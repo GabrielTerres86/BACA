@@ -3282,6 +3282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
               ,cdfinemp
               ,cdlcremp
               ,tpemprst
+              ,dtcarenc
+              ,idcarenc
           FROM crawepr
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -3346,6 +3348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_vlsldisp      NUMBER;
       vr_tab_saldos    EXTR0001.typ_tab_saldos;
       vr_rowid         ROWID;
+      vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
 
       -- Variaveis tratamento de erros
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -3447,20 +3450,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
       END IF;
 
+      -- Busca quantidade de dias da carencia
+      pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
+                                ,pr_qtddias    => vr_qtdias_carencia
+                                ,pr_cdcritic   => vr_cdcritic
+                                ,pr_dscritic   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
       -- Calcula o IOF
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                 ,pr_inpessoa => pr_inpessoa
-                                 ,pr_cdlcremp => rw_crawepr.cdlcremp
-                                 ,pr_qtpreemp => rw_crawepr.qtpreemp
-                                 ,pr_vlpreemp => rw_crawepr.vlpreemp
-                                 ,pr_vlemprst => rw_crawepr.vlemprst
-                                 ,pr_dtdpagto => rw_crawepr.dtdpagto
-                                 ,pr_dtlibera => rw_crawepr.dtlibera
-                                 ,pr_tpemprst => rw_crawepr.tpemprst
-                                 ,pr_valoriof => vr_vltariof
-                                 ,pr_dscritic => vr_dscritic);
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+                                 ,pr_nrdconta        => pr_nrdconta
+                                 ,pr_dtmvtolt        => pr_dtmvtolt
+                                 ,pr_inpessoa        => pr_inpessoa
+                                 ,pr_cdlcremp        => rw_crawepr.cdlcremp
+                                 ,pr_qtpreemp        => rw_crawepr.qtpreemp
+                                 ,pr_vlpreemp        => rw_crawepr.vlpreemp
+                                 ,pr_vlemprst        => rw_crawepr.vlemprst
+                                 ,pr_dtdpagto        => rw_crawepr.dtdpagto
+                                 ,pr_dtlibera        => rw_crawepr.dtlibera
+                                 ,pr_tpemprst        => rw_crawepr.tpemprst
+                                 ,pr_dtcarenc        => rw_crawepr.dtcarenc
+                                 ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_valoriof        => vr_vltariof
+                                 ,pr_dscritic        => vr_dscritic);
       -- Se ocorreu erro
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
