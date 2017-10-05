@@ -3472,7 +3472,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		procedure = 'BUSCA_CNAE';
 		titulo = 'CNAE';
 		filtrosDesc = 'flserasa|2';
-		buscaDescricao('MATRIC', procedure, titulo, 'cdcnae', 'dscnae', cdCnae, 'dscnae', filtrosDesc, 'frmJuridico');				
+		buscaDescricao('ZOOM0001', procedure, titulo, 'cdcnae', 'dscnae', cdCnae, 'dscnae', filtrosDesc, 'frmJuridico');				
 		
 	}
 	
