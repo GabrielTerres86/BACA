@@ -376,8 +376,8 @@ PROCEDURE efetua_login:
                                ELSE
                                    INTE(craptab.dstextab)
                                       
-           tt-login.flgdsenh = 
-                (crapdat.dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias 
+           tt-login.flgdsenh = FALSE /* Senha do operador nao sera mais atualizada, 
+                                        portanto nao deve-se mais tratar expiracao da senha (CRM) */
            tt-login.cdpactra = crapope.cdpactra
            tt-login.flgperac = crapope.flgperac
            tt-login.nvoperad = crapope.nvoperad
