@@ -199,8 +199,10 @@ function controlaLayout() {
             rDtenvres.addClass('rotulo').css({'width':'170px'});
 			rDsinfadc.addClass('rotulo').css({'width':'170px'});
             rVlbloque.addClass('rotulo').css({'width':'170px'});
-            rVlsaldo.addClass('rotulo-linha').css({'width':'180px'});
-			
+            rVlsaldo.addClass('rotulo-linha').css({ 'width': '180px' });
+
+            rVlbloque.show();
+            rVlbloque.next().show();
 			
             cNroficio.addClass('rotulo').css({'width':'200px'});
             cNrproces.addClass('rotulo').css({'width':'200px'});
@@ -234,7 +236,10 @@ function controlaLayout() {
             rNroficon.addClass('rotulo-linha').css({'width':'125px'});
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
-            cNrctacon.addClass('rotulo-linha').css({'width':'110px'}).setMask('INTEGER','zzzzzzzzzzzzz9','','');
+            cNrctacon.addClass('rotulo-linha').css({ 'width': '110px' }).setMask('INTEGER', 'zzzzzzzzzzzzz9', '', '');
+
+            rVlbloque.hide();
+            rVlbloque.next().hide();
 			
 			cCampos.habilitaCampo();
 			cCamposDesbloqueio.habilitaCampo();

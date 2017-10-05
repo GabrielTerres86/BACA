@@ -70,19 +70,13 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRegistro = getObjectXML($xmlResult);
 
-	$msgErro = $xmlObjConsulta->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	$msgErro = $xmlObjRegistro->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjConsulta->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($msgErro);
+	if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == "ERRO") {
+		echo "showError('error','".$msgErro."','Informe - BLQJUD','hideMsgAguardo();');";
 	}else{
 		echo "showError('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Informe - BLQJUD','hideMsgAguardo();estadoInicial();');";
-	}
-	
-	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) {
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","hideMsgAguardo();");';
-		exit();
 	}
 		
 ?>
