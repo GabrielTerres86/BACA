@@ -3282,6 +3282,10 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		titulo = 'Nacionalidade';
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
+
+        // Disparar trigger de Capac. Civil para controlar rotina
+		$('#inhabmen', '#' + nomeForm).change();
+		$('#cdestcvl', '#' + nomeForm).blur();
 	}
 	else if (inpessoa == 2){		
 		$('#nmfansia', '#' + nomeForm).val(nmfantasia);
