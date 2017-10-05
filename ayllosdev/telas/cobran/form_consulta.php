@@ -20,6 +20,7 @@
  *
  * 26/06/2017 - Alteração de DDA para Boleto DDD e inclusão de Campo Pagador DDA, Prj. 340 (Jean Michel)
  *
+ * 27/09/2017 - Receber o campo qtdiaprt, inserasa como parametro (Douglas - Chamado 754911)
  */
  
  	session_start();
@@ -37,7 +38,9 @@
     $cdbandoc	= $_POST['cdbandoc']; 
 	$flserasa	= $_POST['flserasa'];
 	$qtdianeg   = $_POST['qtdianeg'];
+	$inserasa   = $_POST['inserasa'];
 	$flgdprot   = $_POST['flgdprot'];
+	$qtdiaprt   = $_POST['qtdiaprt'];
 	$cdtpinsc   = $_POST['cdtpinsc'];
 	$nrinssac   = $_POST['nrinssac'];
 	
@@ -172,7 +175,7 @@
 												<input type="text" id="flgsacad" name="flgsacad" value="<?php echo $flgsacad; ?>"/>
 
 												</br>
-
+												
 												<label for="dsendsac">Ender:</label>
 												<input type="text" id="dsendsac" name="dsendsac" value="<?php echo $dsendsac; ?>"/>
 

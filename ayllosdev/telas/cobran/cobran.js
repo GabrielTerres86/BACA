@@ -23,6 +23,7 @@
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
  * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
+ * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
  */
 
 //Formulários e Tabela
@@ -1202,7 +1203,9 @@ function buscaConsulta(operacao) {
             cdbandoc: cdbandoc,
             flserasa: flserasa,
             qtdianeg: qtdianeg,
+			inserasa: inserasa,
 			flgdprot: flgdprot,
+            qtdiaprt: qtdiaprt,
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
             redirect: 'script_ajax'
@@ -2317,8 +2320,7 @@ function btnVoltar() {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
-
-        controlaLayoutC();
+		controlaLayoutC();
 
     } else if (cddopcao === 'C' && ni > 0 && $('fieldset:eq(' + ni + ')', '#' + frmOpcao).css('display') == 'block') {
         
