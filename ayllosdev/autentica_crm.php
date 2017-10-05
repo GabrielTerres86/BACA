@@ -31,8 +31,6 @@
 	// Verificar parâmetros recebidos
 	if (trim($inacesso) == 0  || 
 		trim($nmdatela) == "" || 
-		trim($nrdconta) == 0  || 
-		trim($nrcpfcgc) == 0  || 
 		trim($cdoperad) == "" || 
 		trim($cdpactra) == "" || 
 		trim($cdcooper) == 0  || 
