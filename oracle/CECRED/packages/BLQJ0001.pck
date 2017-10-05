@@ -1850,7 +1850,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
-      vr_dscritic := 'Nao foi possivel desbloquear os registros.';
+-- Demetrius
+--      vr_dscritic := 'Nao foi possivel desbloquear os registros.';
+      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic; -- Retornar o erro ocorrido na rotina
       RAISE vr_exc_saida;
     END IF;
     
