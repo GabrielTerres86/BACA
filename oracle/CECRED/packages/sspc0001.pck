@@ -3638,7 +3638,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
          WHERE nrconbir = pr_nrconbir
            AND nrcpfcgc = vr_crapcbd.nrcpfcgc
            AND cdbircon = rw_crapbir.cdbircon
-           AND intippes = vr_intippes
+           AND intippes = DECODE(pr_tpconaut,'M',vr_intippes,intippes)
         RETURN nrseqdet, inpessoa 
           INTO vr_nrseqdet, vr_inpessoa;
       EXCEPTION
