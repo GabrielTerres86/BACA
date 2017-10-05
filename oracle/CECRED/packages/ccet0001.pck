@@ -67,6 +67,8 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       ,pr_inpessoa  IN INTEGER               -- Tipo de pessoa
                                       ,pr_cdlcremp  IN INTEGER               -- Codigo linha credio
                                       ,pr_tpctrato  IN craplcr.tpctrato%TYPE -- Tipo do contrato
+                                      ,pr_nrdconta  IN crapass.nrdconta%type -- Numero da conta
+                                      ,pr_nrctremp  IN NUMBER                -- Numero do Emprestimo
                                       ,pr_vltottar OUT NUMBER                -- Valor Tarifa
                                       ,pr_cdcritic OUT INTEGER
                                       ,pr_dscritic OUT VARCHAR2);
@@ -199,6 +201,8 @@ create or replace package body cecred.CCET0001 is
   --                           pois estava estourando o format
   --                          (Adriano - SD 582204).
   --
+  --              05/10/2017 - Correcao no calculo realizado para o valor da tarifa do CET, quando a proposta ainda nao esta
+  --                           efetivada. Heitor (Mouts) - Chamado 746478.
   ---------------------------------------------------------------------------------------------------------------
 
   pr_cdcritic NUMBER;
@@ -991,6 +995,8 @@ create or replace package body cecred.CCET0001 is
                                       ,pr_inpessoa  IN INTEGER               -- Tipo de pessoa
                                       ,pr_cdlcremp  IN INTEGER               -- Codigo linha credio
                                       ,pr_tpctrato  IN craplcr.tpctrato%TYPE -- Tipo do contrato
+                                      ,pr_nrdconta  IN crapass.nrdconta%type -- Numero da conta
+                                      ,pr_nrctremp  IN NUMBER                -- Numero do Emprestimo
                                       ,pr_vltottar OUT NUMBER                -- Valor Tarifa
                                       ,pr_cdcritic OUT INTEGER
                                       ,pr_dscritic OUT VARCHAR2) IS
@@ -1011,7 +1017,15 @@ create or replace package body cecred.CCET0001 is
   Alteracoes:                  
   ............................................................................. */
     DECLARE
-    
+      cursor cr_crapbpr is
+        select count(*)
+          from crapbpr
+         where cdcooper = pr_cdcooper
+           and nrdconta = pr_nrdconta
+           and tpctrpro = 90
+           and nrctrpro = pr_nrctremp
+           and flgalien = 1;
+
       vr_cdhistor INTEGER;
       vr_cdhisest INTEGER;
       vr_vlrtarif NUMBER;
@@ -1020,7 +1034,8 @@ create or replace package body cecred.CCET0001 is
       vr_dtvigenc DATE;
       vr_cdfvlcop INTEGER;
       vr_vltarbem NUMBER;
-      vr_cdbattar VARCHAR2(15);      
+      vr_cdbattar VARCHAR2(15);
+      vr_qttarbem NUMBER(3) := 1;    
     
       -- Variaveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1158,7 +1173,17 @@ create or replace package body cecred.CCET0001 is
             
         END IF;
       END IF;
-      
+
+     if pr_tpctrato = 2 then
+       open cr_crapbpr;
+       fetch cr_crapbpr into vr_qttarbem;
+       close cr_crapbpr;
+       
+       if vr_qttarbem > 1 then
+         vr_vltarbem := nvl(vr_vltarbem,0) * vr_qttarbem;
+       end if;
+     end if;
+
      -- calcular a tarifa de cadastro + a tarifa do bem alienado se tiver
      pr_vltottar := nvl(vr_vlrtarif,0) + nvl(vr_vltarbem,0) + nvl(vr_vltrfesp,0);
           
@@ -1283,7 +1308,7 @@ create or replace package body cecred.CCET0001 is
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro pc_calcula_tarifa_cadastro : ' || SQLERRM;
+        pr_dscritic := 'Erro pc_calc_taxa_juros : ' || SQLERRM;
         
     END;  
   END pc_calc_taxa_juros;
@@ -1531,6 +1556,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => 0
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctrlim
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -1922,6 +1949,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vlemprst => pr_vlemprst
                                    ,pr_dtdpagto => pr_dtdpagto
                                    ,pr_dtlibera => pr_dtlibera
+                                   ,pr_tpemprst => pr_tpemprst
                                    ,pr_valoriof => vr_vlrdoiof
                                    ,pr_dscritic => vr_dscritic);
                                    
@@ -2007,6 +2035,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => vr_tpctrato
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -2294,6 +2324,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => 0
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctrlim
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -2491,6 +2523,7 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_vlemprst => pr_vlemprst
                                  ,pr_dtdpagto => pr_dtdpagto
                                  ,pr_dtlibera => pr_dtlibera
+                                 ,pr_tpemprst => pr_tpemprst
                                  ,pr_valoriof => vr_vlrdoiof
                                  ,pr_dscritic => vr_dscritic);
                                    
@@ -2574,6 +2607,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => vr_tpctrato
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
