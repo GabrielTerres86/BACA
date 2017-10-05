@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 								Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
 								Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
 								);
-                  
+
   TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
        INDEX BY PLS_INTEGER;
 			 
@@ -435,6 +435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                   31/08/2017 - Ajuste para gravar corretamente o nrseqdig nas tabelas crapcdb, craplot
                               (Adriano - SD 746028).
                               
+      20/09/2017 - #753579 Utilizando o parametro pr_dsiduser concatenado com _, rotina 
+                   DSCC0001.pc_gera_impressao_bordero, chamada pela DSCC0002.pc_imprime_bordero_ib pois o
+                   comando rm está removendo todos os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -716,7 +719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                ,pr_cdcritic => vr_cdcritic    --> Código da crítica
                                ,pr_dscritic => vr_dscritic);  --> Descrição da crítica                
-    
+
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR 
       nvl(vr_cdcritic,0) > 0 THEN
@@ -1312,7 +1315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
     pr_tab_bordero_restri.DELETE;
-    
+
     BEGIN
       -- Buscar data parametro de referencia para calculo de juros
       vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -1369,12 +1372,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               vr_rel_nmcheque := rw_crapjur.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
                                                            pr_inpessoa => 2);
-            ELSE
+      ELSE
               vr_rel_dscpfcgc := 'NAO CADASTRADO';
               vr_rel_nmcheque := 'NAO CADASTRADO';
             END IF;
           END IF;
-        END IF;
+      END IF;
       ELSE
         -- Buscar cadastro de emitentes de cheques
         OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
@@ -1454,7 +1457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vlliquid => vr_vlliquid         --> Retorna valor liquidacao do cheque													 
                                    ,pr_cdcritic => vr_cdcritic         --> Cód. da crítica
                                    ,pr_dscritic => vr_dscritic);       --> Descrição da crítica
-         
+
         IF nvl(vr_cdcritic,0) > 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN 
           RAISE vr_exc_erro; 
@@ -1878,7 +1881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND crapbdc.nrborder = pr_nrborder;
          
     rw_crapbdc cr_crapbdc%ROWTYPE;
-    
+
     -- Linha de Desconto
     CURSOR cr_crapldc (pr_cddlinha IN crapldc.cddlinha%TYPE) IS
       SELECT cddlinha
@@ -2383,10 +2386,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                     -- Se NAO existir na PLTABLE
                     IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
                       vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-                    END IF;
-                  END IF;
                 END IF;
-              END LOOP;
+            END IF;
+        END IF;
+      END LOOP;
             END IF;
           END IF;
           pc_escreve_xml(        '</restricoes>');
@@ -2407,7 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                         '<nmcheque></nmcheque>'||
                         '<dscpfcgc></dscpfcgc>');
         pc_escreve_xml( '</cheque>');
-        
+
         
       END IF;
 
@@ -7285,7 +7288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
-
+                             
                 27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
                              da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 

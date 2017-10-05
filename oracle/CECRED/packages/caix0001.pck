@@ -135,13 +135,12 @@ create or replace package body cecred.CAIX0001 is
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 20/06/2017
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 20/09/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar procedures referentes a tela bcaixa Opcao T
-
   -- Alteracoes: 11/03/2015 - Conversao de Progress -->> Oracle (Lucas R. #245838)
   --
   --             24/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
@@ -156,6 +155,9 @@ create or replace package body cecred.CAIX0001 is
   --                            nas seguintes procedures pc_saldo_caixas - pc_saldo_cofre - pc_saldo_total 
   --                            - pc_gera_relato: Executa o relatório apenas no 2o momento
   --                          ( Belli - Envolti - 20/06/2017 - Chamado 660322)
+  --
+  --             20/09/2017 - Alterada pc_gera_log para não gravar nome de arquivo de log e gravar cdprograma
+  --                          (Ana - Envolti - 20/09/2017 - Chamado 746134)
   --  
   -----------------------------------------------------------------------------------------------------------
 
@@ -289,7 +291,7 @@ create or replace package body cecred.CAIX0001 is
 	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
       vr_acao := 'CAIX0001.pc_saldo_caixas';      
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
-        
+
       -- Limpar temp-table
       vr_tab_crapbcx.DELETE;
 
@@ -1613,7 +1615,7 @@ create or replace package body cecred.CAIX0001 is
       
 	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'CAIX0001.pc_disp_dados_bole_caixa');
-      
+
       -- Iniciar Valores zerados
       pr_vlcredit := 0;
       pr_vldebito := 0;
@@ -2607,13 +2609,15 @@ create or replace package body cecred.CAIX0001 is
    Sistema : CRED
    Sigla   : CAIX0001
    Autor   : Cesar Belli - Envolti - Chamado 660322
-   Data    : Junho/2017.                        Ultima atualizacao: 21/06/2017
+   Data    : Junho/2017.                        Ultima atualizacao: 20/09/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamada.
    Objetivo  : Gerar log de boletim de caixa
-
+   Alteracoes: 20/09/2017 - Alterada pc_gera_log para não gravar nome de arquivo de log e gravar cdprograma
+                            (Ana - Envolti - 20/09/2017 - Chamado 746134)
+    
   ............................................................................. */
   
     -- Tratamento de erros
@@ -2621,13 +2625,16 @@ create or replace package body cecred.CAIX0001 is
       
     -- Variaveis de inclusão de log 
     vr_idprglog            tbgen_prglog.idprglog%TYPE := 0;  
-    vr_dsmensagem          tbgen_prglog_ocorrencia.dsmensagem%TYPE := null;  
+    vr_dsmensagem          tbgen_prglog_ocorrencia.dsmensagem%TYPE := null;
+    vr_modulo              tbgen_prglog.cdprograma%TYPE;  
   BEGIN
+    --Ajuste nmarqlog e cdprograma - Chamado 746134
+    vr_modulo := NVL(trim(pr_modulo), 'CAIX0001');
     
 	  -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
-		GENE0001.pc_set_modulo(pr_module => pr_modulo, pr_action => 'CAIX0001.pc_gera_log');
-                              
-    vr_dsmensagem := to_char(sysdate,'hh24:mi:ss')||' - ' || pr_modulo 
+		GENE0001.pc_set_modulo(pr_module => vr_modulo, pr_action => 'CAIX0001.pc_gera_log');
+
+    vr_dsmensagem := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_modulo 
                              || ' --> ' 
                              || 'ALERTA: '       || pr_dscritic_in    
                              || ' pr_cdcooper='  || pr_cdcooper
@@ -2635,18 +2642,18 @@ create or replace package body cecred.CAIX0001 is
                              || ' ,pr_nrdcaixa=' || pr_nrdcaixa
                              || ' ,pr_dtmvtolt=' || pr_dtmvtolt
                              || ' ,pr_tpcaicof=' || pr_tpcaicof                              
-                             || ' - Module: ' || pr_modulo 
+                             || ' - Module: ' || vr_modulo 
                              || ' - Action: ' || pr_acao;
-                     
+
      cecred.pc_log_programa(pr_dstiplog      => 'O',              -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
-                            pr_cdprograma    => pr_modulo,        -- tbgen_prglog
+                            pr_cdprograma    => vr_modulo,        -- tbgen_prglog
                             pr_cdcooper      => pr_cdcooper,      -- tbgen_prglog
                             pr_tpexecucao    => 1,                -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                             pr_tpocorrencia  => 4,                -- tbgen_prglog_ocorrencia -- 4 Mensagem
                             pr_cdcriticidade => 0,                -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                             pr_dsmensagem    => vr_dsmensagem,    -- tbgen_prglog_ocorrencia
                             pr_flgsucesso    => 1,                -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
-                            pr_nmarqlog      => 'proc_batch.log',
+                            pr_nmarqlog      => NULL,
                             pr_idprglog      => vr_idprglog
                             );
       
