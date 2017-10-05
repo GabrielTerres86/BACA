@@ -9,6 +9,9 @@
 	//***                                                                  ***//	 
 	//*** Alterações: 30/07/2010 - Verificar se a home foi acionada pelo   ***//
 	//***                          Login do sistema (David).               ***//
+	//***																   ***//
+	//***             05/10/2017 - Adicionado tratamento para armazenar    ***//
+	//***                          parâmetros do CRM em sessio. (Reinert)  ***//
 	//************************************************************************//
 	
 	session_start();
