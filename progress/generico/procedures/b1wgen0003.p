@@ -204,6 +204,9 @@
 
 			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
 			                (Marcos-Supero #477843)
+                      
+         05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
+                      Transacao Pendente (Rafael Monteiro - Mouts)
 
 ............................................................................ */
 
@@ -1084,6 +1087,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debito de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper = p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsitdeb = 0 /* Ainda nao debitado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -1160,6 +1164,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debitos de Tarifas */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsittar = 0 /* Ainda nao debitado a tarifa */
                        AND crappfp.vltarapr > 0 /* Com tarifa a cobrar */
                        NO-LOCK
@@ -1257,6 +1262,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Creditos de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
+                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                        AND crappfp.flsitcre = 0 /* Pagamento ainda não creditado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper

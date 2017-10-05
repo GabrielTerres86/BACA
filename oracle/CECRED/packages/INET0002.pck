@@ -10475,7 +10475,8 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
     -- Frequencia: -----
     -- Objetivo  : Valida se o preposto que está aprovando uma transação pendente é um master.
     --
-    -- Alteração : 
+    -- Alteração : 05/10/2017 - Ajuste no cursor cr_tbgen_aprova_trans_pend para restringir também o CPF
+    --                          (Rafael Monteiro - Mouts).
     --
     ---------------------------------------------------------------------------------------------------------------                                  
 
@@ -10507,6 +10508,7 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
          AND t.idsituacao_aprov        = 2  -- Aprovado 
          AND t.cdcooper                = tl.cdcooper
          AND t.nrdconta                = tl.nrdconta
+         AND t.nrcpf_responsavel_aprov = tl.nrcpf
          AND tl.flgmaster              = 1 -- eh master
          AND rownum                    = 1;
     -- Variaveis
