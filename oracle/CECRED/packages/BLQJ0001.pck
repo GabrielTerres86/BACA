@@ -1988,6 +1988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_vldesblo      NUMBER := pr_vldesblo;
     ww_vldesblo      NUMBER;
     vr_vltotblq      NUMBER;
+    vr_inserlcm      BOOLEAN;
     
     -- EXCEPTIONS
     vr_exp_erro       EXCEPTION;
@@ -2072,7 +2073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,nrproces
                              ,dsinfadc
                              ,vlresblq
-                             ,hrblqini
+                             ,GENE0002.fn_busca_time hrblqini
                          FROM crapblj
                         WHERE rowid = rw_crapblj.dsdrowid;
         EXCEPTION
@@ -2176,17 +2177,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           -- Inserir registro na CRAPLCM
           BEGIN
             -- Demetrius
-            UPDATE craplcm lcm
-               SET lcm.vllanmto = lcm.vllanmto + ww_vldesblo
-             WHERE lcm.cdcooper = pr_cdcooper
-               AND lcm.dtmvtolt = pr_dtmvtolt
-               AND lcm.cdagenci = rw_craplot.cdagenci
-               AND lcm.cdbccxlt = rw_craplot.cdbccxlt
-               AND lcm.nrdolote = rw_craplot.nrdolote
-               AND lcm.nrdctabb = rw_crapblj.nrdconta
-               AND lcm.nrdocmto = rw_craplot.nrseqdig; --vr_nrdocmto;
-
-            IF sql%rowcount = 0  THEN
+--            UPDATE craplcm lcm
+--               SET lcm.vllanmto = lcm.vllanmto + ww_vldesblo
+--             WHERE lcm.cdcooper = pr_cdcooper
+--               AND lcm.dtmvtolt = pr_dtmvtolt
+--               AND lcm.cdagenci = rw_craplot.cdagenci
+--               AND lcm.cdbccxlt = rw_craplot.cdbccxlt
+--               AND lcm.nrdolote = rw_craplot.nrdolote
+--               AND lcm.nrdctabb = rw_crapblj.nrdconta
+--               AND lcm.nrdocmto = rw_craplot.nrseqdig; --vr_nrdocmto;
+--
+--            IF sql%rowcount = 0  THEN
+           IF NOT vr_inserlcm THEN
+              vr_inserlcm := TRUE;
               INSERT INTO craplcm(cdcooper
                                  ,dtmvtolt
                                  ,dtrefere
@@ -2212,10 +2215,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,rw_crapblj.nrdctitg               -- nrdctitg
                                  ,vr_nrdocmto                       -- nrdocmto
                                  ,DECODE(rw_crapblj.inpessoa, 1, 1404, 1405) -- cdhistor => 1404 - PF / 1405 - PJ
-                                 ,ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
+                                 ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
                                  ,rw_craplot.nrseqdig + 1           -- nrseqdig
                                  ,'BLOQJUD');                       -- cdpesqbb
-              END IF;
+--            END IF;
+            END IF;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
