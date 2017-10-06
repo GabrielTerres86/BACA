@@ -182,6 +182,10 @@ DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 
+
+DEF TEMP-TABLE tt-titulares-organ LIKE tt-titulares.
+DEF TEMP-TABLE tt-titulares-nomes LIKE tt-titulares. /* LUNELLI */
+
 /*................................. FUNCTIONS ................................*/
 
 FUNCTION valida-senha-numerica RETURN LOGICAL (INPUT par_dssenori AS CHAR,
@@ -375,6 +379,9 @@ PROCEDURE carrega-titulares.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
     DEF VAR aux_qtminast AS INTE									NO-UNDO.
     
+    DEF VAR tmp_dsprnome AS CHAR									NO-UNDO.
+    DEF VAR tmp_contador AS INTE									NO-UNDO.
+    
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -539,6 +546,19 @@ PROCEDURE carrega-titulares.
                        tt-titulares.inpessoa = crapass.inpessoa.
             
             END. /** Fim do FOR EACH crapttl **/
+                                   
+            FOR EACH tt-titulares NO-LOCK:
+                CREATE tt-titulares-organ.
+                BUFFER-COPY tt-titulares TO tt-titulares-organ.
+            END.            
+            
+            IF  TEMP-TABLE tt-titulares-organ:HAS-RECORDS AND 
+                par_flmobile <> YES                       THEN
+                DO:                
+                    RUN organiza-nomes-titulares (INPUT TABLE tt-titulares-organ,
+                                                 OUTPUT TABLE tt-titulares).                
+                END.
+                
         END.
     ELSE /** Pessoa Juridica **/
         DO:
@@ -697,6 +717,30 @@ PROCEDURE carrega-titulares.
     
                 END. /** Fim do FOR EACH crapopi **/
             END. /** Fim do IF par_flmobile **/
+            
+            
+            /* Selecionar apenas primeiro nome. */
+            IF  crapass.idastcjt = 0 THEN 
+                DO:
+                    FOR EACH tt-titulares WHERE tt-titulares.nrcpfope <> 0 NO-LOCK :
+                        CREATE tt-titulares-organ.
+                        BUFFER-COPY tt-titulares TO tt-titulares-organ.
+                    END.
+                END.
+            ELSE IF  crapass.idastcjt = 1 THEN
+                DO:
+                    FOR EACH tt-titulares NO-LOCK:
+                        CREATE tt-titulares-organ.
+                        BUFFER-COPY tt-titulares TO tt-titulares-organ.
+                    END.
+                END.
+                    
+            IF  TEMP-TABLE tt-titulares-organ:HAS-RECORDS AND 
+                par_flmobile <> YES                       THEN
+                DO:                
+                    RUN organiza-nomes-titulares (INPUT TABLE tt-titulares-organ,
+                                                 OUTPUT TABLE tt-titulares).
+                END.
         END.
 
     IF  NOT TEMP-TABLE tt-titulares:HAS-RECORDS THEN
@@ -3905,6 +3949,63 @@ END PROCEDURE.
 
 
 /*............................ PROCEDURES INTERNAS ...........................*/
+PROCEDURE organiza-nomes-titulares:
+
+    DEF INPUT PARAM TABLE FOR tt-titulares.    
+    DEF OUTPUT PARAM TABLE FOR tt-titulares-nomes.    
+    
+    DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR aux_posinome AS INTE                                    NO-UNDO.
+    DEF VAR aux_novonome AS CHAR                                    NO-UNDO.
+    
+    FOR EACH tt-titulares NO-LOCK BY tt-titulares.nmtitula:
+        CREATE tt-titulares-nomes.
+        BUFFER-COPY tt-titulares TO tt-titulares-nomes.
+    END.
+    
+    FOR EACH tt-titulares-nomes EXCLUSIVE-LOCK BY tt-titulares-nomes.nmtitula:
+        
+        ASSIGN aux_novonome = "".
+        
+        loop:
+        DO aux_posinome = 1 TO NUM-ENTRIES(tt-titulares-nomes.nmtitula, " "):
+        
+            ASSIGN aux_contador = 0.
+            FOR EACH tt-titulares NO-LOCK:
+            
+                IF (aux_posinome <= NUM-ENTRIES(tt-titulares.nmtitula, " ")) THEN
+                    DO:
+                        IF (TRIM(ENTRY(aux_posinome, tt-titulares.nmtitula, " ")) =
+                            TRIM(ENTRY(aux_posinome, tt-titulares-nomes.nmtitula , " "))) THEN 
+                            ASSIGN aux_contador = aux_contador + 1.
+                    END.                
+            END.
+            
+            ASSIGN aux_novonome = aux_novonome + " " + TRIM(ENTRY(aux_posinome, tt-titulares-nomes.nmtitula, " ")).
+            
+            /* Forçar adquirir próximo nome quando for DE, DAS, DOS (p.ex. THIAGO DOS SANTOS) */
+            if (CAPS(TRIM(ENTRY(aux_posinome, tt-titulares-nomes.nmtitula, " "))) = "DE"   OR
+                CAPS(TRIM(ENTRY(aux_posinome, tt-titulares-nomes.nmtitula, " "))) = "DOS"  OR
+                CAPS(TRIM(ENTRY(aux_posinome, tt-titulares-nomes.nmtitula, " "))) = "DAS") THEN
+                ASSIGN aux_contador = aux_contador + 1.
+            
+            IF (aux_contador > 1) THEN
+                DO:
+                    NEXT loop.
+                END.
+            ELSE
+                DO:
+                    LEAVE loop.
+                END.
+        END.
+        
+        ASSIGN tt-titulares-nomes.nmtitula = TRIM(aux_novonome).
+    
+    END.
+    
+END PROCEDURE.
+    
+    
 
 /******************************************************************************/
 /**       Procedure para confirmar e bloquear senha de acesso a conta        **/

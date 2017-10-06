@@ -385,7 +385,11 @@ ASSIGN xml_operacao.dslinxml = "<SACADOS qttotsac='" +
                                            "1"
                                         ELSE 
                                            "0") +
-                                       "</flgemail></DADOS>".
+                                       "</flgemail><dsflgend>" +
+                                       tt-sacados-blt.dsflgend +
+                                       "</dsflgend><dsflgprc>" +
+                                       tt-sacados-blt.dsflgprc +
+                                       "</dsflgprc></DADOS>".
                                          
 END.
          

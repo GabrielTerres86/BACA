@@ -209,9 +209,11 @@ ELSE
                                                    "1"
                                                 ELSE 
                                                    "0") +
-                                               "</flgemail>" +
-                                               "</SACADO>".
-            
+                                               "</flgemail><dsflgend>" +
+                                                tt-sacados-blt.dsflgend +
+                                               "</dsflgend><dsflgprc>" +
+                                                tt-sacados-blt.dsflgprc +
+                                               "</dsflgprc></SACADO>".
             END.
         END.
 

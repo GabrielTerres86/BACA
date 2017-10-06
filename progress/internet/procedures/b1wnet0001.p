@@ -2974,12 +2974,11 @@ PROCEDURE seleciona-sacados:
 
                            
         CREATE tt-sacados-blt.
-        ASSIGN tt-sacados-blt.nmdsacad = 
-                 (IF aux_errodcep THEN "** Verificar endereço ** - " 
-                  ELSE "") + 
-                 (IF aux_errodpnp THEN "** Praça não protesta ** - " 
-                  ELSE "") + 
-                  REPLACE(crapsab.nmdsacad,"&","%26")
+        ASSIGN tt-sacados-blt.nmdsacad = REPLACE(crapsab.nmdsacad,"&","%26")
+               tt-sacados-blt.dsflgend = (IF aux_errodcep THEN "** Verificar endereço ** - " 
+                                          ELSE "")
+               tt-sacados-blt.dsflgprc = (IF aux_errodpnp THEN "** Praça não protesta ** - " 
+                                          ELSE "")
                tt-sacados-blt.nrinssac = crapsab.nrinssac
                tt-sacados-blt.dsinssac = aux_dsinssac
                tt-sacados-blt.nrctasac = crapsab.nrctasac
