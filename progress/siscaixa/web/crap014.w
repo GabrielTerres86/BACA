@@ -1539,24 +1539,29 @@ PROCEDURE processa-fatura:
 
         FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper
                              AND crapcon.cdempcon = INT(SUBSTRING(c_codbarras,16,4))
-                             AND crapcon.cdsegmto = INT(SUBSTRING(c_codbarras,2,1))
-                             AND crapcon.cdhistor = 1154
-                             and crapcon.flgcnvsi = TRUE
+                             AND crapcon.cdsegmto = INT(SUBSTRING(c_codbarras,2,1))                                                        
                              NO-LOCK NO-ERROR.
                              
         IF  AVAILABLE crapcon THEN           
             DO:                
-                /* Verificar se convênio possui debito automatico */
-                FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
-                                          crapscn.cdempcon <> 0)                       AND
-                                          crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
-                                          crapscn.dsoparre = 'E'                       AND
-                                         (crapscn.cddmoden = 'A'                       OR
-                                          crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
-                IF  AVAILABLE crapscn THEN
-                    aux_debitaut = TRUE.
-            END.
-            
+                IF  crapcon.flgcnvsi = TRUE THEN
+                    DO:                    
+                        /* Verificar se convênio possui debito automatico */
+                        FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
+                                                  crapscn.cdempcon <> 0)                       AND
+                                                  crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
+                                                  crapscn.dsoparre = 'E'                       AND
+                                                 (crapscn.cddmoden = 'A'                       OR
+                                                  crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
+                        IF  AVAILABLE crapscn THEN
+                            ASSIGN aux_debitaut = TRUE. /* Convenio sicredi */
+                    END.
+                ELSE
+                    DO:
+                       IF  crapcon.cdhistor <> 1154 THEN
+                           ASSIGN aux_debitaut = TRUE. /* Convenio proprio */
+                    END.
+            END.            
 
         IF  par_nrdconta > 0  AND aux_debitaut THEN   /* Cooperado */
             DO:
