@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 15/09/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 06/10/2017
     
    Dados referentes ao programa:
 
@@ -231,7 +231,7 @@
                17/09/2015 - Ajuste no topico 3.1 da proposta pois estava invertido
                             a linha de credito com a finalidade (Lombardi/Jaison)
 
-			   14/09/2015 - Projeto Reformulacao cadastral
+                           14/09/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                             
                20/11/2015 - Ajustado para que a seja utilizado a procedure
@@ -244,11 +244,11 @@
                             nao conta como uma pagina nova SD366647 (Odirlei-AMcom)
                                                    
                26/01/2016 - Alteracao da procedure gera-impressao-empr para gerar o
-							relatorio para o InternetBank. (Projeto Pre-Aprovado 
-							Fase 2 - Carlos Rafael Tanholi)
+                                                        relatorio para o InternetBank. (Projeto Pre-Aprovado 
+                                                        Fase 2 - Carlos Rafael Tanholi)
               
-			   10/03/2016 - Ajuste para impressao da proposta para a Esteira
-			                PRJ207 - Esteira (Odirlei-AMcom)
+                           10/03/2016 - Ajuste para impressao da proposta para a Esteira
+                                        PRJ207 - Esteira (Odirlei-AMcom)
 
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
                             Correçao deletar o Handle da b1wgen0001 esta gerando erro na geraçao
@@ -257,24 +257,26 @@
                             do PDF para envio da esteira (Oscar).
                                                    
                10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
-			   
-			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
-						    (Adriano - SD 614408).
+                           
+                           07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
+                                                    (Adriano - SD 614408).
                
-			         25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
-						                e novo parametro de saida na procedure valida_impressao. 
-						                Projeto 337 - Motor de crédito. (Reinert)
+                                 25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
+                                                                e novo parametro de saida na procedure valida_impressao. 
+                                                                Projeto 337 - Motor de crédito. (Reinert)
                             
                27/04/2017 - Alterado rotinas gera_co_responsavel e busca_operacoes
                             para chamar respectiva versao oracle
-						                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
+                                                                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
 
 
                19/04/2017 - Removido DSNACION variavel nao utilizada.
                             PRJ339 - CRM (Odirlei-AMcom)  
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
-                            pois estourava para conta com muitos AVAIS (Marcos-Supero)               
+                            pois estourava para conta com muitos AVAIS (Marcos-Supero)   
+
+               06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
 .............................................................................*/
 
@@ -1428,7 +1430,7 @@ PROCEDURE gera-impressao-empr:
                 
            (par_idorigem = 5 OR     /** Ayllos Web **/
             par_idorigem = 3 OR     /** InternetBank **/
-			par_idorigem = 9) THEN  /** Esteira de credito **/ 
+                        par_idorigem = 9) THEN  /** Esteira de credito **/ 
             DO:
                 Email: DO WHILE TRUE:
     
@@ -1469,7 +1471,7 @@ PROCEDURE gera-impressao-empr:
                             '/temp/" 2>/dev/null').
                         END.
 
-					/** Copiar pdf para visualizacao no Internet Bank **/
+                                        /** Copiar pdf para visualizacao no Internet Bank **/
                     ELSE IF par_idorigem = 3 THEN
                     DO:
             
@@ -1567,19 +1569,19 @@ PROCEDURE gera-impressao-empr:
                             UNIX SILENT VALUE ("rm " + aux_nmarquiv + "* 2>/dev/null").
                     END.
                 ELSE
-				  IF par_idorigem = 9  THEN
-				    DO:
-					  UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
-				    END.
+                                  IF par_idorigem = 9  THEN
+                                    DO:
+                                          UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
+                                    END.
                   ELSE
                     UNIX SILENT VALUE ("rm " + aux_nmarqpdf + " 2>/dev/null").
          END. 
          
-		 /* Para esteira deve enviar tambem o caminho */
-		 IF par_idorigem = 9 THEN
-		   ASSIGN par_nmarqpdf = aux_nmarqpdf.
-		 ELSE
-		   ASSIGN par_nmarqpdf = 
+                 /* Para esteira deve enviar tambem o caminho */
+                 IF par_idorigem = 9 THEN
+                   ASSIGN par_nmarqpdf = aux_nmarqpdf.
+                 ELSE
+                   ASSIGN par_nmarqpdf = 
                           ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
 
          ASSIGN par_nmarqimp = aux_nmarqimp
@@ -4870,119 +4872,119 @@ PROCEDURE impressao-prnf:
 
             IF  AVAIL crapttl THEN
                 DO:
-				    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
  
-					  /* Efetuar a chamada da rotina Oracle */ 
-						RUN STORED-PROCEDURE pc_busca_gncdocp_car
-							aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapttl.cdocpttl, /*codigo da ocupaca*/                          
-																INPUT "", /*descricao da ocupacao*/                                                                                            
-																INPUT 1, /*nrregist*/
-																INPUT 1, /*nriniseq*/
-																OUTPUT "", /*Nome do Campo*/                
-																OUTPUT "", /*Saida OK/NOK*/                          
-																OUTPUT ?, /*Tabela Regionais*/                       
-																OUTPUT 0, /*Codigo da critica*/                      
-																OUTPUT ""). /*Descricao da critica*/ 
+                                          /* Efetuar a chamada da rotina Oracle */ 
+                                                RUN STORED-PROCEDURE pc_busca_gncdocp_car
+                                                        aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapttl.cdocpttl, /*codigo da ocupaca*/                          
+                                                                                                                                INPUT "", /*descricao da ocupacao*/                                                                                            
+                                                                                                                                INPUT 1, /*nrregist*/
+                                                                                                                                INPUT 1, /*nriniseq*/
+                                                                                                                                OUTPUT "", /*Nome do Campo*/                
+                                                                                                                                OUTPUT "", /*Saida OK/NOK*/                          
+                                                                                                                                OUTPUT ?, /*Tabela Regionais*/                       
+                                                                                                                                OUTPUT 0, /*Codigo da critica*/                      
+                                                                                                                                OUTPUT ""). /*Descricao da critica*/ 
     
-						/* Fechar o procedimento para buscarmos o resultado */ 
-						CLOSE STORED-PROC pc_busca_gncdocp_car
-								aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                                                /* Fechar o procedimento para buscarmos o resultado */ 
+                                                CLOSE STORED-PROC pc_busca_gncdocp_car
+                                                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
          
-						/* Efetuar a chamada da rotina Oracle */ 
-						{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-						
-						/* Busca possíveis erros */ 
-						ASSIGN aux_cdcritic = 0
-							   aux_dscritic = ""
-							   aux_cdcritic = pc_busca_gncdocp_car.pr_cdcritic 
-											  WHEN pc_busca_gncdocp_car.pr_cdcritic <> ?
-							   aux_dscritic = pc_busca_gncdocp_car.pr_dscritic 
-											  WHEN pc_busca_gncdocp_car.pr_dscritic <> ?.
+                                                /* Efetuar a chamada da rotina Oracle */ 
+                                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                                                
+                                                /* Busca possíveis erros */ 
+                                                ASSIGN aux_cdcritic = 0
+                                                           aux_dscritic = ""
+                                                           aux_cdcritic = pc_busca_gncdocp_car.pr_cdcritic 
+                                                                                          WHEN pc_busca_gncdocp_car.pr_cdcritic <> ?
+                                                           aux_dscritic = pc_busca_gncdocp_car.pr_dscritic 
+                                                                                          WHEN pc_busca_gncdocp_car.pr_dscritic <> ?.
 
-						IF aux_cdcritic <> 0   OR
-						   aux_dscritic <> ""  THEN
-						DO:
-							IF aux_dscritic = "" THEN
-							   DO:
-								  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-													 NO-LOCK NO-ERROR.
+                                                IF aux_cdcritic <> 0   OR
+                                                   aux_dscritic <> ""  THEN
+                                                DO:
+                                                        IF aux_dscritic = "" THEN
+                                                           DO:
+                                                                  FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                                                                                         NO-LOCK NO-ERROR.
     
-								  IF AVAIL crapcri THEN
-									 ASSIGN aux_dscritic = crapcri.dscritic.
+                                                                  IF AVAIL crapcri THEN
+                                                                         ASSIGN aux_dscritic = crapcri.dscritic.
     
-							   END.
+                                                           END.
     
-							CREATE tt-erro.
+                                                        CREATE tt-erro.
     
-							ASSIGN tt-erro.cdcritic = aux_cdcritic
-								   tt-erro.dscritic = aux_dscritic.
+                                                        ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                                                   tt-erro.dscritic = aux_dscritic.
     
-						   RETURN "NOK".
+                                                   RETURN "NOK".
 
-						END.
+                                                END.
 
-						/*Leitura do XML de retorno da proc e criacao dos registros na tt-gncdnto
-							para visualizacao dos registros na tela */
+                                                /*Leitura do XML de retorno da proc e criacao dos registros na tt-gncdnto
+                                                        para visualizacao dos registros na tela */
             
-						/* Buscar o XML na tabela de retorno da procedure Progress */ 
-						ASSIGN xml_req = pc_busca_gncdocp_car.pr_clob_ret.
+                                                /* Buscar o XML na tabela de retorno da procedure Progress */ 
+                                                ASSIGN xml_req = pc_busca_gncdocp_car.pr_clob_ret.
     
-						/* Efetuar a leitura do XML*/ 
-						SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
-						PUT-STRING(ponteiro_xml,1) = xml_req. 
+                                                /* Efetuar a leitura do XML*/ 
+                                                SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+                                                PUT-STRING(ponteiro_xml,1) = xml_req. 
     
-						/* Inicializando objetos para leitura do XML */ 
-						CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
-						CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
-						CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
-						CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
-						CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+                                                /* Inicializando objetos para leitura do XML */ 
+                                                CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+                                                CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+                                                CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
+                                                CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+                                                CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
      
-						IF ponteiro_xml <> ? THEN
-							DO:   
-								xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
-								xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+                                                IF ponteiro_xml <> ? THEN
+                                                        DO:   
+                                                                xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+                                                                xDoc:GET-DOCUMENT-ELEMENT(xRoot).
              
-								DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+                                                                DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
              
-									xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                                                                        xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
      
-									IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
-									NEXT. 
+                                                                        IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                                                                        NEXT. 
            
-									IF xRoot2:NUM-CHILDREN > 0 THEN
-									DO:
+                                                                        IF xRoot2:NUM-CHILDREN > 0 THEN
+                                                                        DO:
                 
-										CREATE tt-gncdocp.
+                                                                                CREATE tt-gncdocp.
     
-									END.
+                                                                        END.
      
-									DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                                                                        DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
                
-									xRoot2:GET-CHILD(xField,aux_cont).
+                                                                        xRoot2:GET-CHILD(xField,aux_cont).
                   
-									IF xField:SUBTYPE <> "ELEMENT" THEN 
-										NEXT. 
+                                                                        IF xField:SUBTYPE <> "ELEMENT" THEN 
+                                                                                NEXT. 
               
-									xField:GET-CHILD(xText,1).
+                                                                        xField:GET-CHILD(xText,1).
                   
-									ASSIGN tt-gncdocp.cdocupa = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdocupa"
-										   tt-gncdocp.dsdocupa = xText:NODE-VALUE WHEN xField:NAME = "dsdocupa"
-											tt-gncdocp.rsdocupa = xText:NODE-VALUE WHEN xField:NAME = "rsdocupa".							   
+                                                                        ASSIGN tt-gncdocp.cdocupa = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdocupa"
+                                                                                   tt-gncdocp.dsdocupa = xText:NODE-VALUE WHEN xField:NAME = "dsdocupa"
+                                                                                        tt-gncdocp.rsdocupa = xText:NODE-VALUE WHEN xField:NAME = "rsdocupa".                                                           
                 
-									END. 
+                                                                        END. 
             
-								END.
+                                                                END.
      
-								SET-SIZE(ponteiro_xml) = 0. 
+                                                                SET-SIZE(ponteiro_xml) = 0. 
     
-							END.
+                                                        END.
                     
-						DELETE OBJECT xDoc. 
-						DELETE OBJECT xRoot. 
-						DELETE OBJECT xRoot2. 
-						DELETE OBJECT xField. 
-						DELETE OBJECT xText.
+                                                DELETE OBJECT xDoc. 
+                                                DELETE OBJECT xRoot. 
+                                                DELETE OBJECT xRoot2. 
+                                                DELETE OBJECT xField. 
+                                                DELETE OBJECT xText.
             
                     FIND tt-gncdocp WHERE tt-gncdocp.cdocupa = crapttl.cdocpttl
                           NO-LOCK NO-ERROR.
@@ -8330,27 +8332,91 @@ PROCEDURE gera_co_responsavel:
                                      NEXT.
                                      
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
+                    ASSIGN w-co-responsavel.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci". 
+                    ASSIGN w-co-responsavel.nmprimtl =    (xText:NODE-VALUE) WHEN xField:NAME = "nmprimtl". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
-                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
-                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
-                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
-                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
+                    ASSIGN w-co-responsavel.vlemprst = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlemprst".
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
                     ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
-                    
-                    ASSIGN w-co-responsavel.qtmesdec = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
-                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
-                    ASSIGN w-co-responsavel.qtpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
-
+                    ASSIGN w-co-responsavel.vlprepag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepag".
+                    ASSIGN w-co-responsavel.vljurmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljurmes".
+                    ASSIGN w-co-responsavel.vljuracu = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljuracu".
+                    ASSIGN w-co-responsavel.vlprejuz = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprejuz".
+                    ASSIGN w-co-responsavel.vlsdprej = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdprej".
+                    ASSIGN w-co-responsavel.dtprejuz = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtprejuz".
+                    ASSIGN w-co-responsavel.vljrmprj = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljrmprj".
+                    ASSIGN w-co-responsavel.vljraprj = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljraprj". 
+                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz".
+                    ASSIGN w-co-responsavel.vlprovis = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprovis". 
+                    ASSIGN w-co-responsavel.flgpagto = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgpagto". 
+                    ASSIGN w-co-responsavel.dtdpagto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdpagto".
+                    ASSIGN w-co-responsavel.cdpesqui =    (xText:NODE-VALUE) WHEN xField:NAME = "cdpesqui". 
                     ASSIGN w-co-responsavel.dspreapg =    (xText:NODE-VALUE) WHEN xField:NAME = "dspreapg". 
-                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz". 
-
-                        END.
+                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
+                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
+                    ASSIGN w-co-responsavel.cdfinemp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdfinemp". 
+                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
+                    ASSIGN w-co-responsavel.dsdaval1 =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdaval1". 
+                    ASSIGN w-co-responsavel.dsdaval2 =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdaval2". 
+                    ASSIGN w-co-responsavel.vlpreapg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreapg". 
+                    ASSIGN w-co-responsavel.qtmesdec = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
+                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
+                    ASSIGN w-co-responsavel.vlacresc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlacresc". 
+                    ASSIGN w-co-responsavel.vlrpagos = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagos". 
+                    ASSIGN w-co-responsavel.slprjori = DECI(xText:NODE-VALUE) WHEN xField:NAME = "slprjori". 
+                    ASSIGN w-co-responsavel.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
+                    ASSIGN w-co-responsavel.qtpreemp = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
+                    ASSIGN w-co-responsavel.dtultpag = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultpag".
+                    ASSIGN w-co-responsavel.vlrabono = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrabono". 
+                    ASSIGN w-co-responsavel.qtaditiv = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtaditiv". 
+                    ASSIGN w-co-responsavel.dsdpagto =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdpagto". 
+                    ASSIGN w-co-responsavel.dsdavali =    (xText:NODE-VALUE) WHEN xField:NAME = "dsdavali". 
+                    ASSIGN w-co-responsavel.qtmesatr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesatr". 
+                    ASSIGN w-co-responsavel.qtpromis = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtpromis". 
+                    ASSIGN w-co-responsavel.flgimppr = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgimppr". 
+                    ASSIGN w-co-responsavel.flgimpnp = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgimpnp". 
+                    ASSIGN w-co-responsavel.idseleca =    (xText:NODE-VALUE) WHEN xField:NAME = "idseleca". 
+                    ASSIGN w-co-responsavel.nrdrecid = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdrecid". 
+                    ASSIGN w-co-responsavel.tplcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "tplcremp". 
+                    ASSIGN w-co-responsavel.tpemprst = INT(xText:NODE-VALUE) WHEN xField:NAME = "tpemprst". 
+                    ASSIGN w-co-responsavel.cdtpempr =    (xText:NODE-VALUE) WHEN xField:NAME = "cdtpempr". 
+                    ASSIGN w-co-responsavel.dstpempr =    (xText:NODE-VALUE) WHEN xField:NAME = "dstpempr". 
+                    ASSIGN w-co-responsavel.permulta = DECI(xText:NODE-VALUE) WHEN xField:NAME = "permulta". 
+                    ASSIGN w-co-responsavel.perjurmo = DECI(xText:NODE-VALUE) WHEN xField:NAME = "perjurmo".                     
+                    ASSIGN w-co-responsavel.dtpripgt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtpripgt".
+                    ASSIGN w-co-responsavel.inliquid = INT(xText:NODE-VALUE) WHEN xField:NAME = "inliquid". 
+                    ASSIGN w-co-responsavel.txmensal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txmensal".
+                    ASSIGN w-co-responsavel.flgatras = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgatras". 
+                    ASSIGN w-co-responsavel.dsidenti =    (xText:NODE-VALUE) WHEN xField:NAME = "dsidenti". 
+                    ASSIGN w-co-responsavel.flgdigit = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgdigit". 
+                    ASSIGN w-co-responsavel.tpdocged = INT(xText:NODE-VALUE) WHEN xField:NAME = "tpdocged".
+                    ASSIGN w-co-responsavel.qtlemcal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtlemcal".                     
+                    ASSIGN w-co-responsavel.vlmrapar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlmrapar".                     
+                    ASSIGN w-co-responsavel.vlmtapar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlmtapar".                     
+                    ASSIGN w-co-responsavel.vltotpag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotpag".                     
+                    ASSIGN w-co-responsavel.vlprvenc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprvenc".                     
+                    ASSIGN w-co-responsavel.vlpraven = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpraven". 
+                    ASSIGN w-co-responsavel.flgpreap = LOGICAL(xText:NODE-VALUE) WHEN xField:NAME = "flgpreap".                     
+                    ASSIGN w-co-responsavel.vlttmupr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlttmupr".                     
+                    ASSIGN w-co-responsavel.vlttjmpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlttjmpr".                     
+                    ASSIGN w-co-responsavel.vlpgmupr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpgmupr".                     
+                    ASSIGN w-co-responsavel.vlpgjmpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpgjmpr".                     
+                    ASSIGN w-co-responsavel.vlsdpjtl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdpjtl".  
+                    ASSIGN w-co-responsavel.cdorigem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdorigem".
+                    ASSIGN w-co-responsavel.nrseqrrq = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqrrq".
+                    ASSIGN w-co-responsavel.portabil =    (xText:NODE-VALUE) WHEN xField:NAME = "portabil". 
+                    ASSIGN w-co-responsavel.liquidia = INT(xText:NODE-VALUE) WHEN xField:NAME = "liquidia".
+                    ASSIGN w-co-responsavel.tipoempr =    (xText:NODE-VALUE) WHEN xField:NAME = "tipoempr". 
+                    ASSIGN w-co-responsavel.qtimpctr = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtimpctr". 
+                    ASSIGN w-co-responsavel.dtapgoib = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapgoib".
+                    
+                END.
 
            END. 
 
-            SET-SIZE(ponteiro_xml) = 0. 
+           SET-SIZE(ponteiro_xml) = 0. 
 
-   END.  
+    END.  
 
     /*Elimina os objetos criados*/
     DELETE OBJECT xDoc. 
