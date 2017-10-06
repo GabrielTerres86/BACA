@@ -241,6 +241,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --             17/08/2016 - Inclusão de rotina para renovação de limite de cheque.
   --                          (Linhares - Projeto 300)
   --
+  --             03/10/2017 - Imprimir conta quando o avalista for cooperado
+  --                          Junior (Mouts) - Chamado 767055
+  --
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -1216,7 +1219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         IF rw_crapass.inpessoa = 1 THEN
         
           vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
-                                                                                        pr_inpessoa => rw_crapass.inpessoa );
+                                                                                        pr_inpessoa => rw_crapass.inpessoa )
+																						||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);
           
           --> Buscar conjuge do cooperado
           OPEN cr_crapcje ( pr_cdcooper => pr_cdcooper,
@@ -1259,7 +1263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           
         ELSE
           vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CNPJ: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
-                                                                                         pr_inpessoa => rw_crapass.inpessoa );
+                                                                                         pr_inpessoa => rw_crapass.inpessoa )||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);
                   
           vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_');
           vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
@@ -1304,7 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       vr_idxavais := vr_tab_avais_ctr.count() + 1; 
 	  vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
       vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
-                                                                                    pr_inpessoa => 1 );                       
+                                                                                    pr_inpessoa => 1 )||' '||gene0002.fn_mask_conta(rw_crapass.nrdconta);                       
       vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
       IF rw_crapavt.nrendere > 0 THEN
       
