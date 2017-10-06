@@ -483,7 +483,7 @@ PROCEDURE pc_busca_intippes(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cód. da
 													 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 													 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
 													 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
-													 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
+                           ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 													 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 													 ,pr_inpessoa OUT NUMBER);                 --> 1-Física; 2- Jurídica
 
@@ -521,13 +521,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
---
+  --
   --              26/06/2017 - Incluido o campo nrconbir nas pesquisas da crapcbd, melhoria de performance
   --                           (Tiago/Rodrigo #700127).
---
+  --
   --              28/09/2017 - Utilização do atributo classe da consulta da Ibratan
   --                           (Marcos-Supero).
---
+  --
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -3532,15 +3532,15 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 				-- Fechar cursor 
         CLOSE cr_conscr;
 				
-				-- Buscaremos o tipo da Pessoa em relação a Proposta (Titular, Conjuge, Avalista, etc)
-				pc_busca_intippes(pr_cdcooper => pr_cdcooper
-												 ,pr_nrdconta => pr_nrdconta
-												 ,pr_nrctremp => pr_nrdocmto
-												 ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
+        -- Buscaremos o tipo da Pessoa em relação a Proposta (Titular, Conjuge, Avalista, etc)
+        pc_busca_intippes(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrdocmto
+                         ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
                          ,pr_dsclasse => vr_dsclasse
-												 ,pr_intippes => vr_intippes 
-												 ,pr_nrctapes => vr_nrdconta
-												 ,pr_inpessoa => vr_inpessoa); 
+                         ,pr_intippes => vr_intippes 
+                         ,pr_nrctapes => vr_nrdconta
+                         ,pr_inpessoa => vr_inpessoa); 
 
 				-- Caso não tenhamos conseguido encontrar o tipo 
 				IF vr_intippes IS NULL or vr_inpessoa IS NULL THEN
@@ -3638,7 +3638,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
          WHERE nrconbir = pr_nrconbir
            AND nrcpfcgc = vr_crapcbd.nrcpfcgc
            AND cdbircon = rw_crapbir.cdbircon
-           AND intippes = vr_intippes
+           AND intippes = DECODE(pr_tpconaut,'M',vr_intippes,intippes)
         RETURN nrseqdet, inpessoa 
           INTO vr_nrseqdet, vr_inpessoa;
       EXCEPTION
@@ -10008,7 +10008,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 				pr_inpessoa := vr_inpessoa_av2;
 				RETURN;				
 			END IF;
-			
+
       -- Sem conta
       pr_nrctapes := 0;
 			
@@ -10022,8 +10022,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       ELSIF NVL(pr_dsclasse,' ') = 'T' THEN
         pr_intippes := 6;          
       ELSE
-			-- Qualquer outro caso retornaremos o tipo 7 - Representante Legal/Procurador e PF
-			pr_intippes := 7;
+        -- Qualquer outro caso retornaremos o tipo 7 - Representante Legal/Procurador e PF
+		pr_intippes := 7;
       END IF;  
 			
 		EXCEPTION
