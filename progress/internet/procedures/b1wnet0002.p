@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 24/01/2017
+   Data    : 03/10/2006                        Ultima atualizacao: 06/10/2017
 
    Dados referentes ao programa:
 
@@ -149,15 +149,17 @@
 							              (Andrey - RKAM)
                
                09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
-						    aux_qtminast referente a quantidade minima de assinatura
-						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
+						                aux_qtminast referente a quantidade minima de assinatura
+						                conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
                
-			   17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
-							contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
+               17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
+							              contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
                
                24/01/2017 - Ajuste na procedure "permissoes-menu" para somente mostrar a 
                             opcao Desconto de Cheques quando possuir contrato de limite de
                             desconto de cheque. Projeto 300 (Lombardi)
+                            
+               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)
                
 ..............................................................................*/
 
@@ -2091,6 +2093,249 @@ PROCEDURE verifica-acesso.
                                       
               /* FIM Buscar dados responsavel legal */
             END.
+        END.
+                                                         
+    RETURN "OK".
+    
+END PROCEDURE.
+
+/******************************************************************************/
+/**             Procedure para dados do acesso anterior a conta              **/
+/******************************************************************************/
+PROCEDURE obtem-acesso-anterior.
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfope LIKE crapopi.nrcpfope             NO-UNDO.    
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flmobile AS LOGI                           NO-UNDO.
+            
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-acesso.
+
+    DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR aux_qtdiauso AS INTE                                    NO-UNDO.
+    DEF VAR aux_qtdiaalt AS INTE                                    NO-UNDO.
+    DEF VAR aux_qtdiablq AS INTE                                    NO-UNDO.    
+
+    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+
+    DEF VAR aux_dscidori AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsuforig AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dspaisor AS CHAR                                    NO-UNDO.
+
+    DEF VAR aux_dtaltsnh AS DATE                                    NO-UNDO.
+    
+    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-acesso.
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))           
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+           
+    IF  par_flmobile  THEN
+        ASSIGN aux_dstransa = "Consulta data do acesso anterior ao Cecred Mobile".
+    ELSE
+        ASSIGN aux_dstransa = "Consulta data do acesso anterior a Conta On-Line".    
+
+    DO WHILE TRUE:
+    
+      FOR FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
+                              crapass.nrdconta = par_nrdconta 
+                              NO-LOCK. END.
+                              
+      IF  NOT AVAILABLE crapass  THEN
+          DO:
+              ASSIGN aux_dscritic = "Associado nao cadastrado.".
+              LEAVE.     
+          END.                                     
+        
+      IF  par_nrcpfope = 0  THEN
+          DO:
+              FOR FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper AND
+                                      crapsnh.nrdconta = par_nrdconta AND
+                                      crapsnh.idseqttl = par_idseqttl AND
+                    /** Internet **/  crapsnh.tpdsenha = 1            AND 
+                    /** Ativo    **/  crapsnh.cdsitsnh = 1     
+                                      NO-LOCK. END.
+                 
+              IF  NOT AVAILABLE crapsnh  THEN
+                  DO:
+                      ASSIGN aux_dscritic = "Registro de senha nao " +
+                                            "cadastrado ou bloqueado.".
+                      LEAVE.     
+                  END.
+          END.
+      ELSE
+          DO:
+              FOR FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
+                                      crapopi.nrdconta = par_nrdconta AND
+                                      crapopi.nrcpfope = par_nrcpfope AND
+                     /** Liberado **/ crapopi.flgsitop = TRUE
+                                      NO-LOCK. END.
+
+              IF  NOT AVAILABLE crapopi  THEN
+                  DO:
+                      ASSIGN aux_dscritic = "Operador nao cadastrado ou " +
+                                            "bloqueado.".
+                      LEAVE. 
+                  END.
+          END.    
+                    
+      CREATE tt-acesso.
+        
+      IF  par_nrcpfope = 0  THEN
+          DO:                
+              IF  NOT par_flmobile THEN /* Conta Online */
+                  DO:
+                      ASSIGN tt-acesso.dtultace = crapsnh.dtultace /* TODO - Trocar por campos novos */
+                             tt-acesso.hrultace = crapsnh.hrultace.          
+                  END.
+              ELSE /* Cecred Mobile */
+                  DO:
+                      ASSIGN tt-acesso.dtultace = crapsnh.dtacemob /* TODO - Trocar por campos novos */
+                             tt-acesso.hrultace = crapsnh.hracemob.                   
+                  END.
+          END.
+      ELSE
+          ASSIGN tt-acesso.dtultace = crapopi.dtultace /* TODO - Trocar por campos novos */
+                 tt-acesso.hrultace = crapopi.hrultace.      
+
+      ASSIGN aux_flgtrans = TRUE.
+      
+      LEAVE.
+      
+    END. /** Fim do DO WHILE TRUE - CONSULTA **/    
+    
+    IF  NOT aux_flgtrans  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                aux_dscritic = "Nao foi possivel concluir a requisicao.".
+                
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                               
+            IF  par_flgerlog  THEN
+                DO:
+                    RUN proc_gerar_log (INPUT par_cdcooper,
+                                        INPUT par_cdoperad,
+                                        INPUT aux_dscritic,
+                                        INPUT aux_dsorigem,
+                                        INPUT aux_dstransa,
+                                        INPUT FALSE,
+                                        INPUT par_idseqttl,
+                                        INPUT par_nmdatela,
+                                        INPUT par_nrdconta,
+                                       OUTPUT aux_nrdrowid).
+
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "Origem",
+                                             INPUT "",
+                                             INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+                
+                    IF  par_nrcpfope > 0  THEN
+                        RUN proc_gerar_log_item 
+                                          (INPUT aux_nrdrowid,
+                                           INPUT "Operador",
+                                           INPUT "",
+                                           INPUT STRING(STRING(par_nrcpfope,
+                                                        "99999999999"),
+                                                        "xxx.xxx.xxx-xx")).                   
+                END.
+                
+            RETURN "NOK".
+        END.
+
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Origem",
+                                     INPUT "",
+                                     INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+
+            IF  par_nrcpfope > 0  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "Operador",
+                                         INPUT "",
+                                         INPUT STRING(STRING(par_nrcpfope,
+                                                      "99999999999"),
+                                                      "xxx.xxx.xxx-xx")).
+            
+            IF  crapass.inpessoa > 1  THEN
+                DO:
+                    /* Buscar dados do responsavel legal */
+                    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                    RUN STORED-PROCEDURE pc_verifica_rep_assinatura
+                        aux_handproc = PROC-HANDLE NO-ERROR
+                                      (INPUT par_cdcooper, /* Codigo da Cooperativa */
+                                       INPUT par_nrdconta, /* Numero da Conta */
+                                       INPUT par_idseqttl, /* Sequencia Titularidade */
+                                       INPUT par_idorigem, /* Codigo Origem */
+                                      OUTPUT 0,            /* Flag de Assinatura Multipla pr_idastcjt */
+                                      OUTPUT 0,            /* Numero do CPF pr_nrcpfcgc */
+                                      OUTPUT "",           /* Nome do Representante/Procurador pr_nmprimtl */
+                                      OUTPUT 0,            /* Flag de Preposto Cartao Mag. pr_flcartma */
+                                      OUTPUT 0,            /* Codigo da critica */
+                                      OUTPUT "").          /* Descricao da critica */
+                    
+                    CLOSE STORED-PROC pc_verifica_rep_assinatura
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+                    
+                    ASSIGN aux_nrcpfcgc = 0
+                           aux_nmprimtl = ""
+                           aux_cdcritic = 0
+                           aux_dscritic = ""
+                           aux_nrcpfcgc = pc_verifica_rep_assinatura.pr_nrcpfcgc 
+                                          WHEN pc_verifica_rep_assinatura.pr_nrcpfcgc <> ?
+                           aux_nmprimtl = pc_verifica_rep_assinatura.pr_nmprimtl 
+                                          WHEN pc_verifica_rep_assinatura.pr_nmprimtl <> ?
+                           aux_cdcritic = pc_verifica_rep_assinatura.pr_cdcritic 
+                                          WHEN pc_verifica_rep_assinatura.pr_cdcritic <> ?
+                           aux_dscritic = pc_verifica_rep_assinatura.pr_dscritic
+                                          WHEN pc_verifica_rep_assinatura.pr_dscritic <> ?.                    
+                    
+                    /* Gerar o log com CPF do Rep./Proc. */
+                    IF  aux_nrcpfcgc > 0 THEN
+                        RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                                INPUT "CPF Representate/Procurador" ,
+                                                INPUT "",
+                                                INPUT STRING(STRING(aux_nrcpfcgc,
+                                                        "99999999999"),"xxx.xxx.xxx-xx")).
+                    
+                    /* Gerar o log com Nome do Rep./Proc. */                                
+                    IF  aux_nmprimtl <> ""   THEN
+                        RUN proc_gerar_log_item(INPUT aux_nrdrowid,
+                                                INPUT "Nome Representate/Procurador" ,
+                                                INPUT "",
+                                                INPUT aux_nmprimtl).                    
+                END.
         END.
                                                          
     RETURN "OK".
