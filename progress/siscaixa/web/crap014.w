@@ -21,7 +21,7 @@
 
 Programa: siscaixa/web/crap014.w
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 01/12/2016
+Sigla   : CRED                               Ultima atualizacao: 07/10/2017
    
 Dados referentes ao programa:
 
@@ -109,12 +109,16 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         Return "NOK" pois estava limpando a critica retornada 
                         tambem (Lucas Ranghetti #436077)
 
-		   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+		       03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
-		   01/12/2016 - Adicionado tratamento de erro na chamada Oracle para devolver 
-		                o valor do boleto (correcao M271) (Douglas - Chamado 563281)
+		       01/12/2016 - Adicionado tratamento de erro na chamada Oracle para devolver 
+		                    o valor do boleto (correcao M271) (Douglas - Chamado 563281)
 
            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)     
+           
+           04/10/2017 - Ajustar chamada do autentica.html no processa-fatura e também retirar 
+                        a limpeza das variaves v_codbarras e v_fmtcodbar para titulos
+                        (Lucas Ranghetti #760721)
 
 ..............................................................................*/
 
@@ -772,9 +776,6 @@ PROCEDURE process-web-request:
                                               INPUT glb_cdagenci,
                                               INPUT glb_cdbccxlt).                                   
                                 
-                                ASSIGN v_fmtcodbar = ""
-                                       v_codbarras = "".
-                                
                                 /* Setar o foco no campo Codigo de Barras */ 
                                 ASSIGN vh_foco = "10".
                            END.
@@ -842,10 +843,7 @@ PROCEDURE process-web-request:
                               RUN gera-erro(INPUT glb_cdcooper,
                                             INPUT glb_cdagenci,
                                             INPUT glb_cdbccxlt).
-                              
                                    
-                                   ASSIGN v_fmtcodbar = ""
-                                          v_codbarras = "".
                                    /* Setar o foco no campo Codigo de Barras */ 
                                    ASSIGN vh_foco = "10".
                                END.
@@ -1370,6 +1368,7 @@ PROCEDURE processa-fatura:
     DEF VAR aux_fatura2             AS  DECIMAL                 NO-UNDO.
     DEF VAR aux_fatura3             AS  DECIMAL                 NO-UNDO.
     DEF VAR aux_fatura4             AS  DECIMAL                 NO-UNDO.
+    DEF VAR aux_debitaut            AS  LOG                     NO-UNDO.
 
     FIND FIRST ab_unmap.
 
@@ -1377,7 +1376,8 @@ PROCEDURE processa-fatura:
            aux_fatura1 = 0
            aux_fatura2 = 0
            aux_fatura3 = 0
-           aux_fatura4 = 0.
+           aux_fatura4 = 0
+           aux_debitaut = FALSE.
 
     IF  par_tpproces = 2 THEN /*Digitado manualmente*/
         DO:
@@ -1537,37 +1537,65 @@ PROCEDURE processa-fatura:
             END.
         /* FIM Verificação da autenticação */
 
-        /* ****Se estiver tudo OK**** */
-        IF  LENGTH(p-literal) > 120 THEN
-            DO:
-                ASSIGN par_funcaojs = 'window.open("autentica.html?v_plit='
-                       par_funcaojs = par_funcaojs + p-literal
-                       par_funcaojs = par_funcaojs + "&v_pseq=" + STRING(p-ult-sequencia)
-                       par_funcaojs = par_funcaojs + "&v_prec=YES"
-                       par_funcaojs = par_funcaojs + "&v_psetcook=yes"
-                       par_funcaojs = par_funcaojs + '","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true");'.
+        FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper
+                             AND crapcon.cdempcon = INT(SUBSTRING(c_codbarras,16,4))
+                             AND crapcon.cdsegmto = INT(SUBSTRING(c_codbarras,2,1))
+                             AND crapcon.cdhistor = 1154
+                             and crapcon.flgcnvsi = TRUE
+                             NO-LOCK NO-ERROR.
+                             
+        IF  AVAILABLE crapcon THEN           
+            DO:                
+                /* Verificar se convênio possui debito automatico */
+                FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
+                                          crapscn.cdempcon <> 0)                       AND
+                                          crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
+                                          crapscn.dsoparre = 'E'                       AND
+                                         (crapscn.cddmoden = 'A'                       OR
+                                          crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
+                IF  AVAILABLE crapscn THEN
+                    aux_debitaut = TRUE.
             END.
-        ELSE
-            DO:
-                ASSIGN par_funcaojs = 'window.open("autentica.html?v_plit='
-                       par_funcaojs = par_funcaojs + p-literal 
-                       par_funcaojs = par_funcaojs + "&v_pseq=" + STRING(p-ult-sequencia)
-                       par_funcaojs = par_funcaojs + "&v_prec=NO"
-                       par_funcaojs = par_funcaojs + "&v_psetcook=yes"
-                       par_funcaojs = par_funcaojs + '","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true");'.
-            END.
-    
-        IF  par_nrdconta > 0    THEN   /* Cooperado */
+            
+
+        IF  par_nrdconta > 0  AND aux_debitaut THEN   /* Cooperado */
             DO:
                  /* Chama fonte que oferece débito automático da fatura paga para o cooperado */
-                 ASSIGN par_funcaojs = par_funcaojs + 'window.location = "crap014g.html?v_conta='
+                 ASSIGN par_funcaojs = 'window.location = "crap014g.html?v_conta='
                         par_funcaojs = par_funcaojs + STRING(par_nrdconta) + "&v_nome=" + v_nome
                         par_funcaojs = par_funcaojs + "&v_codbarras=" + c_codbarras + '";'.
             END.
-        ELSE
-            DO:  
-                 ASSIGN par_funcaojs = par_funcaojs + 'window.location = "crap014.html";'.  
+        
+        /* ****Se estiver tudo OK**** */
+        IF  LENGTH(p-literal) > 120 THEN
+            DO:
+                 IF  par_nrdconta > 0  AND aux_debitaut  THEN
+                     ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
+                 ELSE 
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                            par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
+                     
+                 ASSIGN par_funcaojs = par_funcaojs + p-literal
+                        par_funcaojs = par_funcaojs + "&v_pseq=" + STRING(p-ult-sequencia)
+                        par_funcaojs = par_funcaojs + "&v_prec=YES"
+                        par_funcaojs = par_funcaojs + "&v_psetcook=yes"
+                        par_funcaojs = par_funcaojs + '","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true");'.
             END.
+        ELSE
+            DO:
+                IF  par_nrdconta > 0  AND aux_debitaut  THEN
+                     ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
+                 ELSE 
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                            par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
+                     
+                 ASSIGN par_funcaojs = par_funcaojs + p-literal
+                        par_funcaojs = par_funcaojs + "&v_pseq=" + STRING(p-ult-sequencia)
+                        par_funcaojs = par_funcaojs + "&v_prec=NO"
+                        par_funcaojs = par_funcaojs + "&v_psetcook=yes"
+                        par_funcaojs = par_funcaojs + '","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true");'.
+            END.
+            
         END.        
    END.
    
