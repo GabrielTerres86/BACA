@@ -17,6 +17,8 @@
                 22/02/2013 - Incluido a chamada da procedure bloqueio_prova_vida
                              dentro da procedure obtem-cabecalho (Adriano).
    
+                02/10/2017 - Incluido campo idregtrb na tt-cabec 
+                             (Projeto 410 - Diogo - Mouts)
 .............................................................................*/
 
 
@@ -304,7 +306,7 @@ PROCEDURE obtem-cabecalho:
 
             END.
             OTHERWISE DO:
-                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia)
+                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia idregtrb)
                                   WHERE crapjur.cdcooper = crapass.cdcooper AND
                                         crapjur.nrdconta = crapass.nrdconta 
                                         NO-LOCK:
@@ -393,6 +395,10 @@ PROCEDURE obtem-cabecalho:
                                    ?
             tt-cabec.inhabmen = IF AVAIL crapttl THEN 
                                    crapttl.inhabmen 
+                                ELSE 
+                                   0 
+            tt-cabec.idregtrb = IF AVAIL crapjur THEN 
+                                   crapjur.idregtrb
                                 ELSE 
                                    0 
             NO-ERROR.
