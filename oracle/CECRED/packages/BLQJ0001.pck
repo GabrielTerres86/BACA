@@ -2284,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             
           END IF; -- rw_crapblj.flblcrft = 1
         END IF; -- rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag
-        vr_vldesblo := vr_vldesblo - rw_crapblj.vlbloque;
+        vr_vldesblo := vr_vldesblo - ww_vldesblo; --rw_crapblj.vlbloque;
         IF vr_vldesblo <= 0 THEN
           EXIT;
         END IF;
