@@ -47,6 +47,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
                               Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
 
                   21/03/2014 - Conversao progress -> Oracle (Gabriel)
+                  
+                  24/04/2017 - Modificado a qtd max de registros poor arquivo
+                               de 50000 para 1000000 (Tiago/Rodrigo)
   ............................................................................*/
   BEGIN
     DECLARE
@@ -336,8 +339,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
       -- Data de referencia e quantidade maxima
       vr_dtrefere := rw_crapdat.dtmvtolt;
 
-      --quantidade maxima de registros no arquivo
-      vr_nrqtdmax := 50000;
+      --quantidade maxima de registros no arquivo (1000000)      
+      vr_nrqtdmax := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                               pr_cdcooper => 0,
+                                               pr_cdacesso => 'QTD_COOPERADOS_ARQ_3045');
 
       -- A Data Base da consulta eh sempre 2 meses antes
       vr_dtmvtolt := vr_dtrefere - to_number(to_char(vr_dtrefere,'dd'));
@@ -532,4 +537,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
     END;
   END PC_CRPS569;
 /
-
