@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 08/08/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 04/10/2017
            
     Dados referentes ao programa:
                 
@@ -492,9 +492,12 @@
 			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 			 		       (Adriano - P339).
 
-			   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+			         29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
+               
+               04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
+                            de novo limite. (Chamado 768648) - (Fabricio)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1839,7 +1842,7 @@ PROCEDURE efetua_liber_anali_bordero:
          /* Acumula Total IOF */
          ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
 
-       END.
+       END.                          
                           
    END.  /*  Fim do FOR EACH craptdb  */
 
@@ -3132,6 +3135,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
 
     DEF VAR aux_regalias         AS CHAR                    NO-UNDO.
+    DEF VAR h-b1wgen0001         AS HANDLE                  NO-UNDO.
     DEF VAR h-b1wgen0058         AS HANDLE                  NO-UNDO.
     DEF VAR h-b1wgen0110         AS HANDLE                  NO-UNDO.
     DEF VAR h-b1wgen9999         AS HANDLE                  NO-UNDO.
@@ -3139,8 +3143,8 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR aux_nrdmeses         AS INTE                    NO-UNDO.
     DEF VAR aux_dsdidade         AS CHAR                    NO-UNDO.
     DEF VAR aux_dsoperac         AS CHAR                    NO-UNDO.
-    DEF VAR aux_nriniseq 	     AS INTE					NO-UNDO.
-	DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
+    DEF VAR aux_nriniseq 	       AS INTE					          NO-UNDO.
+	  DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -3149,6 +3153,29 @@ PROCEDURE busca_dados_limite_incluir:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+           
+    RUN sistema/generico/procedures/b1wgen0001.p 
+        PERSISTENT SET h-b1wgen0001.
+        
+    IF  VALID-HANDLE(h-b1wgen0001)   THEN
+    DO:
+        RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
+                                         INPUT par_nrdconta,
+                                         INPUT 0, /* cod-agencia */
+                                         INPUT 0, /* nro-caixa   */
+                                         INPUT par_dtmvtolt,
+                                         INPUT par_idorigem,
+                                        OUTPUT TABLE tt-erro).
+
+
+        IF  RETURN-VALUE = "NOK"  THEN
+        DO:                               
+            DELETE PROCEDURE h-b1wgen0001.
+            RETURN "NOK".
+        END.
+        
+        DELETE PROCEDURE h-b1wgen0001.
+    END.
 
     RUN lista-linhas-desc-tit (INPUT par_cdcooper,
 							   INPUT par_cdagenci, 
@@ -6525,36 +6552,7 @@ PROCEDURE busca_dados_dsctit:
                     
                     DELETE PROCEDURE h-b1wgen0001.
                     RETURN "NOK".
-                END.
-            ELSE
-                DO:
-                    RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                     INPUT 0, /* cod-agencia */
-                                                     INPUT 0, /* nro-caixa   */
-                                                     INPUT par_dtmvtolt,
-                                                     INPUT par_idorigem,
-                                                     OUTPUT TABLE tt-erro).
-
-
-                    IF  RETURN-VALUE = "NOK"  THEN
-                        DO:  
-                            IF  par_flgerlog  THEN
-                                RUN proc_gerar_log (INPUT par_cdcooper,
-                                                    INPUT par_cdoperad,
-                                                    INPUT aux_dscritic,
-                                                    INPUT aux_dsorigem,
-                                                    INPUT aux_dstransa,
-                                                    INPUT FALSE,
-                                                    INPUT par_idseqttl,
-                                                    INPUT par_nmdatela,
-                                                    INPUT par_nrdconta,
-                                                   OUTPUT aux_nrdrowid). 
-        
-                            DELETE PROCEDURE h-b1wgen0001.
-                            RETURN "NOK".
-                        END.
-                END.
+                END.            
            DELETE PROCEDURE h-b1wgen0001.     
     END.
     
@@ -7785,14 +7783,30 @@ PROCEDURE valida_dados_inclusao:
                                              INPUT "LANBDTI",
                                              INPUT 1, /* AYLLOS */
                                              OUTPUT TABLE tt-erro).
+                                             
+             IF RETURN-VALUE = "NOK" THEN
+             DO:
+                DELETE PROCEDURE h-b1wgen0001.
+                RETURN "NOK".
+             END.
+             ELSE
+             DO:
+                RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
+                                                 INPUT par_nrdconta,
+                                                 INPUT 0, /* cod-agencia */
+                                                 INPUT 0, /* nro-caixa   */
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT par_idorigem,
+                                                OUTPUT TABLE tt-erro).
 
+
+                IF  RETURN-VALUE = "NOK"  THEN
+                DO:                               
+                    DELETE PROCEDURE h-b1wgen0001.
+                    RETURN "NOK".
+                END.        
+             END.             
              DELETE PROCEDURE h-b1wgen0001.
-             
-             /* Verifica se houve erro */
-             FIND FIRST tt-erro NO-LOCK  NO-ERROR.
- 
-             IF  AVAILABLE tt-erro   THEN
-                 RETURN "NOK".
          END.
      
      FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND

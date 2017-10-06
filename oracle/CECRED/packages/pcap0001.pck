@@ -1017,7 +1017,7 @@ create or replace package body cecred.PCAP0001 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : PCAP
   --  Autor    : Jorge I. Hamaguchi
-  --  Data     : Maio/2013                             Ultima alteracao: 13/10/2016
+  --  Data     : Maio/2013                             Ultima alteracao: 12/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1029,7 +1029,11 @@ create or replace package body cecred.PCAP0001 is
   --              26/02/2016 - Ajustes no layout do arquivo ao BRDE. (Jorge/Gielow) - SD 400291
   --
   --              13/10/2016 - M172 - Ajustes devido ao novo digito em celular.
-                               (Ricardo Linhares)
+  --                           (Ricardo Linhares)
+  --
+  --              12/09/2017 - Ajustes no layout do arquivo ao BRDE. 
+  --                           (Chamado 732059) - (Fabricio)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
     --------------> TempTable <---------------
     vr_tab_avalistas typ_tab_avalistas;
@@ -1074,6 +1078,9 @@ create or replace package body cecred.PCAP0001 is
     vr_cdcidbnd INTEGER;
     vr_dtpedido DATE;
     vr_cdetnia  VARCHAR2(1); --PF = 9 -> Não Declarado / PJ = Branco
+    
+    vr_coopbrde INTEGER;
+    vr_cdestcvl INTEGER;
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
@@ -1131,6 +1138,11 @@ create or replace package body cecred.PCAP0001 is
              crapipc.cdporben,
              crapipc.cdsetben,
              crapipc.vlprocap,
+             (SELECT cem2.dsdemail FROM (SELECT * FROM crapcem                                             
+                                         ORDER BY crapcem.dtmvtolt DESC) cem2
+              WHERE cem2.cdcooper = crapipc.cdcooper
+                AND cem2.nrdconta = crapipc.nrdconta
+                AND ROWNUM = 1) dsdemail,
              -- simular first of
              row_number() over (partition by crapipc.nrdolote 
                                 order by crapipc.nrdolote, crapipc.cdcooper, crapipc.nrdconta) nrseqlot,
@@ -1417,6 +1429,7 @@ create or replace package body cecred.PCAP0001 is
       vr_tab_avalistas.delete;
       vr_dsdlinha := null;
       vr_vlrendim := 0;
+      vr_cdestcvl := 0;
       
       -- Tratamento para pessoa fisica
       IF rw_crapipc.inpessoa = 1 THEN
@@ -1496,6 +1509,19 @@ create or replace package body cecred.PCAP0001 is
           END IF;  
           
           vr_fldosexo := NULL;
+          
+          /* define tipo de estado civil de acordo com tabela BRDE - envio no arquivo */
+          IF rw_crapttl.cdestcvl = 1 THEN /*solteiro*/
+            vr_cdestcvl := 1;
+          ELSIF rw_crapttl.cdestcvl IN (2,3,4,8,9,11,12) THEN /*modalidades casado*/
+            vr_cdestcvl := 2;
+          ELSIF rw_crapttl.cdestcvl = 5 THEN /*viuvo*/
+            vr_cdestcvl := 4;
+          ELSIF rw_crapttl.cdestcvl = 6 THEN /*separado judicialmente*/
+            vr_cdestcvl := 7;
+          ELSIF rw_crapttl.cdestcvl = 7 THEN /*divorciado*/
+            vr_cdestcvl := 3;
+          END IF;
           
           /* se tiver estado civil casado */
           IF rw_crapttl.cdestcvl in (2,3,4,8,9,11,12) THEN
@@ -1820,10 +1846,14 @@ create or replace package body cecred.PCAP0001 is
         raise vr_exc_erro;                              
       END IF;
       
+      vr_coopbrde := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+                                                pr_cdcooper => rw_crapcop.cdcooper, 
+                                                pr_cdacesso => 'AGENCIA_BRDE');
+      
       /*************** TIPO 1 - DADOS CADASTRAIS *****************/
       vr_dsdlinha := '1'                                                    || --Tipo de registro
                       TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')      || --CNPJ da instituição conveniada
-                      '999999'                                              || --Código da instituição conveniada
+                      to_char(vr_coopbrde, 'fm000000')                      || --Código da instituição conveniada
                       RPAD(rw_crapipc.nmprimtl,30,' ')                      || --Nome/Razão social do beneficiário
                       vr_inpessoa                                           || --Tipo de pessoa (1 = Física / 2 = Jurídica)
                       NVL(TO_CHAR(rw_crapipc.dtvencnd,'RRRRMMDD')
@@ -1833,7 +1863,8 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(vr_vlrendim * 100,'fm00000000000000000')      || --Renda/Faturamento anual do beneficiário
                       (TO_CHAR(pr_dtmvtolt,'RRRR') - 1) || '1231'           || --Data de referência da renda bruta anual do beneficiário
                       'E'                                                   || --Classificação da renda (E = Efetiva / P = Prevista)
-                      LPAD(' ',18,' ')                                      || --Filler
+                      LPAD(' ',16,' ')                                      || --Filler
+                      to_char(vr_cdestcvl, 'fm00')                          || --estado civil (conforme tabela BRDE)
                       TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --CPF/CNPJ do beneficiário
                       LPAD(' ',60,' ')                                      || --Filler
                       RPAD(vr_tab_brde(vr_idxbrde).dsendere,'35',' ')       || --Endereço do beneficiário
@@ -1841,8 +1872,8 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(rw_crapipc.cdmunben,'fm0000000')              || --Código do município do cliente
                       LPAD(' ',25,' ')                                      || --Filler
                       TO_CHAR(vr_tab_brde(vr_idxbrde).nrdddtfc,'fm00')      || --DDD beneficiário
-                      TO_CHAR(vr_tab_brde(vr_idxbrde).nrtelefo,'fm00000000')|| --Telefone beneficiário
-                      LPAD(' ',4,' ')                                       || --Filler
+                     TO_CHAR(vr_tab_brde(vr_idxbrde).nrtelefo,'fm000000000')|| --Telefone beneficiário
+                      LPAD(' ',3,' ')                                       || --Filler
                       TO_CHAR(rw_crapipc.cdgenben,'fm000')                  || --Gênero do beneficiário
                       TO_CHAR(rw_crapipc.cdporben,'fm00')                   || --Porte do beneficiário
                       TO_CHAR(rw_crapipc.cdsetben,'fm0000000')              || --Setor de atividade do beneficiário
@@ -1859,7 +1890,8 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ',19,' ')                                      || --Nome fantasia da empresa
                       LPAD(' ',4,' ')                                       || --Ano base da RAIS
                       vr_cdetnia                                            || --Cor/Etnia do beneficiário
-                      LPAD(' ',129,' ')                                     || --Filler
+           RPAD(NVL(TRIM(SUBSTR(rw_crapipc.dsdemail,1,50)),' '),50,' ')     || --email beneficiario
+                      LPAD(' ',79,' ')                                      || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                          --Número sequencial
                       
       -- incluir linha do arquivo
@@ -1868,6 +1900,25 @@ create or replace package body cecred.PCAP0001 is
 
       vr_cdseqlin := vr_cdseqlin + 1;
       vr_nr1conta := vr_nr1conta + 1;
+      
+      /*************** TIPO 3 - Garantias *****************/
+      vr_dsdlinha :=  '3'                                                            || --Tipo de registro
+                      TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')               || --CNPJ da instituição conveniada
+                      TO_CHAR(vr_nrcpfcgc,'fm00000000000000')                        || --CPF/CNPJ do beneficiário
+                      LPAD(' ',34,' ')                                               || --Filler
+                      '000'                                                          || --Grau da hipoteca
+                      LPAD('0',17,'0')                                                   || --Valor da garantia
+                      '9998'                                                         || --Tipo garantia
+                      RPAD('Contratos sem garantia real',60,' ')                     || --Descricao garantia
+                      LPAD(0,17,0)                                                   || --Saldo devedor total
+                      LPAD(' ',431,' ')                                              || --Filler
+                      TO_CHAR(vr_cdseqlin,'fm00000');                                   --Número sequencial
+        
+      -- incluir linha do arquivo
+      vr_tab_arq_brde(vr_cdseqlin).cdseqlin := vr_cdseqlin;
+      vr_tab_arq_brde(vr_cdseqlin).dsdlinha := vr_dsdlinha;
+
+      vr_cdseqlin := vr_cdseqlin + 1;        
       
       /*************** TIPO 4 - Avalistas *****************/
       vr_idxaval := vr_tab_avalistas.first;
@@ -1878,14 +1929,16 @@ create or replace package body cecred.PCAP0001 is
                         TO_CHAR(vr_nrcpfcgc,'fm00000000000000')                        || --CPF/CNPJ do beneficiário
                         RPAD(vr_tab_avalistas(vr_idxaval).nmdavali,35,' ')             || --Nome do avalista
                         vr_tab_avalistas(vr_idxaval).cddosexo                          || --Sexo
-                        TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcpfcgc,'fm00000000000') || --CPF
-                        LPAD(' ',20,' ')                                               || --Filler
+                        LPAD(' ',11,' ')                                               || --Filler
+                        'F'                                                            || --Tipo de avalista(F = Fisica)
+                     TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcpfcgc,'fm00000000000000') || --CPF/CNPJ do avalista
+                        LPAD(' ',5,' ')                                                || --Filler
                         RPAD(vr_tab_avalistas(vr_idxaval).dsendere,35,' ')             || --Endereço do avalista
-                        TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcepend,'fm00000000')    || --CEP
+                        TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcepend,'fm00000000')    || --CEP do avalista
                         LPAD(' ',32,' ')                                               || --Filler
                         LPAD(' ',2,' ')                                                || --DDD contato
-                        LPAD(' ',8,' ')                                                || --Telefone contato
-                        LPAD(' ',414,' ')                                              || --Filler
+                        LPAD(' ',9,' ')                                                || --Telefone contato
+                        LPAD(' ',413,' ')                                              || --Filler
                         TO_CHAR(vr_cdseqlin,'fm00000');                                   --Número sequencial
       
         -- incluir linha do arquivo
@@ -1919,7 +1972,7 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(rw_crapipc.cdmunben,'fm0000000')             || --Código do município BNDES
                       TO_CHAR(rw_craplpc.cdmunbce,'fm000000')              || --Código do município BACEN
                       TO_CHAR(rw_crapipc.vlprocap * 100,'fm00000000000000000') || --Valor financiado
-                      '001'                                                || --Pessoal ocupado no projeto
+                      LPAD(' ', 3,' ')                                     || --Filler
                       LPAD(' ', 8,' ')                                     || --Filler
                       LPAD('0',11,'0')                                     || --Quantidade
                       LPAD(' ',11,' ')                                     || --Previsão de produção
@@ -1927,10 +1980,10 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ', 1,' ')                                     || --Filler
                       'I'                                                  || --Forma de concessão do crédito (I = Individual / C = Coletiva)
                       LPAD(' ',14,' ')                                     || --Código identificador de grupo
-                      LPAD(' ', 3,' ')                                     || --Código do banco do favorecido
+                      LPAD('0', 3,'0')                                     || --Código do banco do favorecido
                       LPAD(' ', 6,' ')                                     || --Código da agência bancária do favorecido
                       LPAD(' ',15,' ')                                     || --Código da conta corrente do favorecido
-                      LPAD(' ',14,' ')                                     || --CNPJ do favorecido
+                      LPAD('0',14,'0')                                     || --CNPJ do favorecido
                       LPAD(' ', 1,' ')                                     || --Filler
                       RPAD(rw_crapcop.dsendcop,35,' ')                     || --Endereço do projeto
                       TO_CHAR(rw_crapcop.nrcepend,'fm00000000')            || --CEP do projeto
@@ -1940,7 +1993,7 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ', 8,' ')                                     || --Data estimada do primeiro corte
                       LPAD(' ',10,' ')                                     || --Área a ser plantada
                       LPAD(' ', 2,' ')                                     || --Código da espécie florestal a ser cultivada BNDES
-                      LPAD(' ', 4,' ')                                     || --Taxa efetiva de juros
+                      '0460'                                               || --Taxa efetiva de juros
                       LPAD(' ', 2,' ')                                     || --Filler
                       LPAD('0', 5,'0')                                     || --Principal cultura geradora de renda associada à operação
                       LPAD('0', 5,'0')                                     || --Percentual da principal cultura geradora de renda associada à operação
@@ -1956,8 +2009,8 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(rw_craplpc.cdsetpro,'fm0000000')             || --Setor de atividade do projeto
                       'CCB'                                                || --Tipo de instrumento contratual
                       LPAD(' ',14,' ')                                     || --Código do empreendimento
-                      LPAD(' ',14,' ')                                     || --Localizacão do empreendimento
-                      LPAD(' ', 1,' ')                                     || --Periodicidade de juros na carência
+                      LPAD(' ',14,' ')                                     || --Filler
+                      'T'                                                  || --Periodicidade de juros na carência
                       LPAD(' ', 1,' ')                                     || --Indicador FGI
                       LPAD(' ', 5,' ')                                     || --Percentual garantido pelo FGI
                       LPAD(' ', 3,' ')                                     || --Número de meses da operação
@@ -1969,7 +2022,10 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ',1,' ')                                      || --Filler
                       TO_CHAR(rw_craplpc.dtpricar,'RRRRMMDD')              || --Data de início do pagamento dos juros durante o período de carência
                       LPAD(' ',1,' ')                                      || --Indicador de amortização única
-                      LPAD(' ',22,' ')                                     || --Filler
+                      LPAD(' ',3,' ')                                      || --Tipo de Beneficiario
+                      LPAD('1',5,'0')                                      || --Qtd empregos diretos antes do investimento
+                      LPAD('1',5,'0')                                      || --Qtd empregos diretos apos o investimento
+                      LPAD(' ',9,' ')                                      || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                         --Número sequencial
       
       -- incluir linha do arquivo
@@ -2014,7 +2070,7 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(vr_cdcidbnd,'fm0000000')                     || --Código do município da cooperativa da qual serão adquiridas as cotas
                       LPAD(vr_ctrcapit,1,' ')                              || --Controle de capital do cooperado
                       LPAD(rw_crapcop.cdufdcop,2,' ')                      || --UF da cooperativa
-                      '10000'                                              || --Filler
+                      LPAD(' ',5,' ')                                      || --Filler
                       TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')     || --CNPJ da cooperativa da qual serão adquiridas as cotas
                       TO_CHAR(rw_craplpc.dtpricar,'RRRRMMDD')              || --Data da primeira carência
                       '05'                                                 || --Periodicidade de pagamento dos juros na carência
@@ -2024,7 +2080,7 @@ create or replace package body cecred.PCAP0001 is
                       SUBSTR(rw_crapcop.nrcepend,1,5)                      || --CEP da cooperativa da qual serão adquiridas as cotas
                       SUBSTR(rw_crapcop.nrcepend,6,3)                      || --Complemento do CEP da cooperativa da qual serão adquiridas as cotas
                       TO_CHAR(rw_crapcop.dtrjunta,'RRRRMMDD')              || --Data de abertura da cooperativa da qual serão adquiridas as cotas
-                      LPAD(' ',17,' ')                                     || --Patrimônio de referência da cooperativa da qual serão adquiridas as cotas
+                      LPAD('1',17,'0')                                     || --Patrimônio de referência da cooperativa da qual serão adquiridas as cotas
                       LPAD(' ',431,' ')                                    || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                         --Número sequencial
       
