@@ -16,6 +16,9 @@
                
                08/07/2015 - Criacao do novo campo cdmodali, dsmodali, tpfinali
                             (Carlos Rafael Tanholi) Projeto Portabilidade.
+
+			         06/10/2017 - Criacao do novo campo vlrtotal para demonstrar 
+							             o total da simulação (Diogo - MoutS - Projeto 410).
 .............................................................................*/
 
 DEF TEMP-TABLE tt-crapsim LIKE crapsim
@@ -26,7 +29,7 @@ DEF TEMP-TABLE tt-crapsim LIKE crapsim
     FIELD cdmodali AS CHAR
     FIELD dsmodali AS CHAR
     FIELD tpfinali AS INTE
-    FIELD idfiniof AS INTE.
+    FIELD vlrtotal AS DECI.
 
 DEF TEMP-TABLE tt-crapfer LIKE crapfer.
 
