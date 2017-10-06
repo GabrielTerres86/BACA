@@ -244,6 +244,7 @@ BEGIN
                              pr_nmarqlog      => NULL);
 
     ELSE
+
       -- Cria taxas
       pc_cria_taxas(pr_cdcooper => rw_crapcop.cdcooper   -- Codigo da cooperativa
                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt); -- Data de movimento atual
@@ -261,7 +262,9 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros
-            vr_dscritic := 'Erro ao inserir CDI. Erro: ' || sqlerrm;
+            vr_dscritic := 'Erro ao inserir CDI: dtiniper:'||rw_crapdat.dtmvtolt
+                           ||', dtfimper:'||rw_crapdat.dtmvtolt||', vlrdtaxa:'||vr_valortax
+                           ||', dtcadast:'||rw_crapdat.dtmvtolt||'. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
 
