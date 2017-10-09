@@ -14,6 +14,7 @@
  * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
  * 004: [30/09/2016] Incluido validacao para Data validade da licenca 'dtvallic' (Tiago/Thiago M310)
  * 005: [13/07/2017] Incluido campo Identificador do Regime tributário 'idregtrb' (Diogo M410)
+ * 006: [06/10/2017] Adicionado o campo Nome da conta (PRJ339 - Kelvin).
  */
 ?>
  
@@ -49,6 +50,7 @@
 	$dtvallic = (isset($_POST['dtvallic'])) ? $_POST['dtvallic'] : '';
 	$idregtrb = (isset($_POST['idregtrb'])) ? $_POST['idregtrb'] : '0';
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
+	$nmctajur = (isset($_POST['nmctajur'])) ? $_POST['nmctajur'] : '';
 
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -107,6 +109,7 @@
 	$xml .= '       <qtfoltal>'.$qtfoltal.'</qtfoltal>';
 	$xml .= '       <dtcadass>'.$dtcadass.'</dtcadass>';
 	$xml .= '       <cdcnae>'.$cdcnae.'</cdcnae>';
+	$xml .= '       <nmctajur>'.$nmctajur.'</nmctajur>';
 
 	if ($procedure == 'grava_dados') {
 		$xml .= '       <nrlicamb>'.$nrlicamb.'</nrlicamb>';
@@ -211,5 +214,8 @@
 		    exibirErro('error','Data de validade da licen&ccedil;a deve ser preechida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtvallic\',\'frmDadosIdentJuridica\')',false);
 		  }
 		}
+
+		// Nome da conta		
+		if ($GLOBALS['nmctajur']=='') exibirErro('error','Nome da conta deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmctajur\',\'frmDadosIdentJuridica\')',false);
 	}
 ?>

@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0053.p
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 25/10/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 06/10/2017
 
    Dados referentes ao programa:
 
@@ -14,6 +14,8 @@
 			                Transferencia entre PAs (Heitor - RKAM)
    
 			   25/10/2016 - Validacao da data de licenca Melhoria 310 (Tiago/Thiago)
+			   
+			   06/10/2017 - Adicionado o campo Nome da conta (PRJ339 - Kelvin).
 .............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -50,6 +52,7 @@ DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvallic AS DATE										   NO-UNDO.
 DEF VAR aux_idregtrb AS INTE										   NO-UNDO.
+DEF VAR aux_nmctajur AS CHAR										   NO-UNDO.
 
 { sistema/generico/includes/b1wgen0053tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -98,6 +101,7 @@ PROCEDURE valores_entrada:
           WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
 		  WHEN "dtvallic" THEN aux_dtvallic = DATE(tt-param.valorCampo).
 		  WHEN "idregtrb" THEN aux_idregtrb = INTE(tt-param.valorCampo).
+		  WHEN "nmctajur" THEN aux_nmctajur = tt-param.valorCampo.
 
       END CASE.
 
@@ -168,6 +172,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_qtfoltal,
                              INPUT aux_nrlicamb,
                              INPUT aux_dtvallic,
+							 INPUT aux_nmctajur,
                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK" THEN
@@ -222,6 +227,7 @@ PROCEDURE Grava_Dados:
                              INPUT aux_nrlicamb,
 							 INPUT aux_dtvallic,
 							 INPUT aux_idregtrb,
+							 INPUT aux_nmctajur,
                             OUTPUT aux_tpatlcad,
                             OUTPUT aux_msgatcad,
                             OUTPUT aux_chavealt,

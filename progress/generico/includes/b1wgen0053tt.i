@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 25/10/2015   
+    Data    : Janeiro/2010                   Ultima atualizacao: 06/10/2017   
 
     Objetivo  : Definicao das Temp-Tables para tela contas_dados_juridica.p
 
@@ -13,6 +13,8 @@
    
                 25/10/2016 - Melhoria 310 novos campos na temptable tt-dados-jur
 				             (Tiago/Thiago).
+				
+				06/10/2017 - Adicionado o campo Nome da conta (PRJ339 - Kelvin).
 ..............................................................................*/
 
                                                                              
@@ -41,7 +43,8 @@ DEFINE TEMP-TABLE tt-dados-jur NO-UNDO
     FIELD cdclcnae LIKE crapass.cdclcnae
     FIELD nrlicamb AS DECI
 	FIELD dtvallic LIKE crapjur.dtvallic
-	FIELD idregtrb LIKE crapjur.idregtrb.
+	FIELD idregtrb LIKE crapjur.idregtrb
+	FIELD nmctajur LIKE crapjur.nmctajur.
 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 

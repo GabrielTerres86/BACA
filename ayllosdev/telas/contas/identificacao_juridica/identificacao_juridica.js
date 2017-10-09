@@ -17,7 +17,8 @@
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
  * 010: [13/07/2017] Diogo (M410)         	   : Incluido campo Identificador do Regime tributário 'idregtrb'
- * 011: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.       
+ * 011: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.    
+ * 012: [06/10/2017] Kelvin (CECRED)           : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -158,7 +159,9 @@ function manterRotina(operacao) {
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 	idregtrb = $('#idregtrb', '#frmDadosIdentJuridica').val();
 	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
-
+	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
+	nmctajur = removeCaracteresInvalidos($('#nmctajur', '#frmDadosIdentJuridica').val());
+	
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -169,7 +172,7 @@ function manterRotina(operacao) {
 			dtiniatv: dtiniatv, cdseteco: cdseteco, cdrmativ: cdrmativ, dsendweb: dsendweb,
 			nmtalttl: nmtalttl, qtfoltal: qtfoltal,	dtcadass: dtcadass, cdcnae  : cdcnae,
 			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb, dtvallic : dtvallic,
-			idregtrb: idregtrb, inpessoa: inpessoa,	redirect: 'script_ajax'
+			idregtrb: idregtrb, inpessoa: inpessoa, nmctajur: nmctajur,	redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
@@ -197,13 +200,13 @@ function controlaLayout(operacao) {
 
 	// Controla a altura da tela
 	divRotina.css('width','552px');	
-	$('#divConteudoOpcao').css('height','352px');
+	/*$('#divConteudoOpcao').css('height','322px');*/
 
 	// Razão Social / Tipo Natureza / CNPJ
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
 	
 	// Nome Fantasia / Consulta / Situação / Natureza Jurídica / Qt. Filiais / Qt. Funcionários / Início Atividade / Setor Econômico / Ramo Atividade / Site / Nome Talão / Qt. Folhas Talão
-	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic, #idregtrb','#frmDadosIdentJuridica');
+	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic, #idregtrb, #nmctajur','#frmDadosIdentJuridica');
 	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"]','#frmDadosIdentJuridica');	
 	var codigo			= $('#cdnatjur, #cdseteco, #cdrmativ','#frmDadosIdentJuridica');
 
@@ -227,6 +230,7 @@ function controlaLayout(operacao) {
 	$('label[for="qtfuncio"]','#frmDadosIdentJuridica').css({'width':'104px'});
 	$('#nrlicamb', '#frmDadosIdentJuridica').css({ 'width': '180px' });
 	$('#dtvallic', '#frmDadosIdentJuridica').css({ 'width': '90px' });
+	$('#nmctajur', '#frmDadosIdentJuridica').css({ 'width': '424px' });
 
 	// Pular para o proximo campo quando pressionado ENTER
 	controlaFocoEnter('frmDadosIdentJuridica');

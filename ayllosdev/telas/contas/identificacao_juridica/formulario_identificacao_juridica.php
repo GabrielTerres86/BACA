@@ -17,7 +17,8 @@
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
  * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
  * 010: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
- * 010: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'idregtrb' (Projeto 410)
+ * 011: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'idregtrb' (Projeto 410)
+ * 012: [06/10/2017] Kelvin 			  : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
  */
 ?>
 
@@ -35,7 +36,11 @@
 	<label for="inpessoa" class="rotulo-80">Tp. Natureza:</label>
 	<input name="inpessoa" id="inpessoa" type="text" value="<? echo getByTagName($identificacao,'inpessoa')." - ".getByTagName($identificacao,'dspessoa'); ?>" />
 	<br />
-
+	
+	<label for="nmctajur" class="rotulo rotulo-90">Nome da Conta:</label>
+	<input name="nmctajur" id="nmctajur" type="text" class="alphanum" maxlength="60" value="<? echo getByTagName($identificacao,'nmctajur') ?>" />
+	<br/>
+	
 	<label for="nrcpfcgc" class="rotulo rotulo-90">C.N.P.J:</label>
 	<input name="nrcpfcgc" id="nrcpfcgc" type="text" class="cnpj" value="<? echo getByTagName($identificacao,'nrcpfcgc') ?>" />
 	

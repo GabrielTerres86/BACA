@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 17/01/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 06/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -30,7 +30,9 @@
 				             licença (Tiago/Thiago).
                      
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             nome fantasia para o CDC. (Reinert Prj 289)                                       
+                             nome fantasia para o CDC. (Reinert Prj 289) 
+
+				06/10/2017 - Adicionado o campo Nome da conta (PRJ339 - Kelvin).
                    
 ..................................................................................*/
 
@@ -132,7 +134,8 @@ PROCEDURE busca_dados:
             tt-dados-jur.cdclcnae = bcrapass.cdclcnae
             tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
 			tt-dados-jur.dtvallic = bcrapjur.dtvallic
-			tt-dados-jur.idregtrb = bcrapjur.idregtrb.     
+			tt-dados-jur.nmctajur = UPPER(bcrapjur.nmctajur).
+			
 
         /* Situacao do CPF/CNPJ */
         CASE tt-dados-jur.cdsitcpf:
@@ -211,6 +214,7 @@ PROCEDURE valida_dados:
     DEF  INPUT PARAM par_qtfoltal AS INTE                           NO-UNDO.
 	DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmctajur AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
@@ -306,9 +310,15 @@ PROCEDURE valida_dados:
               IF  par_dtvallic = ? THEN				
                   DO:
                     ASSIGN aux_dscritic = "Data de Validade da Licenca deve ser informada." .
-        LEAVE Valida.
-    END.
+					LEAVE Valida.
+				  END.
 
+            END.
+		/* Nome Fantasia */
+        IF  par_nmctajur = "" THEN
+            DO:
+                ASSIGN aux_dscritic = "Nome da Conta deve ser informado." .
+                LEAVE Valida.
             END.
     END.
     
@@ -371,6 +381,7 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
 	DEF  INPUT PARAM par_idregtrb AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmctajur AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -551,7 +562,8 @@ PROCEDURE grava_dados:
               crapjur.cdseteco = par_cdseteco
               crapjur.nrlicamb = par_nrlicamb 
 			  crapjur.dtvallic = par_dtvallic
-              crapjur.idregtrb = par_idregtrb	NO-ERROR.
+              crapjur.idregtrb = par_idregtrb	
+			  crapjur.nmctajur = par_nmctajur NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
           DO:
