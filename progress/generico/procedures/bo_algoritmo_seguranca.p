@@ -537,6 +537,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
@@ -548,6 +549,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17

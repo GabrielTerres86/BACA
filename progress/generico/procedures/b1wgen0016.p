@@ -3503,6 +3503,12 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.dtperiod = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtperiod".
             ASSIGN tt-dados-agendamento.dtvendrf = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvendrf".
             ASSIGN tt-dados-agendamento.nrcpfcgc =     (xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
+            ASSIGN tt-dados-agendamento.gpscddpagto = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cddpagto".
+            ASSIGN tt-dados-agendamento.gpsdscompet =    (xText:NODE-VALUE) WHEN xField:NAME = "gps_dscompet".
+            ASSIGN tt-dados-agendamento.gpscdidenti = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cdidenti".
+            ASSIGN tt-dados-agendamento.gpsvlrdinss = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrdinss".
+            ASSIGN tt-dados-agendamento.gpsvlrouent = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrouent".
+            ASSIGN tt-dados-agendamento.gpsvlrjuros = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrjuros". 
                                      
                     END.
 						 
@@ -3676,15 +3682,47 @@ PROCEDURE cancelar-agendamento:
                 UNDO TRANSACAO, LEAVE TRANSACAO.                      
             END.
             
-        /* Se for agendamento de TED*/
-        IF craplau.cdtiptra = 4 THEN
+      /* Se for agendamento de gps */
+        IF craplau.cdtiptra = 2 AND craplau.nrseqagp > 0 THEN DO:
+        
+            IF craplau.insitlau <> 1 THEN DO:
+                ASSIGN par_dscritic = "Para cancelar, o agendamento deve estar PENDENTE.".
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.        
+            
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_gps_agmto_desativar_car aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,         /* pr_cdcooper */
+                                  INPUT par_nrdconta,         /* pr_nrdconta */
+                                  INPUT craplau.nrseqagp,     /* pr_nrseqagp */
+                                  INPUT 3,                    /* pr_idorigem */
+                                  INPUT "996",                /* pr_cdoperad */
+                                  INPUT "INTERNETBANK",       /* pr_nmdatela */
+                                  INPUT 1,                    /* pr_flmobile */
+                                  OUTPUT "").                 /* pr_dscritic */
+
+              CLOSE STORED-PROC pc_gps_agmto_desativar_car aux_statproc = PROC-STATUS
+                    WHERE PROC-HANDLE = aux_handproc.
+
+              ASSIGN par_dscritic = pc_gps_agmto_desativar_car.pr_dscritic
+                                    WHEN pc_gps_agmto_desativar_car.pr_dscritic <> ?.
+           
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              IF par_dscritic <> "" THEN DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.                  
+              END.
+        
+        END.  /* se for TED */
+        ELSE IF craplau.cdtiptra = 4 THEN
         DO: 
            /*Somente pode ser permitido cancela-lo se o mesmo AINDA ESTA
              COM O STATUS DE "EFETIVADO". */
             IF craplau.insitlau <> 1 THEN
             DO:
                 ASSIGN par_dscritic = "Para cancelar, o agendamento deve " + 
-                                      "estar PENDETE.".
+                                      "estar PENDENTE.".
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
