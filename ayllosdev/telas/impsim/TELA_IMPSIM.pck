@@ -209,7 +209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 												IF c_crapjur%FOUND THEN
 														--Conta encontrada.. tudo certo.. Atualiza crapjur
 														UPDATE crapjur a
-														SET a.idregtrb = vr_idregtrb
+														SET a.idregtrb = vr_idregtrb,
+																--Projeto 410 - RF 52 / 62
+																a.idimpdsn = 1
 														WHERE a.cdcooper = vr_cdcooper_arq
 																	AND a.nrdconta = vr_nrdconta;
 												ELSE
