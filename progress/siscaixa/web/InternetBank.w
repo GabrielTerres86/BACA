@@ -1214,6 +1214,14 @@ DEF VAR aux_tppacote AS INTE                                            NO-UNDO.
 /*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
 
+/* Operacao 193 */
+/* Operacao 194 */
+/* Operacao 195 */
+/* Operacao 196 */
+DEF VAR aux_cdorigem AS INTE               NO-UNDO.
+DEF VAR aux_cdtipmod AS INTE               NO-UNDO.
+DEF VAR aux_dsorigem AS CHAR               NO-UNDO.
+DEF VAR aux_idlancto LIKE craplau.idlancto NO-UNDO.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -2225,6 +2233,18 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 192 THEN /* Ler Mensagens de Confirmacao para Prepostos */
                 RUN proc_operacao192. 
+		ELSE
+            IF  aux_operacao = 193 THEN /* Listar Comprovantes  */
+                RUN proc_operacao193.                 
+    	ELSE
+            IF  aux_operacao = 194 THEN /* Detalhes Comprovante  */
+                RUN proc_operacao194.
+    	ELSE
+            IF  aux_operacao = 195 THEN /* Listar Agendamentos  */
+                RUN proc_operacao195.                
+    	ELSE
+            IF  aux_operacao = 196 THEN /* Detalhar Agendamento  */
+                RUN proc_operacao196. 
     END.
 /*....................................................................*/
     
@@ -8429,6 +8449,116 @@ PROCEDURE proc_operacao192:
 
                         {&out} aux_tgfimprg.
                 END.
+
+END PROCEDURE.
+
+/* Listar Comprovantes */
+PROCEDURE proc_operacao193:	
+  
+  ASSIGN aux_dtiniper = DATE(GET-VALUE("dtinipro"))
+         aux_dtfimper = DATE(GET-VALUE("dtfimpro"))
+         aux_nriniseq = INTE(GET-VALUE("iniconta"))
+         aux_nrregist = INTE(GET-VALUE("nrregist"))
+         aux_cdorigem = INTE(GET-VALUE("cdorigem"))
+         aux_cdtipmod = INTE(GET-VALUE("cdtipmod")).
+  
+	RUN sistema/internet/fontes/InternetBank193.p ( INPUT aux_cdcooper,
+                                                    INPUT aux_nrdconta,
+                                                    INPUT aux_dtiniper,
+                                                    INPUT aux_dtfimper,
+                                                    INPUT aux_nriniseq,
+                                                    INPUT aux_nrregist,
+                                                    INPUT aux_cdorigem,
+                                                    INPUT aux_cdtipmod,
+                                                   OUTPUT aux_dsmsgerr,
+                                                   OUTPUT TABLE xml_operacao).
+
+    IF RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+      FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Detalhes Comprovantes */
+PROCEDURE proc_operacao194:	
+  
+  ASSIGN aux_cdtippro = INTE(GET-VALUE("cdtippro"))         
+         aux_dsprotoc = GET-VALUE("dsprotoc")
+         aux_cdorigem = INTE(GET-VALUE("cdorigem")).
+  
+	RUN sistema/internet/fontes/InternetBank194.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_dsprotoc,
+                                                   INPUT aux_cdorigem,
+                                                   INPUT aux_cdtippro,
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+
+    IF RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+      FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Listar Agendamentos */
+PROCEDURE proc_operacao195:	
+  
+  ASSIGN aux_dtiniper = DATE(GET-VALUE("dtageini"))
+         aux_dtfimper = DATE(GET-VALUE("dtagefim"))
+         aux_insitlau = INTE(GET-VALUE("insitlau"))         
+         aux_nriniseq = INTE(GET-VALUE("iniconta"))
+         aux_nrregist = INTE(GET-VALUE("nrregist"))
+         aux_dsorigem = GET-VALUE("dsorigem")
+         aux_cdtipmod = INTE(GET-VALUE("cdtipmod")).
+  
+	RUN sistema/internet/fontes/InternetBank195.p ( INPUT aux_cdcooper,
+                                                    INPUT aux_nrdconta,
+                                                    INPUT aux_dsorigem,
+                                                    INPUT aux_dtiniper,
+                                                    INPUT aux_dtfimper,
+                                                    INPUT aux_insitlau,
+                                                    INPUT aux_nriniseq,
+                                                    INPUT aux_nrregist,
+                                                    INPUT aux_cdtipmod,
+                                                   OUTPUT aux_dsmsgerr,
+                                                   OUTPUT TABLE xml_operacao).
+
+    IF RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+      FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Detalhe Agendamento */
+PROCEDURE proc_operacao196:	
+  
+  ASSIGN aux_cdtiptra = INTE(GET-VALUE("cdtiptra"))
+         aux_idlancto = INTE(GET-VALUE("idlancto")).
+ 
+	RUN sistema/internet/fontes/InternetBank196.p (INPUT aux_cdtiptra,
+                                                 INPUT aux_idlancto,
+                                                OUTPUT aux_dsmsgerr,
+                                                OUTPUT TABLE xml_operacao).
+
+    IF RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+      FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    {&out} aux_tgfimprg.
 
 END PROCEDURE.
 /*............................................................................*/
