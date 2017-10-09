@@ -12,6 +12,7 @@
  *
  *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ * 				  03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)
  */
  
 	session_start();
@@ -31,7 +32,8 @@
 	$nrdconta = $_POST["nrdconta"] == "" ?  0  : $_POST["nrdconta"];
 	$idseqttl = $_POST["idseqttl"] == "" ?  0  : $_POST["idseqttl"];
 	$inpessoa = $_POST["inpessoa"] == "" ?  0  : $_POST["inpessoa"];
-	
+	$idregtrb = $_POST["idregtrb"] == "" ?  0  : $_POST["idregtrb"];
+
 	// Verifica se o número da conta e o titular são inteiros válidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
@@ -72,6 +74,9 @@
 	<div id="declaracao_pep">Declara&ccedil;&atilde;o PEP</div>
 	<? } ?>
 	<div id="cartao_assinatura">Cart&atilde;o Assinatura</div>
+    <? if (($idregtrb == 1) || ($idregtrb == 2)) { ?>
+        <div id="declaracao_optante_simples_nacional">Declara&ccedil;&atilde;o de Optante Simples Nacional</div>
+    <? } ?>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>
@@ -80,7 +85,7 @@
 	
 	var relatorios = new Object();
 	
-	<? for($i = 0; $i <= 7; $i++ ){ ?>
+	<? for($i = 0; $i <= 8; $i++ ){ ?>
 		
 	 var relatorio = new Object();	 
 		 relatorio['msg']  = '<?php echo ( isset($xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata) ) ? $xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata : '';?>';
