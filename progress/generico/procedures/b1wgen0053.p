@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 06/10/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 09/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -32,7 +32,16 @@
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
                              nome fantasia para o CDC. (Reinert Prj 289) 
 
-				06/10/2017 - Adicionado o campo Nome da conta (PRJ339 - Kelvin).
+				06/10/2017 - Adicionado o campo Nome da conta (PRJ339 - Kelvin).   
+
+				09/10/2017 - Projeto 410 - RF 52 / 62 - Diogo (Mouts): alterada 
+                             procedure grava_dados com as regras:
+                             - se o campo idregtrb (regime de tributaçao) for Nao, 
+                               gravar o campo idimpdsn com zero.
+                             - se o campo idregtrb for Sim, gravar o campo 
+                               idimpdsn com o valor 1; 
+                               Porém se o idimpdsn já estiver com 2, nao deve ser 
+                               alterado pois indica que a declaraçao já foi impressa.
                    
 ..................................................................................*/
 
@@ -134,7 +143,8 @@ PROCEDURE busca_dados:
             tt-dados-jur.cdclcnae = bcrapass.cdclcnae
             tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
 			tt-dados-jur.dtvallic = bcrapjur.dtvallic
-			tt-dados-jur.nmctajur = UPPER(bcrapjur.nmctajur).
+			tt-dados-jur.nmctajur = UPPER(bcrapjur.nmctajur)
+            tt-dados-jur.idregtrb = bcrapjur.idregtrb.
 			
 
         /* Situacao do CPF/CNPJ */
@@ -393,6 +403,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+	DEF VAR aux_idimpdsn AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro. 
 
@@ -547,6 +558,15 @@ PROCEDURE grava_dados:
        BUFFER-COPY crapass TO tt-dados-jur-ant.
        BUFFER-COPY crapjur TO tt-dados-jur-ant.
         
+	   /* Proj 410 - RF 52 / 62 - Se IDREGTRB for diferente de 1 ou 2 (Simples Nacional), grava IDIMPDSN com zero. Caso contrário, grava com 1 se está já não estiver sido impressa (IDIMPDSN = 2) */
+       IF par_idregtrb <> 1 AND par_idregtrb <> 2 THEN
+            ASSIGN aux_idimpdsn = 0.
+       ELSE
+            IF crapjur.idimpdsn = 2 THEN
+                ASSIGN aux_idimpdsn = 2.
+            ELSE
+                ASSIGN aux_idimpdsn = 1.
+
        ASSIGN crapass.qtfoltal = par_qtfoltal
               crapass.dtcnscpf = par_dtcnscpf
               crapass.cdsitcpf = par_cdsitcpf
@@ -563,7 +583,8 @@ PROCEDURE grava_dados:
               crapjur.nrlicamb = par_nrlicamb 
 			  crapjur.dtvallic = par_dtvallic
               crapjur.idregtrb = par_idregtrb	
-			  crapjur.nmctajur = par_nmctajur NO-ERROR.
+			  crapjur.nmctajur = par_nmctajur
+              crapjur.idimpdsn = aux_idimpdsn NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
           DO:
