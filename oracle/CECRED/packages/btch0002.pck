@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     Sistema : Processos Batch
     Sigla   : BTCH
     Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2014.                       Ultima atualizacao: 07/07/2017
+    Data    : Maio/2014.                       Ultima atualizacao: 14/09/2017
   
    Dados referentes ao programa:
   
@@ -121,6 +121,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                             
                07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
                             ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
+                            
+               14/09/2017 - Incluido mais uma condição para verificar se deve 
+                            solicitar calculo do retorno das Sobras
+                            na procedure pc_gera_criticas_proces (Tiago/Thiago M439)               
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -151,7 +155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 07/07/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 14/09/2017
 
    Dados referentes ao programa:
 
@@ -338,6 +342,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                             
                07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
                             ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
+                            
+               14/09/2017 - Incluido mais uma condição para verificar se deve 
+                            solicitar calculo do retorno das Sobras(Tiago/Thiago M439)
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
@@ -776,6 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 		-- Data do período do indexador
 		vr_dtperiod DATE;
     
+    vr_flexecut BOOLEAN := FALSE;
     
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
@@ -1826,8 +1834,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;  
     END IF; --  Fim IF dtmvtolt > 19
     
+    IF   gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => add_months(TRUNC(rw_crapdat.dtmvtolt,'RRRR'),12)-1 
+                                    ,pr_tipo => 'A') = rw_crapdat.dtmvtolt  THEN
+         vr_flexecut := TRUE;                                
+    END IF;
+
+    
     /* Verifica se deve solicitar calculo do retorno das Sobras - roda somente ate abril */
-    IF to_char(rw_crapdat.dtmvtolt,'MM') <= to_number(gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NRMES_LIM_JURO_SOBRA')) THEN
+    IF (to_char(rw_crapdat.dtmvtolt,'MM') <= to_number(gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NRMES_LIM_JURO_SOBRA'))) OR
+       vr_flexecut = TRUE  THEN
       -- Buscar informação na craptab
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
