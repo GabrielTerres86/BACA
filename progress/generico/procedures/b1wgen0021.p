@@ -21,7 +21,7 @@
 
    Programa: b1wgen0021.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                     Ultima atualizacao: 03/08/2016
+   Data    : 21/06/2007                     Ultima atualizacao: 09/10/2017
 
    Objetivo  : BO CAPITAL
 
@@ -134,6 +134,8 @@
                27/09/2016 - Ajuste das Rotinade Integralização/Estorno integralizaçao
                             M169 (Ricardo Linhares)
                
+               09/10/2017 - Retornar protocolo da ultima alteracao no plano na
+                            procedure obtem-novo-plano (David)
                
 ..............................................................................*/
 
@@ -816,6 +818,14 @@ PROCEDURE obtem-novo-plano:
 
     ASSIGN tt-novo-plano.despagto = aux_despagto
            tt-novo-plano.dtfuturo = aux_dtdpagto.
+           
+    FOR LAST crappro WHERE crappro.cdcooper = par_cdcooper AND
+                           crappro.nrdconta = par_nrdconta AND
+                           crappro.cdtippro = 3            AND
+                           crappro.nrdocmto = crappla.nrctrpla NO-LOCK. END.
+                           
+    IF  AVAILABLE crappro  THEN
+        ASSIGN tt-novo-plano.dsprotoc = crappro.dsprotoc.
             
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,

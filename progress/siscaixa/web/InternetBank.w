@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 06/10/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 09/10/2017
 
    Dados referentes ao programa:
 
@@ -674,6 +674,8 @@
                               PRJ319.2 - SMS Cobrança(Ricardo Linhares)                             
                               
                  06/10/2017 - Incluir operacao 182 (David).
+                 
+                 09/10/2017 - Ajustes de retorno na operacao 31 (David)
 
 ------------------------------------------------------------------------------*/
 
@@ -2355,7 +2357,7 @@ PROCEDURE proc_operacao2:
                                                  INPUT aux_nripuser,
                                                  INPUT aux_dsorigip,
                                                  INPUT aux_flmobile,
-                                                 INPUT aux_indlogin,
+                                                 INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
                                                 OUTPUT aux_dsmsgerr,
 												OUTPUT TABLE xml_operacao).
     
@@ -3064,9 +3066,9 @@ PROCEDURE proc_operacao18:
                                                   INPUT aux_nripuser,
                                                   INPUT aux_dsorigip,
                                                   INPUT aux_flmobile,
-                                                  INPUT aux_indlogin,
+                                                  INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
                                                  OUTPUT aux_dsmsgerr,
-												OUTPUT TABLE xml_operacao).
+                                                 OUTPUT TABLE xml_operacao).
                 
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -3619,27 +3621,21 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao31:
 
-    RUN sistema/internet/fontes/InternetBank31.p 
-                                         (INPUT aux_cdcooper,
-                                          INPUT aux_nrdconta,
-                                          INPUT aux_idseqttl,
-                                          INPUT aux_dtmvtocd,
-                                         OUTPUT aux_dsmsgerr,
-                                         OUTPUT TABLE xml_operacao31).
+    RUN sistema/internet/fontes/InternetBank31.p (INPUT aux_cdcooper,
+                                                  INPUT aux_nrdconta,
+                                                  INPUT aux_idseqttl,
+                                                  INPUT aux_dtmvtocd,
+                                                 OUTPUT aux_dsmsgerr,
+                                                 OUTPUT TABLE xml_operacao).
 
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr. 
 
-    FIND FIRST xml_operacao31 NO-LOCK NO-ERROR. 
+    FOR EACH xml_operacao NO-LOCK: 
 
-    IF  AVAILABLE xml_operacao31  THEN
-        {&out} xml_operacao31.dscabini xml_operacao31.hrinipla
-               xml_operacao31.hrfimpla xml_operacao31.despagto
-               xml_operacao31.vlprepla xml_operacao31.qtpremax
-               xml_operacao31.dtdpagto xml_operacao31.flcancel 
-               xml_operacao31.dtlimini xml_operacao31.dtinipla 
-               xml_operacao31.dtfuturo xml_operacao31.cdtipcor 
-               xml_operacao31.vlcorfix xml_operacao31.dscabfim.
+      {&out} xml_operacao.dslinxml.
+      
+    END.
 
     {&out} aux_tgfimprg.
 

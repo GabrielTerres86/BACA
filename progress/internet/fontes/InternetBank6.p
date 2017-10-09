@@ -156,7 +156,7 @@ FOR EACH tt-dados-rpp NO-LOCK:
                                    TRIM(STRING(tt-dados-rpp.vlprerpp,
                                                "zzz,zz9.99")) +
                                    "</vlprerpp><dsprodut>"  +
-                                    "Poup. Prog. :"         +
+                                    "Poupança Programada" +
                                    "</dsprodut></POUPANCA>".
                            
 END. /** Fim do FOR EACH tt-dados-rpp **/
