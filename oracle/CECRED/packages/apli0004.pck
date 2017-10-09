@@ -282,6 +282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
      Alteracoes: 27/09/2017 - Inclusão do módulo e ação logado no oracle
                             - Inclusão da chamada de procedure em exception others
                             - Colocado logs no padrão
+                            - Retirada validação dia util para vr_dtiniper 
                               (Ana - Envolti - Chamado 744573)
      ..............................................................................*/
     DECLARE
@@ -466,9 +467,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         IF pr_dtiniper <> '0' OR pr_dtfimper <> '0' THEN
 
           IF LENGTH(pr_dtiniper) > 4 THEN
---para uso no plsql
---            vr_dtiniper := to_date('01/' ||to_char(to_date(pr_dtiniper, 'DD/MM/RRRR'), 'MM/RRRR'));
---            vr_dtfimper := last_day(to_date(pr_dtfimper, 'DD/MM/RRRR'));
             vr_dtiniper := to_date('01/' || pr_dtiniper, 'DD/MM/RRRR');
             vr_dtfimper := last_day(to_date('01/' || pr_dtfimper, 'DD/MM/RRRR'));
           ELSE
@@ -625,12 +623,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
             WHILE vr_dtiniper <= vr_dtfimper LOOP
               
-              /*IF rw_crapind_cod.idperiod IN(1) THEN
-                vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-                                                          ,pr_dtmvtolt => vr_dtiniper
-                                                          ,pr_tipo => 'P');                                          
-              END IF;*/
-                                          
               IF vr_dtiniper > vr_dtfimper THEN
                 CONTINUE;
               END IF;
@@ -2228,11 +2220,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
           RAISE vr_exc_saida;
         END IF;
       END IF;
-declare
-w_nr number;
-begin
-  w_nr := 0/0;
-end;
   
       IF vr_cdcooper <> 3 THEN
         vr_dscritic := 'Cadastro somente pode ser feito pela central.';
