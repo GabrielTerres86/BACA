@@ -5721,6 +5721,7 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         aux_dscritic AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dstransa AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dsorigem AS CHAR                           NO-UNDO.  
+    DEF	 VAR 		     aux_mensagens AS CHAR						              NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -6418,8 +6419,42 @@ PROCEDURE grava-proposta-completa:
                      UNDO Grava, RETURN "NOK".
              END.
 
-        IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, RETURN "NOK".
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
+               aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+               aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+               aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               UNDO Grava, LEAVE Grava.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              UNDO Grava, LEAVE Grava.
+          END.
+
+        IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
+           DO:
+               CREATE tt-msg-confirma.                        
+               ASSIGN tt-msg-confirma.inconfir = 4
+                      tt-msg-confirma.dsmensag = aux_mensagens.
+           END.
         
     END. /* Fim Grava- Fim TRANSACTION */
      

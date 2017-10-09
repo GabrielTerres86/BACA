@@ -1876,6 +1876,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_flgderro AS LOGICAL     NO-UNDO.
     DEFINE VARIABLE aux_lscontas AS CHARACTER   NO-UNDO.
+    DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2272,6 +2273,59 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
         VALIDATE crapprp.
+
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
+               aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+               aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+               aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+              ASSIGN aux_flgderro = TRUE.
+              UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+          END.
+                      
+        IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
+           DO:
+               CREATE tt-msg-confirma.                        
+               ASSIGN tt-msg-confirma.inconfir = 1
+                      tt-msg-confirma.dsmensag = aux_mensagens.
+           END.
 
     END. /* Final da TRANSACAO */
     

@@ -3872,6 +3872,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
     --                           empréstimos, Prj. 302 (Jean Michel).
     --
+    --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
+    --                           PRJ-300 Desconto de Cheque (Daniel)
+    --
+    --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
+    --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
+	--
+	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
+    --   
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4313,6 +4321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_epr_portabilidade   VARCHAR2(1000);
     vr_tab_dados_epr       empr0001.typ_tab_dados_epr;
     vr_tab_dados_cpa       empr0002.typ_tab_dados_cpa;
+    vr_tab_mensagens       TELA_CONTAS_GRUPO_ECONOMICO.typ_tab_mensagens;
     vr_inusatab     BOOLEAN;
     vr_flgexist     BOOLEAN;
     vr_qtregist     INTEGER;
@@ -4329,6 +4338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlblqjud     NUMBER := 0;
     vr_vlresblq     NUMBER := 0;
 		vr_flgpvida     INTEGER;
+    
+    vr_nrdconta_grp tbcc_grupo_economico.nrdconta%TYPE;
+    vr_dsvinculo    VARCHAR(2000);                                                           
     
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
@@ -5375,6 +5387,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_flgativo = 1 THEN
       pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato em acordo.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    
+    -- Verifica se a conta possui algum grupo economico novo
+    vr_tab_mensagens.DELETE;
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_obtem_mensagem_grp_econ(pr_cdcooper      => pr_cdcooper 
+                                                          ,pr_nrdconta      => pr_nrdconta
+                                                          ,pr_tab_mensagens => vr_tab_mensagens
+                                                          ,pr_cdcritic      => vr_cdcritic
+                                                          ,pr_dscritic      => vr_dscritic);
+    
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Condicao para verificar se possui mensagem para exibir do grupo economico
+    IF vr_tab_mensagens.COUNT > 0 THEN
+      FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END LOOP; 
     END IF;
     
     pr_des_reto := 'OK';

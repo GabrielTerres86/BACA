@@ -481,7 +481,7 @@
 	$mensagens = $xmlObjeto->roottag->tags[$i_mensagens]->tags;
 				
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));		
 	}
 	
 	$stringArrayMsg  = implode( "|", $msg);

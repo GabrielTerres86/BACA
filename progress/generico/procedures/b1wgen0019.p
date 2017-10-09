@@ -3459,6 +3459,8 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
+    DEF VAR aux_mensagens    AS CHAR                                NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -3938,6 +3940,60 @@ PROCEDURE cadastrar-novo-limite:
 
         IF   RETURN-VALUE <> "OK"   THEN
              LEAVE.
+
+        IF par_idorigem = 5 THEN
+           DO:
+              /* Verificar se a conta pertence ao grupo economico novo */	
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,""
+                                                    ,0
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
+                     aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+                     aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+                     aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
+                              
+              IF aux_cdcritic > 0 THEN
+                 DO:
+                     RUN gera_erro (INPUT par_cdcooper,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT 1,            /** Sequencia **/
+                                    INPUT aux_cdcritic,
+                                    INPUT-OUTPUT aux_dscritic).
+                               
+                     UNDO TRANSACAO, LEAVE TRANSACAO.
+                 END.
+              ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+                DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                    
+                    UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+                
+              IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
+                 DO:
+                     CREATE tt-msg-confirma.                        
+                     ASSIGN tt-msg-confirma.inconfir = 4
+                            tt-msg-confirma.dsmensag = aux_mensagens.
+                 END.
+           END.
 
         ASSIGN aux_flgtrans = TRUE.
         
