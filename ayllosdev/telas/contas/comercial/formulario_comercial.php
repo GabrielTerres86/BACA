@@ -161,9 +161,9 @@
 	<label for="dsjusren"><?php echo utf8ToHtml('Justificativa:'); ?></label>
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
-	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
-	</script>	
+	<script type="text/javascript">
+    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
+  </script>	
 	<br style="class:both" />	
 		
 </form>
