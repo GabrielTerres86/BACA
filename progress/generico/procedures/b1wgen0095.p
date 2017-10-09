@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 24/01/2017
+    Data    : Junho/2011                         Ultima Atualizacao: 09/10/2017
 
     Dados referentes ao programa:
 
@@ -73,9 +73,12 @@
 
                02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
-			   24/01/2017 - Ajustes para verificar o campo cdagebcb na crapcop
-			                para liberar o campo agencia na tela mantal
-							(Tiago/Elton SD549323)
+               24/01/2017 - Ajustes para verificar o campo cdagebcb na crapcop
+                            para liberar o campo agencia na tela mantal
+                            (Tiago/Elton SD549323)
+              
+               09/10/2017 - Alterar a ordem da gravacao da variavel aux_flagprov dentro 
+                            procedure inclui-contra (Lucas Ranghetti #744217)
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -2066,6 +2069,11 @@ PROCEDURE inclui-contra:
                         ASSIGN crapfdc.incheque = 
                                IF  crapfdc.incheque = 0 THEN 1 ELSE 6.
 
+                     IF  tt-cheques.flprovis THEN
+                         aux_flagprov = TRUE.
+                     ELSE 
+                         aux_flagprov = FALSE.                    
+                    
                     IF   par_tptransa = 2 THEN /*  Tipo 2 - Contra-Ordem  */
                          RUN log-contra-cheque 
                             (INPUT par_dtmvtolt,
@@ -2087,11 +2095,6 @@ PROCEDURE inclui-contra:
                            tt-dctror-atl.nrctachq = tt-cheques.nrctachq
                            tt-dctror-atl.nrcheque = tt-cheques.nrcheque.
                 END.
-
-            IF   tt-cheques.flprovis THEN
-                 aux_flagprov = TRUE.
-            ELSE 
-                 aux_flagprov = FALSE.
             
             
             /* ---------- Grava LOG dos cheques */
