@@ -10,6 +10,8 @@
 							   
 				  06/08/2015 - Reformulacao Cadastral (Gabriel-RKAM)
 
+				  18/09/2017 - Alterei a forma de limitacao de caracteres no campo
+							   Inf. Complem. (SD 754979 - Carlos Rafael Tanholi)
  */
 ?>
  
@@ -37,7 +39,7 @@
 		</div>	
 		
 		<label for="dsinfadi"><? echo utf8ToHtml('Informações complementares:') ?></label><br />
-		<textarea name="dsinfadi" id="dsinfadi" cols="74" rows="5"><? echo juntaTexto($textareaTags) ?></textarea>
+		<textarea name="dsinfadi" id="dsinfadi" maxlength="365"><? echo juntaTexto($textareaTags) ?></textarea>
 				
 								
 		<br clear="both" />

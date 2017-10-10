@@ -1,7 +1,7 @@
 /***********************************************************************
 Fonte: tab042.js                                                 
 Autor: Henrique                                                  
-Data : Agosto/2010                  Última Alteração: 25/10/2012             
+Data : Agosto/2010                  Última Alteração: 13/09/2017            
                                                                   
 Objetivo  : Biblioteca de funções da tela TAB042                 
                                                                  	 
@@ -9,7 +9,10 @@ Alterações: 25/10/2012 - Incluso função voltar, inclusão do efeito
 						 fade e highlightObjFocus, tratamento processo
 						 de desabilitação de campo opção e regra para
 						 execução no botão OK. Retirado processo de
-						 geração mensagem ajuda no rodape. (Daniel)                                                       
+						 geração mensagem ajuda no rodape. (Daniel)    
+                         
+	         13/09/2017 - Correcao na validacao de permissoes na tela. SD 750528 (Carlos Rafael Tanholi).
+
 ************************************************************************/
 
 var nrcartao;
@@ -153,9 +156,12 @@ function carrega_dados(){
 			},
 			success: function(response) {				
 				hideMsgAguardo();
+				if (response.indexOf('showError') != -1 ) {
+					eval(response);
+				} else {
 				$('#dstextab','#frmTab042').html(response);
 				document.getElementById('dstextab').focus();
-				
+				}
 			}		
 			});
 						
