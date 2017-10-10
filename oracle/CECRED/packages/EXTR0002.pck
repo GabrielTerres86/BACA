@@ -770,7 +770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
-                     
+
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			         crapass, crapttl, crapjur 
 					(Adriano - P339).
@@ -3100,7 +3100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            /* Multa e Juros de Mora de Prejuizo */
            IF rw_craplem.cdhistor IN (1733,1734,1735,1736) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
-        END IF;
+           END IF;  
              
         END IF;
               
@@ -3308,7 +3308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END;
     END pc_obtem_extrato_emprest; 
 
-
+    
 
 
     -- Subrotina para obter  impressao do extrato
@@ -3553,7 +3553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             --Se for feriado pula
             IF vr_feriado THEN
               CONTINUE;
-          END IF;
+            END IF;  
           END IF;
           -- Diminuir quantidade dias
           vr_qtdddias:= vr_qtdddias - 1;
@@ -3654,7 +3654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              
   --              28/06/2016 - Incluir conta na busca do maximo Float (Marcos-Supero #477843)
-  --              
+  -- 
   --              
   --              08/08/2016 - Incluído tratamento para pagamento de DARF/DAS (Dionathan)
   -- 
@@ -3673,6 +3673,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
   -- 
   --              29/09/2017 - Ajuste na hora de montar a campo dscedent qdo for pagamento de GPS (Tiago/Adriano)
+  --              05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando 
+  --                           esta em Transacao Pendente (Rafael Monteiro - Mouts)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4066,6 +4069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            WHERE pfp.cdcooper = p_cdcooper
              AND pfp.cdempres = p_cdempres
              AND pfp.idsitapr > 3 --> Aprovados
+             AND pfp.idsitapr <> 6 --> Transacao Pendente
              AND pfp.flsitdeb = 0 --> Ainda nao debitado
              AND lfp.cdcooper = pfp.cdcooper
              AND lfp.cdempres = pfp.cdempres
@@ -4101,6 +4105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          WHERE pfp.cdcooper = p_cdcooper
            AND pfp.cdempres = p_cdempres
            AND pfp.idsitapr > 3 /* Aprovado */
+           AND pfp.idsitapr <> 6 --> Transacao Pendente
            AND pfp.flsittar = 0 --> Ainda não debitado a tarifa
            AND pfp.vltarapr > 0 --> Com tarifa a cobrar
          ORDER BY pfp.nrseqpag;
@@ -4126,6 +4131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          WHERE pfp.cdcooper = p_cdcooper
            AND lfp.nrdconta = p_nrdconta
            AND pfp.idsitapr > 3 /* Aprovado */
+           AND pfp.idsitapr <> 6 --> Transacao pendente
            AND pfp.flsitcre = 0 --> Pagamento ainda não creditado
            AND lfp.idsitlct = 'L' --> Somente os lançados
            AND lfp.idtpcont = 'C' --> Somente associados Cecred
@@ -4703,7 +4709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         ELSIF rw_craplau.cdhistor IN (375,376,377,537,538,539,771,772,1009) THEN
           --Documento recebe conta destino
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_craplau.nrctadst,'fm99999g999g9');
-        END IF;
+        END IF;  
         END IF;
       END LOOP; --rw_craplau
       
@@ -5166,8 +5172,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 ELSE
                   --Valor prestacao recebe valor a pagar
                   vr_vlpresta:= vr_tab_dados_epr(vr_index_epr).vlpreapg;
+                END IF;    
               END IF;
-            END IF;
             END IF;
             --Valor Prestacao menor ou igual a zero
             IF vr_vlpresta <= 0 THEN
@@ -5911,10 +5917,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_vllautom:= nvl(vr_vllautom,0) + vr_vldpagto;
           --Acumular valor Credito 
           vr_vllaucre:= nvl(vr_vllaucre,0) + vr_vldpagto;
-        END IF;
+        END IF;                                                 
         END IF;
       END LOOP;
-
+                                                                                        
       -- mostrar lancto futuro de creditos de cobranca NPC
       -- pagos fora do sistema Cecred
       FOR rw_cred_npc IN cr_cred_npc (pr_cdcooper => pr_cdcooper
@@ -6654,7 +6660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             IF vr_des_reto = 'NOK' THEN
               -- Abandona o processo
               RAISE vr_exc_sair;
-          END IF;
+            END IF;                                   
           END IF;
           
           --Gerar Tarifa do Extrato          
@@ -6726,7 +6732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                 ,pr_nmdatela => pr_nmdatela
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_nrdrowid => vr_nrdrowid);
-        END IF;
+          END IF;  
         END IF;
         --Retornar OK
         pr_des_reto:= 'OK';      
@@ -6792,7 +6798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
                                 
                                    
-
+                                
                                    
     -- Subrotina para gerar impressao extrato conta corrente
     PROCEDURE pc_gera_impextdpv (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -6983,7 +6989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'           --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper   --> Cooperativa
                                              ,pr_nmsubdir => 'rl');       --> Utilizaremos o rl
-
+          
 
           -- Inicializar as informações do XML de dados para o relatório
           dbms_lob.createtemporary(vr_clobxml40, TRUE, dbms_lob.CALL);
@@ -7365,7 +7371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                   END IF; 
                   --Sair 
                   RAISE vr_exc_erro;
-              END IF;
+                END IF; 
               END IF;
               
               --Retorno com Sucesso
@@ -7752,7 +7758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                   END IF;  
                   --Sair 
                   RAISE vr_exc_erro;
-        END IF;
+                END IF; 
                 
 	            END IF; --pr_idorigem = 5
             
@@ -8606,7 +8612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= vr_vlirfont;
                     ELSE
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= 0;                 
-                  END IF;
+                    END IF;                                       
                   END IF;
                   
                   --Zerar Valor IR retido Fonte
@@ -8770,7 +8776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= vr_vlirfont;
                     ELSE
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= 0;                 
-                  END IF;
+                    END IF;                                       
                   END IF;
 
                   --Zerar Valor IR retido Fonte
@@ -11058,7 +11064,7 @@ END pc_consulta_ir_pj_trim;
               END IF; 
             END IF;  
 
-
+            
             --Retornar Valor para parametro
             pr_des_reto:= 'OK';                        
             
@@ -12018,7 +12024,7 @@ END pc_consulta_ir_pj_trim;
   --
   --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
   --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
-  -- 
+  --
   --              26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   -- 		                   crapass, crapttl, crapjur 
   -- 						  (Adriano - P339).
@@ -12734,7 +12740,7 @@ END pc_consulta_ir_pj_trim;
                 pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
               ELSE
                 pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
-            END IF;
+              END IF;    
             END IF;
             
             -- Para o contrato PP em prejuizo, o saldo sera zerado para nao ficar negativo
@@ -12742,7 +12748,7 @@ END pc_consulta_ir_pj_trim;
                vr_tab_extrato_epr_novo(vr_index_novo).dtmvtolt <> vr_tab_extrato_epr_novo(vr_tab_extrato_epr_novo.NEXT(vr_index_novo)).dtmvtolt THEN
               IF rw_crapepr.tpemprst = 1 AND rw_crapepr.inprejuz = 1 THEN           
                 pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo := 0;
-            END IF;
+              END IF;              
             END IF;
             
           EXCEPTION
@@ -13629,7 +13635,7 @@ END pc_consulta_ir_pj_trim;
             dbms_lob.freetemporary(vr_clobxml73);             
 
             IF pr_idorigem = 5 THEN 
-
+                         
               --Enviar arquivo para Web
               GENE0002.pc_envia_arquivo_web (pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
                                             ,pr_cdagenci => pr_cdagenci    --Codigo Agencia
@@ -13971,7 +13977,7 @@ END pc_consulta_ir_pj_trim;
           vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'           --> /usr/coop
                                                  ,pr_cdcooper => pr_cdcooper   --> Cooperativa
                                               ,pr_nmsubdir => 'rl');       --> Utilizaremos o rl
-
+          
 
           -- Inicializar as informações do XML de dados para o relatório
           dbms_lob.createtemporary(vr_clobxml088, TRUE, dbms_lob.CALL);
@@ -14073,10 +14079,10 @@ END pc_consulta_ir_pj_trim;
                     RAISE vr_exc_erro;							
 								
                   END IF;
-                  END IF;
-
               END IF;
 
+			END IF;
+					
             IF vr_tpaplica IN (0,2) THEN -- Todas ou novas
               -- Consulta de novas aplicacoes
               apli0005.pc_busca_aplicacoes(pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
@@ -14896,7 +14902,7 @@ END pc_consulta_ir_pj_trim;
           vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'           --> /usr/coop
                                                  ,pr_cdcooper => pr_cdcooper   --> Cooperativa
                                               ,pr_nmsubdir => 'rl');       --> Utilizaremos o rl
-
+          
 
           -- Inicializar as informações do XML de dados para o relatório
           dbms_lob.createtemporary(vr_clobxml209, TRUE, dbms_lob.CALL);
@@ -15191,7 +15197,7 @@ END pc_consulta_ir_pj_trim;
                 END IF; 
                 --Sair 
                 RAISE vr_exc_sair;
-            END IF;
+              END IF; 
             END IF;
                 
             --Fechar Clob e Liberar Memoria  
@@ -16671,7 +16677,7 @@ END pc_consulta_ir_pj_trim;
                  
                  END IF;
                  
-                 END IF;
+               END IF;                 
  
             END LOOP;            
             
@@ -17741,7 +17747,7 @@ END pc_consulta_ir_pj_trim;
       END IF;
           
   END;
-
+      
   END pc_gera_extrato_op_credito;  
 
     -- Subrotina para gerar impressao
@@ -18463,7 +18469,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
         END LOOP;          
 
       END IF;    
-
+      
       pc_gera_impressao(pr_cdcooper => pr_cdcooper, 
                         pr_cdagenci => pr_cdagenci, 
                         pr_nrdcaixa => pr_nrdcaixa, 
@@ -18807,7 +18813,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
            pr_des_reto := 'OK';
       ELSE
           pr_des_reto:= 'NOK';
-      END IF;
+      END IF;  
       END IF;
       
     EXCEPTION
@@ -18897,7 +18903,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
               AND lfp.cdcooper = ofp.cdcooper
               AND lfp.cdorigem = ofp.cdorigem;
         rw_craplfp cr_craplfp%ROWTYPE;
-
+              
 
         --Variaveis Locais
         vr_dsconteu VARCHAR(1000);
@@ -18931,7 +18937,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
            vr_dscritic := 'Exclusao de lancamento nao permitida.';
            RAISE vr_exc_erro;
         END IF;
-
+        
         --Verifica na tabela de parametro se o historico
         --pode ser excluido(mudar situacao do registro)        
         pc_verifica_hist_lan_del(pr_cdcooper => pr_cdcooper
@@ -19252,7 +19258,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
                                ,pr_cdcritic => 0 --> Critica 0
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => vr_tab_erro);
-
+                               
           ROLLBACK;                                              
 
         WHEN OTHERS THEN
@@ -19512,7 +19518,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
            vr_cdcritic IS NOT NULL OR 
            vr_dscritic IS NOT NULL THEN
            RAISE vr_exc_erro;
-        END IF;
+        END IF;        
         END IF;
         
         IF vr_tab_lancamento_futuro.count() > 0 THEN

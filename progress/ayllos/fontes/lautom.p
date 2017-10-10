@@ -59,6 +59,9 @@
 			   17/11/2016 - Ajuste para retirar condicao que trata o formato
 						    a ser utilizado para apresentar o valor do lancamento
 							(Adriano - SD 548762).
+               05/10/2017 - Ajuste para desconsiderar a situacao da 
+                            folha de pagamento quando esta em 
+                            Transacao Pendente (Rafael Monteiro - Mouts)
                
 ............................................................................. */
 
@@ -416,6 +419,7 @@ DO WHILE TRUE:
        /* Lancamentos de debitos de folha */
        FOR EACH crappfp WHERE crappfp.cdcooper =  glb_cdcooper 
                           AND crappfp.idsitapr > 3 /* Aprovados */
+                          AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                           AND crappfp.flsitdeb = 0 /* Ainda nao debitado */
                           NO-LOCK
           ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -487,6 +491,7 @@ DO WHILE TRUE:
        /* Lancamentos de Debitos de Tarifas */
        FOR EACH crappfp WHERE crappfp.cdcooper =  glb_cdcooper
                           AND crappfp.idsitapr > 3 /* Aprovados */
+                          AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
                           AND crappfp.flsittar = 0 /* Ainda nao debitado a tarifa */
                           AND crappfp.vltarapr > 0 /* Com tarifa a cobrar */
                           NO-LOCK

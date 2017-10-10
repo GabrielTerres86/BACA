@@ -15,6 +15,7 @@
 								caracteres especiais que geravam erro no retorno do Ajax. 
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
+ *                 09/10/2017 - Tratamento para remover caracteres especiais do campo Justificativa (Andrey - Mouts) - Chamado 749679
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -162,7 +163,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
+    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
 	</script>	
 	<br style="class:both" />	
 		

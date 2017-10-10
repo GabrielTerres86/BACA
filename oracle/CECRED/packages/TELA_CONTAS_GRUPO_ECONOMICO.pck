@@ -12,6 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
   -- Objetivo  : Procedimentos para retorno das informações da Contas Grupo Economico
   --
   ---------------------------------------------------------------------------------------------------------------
+  TYPE typ_rec_mensagens IS RECORD(dsmensag VARCHAR2(4000));
+  TYPE typ_tab_mensagens IS TABLE OF typ_rec_mensagens INDEX BY PLS_INTEGER;  
+  
   PROCEDURE pc_tela_buscar_dados(pr_nrdconta IN tbcc_grupo_economico.nrdconta%TYPE --> Numero da Conta
                                 ,pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
@@ -80,14 +83,18 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);
                                                                                                                
-  PROCEDURE pc_verifica_conta_grp_econ(pr_cdcooper     IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
-                                      ,pr_nrdconta     IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
-                                      ,pr_flgativo     OUT PLS_INTEGER                              --> Flag se pertence algum grupo economico
-                                      ,pr_nrdconta_grp OUT tbcc_grupo_economico.nrdconta%TYPE       --> Numero da Conta do Grupo que pertence
-                                      ,pr_dsvinculo    OUT VARCHAR2                                 --> Tipo do Vinculo na Conta Corrente
-                                      ,pr_cdcritic     OUT PLS_INTEGER                              --> Código da crítica
-                                      ,pr_dscritic     OUT VARCHAR2);
+  PROCEDURE pc_obtem_mensagem_grp_econ(pr_cdcooper      IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
+                                      ,pr_nrdconta      IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
+                                      ,pr_tab_mensagens OUT typ_tab_mensagens                        --> Temp-Table das Mensagens
+                                      ,pr_cdcritic      OUT PLS_INTEGER                              --> Código da crítica
+                                      ,pr_dscritic      OUT VARCHAR2);
                                       
+  PROCEDURE pc_obtem_mensagem_grp_econ_prg(pr_cdcooper      IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
+                                          ,pr_nrdconta      IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
+                                          ,pr_mensagens     OUT VARCHAR2                                 --> Descricao das mensagens
+                                          ,pr_cdcritic      OUT PLS_INTEGER                              --> Código da crítica
+                                          ,pr_dscritic      OUT VARCHAR2);
+                                                                              
   PROCEDURE pc_imprime_grupo_economico (pr_idgrupo      IN tbcc_grupo_economico.idgrupo%TYPE  --> Id do Grupo Economico
                                        ,pr_listar_todos IN PLS_INTEGER                        --> Filtro de Consulta -> Listar todos os integrantes
                                        ,pr_nrdconta     IN tbcc_grupo_economico.nrdconta%TYPE --> Filtro de Consulta -> Numero da Conta
@@ -1203,16 +1210,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
     END;    
   END pc_tela_busca_associado;
     
-  PROCEDURE pc_verifica_conta_grp_econ(pr_cdcooper     IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
-                                      ,pr_nrdconta     IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
-                                      ,pr_flgativo     OUT PLS_INTEGER                              --> Flag se pertence algum grupo economico
-                                      ,pr_nrdconta_grp OUT tbcc_grupo_economico.nrdconta%TYPE       --> Numero da Conta do Grupo que pertence
-                                      ,pr_dsvinculo    OUT VARCHAR2                                 --> Tipo do Vinculo na Conta Corrente
-                                      ,pr_cdcritic     OUT PLS_INTEGER                              --> Código da crítica
-                                      ,pr_dscritic     OUT VARCHAR2) IS
+  PROCEDURE pc_obtem_mensagem_grp_econ(pr_cdcooper      IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
+                                      ,pr_nrdconta      IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
+                                      ,pr_tab_mensagens OUT typ_tab_mensagens                        --> Temp-Table das Mensagens
+                                      ,pr_cdcritic      OUT PLS_INTEGER                              --> Código da crítica
+                                      ,pr_dscritic      OUT VARCHAR2) IS
   BEGIN                                   
     /* .............................................................................
-     Programa: pc_verifica_conta_grp_econ
+     Programa: pc_obtem_mensagem_grp_econ
      Sistema : Rotinas referentes ao grupo economico
      Sigla   : CONTAS
      Autor   : Mauro (MOUTS)
@@ -1222,7 +1227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
 
      Frequencia: Sempre que for chamado
 
-     Objetivo  : Verificar se possui um acordo ativo para a conta corrente
+     Objetivo  : Retornar mensagem para apresentar em tela
 
      Observacao: -----
      Alteracoes:
@@ -1239,34 +1244,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
          WHERE tbcc_grupo_economico_integ.cdcooper = pr_cdcooper
            AND tbcc_grupo_economico_integ.nrdconta = pr_nrdconta
            AND tbcc_grupo_economico_integ.dtexclusao IS NULL;
-      rw_tbcc_grupo_economico_integ cr_tbcc_grupo_economico_integ%ROWTYPE;
-          
-      -- Variável de críticas
-      vr_cdcritic      crapcri.cdcritic%TYPE;      
-    BEGIN      
-      pr_flgativo := 0;
-      -- Cursor do Integrante do Grupo Economico
-      OPEN cr_tbcc_grupo_economico_integ(pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => pr_nrdconta);
-      FETCH cr_tbcc_grupo_economico_integ INTO rw_tbcc_grupo_economico_integ;
-      -- Verifica se a retornou registro
-      IF cr_tbcc_grupo_economico_integ%FOUND THEN
-        CLOSE cr_tbcc_grupo_economico_integ;
-        pr_flgativo     := 1;
-        pr_nrdconta_grp := rw_tbcc_grupo_economico_integ.nrdconta;
-        pr_dsvinculo    := fn_busca_tipo_vinculo(pr_tpvinculo => rw_tbcc_grupo_economico_integ.tpvinculo);
-      ELSE
-        -- Apenas Fecha o Cursor
-        CLOSE cr_tbcc_grupo_economico_integ;
-      END IF;     
+      
+    BEGIN
+      -- Percorrer todos os grupos que o integrante faz parte
+      FOR rw_tbcc_grupo_economico_integ IN cr_tbcc_grupo_economico_integ(pr_cdcooper => pr_cdcooper
+                                                                        ,pr_nrdconta => pr_nrdconta) LOOP
+                                                                        
+        pr_tab_mensagens(pr_tab_mensagens.COUNT + 1).dsmensag := 'Grupo Economico Novo. Conta: ' ||
+                                                                 TRIM(gene0002.fn_mask_conta(rw_tbcc_grupo_economico_integ.nrdconta)) || 
+                                                                 '. Vinculo: ' || fn_busca_tipo_vinculo(pr_tpvinculo => rw_tbcc_grupo_economico_integ.tpvinculo);
+      END LOOP;
       
     EXCEPTION      
       WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ: ' || SQLERRM;
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em TELA_CONTAS_GRUPO_ECONOMICO.pc_obtem_mensagem_grp_econ: ' || SQLERRM;
     END;    
-  END pc_verifica_conta_grp_econ;
-  
+  END pc_obtem_mensagem_grp_econ;
+    
+  PROCEDURE pc_obtem_mensagem_grp_econ_prg(pr_cdcooper      IN  tbcc_grupo_economico_integ.cdcooper%TYPE --> Codigo da Cooperativa
+                                          ,pr_nrdconta      IN  tbcc_grupo_economico_integ.nrdconta%TYPE --> Numero da conta corrente
+                                          ,pr_mensagens     OUT VARCHAR2
+                                          ,pr_cdcritic      OUT PLS_INTEGER                              --> Código da crítica
+                                          ,pr_dscritic      OUT VARCHAR2) IS
+  BEGIN                                   
+    /* .............................................................................
+     Programa: pc_obtem_mensagem_grp_econ_prg
+     Sistema : Rotinas referentes ao grupo economico
+     Sigla   : CONTAS
+     Autor   : Mauro (MOUTS)
+     Data    : Julho/17.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Retornar mensagem para apresentar em tela
+
+     Observacao: -----
+     Alteracoes:
+     ..............................................................................*/
+    DECLARE
+      vr_tab_mensagens  typ_tab_mensagens;   
+    BEGIN
+      pc_obtem_mensagem_grp_econ(pr_cdcooper => pr_cdcooper, 
+                                 pr_nrdconta => pr_nrdconta, 
+                                 pr_tab_mensagens => vr_tab_mensagens, 
+                                 pr_cdcritic => pr_cdcritic, 
+                                 pr_dscritic => pr_dscritic);
+        
+      -- Condicao para verificar se existe registro                         
+      IF vr_tab_mensagens.count > 0 THEN
+        
+        FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
+          IF i > 1 THEN
+            pr_mensagens := pr_mensagens || '|@|';  
+          END IF;          
+          pr_mensagens := pr_mensagens || vr_tab_mensagens(i).dsmensag;         
+        END LOOP;        
+      END IF;                                                                        
+      
+    EXCEPTION      
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em TELA_CONTAS_GRUPO_ECONOMICO.pc_obtem_mensagem_grp_econ_prg: ' || SQLERRM;
+    END;    
+  END pc_obtem_mensagem_grp_econ_prg;
+    
   --> Rotina para impressao do Grupo Economico
   PROCEDURE pc_imprime_grupo_economico (pr_idgrupo      IN tbcc_grupo_economico.idgrupo%TYPE  --> Id do Grupo Economico
                                        ,pr_listar_todos IN PLS_INTEGER                        --> Filtro de Consulta -> Listar todos os integrantes

@@ -245,7 +245,7 @@
 
            05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
-                        
+
 
           07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
 
@@ -1964,10 +1964,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_lscontas AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
-
-    DEF VAR aux_flgativo     AS INT                     NO-UNDO.
-    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta      NO-UNDO. 
-    DEF VAR aux_dsvinculo    AS CHAR                    NO-UNDO.    
+    DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2418,27 +2415,23 @@ PROCEDURE efetua_inclusao_limite:
         /* Verificar se a conta pertence ao grupo economico novo */	
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+        RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                               ,INPUT par_nrdconta
-                                              ,0
-                                              ,0
                                               ,""
                                               ,0
                                               ,"").
 
-        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+        CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic      = 0
-               aux_dscritic     = ""
-               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
-               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
-               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
-               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
-               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
+               aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+               aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+               aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
                         
         IF aux_cdcritic > 0 THEN
            DO:
@@ -2465,11 +2458,11 @@ PROCEDURE efetua_inclusao_limite:
               UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
           END.
                       
-        IF aux_flgativo = 1 THEN
+        IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
            DO:
-               CREATE tt-msg-confirma.
+               CREATE tt-msg-confirma.                        
                ASSIGN tt-msg-confirma.inconfir = 1
-                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+                      tt-msg-confirma.dsmensag = aux_mensagens.
            END.
 
     END. /* Final da TRANSACAO */
@@ -10024,7 +10017,7 @@ PROCEDURE busca_cheques_bordero:
                             FIND FIRST crapjur WHERE crapjur.cdcooper = crapcop.cdcooper AND
                                                      crapjur.nrdconta = crapcdb.nrctachq
                                                      NO-LOCK NO-ERROR.
-                            
+        
                             ASSIGN rel_nmcheque = TRIM(crapjur.nmtalttl)
                                    rel_dscpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
                                    rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
@@ -10329,7 +10322,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-				    END.
+                END.
     
             DELETE crapcdb.                   
                            
@@ -12181,9 +12174,9 @@ PROCEDURE efetua_liber_anali_bordero:
 
              /* Acumula Total IOF */
              ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
-
+                  
            END.
-
+                           
        END.  /*  Fim do FOR EACH crapcdb  */
 
 

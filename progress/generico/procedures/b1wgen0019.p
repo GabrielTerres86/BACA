@@ -271,15 +271,15 @@
                             que qnd quebra a pagina e a primeira linha esta em branco
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
-               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
                 02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
                              = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
 			  
-			   14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
-							(Andrey Formigari - RKAM)
+ 			    14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+				 			(Andrey Formigari - RKAM)
 			  
-               15/09/2016 - Inclusao dos parametros default na rotina oracle
+                15/09/2016 - Inclusao dos parametros default na rotina oracle
 				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
 		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
@@ -1347,7 +1347,7 @@ PROCEDURE confirmar-novo-limite:
 
         IF  aux_dscritic <> ""  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
-            
+         
 		FIND crapope WHERE crapope.cdcooper = par_cdcooper
 		               AND UPPER(crapope.cdoperad) = UPPER(par_cdoperad)
 					   NO-LOCK NO-ERROR.
@@ -3474,9 +3474,7 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
-    DEF VAR aux_flgativo     AS INT                                 NO-UNDO.
-    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta                  NO-UNDO. 
-    DEF VAR aux_dsvinculo    AS CHAR                                NO-UNDO.
+    DEF VAR aux_mensagens    AS CHAR                                NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
@@ -3963,27 +3961,23 @@ PROCEDURE cadastrar-novo-limite:
               /* Verificar se a conta pertence ao grupo economico novo */	
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-              RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+              RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                     ,INPUT par_nrdconta
-                                                    ,0
-                                                    ,0
                                                     ,""
                                                     ,0
                                                     ,"").
 
-              CLOSE STORED-PROC pc_verifica_conta_grp_econ
+              CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-              ASSIGN aux_cdcritic      = 0
-                     aux_dscritic     = ""
-                     aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
-                     aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
-                     aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
-                     aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
-                     aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
+                     aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+                     aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+                     aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
                               
               IF aux_cdcritic > 0 THEN
                  DO:
@@ -4007,12 +4001,12 @@ PROCEDURE cadastrar-novo-limite:
                                     
                     UNDO TRANSACAO, LEAVE TRANSACAO.
                 END.
-                            
-              IF aux_flgativo = 1 THEN
+                
+              IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
                  DO:
                      CREATE tt-msg-confirma.                        
                      ASSIGN tt-msg-confirma.inconfir = 4
-                            tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+                            tt-msg-confirma.dsmensag = aux_mensagens.
                  END.
            END.
 
