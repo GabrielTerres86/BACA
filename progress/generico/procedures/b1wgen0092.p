@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 29/09/2017
     
    Dados referentes ao programa:
    
@@ -191,6 +191,8 @@
               20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
                            o primeiro titular da conta é de menor (Tiago/Thiago #652776)
                            
+              29/09/2017 - Validar identificacao de consumidor também para casos
+			               em que for digitado zero (Lucas Ranghetti #765804)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1106,6 +1108,12 @@ PROCEDURE valida-dados:
 
         IF  par_cddopcao = "I"  THEN
             DO:   
+                IF  par_cdrefere = 0 THEN              
+                    DO:
+                        ASSIGN aux_dscritic = "Informe o Codigo Identificador "
+                               par_nmdcampo = "cdrefere".
+                        LEAVE Valida.
+                    END.
                               
                 IF  par_cdhistor = 0 THEN
                     DO:
@@ -2204,7 +2212,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                             
+                        
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2335,10 +2343,10 @@ PROCEDURE busca_convenios_codbarras:
                   IF(crapscn.dsnomres <> "") then
                       ASSIGN aux_nmempcon = crapscn.dsnomres.
                   ELSE
-                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:                
+            DO:      
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2359,13 +2367,13 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-
+                                         
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
-						ASSIGN aux_nmempcon = gnconve.nmempres.
+                       ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
          IF aux_nmresumi <> "" THEN

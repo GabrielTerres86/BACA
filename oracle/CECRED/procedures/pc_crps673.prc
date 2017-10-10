@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 26/07/2017
+       Data    : Março/2014.                     Ultima atualizacao: 22/09/2017
 
        Dados referentes ao programa:
 
@@ -65,6 +65,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
                                 Retirar variáveis não utilizadas (vr_idinsert, vr_chave, vr_nmarquiv)
                                 ( Belli - Envolti )                   
 
+                   22/09/2017 - Adicionar prioridade em que os cartões devem ser utilizados para 
+                                vincular a fatura do cartão (Douglas - Chamado 760181)
 ........................................................................................................... */
     DECLARE                                                                             
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -172,7 +174,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
               ,pcr.nrcrcard
               ,pcr.nrcpftit
               ,pcr.flgprcrd
-          FROM crawcrd pcr;
+              ,decode(pcr.insitcrd,
+                      4,1, -- Em Uso      - Prioridade 1
+                      3,2, -- Liberado    - Prioridade 2
+                      6,3, -- Cancelado   - Prioridade 3
+                      5,4, -- Bloqueado   - Prioridade 4
+                      2,5, -- Solicitado  - Prioridade 5
+                      1,6, -- Aprovado    - Prioridade 6
+                      7) prioridade -- default     - Prioridade 7
+          FROM crawcrd pcr
+       ORDER BY pcr.cdcooper, pcr.nrdconta, pcr.nrcpftit, prioridade;
 		 --AND pcr.insitcrd = 4; /* EM USO */
       
       -- Informações arquivo bancoob

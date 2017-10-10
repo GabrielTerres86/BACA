@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/09/2017
+    Data    : Maio/2010                   Ultima atualizacao: 21/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -190,6 +190,7 @@
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
+				       
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
 
@@ -207,6 +208,9 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
+                21/09/2017 - Sempre que houver a exclusao de titulares da Conta 
+                             Corrente as pendencias registradas para ele devem ser 
+                             baixadas do relatório 620_cadastro (Lucas Ranghetti #746857).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -3956,6 +3960,7 @@ PROCEDURE Grava_Dados_Exclui:
     DEF BUFFER crabcem FOR crapcem.
     DEF BUFFER crabcra FOR crapcra.
     DEF BUFFER crabcrl FOR crapcrl.
+    DEF BUFFER crabdoc FOR crapdoc.
 
     ASSIGN aux_returnvl = "NOK".
 
@@ -4429,6 +4434,46 @@ PROCEDURE Grava_Dados_Exclui:
                 IF  par_cdcritic <> 0 THEN
                     UNDO GravaExclui, LEAVE GravaExclui.
             END. /* FOR EACH crapavt  */
+            
+            /* Atualizar pendencias dos titulares secundarios da conta */
+            FOR EACH crapdoc WHERE crapdoc.cdcooper = crabttl.cdcooper 
+                               AND crapdoc.nrdconta = crabttl.nrdconta
+                               AND crapdoc.idseqttl = crabttl.idseqttl
+                               AND crapdoc.flgdigit = FALSE
+                               NO-LOCK:
+                               
+                ContadorDoc: DO aux_contador = 1 TO 10:
+                
+                  FIND crabdoc WHERE ROWID(crabdoc) = ROWID(crapdoc)
+                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                    IF  NOT AVAILABLE crabdoc THEN
+                        DO:
+                           IF  LOCKED(crabdoc) THEN
+                               DO:
+                                  IF  aux_contador = 10 THEN
+                                      DO:
+                                         ASSIGN par_cdcritic = 72.
+                                         LEAVE ContadorDoc.
+                                      END.
+                                  ELSE 
+                                      DO:
+                                         PAUSE 1 NO-MESSAGE.
+                                         NEXT ContadorDoc.
+                                      END.
+                               END.
+                        END.
+                    ELSE 
+                        DO:
+                           DELETE crabdoc.
+                           LEAVE ContadorDoc.
+                        END.
+                
+                END. /* ContadorDoc */
+                
+                IF  par_cdcritic <> 0 THEN
+                    UNDO GravaExclui, LEAVE GravaExclui.                               
+            END.
             
             ContadorTtl: DO aux_contador = 1 TO 10:
 

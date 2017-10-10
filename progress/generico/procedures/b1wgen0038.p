@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 16/08/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
     
     Dados referentes ao programa:
 
@@ -98,12 +98,14 @@
 			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)      
                
-                17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             endereco para o CDC. (Reinert Prj 289)
-							
+               17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                            endereco para o CDC. (Reinert Prj 289)		
+
 				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
 							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
                             
+               22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                            o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
 
 
@@ -1572,6 +1574,8 @@ PROCEDURE alterar-endereco:
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.
     DEF VAR aux_msgrvcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_persemon AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.    
 
     DEF VAR h-b1wgen0056 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
@@ -1603,7 +1607,26 @@ PROCEDURE alterar-endereco:
 
                 UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
+        
+        IF   crapass.inpessoa = 1 THEN DO:
+            FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                               crapttl.nrdconta = par_nrdconta AND 
+                               crapttl.idseqttl = par_idseqttl NO-LOCK NO-ERROR.
+            IF  NOT AVAILABLE crapttl  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Titular nao cadastrado.".
 
+                    UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+                END.
+            
+            ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc
+                   aux_idseqttl = par_idseqttl.
+          END.
+        ELSE 
+            ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
+                   aux_idseqttl = 0.
+        
         ASSIGN aux_tpendass = IF   par_tpendass <> 0    THEN 
                                    par_tpendass
                               ELSE 
@@ -1696,7 +1719,7 @@ PROCEDURE alterar-endereco:
 						LEAVE TRANS_ENDERECO.
 				     END.	
 			   
-			   END.
+                END.
 
             LEAVE.
 
@@ -1753,7 +1776,7 @@ PROCEDURE alterar-endereco:
                                                     OUTPUT TABLE tt-erro).
 
                 DELETE PROCEDURE h-b1wgen0056.
-
+                
                 IF  RETURN-VALUE = "NOK"  THEN
                     UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
@@ -1822,7 +1845,8 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = par_idseqttl
+                                             crapdoc.idseqttl = aux_idseqttl AND
+                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1848,7 +1872,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.

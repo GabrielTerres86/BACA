@@ -47,6 +47,9 @@
  *							   operação de consulta (Lucas Ranghetti #547448)
  *
  *				  16/01/2017 - Arrumar a gravacao da flginassele (Lucas Ranghetti #564654)
+ *
+ *                12/09/2017 - Tratamento para não permitir o prosseguimento da rotina caso ocorra erro de digito 
+ *                             para a referencia no caso de sicredi sim (Lucas Ranghetti #751239)
  */
 
 // Definição de algumas variáveis globais 
@@ -63,6 +66,7 @@ var arrayAutori   	= new Array();
 
 var valida = 0; // 0 = Segue com operacao/ 1 = Barra operacao
 
+var erroRef = 0;
 
 $(document).ready(function() {	
 	
@@ -213,6 +217,7 @@ function manterRotina() {
 	
 	var nmfatura = '';
 	var nmempres = '';
+	erroRef = 0;
 	
 	if (operacao == 'I4') {
 		if ( $('#dshistor','#frmAutori').val() == '') {
@@ -225,7 +230,9 @@ function manterRotina() {
 		}
 		if ($('#flgsicre','#frmAutori').val() == 'S') {
 			calculoDigito('referencia','cdrefere');
-			//return false;
+			if (erroRef == 1) {
+			  return false;
+			}
 		}
 	}
 	
@@ -1169,7 +1176,7 @@ function calculoDigito(operacao, nomcampo) {
 	
 	$.ajax({
 			type  : 'POST',
-			async : true ,
+			async : false ,
 			url   : UrlSite + 'telas/autori/calcula_digito.php',
 			data: {
 				operacao: operacao,

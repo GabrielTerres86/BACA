@@ -282,7 +282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                
                24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto
-                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)
+                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)               
 
                29/09/2017 - Correção para não processar o débito e crédito quando folha
                             na situação 6 - Transação Pendente. Proj. 397
@@ -8293,7 +8293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Renato Darosci
-  --  Data     : Junho/2015.                   Ultima atualizacao: 28/04/2016
+  --  Data     : Junho/2015.                   Ultima atualizacao: 25/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8310,6 +8310,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          null - Marcos(Supero)
   --
   --             28/04/2016 - Retirada acentos por compatibilidade Ayllos Web (Guilherme/SUPERO)
+  --
+  --             25/09/2017 - verificar se o banco de destino da TEC esta ativo
+  --                          (Douglas - chamado 647346)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -8371,6 +8374,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          AND t.dtdemiss IS NULL;
     rw_assativ  cr_assativ%ROWTYPE;
 
+    -- Verificar se o banco esta ativo
+    CURSOR cr_crapban(pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
+      SELECT ban.cdbccxlt
+        FROM crapban ban
+       WHERE ban.cdbccxlt = pr_cdbccxlt
+         AND ban.flgdispb = 1; 
+    rw_crapban cr_crapban%ROWTYPE; 
   BEGIN
 
     -- Se não veio parametro de tipo de conta
@@ -8563,6 +8573,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Se o cursor estiver aberto
         IF cr_assativ%ISOPEN THEN
           CLOSE cr_assativ;
+        END IF;
+
+      ELSE
+        
+        -- Verificar se o banco que vai receber o credito esta ativo
+        OPEN cr_crapban (pr_cdbccxlt => rw_crapccs.cdbantrf);
+        FETCH cr_crapban INTO rw_crapban;
+        
+        IF cr_crapban%NOTFOUND THEN
+          -- Fechar Cursor 
+          CLOSE cr_crapban;
+          -- Retorna o alerta com a crítica
+          pr_dsalerta := 'Banco destino ' || rw_crapccs.cdbantrf || ' inativo. ' || 
+                         'Entre em contato com seu PA.';
+          RETURN;
+        ELSE 
+          -- Fechar cursor
+          CLOSE cr_crapban;
         END IF;
 
       END IF;

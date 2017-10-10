@@ -7,9 +7,11 @@
  *
  * --------------
  * ALTERAÇÕES   : 03/02/2015 - Incluir Validação para fatura04 e incluido campo nomcampo como parametro (Lucas R. #242146)
- *
- *				: 06/05/2016 - Correação do fluxo referente a convenios SICRED [Rafael Maciel (RKAM)] 
  * --------------
+ *				  06/05/2016 - Correação do fluxo referente a convenios SICRED [Rafael Maciel (RKAM)] 
+ * 
+ *                12/09/2017 - Tratamento para não permitir o prosseguimento da rotina caso ocorra erro de digito 
+ *                             para a referencia no caso de sicredi sim (Lucas Ranghetti #751239)
  *
  */ 
 ?>
@@ -86,6 +88,7 @@
 				}
 				if ($nmdcampo == 'cdrefere') {
 					$mtdErro = $mtdErro . "$('#".$nmdcampo."').focus();"; 
+					echo "erroRef = 1;";
 				}
 				if ($nmdcampo == 'codbarra') {
 					$mtdErro = $mtdErro . "$('#".$nmdcampo."').habilitaCampo().focus(); $('#dshistor','#frmAutori').desabilitaCampo(); $('#cdrefere','#frmAutori').desabilitaCampo();"; 
