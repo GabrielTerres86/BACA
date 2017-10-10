@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --                          boleto para contratos em prejuizo quando for 
   --                          boletagem massiva. (P210.2 - Lombardi)
   --
+  --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
+  --            
   ---------------------------------------------------------------------------
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -1272,9 +1274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         -- 5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto
         IF rw_cde.tpparcela IN (5,7) THEN -- Saldo Prejuizo
         
-          -- Valor da parcela recebe o valor saldo prejuizo
-            vr_vlparcel := vr_vlsdprej;                
-      	   
+          
           -- Rotina para pagamento de prejuizo
           RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta
@@ -1293,8 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                ,pr_vlttjmpr => rw_crapepr.vlttjmpr
                                                ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
                                                ,pr_cdoperad => pr_cdoperad
-                                               ,pr_vlparcel => vr_vlparcel -- vr_vlsdprej
-                                               ,pr_inliqaco => 'S'
+                                               ,pr_vlparcel => pr_vldpagto
                                                ,pr_nmtelant => pr_nmtelant
                                                ,pr_vltotpag => vr_vldpagto -- Retorna o valor pr_vltotpag com o valor pago.
                                                ,pr_cdcritic => vr_cdcritic
@@ -1304,7 +1303,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               -- Gera exceção
               RAISE vr_exc_saida;
             END IF;
+
+            OPEN cr_crapepr;
+            FETCH cr_crapepr INTO rw_crapepr;
+      			
+            IF cr_crapepr%NOTFOUND THEN			   
+              --Fecha cursor
+              CLOSE cr_crapepr;
+              --Atribui críticas
+              vr_cdcritic := 0;
+              vr_dscritic := 'Contrato nao encontrado';
+              -- Gera exceção
+              RAISE vr_exc_saida;
+            END IF;
+          
+            --Fecha cursor
+            CLOSE cr_crapepr;
+
+            IF rw_crapepr.vlsdprej > 0 THEN
+                  
+              -- Rotina para gerar abono se necessario
+              RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_cdagenci => rw_cde.cdagenci
+                                 ,pr_crapdat  => rw_crapdat
+                                 ,pr_nracordo => 0
+                                 ,pr_nrparcel => 0
+                                 ,pr_nrctremp => pr_nrctremp
+                                 ,pr_tpemprst => rw_crapepr.tpemprst
+                                 ,pr_vlprejuz => rw_crapepr.vlprejuz
+                                 ,pr_vlsdprej => rw_crapepr.vlsdprej
+                                 ,pr_vlsprjat => rw_crapepr.vlsprjat
+                                 ,pr_vlpreemp => rw_crapepr.vlpreemp
+                                 ,pr_vlttmupr => rw_crapepr.vlttmupr
+                                 ,pr_vlpgmupr => rw_crapepr.vlpgmupr
+                                 ,pr_vlttjmpr => rw_crapepr.vlttjmpr
+                                 ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
+                                 ,pr_cdoperad => pr_cdoperad
+                                 ,pr_vlparcel => pr_vldpagto
+                                               ,pr_inliqaco => 'S'
+                                               ,pr_nmtelant => pr_nmtelant
+                                               ,pr_vltotpag => vr_vldpagto -- Retorna o valor pr_vltotpag com o valor pago.
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic);
+                               
+      		  -- Se retornar erro da rotina
+            IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+              -- Gera exceção
+              RAISE vr_exc_saida;
+            END IF;
             
+            END IF; 
+            
+            /*
             -- Se valor pago for maior que o valor do boleto
             IF vr_vldpagto > pr_vldpagto THEN
         		 
@@ -1347,20 +1398,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               END IF;
               
             END IF;
+            */
             
           --END IF;
           
         ELSE
           -- Pagamento Parcial
-  
-          -- Se o valor do boleto for maior que o saldo prejuizo
-          IF pr_vldpagto > nvl(vr_vlsdprej,0) THEN
-            -- Valor da parcela recebe saldo prejuizo
-            vr_vlparcel := vr_vlsdprej;                
-          ELSE -- Senao
-            -- Valor da parcela recebe valor do boleto
-            vr_vlparcel := pr_vldpagto;
-          END IF;
         	
           -- Rotina para pagamento de prejuizo
           RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
@@ -1380,7 +1423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                ,pr_vlttjmpr => rw_crapepr.vlttjmpr
                                                ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
                                                ,pr_cdoperad => pr_cdoperad
-                                               ,pr_vlparcel => vr_vlparcel
+                                               ,pr_vlparcel => pr_vldpagto
                                                ,pr_nmtelant => pr_nmtelant
                                                ,pr_vltotpag => vr_vldpagto
                                                ,pr_cdcritic => vr_cdcritic

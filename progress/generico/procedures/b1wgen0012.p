@@ -209,6 +209,9 @@
                
                17/08/2017 - #738442 Retiradas as mensagens informativas 
                             "Verificando registros para geracao de arquivo(s)" (Carlos)
+
+			   27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
+			                variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -4081,6 +4084,8 @@ PROCEDURE gerar_compel_prcctl:
                                        /* Para nao receber arquivo de retorno 
                                        na VIACREDI */ 
                                        ASSIGN aux_dschqctl = "PG_CX ".
+							      ELSE
+								       ASSIGN aux_dschqctl = "      ".
 
                               END.
                          ELSE
