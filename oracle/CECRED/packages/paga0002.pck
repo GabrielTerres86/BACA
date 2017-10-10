@@ -693,7 +693,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -785,6 +785,10 @@ create or replace package body cecred.PAGA0002 is
   --
   --             10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
   --                          um agendamento de Transferencia (Lucas Ranghetti #676219)
+  --
+  --             03/10/2017 - #765090 Nas transferências, na mensagem de horário para saldo em conta, 
+  --                          mostrar os minutos em múltiplos de 5 arredondando para baixo. 
+  --                          Ex.: Cadastrado: 21:04 -> Mostrar: 21:00 (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1422,6 +1426,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
     END pc_grava_favorito;
 
+
+
   BEGIN
     -- Definir descrição da transação
     SELECT DECODE(pr_flgexecu,1,NULL,'Valida ')||
@@ -2047,7 +2053,9 @@ create or replace package body cecred.PAGA0002 is
         -- Fechar cursor
         CLOSE cr_craphec;    
         IF pr_cdtiptra IN(1,5) THEN
-          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'sssss'), 'hh24:mi');
+          -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
+                        to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
         ELSE
           vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
         END IF;
