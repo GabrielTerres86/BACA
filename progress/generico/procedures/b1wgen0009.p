@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 28/07/2017
+   Data    : Marco/2009                     Última atualizacao: 04/10/2017
    
    Dados referentes ao programa:
 
@@ -245,7 +245,7 @@
 
            05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
-
+                        
 
           07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
 
@@ -284,6 +284,9 @@
                         Projeto 300. (Lombardi)
 					                
 		   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+					                
+           04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
+                        de novo limite. (Chamado 768648) - (Fabricio)
 					                
 ............................................................................. */
 
@@ -544,38 +547,8 @@ PROCEDURE busca_dados_dscchq:
             RETURN "NOK".
             
         END.
-        ELSE
-        DO:
-            RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
-                                             INPUT par_nrdconta,
-                                             INPUT par_cdagenci,
-                                             INPUT par_nrdcaixa,
-                                             INPUT par_dtmvtolt,
-                                             INPUT par_idorigem,
-                                             OUTPUT TABLE tt-erro).
-
-            IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                IF  par_flgerlog  THEN
-                DO:
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT aux_dscritic,
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT par_idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid). 
-
-                END.             
-                
                 DELETE PROCEDURE h-b1wgen0001.
-                RETURN "NOK".
             END.
-        END.
-    END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
                              craplim.nrdconta = par_nrdconta   AND
@@ -683,6 +656,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEFINE OUTPUT PARAMETER TABLE FOR tt-msg-confirma.
     
     DEFINE VARIABLE aux_regalias AS CHARACTER       NO-UNDO.
+    DEFINE VARIABLE h-b1wgen0001 AS HANDLE          NO-UNDO.
     DEFINE VARIABLE h-b1wgen0058 AS HANDLE          NO-UNDO.
     DEFINE VARIABLE h-b1wgen0110 AS HANDLE          NO-UNDO.
     DEF VAR         h-b1wgen9999 AS HANDLE          NO-UNDO.
@@ -715,6 +689,42 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
+
+    RUN sistema/generico/procedures/b1wgen0001.p
+        PERSISTENT SET h-b1wgen0001.
+
+    IF  VALID-HANDLE(h-b1wgen0001)  THEN
+    DO:
+        RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
+                                         INPUT par_nrdconta,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_dtmvtolt,
+                                         INPUT par_idorigem,
+                                        OUTPUT TABLE tt-erro).
+
+        IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            IF  par_flgerlog  THEN
+            DO:
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid). 
+
+            END.             
+                    
+            DELETE PROCEDURE h-b1wgen0001.
+            RETURN "NOK".
+        END.
+        DELETE PROCEDURE h-b1wgen0001.
+    END.
 
     /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
@@ -1965,7 +1975,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
     DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
-    
+
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_dscritic = ""
@@ -2460,7 +2470,7 @@ PROCEDURE efetua_inclusao_limite:
                       
         IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
            DO:
-               CREATE tt-msg-confirma.                        
+               CREATE tt-msg-confirma.
                ASSIGN tt-msg-confirma.inconfir = 1
                       tt-msg-confirma.dsmensag = aux_mensagens.
            END.
@@ -10017,7 +10027,7 @@ PROCEDURE busca_cheques_bordero:
                             FIND FIRST crapjur WHERE crapjur.cdcooper = crapcop.cdcooper AND
                                                      crapjur.nrdconta = crapcdb.nrctachq
                                                      NO-LOCK NO-ERROR.
-        
+                            
                             ASSIGN rel_nmcheque = TRIM(crapjur.nmtalttl)
                                    rel_dscpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
                                    rel_dscpfcgc = STRING(rel_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
@@ -12174,9 +12184,9 @@ PROCEDURE efetua_liber_anali_bordero:
 
              /* Acumula Total IOF */
              ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
-                  
+
            END.
-                           
+
        END.  /*  Fim do FOR EACH crapcdb  */
 
 

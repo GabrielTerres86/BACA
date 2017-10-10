@@ -160,8 +160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Descontos dentro da ATENDA
   --
-  -- Alteracoes: 
-  --
+  -- Alteracoes: 04/10/2017 - Ajuste na pc_busca_inf_bordero para verificar
+  --                          revisao cadastral na opcao de inclusao do bordero.
+  --                          (Chamado 768648) - (Fabricio)
   ---------------------------------------------------------------------------
   
   PROCEDURE pc_ren_lim_desc_cheque_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -1314,6 +1315,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass_2  cr_crapass_2%ROWTYPE;
 		
+    /* Cursor generico de parametrizacao */
+    CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                     ,pr_nmsistem IN craptab.nmsistem%TYPE
+                     ,pr_tptabela IN craptab.tptabela%TYPE
+                     ,pr_cdempres IN craptab.cdempres%TYPE
+                     ,pr_cdacesso IN craptab.cdacesso%TYPE
+                     ,pr_tpregist IN craptab.tpregist%TYPE) IS
+        SELECT tab.dstextab
+          FROM craptab tab
+         WHERE tab.cdcooper = pr_cdcooper
+           AND upper(tab.nmsistem) = pr_nmsistem
+           AND upper(tab.tptabela) = pr_tptabela
+           AND tab.cdempres = pr_cdempres
+           AND upper(tab.cdacesso) = pr_cdacesso
+           AND tab.tpregist = pr_tpregist;
+    rw_craptab cr_craptab%ROWTYPE;
+    
+    -- Cursor para verificar se existe recadastro na conta
+    CURSOR cr_crapalt(pr_cdcooper IN crapalt.cdcooper%TYPE
+                     ,pr_nrdconta IN crapalt.nrdconta%TYPE
+                     ,pr_dtmvtolt IN crapalt.dtaltera%TYPE
+                     ,pr_dtrecadast PLS_INTEGER) IS
+        SELECT 1
+          FROM crapalt a
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND tpaltera = 1
+           AND a.dtaltera > pr_dtmvtolt - pr_dtrecadast;
+    rw_crapalt cr_crapalt%ROWTYPE;
+		
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
@@ -1367,6 +1398,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		
 		-- Incluir
 		IF pr_cddopcao = 'I' THEN
+      
+      -- Le tabela de dias de recadastro
+      OPEN cr_craptab(pr_cdcooper => vr_cdcooper
+                     ,pr_nmsistem => 'CRED'
+                     ,pr_tptabela => 'GENERI'
+                     ,pr_cdempres => vr_cdcooper
+                     ,pr_cdacesso => 'ATUALIZCAD'
+                     ,pr_tpregist => 0);
+      FETCH cr_craptab INTO rw_craptab;      
+      
+      IF cr_craptab%FOUND THEN
+        CLOSE cr_craptab;
+        -- Verifica se a conta esta recadastrada
+        OPEN cr_crapalt(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                       ,pr_dtrecadast => rw_craptab.dstextab);
+        FETCH cr_crapalt INTO rw_crapalt;
+        -- se nao encontrar deve solicitar revisao cadastral
+        IF cr_crapalt%NOTFOUND THEN
+          CLOSE cr_crapalt;
+          vr_cdcritic := 763;
+          vr_dscritic := NULL;
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapalt;
+      ELSE
+        CLOSE cr_craptab;
+      END IF;            
+      
 			pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Dados><nrctrlim>' || rw_craplim.nrctrlim || '</nrctrlim>' ||
 																		 '<vllimdsp>' || rw_craplim.vllimdis || '</vllimdsp>' || 
