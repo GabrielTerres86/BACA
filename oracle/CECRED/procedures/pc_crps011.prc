@@ -112,6 +112,10 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
 
                27/06/2016 - M325 - Tributacao Juros ao Capital (Guilherme/SUPERO)
 
+               23/08/2017 - M325 - Alterar a forma de processamento dos históricos de 
+                            pagamento de empréstimos, afim de resolver problema de performance, 
+                            causado pela leitura dos registros da craplcm (Renato Darosci)
+
                04/09/2017 - M439 Modificado cursor cr_craplct para somar todos 
                             lancamentos dentro do ano (Tiago/Thiago #635669)
     ............................................................................ */
@@ -557,6 +561,18 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   rw_crapcpc cr_crapcpc%ROWTYPE;
 
   -- Calculo dos Valores Pagos em Emprestimos e Financiamentos no ano
+  CURSOR cr_apuraepr(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                     pr_cdoperac IN NUMBER,
+                     pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS 
+    SELECT t.nrdconta
+         , SUM(t.vloperacao)  vllanmto
+      FROM cecred.tbcc_operacoes_diarias t
+     WHERE t.cdcooper   = pr_cdcooper
+       AND t.cdoperacao = pr_cdoperac
+       AND t.dtoperacao BETWEEN trunc(pr_dtmvtolt, 'yyyy') and pr_dtmvtolt
+     GROUP BY t.nrdconta;
+  
+  /*  NÃO DEVERÁ MAIS LER A TABELA DE LANÇAMENTOS
   cursor cr_craplcm (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrdconta in crapass.nrdconta%type,
                      pr_dtmvtolt in crapdat.dtmvtolt%type) is
@@ -576,7 +592,8 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
        and lcm.cdhistor in (108, 275, 1539, 393, 1706, 99)
        and lcm.dtmvtolt between trunc(pr_dtmvtolt, 'yyyy') and pr_dtmvtolt
      group by lcm.cdcooper, lcm.nrdconta;
-  rw_craplcm cr_craplcm%ROWTYPE;
+  rw_craplcm cr_craplcm%ROWTYPE;*/
+
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
@@ -605,6 +622,9 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   vr_sldrgttt     decimal(25,8)  := 0;
   vr_vlsdrdca     decimal(25,8)  := 0;
   vr_sldpresg     decimal(25,8)  := 0;
+
+  -- Parametro com o código de operação dos lançamentos de histórico
+  vr_cdoperac_pagepr   NUMBER;
 
   -- PL/Table para armazenar os lançamentos das contas
   type typ_aplica is record (nraplica      craprda.nraplica%type,
@@ -650,6 +670,10 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   type typ_prgepr is record (nrdconta        craprda.nrdconta%TYPE,
                              vlsdpgepr       crapepr.vlsdeved%TYPE);
   type typ_tab_pgtepr is table of typ_prgepr index by varchar2(10); -- O índice será o nrdconta
+  
+  -- table para guardar a apuração de valores de empréstimo por conta
+  TYPE typ_apura_epr IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+  vr_apuracao_epr     typ_apura_epr;
 
   -- Variavel para Pagamento de Emprestimos
   vr_pgtoepr       typ_tab_pgtepr;
@@ -744,6 +768,11 @@ BEGIN
     END IF;
   END IF;
 
+  -----------------------------------------------------------------------------------------------
+  -- Buscar o código de operação para os registros de lançamento de históricos de empréstimos
+  vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+  -----------------------------------------------------------------------------------------------
+  
   -- Regra de negócio do programas --
 
   -- Leitura de dados de ufir
@@ -890,6 +919,19 @@ BEGIN
     vr_craprda(lpad(rw_crapepr.nrdconta, 10, '0')).vlsdeved := nvl(rw_crapepr.vlsdeved, 0);
   end loop;
 
+  ------------------------------------------------------------------------------
+  -- Deve executar a rotina de apuração para o dia do fechamento, afim de 
+  -- calcular os valores para o último dia do mês (Renato Darosci - 23/08/2017)
+  PAGA0002.pc_apura_lcm_his_emprestimo(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtrefere => rw_crapdat.dtmvtolt);
+                                      
+   -- Após realizar a apuração dos dados ... deve agrupar os valores na tabela de memória
+   FOR rw_apuraepr IN cr_apuraepr(pr_cdcooper
+                                 ,vr_cdoperac_pagepr
+                                 ,rw_crapdat.dtmvtolt) LOOP
+     vr_apuracao_epr(rw_apuraepr.nrdconta) := rw_apuraepr.vllanmto;
+   END LOOP;
+  ------------------------------------------------------------------------------
 
   -- Busca o registro de saldo dos associados e zera os totalizadores anuais
   for rw_crapsld in cr_crapsld (pr_cdcooper,
@@ -1010,9 +1052,18 @@ BEGIN
 
     END LOOP;
 
-
-    -- Pagamento de Emprestimos/Financiamentos
-    IF cr_craplcm%ISOPEN THEN
+    ----------------------------------------------------------------------
+    -- Realizar a leitura da tabela de auditoria ao invés da tabela de 
+    -- lançamentos. (Renato Darosci - 23/08/2017)
+    ----------------------------------------------------------------------
+    vr_totvleprpgt := 0;
+    
+    -- Verifica se existe dados para a conta
+    IF vr_apuracao_epr.EXISTS(rw_crapsld.nrdconta) THEN
+      vr_totvleprpgt := NVL( vr_apuracao_epr(rw_crapsld.nrdconta) , 0);
+    END IF;
+    
+    /*IF cr_craplcm%ISOPEN THEN
       CLOSE cr_craplcm;
     END IF;
     open cr_craplcm(pr_cdcooper,
@@ -1029,8 +1080,8 @@ BEGIN
     END IF;
     IF cr_craplcm%ISOPEN THEN
       CLOSE cr_craplcm;
-    END IF;
-
+    END IF;*/
+    ----------------------------------------------------------------------
 
     -- Preparar informações cfme existência ou não da RDA
     if vr_craprda.exists(vr_ind_craprda) then

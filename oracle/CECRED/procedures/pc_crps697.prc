@@ -23,6 +23,8 @@ BEGIN
      Alterações: 29/12/2015 - Incluso tratamento 'DD/MM/YYYY' ao usar o to_date (Daniel)
 
 	             04/10/2016 - Ajuste erro encontrado na execução do processo Batch (Daniel)
+
+                 18/08/2017 - Ajuste para não remover agendamentos com pagamento no ano seguinte (rafael faria - supero)
     ...............................................................................*/
 
     DECLARE
@@ -128,7 +130,8 @@ BEGIN
      WHERE gps.cdcooper   = pr_cdcooper
        AND gps.insituacao = 0 -- FIXO 0 - Agendadas
        AND gps.dtagendamento >= to_date('01/01/'||TO_CHAR(pr_dtmvtolt, 'RRRR'),'DD/MM/YYYY') -- 01/01/ do ano da pr_dtmvtolt (ano que finalizou)
-       AND gps.dtagendamento <= to_date('31/12/'||TO_CHAR(pr_dtmvtolt, 'RRRR'),'DD/MM/YYYY'); -- 31/12/ do ano da pr_dtmvtolt (ano que finalizou)
+       AND gps.dtagendamento <= to_date('31/12/'||TO_CHAR(pr_dtmvtolt, 'RRRR'),'DD/MM/YYYY') -- 31/12/ do ano da pr_dtmvtolt (ano que finalizou)
+       AND gps.dtdebito >= to_date('01/02/' || (TO_CHAR(pr_dtmvtolt,'RRRR')+1) , 'DD/MM/YYYY'); -- somente que tiver pagamento acima de janeiro do proximo ano chamado 586628
     rw_pendentes_gps cr_pendentes_gps%ROWTYPE;
 
 
