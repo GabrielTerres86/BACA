@@ -1,27 +1,27 @@
-CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
+CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
 
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : GENE0002
     Sistema  : Rotinas genéricas para mascaras e relatórios
     Sigla    : GENE
     Autor    : Marcos E. Martini - Supero
     Data     : Novembro/2012.                   Ultima atualizacao: 05/02/2016
-  
+
    Dados referentes ao programa:
-  
+
    Frequencia: -----
    Objetivo  : Definir variaveis e funções para auxilio de mascaras e rotinas de relatórios
-                
+
                27/02/2015 - Incluido o nome do arquivo .pdf no retorno da variavel pr_nmarqpdf,
                             feito tratamento para arquivos .lst na procedure pc_envia_arquivo_web
-                            (Jean Michel).                  
-  
-               22/09/2015 - Adicionar validação na procedure pc_solicita_relato para quando o 
+                            (Jean Michel).
+
+               22/09/2015 - Adicionar validação na procedure pc_solicita_relato para quando o
                             relatorio for solicitado durante o processo batch, o erro seja escrito
                             no proc_batch, caso contrario no proc_message (Douglas - Chamado 306525)
 
-               05/02/2016 - Realizado ajustes na rotina para efetuar a copia 
+               05/02/2016 - Realizado ajustes na rotina para efetuar a copia
                             correta dos arquivos para a intranet
                             (Adriano ).
   ------------------------------------------------------------------------------------------------------------------*/
@@ -34,6 +34,11 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
           ,dssepdec VARCHAR2(1));
   TYPE typ_tab_nlspar IS TABLE OF typ_reg_nlspar INDEX BY PLS_INTEGER;
   vr_nlspar typ_tab_nlspar;
+
+  -- Tabela de memória para armazenar o conteudo de um arquivo XML
+  TYPE typ_reg_tabela IS
+    RECORD(dslinha varchar2(1000));
+  TYPE typ_tab_tabela IS TABLE OF typ_reg_tabela INDEX BY PLS_INTEGER;
 
   /* Função genérica para aplicar uma maskara ao conteudo passado */
   FUNCTION fn_mask(pr_dsorigi IN VARCHAR2
@@ -110,7 +115,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
   PROCEDURE pc_efetua_copia_pdf (pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                                 ,pr_cdagenci IN INTEGER                   --> Codigo da agencia para erros
                                 ,pr_nrdcaixa IN INTEGER                   --> Codigo do caixa para erros
-                                ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo PDF  a ser gerado                                 
+                                ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo PDF  a ser gerado
                                 ,pr_des_reto OUT VARCHAR2                 --> Saída com erro
                                 ,pr_tab_erro OUT gene0001.typ_tab_erro);  --> tabela de erros
 
@@ -118,16 +123,16 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
   PROCEDURE pc_efetua_copia_arq_ib(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                                   ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo a ser enviado
                                   ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
-  
+
   --> Publicar arquivo de controle na intranet
-  PROCEDURE pc_publicar_arq_intranet;   
-  
+  PROCEDURE pc_publicar_arq_intranet;
+
   /* Procedure para converter proposta para o formato PDF */
   PROCEDURE pc_gera_pdf_impressao(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                                  ,pr_nmarqimp IN VARCHAR2                  --> Arquivo a ser convertido para pDf
-                                 ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo PDF  a ser gerado                                 
+                                 ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo PDF  a ser gerado
                                  ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
-  
+
   /* Procedimento para geração de PDFs */
   PROCEDURE pc_cria_PDF(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                        ,pr_nmorigem IN VARCHAR2                  --> Path arquivo origem
@@ -142,7 +147,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                          ,pr_lsarqpdf  IN VARCHAR2           --> Lista dos nomes dos arquivos PDFs
                          ,pr_nmpdfsai  IN VARCHAR2           --> Diretorio + nome do arquivo PDF de saida
                          ,pr_dscritic OUT VARCHAR2);        --> Critica caso ocorra
-                         
+
   /* Procedimento para tratamento de arquivos ZIP*/
   PROCEDURE pc_zipcecred(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                         ,pr_tpfuncao  IN VARCHAR2 DEFAULT 'A'      --> Tipo de função (A-Add;E-Extract;V-View)
@@ -304,28 +309,35 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
 
 
   -- Procedure para importar arquivo XML para XMLtype
-  PROCEDURE pc_arquivo_para_XML (pr_nmarquiv IN VARCHAR2       --> Nome do caminho completo) 
+  PROCEDURE pc_arquivo_para_XML (pr_nmarquiv IN VARCHAR2       --> Nome do caminho completo)
                                 ,pr_tipmodo  IN NUMBER DEFAULT 1 --> Tipo de modo de carregamento 1 - Normal(utl_file) 2 - Alternativo(usando blob)
                                 ,pr_xmltype  OUT XmlType       --> Saida para o XML
                                 ,pr_des_reto OUT VARCHAR2      --> Descrição OK/NOK
-                                ,pr_dscritic OUT VARCHAR2);    --> Descricao Erro    
-                                
+                                ,pr_dscritic OUT VARCHAR2);    --> Descricao Erro
+
   -- Função para abreviar string
   FUNCTION fn_abreviar_string (pr_nmdentra IN VARCHAR2                  --> Nome de Entrada
-                              ,pr_qtletras IN INTEGER) RETURN VARCHAR2; --> Quantidade de Letras                                
+                              ,pr_qtletras IN INTEGER) RETURN VARCHAR2; --> Quantidade de Letras
 
   -- Função para centralizar e preencher texto a direita e esquerda
   FUNCTION fn_centraliza_texto (pr_dstexto  IN VARCHAR2       --> Texto de Entrada
-                               ,pr_dscarac  IN VARCHAR2       --> Caracter para preencher 
+                               ,pr_dscarac  IN VARCHAR2       --> Caracter para preencher
                                ,pr_tamanho  IN INTEGER) RETURN VARCHAR2; --> Tamanho da String
 
   -- Função para retornar o valor em extenso
   FUNCTION fn_valor_extenso (pr_idtipval  IN VARCHAR2      --> Tipo de valor (M-Monetario, P-Porcentagem, I-Inteiro)
                             ,pr_valor     IN VARCHAR2   )  --> Valor a ser convertido para extenso
-                            RETURN VARCHAR2;                               
-END gene0002;
+                            RETURN VARCHAR2;
+
+  -- Procedure para importar arquivo XML para Tabela em memória
+  PROCEDURE pc_arquivo_para_table_of (pr_nmarquiv IN VARCHAR2                     --> Nome do caminho completo)
+                                     ,pr_table_of OUT GENE0002.typ_tab_tabela --> Saida para o array
+                                     ,pr_des_reto OUT VARCHAR2                    --> Descrição OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2);                  --> Descricao Erro
+
+END GENE0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.GENE0002 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -353,12 +365,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             11/03/2016 - Na procedure pc_gera_relato ao ocorrer erro na exclusão do xml foi modificado
   --                          para logar no proc_message e não mais no proc_batch conforme solicitado
-  --                          no chamado 411723 (Kelvin)                                 
+  --                          no chamado 411723 (Kelvin)
   --
   --             05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
-  --                          (Adriano).        
+  --                          (Adriano).
   --
-  --             29/09/2016 - #523947 No procedimento pc_controle_filas_relato, incluído log de início, fim e 
+  --             29/09/2016 - #523947 No procedimento pc_controle_filas_relato, incluído log de início, fim e
   --                          erro na execução do job (Carlos)
   --
   --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
@@ -1278,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Retornando a critica para o programa chamdador
       pr_des_erro := 'Erro na rotina GENE0002.pc_efetua_copia_pdf_ib. '||sqlerrm;
   END pc_efetua_copia_arq_ib;
-  
+
   /*****************************************************
   **   Publicar arquivo de controle na intranet       **
   ******************************************************/
@@ -1295,7 +1307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
      Frequencia: Em job de 30 em 30 min.
      Objetivo  : Buscar arquivos pendentes na TMPPDF da coop e enviar arquivo de controle
-                 para o servidor da intranet. 
+                 para o servidor da intranet.
 
      Alteracoes:
 
@@ -1306,15 +1318,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       SELECT cop.dsdircop,
              cop.cdcooper
         FROM crapcop cop,
-             crapdat dat        
-       WHERE cop.cdcooper <> 3 
+             crapdat dat
+       WHERE cop.cdcooper <> 3
          AND cop.flgativo = 1
          AND cop.cdcooper = dat.cdcooper
          AND dat.inproces = 1
          ORDER BY cdcooper DESC;
-         
+
     rw_crapcop cr_crapcop%ROWTYPE;
-    
+
     --Tabela para receber arquivos lidos no unix
     vr_tab_arquivo  TYP_SIMPLESTRINGARRAY:= cecred.TYP_SIMPLESTRINGARRAY();
     vr_cdprogra     VARCHAR2(200) := 'pc_publicar_arq_intranet';
@@ -1332,34 +1344,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_dthora_inic  DATE;
     vr_dthora_fim   DATE;
   BEGIN
-    
+
     vr_cdcooper := 1;
     vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-    vr_dscomora := gene0001.fn_param_sistema('CRED',3,'SCRIPT_EXEC_SHELL');  
-    
+    vr_dscomora := gene0001.fn_param_sistema('CRED',3,'SCRIPT_EXEC_SHELL');
+
     --> Validar horario que a rotina pode rodar
-    vr_dsinterval := gene0001.fn_param_sistema('CRED',3,'INTERVAL_PUBLIC_INTRANET');  
-    
-    vr_dthora_inic := to_date(gene0002.fn_busca_entrada(pr_postext => 1, 
-                                                        pr_dstext  => vr_dsinterval, 
+    vr_dsinterval := gene0001.fn_param_sistema('CRED',3,'INTERVAL_PUBLIC_INTRANET');
+
+    vr_dthora_inic := to_date(GENE0002.fn_busca_entrada(pr_postext => 1,
+                                                        pr_dstext  => vr_dsinterval,
                                                         pr_delimitador => ';'),
                               'HH24:MI');
-    
-    vr_dthora_fim  := to_date(gene0002.fn_busca_entrada(pr_postext => 2, 
-                                                        pr_dstext  => vr_dsinterval, 
+
+    vr_dthora_fim  := to_date(GENE0002.fn_busca_entrada(pr_postext => 2,
+                                                        pr_dstext  => vr_dsinterval,
                                                         pr_delimitador => ';'),
                               'HH24:MI');
-        
-    IF to_char(SYSDATE,'HH24MI') NOT BETWEEN to_char(vr_dthora_inic,'HH24MI') AND 
-                                             to_char(vr_dthora_fim,'HH24MI') THEN      
+
+    IF to_char(SYSDATE,'HH24MI') NOT BETWEEN to_char(vr_dthora_inic,'HH24MI') AND
+                                             to_char(vr_dthora_fim,'HH24MI') THEN
       RETURN;
-    END IF;     
-    
+    END IF;
+
     --> Buscar coops ativas para verificação dos arquivos pendentes
     FOR rw_crapcop IN cr_crapcop LOOP
       BEGIN
         vr_cdcooper := rw_crapcop.cdcooper;
-        
+
         --> Definir nome dos arquivos
         vr_nmarqctl := 'controle.'||rw_crapcop.dsdircop||'.txt';
         vr_nmarqctl_tmp := 'controle.'||rw_crapcop.dsdircop||'_'||to_char(SYSDATE,'SSSSS')||'.tmp';
@@ -1368,26 +1380,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C',
                                              pr_cdcooper => vr_cdcooper,
                                              pr_nmsubdir => NULL);
-        
+
         --> Listar arquivos da pasta tmppdf
         gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo,
                                    pr_path          => vr_dsdircop||'/tmppdf/',
-                                   pr_pesq          => '%');  
-        
+                                   pr_pesq          => '%');
+
         IF vr_tab_arquivo.count > 0 THEN
           --> Listar os arquivos encontrados
           FOR idx IN vr_tab_arquivo.first..vr_tab_arquivo.last LOOP
-            
+
             --> Concatenar os arquivos no arquivo de controle
             vr_comando:= 'cat '||vr_dsdircop||'/tmppdf/'||vr_tab_arquivo(idx)||
                          ' >> '||vr_dsdircop||'/tmppdf/'||vr_nmarqctl_tmp;
-              
+
             --Executar o comando no unix
             GENE0001.pc_OScommand (pr_typ_comando => 'S'
                                   ,pr_des_comando => vr_comando
                                   ,pr_typ_saida   => vr_typ_saida
                                   ,pr_des_saida   => vr_dscritic );
-            
+
             IF vr_typ_saida = 'ERR' THEN
               vr_dscritic := 'Erro ao concatenar arquivo: '||vr_dscritic;
               RAISE vr_exc_erro;
@@ -1406,17 +1418,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             IF vr_typ_saida = 'ERR' THEN
               vr_dscritic := 'Erro ao renomear arquivo: '||vr_dscritic;
               RAISE vr_exc_erro;
-            END IF;        
+            END IF;
 
           END LOOP; --> Fim loop arquivos
 
           --> Copiar arquivo de controle para servidor
           vr_comando:= ' sudo /usr/local/cecred/bin/cp_pkghttpintranet.sh '|| rw_crapcop.dsdircop ||' '|| --> nome coop
                         vr_dsdircop||'/tmppdf/'|| vr_nmarqctl_tmp ||' '||     --> Arquivo origem
-                        vr_nmarqctl;                                          --> Nome do arq. destino                      
-                                  
+                        vr_nmarqctl;                                          --> Nome do arq. destino
+
           vr_comando := vr_dscomora ||' shell_remoto ' || vr_comando;
-          
+
           -- alterar o diretorio pois como será executado via ssh no servidor progress
           vr_comando := regexp_replace(vr_comando,'\/coop[a-z,0-9]*\/','/coop/');
           --Executar o comando no unix
@@ -1429,11 +1441,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             vr_dscritic := 'Erro ao enviar arquivo controle: '||vr_dscritic;
             RAISE vr_exc_erro;
           END IF;
-          
+
           --> mover arquivo de controle para pasta salvar
           vr_comando:= 'mv '|| vr_dsdircop||'/tmppdf/'|| vr_nmarqctl_tmp ||' '||        --> Arquivo origem
                                vr_dsdircop||'/salvar/'|| vr_nmarqctl||'.'||
-                               to_char(SYSDATE,'DDMM')||'.'||gene0002.fn_busca_time; --> Nome do arq. destino
+                               to_char(SYSDATE,'DDMM')||'.'||GENE0002.fn_busca_time; --> Nome do arq. destino
 
           --Executar o comando no unix
           GENE0001.pc_OScommand (pr_typ_comando => 'S'
@@ -1445,7 +1457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             vr_dscritic := 'Erro ao mover arquivo controle para salvar: '||vr_dscritic;
             RAISE vr_exc_erro;
           END IF;
-          
+
           --> Remover arquivos ja enviados
           vr_comando:= 'rm '||vr_dsdircop||'/tmppdf/remover_*';
 
@@ -1459,8 +1471,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
             RAISE vr_exc_erro;
           END IF;
-          
-        END IF;  
+
+        END IF;
       -- Exception por cooperativa, para execução de uma não interferir as demais
       EXCEPTION
         WHEN vr_exc_erro THEN
@@ -1477,9 +1489,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                      pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                         ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
                                      pr_nmarqlog     => vr_nmarqlog);
-      END; 
+      END;
     END LOOP; --> Fim loop coop
-    
+
     COMMIT;
 
   EXCEPTION
@@ -1800,43 +1812,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Objetivo  : Procedimento para juntar/contatenar 2 ou mais arquivos PDFs separados por ;
 
-       Alteracoes: 
+       Alteracoes:
     ..............................................................................*/
-    
+
     vr_exc_erro   EXCEPTION;
     vr_dscritic   VARCHAR2(1000);
-    
-    vr_dsscript   VARCHAR2(1000); 
-    vr_dscomand   VARCHAR2(1000); 
+
+    vr_dsscript   VARCHAR2(1000);
+    vr_dscomand   VARCHAR2(1000);
     vr_typsaida   VARCHAR2(100);
-    
+
   BEGIN
-   
+
     IF pr_dsdirarq IS NULL THEN
       vr_dscritic := 'Diretorio dos arquivos PDFs não informado.';
-      RAISE vr_exc_erro;    
-    END IF; 
-    
+      RAISE vr_exc_erro;
+    END IF;
+
     IF pr_lsarqpdf IS NULL THEN
       vr_dscritic := 'Lista de arquivos PDFs não informada.';
-      RAISE vr_exc_erro;    
-    END IF; 
-    
+      RAISE vr_exc_erro;
+    END IF;
+
     IF pr_nmpdfsai IS NULL THEN
       vr_dscritic := 'Saida do PDF não informada.';
-      RAISE vr_exc_erro;    
+      RAISE vr_exc_erro;
     END IF;
-    
+
     --> Buscar script de merge
-    vr_dsscript :=  gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
-                                               pr_cdcooper => 0, 
+    vr_dsscript :=  gene0001.fn_param_sistema( pr_nmsistem => 'CRED',
+                                               pr_cdcooper => 0,
                                                pr_cdacesso => 'SCRIPT_MERGEPDF');
-                                              
-                                              
+
+
     vr_dscomand := vr_dsscript||'  "'||pr_dsdirarq ||'" "'||
                    pr_lsarqpdf||'" "'||pr_nmpdfsai||'"';
 
-  
+
     gene0001.pc_OScommand(pr_typ_comando => 'S'
                          ,pr_des_comando => vr_dscomand
                          ,pr_typ_saida   => vr_typsaida
@@ -1847,16 +1859,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dscritic := substr(vr_dscritic,instr(vr_dscritic,'NOK') + 4);
       vr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||substr(vr_dscritic,1,60);
       RAISE vr_exc_erro;
-    END IF;                                          
-  
-  
-  EXCEPTION 
+    END IF;
+
+
+  EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||SQLERRM;
   END pc_Juntar_Pdf;
-  
+
   /* Procedimento para tratamento de arquivos ZIP*/
   PROCEDURE pc_zipcecred(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                         ,pr_tpfuncao  IN VARCHAR2 DEFAULT 'A'      --> Tipo de função (A-Add;E-Extract;V-View)
@@ -2227,7 +2239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Prepara a linha com as informações para gerar o TXT
         vr_setlinha := RPad(rw_crapcop.nmrescop,20,' ')          ||';'||
                        To_Char(pr_dtmvtolt,'YYYY;MM;DD')         ||';'||
-                       gene0002.fn_mask(vr_tprelato,'z9')        ||';'||
+                       GENE0002.fn_mask(vr_tprelato,'z9')        ||';'||
                        RPAD(vr_nmarqpdf,40,' ')                  ||';'||
                        RPAD(Upper(vr_nmrelato),50,' ')           ||';';
         -- Adiciona a linha de cabecalho
@@ -2242,7 +2254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           RAISE vr_exc_erro;
         END;
         -- Executar a criação do PDF
-        gene0002.pc_cria_PDF(pr_cdcooper => pr_cdcooper
+        GENE0002.pc_cria_PDF(pr_cdcooper => pr_cdcooper
                             ,pr_nmorigem => pr_caminho|| '/' || pr_nmarqimp
                             ,pr_ingerenc => vr_dsgerenc
                             ,pr_tirelato => vr_nmformul
@@ -2444,13 +2456,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                           para passar a usar o script concatena_relatorios.sh
     --                           (Adriano).
     --
-    --              02/08/2016 - Ajuste na rotina de geração para utilizar a versão da rotina java de geração do 
+    --              02/08/2016 - Ajuste na rotina de geração para utilizar a versão da rotina java de geração do
     --                           relatorio conforme a informada pelo programa gerador.
     --                           PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
     --
     --              08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
     --                           append, para garantir processo.
-    --                           SD572620 (Odirlei-AMcom)         
+    --                           SD572620 (Odirlei-AMcom)
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2579,7 +2591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Trocar a extensão do arquivo
         vr_nom_arqxml := REPLACE(vr_nom_arqxml,gene0001.fn_extensao_arquivo(vr_nom_arqxml),'xml');
         -- Gerar o arquivo de XML com mesmo nome e na mesma pasta do arquivo de saída
-        gene0002.pc_XML_para_arquivo(pr_XML      => rw_crapslr.dsxmldad
+        GENE0002.pc_XML_para_arquivo(pr_XML      => rw_crapslr.dsxmldad
                                     ,pr_caminho  => vr_nom_direto
                                     ,pr_arquivo  => vr_nom_arqxml
                                     ,pr_des_erro => vr_des_saida);
@@ -2654,13 +2666,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         ELSE
           vr_flsemqueb := 0;
         END IF;
-        
+
         --> nome do parametro do script do relatorio
         vr_scriptrl := 'SCRIPT_IREPORT';
         IF rw_crapslr.nrvergrl > 0 THEN
           vr_scriptrl := vr_scriptrl||'_V'||rw_crapslr.nrvergrl;
         END IF;
-        
+
         -- Monta comando para execução via Shell (Java), caso os parâmetros do sistemas sejam nulos retorna o path padrão
         vr_des_comando := nvl(gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,vr_scriptrl), 'java -Xms512m -Xmx4000m -jar /usr/coop/ireport/_GeraRelatorio.jar')
                        || ' "'  ||  vr_nom_direto||'/'||vr_nom_arqxml || '" "' || rw_crapslr.dsxmlnod || '" "'
@@ -2840,9 +2852,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
                      31/08/2015 - Inclusao do parametro flappend na pc_clob_para_arquivo.
                                   (Jaison/Marcos-Supero)
-                     
-                     29/12/2015 - Controlar lock na tabela crapslr, para que o lock ocorra a nivel de registro 
-                                  e não toda a consulta SD379026 (Odirlei-AMcom)             
+
+                     29/12/2015 - Controlar lock na tabela crapslr, para que o lock ocorra a nivel de registro
+                                  e não toda a consulta SD379026 (Odirlei-AMcom)
 
        ............................................................................. */
     DECLARE
@@ -2900,7 +2912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                  ,slr.nrseqsol;     --> e dentro da mesma prioridade os mais antigos primeiro
 
       rw_crapslr cr_crapslr%ROWTYPE;
-      
+
       -- lockar registro, porém sem aguardar em caso se ja estar lockado
       CURSOR cr_crapslr_rowid (pr_rowid ROWID) IS
         SELECT slr.rowid,
@@ -2909,7 +2921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
          WHERE slr.ROWID = pr_rowid
            FOR UPDATE NOWAIT; --> Lockando o registro
       rw_crapslr_rowid cr_crapslr_rowid%ROWTYPE;
-      
+
       -- Configuração do relatório
       CURSOR cr_craprel(pr_cdcooper IN craprel.cdcooper%TYPE
                        ,pr_cdrelato IN craprel.cdrelato%TYPE) IS
@@ -2925,7 +2937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Variavel para armazenar o horário de início da solicitação.
       vr_dthorain DATE;
       -- Lista de diretórios para cópia
-      vr_lista_copia gene0002.typ_split; --> Split de caminhos
+      vr_lista_copia GENE0002.typ_split; --> Split de caminhos
       -- Tipo de saída e comando Host
       vr_typ_said VARCHAR2(100);
       vr_des_comando VARCHAR2(4000);
@@ -2945,9 +2957,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dsdirconv   VARCHAR2(100);
       -- Tamanho do arquivo
       vr_qtd_bytes NUMBER;
-      
+
     BEGIN
-      
+
       -- Efetuar laço para processar a quantidade maxima de relatórios
       LOOP
         -- Busca quantidade maxima de relatórios por Job na fila
@@ -2974,38 +2986,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         LOOP
           FETCH cr_crapslr INTO rw_crapslr;
           IF cr_crapslr%FOUND THEN
-          
+
             -- Lockar o registro
             BEGIN
-              
+
               OPEN cr_crapslr_rowid (pr_rowid => rw_crapslr.rowid);
-              FETCH cr_crapslr_rowid INTO rw_crapslr_rowid; 
+              FETCH cr_crapslr_rowid INTO rw_crapslr_rowid;
               IF cr_crapslr_rowid%NOTFOUND THEN
                 CLOSE cr_crapslr_rowid;
                 EXIT;
               ELSE
                 CLOSE cr_crapslr_rowid;
-                --> Garantir que nesse meio tempo outro processo já lockou 
+                --> Garantir que nesse meio tempo outro processo já lockou
                 -- e esta processando
                 IF rw_crapslr_rowid.dtiniger IS NOT NULL AND
-                   pr_nrseqsol IS NULL THEN                  
+                   pr_nrseqsol IS NULL THEN
                   -- Se estiver busca o proximo
                   continue;
-                END IF;              
-              END IF;                             
+                END IF;
+              END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 IF cr_crapslr_rowid%ISOPEN THEN
                   CLOSE cr_crapslr_rowid;
-                END IF;    
-              
-                -- caso registro já esteja lockado busca o proximo              
-                continue;              
+                END IF;
+
+                -- caso registro já esteja lockado busca o proximo
+                continue;
             END;
-          END IF;  
-          EXIT;          
-        END LOOP; 
-        
+          END IF;
+          EXIT;
+        END LOOP;
+
         -- Somente se encontrou registro
         IF cr_crapslr%FOUND THEN
           -- Fechar o cursor
@@ -3112,7 +3124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                 -- Fechar cursor
                 CLOSE cr_craprel;
                 -- Executar a criação do PDF
-                gene0002.pc_cria_PDF(pr_cdcooper => rw_crapslr.cdcooper
+                GENE0002.pc_cria_PDF(pr_cdcooper => rw_crapslr.cdcooper
                                     ,pr_nmorigem => vr_dsdir||'/'||vr_dsarq
                                     ,pr_ingerenc => vr_dsgerenc
                                     ,pr_tirelato => NVL(rw_crapslr.nmformul,'padrao')
@@ -3140,7 +3152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               -- Troca todas as virgulas por ponto e virgula, para facilitar a busca abaixo
               rw_crapslr.dspathcop := REPLACE(rw_crapslr.dspathcop,',',';');
               -- Quebra string retornada da consulta pelo delimitador ';'
-              vr_lista_copia := gene0002.fn_quebra_string(rw_crapslr.dspathcop, ';');
+              vr_lista_copia := GENE0002.fn_quebra_string(rw_crapslr.dspathcop, ';');
               -- Se foi solicitada a cópia do arquivo em PDF
               IF rw_crapslr.dsextcop = 'pdf' THEN
                 -- Copiaremos o PDF
@@ -4006,7 +4018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               ,slr.dsarqsai
               ,slr.dtiniger
               ,slr.dtfimger
-              ,gene0002.fn_calc_difere_datas(slr.dtiniger,slr.dtfimger) qttmpexe
+              ,GENE0002.fn_calc_difere_datas(slr.dtiniger,slr.dtfimger) qttmpexe
               ,slr.dserrger
               ,ROW_NUMBER() OVER(PARTITION BY cdcooper
                                      ORDER BY cdcooper) nrseq_coop
@@ -4059,39 +4071,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             -- Montar o início da tabela (Agora num clob para evitar estouro)
             dbms_lob.createtemporary(vr_dshmtl, TRUE, dbms_lob.CALL);
             dbms_lob.open(vr_dshmtl,dbms_lob.lob_readwrite);
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<table border="1" style="width:500px; margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;" >');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<table border="1" style="width:500px; margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;" >');
             -- Montando header
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>NrSeqSol</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Hora</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Programa</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Fila</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Jasper</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Destino</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Início</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Fim</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Tempo Execução</th>');
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Erro encontrado</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>NrSeqSol</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Hora</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Programa</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Fila</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Jasper</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Destino</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Início</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Fim</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Tempo Execução</th>');
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Erro encontrado</th>');
           END IF;
           -- Para cada registro, montar sua tr
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<tr>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<tr>');
           -- E os detalhes do registro
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td align="right">'||to_char(rw_crapslr.nrseqsol)||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td align="center">'||to_char(rw_crapslr.dtsolici,'hh24:mi:ss')||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.cdprogra||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.cdfilrel||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dsjasper||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dsarqsai||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||to_char(rw_crapslr.dtiniger,'hh24:mi:ss')||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||to_char(rw_crapslr.dtfimger,'hh24:mi:ss')||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.qttmpexe||'</td>');
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dserrger||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td align="right">'||to_char(rw_crapslr.nrseqsol)||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td align="center">'||to_char(rw_crapslr.dtsolici,'hh24:mi:ss')||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.cdprogra||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.cdfilrel||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dsjasper||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dsarqsai||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||to_char(rw_crapslr.dtiniger,'hh24:mi:ss')||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||to_char(rw_crapslr.dtfimger,'hh24:mi:ss')||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.qttmpexe||'</td>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_crapslr.dserrger||'</td>');
           -- Encerrar a tr
-          gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</tr>');
+          GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</tr>');
           -- No ultimo registro da coop
           IF rw_crapslr.nrseq_coop = rw_crapslr.conta_coop THEN
             -- Enfim, encerrar o texto e o clob
-            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'',true);
+            GENE0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'',true);
             -- Gerar o arquivo na pasta converte
             pc_clob_para_arquivo(pr_clob     => vr_dshmtl
                                 ,pr_caminho  => vr_dsdircop
@@ -4242,14 +4254,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
-        --> Controlar geração de log de execução dos jobs 
+        --> Controlar geração de log de execução dos jobs
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                  ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-      END pc_controla_log_batch;     
+      END pc_controla_log_batch;
 
     BEGIN
 
@@ -4302,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         CLOSE cr_crapslr_fila;
         -- Somente continuar se a fila possui relatórios pendentes
         IF vr_qtrel_penden > 0 THEN
-          
+
           -- Log de inicio de execucao
           pc_controla_log_batch(pr_dstiplog => 'I');
 
@@ -4335,7 +4347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               vr_dsplsql := 'declare'||chr(10)
                          || '  vr_des_erro VARCHAR2(4000);'||chr(10)
                          || 'begin' ||chr(10)
-                         || '  gene0002.pc_process_relato_penden(pr_cdfilrel=>'''||rw_crapfil.cdfilrel||''',pr_des_erro=>vr_des_erro);'||chr(10)
+                         || '  GENE0002.pc_process_relato_penden(pr_cdfilrel=>'''||rw_crapfil.cdfilrel||''',pr_des_erro=>vr_des_erro);'||chr(10)
                          || 'end;';
               -- Devemos criar um novo JOB para a fila
               gene0001.pc_submit_job(pr_cdcooper  => 0             --> Código da cooperativa
@@ -4347,10 +4359,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                     ,pr_des_erro  => vr_des_erro);
               -- Testar saida com erro
               IF vr_des_erro IS NOT NULL THEN
-                
+
                 pc_controla_log_batch(pr_dstiplog => 'E',
                                       pr_dscritic => 'Problema na rotina controladora das filas ao escalonar job para a fila '||rw_crapfil.cdfilrel||'. Detalhes: '||sqlerrm||'.');
-              
+
                 -- Enviar ao LOG
                  pc_gera_log_relato(pr_cdcooper => 0
                                    ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas ao escalonar job para a fila '||rw_crapfil.cdfilrel||'. Detalhes: '||sqlerrm||'.');
@@ -4363,7 +4375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Chamar rotina que verifica possíveis erros nos relatórios e avisa os responsáveis
       pc_aviso_erros_procrel;
 
-      IF vr_qtrel_penden > 0 THEN 
+      IF vr_qtrel_penden > 0 THEN
         -- Log de inicio de execucao
         pc_controla_log_batch(pr_dstiplog => 'F');
       END IF;
@@ -4952,7 +4964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --                           feito tratamento para arquivos .lst (Jean Michel).
   --
   --              05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
-  --                           (Adriano).        
+  --                           (Adriano).
   ---------------------------------------------------------------------------------------------------------------
         --Cursores Locais
         -- Busca dos dados da cooperativa
@@ -4980,7 +4992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_nmarqpdf VARCHAR2(200);
         vr_nmarqimp VARCHAR2(200);
         vr_dircoope VARCHAR2(400);
-        vr_tipsplit gene0002.typ_split;
+        vr_tipsplit GENE0002.typ_split;
 
       BEGIN
         --Limpar parametros erro
@@ -5055,7 +5067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
         -- Retornar arquivo .pdf
         IF vr_nmarqpdf IS NOT NULL THEN
-          vr_tipsplit := gene0002.fn_quebra_string(pr_string => vr_nmarqpdf, pr_delimit => '/');
+          vr_tipsplit := GENE0002.fn_quebra_string(pr_string => vr_nmarqpdf, pr_delimit => '/');
           pr_nmarqpdf := vr_tipsplit(vr_tipsplit.LAST);
         END IF;
 
@@ -5189,13 +5201,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             --Se a linha possuir informacao
             IF vr_setlinha IS NOT NULL THEN
               --Colocar linha convertida no CLOB
-              gene0002.pc_escreve_xml(vr_clob,vr_dstxtclob,vr_setlinha);
+              GENE0002.pc_escreve_xml(vr_clob,vr_dstxtclob,vr_setlinha);
             END IF;
 
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
               --Acabaram as linhas do arquivo, atualiza CLOB
-              gene0002.pc_escreve_xml(vr_clob,vr_dstxtclob,' ',TRUE);
+              GENE0002.pc_escreve_xml(vr_clob,vr_dstxtclob,' ',TRUE);
 
               --Fechar o arquivo de leitura
               IF utl_file.is_open(vr_input_file) THEN
@@ -5231,7 +5243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                        ,pr_direto  => vr_nmdireto
                                        ,pr_arquivo => vr_nmarquiv);
         -- Exportar arquivo para clob
-        vr_Blob := gene0002.fn_arq_para_blob(pr_caminho => vr_nmdireto,
+        vr_Blob := GENE0002.fn_arq_para_blob(pr_caminho => vr_nmdireto,
                                              pr_arquivo => vr_nmarquiv);
 
         -- Criar um LOB para armazenar o arquivo
@@ -5277,10 +5289,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_reto:= 'NOK';
-        pr_dscritic:= 'Erro na gene0002.pc_arquivo_para_xml. '||vr_dscritic;
+        pr_dscritic:= 'Erro na GENE0002.pc_arquivo_para_xml. '||vr_dscritic;
       WHEN OTHERS THEN
         pr_des_reto:= 'NOK';
-        pr_dscritic:= 'Erro na gene0002.pc_arquivo_para_xml. '||sqlerrm;
+        pr_dscritic:= 'Erro na GENE0002.pc_arquivo_para_xml. '||sqlerrm;
     END;
   END pc_arquivo_para_XML;
 
@@ -5564,11 +5576,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Objetivo  : Retornar o valor em extenso
 
 
-   Alteracoes: 
+   Alteracoes:
 
   .............................................................................*/
     valor_string VARCHAR2(256);
-    valor_conv   VARCHAR2(25);    
+    valor_conv   VARCHAR2(25);
     tres_digitos VARCHAR2(3);
     texto_string VARCHAR2(256);
     vr_dsintplu  VARCHAR2(256);
@@ -5576,43 +5588,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_dsdecplu  VARCHAR2(256);
     vr_dsdecsin  VARCHAR2(256);
     vr_numero    NUMBER;
-    
+
   BEGIN
-  
+
     valor_conv := to_char(trunc((abs(pr_valor) * 100), 0), '0999999999999999999');
     valor_conv := substr(valor_conv, 1, 18) || '0' || substr(valor_conv, 19, 2);
     IF to_number(valor_conv) = 0 THEN
       RETURN('Zero ');
     END IF;
-    
+
     IF pr_idtipval = 'M' THEN
-      vr_dsintplu := 'Reais ';  
+      vr_dsintplu := 'Reais ';
       vr_dsintsin := 'Real ';
-      vr_dsdecplu := 'centavos';  
+      vr_dsdecplu := 'centavos';
       vr_dsdecsin := 'centavo';
     ELSIF pr_idtipval = 'P' THEN
-      vr_dsintplu := 'Inteiros ';  
+      vr_dsintplu := 'Inteiros ';
       vr_dsintsin := 'Inteiro ';
-      vr_dsdecplu := 'por cento';  
+      vr_dsdecplu := 'por cento';
       vr_dsdecsin := 'por cento';
     ELSIF pr_idtipval = 'I' THEN
-      IF pr_valor < 1 THEN    
+      IF pr_valor < 1 THEN
         RETURN 'VALOR COM DECIMAIS, NAO COMPATIVEL COM NUMEROS INTEIROS';
-      END IF;  
+      END IF;
     END IF;
-    
+
     FOR ind IN 1 .. 7 LOOP
       tres_digitos := substr(valor_conv, (((ind - 1) * 3) + 1), 3);
       texto_string := '';
-      
+
       --> Garantir que para qnd informado apenas uma dezena
       --> seja apresentado corretamente
-      IF pr_idtipval = 'P' AND 
+      IF pr_idtipval = 'P' AND
          ind = 7 AND
          substr(tres_digitos,3,1) = 0 THEN
         tres_digitos := to_char(tres_digitos/10,'fm000');
-      END IF; 
-      
+      END IF;
+
       -- Extenso para Centena
       IF substr(tres_digitos, 1, 1) = '2' THEN
         texto_string := texto_string || 'Duzentos ';
@@ -5752,7 +5764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END IF;
       IF ind = 6 THEN
         IF to_number(substr(valor_conv, 1, 18)) > 1 THEN
-          IF pr_idtipval = 'P' AND 
+          IF pr_idtipval = 'P' AND
              to_number(substr(valor_conv, 20, 2)) = 0 THEN
             valor_string := valor_string || vr_dsdecsin;
           ELSE
@@ -5772,17 +5784,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         --> Porcentagem deve incrementar texto
         IF pr_idtipval = 'P' THEN
           vr_numero := substr(valor_conv, 20, 2);
-          
+
           IF vr_numero = 10 THEN
             valor_string := valor_string || 'Decimo '||vr_dsdecsin;
-          ELSIF substr(vr_numero,2,1) = 0 THEN     
+          ELSIF substr(vr_numero,2,1) = 0 THEN
             valor_string := valor_string || 'Decimos '||vr_dsdecsin;
-          ELSIF vr_numero = 01 THEN     
-            valor_string := valor_string || 'Centesimo  '||vr_dsdecsin; 
-          ELSIF vr_numero > 1 THEN     
-            valor_string := valor_string || 'Centesimos '||vr_dsdecsin;   
+          ELSIF vr_numero = 01 THEN
+            valor_string := valor_string || 'Centesimo  '||vr_dsdecsin;
+          ELSIF vr_numero > 1 THEN
+            valor_string := valor_string || 'Centesimos '||vr_dsdecsin;
           END IF;
-        
+
         ELSE
           IF to_number(substr(valor_conv, 20, 2)) > 1 THEN
             valor_string := valor_string || vr_dsdecplu;
@@ -5798,5 +5810,115 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       RETURN('*** VALOR INVALIDO ***');
   END;
 
-END gene0002;
+  -- Procedure para importar arquivo XML para Tabela em memoria
+  PROCEDURE pc_arquivo_para_table_of (pr_nmarquiv IN VARCHAR2                     --> Nome do caminho completo)
+                                     ,pr_table_of OUT GENE0002.typ_tab_tabela --> Saida para o array
+                                     ,pr_des_reto OUT VARCHAR2                    --> Descrição OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2)                   --> Descricao Erro
+                                     IS
+  BEGIN
+    DECLARE
+
+      vr_contador  INTEGER;
+      vr_setlinha  VARCHAR2(32767);
+      --handle de Arquivo
+      vr_input_file UTL_FILE.FILE_TYPE;
+      --Variavel erro
+      vr_dscritic VARCHAR2(1000);
+      --Variavel Excecao
+      vr_exc_erro EXCEPTION;
+      -- caminho e nome do arquivo
+      vr_nmdireto  VARCHAR2(500);
+      vr_nmarquiv  VARCHAR2(500);
+
+    BEGIN
+
+      /* Verificar se o arquivo existe */
+      IF NOT gene0001.fn_exis_arquivo(pr_caminho => pr_nmarquiv) THEN
+        vr_dscritic:= 'Arquivo nao encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      /* Importar arquivo para retirar caracteres especiais */
+
+      --Abrir o arquivo
+      gene0001.pc_abre_arquivo(pr_nmcaminh => pr_nmarquiv   --> Nome do caminho completo
+                              ,pr_tipabert => 'R'           --> Somente Leitura
+                              ,pr_utlfileh => vr_input_file --> Handle do Arquivo
+                              ,pr_des_erro => vr_dscritic); --> Erro
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        --Proximo Registro
+        RAISE vr_exc_erro;
+      END IF;
+
+      --Inicializar table_of
+      pr_table_of.delete;
+
+      --Inicializar Contador
+      vr_contador:= 1;
+
+      --Faz leitura das linhas
+      LOOP
+        BEGIN
+          -- Carrega handle do arquivo
+          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                      ,pr_des_text => vr_setlinha); --> Texto lido
+
+          --Substituir caracteres especiais da Linha
+          vr_setlinha:= inss0001.fn_substitui_caracter(vr_setlinha);
+
+          --Retirar Sujeira Inicio do arquivo
+          IF vr_contador = 1 THEN
+            vr_setlinha:= substr(vr_setlinha,instr(vr_setlinha,'<?xml'));
+          END IF;
+
+          --Se a linha possuir informacao
+          IF vr_setlinha IS NOT NULL THEN
+            IF INSTR(vr_setlinha,'<opt')      > 0
+            OR INSTR(vr_setlinha,'<SISARQ')   > 0
+            OR INSTR(vr_setlinha,'</SISARQ>') > 0
+            OR INSTR(vr_setlinha,'<BCARQ')    > 0
+            OR INSTR(vr_setlinha,'</opt>')    > 0
+            OR INSTR(vr_setlinha,'<Grupo_')   > 0
+            THEN
+              --Colocar linha convertida no table_of
+              pr_table_of(vr_contador).dslinha := vr_setlinha;
+            ELSE
+              vr_contador := vr_contador - 1;
+              --Concatenar linha convertida com a linha anterior no table_of
+              pr_table_of(vr_contador).dslinha := pr_table_of(vr_contador).dslinha
+                                               || vr_setlinha;
+            END IF;
+          END IF;
+
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            --Acabaram as linhas do arquivo
+
+            --Fechar o arquivo de leitura
+            IF utl_file.is_open(vr_input_file) THEN
+              gene0001.pc_fecha_arquivo(vr_input_file);
+            END IF;
+
+            --Sair do LOOP
+            EXIT;
+          WHEN OTHERS THEN
+            --Erro no processamento
+            vr_dscritic:= 'Erro ao processar arquivo '||pr_nmarquiv||' - '||SQLERRM;
+
+            --Fechar o arquivo de leitura
+            IF utl_file.is_open(vr_input_file) THEN
+              gene0001.pc_fecha_arquivo(vr_input_file);
+            END IF;
+
+            --Levantar Excecao Proximo
+            RAISE vr_exc_erro;
+        END;
+        --Incrementar Contador
+        vr_contador:= vr_contador+1;
+      END LOOP;
+    END;
+  END pc_arquivo_para_table_of;
+END GENE0002;
 /

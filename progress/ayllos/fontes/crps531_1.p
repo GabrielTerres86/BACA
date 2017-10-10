@@ -812,6 +812,10 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
     /* Antecipaçao de Recebíveis - LTR - Mauricio */
     IF  CAN-DO("LTR0005R2",aux_CodMsg) THEN
          DO:
+         
+		 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + glb_cdprogra + "' --> '"  +
+                           glb_dscritic + " >> log/proc_batch.log"). 
 
 			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
 
