@@ -10,6 +10,7 @@
  *                
  *				  16/07/2015 : Reformulacao cadastral (Gabriel-RKAM).
  *                25/04/2017 : Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -46,6 +47,9 @@
 		
 		<label for="cdoeddoc" class="rotulo-60">Org.Emi.:</label>
 		<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo $frm_dsorgemi; ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
+		
 		<br />
 		
 		<label for="cdufddoc" class="rotulo rotulo-70">U.F.:</label>

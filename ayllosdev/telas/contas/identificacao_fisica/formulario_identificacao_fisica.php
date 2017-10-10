@@ -22,6 +22,7 @@
     							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
  * 013: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
+ * 014: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -93,7 +94,9 @@
 
 		<label for="cdoedttl">Org. Emi.:</label>
 		<input name="cdoedttl" id="cdoedttl" type="text" value="<? echo getByTagName($IdentFisica,'cdoedttl') ?>" />	
-								
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedttl" id="nmoedttl" type="text" style="display:none;" />
+		
 		<label for="cdufdttl" class="rotulo-linha">U.F.:</label>
 		<? echo selectEstado('cdufdttl', getByTagName($IdentFisica,'cdufdttl'),1) ?>
 		

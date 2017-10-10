@@ -14,7 +14,7 @@
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					          (Adriano - P339).
- *
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  * -------------- 
  */  
 ?>
@@ -74,6 +74,9 @@
 
 		<label for="cdoedptl">Org. Emi.:</label>
 		<input name="cdoedptl" id="cdoedptl" type="text" value="<? echo getByTagName($registro,'cdoedptl') ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedptl" id="nmoedptl" type="text" style="display:none;" />
+		
 					
 		<label for="cdufdptl">U.F.:</label>
 		<? echo selectEstado('cdufdptl', getByTagName($registro,'cdufdptl'), 1) ?>
