@@ -188,11 +188,11 @@
                07/03/2016 - #407136 - Incluido novo filtro ao verificar se o operador
                             pertence a forca tarefa da VIACREDI. Estava considerando de forma
                             parcial (Ex: Operador 294 e 2941). (Heitor - RKAM)
-
+                            
                30/05/2016 - Adicionado campo de codigo identificador no layout do BB
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
-                            gerar_compel_altoVale (Douglas - Chamado 445731) 
+                            gerar_compel_altoVale (Douglas - Chamado 445731)
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
@@ -209,6 +209,9 @@
                
                17/08/2017 - #738442 Retiradas as mensagens informativas 
                             "Verificando registros para geracao de arquivo(s)" (Carlos)
+
+			   27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
+			                variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -1518,7 +1521,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"              
+              aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -1566,7 +1569,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"              
+              aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -4081,6 +4084,8 @@ PROCEDURE gerar_compel_prcctl:
                                        /* Para nao receber arquivo de retorno 
                                        na VIACREDI */ 
                                        ASSIGN aux_dschqctl = "PG_CX ".
+							      ELSE
+								       ASSIGN aux_dschqctl = "      ".
 
                               END.
                          ELSE

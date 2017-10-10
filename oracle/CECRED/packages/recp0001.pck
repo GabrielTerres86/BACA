@@ -191,6 +191,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --
   --             22/02/2017 - Alteracao para passar pr_nrparcel na pc_cria_lancamento_cc. (Jaison/James)
   --
+  --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
+  --
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
   ---------------------------------------------------------------------------------------------------------------
   
@@ -666,7 +668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 
     -- Se for liquidação do acordo, deve pagar o valor total do prejuízo
     IF NVL(pr_inliqaco,'N') = 'S' THEN
-      vr_vlpagmto := NVL(pr_vlsdprej,0) + NVL(pr_vlttmupr,0) + NVL(pr_vlttjmpr,0);
+      vr_vlpagmto := NVL(pr_vlsdprej,0) + NVL(pr_vlttmupr,0) + NVL(pr_vlttjmpr,0) - NVL(pr_vlpgmupr,0) - NVL(pr_vlpgjmpr,0);
+      GOTO GERAR_ABONO_LEM;
     END IF;
 
     ------------------------------------------------------------------------------------------------------------
@@ -945,7 +948,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         END IF;
         RAISE vr_exc_erro;
       END IF;  
+         
     END IF;    
+    
+    ------------------------------------------------------------------------------------------------------------
+    -- INICIO PARA O LANÇAMENTO DE ABONO NA CRAPLEM
+    ------------------------------------------------------------------------------------------------------------
+    /***********/   <<GERAR_ABONO_LEM>>   /***********/
+    ------------------------------------------------------------------------------------------------------------
+    
+    IF NVL(pr_inliqaco,'N') = 'S' THEN
+      
+      IF vr_vlpagmto > 0 THEN 
+      
+      -- ROTINA PARA EFETUAR O LANÇAMENTO
+      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
+                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
+                                     ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
+                                     ,pr_cdbccxlt => 100               -- Codigo Caixa
+                                     ,pr_cdoperad => pr_cdoperad       -- Operador
+                                     ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
+                                     ,pr_tplotmov => 5                 -- Tipo movimento
+                                     ,pr_nrdolote => 650002            -- Numero Lote
+                                     ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
+                                     ,pr_cdhistor => 383               -- Codigo Historico
+                                     ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
+                                     ,pr_vllanmto => vr_vlpagmto       -- Valor Lancamento
+                                     ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
+                                     ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
+                                     ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
+                                     ,pr_nrsequni => 0                 -- Numero Sequencia
+                                     ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
+                                     ,pr_flgincre => TRUE              -- Indicador Credito
+                                     ,pr_flgcredi => TRUE              -- Credito
+                                     ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
+                                     ,pr_cdorigem => 1                 -- Origem do Lançamento
+                                     ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
+                                     ,pr_dscritic => vr_dscritic);     -- Descricao Erro
+         
+      -- Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Atualiza a informação do empréstimo
+      BEGIN
+        
+        UPDATE crapepr epr
+           SET epr.vlsdprej = 0
+             , epr.vlpgmupr = pr_vlttmupr
+             , epr.vlpgjmpr = pr_vlttjmpr
+             , epr.dtliquid = pr_crapdat.dtmvtolt
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;
+      
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro ao atualizar emprestimo (GERACAO ABONO): '||SQLERRM;
+        RAISE vr_exc_erro;
+      END;
+        
+      END IF;  
+      
+    END IF;    
+    
     
   EXCEPTION
     WHEN  vr_exc_erro THEN

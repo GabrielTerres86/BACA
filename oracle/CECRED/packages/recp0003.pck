@@ -48,6 +48,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
      21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
                   quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão 
                   txt para unix para que os responsáveis pelo negócio sejam avisados por e-mail (Carlos)
+
+  --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -421,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dscritic => 'ARQUIVO INCONSISTENTE');
 
                    pr_flgemail := TRUE;
-				   ROLLBACK;
+                   ROLLBACK;
                    -- Fim do arquivo
                    EXIT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
@@ -897,7 +900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || 'ARQUIVO INCONSISTENTE');
                    --Fim do arquivo
                    pr_flgemail := TRUE;
-				   ROLLBACK;
+                   ROLLBACK;
                    EXIT LEITURA_TXT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
                    CONTINUE;                                          
@@ -1069,7 +1072,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          EXIT LEITURA_TXT;
                        END IF;
                         
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);   
+                       -- Não deve mais gerar lancamento 2181 para pagamento prejuizo.
+                       -- vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);   
                      -- Folha de Pagamento
                      ELSIF rw_crapepr.flgpagto = 1 THEN 
                        
