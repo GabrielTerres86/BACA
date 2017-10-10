@@ -7,13 +7,13 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_language = ''AMERICAN''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_length_semantics = ''BYTE''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_nchar_conv_excp = ''FALSE''';
-  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = ''.,''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_sort = ''BINARY''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_territory = ''AMERICA''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
-  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';  
  
   sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBDOMIC_PROCESSA_ARQ_SILOC_1',
                                 job_type            => 'PLSQL_BLOCK',
