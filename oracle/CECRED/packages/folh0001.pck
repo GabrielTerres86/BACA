@@ -2002,7 +2002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       Sistema : Rotina chamada via job
       Sigla   : CRED
       Autor   : Vanessa Klein
-      Data    : Julho/2015.                  Ultima atualizacao: 07/07/2016
+      Data    : Julho/2015.                  Ultima atualizacao: 10/10/2017
 
       Dados referentes ao programa:
 
@@ -2025,6 +2025,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                   07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
                                de performance - Marcos(Supero)
+                               
+                  10/10/2017 - Adicionar NVL na soma do campo vllctpag.
+                               (Chamado 754474) - (Fabricio)
                                
     ..............................................................................*/
 
@@ -2168,7 +2171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- que estejam com valores divergentes dos lançamentos
         BEGIN
           UPDATE crappfp pfp
-             SET pfp.vllctpag = (SELECT SUM(nvl(lfp.vllancto,0))
+             SET pfp.vllctpag = (SELECT NVL(SUM(nvl(lfp.vllancto,0)),0)
                                    FROM craplfp lfp
                                  WHERE lfp.cdcooper = pfp.cdcooper
                                    AND lfp.cdempres = pfp.cdempres
