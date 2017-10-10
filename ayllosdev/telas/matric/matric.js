@@ -39,13 +39,19 @@
  * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
  * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
  * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
- 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
+ * 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
  *                                              bloqueios de acesso.
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
  * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
- * 023: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
- * 024: [15/09/2017] Kelvin			  (CECRED): Alterações referente a melhoria 339 (Kelvin).
+ * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+ *		                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
+ * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
+ * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae. 
+ * 028: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
+ * 029: [15/09/2017] Kelvin			  (CECRED): Alterações referente a melhoria 339 (Kelvin).
+ * 030: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  */
 
 // Definição de algumas variáveis globais 
@@ -312,7 +318,7 @@ function manterRotina() {
         cdoedptl = normalizaTexto($('#cdoedptl', '#frmFisico').val());
         dtemdptl = $('#dtemdptl', '#frmFisico').val();
         tpnacion = $('#tpnacion', '#frmFisico').val();
-        dsnacion = $('#dsnacion', '#frmFisico').val();
+        cdnacion = $('#cdnacion', '#frmFisico').val();
         dtnasctl = $('#dtnasctl', '#frmFisico').val();
         dsnatura = $('#dsnatura', '#frmFisico').val();
         inhabmen = $('#inhabmen', '#frmFisico').val();
@@ -416,7 +422,7 @@ function manterRotina() {
 				nmprimtl: nmprimtl, nrcpfcgc: nrcpfcgc, dtcnscpf: dtcnscpf,
 				cdsitcpf: cdsitcpf, tpdocptl: tpdocptl, nrdocptl: nrdocptl,
 				cdoedptl: cdoedptl, cdufdptl: cdufdptl, dtemdptl: dtemdptl,
-				tpnacion: tpnacion, dsnacion: dsnacion, dtnasctl: dtnasctl,
+				tpnacion: tpnacion, cdnacion: cdnacion, dtnasctl: dtnasctl,
 				dsnatura: dsnatura, cdsexotl: cdsexotl, cdestcvl: cdestcvl,
 				nmconjug: nmconjug, cdempres: cdempres, nrcadast: nrcadast,
 				cdocpttl: cdocpttl, rowidcem: rowidcem, dsdemail: dsdemail, 
@@ -999,9 +1005,6 @@ function formataCabecalho() {
 		});
 	}
 	
-	
-	
-
     if (operacao == '' || operacao == 'FC') {
 		
 		cNrConta.habilitaCampo();
@@ -1296,7 +1299,7 @@ function formataPessoaFisica() {
     rNomeTitular.addClass('rotulo').css('width', '72px');
     rDtConsulta.css('width', '58px');
     rSituacao.css('width', '58px');
-    rOrgEmissor.css('width', '58px');
+    rOrgEmissor.addClass('rotulo').css('width', '72px');
     rEstEmissor.css('width', '27px');
     rDtEmissao.css('width', '51px');
 	
@@ -1322,10 +1325,10 @@ function formataPessoaFisica() {
     cDtConsulta.addClass('data').css('width', '75px');
     cSituacao.css('width', '133px');
     cTpDocumento.css('width', '183px');
-    cNrDocumento.addClass('alphanum').css({ 'width': '80px', 'text-align': 'right' }).attr('maxlength', '15');
-    cOrgEmissor.addClass('alphanum').css('width', '55px').attr('maxlength', '5');
-    cEstEmissor.css('width', '45px');
-    cDtEmissao.addClass('data').css('width', '75px');
+    cNrDocumento.addClass('alphanum').css({ 'width': '400px', 'text-align': 'right' }).attr('maxlength', '40');
+    cOrgEmissor.addClass('alphanum').css('width', '60px').attr('maxlength', '5');
+    cEstEmissor.css('width', '55px');
+    cDtEmissao.addClass('data').css('width', '95px');
 	
     if ($.browser.msie) {
         cNomeTitular.css('width', '584px');
@@ -1378,7 +1381,7 @@ function formataPessoaFisica() {
 	/* ----------------------- */
 	/*  FIELDSET INF. COMPL.   */
 	/* ----------------------- */	
-    var rRotuloPF2 = $('label[for="tpnacion"],label[for="dsnacion"],label[for="dsnatura"],label[for="cdestcvl"],label[for="cdempres"],label[for="cdocpttl"],label[for="inhabmen"],label[for="nrtelres"]', '#frmFisico');
+    var rRotuloPF2 = $('label[for="tpnacion"],label[for="cdnacion"],label[for="dsnatura"],label[for="cdestcvl"],label[for="cdempres"],label[for="cdocpttl"],label[for="inhabmen"],label[for="nrtelres"]', '#frmFisico');
     var rRotulo70 = $('label[for="dtnasctl"],label[for="cdsexotl"]', '#frmFisico');
     var rNrcadast = $('label[for="nrcadast"]', '#frmFisico');
     var rNmconjug = $('label[for="nmconjug"]', '#frmFisico');
@@ -1395,10 +1398,11 @@ function formataPessoaFisica() {
     rTelefones.css({ 'width': '70px' });
 	
     var cTodosPF2 = $('input,select', '#frmFisico fieldset:eq(1)');
-    var cCodigoPF1 = $('#tpnacion,#cdestcvl,#cdempres,#cdocpttl', '#frmFisico');
-    var cDescricaoPF1 = $('#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
+    var cCodigoPF1 = $('#cdnacion,#tpnacion,#cdestcvl,#cdempres,#cdocpttl', '#frmFisico');
+    var cDescricaoPF1 = $('#dsnacion,#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
     var cCodTpNacio = $('#tpnacion', '#frmFisico');
     var cDesTpNacio = $('#destpnac', '#frmFisico');
+    var cCodNacion = $('#cdnacion', '#frmFisico');
     var cDesNacion = $('#dsnacion', '#frmFisico');
     var cCPF = $('#nrcpfcgc', '#frmFisico');
     var cDtNasc = $('#dtnasctl', '#frmFisico');
@@ -1429,9 +1433,9 @@ function formataPessoaFisica() {
     cCodigoPF1.addClass('codigo pesquisa').css({ 'width': '40px' });
 	cDescricaoPF1.addClass('descricao');
     cDesTpNacio.css('width', '526px');
-    cDesNacion.addClass('pesquisa alphanum').css('width', '400px').attr('maxlength', '15');
+    cDesNacion.css('width', '526px');
     cDtNasc.addClass('data').css('width', '75px');
-    cDesNatura.addClass('pesquisa alphanum').css('width', '330px').attr('maxlength', '25');
+    cDesNatura.addClass('pesquisa alphanum').css('width', '330px').attr('maxlength', '50');
     cInhabmen.css('width', '183px');
     cDthabmen.addClass('data').css('width', '94px');
     cDesEstCivil.css('width', '200px');
@@ -1465,16 +1469,18 @@ function formataPessoaFisica() {
 	
 		if ($(this).val() == 1) { // Se for brasileiro/a
 			cCdufnatu.val("").habilitaCampo();
-			cDesNacion.val("BRASILEIRA").desabilitaCampo();
+            cCodNacion.val("42");
+			cDesNacion.val("BRASILEIRA");
 			controlaPesquisas();
 			cDesNatura.focus();
 		}
 		else {
 			cCdufnatu.val("EX").desabilitaCampo();
 			if (cDesNacion.val() == "BRASILEIRA") {
+                cCodNacion.val("");
 				cDesNacion.val("");
 			}
-			cDesNacion.habilitaCampo().focus();
+			cCodNacion.focus();
 			controlaPesquisas();
 		}
 		return false;
@@ -1941,7 +1947,22 @@ function controlaPesquisas() {
         linkNaciona.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	}
     else {
-        linkNaciona.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { mostraNacionalidade(); });
+        linkNaciona.addClass('lupa').css('cursor', 'pointer').unbind('click').bind('click', function () { 
+
+			var filtrosPesq = "Código;cdnacion;100px;S;0|Descrição;dsnacion;200px;S;";
+			var colunas = 'Código;cdnacion;25%;right|Descrição;dsnacion;75%;left';
+			mostraPesquisa("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidades", "30", filtrosPesq, colunas);
+			
+			return false;
+			
+		});       
+        
+        linkNaciona.prev().unbind('change').bind('change', function () {
+            
+            buscaDescricao("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidade", $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', '', 'frmFisico');
+			return false;
+
+		});
 	}
 	
 	
@@ -2224,14 +2245,14 @@ function controlaPesquisas() {
             qtReg = '30';
             filtrosPesq = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
             colunas = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
-            mostraPesquisa('MATRIC', procedure, titulo, qtReg, filtrosPesq, colunas);
+            mostraPesquisa('ZOOM0001', procedure, titulo, qtReg, filtrosPesq, colunas);
 			return false;	
 		});
         linkCnae.prev().unbind('change').bind('change', function () {
             procedure = 'BUSCA_CNAE';
             titulo = 'CNAE';
 			filtrosDesc = 'flserasa|2';
-            buscaDescricao('MATRIC', procedure, titulo, $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmJuridico');
+			buscaDescricao('ZOOM0001', procedure, titulo, $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmJuridico');
 			return false;
 		});
 	}
