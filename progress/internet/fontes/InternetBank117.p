@@ -19,6 +19,10 @@
                24/07/2015 - Substituir '&' por 'E' ao gerar arquivo de retorno
                             ao cooperado. (Rafael)
                             
+               05/09/2017 - Quando o cooperado possui retorno do arquivo via FTP
+                            o arquivo sera disponibilizado no FTP e nao baixado, 
+                            com isso devemos retornar uma mensagem informando o 
+                            cooperado. (Douglas - Melhoria 271.3)
 ..............................................................................*/
 
 
@@ -41,6 +45,7 @@
  DEF VAR aux_xml_operacao AS LONGCHAR                                   NO-UNDO.
  DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
  DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+ DEF VAR aux_dsinform AS CHAR                                           NO-UNDO.
  DEF VAR aux_flabrtag AS LOG                                            NO-UNDO.
  DEF VAR aux_dslinxml AS CHAR                                           NO-UNDO.
  DEF VAR aux_arquivo  AS CHAR                                           NO-UNDO.
@@ -67,6 +72,7 @@
                        INPUT "996", /* cdoperad */
                        OUTPUT "",
                        OUTPUT "",
+                       OUTPUT "",
                        OUTPUT 0,
                        OUTPUT "").
 
@@ -75,10 +81,13 @@
  ASSIGN aux_xml_operacao = ""
         aux_cdcritic = 0
         aux_dscritic = ""
+        aux_dsinform = ""
         aux_cdcritic = pc_gerar_arq_ret_pgto.pr_cdcritic
                        WHEN pc_gerar_arq_ret_pgto.pr_cdcritic <> ?
         aux_dscritic = pc_gerar_arq_ret_pgto.pr_dscritic
                        WHEN pc_gerar_arq_ret_pgto.pr_dscritic <> ?
+        aux_dsinform = pc_gerar_arq_ret_pgto.pr_dsinform
+                       WHEN pc_gerar_arq_ret_pgto.pr_dsinform <> ?
         aux_xml_operacao = pc_gerar_arq_ret_pgto.pr_dsarquiv
                        WHEN pc_gerar_arq_ret_pgto.pr_dsarquiv <> ?.
 
@@ -104,6 +113,18 @@
      RETURN "NOK".
 
  END.
+ 
+ IF aux_dsinform <> "" THEN
+ DO:
+    /* Incluir linha no xml */
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<dsinform>" + 
+                                   aux_dsinform +
+                                   "</dsinform>".
+    
+    RETURN "OK".
+ END.
+ 
  
  /**********************************************/
   /**LER XML RETORNADO DO PROCEDIMENTO ORACLE **/ 
