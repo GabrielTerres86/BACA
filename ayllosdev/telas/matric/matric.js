@@ -3380,7 +3380,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 								    dsnacion, cdExpedidor, dsdemail, nmfantasia, comercialNrCep, comercialNmLogradouro, comercialNrLogradouro,
 								    comercialDsComplemento, comercialNmBairro, comercialCdEstado, comercialDsCidade, comercialTporigem,
 									nrInscricao, nrLicenca, cdNatureza, cdSetor, cdRamo, cdCnae, dtInicioAtividade, cdNaturezaOcupacao, 
-									cdNacionalidade) {
+									cdNacionalidade, cdCadastroEmpresa) {
 																			 
 	var bo = 'b1wgen0059.p';	
 	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
@@ -3432,6 +3432,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		$('#nmcidade', '#' + nomeForm).val(residencialDsCidade);
 		$('#idorigee', '#' + nomeForm).val(residencialTporigem); 
 		$('#cdocpttl', '#' + nomeForm).val(cdNaturezaOcupacao); 
+		$('#nrcadast', '#' + nomeForm).val(cdCadastroEmpresa); 		 
 				
 		if (tpsexo == 1) {
 			$('#sexoFem', '#' + nomeForm).prop('checked', false);	  	
@@ -3461,6 +3462,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		titulo = 'Nacionalidade';
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
+		
 	}
 	else if (inpessoa == 2){		
 		$('#nmfansia', '#' + nomeForm).val(nmfantasia);
