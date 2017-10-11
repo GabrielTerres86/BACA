@@ -162,7 +162,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript">
-    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
+		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
   </script>	
 	<br style="class:both" />	
 		
