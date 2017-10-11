@@ -3667,6 +3667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           acessar a tela ATENDA mesmo quando o limite estiver Em Estudo (Mateus - MoutS)
   --
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
+  --
+  --              05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando 
+  --                           esta em Transacao Pendente (Rafael Monteiro - Mouts)
   -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -4061,6 +4064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            WHERE pfp.cdcooper = p_cdcooper
              AND pfp.cdempres = p_cdempres
              AND pfp.idsitapr > 3 --> Aprovados
+             AND pfp.idsitapr <> 6 --> Transacao Pendente
              AND pfp.flsitdeb = 0 --> Ainda nao debitado
              AND lfp.cdcooper = pfp.cdcooper
              AND lfp.cdempres = pfp.cdempres
@@ -4096,6 +4100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          WHERE pfp.cdcooper = p_cdcooper
            AND pfp.cdempres = p_cdempres
            AND pfp.idsitapr > 3 /* Aprovado */
+           AND pfp.idsitapr <> 6 --> Transacao Pendente
            AND pfp.flsittar = 0 --> Ainda não debitado a tarifa
            AND pfp.vltarapr > 0 --> Com tarifa a cobrar
          ORDER BY pfp.nrseqpag;
@@ -4121,6 +4126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          WHERE pfp.cdcooper = p_cdcooper
            AND lfp.nrdconta = p_nrdconta
            AND pfp.idsitapr > 3 /* Aprovado */
+           AND pfp.idsitapr <> 6 --> Transacao pendente
            AND pfp.flsitcre = 0 --> Pagamento ainda não creditado
            AND lfp.idsitlct = 'L' --> Somente os lançados
            AND lfp.idtpcont = 'C' --> Somente associados Cecred

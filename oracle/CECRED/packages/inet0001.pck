@@ -3046,10 +3046,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
       --Variaveis Locais
       vr_vldspptl        crapsnh.vllimflp%TYPE ;
+      vr_vldspptl_conta  crapsnh.vllimflp%TYPE ;
       vr_idseqttl        crapttl.idseqttl%TYPE := 0;
       va_existe_operador NUMBER(1);
       vr_dsdmensa        VARCHAR2(100);
       pr_tab_internet    INET0001.typ_tab_internet;
+      tab_limite_conta    INET0001.typ_tab_internet;
       vr_dtdebpfp        crappfp.dtdebito%TYPE;
       va_nrcpfcgc        crapsnh.nrcpfcgc%type;
       va_des_reto        VARCHAR2(100);
@@ -3307,9 +3309,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;             
+              /*Buscar limites da conta*/
+              pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                               ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                               ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                               ,pr_flglimdp     => TRUE         --Indicador limite deposito
+                               ,pr_dtmvtopg     => va_data_ant  --Data do proximo pagamento
+                               ,pr_flgctrag     => FALSE  --Indicador validacoes
+                               ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                               ,pr_tab_internet => tab_limite_conta --Tabelas de retorno de horarios limite
+                               ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                               ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+              --Se ocorreu erro
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;                  
               --
               -- Limite disponível Folha de  pagamento
               vr_vldspptl := pr_tab_internet(vr_idseqttl).vldspflp;
+              vr_vldspptl_conta := tab_limite_conta(vr_idseqttl).vldspflp;
               --
               -- log item
               gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -3334,6 +3353,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                vr_cdcritic:= 0;
                vr_dscritic:= 'O saldo do seu limite diario e insuficiente  - Folha pagamento';
                RAISE vr_exc_erro;
+             ELSIF vr_vllanmto > vr_vldspptl_conta THEN
+               vr_cdcritic:= 0;
+               vr_dscritic:= 'O saldo do seu limite diario e insuficiente  - Folha pagamento';
+               RAISE vr_exc_erro;               
              ELSIF vr_vllanmto > vr_vldspptl  THEN
                 
                 vr_indrowid2 := gene0002.fn_quebra_string(pr_string => vr_rowidexe, pr_delimit => ',');
@@ -3535,9 +3558,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;             
+         /*Buscar limites da conta*/
+          pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                           ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                           ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                           ,pr_flglimdp     => TRUE         --Indicador limite deposito
+                           ,pr_dtmvtopg     => va_data_ant  --Data do proximo pagamento
+                           ,pr_flgctrag     => FALSE  --Indicador validacoes
+                           ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                           ,pr_tab_internet => tab_limite_conta --Tabelas de retorno de horarios limite
+                           ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                           ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;                  
           --
           -- Limite disponível Folha de  pagamento
           vr_vldspptl := pr_tab_internet(vr_idseqttl).vldspflp;
+          vr_vldspptl_conta := tab_limite_conta(vr_idseqttl).vldspflp;
           --
           -- log item
           gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -3555,13 +3595,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            IF rw_crapass.idastcjt = 0 AND vr_operador_conta = 0 AND
              vr_vllanmto > vr_vldspptl THEN
              --vr_cdcritic:= 0;
-             vr_dscritic:= 'O saldo do seu limite diario é insuficiente - Folha Pagamento.';
+             vr_dscritic:= 'O saldo do seu limite diario é insuficiente - Folha Pagamento';
              RAISE vr_exc_erro;
            ELSIF rw_crapass.idastcjt = 0 AND pr_nrcpfope <= 0 AND
              vr_vllanmto > vr_vldspptl THEN
              --vr_cdcritic:= 0;
              vr_dscritic:= 'O saldo do seu limite diario é insuficiente  - Folha pagamento.';
              RAISE vr_exc_erro;
+           ELSIF vr_vllanmto > vr_vldspptl_conta THEN
+             vr_dscritic:= 'O saldo do seu limite diario é insuficiente.  - Folha pagamento.';
+             RAISE vr_exc_erro;             
            ELSIF vr_vllanmto > vr_vldspptl  THEN   /** Verifica se pode movimentar em relacao ao que ja foi usado **/
             vr_indrowid2 := gene0002.fn_quebra_string(pr_string => vr_rowidexe, pr_delimit => ',');
             -- Para cada registro selecionado, faremos as validacoes necessarias
@@ -3854,6 +3897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_dsblqage  VARCHAR2(100);
       vr_cddbanco  crapcti.cddbanco%TYPE;
       vr_vldspptl  crapsnh.vllimweb%TYPE;
+      vr_vldspptl_conta  crapsnh.vllimweb%TYPE;
       vr_vldspttl  crapsnh.vllimweb%TYPE;
       vr_vllimptl  crapsnh.vllimweb%TYPE;
       vr_vllimttl  crapsnh.vllimweb%TYPE;
@@ -3884,6 +3928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
       vr_tp_transa VARCHAR2(100) := null;     
       --
+      tab_limite_conta INET0001.typ_tab_internet; --Tabelas de retorno de horarios limite
     BEGIN
       --Inicializar varaivel retorno erro
       pr_cdcritic:= NULL;
@@ -4263,6 +4308,84 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      /*Buscar limite da conta para validar quando conta PJ*/
+      /* Buscar Limites da internet DA CONTA */
+      pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                       ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                       ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                       ,pr_flglimdp     => TRUE         --Indicador limite deposito
+                       ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
+                       ,pr_flgctrag     => pr_flgctrag  --Indicador validacoes
+                       ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                       ,pr_tab_internet => tab_limite_conta --Tabelas de retorno de horarios limite
+                       ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                       ,pr_dscritic     => vr_dscritic); --Descricao do erro;      
+	    
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF; 
+      
+      IF pr_tpoperac = 6 THEN /* VR Boleto */
+        --Saldo todos os titulares
+        vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vllimvrb;
+/*        --Limite para internet
+        vr_vllimttl2:= tab_limite_conta(vr_idseqttl).vllimvrb;
+        --Limite diario
+        vr_vllimptl2:= tab_limite_conta(vr_idseqttl).vllimvrb;
+        --Limite da operacao na cooperativa
+        vr_vllimcop2 := tab_limite_conta(vr_idseqttl).vlvrbcop;*/
+      ELSE
+        IF pr_tpoperac = 4 THEN /* TED */
+          --Saldo primeiro titular
+          vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspted;
+/*          --Saldo todos titulares
+          vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldspted;
+          --Limite diario
+          vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimted;
+          --Limite para internet
+          vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimted;
+          --Limite da operacao na cooperativa
+          vr_vllimcop:= tab_limite_conta(vr_idseqttl).vltedcop;*/
+        ELSIF rw_crapass.inpessoa = 1 THEN /* Pessoa Fisica */
+          --Saldo primeiro titular
+          vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspweb;
+/*          --Saldo todos titulares
+          vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldspweb;
+          --Limite diario
+          vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimweb;
+          --Limite para internet
+          vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimweb;
+          --Limite da operacao na cooperativa
+          vr_vllimcop:= tab_limite_conta(vr_idseqttl).vlwebcop;*/
+        ELSIF rw_crapass.inpessoa > 1 THEN /* Pessoa Juridica */
+          --Pagamento / DARF/DAS
+          IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN
+            --Saldo primeiro titular
+            vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldsppgo;
+/*            --Saldo todos titulares
+            vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldsppgo;
+            --Limite diario
+            vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimpgo;
+            --Limite para internet
+            vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimpgo;
+            --Limite da operacao na cooperativa
+            vr_vllimcop:= tab_limite_conta(vr_idseqttl).vlpgocop;*/
+          ELSE  /* Transferencia */
+            --Saldo primeiro titular
+            vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldsptrf;
+/*            --Saldo todos titulares
+            vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldsptrf;
+            --Limite diario
+            vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimtrf;
+            --Limite para internet
+            vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimtrf;
+            --Limite da operacao na cooperativa
+            vr_vllimcop:= tab_limite_conta(vr_idseqttl).vltrfcop;*/
+          END IF;
+        END IF;
+      END IF;      
 
       /** Obtem limites do primeiro titular se for pessoa fisica **/
       IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 THEN
@@ -4657,6 +4780,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         RAISE vr_exc_erro;
       ELSIF rw_crapass.idastcjt = 0 AND pr_nrcpfope <= 0 AND
         pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
+        RAISE vr_exc_erro;
+      -- Se o valor do lançamento for maior que o limite da conta, nao permitir 
+      ELSIF pr_vllanmto > vr_vldspptl_conta and rw_crapass.inpessoa IN (2,3) THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
         RAISE vr_exc_erro;

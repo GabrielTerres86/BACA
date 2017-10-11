@@ -6141,6 +6141,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
 											  INPUT  "TAA", /*Nome da tela*/
+                                              INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
 
