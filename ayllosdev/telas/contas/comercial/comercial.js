@@ -16,7 +16,8 @@
  *                20/02/2017 - Alterado codigo para que os caracteres com acento sejam substituidos pelos equivalentes sem acento,
  *                             ao inves de removidos. (Heitor - Chamado 614746)
  *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
- *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
+ *				  27/03/2017 - Ajuse realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
+ *                11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  * --------------
  */
 
@@ -227,8 +228,7 @@ function manterRotina(operacao) {
     complcom = $('#complcom', '#' + nomeForm).val();
     bairoct1 = $('#bairoct1', '#' + nomeForm).val();
     cidadct1 = $('#cidadct1', '#' + nomeForm).val();
-    ufresct1 = $('#ufresct1', '#' + nomeForm).val();
-    cxpotct1 = $('#cxpotct1', '#' + nomeForm).val();
+    ufresct1 = $('#ufresct1', '#' + nomeForm).val();    
     inpolexp = $('#inpolexp', '#' + nomeForm).val();
     inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
 
@@ -236,8 +236,7 @@ function manterRotina(operacao) {
     cdnvlcgo = normalizaNumero(cdnvlcgo);
     cdturnos = normalizaNumero(cdturnos);
     nrcadast = normalizaNumero(nrcadast);
-    cepedct1 = normalizaNumero(cepedct1);
-    cxpotct1 = normalizaNumero(cxpotct1);
+    cepedct1 = normalizaNumero(cepedct1);    
     inpolexp = normalizaNumero(inpolexp);
 
     nmextemp = trim(nmextemp);
@@ -254,8 +253,8 @@ function manterRotina(operacao) {
             tpdrendi: tpdrendi, tpdrend4: tpdrend4, tpdrend2: tpdrend2, tpdrend3: tpdrend3,
             vldrendi: vldrendi, vldrend4: vldrend4, vldrend2: vldrend2, vldrend3: vldrend3,
             cdturnos: cdturnos, cepedct1: cepedct1, endrect1: endrect1, nrendcom: nrendcom,
-            complcom: complcom, bairoct1: bairoct1, cidadct1: cidadct1, ufresct1: ufresct1,
-            cxpotct1: cxpotct1, flgcadas: flgcadas, flgContinuar: flgContinuar,
+            complcom: complcom, bairoct1: bairoct1, cidadct1: cidadct1, ufresct1: ufresct1,            
+			flgcadas: flgcadas, flgContinuar: flgContinuar,
             inpolexp: inpolexp, inpolexpAnt: inpolexpAnt,
             redirect: 'script_ajax'
         },
@@ -340,8 +339,7 @@ function controlaLayout(operacao) {
     var rCep = $('label[for="cepedct1"]', '#' + nomeForm);
     var rEnd = $('label[for="endrect1"]', '#' + nomeForm);
     var rNum = $('label[for="nrendcom"]', '#' + nomeForm);
-    var rCom = $('label[for="complcom"]', '#' + nomeForm);
-    var rCax = $('label[for="cxpotct1"]', '#' + nomeForm);
+    var rCom = $('label[for="complcom"]', '#' + nomeForm);    
     var rBai = $('label[for="bairoct1"]', '#' + nomeForm);
     var rEst = $('label[for="ufresct1"]', '#' + nomeForm);
     var rCid = $('label[for="cidadct1"]', '#' + nomeForm);
@@ -349,18 +347,16 @@ function controlaLayout(operacao) {
     rCep.addClass('rotulo').css('width', '55px');
     rEnd.addClass('rotulo-linha').css('width', '33px');
     rNum.addClass('rotulo').css('width', '55px');
-    rCom.addClass('rotulo-linha').css('width', '52px');
-    rCax.addClass('rotulo').css('width', '55px');
-    rBai.addClass('rotulo-linha').css('width', '52px');
-    rEst.addClass('rotulo').css('width', '55px');
-    rCid.addClass('rotulo-linha').css('width', '52px');
+    rCom.addClass('rotulo-linha').css('width', '52px');    
+    rBai.addClass('rotulo').css('width', '55px');
+    rEst.addClass('rotulo-linha').css('width', '55px');
+    rCid.addClass('rotulo').css('width', '55px');
 
     var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(1)');
     var cCep = $('#cepedct1', '#' + nomeForm);
     var cEnd = $('#endrect1', '#' + nomeForm);
     var cNum = $('#nrendcom', '#' + nomeForm);
-    var cCom = $('#complcom', '#' + nomeForm);
-    var cCax = $('#cxpotct1', '#' + nomeForm);
+    var cCom = $('#complcom', '#' + nomeForm);    
     var cBai = $('#bairoct1', '#' + nomeForm);
     var cEst = $('#ufresct1', '#' + nomeForm);
     var cCid = $('#cidadct1', '#' + nomeForm);
@@ -368,8 +364,7 @@ function controlaLayout(operacao) {
     cCep.addClass('cep pesquisa').css('width', '65px').attr('maxlength', '9');
     cEnd.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
     cNum.addClass('numerocasa').css('width', '65px').attr('maxlength', '7');
-    cCom.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
-    cCax.addClass('caixapostal').css('width', '65px').attr('maxlength', '6');
+    cCom.addClass('alphanum').css('width', '353px').attr('maxlength', '40');    
     cBai.addClass('alphanum').css('width', '353px').attr('maxlength', '40');
     cEst.css('width', '65px');
     cCid.addClass('alphanum').css('width', '353px').attr('maxlength', '25');
@@ -597,17 +592,6 @@ function controlaLayout(operacao) {
                 return false;
             }
         });
-
-        // Acionar o botao Salvar no enter do ultinmo campo
-        cCax.unbind("keydown").bind("keydown", function (e) {
-            if (e.keyCode == 13) {
-                $("#btSalvar", "#divBotoes").trigger("click");
-                return false;
-            }
-        });
-
-		
-
     }
 
     cValores_3.unbind("keydown").bind("keydown", function (e) {
@@ -629,8 +613,7 @@ function controlaLayout(operacao) {
     controlaPesquisas();
     layoutPadrao();
     cCadEmp.trigger('blur');
-    cCep.trigger('blur');
-    cCax.trigger('blur');
+    cCep.trigger('blur');    
     cCnpj.trigger('blur');
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
