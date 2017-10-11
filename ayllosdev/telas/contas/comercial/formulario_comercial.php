@@ -15,7 +15,6 @@
 								caracteres especiais que geravam erro no retorno do Ajax. 
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
- * 				   11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -131,7 +130,10 @@
 		
 		<label for="complcom"><?php echo utf8ToHtml('Comple.:') ?></label>
 		<input name="complcom" id="complcom" type="text" value="<?php echo getByTagName($comercial,'complcom') ?>" />
-		<br />		
+		<br />
+		
+		<label for="cxpotct1"><?php echo utf8ToHtml('Cx.Postal:') ?></label>
+		<input name="cxpotct1" id="cxpotct1" type="text" value="<?php echo getByTagName($comercial,'cxpotct1') ?>" />		
 		
 		<label for="bairoct1"><?php echo utf8ToHtml('Bairro:') ?></label>
 		<input name="bairoct1" id="bairoct1" type="text" value="<?php echo getByTagName($comercial,'bairoct1') ?>" />								
