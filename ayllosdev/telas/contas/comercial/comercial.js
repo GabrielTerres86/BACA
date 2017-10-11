@@ -1,5 +1,5 @@
 /*!
- * FONTE        : comercial.js                              Última alteração: 27/03/2017
+ * FONTE        : comercial.js                              Última alteração: 11/10/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL da tela de CONTAS
@@ -17,6 +17,7 @@
  *                             ao inves de removidos. (Heitor - Chamado 614746)
  *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
+ * 				  11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  * --------------
  */
 
@@ -227,8 +228,7 @@ function manterRotina(operacao) {
     complcom = $('#complcom', '#' + nomeForm).val();
     bairoct1 = $('#bairoct1', '#' + nomeForm).val();
     cidadct1 = $('#cidadct1', '#' + nomeForm).val();
-    ufresct1 = $('#ufresct1', '#' + nomeForm).val();
-    cxpotct1 = $('#cxpotct1', '#' + nomeForm).val();
+    ufresct1 = $('#ufresct1', '#' + nomeForm).val();    
     inpolexp = $('#inpolexp', '#' + nomeForm).val();
     inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
 
@@ -236,8 +236,7 @@ function manterRotina(operacao) {
     cdnvlcgo = normalizaNumero(cdnvlcgo);
     cdturnos = normalizaNumero(cdturnos);
     nrcadast = normalizaNumero(nrcadast);
-    cepedct1 = normalizaNumero(cepedct1);
-    cxpotct1 = normalizaNumero(cxpotct1);
+    cepedct1 = normalizaNumero(cepedct1);    
     inpolexp = normalizaNumero(inpolexp);
 
     nmextemp = trim(nmextemp);
@@ -255,7 +254,7 @@ function manterRotina(operacao) {
             vldrendi: vldrendi, vldrend4: vldrend4, vldrend2: vldrend2, vldrend3: vldrend3,
             cdturnos: cdturnos, cepedct1: cepedct1, endrect1: endrect1, nrendcom: nrendcom,
             complcom: complcom, bairoct1: bairoct1, cidadct1: cidadct1, ufresct1: ufresct1,
-            cxpotct1: cxpotct1, flgcadas: flgcadas, flgContinuar: flgContinuar,
+            flgcadas: flgcadas, flgContinuar: flgContinuar,
             inpolexp: inpolexp, inpolexpAnt: inpolexpAnt,
             redirect: 'script_ajax'
         },
@@ -340,8 +339,7 @@ function controlaLayout(operacao) {
     var rCep = $('label[for="cepedct1"]', '#' + nomeForm);
     var rEnd = $('label[for="endrect1"]', '#' + nomeForm);
     var rNum = $('label[for="nrendcom"]', '#' + nomeForm);
-    var rCom = $('label[for="complcom"]', '#' + nomeForm);
-    var rCax = $('label[for="cxpotct1"]', '#' + nomeForm);
+    var rCom = $('label[for="complcom"]', '#' + nomeForm);    
     var rBai = $('label[for="bairoct1"]', '#' + nomeForm);
     var rEst = $('label[for="ufresct1"]', '#' + nomeForm);
     var rCid = $('label[for="cidadct1"]', '#' + nomeForm);
@@ -359,8 +357,7 @@ function controlaLayout(operacao) {
     var cCep = $('#cepedct1', '#' + nomeForm);
     var cEnd = $('#endrect1', '#' + nomeForm);
     var cNum = $('#nrendcom', '#' + nomeForm);
-    var cCom = $('#complcom', '#' + nomeForm);
-    var cCax = $('#cxpotct1', '#' + nomeForm);
+    var cCom = $('#complcom', '#' + nomeForm);    
     var cBai = $('#bairoct1', '#' + nomeForm);
     var cEst = $('#ufresct1', '#' + nomeForm);
     var cCid = $('#cidadct1', '#' + nomeForm);
