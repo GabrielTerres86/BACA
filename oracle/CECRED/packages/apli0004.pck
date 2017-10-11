@@ -199,7 +199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
   vr_dsmsglog  VARCHAR2(4000); -- Mensagem de log
   vr_idprglog  tbgen_prglog.idprglog%TYPE := 0;
-
+  vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'APLI0004';
+  
   -- Selecionar os dados da Cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
   SELECT cop.cdcooper
@@ -390,7 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_tela_indice');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_tela_indice');
         
         vr_cddopcao := pr_cddopcao;
 
@@ -435,13 +436,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
           IF cr_crapind_cod%NOTFOUND THEN
             -- Fechar o cursor
             CLOSE cr_crapind_cod;
-            vr_dscritic := 'Indexador Inexistente.';
+            vr_dscritic := 'Indexador Inexistente:'||pr_cddindex;
             RAISE vr_exc_saida;
           ELSE
             -- Fechar o cursor
             CLOSE cr_crapind_cod;
           END IF;
         ELSE
+
           OPEN cr_crapind_nom(pr_nmdindex);
           FETCH cr_crapind_nom
           INTO rw_crapind_nom;
@@ -462,6 +464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
         -- Verifica se datas passadas por parametros
         IF pr_dtiniper <> '0' OR pr_dtfimper <> '0' THEN
+
           IF LENGTH(pr_dtiniper) > 4 THEN
             vr_dtiniper := to_date('01/' || pr_dtiniper, 'DD/MM/RRRR');
             vr_dtfimper := last_day(to_date('01/' || pr_dtfimper, 'DD/MM/RRRR'));
@@ -518,7 +521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               IF cr_crapind_cod%NOTFOUND THEN
                 -- Fechar o cursor
                 CLOSE cr_crapind_cod;
-                vr_dscritic := 'Indexador Inexistente.';
+                vr_dscritic := 'Indexador Inexistente - 1:'||pr_cddindex;
                 RAISE vr_exc_saida;
               ELSE
                 -- Fechar o cursor
@@ -532,8 +535,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               -- Verifica se houve problema na atualizacao do registro
               EXCEPTION
                 WHEN OTHERS THEN
-                -- Descricao do erro na insercao de registros
-                vr_dscritic := 'Erro ao atualizar Indexador: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar Indexador: idperiod:'||pr_idperiod
+                             ||', idcadast:'||pr_idcadast||', idexpres:'||pr_idexpres
+                             ||' com cddindex:'||pr_cddindex||'. '||SQLERRM;
                 RAISE vr_exc_saida;
               END;
               
@@ -608,7 +613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             IF cr_crapind_cod%NOTFOUND THEN
               -- Fechar o cursor
               CLOSE cr_crapind_cod;
-              vr_dscritic := 'Indexador Inexistente.';
+              vr_dscritic := 'Indexador Inexistente - 2:'||pr_cddindex;
               RAISE vr_exc_saida;
             ELSE
               -- Fechar o cursor
@@ -779,6 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarqpdf, pr_des_erro => vr_dscritic);
 
             END IF;
+
           WHEN 'I' THEN -- Inclusao
 
             BEGIN
@@ -789,12 +795,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             EXCEPTION
               WHEN OTHERS THEN
                 -- Descricao do erro na insercao de registros
-                vr_dscritic := 'Erro ao inserir Vinculacao de Transacao: '||SQLERRM;
+                vr_dscritic := 'Erro ao inserir Vinculacao de Transacao: nmdindex:'||pr_nmdindex
+                                ||', idperiod:'||pr_idperiod||', idcadast:'||pr_idcadast
+                                ||', idexpres:'||pr_idexpres||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
-            vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' - '||'APLI0004'
-                           ||' --> ALERTA: '||'Operador: ' || vr_cdoperad;
+            vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' -> Operador: ' || vr_cdoperad;
 
             vr_dsmsglog := vr_dsmsglog || ' - incluiu novo indexador: codigo: ' || vr_cddindex || ', nome: ' || pr_nmdindex;
             vr_dsmsglog := vr_dsmsglog || ', periodicidade: ' || gene0002.fn_busca_entrada(pr_postext     => pr_idperiod
@@ -830,6 +837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
           -- Incluir log de execução.
           BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_cdprograma   => vr_cdprogra
                                     ,pr_ind_tipo_log => 1
                                     ,pr_des_log      => vr_dsmsglog
                                     ,pr_nmarqlog     => 'indice');
@@ -861,8 +869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral na rotina da tela INDICE: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper );
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -933,7 +940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_carrega_index');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_carrega_index');
 
         -- Criar cabeçalho do XML
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -956,7 +963,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
           vr_contador := vr_contador + 1;
 
         END LOOP;
-
         CLOSE cr_crapind;
 
         COMMIT;
@@ -980,8 +986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_carrega_index: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => 3
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => 3 );
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1055,7 +1060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_cadastra_taxa_cdi_mensal');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_cadastra_taxa_cdi_mensal');
 
       -- Verifica dias anteriores
       IF pr_flatuant THEN -- Certifica se deve atualizar p/ dias ant.
@@ -1157,15 +1162,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Problemas na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
+        pr_dscritic := 'Erro na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Problemas na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: '||SQLERRM;
+        pr_dscritic := 'Erro na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -1296,8 +1300,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_grava_taxa_cdi_mensal');
-
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_grava_taxa_cdi_mensal');
+        
       OPEN cr_crapmfx(pr_cdcooper, pr_dtiniper, 16);
         FETCH cr_crapmfx
         INTO rw_crapmfx;
@@ -1312,7 +1316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             VALUES(pr_dtiniper, 16, pr_cdcooper) RETURNING ROWID INTO vr_auxrowid;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro na CRAPMFX: '||SQLERRM;
+            vr_dscritic := 'Erro ao inserir registro na CRAPMFX: dtmvtolt:'||pr_dtiniper
+                           ||', tpmoefix:16. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
 
@@ -1330,7 +1335,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       vr_contador := 0;
 
       OPEN cr_craptab(pr_cdcooper);
-
       LOOP
 
         FETCH cr_craptab INTO rw_craptab;
@@ -1379,7 +1383,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
            UPDATE crapmfx SET vlmoefix = vr_cdimensa WHERE crapmfx.rowid = vr_auxrowid;
          EXCEPTION
            WHEN OTHERS THEN
-             vr_dscritic := 'Erro ao atualizar registro na CRAPMFX: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar registro na CRAPMFX: vlmoefix:'||vr_cdimensa
+                             ||' com rowid:'||vr_auxrowid||'. '||SQLERRM;
              RAISE vr_exc_saida;
          END;
 
@@ -1398,7 +1404,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               RETURNING ROWID INTO vr_rowidtrd;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir registro na CRAPTRD: '||SQLERRM;
+              vr_dscritic := 'Erro ao inserir registro na CRAPTRD: tptaxrda:'||vr_taxcdi(vr_contaaux)
+                             ||', dtiniper:'||pr_dtiniper||', dtfimper:'||vr_dtfimper||', qtdiaute:'||vr_qtdiaute
+                             ||', vlfaixas:'||vr_taxfai(vr_contaaux)||', incarenc:0, incalcul:0. '||SQLERRM;
               RAISE vr_exc_saida;
           END;
 
@@ -1414,13 +1422,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
          BEGIN
            UPDATE craptrd
            SET    craptrd.txofimes = vr_vltxadic,
-             craptrd.txofidia = ROUND(((POWER(1 + (vr_vltxadic / 100),1 / vr_qtdiaute) - 1) * 100),6)
+                  craptrd.txofidia = ROUND(((POWER(1 + (vr_vltxadic / 100),1 / vr_qtdiaute) - 1) * 100),6)
            WHERE  craptrd.rowid = vr_rowidtrd
            RETURNING  craptrd.txofimes, craptrd.txofidia
            INTO       rw_craptrd.txofimes, rw_craptrd.txofidia;
          EXCEPTION
            WHEN OTHERS THEN
-             vr_dscritic := 'Problemas ao inserir registro na CRAPTRD: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar registro na CRAPTRD: txofimes:'||vr_vltxadic
+                             ||', txofidia:'||ROUND(((POWER(1 + (vr_vltxadic / 100),1 / vr_qtdiaute) - 1) * 100),6)
+                             ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
              RAISE vr_exc_saida;
          END;
 
@@ -1442,7 +1453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
-                vr_dscritic := 'Problemas ao atualizar registro na CRAPTRD - 1: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 1: vltrapli:'||vr_cdimensa
+                               ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
            ELSE
@@ -1467,17 +1480,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               BEGIN
                 UPDATE craptrd
                 SET    craptrd.vltrapli = case when rw_craptrd.txofimes < vr_txmespop then rw_crapmfx_2.vlmoefix /* Poupança */ else vr_cdimensa  /* CDI */ end,
-                  craptrd.txofimes = case when rw_craptrd.txofimes < vr_txmespop then vr_txmespop /* Poupança */ else rw_craptrd.txofimes end,
-                  craptrd.txofidia = case when rw_craptrd.txofidia < vr_txdiapop then vr_txdiapop else rw_craptrd.txofidia END
+                       craptrd.txofimes = case when rw_craptrd.txofimes < vr_txmespop then vr_txmespop /* Poupança */ else rw_craptrd.txofimes end,
+                       craptrd.txofidia = case when rw_craptrd.txofidia < vr_txdiapop then vr_txdiapop else rw_craptrd.txofidia end
                 WHERE  craptrd.rowid = vr_rowidtrd;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_cdcritic := 0;
-                  vr_dscritic := 'Problemas ao atualizar registro na CRAPTRD - 2: '||SQLERRM;
+                  -- Descricao do erro na atualizacao de registros
+                  vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 2: txofimes:'||rw_craptrd.txofimes
+                  ||', vr_txmespop:'||vr_txmespop||', vlmoefix:'||rw_crapmfx_2.vlmoefix||', vr_cdimensa:'||vr_cdimensa
+                  ||', txofidia:'||rw_craptrd.txofidia||',vr_txdiapop:'||vr_txdiapop
+                  ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
 
            END IF;
+
          ELSE
            -- Verifica se a Poupanca eh maior que o CDI e se irá utilizar nova regra
 
@@ -1497,7 +1515,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
              EXCEPTION
                WHEN OTHERS THEN
                  vr_cdcritic := 0;
-                 vr_dscritic := 'Problemas ao atualizar registro na CRAPTRD - 3: '||SQLERRM;
+                 -- Descricao do erro na atualizacao de registros
+                 vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 3: vltrapli:'||vr_cdimensa
+                                ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                  RAISE vr_exc_saida;
              END;
 
@@ -1523,13 +1543,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
              BEGIN
                UPDATE craptrd
                SET    craptrd.vltrapli = case when rw_craptrd.txofimes < vr_txmespop then rw_crapmfx_3.vlmoefix /* Poupança */ else vr_cdimensa  /* CDI */ end,
-                 craptrd.txofimes = case when rw_craptrd.txofimes < vr_txmespop then vr_txmespop /* Poupança */ else rw_craptrd.txofimes end,
-                 craptrd.txofidia = case when rw_craptrd.txofidia < vr_txdiapop then vr_txdiapop else rw_craptrd.txofidia END
+                      craptrd.txofimes = case when rw_craptrd.txofimes < vr_txmespop then vr_txmespop /* Poupança */ else rw_craptrd.txofimes end,
+                      craptrd.txofidia = case when rw_craptrd.txofidia < vr_txdiapop then vr_txdiapop else rw_craptrd.txofidia end
                WHERE  craptrd.rowid = vr_rowidtrd;
              EXCEPTION
                WHEN OTHERS THEN
                  vr_cdcritic := 0;
-                 vr_dscritic := 'Problemas ao atualizar registro na CRAPTRD - 4: '||SQLERRM;
+                 -- Descricao do erro na atualizacao de registros
+                 vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 4: txofimes:'||rw_craptrd.txofimes
+                 ||', vr_txmespop:'||vr_txmespop||', vlmoefix:'||rw_crapmfx_3.vlmoefix||', vr_cdimensa:'||vr_cdimensa
+                 ||', txofidia:'||rw_craptrd.txofidia||',vr_txdiapop:'||vr_txdiapop
+                 ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                  RAISE vr_exc_saida;
              END;
            END IF;
@@ -1542,15 +1566,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Problemas na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
+        pr_dscritic := 'Erro na Rotina apli0004.pc_grava_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Problemas na Rotina apli0004.pc_cadastra_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: '||SQLERRM;
+        pr_dscritic := 'Erro na Rotina apli0004.pc_grava_taxa_cdi_mensal ' || pr_cdcooper ||'. Erro: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -1597,7 +1620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_calcula_poupanca');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_calcula_poupanca');
 
       -- Buscar configuração na tabela
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -1617,14 +1640,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Problemas na rotina apli0004.pc_calcula_poupanca. Cooper: ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
+        pr_dscritic := 'Erro na rotina apli0004.pc_calcula_poupanca. Cooper: ' || pr_cdcooper ||'. Erro: ' || vr_dscritic;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Problemas na rotina apli0004.pc_calcula_poupanca. Cooper: ' || pr_cdcooper ||'. Erro: '||SQLERRM;
+        pr_dscritic := 'Erro na rotina apli0004.pc_calcula_poupanca. Cooper: ' || pr_cdcooper ||'. Erro: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
     END;
   END pc_calcula_poupanca;
@@ -1717,7 +1739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_valida_data');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_valida_data');
 
       vr_dtperiod := to_date(pr_dtperiod,'dd/mm/yyyy');
 
@@ -1894,8 +1916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_valida_data: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper );
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -2021,7 +2042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_manter_taxa');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_manter_taxa');
 
       vr_dtperiod := to_date(pr_dtperiod,'dd/mm/RRRR');
 
@@ -2061,11 +2082,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       --TR (Caso for TR deixar passar valor zerado SD 615474)
       IF pr_cddindex = 2 THEN
-      -- Valida valor de taxa
+        -- Valida valor de taxa
         IF pr_vlrdtaxa IS NULL THEN
-        vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
-        RAISE vr_exc_saida;
-      END IF;
+          vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
+          RAISE vr_exc_saida;          
+        END IF;
       ELSE
         -- Valida valor de taxa
         IF pr_vlrdtaxa <= 0 OR
@@ -2104,7 +2125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       IF cr_crapind_cod%NOTFOUND THEN
         -- Fechar o cursor
         CLOSE cr_crapind_cod;
-        vr_dscritic := 'Indexador Inexistente.';
+        vr_dscritic := 'Indexador Inexistente - 3:'||pr_cddindex;
         RAISE vr_exc_saida;
       ELSE
         -- Fechar o cursor
@@ -2129,9 +2150,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
           VALUES
             (pr_cddindex,vr_dtperiod,vr_dtperiod, pr_vlrdtaxa ,rw_crapdat.dtmvtolt);
 
-          vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' - '||'APLI0004'
-                           ||' --> ALERTA: '||'Operador: ' || vr_cdoperad;
-
+          -- Monta mensagem de log com atualizacao do registro
+          vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' -> Operador: ' || vr_cdoperad;
 
           vr_dsmsglog := vr_dsmsglog || ' - cadastrou taxa do indexador: ' || pr_cddindex || ' - ' || rw_crapind_cod.nmdindex;
 
@@ -2151,7 +2171,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         EXCEPTION
           WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros
-            vr_dscritic := 'Erro ao inserir Taxa: '||SQLERRM;
+            vr_dscritic := 'Erro ao inserir Taxa: cddindex:'||pr_cddindex||', dtiniper:'||vr_dtperiod
+                           ||', dtfimper:'||vr_dtperiod||', vlrdtaxa:'||pr_vlrdtaxa
+                           ||', dtcadast:'||rw_crapdat.dtmvtolt||'. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
       ELSE
@@ -2164,8 +2186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             UPDATE craptxi
             SET    vlrdtaxa = pr_vlrdtaxa
             WHERE  craptxi.cddindex = pr_cddindex AND
-              craptxi.dtiniper = vr_dtperiod AND
-              craptxi.dtfimper = vr_dtperiod;
+                   craptxi.dtiniper = vr_dtperiod AND
+                   craptxi.dtfimper = vr_dtperiod;
             
             -- Consulta indexador para obter informacoes para geracao do log
             OPEN cr_crapind_cod(pr_cddindex);
@@ -2173,8 +2195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             INTO rw_crapind_cod;
     
             -- Monta mensagem de log com atualizacao do registro
-            vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' - '||'APLI0004'
-                           ||' --> ALERTA: '||'Operador: ' || vr_cdoperad;
+            vr_dsmsglog := TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') || ' -> Operador: ' || vr_cdoperad;
 
             vr_dsmsglog := vr_dsmsglog || ' - Alterou taxa do indexador: ' || pr_cddindex || ' - ' || rw_crapind_cod.nmdindex;
 
@@ -2193,7 +2214,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar Taxa:'||SQLERRM;    
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar Taxa: vlrdtaxa:'||pr_vlrdtaxa
+                             ||' com cddindex:'||pr_cddindex
+                             ||', dtiniper:'||vr_dtperiod||', dtfimper:'||vr_dtperiod||'. '||SQLERRM;
               RAISE vr_exc_saida;
           END;
         ELSE
@@ -2302,7 +2326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) <> 0 THEN
               RAISE vr_exc_saida;
             END IF;      
-            
+
             -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_manter_taxa');
             
@@ -2357,7 +2381,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
               EXCEPTION
                 WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar taxa TR: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar taxa TR: vlmoefix:'||pr_vlrdtaxa
+                               ||' com cdcooper:'||rw_crapcop.cdcooper
+                               ||', dtmvtolt:'||vr_dtperiod||', tpmoefix:11. '||SQLERRM;
               END;
 
               apli0004.pc_atualiza_taxa_poupanca(pr_cdcooper => rw_crapcop.cdcooper
@@ -2372,7 +2399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_manter_taxa');
 
-            END IF;                              
+           END IF;                              
 
           END LOOP;
           CLOSE cr_crapcop;
@@ -2401,8 +2428,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 VALUES(rw_crapcop.cdcooper, vr_dtperiod, 19, pr_vlrdtaxa);
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao cadastrar SELIC Meta na cooperativa: ' || rw_crapcop.cdcooper
-                               ||': '||SQLERRM; 
+                vr_dscritic := 'Erro ao cadastrar SELIC Meta na cooperativa: cdcooper:'||rw_crapcop.cdcooper
+                               ||', dtmvtolt:'||vr_dtperiod||', tpmoefix:19 '||', vlmoefix:'||pr_vlrdtaxa||'. '
+                               ||SQLERRM; 
                 RAISE vr_exc_saida;   
             END;  
     
@@ -2424,12 +2452,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               UPDATE crapmfx
                  SET vlmoefix = pr_vlrdtaxa
                WHERE cdcooper = rw_crapcop.cdcooper
-                AND dtmvtolt = vr_dtperiod
-                AND tpmoefix = 19;
+                 AND dtmvtolt = vr_dtperiod
+                 AND tpmoefix = 19;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao cadastrar SELIC Meta na cooperativa: ' || rw_crapcop.cdcooper
-                               ||': '||SQLERRM; 
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar SELIC Meta na cooperativa:'||rw_crapcop.cdcooper
+                               ||', vlmoefix:'||pr_vlrdtaxa
+                               ||' com dtmvtolt:'||vr_dtperiod||', tpmoefix:19. '||SQLERRM;
                 RAISE vr_exc_saida;   
             END;  
           END LOOP;
@@ -2496,8 +2526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_manter_taxa: '||SQLERRM || ', ' || vr_dscritic;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper );
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -2639,7 +2668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       IF cr_crapcop%ISOPEN THEN
          close cr_crapcop;
       END IF;
-
+      
       OPEN cr_crapcop(pr_cdcooper => 0);
       LOOP
         FETCH cr_crapcop INTO rw_crapcop;
@@ -2662,7 +2691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                                    pr_idprglog      => vr_idprglog,
                                    pr_nmarqlog      => NULL);
           END IF;
-          
+
           OPEN cr_crapmfx(pr_cdcooper => rw_crapcop.cdcooper
                          ,pr_dtmvtolt => pr_dtmvtolt
                          ,pr_tpmoefix => pr_tpmoefix);
@@ -2676,7 +2705,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 VALUES(rw_crapcop.cdcooper, pr_dtmvtolt, pr_vlmoefix, pr_tpmoefix);
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir Taxa - 1: '||SQLERRM;
+                vr_dscritic := 'Erro ao inserir Taxa - 1: cdcooper:'||rw_crapcop.cdcooper
+                               ||', dtmvtolt:'||pr_dtmvtolt||', tpmoefix:'||pr_tpmoefix
+                               ||', vlmoefix:'||pr_vlmoefix||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -2709,7 +2740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 vr_dtmvtolt := vr_dtmvtolt + 1;
               END LOOP;
             --END IF;
-            
+
             OPEN cr_crapgen(pr_cdcooper => rw_crapcop.cdcooper);
             LOOP
               FETCH cr_crapgen INTO rw_crapgen;
@@ -2729,17 +2760,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                   CLOSE cr_craptrd;
 
                   BEGIN
-
                     vr_txprodia := ((POWER((1 + pr_vlmoefix / 100),(1 / 252)) - 1) * 100);
 
                     INSERT INTO
                       craptrd(cdcooper, dtiniper, qtdiaute, tptaxrda, incarenc, vlfaixas, cdperapl, txprodia, txofidia)
                     VALUES(rw_crapgen.cdcooper, pr_dtmvtolt, vr_qtdiaute, rw_crapgen.tpaplica, 0,
-                           rw_crapgen.vlfaixas, rw_crapgen.cdperapl,vr_txprodia,
+                           rw_crapgen.vlfaixas, rw_crapgen.cdperapl, vr_txprodia,
                            (ROUND((vr_txprodia * rw_crapgen.perapltx / 100),6)));
                   EXCEPTION
                     WHEN OTHERS THEN
-                      vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 1: '||SQLERRM;
+                      vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 1: cdcooper:'||rw_crapgen.cdcooper
+                                     ||', dtiniper:'||pr_dtmvtolt||', qtdiaute:'||vr_qtdiaute
+                                     ||', tptaxrda:'||rw_crapgen.tpaplica||', incarenc:0'
+                                     ||', vlfaixas:'||rw_crapgen.vlfaixas||', cdperapl:'||rw_crapgen.cdperapl
+                                     ||', txprodia:'||vr_txprodia
+                                     ||', txofidia:'||(ROUND((vr_txprodia * rw_crapgen.perapltx / 100),6))||'. '
+                                     ||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
 
@@ -2754,7 +2790,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                              (ROUND((vr_txprodia * rw_crapgen.perrdttx / 100),6)));
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 2: '||SQLERRM;
+                      vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 2: cdcooper:'||rw_crapgen.cdcooper
+                                     ||', dtiniper:'||pr_dtmvtolt||', qtdiaute:'||vr_qtdiaute
+                                     ||', tptaxrda:'||rw_crapgen.tpaplica||', incarenc:1'
+                                     ||', vlfaixas:'||rw_crapgen.vlfaixas||', cdperapl:'||rw_crapgen.cdperapl
+                                     ||', txprodia:'||vr_txprodia
+                                     ||', txofidia:'||(ROUND((vr_txprodia * rw_crapgen.perrdttx / 100),6))||'. '
+                                     ||SQLERRM;
                         RAISE vr_exc_saida;
                     END;
                   END IF;
@@ -2808,7 +2850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               vr_dscritic := 'Erro ao cadastrar o CDI acumulado - Cooperativa: ' || rw_crapcop.nmrescop || ', Erro: ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;  
-            
+
             -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_cadastra_taxa_cdi');
             
@@ -2835,7 +2877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
               vr_dscritic := 'TAXRDC JA EXISTE PARA COOPERATIVA: '||rw_crapcop.nmrescop;
                                                             
-             -- Cria log informando que as taxas ja estao cadastradas
+              -- Cria log informando que as taxas ja estao cadastradas
               CECRED.pc_log_programa(pr_dstiplog      => 'E', 
                                      pr_cdprograma    => pr_cdprogra, 
                                      pr_cdcooper      => pr_cdcooper, 
@@ -2868,8 +2910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em cadastro de taxa: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -3010,7 +3051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       rw_craptrd_II cr_craptrd_II%ROWTYPE;  
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_altera_taxa_cdi');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_altera_taxa_cdi');
 
       -- Busca do calendario da Cooperativa
       OPEN cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -3113,11 +3154,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 BEGIN
                   UPDATE craptrd
                   SET    craptrd.txprodia = vr_txprodia,
-                  craptrd.txofidia = ROUND((vr_txprodia * rw_crapgen.perapltx / 100 ),6)
+                         craptrd.txofidia = ROUND((vr_txprodia * rw_crapgen.perapltx / 100 ),6)
                   WHERE  craptrd.rowid = rw_craptrd_II.rowid;
                 EXCEPTION
                   WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 5: ' ||SQLERRM; 
+                    -- Descricao do erro na atualizacao de registros
+                    vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 5: txprodia:'||vr_txprodia
+                                   ||', txofidia:'||ROUND((vr_txprodia * rw_crapgen.perapltx / 100 ),6)
+                                   ||' com rowid:'||rw_craptrd_II.rowid||'. '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;  
 
@@ -3126,11 +3170,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 BEGIN
                   UPDATE craptrd
                   SET    craptrd.txprodia = vr_txprodia,
-                  craptrd.txofidia = ROUND((vr_txprodia * rw_crapgen.perrdttx / 100 ),6)
+                         craptrd.txofidia = ROUND((vr_txprodia * rw_crapgen.perrdttx / 100 ),6)
                   WHERE  craptrd.rowid = rw_craptrd_II.rowid;
                 EXCEPTION
                   WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 6: ' ||SQLERRM; 
+                    -- Descricao do erro na atualizacao de registros
+                    vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 6: txprodia:'||vr_txprodia
+                                   ||', txofidia:'||ROUND((vr_txprodia * rw_crapgen.perapltx / 100 ),6)
+                                   ||' com rowid:'||rw_craptrd_II.rowid||'. '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;  
 
@@ -3150,7 +3197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  crapmfx.rowid = vr_auxrowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPMFX - 1: ' ||SQLERRM; 
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPMFX - 1: vlmoefix:'||pr_vlmoefix
+                               ||' com rowid:'||vr_auxrowid||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;  
           END IF;             
@@ -3209,8 +3258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em alteracao de taxa: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -3289,7 +3337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_cadastra_taxa_cdi_acumulado');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_cadastra_taxa_cdi_acumulado');
         
         -- Calcular CDI Diário
         vr_cdidiari := ROUND(((POWER(1 + (pr_cdianual / 100), 1 / 252) - 1) * 100),8);
@@ -3311,7 +3359,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               VALUES(pr_cdcooper, pr_dtperiod, 18, vr_cdidiari) RETURNING ROWID INTO vr_rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir CDI: '||SQLERRM;
+              vr_dscritic := 'Erro ao inserir CDI: dtmvtolt:'||pr_dtperiod||', tpmoefix:18'
+                             ||', vlmoefix:'||vr_cdidiari||'. '||SQLERRM;
               RAISE vr_exc_saida;  
           END;
         ELSE
@@ -3322,7 +3371,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             WHERE  crapmfx.rowid = rw_crapmfx.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar CDI - 1: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar CDI - 1: vlmoefix:'||vr_cdidiari
+                             ||' com rowid:'||rw_crapmfx.rowid||'. '||SQLERRM;
             RAISE vr_exc_saida;
           END;
         END IF;
@@ -3356,7 +3407,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 VALUES(pr_cdcooper, vr_dtperiod, 17, vr_cdidiari) RETURNING ROWID INTO vr_rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir CDI Acumulado: '||SQLERRM;
+                vr_dscritic := 'Erro ao inserir CDI Acumulado: dtmvtolt:'||vr_dtperiod||', tpmoefix:17'
+                               ||', vlmoefix:'||vr_cdidiari||'. '||SQLERRM;
+
                 RAISE vr_exc_saida;  
             END;
           ELSE
@@ -3368,7 +3421,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  crapmfx.rowid = rw_crapmfx.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar CDI - 2: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar CDI - 2: vlmoefix:'||vr_cdidiari
+                               ||' com rowid:'||rw_crapmfx.rowid||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
           END IF;
@@ -3416,7 +3471,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                         VALUES(pr_cdcooper, vr_dtiniper, 17, vr_vlmoefix);
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 1: ' ||SQLERRM;
+                        vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 1: dtmvtolt:'||vr_dtiniper
+                                       ||', tpmoefix:17'||', vlmoefix:'||vr_vlmoefix||'. '||SQLERRM;
                         RAISE vr_exc_saida; 
                     END;            
                   ELSE
@@ -3427,7 +3483,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                       WHERE  crapmfx.rowid = rw_crapmfx.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao atualizar taxa na tabela CRAPMFX - 2: ' ||SQLERRM;
+                        -- Descricao do erro na atualizacao de registros
+                        vr_dscritic := 'Erro ao atualizar taxa na tabela CRAPMFX - 2: vlmoefix:'||vr_vlmoefix
+                                       ||' com rowid:'||rw_crapmfx.rowid||'. '||SQLERRM;
                         RAISE vr_exc_saida; 
                     END;
                   END IF;
@@ -3482,7 +3540,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                 VALUES(pr_cdcooper, pr_dtperiod, 17, vr_cdiacuml);
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 2: '||SQLERRM;
+                vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 2: dtmvtolt:'||pr_dtperiod
+                                       ||', tpmoefix:17'||', vlmoefix:'||vr_cdiacuml||'. '||SQLERRM;
                 RAISE vr_exc_saida; 
             END;                
           ELSE
@@ -3495,7 +3554,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  crapmfx.rowid = rw_crapmfx.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar CDI - 3: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar CDI - 3: vlmoefix:'||vr_cdiacuml
+                               ||' com rowid:'||rw_crapmfx.rowid||'. '||SQLERRM;
               RAISE vr_exc_saida;
             END;
           END IF;
@@ -3546,7 +3607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                           VALUES(pr_cdcooper, vr_dtiniper, 17, vr_vlmoefix);
                       EXCEPTION
                         WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 3: '||SQLERRM;
+	                         vr_dscritic := 'Erro ao inserir taxa na tabela CRAPMFX - 3: dtmvtolt:'||vr_dtiniper
+                                          ||', tpmoefix:17'||', vlmoefix:'||vr_vlmoefix||'. '||SQLERRM;
                           RAISE vr_exc_saida; 
                       END;
                     ELSE
@@ -3559,7 +3621,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                         WHERE  crapmfx.rowid = rw_crapmfx.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao atualizar CDI - 4: '||SQLERRM;
+                          -- Descricao do erro na atualizacao de registros
+                          vr_dscritic := 'Erro ao atualizar CDI - 4: vlmoefix:'||vr_vlmoefix
+                                         ||' com rowid:'||rw_crapmfx.rowid||'. '||SQLERRM;
                         RAISE vr_exc_saida;
                       END;
                     END IF;
@@ -3591,8 +3655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_cadastra_taxa_cdi_acumulado: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -3731,7 +3794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_poupanca');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_poupanca');
         
         -- Verifica se taxa SELIC esta cadastrada
         -- Busca registro de taxa
@@ -3774,7 +3837,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               VALUES(pr_cdcooper, pr_dtperiod, 11, pr_vltaxatr);
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir taxa TR: '||SQLERRM;
+               vr_dscritic := 'Erro ao inserir taxa TR: dtmvtolt:'||pr_dtperiod
+                              ||', tpmoefix:11'||', vlmoefix:'||pr_vltaxatr||'. '||SQLERRM;
           END;  
           
         ELSE
@@ -3785,11 +3849,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             UPDATE crapmfx
             SET    vlmoefix = pr_vltaxatr
             WHERE  cdcooper = pr_cdcooper
-            AND    pr_dtperiod = dtmvtolt
+            AND    dtmvtolt = pr_dtperiod
             AND    tpmoefix = 11;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar taxa TR - 1: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar TR - 1: vlmoefix:'||pr_vltaxatr
+                               ||' com dtmvtolt:'||pr_dtperiod
+                               ||', tpmoefix:11. '||SQLERRM;
           END; 
 
         END IF;
@@ -3824,7 +3892,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               VALUES(pr_cdcooper, pr_dtperiod, 20, vr_vlpoupnr);
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir taxa Nova Regra Poupanca: '||SQLERRM;
+               vr_dscritic := 'Erro ao inserir taxa Nova Regra Poupanca: dtmvtolt:'||pr_dtperiod
+                              ||', tpmoefix:20'||', vlmoefix:'||vr_vlpoupnr||'. '||SQLERRM;
           END;  
           
         ELSE
@@ -3839,7 +3908,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             AND    tpmoefix = 20;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar taxa Nova Regra Poupanca: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar taxa Nova Regra Poupanca: vlmoefix:'||vr_vlpoupnr
+                             ||' com dtmvtolt:'||pr_dtperiod||', tpmoefix:20. '||SQLERRM;
           END; 
 
         END IF;
@@ -3862,7 +3933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               VALUES(pr_cdcooper, pr_dtperiod, 8, vr_vlpoupan);
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir taxa Poupanca: '||SQLERRM;
+              vr_dscritic := 'Erro ao inserir taxa Poupanca: dtmvtolt:'||pr_dtperiod
+                             ||', tpmoefix:8'||', vlmoefix:'||vr_vlpoupan||'. '||SQLERRM;
           END;  
           
         ELSE
@@ -3877,7 +3949,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             AND    tpmoefix = 8;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar taxa Poupanca: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar taxa Poupanca: vlmoefix:'||vr_vlpoupan
+                             ||' com dtmvtolt:'||pr_dtperiod||', tpmoefix:8. '||SQLERRM;
           END; 
 
         END IF;
@@ -3969,16 +4043,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
           FETCH cr_craptrd INTO rw_craptrd;
 
           IF cr_craptrd%NOTFOUND THEN
-
             CLOSE cr_craptrd;
-
             BEGIN
               INSERT INTO craptrd(tptaxrda, dtiniper, dtfimper, qtdiaute, vlfaixas, incarenc, incalcul, cdcooper)
                 VALUES(vr_tptaxcdi(vr_qtdtxtab), pr_dtperiod, vr_dtfimper, vr_qtdiaute, vr_vlfaixas(vr_qtdtxtab), 0, 0, pr_cdcooper)
                 RETURNING ROWID INTO vr_rowidtrd;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 3: '||SQLERRM;
+                vr_dscritic := 'Erro ao inserir registro na CRAPTRD - 3: cdcooper:'||pr_cdcooper
+                               ||', dtiniper:'||pr_dtperiod||', dtfimper:'||vr_dtfimper
+                               ||', qtdiaute:'||vr_qtdiaute||', tptaxrda:'||vr_tptaxcdi(vr_qtdtxtab)
+                               ||', incarenc:0, incalcul:0'||', vlfaixas:'||vr_vlfaixas(vr_qtdtxtab)||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -4049,12 +4124,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             BEGIN
               UPDATE craptrd
               SET    craptrd.vltrapli = vr_auxvapli
-               ,craptrd.txofimes = vr_auxfimes
-               ,craptrd.txofidia = vr_auxfidia
+                    ,craptrd.txofimes = vr_auxfimes
+                    ,craptrd.txofidia = vr_auxfidia
               WHERE  craptrd.rowid = vr_rowidtrd;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 7: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 7: vltrapli: '||vr_auxvapli
+                               ||', txofimes:'||vr_auxfimes||', txofidia:'||vr_auxfidia
+                               ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
     
@@ -4068,12 +4146,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             BEGIN
               UPDATE craptrd
               SET    craptrd.vltrapli = vr_auxvapli
-               ,craptrd.txofimes = vr_txmespop
-               ,craptrd.txofidia = vr_txdiapop
+                    ,craptrd.txofimes = vr_txmespop
+                    ,craptrd.txofidia = vr_txdiapop
               WHERE  craptrd.rowid = vr_rowidtrd;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 8: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 8: vltrapli: '||vr_auxvapli
+                               ||', txofimes:'||vr_txmespop||', txofidia:'||vr_txdiapop
+                               ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
           END IF;
@@ -4100,8 +4181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em poupanca: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => vr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -4163,7 +4243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_calcula_qt_dias_uteis');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_calcula_qt_dias_uteis');
 
       -- Busca do calendario da Cooperativa
       OPEN cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -4193,7 +4273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                                           ,pr_qtmesano => 1
                                           ,pr_tpmesano => 'M'
                                           ,pr_des_erro => vr_dscritic);
-                                          
+
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
@@ -4239,8 +4319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_calcula_qt_dias_uteis: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -4321,7 +4400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_atualiza_sol026');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_atualiza_sol026');
 
         -- Monta data para comparacao
         vr_auxdtperi := to_date('01/' || to_char(pr_dtperiod,'mm') || '/' || to_char(pr_dtperiod,'yyyy'),'dd/mm/yyyy');
@@ -4402,7 +4481,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             WHERE  craptab.rowid = rw_craptab.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar registro na CRAPTAB: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar registro na CRAPTRD: dstextab: '||rw_craptab.dstextab
+                             ||' com rowid:'||rw_craptab.rowid||'. '||SQLERRM;
               RAISE vr_exc_saida;
           END;
 
@@ -4423,8 +4504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em atualizar pc_atualiza_sol026: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -4537,7 +4617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_atualiza_tr');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_atualiza_tr');
         
         -- Monta data para comparacao
         vr_auxdtper := to_date('01/' || to_char(pr_dtperiod,'mm') || '/' || to_char(pr_dtperiod,'yyyy'),'dd/mm/yyyy');
@@ -4590,7 +4670,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             WHERE  craptab.rowid = rw_craptab.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar registro na CRAPTAB I: '||SQLERRM;
+              -- Descricao do erro na atualizacao de registros
+              vr_dscritic := 'Erro ao atualizar registro na CRAPTAB I: dstextab: '||rw_craptab.dstextab
+                             ||' com rowid:'||rw_craptab.rowid||'. '||SQLERRM;
               RAISE vr_exc_saida;
           END;
 
@@ -4610,7 +4692,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  craplrt.rowid = rw_craplrt.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPLRT: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPLRT: txmensal: '||rw_craplrt.txmensal
+                               ||' com rowid:'||rw_craplrt.rowid||'. '||SQLERRM;
             END;
             
           END LOOP;
@@ -4646,7 +4730,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  craptab.rowid = rw_craptab.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPTAB II: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPTAB II: dstextab: '||rw_craptab.dstextab
+                               ||' com rowid:'||rw_craptab.rowid||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -4680,7 +4766,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               WHERE  craptab.rowid = rw_craptab.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPTAB III: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPTAB III: dstextab: '||rw_craptab.dstextab
+                               ||' com rowid:'||rw_craptab.rowid||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
           END IF;
@@ -4721,11 +4809,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             BEGIN
               UPDATE craplcr
               SET    txmensal = rw_craplcr.txmensal,
-                txdiaria = rw_craplcr.txdiaria
+                     txdiaria = rw_craplcr.txdiaria
               WHERE  craplcr.rowid = rw_craplcr.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar registro na CRAPLCR: '||SQLERRM;
+                -- Descricao do erro na atualizacao de registros
+                vr_dscritic := 'Erro ao atualizar registro na CRAPLCR: txmensal: '||rw_craplcr.txmensal
+                               ||', txdiaria:'||rw_craplcr.txdiaria
+                               ||' com rowid:'||rw_craplcr.rowid||'. '||SQLERRM;
             END;
 
           END LOOP; -- Fim do LOOP / Atualizar linhas de credito
@@ -4748,8 +4839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em atualizar pc_atualiza_tr: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -4815,7 +4905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_atualiza_taxa_poupanca');
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_atualiza_taxa_poupanca');
         
         OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
                        ,pr_dtperiod => pr_dtmvtolt --> Data do periodo
@@ -4889,8 +4979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         pr_dscritic := 'Erro geral em pc_atualiza_taxa_poupanca: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper );
 
         ROLLBACK;
     END;
@@ -4955,7 +5044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
     BEGIN
       -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_verifica_tipo_data');
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'APLI0004.pc_verifica_tipo_data');
 
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -5012,11 +5101,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em pc_valida_data: '||SQLERRM;
+        pr_dscritic := 'Erro geral em pc_verifica_tipo_data: '||SQLERRM;
 
         --Inclusão na tabela de erros Oracle - Chamado 744573
-        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper
-                                     ,pr_compleme => pr_dscritic );
+        CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper );
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
