@@ -1,3 +1,21 @@
+/*..............................................................................
+
+Programa: siscaixa/web/crap015b.w
+Sistema : Caixa On-line                                       
+Sigla   : CRED    
+                                             Ultima atualizacao: 06/10/2017
+   
+Dados referentes ao programa:
+
+Objetivo  : Estorno de titulo/convenio
+
+Alteracoes: 29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
+
+            06/10/2017 - Ajuste no bloco de transacao da rotina de estorno NPC (Rafael)
+
+..............................................................................*/
+{ sistema/generico/includes/var_oracle.i }
+
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
@@ -19,7 +37,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_tit4 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_tit5 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valordoc AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_valorpago AS CHARACTER FORMAT "X(256)":U .
+       FIELD v_valorpago AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_cdctrbxo  AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -84,6 +103,9 @@ DEFINE VARIABLE p-pg        AS LOGICAL    NO-UNDO.
 DEFINE VARIABLE p-docto     AS DECIMAL    NO-UNDO.
 DEFINE VARIABLE p-literal   AS CHARACTER  NO-UNDO.
 DEFINE VARIABLE p-ult-sequencia AS INTEGER    NO-UNDO.
+DEFINE VARIABLE aux_dscritic AS CHARACTER     NO-UNDO.
+DEFINE VARIABLE aux_des_erro AS CHARACTER     NO-UNDO.
+
 DEFINE VARIABLE p-registro  AS RECID      NO-UNDO.
 
 DEF TEMP-TABLE w-craperr  NO-UNDO
@@ -111,8 +133,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorpago 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorpago 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorpago ab_unmap.v_cdctrbxo
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorpago ab_unmap.v_cdctrbxo 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -198,6 +220,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_cdctrbxo AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1    
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -378,6 +404,9 @@ PROCEDURE htmOffsets :
     ("v_valordoc":U,"ab_unmap.v_valordoc":U,ab_unmap.v_valordoc:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_valorpago":U,"ab_unmap.v_valorpago":U,ab_unmap.v_valorpago:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_cdctrbxo":U,"ab_unmap.v_cdctrbxo":U,ab_unmap.v_cdctrbxo:HANDLE IN FRAME {&FRAME-NAME}).  
+    
 END PROCEDURE.
 
 
@@ -528,6 +557,7 @@ PROCEDURE process-web-request :
         ASSIGN v_tit3      = string(dec(get-value("v_ptit3")),"99999,999999").
         ASSIGN v_tit4      = string(dec(get-value("v_ptit4")),"9").
         ASSIGN v_tit5      = string(dec(get-value("v_ptit5")),"zz,zzz,zzz,zzz999").
+        ASSIGN v_cdctrbxo  = get-value("v_pcdctrbxo").
     
         IF get-value("ok") <> "" THEN
         DO:
@@ -610,7 +640,54 @@ PROCEDURE process-web-request :
                             END.
                             UNDO.
                         END.
+                        ELSE 
+
+                          /** Requisitar cancelamento da baixa operacional CIP **/
+                          /* Se possuir codigo de controle de baixa operacional */
+                          IF v_cdctrbxo <> "" THEN
+                          DO:
+                            
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                      
+
+                            RUN STORED-PROCEDURE pc_cancelar_baixa_operac
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                        (INPUT "LEGWS"      /* pr_cdlegado Co~ digo Legado */
+                                                        ,INPUT "0"          /* pr_idtitdda Id~ entificador Titulo DDA */
+                                                        ,INPUT v_cdctrbxo   /* pr_cdctrlcs Numero controle consulta NPC */
+                                                        ,INPUT v_codbarras  /* pr_cdcodbar Codigo de barras do titulo */
+                                                        ,OUTPUT ""          /* pr_des_erro Indicador erro OK/NOK */
+                                                        ,OUTPUT "" ).       /* pr_dscritic Descricao erro */
+
+                            CLOSE STORED-PROC pc_cancelar_baixa_operac
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                            ASSIGN aux_des_erro = pc_cancelar_baixa_operac.pr_des_erro
+                                   aux_dscritic = pc_cancelar_baixa_operac.pr_dscritic.
+                               
+                            IF aux_des_erro = "NOK" THEN 
+                            DO:
+                                ASSIGN l-houve-erro = YES.
+                                CREATE w-craperr.
+                                ASSIGN w-craperr.cdagenci   = glb_cdagenci
+                                       w-craperr.nrdcaixa   = glb_cdbccxlt
+                                       w-craperr.nrsequen   = 1
+                                       w-craperr.cdcritic   = 999
+                                       w-craperr.dscritic   = aux_dscritic
+                                       w-craperr.erro       = TRUE.
+
+                                UNDO.
+                              /*{&OUT} '<script> alert("' + aux_dscritic + '") </script>'.*/
                     END.
+
+                          END.
+                        
+                    END.
+
+              END.
+
                     IF l-houve-erro THEN
                     DO:
         
@@ -633,7 +710,9 @@ PROCEDURE process-web-request :
                                    craperr.erro       = w-craperr.erro.
                             VALIDATE craperr.
                         END.
+
                         {include/i-erro.i}
+
                     END.
                     ELSE
                     DO:
@@ -651,7 +730,6 @@ PROCEDURE process-web-request :
                 END.
             END.
         END.
-    END.
 
     
     /* STEP 4 -
@@ -710,6 +788,7 @@ PROCEDURE process-web-request :
    ASSIGN v_tit3      = string(dec(get-value("v_ptit3")),"99999,999999").
    ASSIGN v_tit4      = string(dec(get-value("v_ptit4")),"9").
    ASSIGN v_tit5      = string(dec(get-value("v_ptit5")),"zz,zzz,zzz,zzz999").
+   ASSIGN v_cdctrbxo  = get-value("v_pcdctrbxo").
           
     RUN displayFields.
 

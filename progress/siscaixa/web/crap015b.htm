@@ -7,6 +7,7 @@ Alteracoes: 06/07/2009 - Aumento do campo Operador (Diego).
             04/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
 
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 -->
 <html>
 
@@ -24,7 +25,7 @@ Alteracoes: 06/07/2009 - Aumento do campo Operador (Diego).
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post>
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7">
 
@@ -101,6 +102,7 @@ Alteracoes: 06/07/2009 - Aumento do campo Operador (Diego).
           <td align="left" class="linhaform" width="77%" colspan="2"><!--webbot
             bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="44" --><input type="text" name="v_codbarras" size="52" class="input" maxlength="44" disabled>
           <!--  <input type="submit" value="Manual" name="Manual" class="button"> -->
+          <input type="hidden" name="v_cdctrbxo" size="52" class="input" maxlength="80" disabled>
           </td>
           </tr>
         <tr>
