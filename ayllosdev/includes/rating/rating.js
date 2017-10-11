@@ -14,6 +14,8 @@
 //***						   impressao. (Jorge)              		   ***//
 //***                                                                  ***//
 //***             16/04/2015 - Consultas automatizadas (Gabriel-RKAM)  ***//
+//***                                                                  ***//
+//***             16/04/2015 - Liberacao M442          (Heitor-Mouts)  ***//
 //************************************************************************//
 
 var fncRatingContinue = "";  // Variável para armazenar função que será acionada quando os dados do RATING já foram validados
@@ -217,6 +219,41 @@ function imprimirRating(flgefeti,tpctrato,nrctrato,iddivcri,fnfinish) {
 	}
 }
 
+function imprimirRatingProposta(flgefeti,tpctrato,nrctrato,iddivcri,fnfinish) {
+	if (flgefeti) {
+		abreJanelaImpressao();
+	} else {
+		showMsgAguardo("Aguarde, carregando par&acirc;metros para impress&atilde;o do rating proposta ...");	
+
+		fncRatingSuccess = fnfinish;
+
+		// Executa o script de validação dos dados do rating através de ajax
+		$.ajax({
+			type: "POST",
+			url: UrlSite + "includes/rating/rating_dados_impressao_proposta.php",
+			data: {
+				nrdconta: nrdconta,
+				tpctrato: tpctrato,
+				nrctrato: nrctrato,
+				iddivcri: iddivcri,
+				redirect: "script_ajax"
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function(response) {
+				try {
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}				
+		}); 	
+	}
+}
+
 // Função para abrir janela de impressão
 function abreJanelaImpressao() {
 	
@@ -224,4 +261,21 @@ function abreJanelaImpressao() {
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
 	carregaImpressaoAyllos("frmImprimirRating",action,callafter);
+}
+
+// Função para envio de formulário de impressao
+function Gera_Impressao_Proposta(nmarqpdf, callback) {
+
+    hideMsgAguardo();
+
+    var action = UrlSite + 'includes/rating/imprimir_pdf.php';
+
+    $('#nmarqpdf', '#frmImprimirRating').remove();
+	$('#sidlogin', '#frmImprimirRating').remove();
+
+	$('#frmImprimirRating').append('<input type="hidden" id="nmarqpdf" name="nmarqpdf" value="' + nmarqpdf + '" />');
+	$('#frmImprimirRating').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+
+	carregaImpressaoAyllos("frmImprimirRating", action, callback);
+
 }

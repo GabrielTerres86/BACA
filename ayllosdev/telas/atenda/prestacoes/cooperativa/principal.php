@@ -40,6 +40,7 @@
  * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  * 031: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
+ * 032: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
  */
 ?>
 
@@ -344,7 +345,6 @@
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 
-			
 			var arrayRendimento = new Object();
 			
 			var contRend = <? echo count($rendimento[0]->tags)?>;
@@ -592,6 +592,37 @@
 							
 			</script><?
 		
+		    // Monta o xml de requisição
+            $xml  = "";
+            $xml .= "<Root>";
+            $xml .= "  <Dados>";
+            $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+            $xml .= "    <idseqttl>".$idseqttl."</idseqttl>";
+            $xml .= "    <dtcalcul></dtcalcul>";	
+            $xml .= "    <nrctremp>".$nrctremp."</nrctremp>";
+            $xml .= "    <cdprogra>".$glbvars["nmdatela"]."</cdprogra>";
+            $xml .= "    <flgcondc>1</flgcondc>";
+            $xml .= "	 <nrregist>".$nrregist."</nrregist>";
+            
+                      if($nrctremp == '0'){
+            $xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
+                      }else{
+                          $xml .= "    <nriniseq>1</nriniseq>";
+                      }
+
+            $xml .= "  </Dados>";
+            $xml .= "</Root>";
+            
+            $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlObjeto = getObjectXML($xmlResult);
+			$registros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
+			
+			?><script type="text/javascript">
+			
+			arrayProposta['dsratpro'] = '<? echo getByTagName($registros,'dsratpro'); ?>';
+			arrayProposta['dsratatu'] = '<? echo getByTagName($registros,'dsratatu'); ?>';
+			
+			</script><?
 		}
 	}else if (in_array($operacao,array('C_PAG_PREST','C_DESCONTO'))){
 
