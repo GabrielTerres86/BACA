@@ -5263,7 +5263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos para obter horario limite de aprovacao das transacoes pendentes
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi
-  --  Data     : Dezembro/2015.                   Ultima atualizacao: 
+  --  Data     : Dezembro/2015.                   Ultima atualizacao: 10/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -5285,8 +5285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --            16 - Contrato SMS Cobrança
   --            17 - Cancelamento de Contrato SMS Cobrança
   --            18 - Desconto de Cheque
+  --            19 - Folha Pagamento (Cooperativa)
   --
-  -- Alteração : 
+  -- Alteração : 10/10/2017 - Adicionar o horario Folha Pagamento (Coop) - 19
+  --                          (Douglas - Chamado 707072)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -5296,6 +5298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_hrlimage VARCHAR2(5); --horario folha agendamento
     vr_hrlimptb VARCHAR2(5); --horario folha portabilidade
     vr_hrlimsol VARCHAR2(5); --horario folha solicitacao Estouro
+    vr_hrlimcop VARCHAR2(5); --horario folha cooperativa
     vr_index_limite INTEGER;
     vr_index_limite_pend INTEGER;
     vr_dstextab craptab.dstextab%TYPE;
@@ -5423,6 +5426,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
       pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimsol;
+
+      --Criar registro para tabela limite horarios
+      vr_hrlimcop := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PAG_COOP');
+      vr_index_limite_pend:= 19; --Folha Pagamento Cooperativa
+      pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimcop;
 
     END IF;
   EXCEPTION
