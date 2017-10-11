@@ -6429,11 +6429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            AND ctz.idcentraliza = pdv.idcentraliza
            AND lct.idlancto = ctz.idlancto
            AND arq.idarquivo = lct.idarquivo
-           AND NOT EXISTS                       --Alteração necessária para evitar reenviar arquivo PGT em duplicidade
-               (select *
-                  FROM tbdomic_liqtrans_arquivo pgt
-                 WHERE pgt.nrcontrole_emissor = arq.nrcontrole_emissor
-                   AND pgt.nmarquivo_origem like '%PGT')
+           AND nvl(pdv.dserro,'X') <> 'Agendamento' --Alteração implementada para evitar gerar arquivo PGT em duplicidade
            ORDER BY arq.idarquivo,lct.idlancto,ctz.idcentraliza,pdv.idpdv;
 
       CURSOR cr_arquivo(pr_nmarquivo   tbdomic_liqtrans_arquivo.nmarquivo_origem%TYPE) IS
@@ -6690,6 +6686,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           ,NULL
                           ,NULL
                           ,NULL)  RETURNING idpdv INTO vr_idpdv_novo;
+
+               --Alteração implementada para evitar gerar arquivo PGT em duplicidade
+               UPDATE tbdomic_liqtrans_pdv
+                  SET dserro = 'Agendamento'
+                WHERE idpdv  = rw_craplau.idpdv;
+
              EXCEPTION
                 WHEN OTHERS THEN
                     pr_dscritic := 'ERRO ao gerar a tabela tbdomic_liqtrans_pdv '||SQLERRM;
@@ -6847,7 +6849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 --        (rw_lancamento.tparquivo = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf) = 'S')) THEN
 --       Incluída a validação da forma de transferência para validar apenas se for = 3 (SILOC)        
         (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf <> 3) OR
-        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf,'N') = 'S')) THEN
+        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf,'S') = 'S')) THEN
           
         FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
           -- Limpa a variavel de erro
@@ -7196,11 +7198,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_cdocorr_arq := '99';
       END IF;
       
-      IF ((rw_lancamento.tparquivo <> 3) OR
---        (rw_lancamento.tparquivo = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf) = 'S')) THEN
---       Incluída a validação da forma de transferência para validar apenas se for = 3 (SILOC)        
-        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf <> 3) OR
-        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf, 'S') = 'S')) THEN
+--      IF ((rw_lancamento.tparquivo <> 3) OR
+--        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf <> 3) OR
+--        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf, 'S') = 'S')) THEN
         
         vr_qtproclancto := 0;
         FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
@@ -7501,7 +7501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           END;
         END IF;
 
-      END IF;
+      --END IF;
     END LOOP;  -- loop cr_lancamento
 
     -- Se possuir algum registro com erro ou processado
