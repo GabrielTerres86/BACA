@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 09/10/2017
+    Data    : Marco/2010                   Ultima atualizacao: 11/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -77,6 +77,9 @@
                 09/10/2017 - Projeto 410 - RF 52/62 - Adicionado indicador de 
                              impressão da declaração do simples nacional na 
                              crapjur (Diogo - Mouts).
+							 
+				11/10/2017 - Ajuste referente ao projeto 339. (Kelvin)
+				
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -703,8 +706,8 @@ PROCEDURE Busca_PF:
         
         /* Endereco Comercial */
         /* se for Emp. Diversas, pega da crapenc, senao pega da crapemp */
-        IF((par_cdcooper = 2 AND tt-fcad-comer.cdempres = 88) OR
-           (par_cdcooper <> 2 AND tt-fcad-comer.cdempres = 81)) THEN
+/*        IF((par_cdcooper = 2 AND tt-fcad-comer.cdempres = 88) OR
+           (par_cdcooper <> 2 AND tt-fcad-comer.cdempres = 81)) THEN*/
             DO:
                FOR FIRST crabenc FIELDS(dsendere complend nmbairro nmcidade
                                         cdufende nrcxapst nrendere nrcepend)
@@ -729,7 +732,7 @@ PROCEDURE Busca_PF:
                                                              "99999,999").
                END.
             END.
-        ELSE
+        /*ELSE
            DO:
               FOR FIRST crapemp FIELDS(dsendemp dscomple nmbairro nmcidade 
                                        cdufdemp nrendemp nrcepend) 
@@ -751,7 +754,7 @@ PROCEDURE Busca_PF:
                                    STRING(crapemp.nrcepend,"99999,999").
               END.
 
-           END.
+           END.*/
         
 
         /* Empresa */
