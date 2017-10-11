@@ -6154,6 +6154,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
 											  INPUT  "TAA", /*Nome da tela*/
+                                              INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
 
@@ -6431,7 +6432,7 @@ PROCEDURE verifica_comprovantes:
                   xText:NODE-VALUE = aux_dspagador.
                                
                   xField:APPEND-CHILD(xText).
-                  
+                                    
                   xDoc:CREATE-NODE(xField,"NRCPFCGC_PAGAD","ELEMENT").
                   xRoot2:APPEND-CHILD(xField).
 
@@ -6481,7 +6482,7 @@ PROCEDURE verifica_comprovantes:
                   xField:APPEND-CHILD(xText).
                 
               END.         
-                
+
               END.         
 
           /* Banco 085 */
@@ -9089,7 +9090,7 @@ PROCEDURE calcula_valor_titulo:
 	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
   RUN STORED-PROCEDURE pc_consultar_valor_titulo
-      aux_handproc = PROC-HANDLE NO-ERROR
+	  aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT aux_cdcooper       /* Cooperativa             */
                          ,INPUT aux_nrdconta       /* Número da conta         */
                          ,INPUT 91                 /* Agencia                 */
@@ -9146,7 +9147,7 @@ PROCEDURE calcula_valor_titulo:
 	CLOSE STORED-PROC pc_retorna_vlr_tit_vencto
 		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 	*/
-	
+
 	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 	
 	/* Busca possíveis erros */ 
@@ -9264,7 +9265,7 @@ PROCEDURE calcula_valor_titulo:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(aux_nrdocbnf).
     xField:APPEND-CHILD(xText). 
-    
+
     /*---------------*/    
     
     IF aux_nmbenefi <> ?  AND 
@@ -9278,7 +9279,7 @@ PROCEDURE calcula_valor_titulo:
       xField:APPEND-CHILD(xText).
     END.
 
-    /*---------------*/             
+    /*---------------*/
     IF aux_cdctrlcs <> ?  AND 
        aux_cdctrlcs <> "" THEN
     DO: 
@@ -10186,15 +10187,15 @@ PROCEDURE efetua_recarga:
               INPUT aux_nrterfin,        /* Nr. terminal financeiro */
               INPUT aux_nrcartao,        /* Nr. cartao */
               INPUT aux_nrsequni,        /* Nr. sequencial unico */
-						  INPUT 4,             /* Id origem (4-TAA)*/
+		      INPUT 4,             /* Id origem (4-TAA)*/
               INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+			  INPUT 0,             /* Indicador de operacao (transacao pendente) */
 			  INPUT 0,             /* Indicador se origem é mobile (Não) */
               OUTPUT 0,            /* Indicador de assinatura conjunta */
               OUTPUT "",           /* Protocolo */
               OUTPUT "",           /* NSU Operadora */
-						  OUTPUT 0,            /* Código da crítica.*/
-						  OUTPUT "").          /* Desc. da crítica */
+			  OUTPUT 0,            /* Código da crítica.*/
+			  OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_manter_recarga
