@@ -34,6 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qtimpctr crapepr.qtimpctr%TYPE
     ,portabil VARCHAR2(100)
     ,dsorgrec craplcr.dsorgrec%TYPE
-    ,dtinictr DATE);
+    ,dtinictr DATE
+    ,dsratpro VARCHAR2(30)
+    ,dsratatu VARCHAR2(30));
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -4679,6 +4682,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND craplcm.dtmvtolt = pr_dtmvtolt_dat;
       rw_craplcm cr_craplcm%ROWTYPE;
       
+      cursor c_rating is
+        select 1 idrating
+             , t.indrisco||'-'||to_char(t.dtmvtolt,'DD/MM/RRRR')||' '||decode(t.insitrat,1,'(Pr.)','(Ef.)') dsrating
+          from tbrat_hist_nota_contrato t
+         where t.cdcooper (+) = pr_cdcooper
+           and t.nrdconta (+) = pr_nrdconta
+           and t.nrctrrat (+) = pr_nrctremp
+           and t.tpctrrat (+) = 90
+           and t.nrseqrat (+) = 1
+        union
+        select 2 idrating
+             , t.indrisco||'-'||to_char(t.dtmvtolt,'DD/MM/RRRR')||' '||decode(t.insitrat,1,'(Pr.)','(Ef.)') dsrating
+          from crapnrc t
+         where t.cdcooper (+) = pr_cdcooper
+           and t.nrdconta (+) = pr_nrdconta
+           and t.nrctrrat (+) = pr_nrctremp
+           and t.tpctrrat (+) = 90;
       -- variaveis auxiliares a busca
       vr_nmprimtl crapass.nmprimtl%TYPE; --> Nome do associado
       vr_dsdpagto VARCHAR2(100); --> Descrição auxiliar do débito
@@ -5512,6 +5532,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
           -- Fechar o cursor
           CLOSE cr_crapass;
+          for r_rating in c_rating loop
+            if r_rating.idrating = 1 then
+              pr_tab_dados_epr(vr_indadepr).dsratpro := r_rating.dsrating;
+            else
+              pr_tab_dados_epr(vr_indadepr).dsratatu := r_rating.dsrating;
+            end if;
+          end loop;
           -- atribuicao para controle da paginacao
           vr_nrregist := vr_nrregist - 1;
         
@@ -5940,6 +5967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
+                        '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                       '</inf>' );
 
       -- buscar proximo

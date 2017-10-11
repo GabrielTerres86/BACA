@@ -44,6 +44,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATURAT AS
                             no crps310_i. (James)  
                             
                02/05/2016 - Conversão Progress >> Oracle (Andrei - RKAM). 
+
+			   11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
    */               
    
   PROCEDURE pc_verifica_rating_ativo(pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
@@ -142,6 +144,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATURAT AS
                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                       ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK                                           
                                                     
+  PROCEDURE pc_gera_rating_proposta(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
+                                   ,pr_cddopcao IN VARCHAR2              --Opção da tela
+                                   ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE --Número do contrato
+                                   ,pr_tpctrrat IN crapnrc.tpctrrat%TYPE --Tipo do contrato
+                                   ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
+                                   ,pr_des_erro OUT VARCHAR2);           --Saida OK/NOK
 END TELA_ATURAT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
@@ -598,6 +610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                               ,pr_nmdatela => vr_nmdatela  --> Nome da tela
                               ,pr_flgerlog => 'N'          --> Identificador de geração de log
                               ,pr_tab_rating_sing       => vr_tab_crapras --> Registros gravados para rating singular
+                              ,pr_flghisto => pr_flgatltl
                               ----- OUT ----
                               ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooperado
                               ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
@@ -2904,6 +2917,184 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                          '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');        
         
   END pc_busca_rating_singulares;
+  PROCEDURE pc_gera_rating_proposta(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
+                                   ,pr_cddopcao IN VARCHAR2              --Opção da tela
+                                   ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE --Número do contrato
+                                   ,pr_tpctrrat IN crapnrc.tpctrrat%TYPE --Tipo do contrato
+                                   ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
+                                   ,pr_des_erro OUT VARCHAR2) IS
+    -- Variaveis de locais
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := '';      
+    vr_index    varchar2(25);
+    vr_nmarquiv VARCHAR2(400);
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION; 
+    --Tipo de Dados para cursor data
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;    
+    --PL tables  
+    vr_tab_impress_coop     RATI0001.typ_tab_impress_coop;
+    vr_tab_impress_rating   RATI0001.typ_tab_impress_rating;
+    vr_tab_impress_risco_cl RATI0001.typ_tab_impress_risco;
+    vr_tab_impress_risco_tl RATI0001.typ_tab_impress_risco;
+    vr_tab_impress_assina   RATI0001.typ_tab_impress_assina;
+    vr_tab_efetivacao       RATI0001.typ_tab_efetivacao;
+    vr_tab_ratings          RATI0001.typ_tab_ratings;
+    vr_tab_crapras          RATI0001.typ_tab_crapras;
+    vr_tab_erro             GENE0001.typ_tab_erro;
+    cursor c_rating is
+      select t.nrtopico
+           , t.nritetop
+           , t.nrseqite
+        from tbrat_hist_cooperado t
+       where t.cdcooper = vr_cdcooper
+         and t.nrdconta = pr_nrdconta
+         and t.nrctrrat = pr_nrctrrat
+         and t.tpctrrat = pr_tpctrrat
+         and t.nrseqrat = 1;
+  BEGIN
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'ATENDA'
+                              ,pr_action => null); 
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+    -- Verifica se a data esta cadastrada
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);      
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE BTCH0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    for r_rating in c_rating loop
+      vr_index := lpad(r_rating.nrtopico,5,'0') || lpad(r_rating.nritetop,5,'0') || lpad(r_rating.nrseqite,5,'0');
+      -- incluir dados na temptable
+      vr_tab_crapras(vr_index).nrtopico := r_rating.nrtopico;
+      vr_tab_crapras(vr_index).nritetop := r_rating.nritetop;
+      vr_tab_crapras(vr_index).nrseqite := r_rating.nrseqite;
+    end loop;
+    if vr_tab_crapras.count > 0 then
+      rati0001.pc_gera_arq_impress_rating(pr_cdcooper => vr_cdcooper
+                                        , pr_cdagenci => vr_cdagenci
+                                        , pr_nrdcaixa => vr_nrdcaixa
+                                        , pr_cdoperad => vr_cdoperad
+                                        , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                        , pr_nrdconta => pr_nrdconta
+                                        , pr_tpctrato => pr_tpctrrat
+                                        , pr_nrctrato => pr_nrctrrat
+                                        , pr_flgcriar => 0
+                                        , pr_flgcalcu => 1
+                                        , pr_idseqttl => 1
+                                        , pr_idorigem => vr_idorigem
+                                        , pr_nmdatela => vr_nmdatela
+                                        , pr_flgerlog => 'N'
+                                        , pr_tab_crapras => vr_tab_crapras
+                                        , pr_tab_impress_coop => vr_tab_impress_coop
+                                        , pr_tab_impress_rating => vr_tab_impress_rating
+                                        , pr_tab_impress_risco_cl => vr_tab_impress_risco_cl
+                                        , pr_tab_impress_risco_tl => vr_tab_impress_risco_tl
+                                        , pr_tab_impress_assina => vr_tab_impress_assina
+                                        , pr_tab_efetivacao => vr_tab_efetivacao
+                                        , pr_tab_erro => vr_tab_erro
+                                        , pr_des_reto => pr_des_erro);
+      -- Em caso de erro
+      IF pr_des_erro <> 'OK' THEN
+        -- Sair
+        RAISE vr_exc_erro;
+      END IF;
+    else
+      vr_cdcritic := 0;
+      vr_dscritic := 'Nao existe rating proposta para esse contrato!';
+      RAISE vr_exc_erro;
+    end if;
+    pc_imprimir_rating(pr_cdcooper  => vr_cdcooper --> Codigo da cooperativa
+                      ,pr_cddopcao  => pr_cddopcao --> Opcao da tela
+                      ,pr_nrdconta  => pr_nrdconta --> Número da Conta                              
+                      ,pr_cdoperad  => vr_cdoperad --> Codigo do operador
+                      ,pr_cdagenci  => vr_cdagenci --> Codigo da agencia
+                      ,pr_nrdcaixa  => vr_nrdcaixa --> Numero do caixa
+                      ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooperado
+                      ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
+                      ,pr_tab_impress_risco_cl => vr_tab_impress_risco_cl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                      ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                      ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do Rating
+                      ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetivação
+                      ,pr_nmarquiv             => vr_nmarquiv             --> Nome do arquivo gerado
+                      ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro                             
+                      ,pr_des_reto             => pr_des_erro);           --> Ind. de retorno OK/NOK
+    IF pr_des_erro <> 'OK' THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Nao foi possivel gerar o relatorio.';
+      RAISE vr_exc_erro;
+    END IF;
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?>'|| 
+                                                 '<Dados>' ||
+                                                   '<relatorio>'||                                                       
+                                                      '<nmarquiv>' || vr_nmarquiv ||'</nmarquiv>'||
+                                                   '</relatorio>'||
+                                                 '</Dados>'
+                           ,pr_fecha_xml      => TRUE);      
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);  
+    pr_des_erro := 'OK'; 
+  EXCEPTION
+    WHEN vr_exc_erro THEN 
+      -- Erro
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK'; 
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');    
+    WHEN OTHERS THEN 
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_gera_rating_proposta --> '|| SQLERRM;
+      pr_des_erro:= 'NOK';
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+  END;
  
 END TELA_ATURAT;
 /
