@@ -318,10 +318,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --                           da rotina pc_controle_remessas para não enviar mais email, apenas 
   --                           logar no proc_message (Carlos)
   --
+  --              17/02/2017 - #551213 Log de início, erros e fim de execução do procedimento
+  --                           pc_gra_arquivo_reafor (jbcybe_arquivo_reafor) (Carlos)
+  --  
+  --              27/04/2017 - #654523 Retirada do vr_cdprogra pois o procedimento do job não é 
+  --                           um programa da crapprg, utilizada para crps (Carlos)
+  --
+  --              23/06/2017 - #674963 Retirado o log do proc_message e inserido apenas na tabela 
+  --                           tbgen_prglog_ocorrencia concatenando os parâmetros idtpreme, dtmvtolt
+  --                           e nrseqarq (Carlos)
+  --
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                           de criptografia para o acesso ao SFTP. (Oscar)
   -- 
-  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -5529,10 +5538,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_script_ftp VARCHAR2(1000); --> Script FTP
       vr_comand_ftp VARCHAR2(4000); --> Comando montado do envio ao FTP
       vr_typ_saida  VARCHAR2(3);    --> Saída de erro
+      vr_prmkeysftp VARCHAR2(4000); --> Paramentros de chave de criptografia apenas para SFTP
     BEGIN
+      vr_prmkeysftp := '';
       --Chama script específico para conexão de ftp segura
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
+        vr_prmkeysftp := ' -caminhoarquivochave ' || CHR(39) || pr_key_path|| CHR(39) || ' -senhadachave ' || pr_passphra;
       ELSE
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
@@ -5548,8 +5560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
                     || ' -log /usr/coop/cecred/log/proc_autbur.log'
-                    || ' -caminhoarquivochave '   || CHR(39) || pr_key_path|| CHR(39)
-                    || ' -senhadachave  '         || pr_passphra;
+                    || vr_prmkeysftp;
       
       -- Chama procedure de envio e recebimento via ftp
       GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
@@ -6148,9 +6159,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_lstarqre gene0002.typ_split;    --> Split de arquivos encontrados
       vr_nrseqarq craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo
       vr_flchkret VARCHAR2(1);           --> Retorno S/N de validação do retorno atual X arquivo enviado
+      vr_idprglog PLS_INTEGER := 0;
+      vr_prmkeysftp VARCHAR2(4000);      --> Paramentros de chave de criptografia apenas para SFTP
     BEGIN
       -- Inicializar quantidade de retornos
       pr_qtretorn := 0;
+      vr_prmkeysftp := '';
       -- Buscar diretório temporário
       vr_dir_temp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_DIR_TEMP');
       -- Primeiramente limpamos a pasta temporária (PArâmetro AUTBUR_DIR_TEMP)
@@ -6165,6 +6179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF pr_idenvseg = 'S' THEN
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
+        vr_prmkeysftp := ' -caminhoarquivochave ' || CHR(39) || pr_key_path|| CHR(39) || ' -senhadachave ' || pr_passphra;
       ELSE 
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
@@ -6180,9 +6195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -dir_local '    || CHR(39) || vr_dir_temp || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
                     || ' -log /usr/coop/cecred/log/proc_autbur.log'
-                    || ' -caminhoarquivochave '   || CHR(39) || pr_key_path|| CHR(39)
-                    || ' -senhadachave  '         || pr_passphra;
-
+                    || vr_prmkeysftp;
                       
       
       -- Chama procedure de envio e recebimento via ftp
@@ -6207,13 +6220,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gravar no proc_message e retornar para o programa
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                     pr_ind_tipo_log => 2, -- erro tratado 
-                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+          -- Gravar na tabela tbgen_prglog_ocorrencia e retornar para o programa
+          CECRED.pc_log_programa(PR_DSTIPLOG      => 'O', 
+                                 PR_CDPROGRAMA    => 'jbcyb_controle_remessas', 
+                                 pr_cdcooper      => 3, 
+                                 pr_tpexecucao    => 2, --job
+                                 pr_tpocorrencia  => 4, --mensagem
+                                 pr_cdcriticidade => 0, --baixa
+                                 pr_dsmensagem    => to_char(sysdate,'hh24:mi:ss')||' - '
                                                         || 'CYBE0002.pc_retorno_arquivo_ftp --> '
-                                                        || 'Retorno ainda nao encontrado no FTP.', 
-                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                                     || 'Retorno ainda nao encontrado no FTP.'
+                                                     || ' pr_idtpreme: ' || pr_idtpreme 
+                                                     || ' pr_dtmvtolt: ' || pr_dtmvtolt
+                                                     || ' pr_nrseqarq: ' || pr_nrseqarq, 
+                                 PR_IDPRGLOG => vr_idprglog);
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
@@ -7238,8 +7258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
-      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
+      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
       vr_flgerlog    BOOLEAN := FALSE;
 
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
@@ -7248,7 +7267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_cdprogra  => ''             --> Codigo do programa
                                  ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
@@ -7692,6 +7711,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
+  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcyb_arquivo_reafor';
+  vr_flgerlog  BOOLEAN := FALSE;
+
   --Funcao para retornar cpf/cnpj
   FUNCTION fn_busca_cpfcgc (pr_nrcpfcgc IN NUMBER) RETURN VARCHAR2 IS
      BEGIN
@@ -8077,8 +8099,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            pr_dscritic := 'Erro na rotina pc_reab_forcada_credito: '||SQLERRM;
      END pc_reab_forcada_credito;
 
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3             --> Cooperativa
+                               ,pr_cdprogra  => ''            --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob   --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog   --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic   --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog); --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
   -- INICIO DA PROCEDURE
   BEGIN
+
+     -- Início do programa
+     pc_controla_log_batch('I');
 
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop1(pr_cdcooper => pr_cdcooper);
@@ -8261,33 +8299,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      --Salvar informacoes no banco de dados
      COMMIT;
 
+     -- Log de fim do programa
+     pc_controla_log_batch('F');     
+
   EXCEPTION
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+
         -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-      -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || 'CYBE0002.pc_grava_arquivo_reafor --> '
-                                                   || vr_dscritic );
-      END IF;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      -- Log de erro no programa
+      pc_controla_log_batch('E', vr_dscritic);
+
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
+
+      cecred.pc_internal_exception(pr_cdcooper);
+    
       -- Efetuar retorno do erro nao tratado
       vr_dscritic := SQLERRM;
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 3 -- Erro não tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || 'CYBE0002.pc_grava_arquivo_reafor --> '
-                                                 || vr_dscritic );
+      
+      -- Log de erro no programa
+      pc_controla_log_batch('E', vr_dscritic);
+
       -- Efetuar rollback
       ROLLBACK;
   END pc_grava_arquivo_reafor;
