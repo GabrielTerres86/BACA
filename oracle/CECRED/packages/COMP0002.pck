@@ -435,6 +435,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrtelefo>' || vr_protocolo(vr_ind).nrcelular   || '</nrtelefo>' ||
                                   '<nmoperad>' || vr_protocolo(vr_ind).nmoperadora || '</nmoperad>');   
 				END IF;
+				
+	    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => '</Comprovante>');
 																			 															 				
       END LOOP;
       
@@ -1255,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
                                   '<dtdpagto>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                        || '</dtdpagto>' ||
-																	'<nrnsuope>' || vr_protocolo(vr_ind).nrseqaut                                                               || '</nrnsuope>' ||
+																	'<nrnsuope>' || vr_protocolo(vr_ind).nrnsuope                                                               || '</nrnsuope>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
                                   '<infosac>'  ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||

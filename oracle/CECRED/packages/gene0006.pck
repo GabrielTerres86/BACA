@@ -1510,6 +1510,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
+		  
+		  IF rw_crappro.cdtippro IN (20) THEN
+			pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
+			pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
+          END IF;
 
           -- Valida TAA
           IF pr_cdorigem = 4 THEN
@@ -2047,7 +2052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (2,6,9) THEN
+        IF rw_crappro.cdtippro IN (2,6,9,20) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
@@ -2056,9 +2061,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         END IF;
 				
 				IF rw_crappro.cdtippro IN (20) THEN
-					pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));
-					pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
-					pr_protocolo(vr_index).nrnsuope    := TRIM(gene0002.fn_busca_entrada(4, rw_crappro.dsinform##2, '#'));
+					pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
+					pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));
+					pr_protocolo(vr_index).nrnsuope    := TRIM(gene0002.fn_busca_entrada(5, rw_crappro.dsinform##2, '#'));
 				END IF;
 
         -- Valida TAA

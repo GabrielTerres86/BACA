@@ -3227,6 +3227,9 @@ PROCEDURE proc_operacao22:
            aux_dshistor = GET-VALUE("aux_dshistor")
 		   aux_gravafav = INTE(GET-VALUE("aux_gravafav")).
 
+	IF  LENGTH(aux_dtinicio) = 10 THEN
+	    ASSIGN aux_dtinicio = SUBSTR(aux_dtinicio,4).
+
     IF  GET-VALUE("aux_flgexecu") <> ""  THEN
         ASSIGN aux_flgexecu = LOGICAL(GET-VALUE("aux_flgexecu")).
 

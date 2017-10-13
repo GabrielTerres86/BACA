@@ -330,7 +330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																 '<Agendamento>' ||
 																		'<idlancto>' || vr_tab_age_recarga(vr_idx).idoperacao                                                              || '</idlancto>' ||
 																		'<dtmvtopg>' || TO_CHAR(vr_tab_age_recarga(vr_idx).dtrecarga, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
-																		'<cdtiptra>11</cdtiptra>' ||
+																		'<cdtiptra>20</cdtiptra>' ||
 																		'<dstiptra>Recarga de celular</dstiptra>' ||
 																		'<dsagenda>AGENDAMENTO DE RECARGA DE CELULAR</dsagenda>' ||
 																		'<insitlau>' || CASE WHEN vr_tab_age_recarga(vr_idx).insit_operacao = 4 THEN 3
@@ -1436,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 							,opc.dttransa
 							,to_char(opc.vlrecarga,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') AS vldocmto
 							,opc.insit_operacao
-							,'11' AS cdtiptra
+							,'20' AS cdtiptra
 							,'Recarga de celular' AS dstiptra
 							,(CASE WHEN opc.insit_operacao = 1 THEN 'Pendente'
 										 WHEN opc.insit_operacao = 4 THEN 'Cancelado'
@@ -1449,7 +1449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 							,opc.nrcelular
 							,opa.nmoperadora
 							,'(' || opc.nrddd || ') ' || gene0002.fn_mask(opc.nrcelular,'99999-9999') AS nrdddtel
-							,to_char(to_date(opc.dttransa,'SSSSS'),'hh24:mi:ss') AS hrautent
+							,to_char(opc.dttransa,'hh24:mi:ss') AS hrautent
 					FROM tbrecarga_operacao opc
 		 LEFT JOIN crapcop cop
 					  ON cop.cdcooper = opc.cdcooper
@@ -1508,9 +1508,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nmoperad></nmoperad>'  ||																
 																'<nmopetel>' || rw_agendamento.nmoperadora || '</nmopetel>'  ||
 																'<nrdddtel>' || rw_agendamento.nrdddtel || '</nrdddtel>'  ||
-                                '<dttransa>' || rw_agendamento.dttransa || '</dttransa>'  ||																
+                                '<dttransa>' || TO_CHAR(rw_agendamento.dttransa,'DD/MM/RRRR') || '</dttransa>'  ||																
                                 '<hrautent>' || rw_agendamento.hrautent || '</hrautent>'  ||
-																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>'  ||																
+																'<dtmvtopg>' || TO_CHAR(rw_agendamento.dtmvtopg,'DD/MM/RRRR') || '</dtmvtopg>'  ||																
 																'<vldocmto>' || rw_agendamento.vldocmto || '</vldocmto>' ||
 																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>'  ||																
                                 '<infosac>'  ||
