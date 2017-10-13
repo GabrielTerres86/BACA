@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --                         - Tratamento tipo do log da critica de retorno de remessa
   --                           ( Belli - Envolti - Chamado 669487/719114 )
   --
+  --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
+  --                           de criptografia para o acesso ao SFTP. (Oscar)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Funcao generica para buscar o nome resumido da cooperativa --
@@ -308,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 21/07/2017
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -344,6 +347,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --                         - Tratamento tipo do log da critica de retorno de remessa
   --                           ( Belli - Envolti - Chamado 669487/719114 )
   --
+  --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
+  --                          de criptografia para o acesso ao SFTP. (Oscar)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -5744,6 +5750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_ftp_user IN VARCHAR2              --> Usuário para acesso ao FTP
                                 ,pr_ftp_pass IN VARCHAR2              --> Senha para acesso ao FTP
                                 ,pr_ftp_path IN VARCHAR2              --> Pasta no FTP para envio do arquivo
+                                ,pr_key_path IN VARCHAR2              --> Caminho da chave de criptografia quando o (SFTP) usar.
+                                ,pr_passphra IN VARCHAR2              --> Senha da chave de criptografica quando o (SFTP) usar.
                                 ,pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -5752,7 +5760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao:
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 10/10/2017
     --
     -- Dados referentes ao programa: 23/03/2016
     --
@@ -5761,12 +5769,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --
     -- Alteracoes: 23/03/2016 - Adicionado tratamento para identificar se é necessário fazer
     --                          a chamada do ftp seguro conforme solicitado no chamado 412682. (Kelvin)
+    --
+    --             10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
+    --                          de criptografia para o acesso ao SFTP. (Oscar)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
     
       vr_script_ftp VARCHAR2(1000); --> Script FTP
       vr_comand_ftp VARCHAR2(4000); --> Comando montado do envio ao FTP
       vr_typ_saida  VARCHAR2(3);    --> Saída de erro
+      vr_prmkeysftp VARCHAR2(4000); --> Paramentros de chave de criptografia apenas para SFTP
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa_ftp');      
@@ -5774,6 +5786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       --Chama script específico para conexão de ftp segura
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
+        vr_prmkeysftp := ' -caminhoarquivochave ' || CHR(39) || pr_key_path|| CHR(39) || ' -senhadachave ' || pr_passphra;
       ELSE
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
@@ -5788,7 +5801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -arq '          || CHR(39) || pr_nmarquiv || CHR(39)
                     || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
-                    || ' -log /usr/coop/cecred/log/proc_autbur.log';
+                    || ' -log /usr/coop/cecred/log/proc_autbur.log'
+                    || vr_prmkeysftp;
       
       -- Chama procedure de envio e recebimento via ftp
       GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
@@ -5820,7 +5834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 07/10/2015
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 10/10/2017
     --
     -- Dados referentes ao programa:
     --
@@ -5830,7 +5844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- Alteracoes:
     --
     -- 07/10/2015 - PRJ210 - Adaptar envio para remessas sob-demanda (Marcos-Supero)
-    --
+    -- 10/10/2017 - M434 - Adicionar novos parametros para o SPC Brasil neste momento será fixo em caracter 
+    --                     emergencial posteriormente deverá ser criado parametros na tela LOGRBC. (Oscar)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -5840,6 +5855,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_dslogeve VARCHAR2(1000);
       vr_qtdenvio NUMBER := 0;
       vr_dschvrem VARCHAR2(4000);
+      vr_key_path VARCHAR2(4000);
+      vr_passphra VARCHAR2(4000);
+
 
       -- Busca das informações para envio da remessa
       CURSOR cr_pbc IS
@@ -6111,6 +6129,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         END IF;
         -- Chamar rotina específica de Envio
         IF rw_pbc.idtpenvi = 'F' THEN
+          
+          vr_key_path := NULL;
+          vr_passphra := NULL;
+          IF rw_pbc.idenvseg = 'S' THEN
+             vr_key_path := gene0001.fn_param_sistema('CRED',0, pr_idtpreme || '_BRASIL_KEYPATH');
+             vr_passphra := gene0001.fn_param_sistema('CRED',0, pr_idtpreme || '_BRASIL_PASSPHR');
+          END IF;
+
           -- Envio FTP
           pc_envio_remessa_ftp(pr_nmarquiv => vr_nmarquiv           --> Nome arquivo a enviar
                               ,pr_nmdireto => vr_dir_temp           --> Diretório do arquivo a enviar
@@ -6119,6 +6145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_ftp_user => rw_pbc.dsusrftp       --> Usuário para acesso ao FTP
                               ,pr_ftp_pass => rw_pbc.dspwdftp       --> Senha para acesso ao FTP
                               ,pr_ftp_path => rw_pbc.dsdreftp       --> Pasta no FTP para envio do arquivo
+                              ,pr_key_path => vr_key_path           --> Caminho da chave de criptografia quando o (SFTP) usar.
+                              ,pr_passphra => vr_passphra           --> Senha da chave de criptografica quando o (SFTP) usar.
                               ,pr_dscritic => vr_dscritic);         --> Retorno de crítica
         ELSIF rw_pbc.idtpenvi = 'C' THEN
           -- Envio Connect Direct
@@ -6391,6 +6419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_ftp_pass IN VARCHAR2              --> Senha para acesso ao FTP
                                   ,pr_ftp_path IN VARCHAR2              --> Pasta no FTP para busca do arquivo
                                   ,pr_dsfnchrt IN crappbc.dsfnchrt%TYPE --> Função que faz a checagem dos retornos para garatir a relação com o envio
+                                  ,pr_key_path IN VARCHAR2              --> Caminho da chave de criptografia quando o (SFTP) usar.
+                                  ,pr_passphra IN VARCHAR2              --> Senha da chave de criptografica quando o (SFTP) usar.
                                   ,pr_qtretorn OUT NUMBER               --> Numero de arquivos retornados
                                   ,pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
   BEGIN
@@ -6400,7 +6430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 10/10/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6418,6 +6448,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --                          Colocado logs no padrão
     --                        ( Belli - Envolti - Chamado 719114)
     --
+    --             10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
+    --                          de criptografia para o acesso ao SFTP. (Oscar)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_dir_temp VARCHAR2(4000);        -- Armazenar o diretório de arquivos temporário
@@ -6434,6 +6466,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   	  -- Variaveis para módulo e ação logado - Chamado 719114 - 21/07/2017 
       vr_modulo    VARCHAR2(100);
       vr_acao      VARCHAR2(100);
+      vr_idprglog PLS_INTEGER := 0;
+      vr_prmkeysftp VARCHAR2(4000);      --> Paramentros de chave de criptografia apenas para SFTP
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
       DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
@@ -6442,6 +6476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
       -- Inicializar quantidade de retornos
       pr_qtretorn := 0;
+      vr_prmkeysftp := '';
       -- Buscar diretório temporário
       vr_dir_temp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_DIR_TEMP');
       -- Primeiramente limpamos a pasta temporária (PArâmetro AUTBUR_DIR_TEMP)
@@ -6456,6 +6491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF pr_idenvseg = 'S' THEN
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
+        vr_prmkeysftp := ' -caminhoarquivochave ' || CHR(39) || pr_key_path|| CHR(39) || ' -senhadachave ' || pr_passphra;
       ELSE 
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
@@ -6471,7 +6507,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -arq '          || CHR(39) || pr_nmarquiv || CHR(39)
                     || ' -dir_local '    || CHR(39) || vr_dir_temp || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
-                    || ' -log /usr/coop/cecred/log/proc_autbur.log';
+                    || ' -log /usr/coop/cecred/log/proc_autbur.log'
+                    || vr_prmkeysftp;
                       
       
       -- Chama procedure de envio e recebimento via ftp
@@ -6803,7 +6840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 10/10/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6821,6 +6858,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --                          Colocado logs no padrão
     --                        ( Belli - Envolti - Chamado 719114)
     --
+    --             10/10/2017 - M434 - Adicionar novos parametros para o SPC Brasil neste momento será fixo em caracter 
+    --                         emergencial posteriormente deverá ser criado parametros na tela LOGRBC. (Oscar)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Busca das informações para retorno da remessa
@@ -6950,6 +6989,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       
       -- Variavel para tratar o parâmetro tipo de log - Chamado 719114 - 07/08/2017
       vr_dstiplog VARCHAR2(1) := NULL;
+      vr_key_path VARCHAR2(4000);
+      vr_passphra VARCHAR2(4000);
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa');
@@ -7142,6 +7183,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                ,pr_dstiplog => vr_dstiplog      --> Tipo de Log
                                ,pr_dscritic => pr_dscritic);    --> Retorno de crítica
         ELSIF rw_crb.idtpenvi = 'F' THEN
+          
+          vr_key_path := NULL;
+          vr_passphra := NULL;
+          IF rw_crb.idenvseg = 'S' THEN
+             vr_key_path := gene0001.fn_param_sistema('CRED',0, pr_idtpreme || '_BRASIL_KEYPATH');
+             vr_passphra := gene0001.fn_param_sistema('CRED',0, pr_idtpreme || '_BRASIL_PASSPHR');
+          END IF;
+        
           -- Retorno via FTP
           pc_retorno_arquivo_ftp(pr_idtpreme => pr_idtpreme     --> Tipo da Remessa
                                 ,pr_dtmvtolt => pr_dtmvtolt     --> Data da Remessa
@@ -7153,6 +7202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_ftp_pass => rw_crb.dspwdftp --> Senha para acesso ao FTP
                                 ,pr_ftp_path => rw_crb.dsdrrftp --> Pasta no FTP para busca do arquivo
                                 ,pr_dsfnchrt => rw_crb.dsfnchrt --> Função para checagem da ligação retorno X envio
+                                ,pr_key_path => vr_key_path     --> Caminho da chave de criptografia quando o (SFTP) usar.
+                                ,pr_passphra => vr_passphra     --> Senha da chave de criptografica quando o (SFTP) usar.
                                 ,pr_qtretorn => vr_qtretaux     --> Quantidade retornada
                                 ,pr_dscritic => pr_dscritic);   --> Retorno de crítica
         END IF;
@@ -7600,6 +7651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       
       -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
       vr_dstiplog    VARCHAR2(1);
+      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
+      vr_flgerlog    BOOLEAN := FALSE;
 
     BEGIN
 	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
