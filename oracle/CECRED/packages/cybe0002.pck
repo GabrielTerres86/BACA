@@ -330,13 +330,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --              17/02/2017 - #551213 Log de início, erros e fim de execução do procedimento
   --                           pc_gra_arquivo_reafor (jbcybe_arquivo_reafor) (Carlos)
-  --
+  --  
   --              27/04/2017 - #654523 Retirada do vr_cdprogra pois o procedimento do job não é 
   --                           um programa da crapprg, utilizada para crps (Carlos)
   --
   --              23/06/2017 - #674963 Retirado o log do proc_message e inserido apenas na tabela 
   --                           tbgen_prglog_ocorrencia concatenando os parâmetros idtpreme, dtmvtolt
-  --                           e nrseqarq (Carlos)                         
+  --                           e nrseqarq (Carlos)
   --
   --              21/07/2017 - Inclusão do módulo e ação logado no oracle
   --                         - Inclusão da  chamada de procedure em exception others
@@ -6428,6 +6428,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_lstarqre gene0002.typ_split;    --> Split de arquivos encontrados
       vr_nrseqarq craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo
       vr_flchkret VARCHAR2(1);           --> Retorno S/N de validação do retorno atual X arquivo enviado
+
+  	  -- Excluida variavel vr_idprglog - Chamado 719114 - 07/08/2017  
+      
+  	  -- Variaveis para módulo e ação logado - Chamado 719114 - 21/07/2017 
+      vr_modulo    VARCHAR2(100);
+      vr_acao      VARCHAR2(100);
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
       DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
@@ -6490,13 +6496,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gravar no proc_message e retornar para o programa
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                     pr_ind_tipo_log => 2, -- erro tratado 
-                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || 'CYBE0002.pc_retorno_arquivo_ftp --> '
-                                                        || 'Retorno ainda nao encontrado no FTP.', 
-                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
+          -- Gravar na tabela tbgen_prglog_ocorrencia e retornar para o programa
+          pc_controla_log_batch(pr_dstiplog   => 'O',
+                                pr_dscritic   => 'Retorno ainda nao encontrado no FTP.' ||
+                                                 ' - pr_idtpreme: ' || pr_idtpreme ||
+                                                 ' ,pr_dtmvtolt: ' || pr_dtmvtolt ||
+                                                 ' ,pr_nrseqarq: ' || pr_nrseqarq ||
+                                                 ' ,arq: '         || pr_nmarquiv || 
+                                                 ' ,dir_local: '   || vr_dir_temp || 
+                                                 ' ,dir_remoto: '  || pr_ftp_path,
+                                pr_cdprograma => 'jbcyb_controle_remessas');
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
@@ -7583,19 +7593,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
-      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
-      vr_flgerlog    BOOLEAN := FALSE;
+      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
+  
+      -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017
+	    -- Excluida PROCEDURE pc_controla_log_batch interna e incluida como externa - Chamado 719114 - 07/08/2017          
+      
+      -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
+      vr_dstiplog    VARCHAR2(1);
 
     BEGIN
-        --> Controlar geração de log de execução dos jobs 
-        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-      END pc_controla_log_batch;
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	    GENE0001.pc_set_modulo(pr_module => vr_nomdojob, pr_action => 'CYBE0002.pc_controle_remessas');
 
       -- Esta rotina somente poderá ser executada de 2ª a 6ª
       IF to_char(SYSDATE,'d') NOT IN(1,7) THEN
@@ -8071,9 +8079,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
-  vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_grava_arquivo_reafor';
-  vr_nomdojob  CONSTANT VARCHAR2(100)         := 'jbcybe_arquivo_reafor';
-  vr_flgerlog  BOOLEAN := FALSE;
+  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcyb_arquivo_reafor';
+  
+  -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017  
 
   --Funcao para retornar cpf/cnpj
   FUNCTION fn_busca_cpfcgc (pr_nrcpfcgc IN NUMBER) RETURN VARCHAR2 IS
@@ -8474,19 +8482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            pr_dscritic := 'Erro na rotina pc_reab_forcada_credito: '||SQLERRM;
      END pc_reab_forcada_credito;
 
-    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-    END pc_controla_log_batch;
+     -- Excluida PROCEDURE pc_controla_log_batch interna e incluida como externa - Chamado 719114 - 07/08/2017 
 
   -- INICIO DA PROCEDURE
   BEGIN
