@@ -342,7 +342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --                         - Inclusão da  chamada de procedure em exception others
   --                         - Colocado logs no padrão
   --                         - Tratamento tipo do log da critica de retorno de remessa
-  --                           ( Belli - Envolti - Chamado 669487/719114 )
+  --                           ( Belli - Envolti - Chamado 669487 / 719114 )
   --
   ---------------------------------------------------------------------------------------------------------------
 
