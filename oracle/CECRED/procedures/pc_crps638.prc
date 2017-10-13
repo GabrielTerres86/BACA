@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/10/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/04/2017
 
     Dados referente ao programa:
 
@@ -108,9 +108,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               P307 - (Jonatas - Supero)
 
                  05/04/2017 - Inclusão do código da Cooperativa no arquivo Contab (Jonata-Mouts)
-                 
-                 13/10/2017 - Ajustes no crrl634 e crrl635 para apresentarmos os valores corretos
-                              das tarifas (Lucas Ranghetti #743401)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -491,7 +488,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
     vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
-    
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
       -- Se já existe registro
@@ -515,7 +511,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_rel634(vr_ind_rel63X).dsmeiarr := substr(pr_dsmeiarr,1,8);
       END IF;
       -- Tarifa Sicredi 
-      vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar - vr_tab_rel634(vr_ind_rel63X).vlrecliq;
+      IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN  
+        vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar;
+      ELSE 
+        vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar - vr_tab_rel634(vr_ind_rel63X).vlrecliq;
+      END IF; 
     END IF;
     -- 635 e 636 emite todos os dias do mês e somente é alimentada no processo mensal 
     IF TRUNC(rw_crapdat.dtmvtolt,'mm') <> TRUNC(rw_crapdat.dtmvtopr,'mm') THEN 
@@ -547,8 +547,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := 0;
           vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := 0;
         END IF;
-        -- Tarifa Sicredi       
-        vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar - vr_tab_rel635(vr_ind_rel63X).vlrecliq;
+        -- Tarifa Sicredi 
+        IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN  
+          vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar;
+        ELSE 
+          vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar - vr_tab_rel635(vr_ind_rel63X).vlrecliq;
+        END IF;      
         
         -- Tratamento PF / PJ 
         IF pr_inpessoa = 0 THEN 
@@ -576,8 +580,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PF         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := vr_tab_rel635(vr_ind_rel63X).vlrliqpf + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-        
+          
+          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN  
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
+          ELSE 
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
+          END IF;  
+                   
+          
           --Acumular valor tarifa sicredi por pessoa fisica
           IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
           
@@ -587,7 +597,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
               vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
             END IF;
             
-          ELSE 
+          ELSE
             
             IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
               vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
@@ -611,8 +621,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PJ         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
-                    
+
+          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN  
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
+          ELSE 
+            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
+          END IF; 
+          
           --Acumular valor tarifa sicredi por pessoa fisica
           IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
           
@@ -1122,7 +1137,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
       vr_deb_vltrfsic := 0;
 
       -- Busca o primeiro registro da temp-table
-      vr_ind_rel63X := vr_tab_rel634.first; 
+      vr_ind_rel63X := vr_tab_rel634.first;
       LOOP
         EXIT WHEN vr_ind_rel63X IS NULL;
 
@@ -1142,8 +1157,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         IF vr_tab_rel634(vr_ind_rel63X).vltotfat < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltotfat := 0;
         END IF;
+        IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN
+          vr_tab_rel634(vr_ind_rel63X).vlrecliq := 0;
+        END IF;
         IF vr_tab_rel634(vr_ind_rel63X).vltottar < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltottar := 0;
+        END IF;
+        IF vr_tab_rel634(vr_ind_rel63X).vltrfsic < 0 THEN
+          vr_tab_rel634(vr_ind_rel63X).vltrfsic := 0;
         END IF;
 
         -- TOTAIS INTERNET
@@ -1259,7 +1280,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
                                  ,pr_nrcopias  => 1                   --> Número de cópias
-                                 ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                 ,pr_flg_gerar => 'N'                 --> gerar PDF
                                  ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
       -- Liberando a memória alocada pro CLOB
@@ -1363,9 +1384,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             -- Corrigir valores negativos
             IF vr_tab_rel635(vr_ind_rel63X).vltotfat < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltotfat := 0;
-            END IF;            
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vlrecliq := 0;
+            END IF;
             IF vr_tab_rel635(vr_ind_rel63X).vltottar < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltottar := 0;
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpf < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := 0;
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vlrliqpf := 0;
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpj < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := 0;
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vlrliqpj := 0;
+            END IF;
+            IF vr_tab_rel635(vr_ind_rel63X).vltrfsic < 0 THEN
+              vr_tab_rel635(vr_ind_rel63X).vltrfsic := 0;
             END IF;
 
             -- TOTAIS INTERNET
@@ -1557,7 +1596,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
                                      ,pr_nmformul  => '234dh'            --> Nome do formulário para impressão
                                      ,pr_nrcopias  => 1                   --> Número de cópias
-                                     ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                     ,pr_flg_gerar => 'N'                 --> gerar PDF
                                      ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
           -- Liberando a memória alocada pro CLOB
@@ -1688,7 +1727,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                                ,pr_dsxml     => vr_des_clb          --> Arquivo XML de dados
                                                ,pr_dsarqsaid => vr_caminho_coop||vr_aux_nmarqdat  --> Path/Nome do arquivo PDF gerado
                                                ,pr_flg_impri => 'N'                  --> Chamar a impressão (Imprim.p)
-                                               ,pr_flg_gerar => 'S'                  --> Gerar o arquivo na hora
+                                               ,pr_flg_gerar => 'N'                  --> Gerar o arquivo na hora
                                                ,pr_nmformul  => '234dh'              --> Nome do formulário para impressão
                                                ,pr_nrcopias  => 1                    --> Número de cópias para impressão
                                                ,pr_dspathcop => vr_caminho_dirX      --> Lista sep. por ';' de diretórios a copiar o arquivo
@@ -1797,7 +1836,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                                ,pr_dsxml     => vr_des_clb          --> Arquivo XML de dados
                                                ,pr_dsarqsaid => vr_caminho_coop||vr_aux_nmarqdat  --> Path/Nome do arquivo PDF gerado
                                                ,pr_flg_impri => 'N'                  --> Chamar a impressão (Imprim.p)
-                                               ,pr_flg_gerar => 'S'                  --> Gerar o arquivo na hora
+                                               ,pr_flg_gerar => 'N'                  --> Gerar o arquivo na hora
                                                ,pr_nmformul  => '234dh'              --> Nome do formulário para impressão
                                                ,pr_nrcopias  => 1                    --> Número de cópias para impressão
                                                ,pr_dspathcop => vr_caminho_dirX      --> Lista sep. por ';' de diretórios a copiar o arquivo
