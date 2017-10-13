@@ -57,11 +57,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
   -- Vetor para armazenamento
   vr_tab_feriado typ_tab_feriado;
   
-  -- Tipos e tabelas de memória para armazenar os dados do feriado
-  TYPE typ_tab_data_calculo IS
-    TABLE OF DATE
-      INDEX BY VARCHAR2(8);
-
   PROCEDURE pc_calcula_prox_parcela_pos(pr_cdcooper        IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                        ,pr_flgbatch        IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                        ,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
@@ -1049,7 +1044,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_exc_erro          EXCEPTION;
       
       -- Vetores
-      vr_tab_data_calculo  typ_tab_data_calculo;
       vr_tab_price         typ_tab_price;
       
       -- Variaveis
@@ -1063,7 +1057,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_indice            VARCHAR2(10);
     BEGIN
       vr_tab_price.DELETE;
-      vr_tab_data_calculo.DELETE;
       -- Numero da parcela inicial
       vr_nrparepr := pr_nrparepr;
      
@@ -1082,18 +1075,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
             EXIT;
           END IF;
           
+          /*
           -- Condicao para verificar se eh mensal
           IF vr_dtlancto = LAST_DAY(vr_dtlancto) THEN
             -- Efetua o lancamento no dia da carencia
             vr_tab_data_calculo(TO_CHAR(vr_dtlancto,'RRRRMMDD')) := vr_dtlancto;
           END IF;
+          */
           
           -- Condicao para verificar se eh o dia da carencia
           IF TO_CHAR(vr_dtlancto,'DD') = TO_CHAR(pr_dtpripgt,'DD') THEN
             -- Incrementar o proximo lancamento de juros de carencia
             vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
             -- Efetua o lancamento no dia da carencia
-            vr_tab_data_calculo(TO_CHAR(vr_dtlancto,'RRRRMMDD')) := vr_dtlancto;
+           -- vr_tab_data_calculo(TO_CHAR(vr_dtlancto,'RRRRMMDD')) := vr_dtlancto;
           END IF;
             
           -- Condicao para avancar a data do lancamento
@@ -1106,11 +1101,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
         -- Percorrer as datas que deverão ser calculadas
         --vr_datainicial := pr_dtcalcul;
+          /*
         vr_dtcarenc    := pr_dtcarenc;        
         vr_indice      := vr_tab_data_calculo.FIRST;
         WHILE vr_indice IS NOT NULL LOOP
           -- Procedure para calcular o saldo projetado
-          /*
+        
           pc_calcula_saldo_projetado(pr_cdcooper    => pr_cdcooper
                                     ,pr_flgbatch    => pr_flgbatch
                                     ,pr_dtefetiv    => pr_dtcalcul
@@ -1124,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_tab_price   => vr_tab_price
                                     ,pr_cdcritic    => vr_cdcritic
                                     ,pr_dscritic    => vr_dscritic);
-                                            */
+
           -- Condicao para verificar se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
@@ -1135,7 +1131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_vlparepr := NVL(vr_vlparepr,0) + 
                          vr_tab_price(vr_tab_price.LAST).juros_correcao + 
                          vr_tab_price(vr_tab_price.LAST).juros_remuneratorio;
-          */
+          
           -- Condicao para verificar 
           IF vr_tab_data_calculo(vr_indice) = vr_dtcarenc THEN
             -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
@@ -1152,6 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_datainicial := vr_tab_data_calculo(vr_indice);
           vr_indice      := vr_tab_data_calculo.NEXT(vr_indice);
         END LOOP;
+        */
       END IF;
 
       -----------------------------------------------------------------------------------------------------------
@@ -1202,7 +1199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_prox_parcela_pos;
   
   PROCEDURE pc_calcula_parcelas_pos_fixado(pr_cdcooper        IN crapcop.cdcooper%TYPE      --> Codigo da Cooperativa
-                                          ,pr_flgbatch        IN  BOOLEAN DEFAULT FALSE     --> Indica se o processo noturno estah rodando
+                                          ,pr_flgbatch        IN BOOLEAN DEFAULT FALSE      --> Indica se o processo noturno estah rodando
                                           ,pr_dtcalcul        IN crapdat.dtmvtolt%TYPE      --> Data de Calculo
                                           ,pr_cdlcremp        IN craplcr.cdlcremp%TYPE      --> Codigo da Linha de Credito
                                           ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE      --> Data da Carencia do Contrato
@@ -1251,7 +1248,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       rw_craptxi cr_craptxi%ROWTYPE;
       
       -- Vetor para armazenamento
-      vr_tab_data_calculo       typ_tab_data_calculo;
       vr_tab_price              typ_tab_price;
       vr_tab_total_juros        typ_tab_total_juros;
       vr_tab_saldo_projetado    typ_tab_saldo_projetado;
@@ -1262,10 +1258,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtvencto               crappep.dtvencto%TYPE;
       vr_nrparepr               crappep.nrparepr%TYPE;
       vr_dtcarenc               crawepr.dtdpagto%TYPE;
+      vr_datainicial            DATE;
+      vr_datafinal              DATE;
       vr_fator_price_total      NUMBER(25,10);
       vr_saldo_projetado        NUMBER(25,10);
-      vr_datainicial            DATE;
-      vr_dtlancto               DATE;
       vr_indice                 VARCHAR2(4000);
             
       -- Variaveis tratamento de erros
@@ -1274,7 +1270,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_exc_erro               EXCEPTION;
     BEGIN
       vr_tab_price.DELETE;
-      vr_tab_data_calculo.DELETE;
       vr_tab_total_juros.DELETE;
       vr_tab_saldo_projetado.DELETE;
       
@@ -1314,51 +1309,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
      
       -- Saldo Projetado Inicial
       vr_saldo_projetado := pr_vlemprst;
+      -- Percorrer as datas que deverão ser calculadas
+      vr_nrparepr        := pr_tab_parcelas.COUNT + 1;      
+      -- Data da Carencia
+      vr_dtcarenc        := pr_dtcarenc;
       -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) THEN
-        vr_dtlancto := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(pr_dtcalcul,'MM/RRRR'),'DD/MM/RRRR');
+      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
+        vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
       ELSE
-        vr_dtlancto := LAST_DAY(pr_dtcalcul);
-      END IF;        
-      -- Loop para percorrer todas as datas que deverao ser calculadas
-      WHILE vr_dtlancto < pr_dtdpagto LOOP
+        vr_datafinal := LAST_DAY(vr_dtmvtolt);
+      END IF;      
+      -- Data Inicial será a data de efetivação do contrato
+      vr_datainicial := vr_dtmvtolt;
+      WHILE vr_datafinal < pr_dtdpagto LOOP
         -- Vencimento da ultima mensal não será calculada 
-        IF LAST_DAY(ADD_MONTHS(pr_dtdpagto,-1)) = vr_dtlancto THEN
+        IF LAST_DAY(ADD_MONTHS(pr_dtdpagto,-1)) = vr_datafinal THEN
           EXIT;
         END IF;
-          
-        -- Condicao para verificar se eh mensal
-        IF vr_dtlancto = LAST_DAY(vr_dtlancto) THEN
-          -- Efetua o lancamento no dia da carencia
-          vr_tab_data_calculo(TO_CHAR(vr_dtlancto,'RRRRMMDD')) := vr_dtlancto;
-        END IF;
-          
-        -- Condicao para verificar se eh o dia da carencia
-        IF TO_CHAR(vr_dtlancto,'DD') = TO_CHAR(pr_dtdpagto,'DD') THEN
-          -- Efetua o lancamento no dia da carencia
-          vr_tab_data_calculo(TO_CHAR(vr_dtlancto,'RRRRMMDD')) := vr_dtlancto;
-        END IF;
-          
-        -- Condicao para avancar a data do lancamento
-        IF TO_CHAR(vr_dtlancto,'DD') = TO_CHAR(pr_dtdpagto,'DD') AND vr_dtlancto <> LAST_DAY(vr_dtlancto) THEN
-          vr_dtlancto := LAST_DAY(vr_dtlancto);
-        ELSE
-          vr_dtlancto := ADD_MONTHS(TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||TO_CHAR(vr_dtlancto,'/MM/RRRR'),'DD/MM/RRRR'),1);
-        END IF;
-      END LOOP;
-          
-      -- Percorrer as datas que deverão ser calculadas
-      vr_nrparepr    := pr_tab_parcelas.COUNT + 1;
-      vr_datainicial := pr_dtcalcul;
-      vr_dtcarenc    := pr_dtcarenc;        
-      vr_indice      := vr_tab_data_calculo.FIRST;
-      WHILE vr_indice IS NOT NULL LOOP
+        
         -- Procedure para calcular o saldo projetado
         pc_calcula_saldo_projetado(pr_cdcooper            => pr_cdcooper
                                   ,pr_flgbatch            => pr_flgbatch
                                   ,pr_dtefetiv            => pr_dtcalcul
                                   ,pr_datainicial         => vr_datainicial
-                                  ,pr_datafinal           => vr_tab_data_calculo(vr_indice)
+                                  ,pr_datafinal           => vr_datafinal
                                   ,pr_nrparepr            => vr_nrparepr
                                   ,pr_dtvencto            => vr_dtcarenc
                                   ,pr_vlrdtaxa            => rw_craptxi.vlrdtaxa
@@ -1376,7 +1350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
 
         -- Condicao para verificar se devemos calcular o Juros da Carencia
-        IF vr_tab_data_calculo(vr_indice) = vr_dtcarenc THEN
+        IF vr_datafinal = vr_dtcarenc THEN
           pr_tab_parcelas(vr_nrparepr).nrparepr := vr_nrparepr;
           pr_tab_parcelas(vr_nrparepr).vlparepr := vr_tab_total_juros(vr_nrparepr).valor_total_juros;
           pr_tab_parcelas(vr_nrparepr).dtvencto := vr_dtcarenc;
@@ -1388,10 +1362,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
         END IF;
         
-        -- Inicial recebe a final
-        vr_datainicial := vr_tab_data_calculo(vr_indice);
-        -- Proxima data
-        vr_indice      := vr_tab_data_calculo.NEXT(vr_indice);
+        vr_datainicial := vr_datafinal;
+        IF TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtdpagto,'DD') AND vr_datafinal <> LAST_DAY(vr_datafinal) THEN
+          vr_datafinal := LAST_DAY(vr_datafinal);
+        ELSE
+          vr_datafinal := ADD_MONTHS(TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||TO_CHAR(vr_datafinal,'/MM/RRRR'),'DD/MM/RRRR'),1);
+        END IF;
       END LOOP;      
         
       -- Condicao para verificar se foi possivel calcular o saldo projetado
@@ -1430,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_dtvencto := pr_dtdpagto;
         vr_nrparepr := 1;
       ELSE
-        vr_dtvencto := ADD_MONTHS(pr_tab_parcelas(vr_nrparepr).dtvencto,1);
+        vr_dtvencto := vr_dtcarenc;
         vr_nrparepr := vr_nrparepr + 1;
       END IF;
       
