@@ -149,7 +149,9 @@
                              PRJ339 - CRM (Odirlei-AMcom)                
                              
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
-                             PRJ339 - CRM (Odirlei-AMcom)               
+                             PRJ339 - CRM (Odirlei-AMcom) 
+
+		        13/10/2017 - Removido a funcao que atualizava o nome do talao para segundo titular. (PRJ339 - Kelvin/Andrino).
                              
 .............................................................................*/
 
@@ -2869,9 +2871,11 @@ PROCEDURE Grava_Alteracao:
                                           crafttl.dthabmen = brapttl.dthabmen  
                                           crafttl.cdestcvl = brapttl.cdestcvl  
                                           crafttl.grescola = brapttl.grescola
-                                          crafttl.cdfrmttl = brapttl.cdfrmttl                                         
-                                          crafttl.nmtalttl = brapttl.nmtalttl.
-
+                                          crafttl.cdfrmttl = brapttl.cdfrmttl.
+									   /* A pedido da Sarah em 13/10/2017 nao deve-se atualizar
+                                          o nome do talao para segundo titular 
+                                          crafttl.nmtalttl = brapttl.nmtalttl. */										  
+                                          
                                       ContadorCje1: DO aux_contado2 = 1 TO 10:
     
                                           FIND crapcje WHERE crapcje.cdcooper = crabttl.cdcooper AND
