@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 04/10/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 16/10/2017
            
     Dados referentes ao programa:
                 
@@ -498,6 +498,8 @@
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                             de novo limite. (Chamado 768648) - (Fabricio)
+
+			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -863,6 +865,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_dtmvtolt AS DATE                                     NO-UNDO.
     DEF VAR aux_txdiaria AS DECIMAL                                  NO-UNDO.
     DEF VAR aux_vlborder AS DECIMAL                                  NO-UNDO.
+    DEF VAR aux_vlborderbrut AS DECIMAL                              NO-UNDO.
     DEF VAR aux_qtdprazo AS INTEGER                                  NO-UNDO.
     DEF VAR aux_vltitulo AS DECIMAL                                  NO-UNDO.
     DEF VAR aux_dtperiod AS DATE                                     NO-UNDO.
@@ -1643,6 +1646,7 @@ PROCEDURE efetua_liber_anali_bordero:
    ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
                                          1 / 30) - 1),7)
           aux_vlborder = 0
+          aux_vlborderbrut = 0
           aux_contamsg = 0
           aux_contareg = 0
           aux_vltotiof = 0.
@@ -1819,7 +1823,8 @@ PROCEDURE efetua_liber_anali_bordero:
          
        ASSIGN aux_vldjuros     = aux_vltitulo - craptdb.vltitulo
               craptdb.vlliquid = craptdb.vltitulo - aux_vldjuros
-              aux_vlborder     = aux_vlborder + craptdb.vlliquid.
+              aux_vlborder     = aux_vlborder + craptdb.vlliquid
+              aux_vlborderbrut = aux_vlborderbrut + craptdb.vltitulo.
 
        /* Daniel */
        IF par_cddopcao = "L" THEN 
@@ -1977,7 +1982,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                           INPUT par_nrdconta,
                                           INPUT par_cdagenci,
                                           INPUT par_nrdcaixa,
-                                          INPUT aux_vlborder,
+                                          INPUT aux_vlborderbrut,
                                           OUTPUT aux_vltarifa,
                                           OUTPUT aux_cdfvlcop,
                                           OUTPUT aux_cdhistor).
