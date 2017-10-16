@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 26/06/2017
+   Data    : Abril/2004                    Ultima atualizacao: 16/10/2017
 
    Dados referentes ao programa:
 
@@ -187,7 +187,11 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                25/05/2017 - Ajuste na geração de mensagens no log (Rodrigo)
                
                26/06/2017 - Incluir tratamento para SANEPAR qto a identificaçao
-                            do cliente no arquivo (Tiago/Fabricio #673343)                            
+                            do cliente no arquivo (Tiago/Fabricio #673343)      
+                            
+              16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
+                           a referencia do convenio de acordo com o cadastrado na tabela crapprm 
+                           (Lucas Ranghetti #712492)                                                  
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -334,6 +338,8 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   vr_nmarqdat        varchar2(100);
   vr_nmarqped        varchar2(24);
   vr_dtmovini        DATE;
+  vr_nrrefere        VARCHAR2(25);
+  vr_qtdigito        INTEGER;
 
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
@@ -615,13 +621,23 @@ begin
             end if; 
          end if;     
       end if;
-            
-      --
-      if rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
+           
+      -- Buscar referencia formatada
+      conv0001.pc_retorna_referencia_conv(pr_cdconven => rw_gnconve.cdconven, 
+                                          pr_cdhistor => 0, 
+                                          pr_cdrefere => rw_crapatr.cdrefere, 
+                                          pr_nrrefere => vr_nrrefere, 
+                                          pr_qtdigito => vr_qtdigito, 
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic);      
+      -- CERSAD e SANEPAR
+      IF vr_qtdigito <> 0 THEN
+        vr_cdidenti:= vr_nrrefere;
+      ELSIF rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');
-      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108, 101) then
+      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000')||lpad(' ', 17, ' ');
-      elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45, 51) then
+      elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000000')||lpad(' ', 16, ' ');
       elsif rw_gnconve.cdconven in (3, 48) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000000000000000')||lpad(' ', 5, ' ');
@@ -976,3 +992,4 @@ exception
     -- Efetuar rollback
     rollback;
 end;
+/

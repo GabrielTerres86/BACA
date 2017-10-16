@@ -368,6 +368,15 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                                ,pr_nmarqint IN gnconve.nmarqint%TYPE --> Nome do arquivo
                                ,pr_cdcritic OUT NUMBER               --> Codigo da critica
                                ,pr_dscritic OUT VARCHAR2);           --> Descrição da critica
+                 
+  -- Retornar referencia do convenio ja formatada              
+  PROCEDURE pc_retorna_referencia_conv (pr_cdconven IN gnconve.cdconven%TYPE --> Codigo do convenio
+                                       ,pr_cdhistor IN INTEGER               --> Historico do convenio  
+                                       ,pr_cdrefere IN VARCHAR2              --> Referencia
+                                       ,pr_nrrefere OUT VARCHAR2             --> Referencia formatada
+                                       ,pr_qtdigito OUT INTEGER              --> Qtd. maxima de digitos                                       
+                                       ,pr_cdcritic OUT NUMBER               --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2);
 END CONV0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
@@ -378,7 +387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 29/09/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 16/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -472,6 +481,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          na pc_gerandb (Tiago/Fabricio #673343)  
   --
   --             29/09/2017 - Incluir validacao de 23 posicoes para a CHUBB(Lucas Ranghetti #766211)
+  --
+  --             16/10/2017 - Adicionar procedure pc_retorna_referencia_conv para formatar a referencia
+  --                          do convenio de acordo com o cadastrado na tabela crapprm 
+  --                          (Lucas Ranghetti #712492)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1620,7 +1633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 29/09/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 16/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1736,6 +1749,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          (Tiago/Fabricio #673343)  
   --
   --             29/09/2017 - Incluir validacao de 23 posicoes para a CHUBB(Lucas Ranghetti #766211)
+  --
+  --             16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para 
+  --                          formatar a referencia do convenio de acordo com o cadastrado
+  --                          na tabela crapprm (Lucas Ranghetti #712492)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1757,6 +1774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       vr_dtmvtolt craplau.dtmvtolt%TYPE;
       vr_flgsicre INTEGER := 0;
       vr_cdseqtel VARCHAR2(60);
+      vr_cdrefere VARCHAR2(25);
+      vr_qtdigito INTEGER;      
 
       -- VARIAVEIS PARA CAULCULO DE DIGITOS A COMPLETAR COM ZEROS OU ESPAÇOS
       vr_resultado VARCHAR2(25);
@@ -1896,10 +1915,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_nrdconta := gene0002.fn_mask(vr_cdcooper, '9999') || gene0002.fn_mask(pr_nrdconta, '99999999');
         END IF;
 
+        -- Buscar referencia formatada 
+        pc_retorna_referencia_conv(pr_cdconven => 0, 
+                                   pr_cdhistor => pr_cdhistor, 
+                                   pr_cdrefere => pr_cdrefere, 
+                                   pr_nrrefere => vr_cdrefere, 
+                                   pr_qtdigito => vr_qtdigito, 
+                                   pr_cdcritic => vr_cdcritic, 
+                                   pr_dscritic => vr_dscritic);
+
         -- VERIFICAÇÃO DE HISTÓRICOS
-        IF pr_cdhistor IN(31,690)  THEN -- BRASIL TELECOM DB. AUTOMATICO/SAMAE SAO BENTO
+        IF vr_qtdigito <> 0 THEN -- CERSAD E SANEPAR
+          vr_dstexarq := vr_dstexarq || vr_cdrefere;
+        ELSIF pr_cdhistor IN(31,690)  THEN -- BRASIL TELECOM DB. AUTOMATICO/SAMAE SAO BENTO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
-        ELSIF pr_cdhistor IN (48,2284,554,2263) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM | AGUAS JOINVILLE | SANEPAR
+        ELSIF pr_cdhistor IN (48,2284,554) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM | AGUAS JOINVILLE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
         ELSIF pr_cdhistor IN(2039,1517,2025) THEN -- PREVISC, SULAMERICA,UNIFIQUE POMERODE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
@@ -1916,9 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         ELSIF pr_cdhistor = 453 THEN -- VIVO/TELEFONICA
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999') || RPAD(' ',14,' ');
         ELSIF pr_cdhistor = 900 THEN -- Samae Rio Negrinho
-          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999') || RPAD(' ',19,' ');
-        ELSIF pr_cdhistor = 2291 THEN -- CERSAD
-          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999999') || RPAD(' ',16,' ');
+          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999') || RPAD(' ',19,' ');        
         ELSIF vr_flgsicre = 0 THEN -- RECEBIMENTO SAMAE BLUMENAU AUTOMATICO
           vr_dstexarq := vr_dstexarq || pr_cdrefere || RPAD(' ',25 - LENGTH(pr_cdrefere),' ');
         END IF;
@@ -1930,7 +1958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_auxcdcri := '05';
         ELSIF vr_cdcritic = '64' THEN -- Cooperado demitido
           vr_auxcdcri := '15'; -- Conta corrente invalida
-		ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
+		    ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
           vr_auxcdcri := '04'; -- Outros
         ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (vr_cdcritic = '1001' OR vr_cdcritic = '1002' OR vr_cdcritic = '1003') THEN 
           vr_auxcdcri := '19'; -- Outros
@@ -3548,6 +3576,103 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
          pr_dscritic:= 'Erro na rotina CONV0001.pc_pula_seq_gt0001. ' || sqlerrm;
     END;
   END pc_pula_seq_gt0001;
+  
+  PROCEDURE pc_retorna_referencia_conv (pr_cdconven IN gnconve.cdconven%TYPE --> Codigo do convenio
+                                       ,pr_cdhistor IN INTEGER               --> Historico do convenio
+                                       ,pr_cdrefere IN VARCHAR2              --> Referencia
+                                       ,pr_nrrefere OUT VARCHAR2             --> Referencia formatada
+                                       ,pr_qtdigito OUT INTEGER              --> Qtd. maxima de digitos
+                                       ,pr_cdcritic OUT NUMBER               --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2) IS
+  /*-------------------------------------------------------------------------------------------------
+  
+    Programa : pc_retorna_referencia_conv
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Lucas Ranghetti
+    Data     : 16/10/2017               Ultima atualizacao: 
+  
+   Dados referentes ao programa:
+  
+   Frequencia: Sempre que for chamado
+   Objetivo  : Retornar a referencia do convenio ja formatada com 25 posições
+   Alteracoes:
+	
+  --------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+      vr_qtdigito INTEGER;
+      -- tipo preenchimento = 0 - Nao preenche com zeros / 
+      -- 1 - Preenche com zeros a esquerda / 2 - Preenche com zeros a direita
+      vr_tppreenc INTEGER; 
+      vr_nrrefere VARCHAR2(25);
+      vr_cdconven INTEGER;
+      
+      CURSOR cr_crapprm IS
+       SELECT prm.dsvlrprm            
+         FROM crapprm prm
+        WHERE prm.cdcooper = 0
+          AND upper(prm.nmsistem) = 'CRED' 
+          AND upper(prm.cdacesso) = 'FORMATA_REF_CONVEN_'||vr_cdconven;
+      rw_crapprm cr_crapprm%ROWTYPE;
+      
+      --  Busca convenio
+      CURSOR cr_gnconve IS
+        SELECT gnconve.cdconven
+          FROM gnconve
+         WHERE gnconve.cdhisdeb = pr_cdhistor;   
+      rw_gnconve cr_gnconve%ROWTYPE;
+      
+    BEGIN
+    
+      IF pr_cdconven = 0 AND pr_cdhistor <> 0 THEN
+        OPEN cr_gnconve;
+        FETCH cr_gnconve INTO rw_gnconve;
+      
+        IF cr_gnconve%FOUND THEN
+          CLOSE cr_gnconve;
+          vr_cdconven:= rw_gnconve.cdconven;
+        ELSE
+          CLOSE cr_gnconve;
+        END IF;
+      ELSE
+        vr_cdconven:= pr_cdconven;
+      END IF;
+    
+      OPEN cr_crapprm;
+      FETCH cr_crapprm INTO rw_crapprm;
+      
+      IF cr_crapprm%FOUND THEN
+        CLOSE cr_crapprm;
+        -- Qtd de digitos a completar
+        vr_qtdigito:= gene0002.fn_busca_entrada(1, rw_crapprm.dsvlrprm,';');
+        -- Tipo de preenchimento
+        vr_tppreenc:= gene0002.fn_busca_entrada(2, rw_crapprm.dsvlrprm,';');
+      
+        -- Nao preenche com zeros
+        IF vr_tppreenc = 0 THEN
+           vr_nrrefere:= pr_cdrefere;    
+        ELSIF vr_tppreenc = 1 THEN -- 1 - Preenche com zeros a esquerda
+          vr_nrrefere:= LPAD(pr_cdrefere,vr_qtdigito,'0');
+        ELSIF vr_tppreenc = 2 THEN -- 2 - Preenche com zeros a direita
+          vr_nrrefere:= RPAD(pr_cdrefere,vr_qtdigito,'0');           
+        END IF;      
+      ELSE
+         CLOSE cr_crapprm;
+        vr_nrrefere:= pr_cdrefere;
+      END IF;
+      
+      -- completar com espaços até 25 posições
+      pr_nrrefere:= RPAD(vr_nrrefere,25,' ');      
+      -- Quantidade maxima de digitos aceitos para deb. aut.
+      pr_qtdigito:= nvl(vr_qtdigito,0);
+
+    EXCEPTION      
+      WHEN OTHERS THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina CONV0001.pc_retorna_referencia_conv - ' || sqlerrm;
+    END;
+  END pc_retorna_referencia_conv;
 
 END CONV0001;
 /
