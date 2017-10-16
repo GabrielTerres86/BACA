@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
+    Data    : Maio/2010                   Ultima atualizacao: 13/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -192,6 +192,20 @@
                              (Carlos)
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
+
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+                             
+				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)
+
+                13/09/2017 - Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Jaison/Elton - M459)
 
 .............................................................................*/
 
@@ -469,6 +483,24 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
+
+        /* Tratamento temporario para nao permitir solicitacao
+           ou encerramento de conta ITG devido a migracao do BB */
+        IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
+             par_dtmvtolt >= 10/18/2017 AND par_dtmvtolt <= 10/24/2017)  OR
+            (CAN-DO ("2,16", STRING(par_cdcooper)) AND /* Acredicoop / Alto Vale */
+             par_dtmvtolt >= 10/19/2017 AND par_dtmvtolt <= 10/25/2017)  OR
+            (CAN-DO ("8,9,11", STRING(par_cdcooper)) AND /* Credelesc / Transpocred / Credifoz */
+             par_dtmvtolt >= 10/20/2017 AND par_dtmvtolt <= 10/26/2017)  OR
+            (CAN-DO ("5,7,10", STRING(par_cdcooper)) AND /* Acentra / Credcrea / Credicomin */
+             par_dtmvtolt >= 10/23/2017 AND par_dtmvtolt <= 10/27/2017)  OR
+            (par_cdcooper = 1 AND /* Viacredi */
+             par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
+            DO:
+               ASSIGN tt-conta-corr.btencitg = NO
+                      tt-conta-corr.btsolitg = NO.
+            END.
+        
 
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
@@ -3468,22 +3500,6 @@ PROCEDURE Grava_Dados_Altera:
               END.
                                      END.
 
-        IF crabass.inpessoa = 1   /* Fisica */                     AND
-           NOT CAN-DO("3,4,6,10,11,14,15,17",STRING(par_cdtipcta)) AND
-           CAN-DO("3,4,6,10,11,14,15,17",STRING(crabass.cdtipcta)) THEN
-           /* apaga os dados do segundo e terceiro titulares */
-           ASSIGN crabass.cdoedstl = ""   crabass.cdufdstl = ""
-                  crabass.dsfilstl = ""   crabass.dtemdstl = ?    
-                  crabass.dtnasstl = ?    crabass.nmmaestl = ""   
-                  crabass.nmpaistl = ""   crabass.nmsegntl = ""   
-                  crabass.nrcpfstl = 0    crabass.nrdocstl = ""   
-                  crabass.tpdocstl = ""   crabass.cdoedttl = ""   
-                  crabass.cdufdttl = ""   crabass.dsfilttl = ""   
-                  crabass.dtemdttl = ?    crabass.dtnasttl = ?
-                  crabass.nmmaettl = ""   crabass.nmpaittl = ""
-                  crabass.nmtertl  = ""   crabass.nrcpfttl = 0
-                  crabass.nrdocttl = ""   crabass.tpdocttl = "".
-
         IF crabass.cdbcochq <> par_cdbcochq THEN
            DO:
                ContadorAlt: DO aux_contador = 1 TO 10:
@@ -4456,19 +4472,6 @@ PROCEDURE Grava_Dados_Exclui:
                                OUTPUT aux_nrdrowid).
         END.
 
-        /* Apaga os dados do segundo e terceiro titulares */
-        ASSIGN crabass.cdoedstl = ""   crabass.cdufdstl = ""
-               crabass.dsfilstl = ""   crabass.dtemdstl = ?    
-               crabass.dtnasstl = ?    crabass.nmmaestl = ""   
-               crabass.nmpaistl = ""   crabass.nmsegntl = ""   
-               crabass.nrcpfstl = 0    crabass.nrdocstl = ""   
-               crabass.tpdocstl = ""   crabass.cdoedttl = ""   
-               crabass.cdufdttl = ""   crabass.dsfilttl = ""   
-               crabass.dtemdttl = ?    crabass.dtnasttl = ?
-               crabass.nmmaettl = ""   crabass.nmpaittl = ""
-               crabass.nmtertl  = ""   crabass.nrcpfttl = 0
-               crabass.nrdocttl = ""   crabass.tpdocttl = "".
-
         ASSIGN aux_returnvl = "OK".
 
         LEAVE GravaExclui.
@@ -4828,9 +4831,9 @@ PROCEDURE Critica_Cadastro_Pf:
     CriticaPf: DO ON ERROR UNDO CriticaPf, LEAVE CriticaPf:
 
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
-                                dtcnscpf cdsitcpf tpdocttl nrdocttl cdoedttl 
+                                dtcnscpf cdsitcpf tpdocttl nrdocttl idorgexp 
                                 cdufdttl dtemdttl dtnasttl cdsexotl tpnacion 
-                                dsnacion dsnatura inhabmen dthabmen cdgraupr 
+                                cdnacion dsnatura inhabmen dthabmen cdgraupr 
                                 cdestcvl grescola nmtalttl nmmaettl nmpaittl 
                                 cdnatopc cdocpttl tpcttrab cdempres nmextemp 
                                 dsproftl cdnvlcgo cdfrmttl cdufnatu)
@@ -4875,7 +4878,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Documento", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.cdoedttl = "" THEN
+            IF  craxttl.idorgexp = 0 THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Orgao Emissor do Documento",
@@ -4911,7 +4914,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Tipo Nacionalidade", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.dsnacion = "" THEN
+            IF  craxttl.cdnacion = 0 THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Nacionalidade", 
@@ -5313,8 +5316,8 @@ PROCEDURE Critica_Cadastro_Pj:
                   INPUT "Orgao de Registro",
                   INPUT {&TT-REGIS} ).
 
-        FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava cdoeddoc
-                                 cdufddoc dtemddoc dtnascto dsnacion dsnatura 
+        FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava idorgexp
+                                 cdufddoc dtemddoc dtnascto cdnacion dsnatura 
                                  nrcepend dsendres nmbairro nmcidade cdufresd 
                                  nmmaecto dsproftl dtvalida)
                           WHERE crabavt.cdcooper = par_cdcooper   AND
@@ -5346,7 +5349,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Documento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.cdoeddoc = "" THEN
+            IF  crabavt.idorgexp = 0 THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Orgao Emissor do Documento",
@@ -5370,7 +5373,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Data de Nascimento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.dsnacion = "" THEN
+            IF  crabavt.cdnacion = 0 THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Nacionalidade do Representante/Procurador",
