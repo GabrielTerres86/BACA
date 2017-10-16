@@ -25,7 +25,7 @@ begin
   cecred.ccrd0006.pc_lancamentos_singulares(pr_cdcritic => :pr_cdcritic, pr_dscritic => :pr_dscritic);
   IF vr_dscritic IS NOT NULL THEN     
     -- Levantar exceçao     
-    RAISE_application_error(-20500,"Erro: "||vr_dscritic);
+    RAISE_application_error(-20500,vr_dscritic);
   END IF;
 end;',
                                 start_date          => to_date('09-10-2017 12:00:00', 'dd-mm-yyyy hh24:mi:ss'),
