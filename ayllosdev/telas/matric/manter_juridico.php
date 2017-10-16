@@ -9,6 +9,7 @@
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
 				  15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
+    			  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  */
 ?> 
 
@@ -107,7 +108,9 @@
 	
 		$xml .= "<$key>$value</$key>";   
 		
-	} 
+	}
+	
+	$xml .= "<nrcxapst>0</nrcxapst>"; 	
 	
 	if($procedure == "grava_dados" || $procedure == "valida_dados"){ 
 

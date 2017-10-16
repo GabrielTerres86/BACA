@@ -14,6 +14,7 @@
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
 				  15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  */
 ?> 
 
@@ -123,6 +124,8 @@
 		$xml .= "<$key>$value</$key>";   
 		
 	} 
+	
+	$xml .= "<nrcxapst>0</nrcxapst>"; 
 	  
 	if($procedure == 'valida_dados' || $procedure == 'grava_dados'){
 

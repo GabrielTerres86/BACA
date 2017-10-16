@@ -12,7 +12,8 @@
  *               09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
  *
  *				 15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
- *
+ *				 
+ *				 16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  */ 
 ?>
 
@@ -116,20 +117,12 @@
 		<input name="complend" id="complend" type="text" value="<? echo getByTagName($registro,'complend') ?>" />
 		<br />
 
-		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($registro,'nrcxapst') ?>" />		
+		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
+		<? echo selectEstado('cdufende', getByTagName($registro,'cdufende'), 1); ?>		
 
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($registro,'nmbairro') ?>" />								
 		<br />	
-
-		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
-		<? echo selectEstado('cdufende', getByTagName($registro,'cdufende'), 1); ?>	
-
-		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
-		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
-
-		<br style="clear:both" />
 
 		<label for="idorigee" class="rotulo"><? echo utf8ToHtml('Origem:'); ?></label>
 		<select id="idorigee" name="idorigee">
@@ -138,6 +131,9 @@
 			<option value="2" <? if (getByTagName($registro,'idorigee') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($registro,'idorigee') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
+
+		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
+		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
 
 		<br style="clear:both" />
 
