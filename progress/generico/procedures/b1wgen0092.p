@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 25/05/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 05/10/2017
     
    Dados referentes ao programa:
    
@@ -169,6 +169,8 @@
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
                            
+              28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
+                           
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
                            esquerda no campo de senha informada pelo usuário
                            Rafael (Mouts) - Chamado 657038
@@ -182,6 +184,18 @@
                            
               25/05/2017 - Incluir vr_dstransa atualizada apos a chamada do bloqueia_lancamento
                            (Lucas Ranghetti #671626).
+                           
+              11/07/2017 - Incluir tratamento para permitir a exclusao da autorizaçao somente no 
+                           proximo dia util apos o cancelamento na procedure grava-dados (Lucas Ranghetti #703802)
+                           
+              20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
+                           o primeiro titular da conta é de menor (Tiago/Thiago #652776)
+                           
+              29/09/2017 - Validar identificacao de consumidor também para casos
+			                     em que for digitado zero (Lucas Ranghetti #765804)
+                           
+              05/10/2017 - Adicionar tratamento de 9 posições para a CERSAR e 8 para 
+                           o SANEPAR (Lucas Ranghetti #712492)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1097,6 +1111,12 @@ PROCEDURE valida-dados:
 
         IF  par_cddopcao = "I"  THEN
             DO:   
+                IF  par_cdrefere = 0 THEN              
+                    DO:
+                        ASSIGN aux_dscritic = "Informe o Codigo Identificador "
+                               par_nmdcampo = "cdrefere".
+                        LEAVE Valida.
+                    END.
                               
                 IF  par_cdhistor = 0 THEN
                     DO:
@@ -1104,6 +1124,40 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "dshistor".
                         LEAVE Valida.
                     END.
+                ELSE
+                IF  par_cdhistor = 2291 THEN /* CERSAD */
+                    DO:                    
+                        IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 654
+                                       par_nmdcampo = "cdrefere".
+                                LEAVE Valida.
+                            END.   
+                    END.
+                ELSE
+                IF par_cdhistor = 2263 THEN /* SANEPAR */
+                   DO:                   
+                       IF  LENGTH(STRING(par_cdrefere)) > 8 THEN
+                           DO:
+                               ASSIGN aux_cdcritic = 654
+                                      par_nmdcampo = "cdrefere".
+                               LEAVE Valida.
+                           END. 
+                           
+                       ASSIGN aux_cdrefere = par_cdrefere.
+                       
+                       RUN dig_sanepar ( INPUT-OUTPUT aux_cdrefere,
+                                        OUTPUT aux_stsnrcal ).
+                       
+                       ASSIGN aux_cdrefere = 0.
+                       
+                       IF  NOT aux_stsnrcal THEN
+                           DO:
+                               ASSIGN aux_cdcritic = 008
+                                      par_nmdcampo = "cdrefere".
+                               LEAVE Valida.
+                           END. 
+                   END.
                 ELSE
                 IF  par_cdhistor = 509   THEN   /* UNIMED */
                     DO:
@@ -1179,8 +1233,7 @@ PROCEDURE valida-dados:
                     END.
                 ELSE    
                 IF  par_cdhistor = 667 OR
-                    par_cdhistor = 624 OR /*Celesc */
-                    par_cdhistor = 928 THEN /* CERSAD */
+                    par_cdhistor = 624 THEN /*Celesc */                    
                     DO:
                          IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
                             DO:
@@ -1629,6 +1682,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
+    DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1747,6 +1801,26 @@ PROCEDURE grava-dados:
             
         IF  par_cddopcao = "I" THEN
             DO: 
+            
+                /*Validar se o cooperado for menor de idade e nao eh emancipado nao deixar incluir a autorizaçao*/
+                ASSIGN aux_dtamenor = ADD-INTERVAL( TODAY, -18, "YEARS").
+                
+                 FIND crapttl 
+                WHERE crapttl.cdcooper = par_cdcooper 
+                  AND crapttl.nrdconta = par_nrdconta
+                  AND crapttl.idseqttl = 1
+                  AND crapttl.dtnasttl > aux_dtamenor
+                  AND crapttl.dthabmen = ?
+                  NO-LOCK NO-ERROR.
+                
+            
+                IF AVAILABLE(crapttl) THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Nao foi possivel incluir autorizacao de debito, cooperado menor de idade.".
+                      UNDO Grava, LEAVE Grava.
+                   END.
+                /*Fim valida*/
+                
                 ASSIGN aux_vlrcalcu = ""
                        aux_cdempres = "0".
                 
@@ -2160,6 +2234,20 @@ PROCEDURE grava-dados:
                 ELSE
                 IF  par_cddopcao = "E" THEN
                     DO:
+                        IF  crapatr.dtiniatr = par_dtmvtolt THEN
+                            DO: 
+                                ASSIGN aux_dscritic = "Esta alteracao podera" +
+                                                      " ser efetuada no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                            
+                         /* Permitir a exclusao do debito somente no proximo dia util apos 
+                            o cancelamento */
+                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
+                             DO:
+                                ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                             END.
                         
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
@@ -2268,12 +2356,14 @@ PROCEDURE busca_convenios_codbarras:
     DEF OUTPUT PARAM TABLE FOR tt-convenios-codbarras.
 
     DEF VAR aux_nmempcon AS CHAR NO-UNDO.
+    DEF VAR aux_nmresumi AS CHAR NO-UNDO. 
     
     FOR EACH crapcon WHERE crapcon.cdcooper =  par_cdcooper         AND
                            crapcon.cdempcon >= par_cdempcon         AND
                            crapcon.cdsegmto >= par_cdsegmto         NO-LOCK:
                            
-        ASSIGN aux_nmempcon = "".
+        ASSIGN aux_nmempcon = ""
+               aux_nmresumi = "".
                            
         IF  crapcon.flgcnvsi = TRUE THEN
             DO:
@@ -2286,6 +2376,9 @@ PROCEDURE busca_convenios_codbarras:
                 IF  NOT AVAIL crapscn THEN
                     NEXT.
                 ELSE
+                  IF(crapscn.dsnomres <> "") then
+                      ASSIGN aux_nmempcon = crapscn.dsnomres.
+                  ELSE
                     ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
@@ -2319,13 +2412,16 @@ PROCEDURE busca_convenios_codbarras:
                        ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
+         IF aux_nmresumi <> "" THEN
+          ASSIGN aux_nmempcon = aux_nmresumi.    
+
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
             
         CREATE tt-convenios-codbarras.
         ASSIGN tt-convenios-codbarras.nmextcon = IF aux_nmempcon = "" THEN crapcon.nmextcon ELSE aux_nmempcon
-               tt-convenios-codbarras.nmrescon = crapcon.nmrescon
+               tt-convenios-codbarras.nmrescon = IF aux_nmresumi = "" THEN crapcon.nmrescon ELSE aux_nmresumi 
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
@@ -4593,6 +4689,57 @@ PROCEDURE dig_semasa:
     ASSIGN aux_resto = aux_calculo MODULO 11.
     
     IF  aux_resto > 1 AND aux_resto < 10 THEN 
+        ASSIGN aux_digito = 11 - aux_resto.
+    ELSE
+        ASSIGN aux_digito = 0.
+    
+    IF  (INTEGER(SUBSTRING(STRING(par_nrcalcul),
+                           LENGTH(STRING(par_nrcalcul)),1))) <> aux_digito THEN
+         ASSIGN par_stsnrcal = FALSE.
+    ELSE
+         ASSIGN par_stsnrcal = TRUE.
+    
+    /** Substituicao do numero do digito errado pelo numero correto **/
+    ASSIGN par_nrcalcul = DECIMAL(SUBSTRING(STRING(par_nrcalcul),1,
+                                            LENGTH(STRING(par_nrcalcul)) - 1) +
+                                  STRING(aux_digito)).
+
+END PROCEDURE.
+
+PROCEDURE dig_sanepar:
+
+    DEF INPUT-OUTPUT PARAM par_nrcalcul AS DECIMAL FORMAT ">>>>>>>>>>>>>9" 
+                                                                      NO-UNDO.
+    DEF OUTPUT PARAM par_stsnrcal       AS LOGICAL                    NO-UNDO.
+
+    DEF VAR aux_digito  AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_posicao AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_peso    AS INT     EXTENT 7  INIT [2,7,6,5,4,3,2]
+                                                                      NO-UNDO.
+    DEF VAR aux_calculo AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_resto   AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_indice  AS INT                                        NO-UNDO.
+                 
+    IF  LENGTH(STRING(par_nrcalcul)) < 2   THEN
+        DO:
+            ASSIGN par_stsnrcal = FALSE.
+            RETURN.
+        END.
+    
+    ASSIGN  aux_indice = 7.
+    
+    DO  aux_posicao = (LENGTH(STRING(par_nrcalcul)) - 1) TO 1 BY -1:
+                                
+        ASSIGN aux_calculo = aux_calculo + 
+                            (INTEGER(SUBSTRING(STRING(par_nrcalcul),
+                                     aux_posicao,1)) * aux_peso[aux_indice]).
+        ASSIGN aux_indice = aux_indice - 1.
+        
+    END.  /*  Fim do DO .. TO  */
+    
+    ASSIGN aux_resto = aux_calculo MODULO 11.
+    
+    IF  aux_resto > 1 THEN 
         ASSIGN aux_digito = 11 - aux_resto.
     ELSE
         ASSIGN aux_digito = 0.
