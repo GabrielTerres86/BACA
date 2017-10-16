@@ -219,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 11/10/2017
 
    Dados referentes ao programa:
   
@@ -241,6 +241,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                           
+              11/10/2017 - Na procedure pc_busca_cheque mudar ordenacao do select pra trazer os 
+                           ultimos cheques emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -2356,8 +2359,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-
-                        
+    
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
@@ -2377,7 +2379,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotinas para cadastros Web
     --  Sigla    : CHEQUE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    --  Data     : Maio/2013.                   Ultima atualizacao: 11/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2393,6 +2395,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     
                      25/04/2017 - Incluir >= na busca do todos pr_nrtipoop = 5 para 
                                   trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                                  
+                     11/10/2017 - Mudar ordenacao do select pra trazer os ultimos cheques
+                                  emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
      .............................................................................*/
     
     -- Variáveis
@@ -2511,9 +2516,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             'order by nrctachq desc, nrseqems desc, nrcheque desc';
       WHEN 5 THEN
         IF pr_nrcheque > 0 THEN
-          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' ' ||
-                              'order by nrcheque';
+          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' ';
         END IF;
+        
+        vr_sql := vr_sql || 'order by dtemschq desc, nrcheque desc';
+        
     END CASE;
 
     -- Buscar ID da execução DBMS
