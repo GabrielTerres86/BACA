@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,vlsdvpar     crappep.vlsdvpar%TYPE
       ,vldescto     crappep.vldespar%TYPE
       ,vlatupar     NUMBER(25,2)
+      ,vlatrpag     NUMBER(25,2)
       ,flcarenc     PLS_INTEGER
       ,vlrdtaxa     craptxi.vlrdtaxa%TYPE
       ,taxa_periodo NUMBER(25,10));
@@ -382,6 +383,23 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                                         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
                                         ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+
+  PROCEDURE pc_gera_pagto_pos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                             ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE --> Data de calculo das parcelas
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                             ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                             ,pr_nrparepr  IN crappep.nrparepr%TYPE --> Numero da parcela
+                             ,pr_vlpagpar  IN crappep.vlparepr%TYPE --> Valor para pagamento da parcela
+                             ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencia do titular
+                             ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da Agencia
+                             ,pr_cdpactra  IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
+                             ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE --> Numero do caixa
+                             ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
+                             ,pr_nrseqava  IN PLS_INTEGER           --> Sequencia de pagamento de avalista
+                             ,pr_idorigem  IN PLS_INTEGER           --> Codigo de origem
+                             ,pr_nmdatela  IN VARCHAR2              --> Nome da tela
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                             ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
   PROCEDURE pc_gera_pagto_pos_web(pr_dtcalcul   IN VARCHAR2              --> Data de calculo das parcelas
                                  ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Numero da conta
@@ -2137,6 +2155,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- A Vencer
           pr_tab_parcelas(vr_indice).insitpar := 3;          
         END IF;
+        -- Valor atual da parcela mais multa e juros de mora
+        pr_tab_parcelas(vr_indice).vlatrpag := NVL(pr_tab_parcelas(vr_indice).vlatupar,0)
+                                             + NVL(pr_tab_parcelas(vr_indice).vlmtapar,0)
+                                             + NVL(pr_tab_parcelas(vr_indice).vlmrapar,0);
       END LOOP;
 
     EXCEPTION
@@ -5817,27 +5839,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_valida_pagamentos_pos_web;
 
-  PROCEDURE pc_gera_pagto_pos_web(pr_dtcalcul   IN VARCHAR2              --> Data de calculo das parcelas
-                                 ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Numero da conta
-                                 ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato
-                                 ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia do titular
-                                 ,pr_cdpactra   IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
-                                 ,pr_nrseqava   IN PLS_INTEGER           --> Sequencia de pagamento de avalista
-                                 ,pr_dadosprc   IN CLOB                  --> Dados das parcelas selecionadas
-                                 ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
-                                 ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
-                                 ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
-                                 ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
-                                 ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
-                                 ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  PROCEDURE pc_gera_pagto_pos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                             ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE --> Data de calculo das parcelas
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                             ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                             ,pr_nrparepr  IN crappep.nrparepr%TYPE --> Numero da parcela
+                             ,pr_vlpagpar  IN crappep.vlparepr%TYPE --> Valor para pagamento da parcela
+                             ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencia do titular
+                             ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da Agencia
+                             ,pr_cdpactra  IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
+                             ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE --> Numero do caixa
+                             ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
+                             ,pr_nrseqava  IN PLS_INTEGER           --> Sequencia de pagamento de avalista
+                             ,pr_idorigem  IN PLS_INTEGER           --> Codigo de origem
+                             ,pr_nmdatela  IN VARCHAR2              --> Nome da tela
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                             ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
   BEGIN
     /* .............................................................................
 
-       Programa: pc_gera_pagto_pos_web
+       Programa: pc_gera_pagto_pos
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Julho/2017                         Ultima atualizacao: 
+       Data    : Outubro/2017                         Ultima atualizacao: 
 
        Dados referentes ao programa:
 
@@ -5940,10 +5965,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_blnachou BOOLEAN;
       vr_floperac BOOLEAN;
       vr_flmensal BOOLEAN;
-      vr_parc_lst GENE0002.typ_split;
-      vr_parc_reg GENE0002.typ_split;
-      vr_nrparepr INTEGER;
-      vr_vlpagpar NUMBER;
       vr_txdiaria craplcr.txdiaria%TYPE;
       vr_dsorigem VARCHAR2(50);
       vr_nrdrowid ROWID;
@@ -5955,35 +5976,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dscritic VARCHAR2(4000);
     
       -- Variaveis Excecao
-      vr_exc_erro  EXCEPTION;
-
-      -- Variaveis de log
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
+      vr_exc_erro EXCEPTION;
 
     BEGIN
       -- Incluir nome do modulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'pc_gera_pagto_pos_web'
+      GENE0001.pc_informa_acesso(pr_module => 'pc_gera_pagto_pos'
                                 ,pr_action => NULL);
 
-      -- Extrai os dados vindos do XML
-      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
-                              ,pr_cdcooper => vr_cdcooper
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nmeacao  => vr_nmeacao
-                              ,pr_cdagenci => vr_cdagenci
-                              ,pr_nrdcaixa => vr_nrdcaixa
-                              ,pr_idorigem => vr_idorigem
-                              ,pr_cdoperad => vr_cdoperad
-                              ,pr_dscritic => vr_dscritic);
-
       -- Seleciona o calendario
-      OPEN  BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       vr_blnachou := BTCH0001.cr_crapdat%FOUND;
       CLOSE BTCH0001.cr_crapdat;
@@ -5994,20 +5995,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
 
       -- Data de calculo do Price
-      vr_dtmvtolt := TO_DATE(pr_dtcalcul,'DD/MM/RRRR');
+      vr_dtmvtolt := pr_dtcalcul;
 
       -- Funcao para retornar o dia anterior
-      vr_dtmvtoan := GENE0005.fn_valida_dia_util(pr_cdcooper  => vr_cdcooper,
+      vr_dtmvtoan := GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
                                                  pr_dtmvtolt  => vr_dtmvtolt - 1,
                                                  pr_tipo      => 'A');
 
       -- Funcao para retornar o proximo dia
-      vr_dtmvtopr := GENE0005.fn_valida_dia_util(pr_cdcooper  => vr_cdcooper,
+      vr_dtmvtopr := GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
                                                  pr_dtmvtolt  => vr_dtmvtolt + 1,
                                                  pr_tipo      => 'P');
 
       -- Buscar os dados de emprestimo
-      OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
+      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
                      ,pr_nrctremp => pr_nrctremp);
       FETCH cr_crapepr INTO rw_crapepr;
@@ -6020,7 +6021,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
 
       -- Buscar os dados da linha de credito
-      OPEN cr_craplcr(pr_cdcooper => vr_cdcooper
+      OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
                      ,pr_cdlcremp => rw_crapepr.cdlcremp);
       FETCH cr_craplcr INTO rw_craplcr;
       vr_blnachou := cr_craplcr%FOUND;
@@ -6050,14 +6051,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_floperac := (rw_craplcr.dsoperac = 'FINANCIAMENTO');
 
       -- Seta o nome da origem
-      vr_dsorigem := GENE0001.vr_vet_des_origens(vr_idorigem);
+      vr_dsorigem := GENE0001.vr_vet_des_origens(pr_idorigem);
 
       -- Calcula a taxa diaria
       vr_txdiaria := POWER(1 + (NVL(rw_crapepr.txmensal,0) / 100),(1 / 30)) - 1;
-
-      -- Quebra string para transformar numa tabela com os registros
-      vr_parc_lst := GENE0002.fn_quebra_string(pr_string  => pr_dadosprc
-                                              ,pr_delimit => '|');
 
       -- Verifica se a Linha de Credito Cobra Multa
       IF rw_craplcr.flgcobmu = 1 THEN
@@ -6078,6 +6075,260 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_percmult := 0;
       END IF;
 
+      -- Buscar os dados da parcela
+      OPEN cr_crappep(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp
+                     ,pr_nrparepr => pr_nrparepr);
+      FETCH cr_crappep INTO rw_crappep;
+      vr_blnachou := cr_crappep%FOUND;
+      CLOSE cr_crappep;
+      -- Se NAO achou
+      IF NOT vr_blnachou THEN
+        vr_dscritic := 'Parcela ' || pr_nrparepr + ' nao encontrada.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Verifica se tem alguma parcela anterior em aberto
+      OPEN cr_pep_ant(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp
+                     ,pr_nrparepr => pr_nrparepr);
+      FETCH cr_pep_ant INTO rw_pep_ant;
+      vr_blnachou := cr_pep_ant%FOUND;
+      CLOSE cr_pep_ant;
+      -- Se achou
+      IF vr_blnachou THEN
+        vr_dscritic := 'Efetuar primeiro o pagamento da parcela em aberto.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Verificar se a parcela jah esta liquidada
+      IF rw_crappep.inliquid = 1 THEN
+        vr_dscritic := 'Parcela ' || pr_nrparepr + ' ja liquidada!';
+        RAISE vr_exc_erro;
+      END IF;
+
+      --------------------
+      -- Parcela em dia --
+      --------------------
+      IF rw_crappep.dtvencto > vr_dtmvtoan AND rw_crappep.dtvencto <= vr_dtmvtolt THEN
+        -- Efetua o pagamento da parcela em Dia
+        pc_efetua_pagamento_em_dia(pr_cdcooper => pr_cdcooper
+                                  ,pr_dtcalcul => vr_dtmvtolt
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_cdpactra => pr_cdpactra
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_cdorigem => pr_idorigem
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrctremp => pr_nrctremp
+                                  ,pr_vlpreemp => rw_crapepr.vlpreemp
+                                  ,pr_qtprepag => rw_crapepr.qtprepag
+                                  ,pr_qtprecal => rw_crapepr.qtprecal
+                                  ,pr_dtlibera => rw_crapepr.dtlibera
+                                  ,pr_dtrefjur => rw_crapepr.dtrefjur
+                                  ,pr_vlrdtaxa => rw_crappep.vltaxatu
+                                  ,pr_txdiaria => vr_txdiaria
+                                  ,pr_txjuremp => rw_crapepr.txjuremp
+                                  ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                  ,pr_floperac => vr_floperac
+                                  ,pr_nrseqava => pr_nrseqava
+                                  ,pr_nrparepr => pr_nrparepr
+                                  ,pr_dtvencto => rw_crappep.dtvencto
+                                  ,pr_vlpagpar => pr_vlpagpar
+                                  ,pr_vlsdvpar => rw_crappep.vlsdvpar
+                                  ,pr_vlsdvatu => rw_crappep.vlsdvatu
+                                  ,pr_vljura60 => rw_crappep.vljura60
+                                  ,pr_ehmensal => vr_flmensal
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+      ---------------------
+      -- Parcela Vencida --
+      ---------------------
+      ELSIF rw_crappep.dtvencto < vr_dtmvtolt THEN
+
+        -- Efetua o pagamento da parcela Vencida
+        pc_efetua_pagamento_em_atraso(pr_cdcooper => pr_cdcooper
+                                     ,pr_dtcalcul => vr_dtmvtolt
+                                     ,pr_cdagenci => pr_cdagenci
+                                     ,pr_cdpactra => pr_cdpactra
+                                     ,pr_cdoperad => pr_cdoperad
+                                     ,pr_cdorigem => pr_idorigem
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrctremp => pr_nrctremp
+                                     ,pr_vlpreemp => rw_crapepr.vlpreemp
+                                     ,pr_qtprepag => rw_crapepr.qtprepag
+                                     ,pr_qtprecal => rw_crapepr.qtprecal
+                                     ,pr_txjuremp => rw_crapepr.txjuremp
+                                     ,pr_qttolatr => rw_crapepr.qttolatr
+                                     ,pr_floperac => vr_floperac
+                                     ,pr_nrseqava => pr_nrseqava
+                                     ,pr_nrparepr => pr_nrparepr
+                                     ,pr_dtvencto => rw_crappep.dtvencto
+                                     ,pr_dtultpag => rw_crappep.dtultpag
+                                     ,pr_vlparepr => rw_crappep.vlparepr
+                                     ,pr_vlpagpar => pr_vlpagpar
+                                     ,pr_vlsdvpar => rw_crappep.vlsdvpar
+                                     ,pr_vlsdvatu => rw_crappep.vlsdvatu
+                                     ,pr_vljura60 => rw_crappep.vljura60
+                                     ,pr_vlpagmta => rw_crappep.vlpagmta
+                                     ,pr_perjurmo => rw_craplcr.perjurmo
+                                     ,pr_percmult => vr_percmult
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+      ----------------------
+      -- Parcela a Vencer --
+      ----------------------
+      ELSIF rw_crappep.dtvencto > vr_dtmvtolt THEN
+
+        --  Efetua o pagamento da parcela a Vencer
+        NULL; -- JFF
+
+      END IF; -- Parcela a Vencer
+
+      -- Faz a liquidacao do contrato
+      EMPR0011.pc_efetua_liquidacao_empr_pos(pr_cdcooper   => pr_cdcooper
+                                            ,pr_nrdconta   => pr_nrdconta
+                                            ,pr_nrctremp   => pr_nrctremp
+                                            ,pr_rw_crapdat => rw_crapdat
+                                            ,pr_cdagenci   => pr_cdagenci
+                                            ,pr_cdpactra   => pr_cdpactra
+                                            ,pr_cdoperad   => pr_cdoperad
+                                            ,pr_nrdcaixa   => pr_nrdcaixa
+                                            ,pr_cdorigem   => pr_idorigem
+                                            ,pr_nmdatela   => pr_nmdatela
+                                            ,pr_floperac   => vr_floperac
+                                            ,pr_cdcritic   => vr_cdcritic
+                                            ,pr_dscritic   => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Gera log do pagamento
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => NULL
+                          ,pr_dsorigem => vr_dsorigem
+                          ,pr_dstransa => 'Pag. Emp/Fin Nr ' || GENE0002.fn_mask_contrato(pr_nrctremp) || '/' || TO_CHAR(pr_nrparepr)
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1 -- TRUE
+                          ,pr_hrtransa => GENE0002.fn_busca_time
+                          ,pr_idseqttl => pr_idseqttl
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'nrparepr',
+                                pr_dsdadant => pr_nrparepr,
+                                pr_dsdadatu => pr_nrparepr);
+            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'vlpagpar',
+                                pr_dsdadant => TO_CHAR(pr_vlpagpar,'FM999G999G999G990D00'),
+                                pr_dsdadatu => TO_CHAR(pr_vlpagpar,'FM999G999G999G990D00'));
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Apenas retornar a variável de saida
+        IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_cdcritic := NVL(vr_cdcritic, 0);
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Apenas retornar a variável de saida
+        pr_cdcritic := NVL(vr_cdcritic, 0);
+        pr_dscritic := 'Erro na procedure pc_gera_pagto_pos: ' || SQLERRM;
+    END;
+
+  END pc_gera_pagto_pos;
+
+  PROCEDURE pc_gera_pagto_pos_web(pr_dtcalcul   IN VARCHAR2              --> Data de calculo das parcelas
+                                 ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Numero da conta
+                                 ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia do titular
+                                 ,pr_cdpactra   IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
+                                 ,pr_nrseqava   IN PLS_INTEGER           --> Sequencia de pagamento de avalista
+                                 ,pr_dadosprc   IN CLOB                  --> Dados das parcelas selecionadas
+                                 ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN
+    /* .............................................................................
+
+       Programa: pc_gera_pagto_pos_web
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Jaison Fernando
+       Data    : Julho/2017                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para geracao dos pagamentos.
+
+       Alteracoes: 
+    ............................................................................. */
+
+    DECLARE
+      -- Variaveis Locais
+      vr_dtcalcul DATE;
+      vr_parc_lst GENE0002.typ_split;
+      vr_parc_reg GENE0002.typ_split;
+      vr_nrparepr INTEGER;
+      vr_vlpagpar NUMBER;
+    
+      -- Variaveis Erro
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+    
+      -- Variaveis Excecao
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Data de calculo do Price
+      vr_dtcalcul := TO_DATE(pr_dtcalcul,'DD/MM/RRRR');
+
+      -- Quebra string para transformar numa tabela com os registros
+      vr_parc_lst := GENE0002.fn_quebra_string(pr_string  => pr_dadosprc
+                                              ,pr_delimit => '|');
+
       -- Listagem de pagamentos informados
       FOR vr_idx_lst IN 1..vr_parc_lst.COUNT LOOP
 
@@ -6088,171 +6339,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_nrparepr := vr_parc_reg(1);
         vr_vlpagpar := TO_NUMBER(vr_parc_reg(2));
 
-        -- Buscar os dados da parcela
-        OPEN cr_crappep(pr_cdcooper => vr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctremp => pr_nrctremp
-                       ,pr_nrparepr => vr_nrparepr);
-        FETCH cr_crappep INTO rw_crappep;
-        vr_blnachou := cr_crappep%FOUND;
-        CLOSE cr_crappep;
-        -- Se NAO achou
-        IF NOT vr_blnachou THEN
-          vr_dscritic := 'Parcela ' || vr_nrparepr + ' nao encontrada.';
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Verifica se tem alguma parcela anterior em aberto
-        OPEN cr_pep_ant(pr_cdcooper => vr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctremp => pr_nrctremp
-                       ,pr_nrparepr => vr_nrparepr);
-        FETCH cr_pep_ant INTO rw_pep_ant;
-        vr_blnachou := cr_pep_ant%FOUND;
-        CLOSE cr_pep_ant;
-        -- Se achou
-        IF vr_blnachou THEN
-          vr_dscritic := 'Efetuar primeiro o pagamento da parcela em aberto.';
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Verificar se a parcela jah esta liquidada
-        IF rw_crappep.inliquid = 1 THEN
-          vr_dscritic := 'Parcela ' || vr_nrparepr + ' ja liquidada!';
-          RAISE vr_exc_erro;
-        END IF;
-
-        --------------------
-        -- Parcela em dia --
-        --------------------
-        IF rw_crappep.dtvencto > vr_dtmvtoan AND rw_crappep.dtvencto <= vr_dtmvtolt THEN
-          -- Efetua o pagamento da parcela em Dia
-          pc_efetua_pagamento_em_dia(pr_cdcooper => vr_cdcooper
-                                    ,pr_dtcalcul => vr_dtmvtolt
-                                    ,pr_cdagenci => vr_cdagenci
-                                    ,pr_cdpactra => pr_cdpactra
-                                    ,pr_cdoperad => vr_cdoperad
-                                    ,pr_cdorigem => vr_idorigem
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_nrctremp => pr_nrctremp
-                                    ,pr_vlpreemp => rw_crapepr.vlpreemp
-                                    ,pr_qtprepag => rw_crapepr.qtprepag
-                                    ,pr_qtprecal => rw_crapepr.qtprecal
-                                    ,pr_dtlibera => rw_crapepr.dtlibera
-                                    ,pr_dtrefjur => rw_crapepr.dtrefjur
-                                    ,pr_vlrdtaxa => rw_crappep.vltaxatu
-                                    ,pr_txdiaria => vr_txdiaria
-                                    ,pr_txjuremp => rw_crapepr.txjuremp
-                                    ,pr_vlsprojt => rw_crapepr.vlsprojt
-                                    ,pr_floperac => vr_floperac
-                                    ,pr_nrseqava => pr_nrseqava
-                                    ,pr_nrparepr => vr_nrparepr
-                                    ,pr_dtvencto => rw_crappep.dtvencto
-                                    ,pr_vlpagpar => vr_vlpagpar
-                                    ,pr_vlsdvpar => rw_crappep.vlsdvpar
-                                    ,pr_vlsdvatu => rw_crappep.vlsdvatu
-                                    ,pr_vljura60 => rw_crappep.vljura60
-                                    ,pr_ehmensal => vr_flmensal
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
-          -- Se houve erro
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
-
-        ---------------------
-        -- Parcela Vencida --
-        ---------------------
-        ELSIF rw_crappep.dtvencto < vr_dtmvtolt THEN
-
-          -- Efetua o pagamento da parcela Vencida
-          pc_efetua_pagamento_em_atraso(pr_cdcooper => vr_cdcooper
-                                       ,pr_dtcalcul => vr_dtmvtolt
-                                       ,pr_cdagenci => vr_cdagenci
-                                       ,pr_cdpactra => pr_cdpactra
-                                       ,pr_cdoperad => vr_cdoperad
-                                       ,pr_cdorigem => vr_idorigem
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_vlpreemp => rw_crapepr.vlpreemp
-                                       ,pr_qtprepag => rw_crapepr.qtprepag
-                                       ,pr_qtprecal => rw_crapepr.qtprecal
-                                       ,pr_txjuremp => rw_crapepr.txjuremp
-                                       ,pr_qttolatr => rw_crapepr.qttolatr
-                                       ,pr_floperac => vr_floperac
-                                       ,pr_nrseqava => pr_nrseqava
-                                       ,pr_nrparepr => vr_nrparepr
-                                       ,pr_dtvencto => rw_crappep.dtvencto
-                                       ,pr_dtultpag => rw_crappep.dtultpag
-                                       ,pr_vlparepr => rw_crappep.vlparepr
-                                       ,pr_vlpagpar => vr_vlpagpar
-                                       ,pr_vlsdvpar => rw_crappep.vlsdvpar
-                                       ,pr_vlsdvatu => rw_crappep.vlsdvatu
-                                       ,pr_vljura60 => rw_crappep.vljura60
-                                       ,pr_vlpagmta => rw_crappep.vlpagmta
-                                       ,pr_perjurmo => rw_craplcr.perjurmo
-                                       ,pr_percmult => vr_percmult
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-          -- Se houve erro
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
-
-        ----------------------
-        -- Parcela a Vencer --
-        ----------------------
-        ELSIF rw_crappep.dtvencto > vr_dtmvtolt THEN
-
-          --  Efetua o pagamento da parcela a Vencer
-          NULL;
-
-        END IF; -- Parcela a Vencer
-
-        -- Faz a liquidacao do contrato
-        EMPR0011.pc_efetua_liquidacao_empr_pos(pr_cdcooper   => vr_cdcooper
-                                              ,pr_nrdconta   => pr_nrdconta
-                                              ,pr_nrctremp   => pr_nrctremp
-                                              ,pr_rw_crapdat => rw_crapdat
-                                              ,pr_cdagenci   => vr_cdagenci
-                                              ,pr_cdpactra   => pr_cdpactra
-                                              ,pr_cdoperad   => vr_cdoperad
-                                              ,pr_nrdcaixa   => vr_nrdcaixa
-                                              ,pr_cdorigem   => vr_idorigem
-                                              ,pr_nmdatela   => vr_nmdatela
-                                              ,pr_floperac   => vr_floperac
-                                              ,pr_cdcritic   => vr_cdcritic
-                                              ,pr_dscritic   => vr_dscritic);
+        -- Chama pagamento da parcela
+        pc_gera_pagto_pos(pr_cdcooper => vr_cdcooper
+                         ,pr_dtcalcul => vr_dtcalcul
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrctremp
+                         ,pr_nrparepr => vr_nrparepr
+                         ,pr_vlpagpar => vr_vlpagpar
+                         ,pr_idseqttl => pr_idseqttl
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdpactra => pr_cdpactra
+                         ,pr_nrdcaixa => vr_nrdcaixa
+                         ,pr_cdoperad => vr_cdoperad
+                         ,pr_nrseqava => pr_nrseqava
+                         ,pr_idorigem => vr_idorigem
+                         ,pr_nmdatela => vr_nmdatela
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
 
-        -- Gera log do pagamento
-        GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => NULL
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => 'Pag. Emp/Fin Nr ' || GENE0002.fn_mask_contrato(pr_nrctremp) || '/' || TO_CHAR(vr_nrparepr)
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 1 -- TRUE
-                            ,pr_hrtransa => GENE0002.fn_busca_time
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
-            
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                  pr_nmdcampo => 'nrparepr',
-                                  pr_dsdadant => vr_nrparepr,
-                                  pr_dsdadatu => vr_nrparepr);
-            
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                  pr_nmdcampo => 'vlpagpar',
-                                  pr_dsdadant => TO_CHAR(vr_vlpagpar,'FM999G999G999G990D00'),
-                                  pr_dsdadatu => TO_CHAR(vr_vlpagpar,'FM999G999G999G990D00'));
-
-      END LOOP; -- vr_parc_lst
+      END LOOP;
 
       COMMIT;
 
