@@ -217,7 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 28/08/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 10/10/2017
 --
 -- Dados referentes ao programa:
 --
@@ -247,6 +247,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          (Adriano - SD 738594).
 --
 --             12/09/2017 - Ajuste contigencia NPC. PRJ340 (Odirlei-AMcom)   
+--
+--             10/10/2017 - Ajuste na geração da linha do SEGMENTO J99 para gerar com 
+--                          240 posições (Douglas - Chamado 751271)
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -5102,7 +5105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           NVL(to_char(rw_crapdpt.dtmvtolt,'DDMMRRRR'),to_char(trunc(SYSDATE),'DDMMRRRR'))                                || -- 11.4J99 - Data do Pagamento
           GENE0002.fn_mask(rw_crapdpt.hrautent,'999999')                                                                 || -- 12.4J99 - Hora do Pagamento
           RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                                 || -- 12.4J99 - Hora do Pagamento
-          LPAD(' ',101,' ')                                                                                              || -- 13.4J99 - CNAB Uso Exclusivo Cecred
+          LPAD(' ',102,' ')                                                                                              || -- 13.4J99 - CNAB Uso Exclusivo Cecred
           CHR(13);  
           
           -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
