@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 04/07/2017
+  Data    : Abril/2004                          Ultima atualizacao: 04/10/2017
 
   Dados referentes ao programa:
 
@@ -245,8 +245,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
                            
+              26/06/2017 - Incluido tratamento para cdrefere da linha F para
+                           SANEPAR (Tiago/Fabricio #640336)                           
+
               04/07/2017 - Incluir nvl para a varial vr_vrlanmto pois se o valor estivesse
                            vazio ia dar pau no programa (Lucas Ranghetti #706349)
+             
+              16/08/2017 - Aumentar o format da referencia para 23 posições (Lucas Ranghetti #681634)
+              
+              28/09/2017 - Aumentar o format da referencia para 23 posições somente 
+                           para a CHUBB mantendo os convenios do else com 22 (Lucas Ranghetti #766211)
+                           
+              04/10/2017 - Alterar o craplau.nrdocmto pelo crapatr.cdrefere na exibição da
+                           referencia no arquivo para a MAPFRE pois estava calculando a 
+                           quantidade a completar com espaços baseado no nrdocmto e deveria
+                           se basear no cdrefere  (Lucas Ranghetti #769738)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1167,7 +1180,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1302,7 +1316,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                 
             vr_dslinreg := 'F' 
                     || rw_crapatr.cdrefere 
-                    || LPAD(' ',25 - length(rw_craplau.nrdocmto),' ') 
+                    || LPAD(' ',25 - length(rw_crapatr.cdrefere),' ') 
                     || to_char(vr_nragenci,'fm0000') 
                     || RPAD(vr_nrdconta,14,' ') 
                     || vr_dtmvtolt 
@@ -1313,6 +1327,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
                     || RPAD(' ',4,' ') || '0';
                     
+          ELSIF rw_gnconve.cdconven = 112 THEN -- chubb seguros
+              vr_dslinreg := 'F'
+                    || to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                    || RPAD(' ',2,' ') 
+                    || to_char(vr_nragenci,'fm0000') 
+                    || RPAD(vr_nrdconta,14,' ') 
+                    || vr_dtmvtolt 
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00' 
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
           ELSE
               vr_dslinreg := 'F'
                     || to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
@@ -1326,7 +1353,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char(rw_craplau.tppessoa_dest,'fm0') 
                     || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
                     || RPAD(' ',4,' ') || '0';
-                    
           END IF;
        
        ELSE
@@ -1355,7 +1381,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         /* 53 - Foz do Brasil */
         /* 54 - AGUAS DE MASSARANDUBA */  
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN        
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
                       ||to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1473,7 +1500,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
                       ||rw_crapatr.cdrefere
-                      ||LPAD(' ',25-length(rw_craplau.nrdocmto),' ')
+                      ||LPAD(' ',25-length(rw_crapatr.cdrefere),' ')
                       ||to_char(vr_nragenci,'fm0000')
                       ||RPAD(vr_nrdconta,14,' ')
                       ||vr_dtmvtolt
@@ -1481,6 +1508,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||'00'
                       ||rpad(rw_craplau.cdseqtel,60,' ')
                       ||RPAD(' ',20,' ')||'0';
+        ELSIF rw_gnconve.cdconven = 112 THEN -- chubb seguros
+          -- Enviar linha ao arquivo 
+          vr_dslinreg := 'F'
+                      ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                      ||LPAD(' ',2,' ')
+                      ||to_char(vr_nragenci,'fm0000')
+                      ||RPAD(vr_nrdconta,14,' ')
+                      ||vr_dtmvtolt
+                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                      ||'00'
+                      ||rpad(rw_craplau.cdseqtel,60,' ')
+                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                      ||RPAD(' ',12,' ')||'0';                
         ELSE
           -- Todos outros casos 
           -- Enviar linha ao arquivo 
@@ -1496,8 +1536,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
                       ||RPAD(' ',12,' ')||'0';              
         END IF;
-        
         END IF;
+        
         
         -- Enviar para o arquivo 
         gene0002.pc_escreve_xml(vr_clobarqu
