@@ -1832,7 +1832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 24/07/2017
+    --  Data     :                      Ultima atualizacao: 16/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -1841,6 +1841,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --
     --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
     --                            PRJ339-CRM  (Odirlei-AMcom)
+    --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de 
+    --                            duplicacao de contas. (PRJ339  - Kelvin/Andrino)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2411,7 +2413,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM crapavt
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta_org
-           AND tpctrato IN (5, 6); --Contatos e Procuradores
+           AND (tpctrato = 5 -- Contatos
+            OR (tpctrato = 6 AND rw_crapass.inpessoa <> 1 AND dsproftl <> 'PROCURADOR')); -- Representantes para PJ  diferentes de procurador
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na CRAPAVT: '||SQLERRM;
