@@ -13,7 +13,8 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
-  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';  
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+ 
   sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBDOMIC_PROCESSA_ARQ_SILOC_2',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'declare 
@@ -27,7 +28,7 @@ begin
   cecred.ccrd0006.pc_executa_processo(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic, pr_dtprocessoexec => vr_dtprocessoexec);
   IF vr_dscritic IS NOT NULL THEN     
     -- Levantar exceçao     
-    RAISE_application_error(-20500,"Erro: "||vr_dscritic);
+    RAISE_application_error(-20500,vr_dscritic);
   END IF;
 end;',
                                 start_date          => to_date('27-09-2017 12:00:00', 'dd-mm-yyyy hh24:mi:ss'),
