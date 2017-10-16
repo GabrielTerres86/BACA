@@ -176,6 +176,8 @@
 
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
+							 
+				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
  
 .....................................................................................*/
 
@@ -1820,8 +1822,9 @@ PROCEDURE Valida_Dados:
                
                END.
 
-           END.
-        ELSE
+        IF par_nmrotina <> "PROCURADORES"             AND
+           par_nmrotina <> "PROCURADORES_FISICA"       AND
+           par_nmrotina <> "Representante/Procurador"  THEN
            DO:
               /* procuradores da conta */
                FOR EACH tt-crapavt-b WHERE
