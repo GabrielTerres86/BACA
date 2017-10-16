@@ -673,6 +673,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     AND   crapsnh.tpdsenha = pr_tpdsenha;
   rw_crapsnh cr_crapsnh%ROWTYPE;
 
+  CURSOR cr_crapsnh_2 (pr_cdcooper IN crapsnh.cdcooper%type
+                      ,pr_nrdconta IN crapsnh.nrdconta%type
+                      ,pr_tpdsenha IN crapsnh.tpdsenha%type) IS
+      SELECT distinct
+             crapsnh.vllimweb
+            ,crapsnh.vllimpgo
+            ,crapsnh.vllimtrf
+            ,crapsnh.vllimted
+            ,crapsnh.vllimvrb
+      FROM crapsnh
+      WHERE crapsnh.cdcooper = pr_cdcooper
+      AND   crapsnh.nrdconta = pr_nrdconta
+      AND   crapsnh.tpdsenha = pr_tpdsenha
+      ;   
+  rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;      
   --Selecionar contas transferencia cadastradas internet
   CURSOR cr_crapcti (pr_cdcooper IN crapcti.cdcooper%type
                     ,pr_cddbanco IN crapcti.cddbanco%type
@@ -1616,13 +1631,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       FETCH cr_crapsnh INTO rw_crapsnh;
       --Se nao encontrar
       IF cr_crapsnh%NOTFOUND THEN
-
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Senha para conta on-line nao cadastrada.';
-
         --Fechar Cursor
         CLOSE cr_crapsnh;
-
+        -- Busca sem preposto
+        OPEN cr_crapsnh_2 (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_tpdsenha => 1);
+        --Posicionar no proximo registro
+        FETCH cr_crapsnh_2 INTO rw_crapsnh_2;
+        --Se nao encontrar
+        IF cr_crapsnh_2%NOTFOUND THEN
+          --Fechar Cursor          
+          CLOSE cr_crapsnh_2;
+        pr_cdcritic:= 0;
+          pr_dscritic:= 'Não encontrou limites para a conta.';
         --Limite Web
         vr_vllimweb:= 0;
         --Limite Pagamento
@@ -1631,6 +1653,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_vllimtrf:= 0;
         --Limite TED
         vr_vllimted:= 0;
+      ELSE
+        --Fechar Cursor
+          CLOSE cr_crapsnh_2;
+
+          --Limite Web
+          vr_vllimweb:= rw_crapsnh_2.vllimweb;
+          --Limite Pagamento
+          vr_vllimpgo:= rw_crapsnh_2.vllimpgo;
+          --Limite Transferencia
+          vr_vllimtrf:= rw_crapsnh_2.vllimtrf;
+          --Limite TED
+          vr_vllimted:= rw_crapsnh_2.vllimted;
+        END IF;
+       
       ELSE
 
 	    --Fechar Cursor
@@ -1647,7 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
 
       --Criar registro limite internet
-      vr_index:= rw_crapsnh.idseqttl;
+      vr_index:= pr_idseqttl;--nvl(rw_crapsnh.idseqttl,pr_idseqttl);
       pr_tab_internet(vr_index).idseqttl:= rw_crapsnh.idseqttl;
       pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
       pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
@@ -1696,7 +1732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Fechar Cursor
         CLOSE cr_crapsnh;
         --Criar registro limite internet
-        vr_index:= rw_crapsnh.idseqttl;
+        vr_index:= pr_idseqttl; --rw_crapsnh.idseqttl;
         pr_tab_internet(vr_index).idseqttl:= vr_index;
         pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
         pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
@@ -4326,63 +4362,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF; 
-
+      
+      vr_vldspptl_conta := 0;
+      
       IF pr_tpoperac = 6 THEN /* VR Boleto */
         --Saldo todos os titulares
         vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vllimvrb;
-/*        --Limite para internet
-        vr_vllimttl2:= tab_limite_conta(vr_idseqttl).vllimvrb;
-        --Limite diario
-        vr_vllimptl2:= tab_limite_conta(vr_idseqttl).vllimvrb;
-        --Limite da operacao na cooperativa
-        vr_vllimcop2 := tab_limite_conta(vr_idseqttl).vlvrbcop;*/
       ELSE
         IF pr_tpoperac = 4 THEN /* TED */
           --Saldo primeiro titular
           vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspted;
-/*          --Saldo todos titulares
-          vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldspted;
-          --Limite diario
-          vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimted;
-          --Limite para internet
-          vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimted;
-          --Limite da operacao na cooperativa
-          vr_vllimcop:= tab_limite_conta(vr_idseqttl).vltedcop;*/
         ELSIF rw_crapass.inpessoa = 1 THEN /* Pessoa Fisica */
           --Saldo primeiro titular
           vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspweb;
-/*          --Saldo todos titulares
-          vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldspweb;
-          --Limite diario
-          vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimweb;
-          --Limite para internet
-          vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimweb;
-          --Limite da operacao na cooperativa
-          vr_vllimcop:= tab_limite_conta(vr_idseqttl).vlwebcop;*/
         ELSIF rw_crapass.inpessoa > 1 THEN /* Pessoa Juridica */
           --Pagamento / DARF/DAS
           IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN
             --Saldo primeiro titular
             vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldsppgo;
-/*            --Saldo todos titulares
-            vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldsppgo;
-            --Limite diario
-            vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimpgo;
-            --Limite para internet
-            vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimpgo;
-            --Limite da operacao na cooperativa
-            vr_vllimcop:= tab_limite_conta(vr_idseqttl).vlpgocop;*/
           ELSE  /* Transferencia */
             --Saldo primeiro titular
             vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldsptrf;
-/*            --Saldo todos titulares
-            vr_vldspttl:= tab_limite_conta(vr_idseqttl).vldsptrf;
-            --Limite diario
-            vr_vllimptl:= tab_limite_conta(vr_idseqttl).vllimtrf;
-            --Limite para internet
-            vr_vllimttl:= tab_limite_conta(vr_idseqttl).vllimtrf;
-            --Limite da operacao na cooperativa
-            vr_vllimcop:= tab_limite_conta(vr_idseqttl).vltrfcop;*/
           END IF;
         END IF;
       END IF;      
