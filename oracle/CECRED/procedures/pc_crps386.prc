@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 26/05/2017
+   Data    : Abril/2004                    Ultima atualizacao: 26/06/2017
 
    Dados referentes ao programa:
 
@@ -185,6 +185,9 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             do cliente no arquivo (Tiago/Fabricio #640336)             
                             
                25/05/2017 - Ajuste na geração de mensagens no log (Rodrigo)
+               
+               26/06/2017 - Incluir tratamento para SANEPAR qto a identificaçao
+                            do cliente no arquivo (Tiago/Fabricio #673343)                            
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -616,7 +619,7 @@ begin
       --
       if rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');
-      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108) then
+      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108, 101) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000')||lpad(' ', 17, ' ');
       elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45, 51) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000000')||lpad(' ', 16, ' ');
