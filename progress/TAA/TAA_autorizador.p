@@ -1687,7 +1687,7 @@ DO:
         IF   aux_operacao = 75   THEN
              DO:
                  RUN verifica_notas_cem.
-                 
+
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
@@ -6154,6 +6154,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
 											  INPUT  "TAA", /*Nome da tela*/
+                                              INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
 
@@ -6479,9 +6480,9 @@ PROCEDURE verifica_comprovantes:
                   xText:NODE-VALUE = aux_nrcpfcgc_benef.
                                
                   xField:APPEND-CHILD(xText).
-                
+                                    
               END.         
-                
+
               END.         
 
           /* Banco 085 */
