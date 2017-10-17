@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 25/07/2017
+      Data: Janeiro/2010                        Ultima alteracao: 13/10/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -301,6 +301,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
                          operacao 75, para verificar se o TAA utiliza notas de cem 
 						 (Carlos)
+                         
+            13/10/2017 - #765295 Criada a rotina busca_convenio_nome, operacao 
+                         76, para logar o nome do convenio (Carlos)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -1687,6 +1690,14 @@ DO:
         IF   aux_operacao = 75   THEN
              DO:
                  RUN verifica_notas_cem.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 76   THEN
+             DO:
+                 RUN busca_convenio_nome.
 
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
@@ -10318,6 +10329,7 @@ PROCEDURE exclui_agendamentos_recarga:
 
 END PROCEDURE.
 
+/* Operacao 75 */
 PROCEDURE verifica_notas_cem:
 
     RUN sistema/generico/procedures/b1wgen0123.p PERSISTENT SET h-b1wgen0123.
@@ -10343,6 +10355,56 @@ PROCEDURE verifica_notas_cem:
 
 END PROCEDURE.
 /* Fim 75 - verifica notas cem */
+
+
+/* Operacao 76 */
+PROCEDURE busca_convenio_nome:
+    DEF     VAR     aux_nmextcon    AS      CHAR.
+    DEF     VAR     aux_cdbarras    AS      CHAR.
+    DEF     VAR     aux_cdempcon    AS      INTE.
+    DEF     VAR     aux_cdsegmto    AS      INTE.
+
+    DEF     VAR     aux_nmempcon    AS      CHAR.
+
+    ASSIGN aux_cdbarras = SUBSTR(aux_cdbarra1, 1 ,11) + aux_cdbarra2.
+
+    IF  aux_dscodbar <> "" THEN
+        ASSIGN aux_cdempcon  = INT(SUBSTR(aux_dscodbar,16,4)) 
+               aux_cdsegmto  = INT(SUBSTR(aux_dscodbar,2,1)). 
+    ELSE
+        ASSIGN aux_cdempcon = INT(SUBSTR(aux_cdbarras,16,4))
+               aux_cdsegmto = INT(SUBSTR(aux_cdbarras,2,1)).
+
+    RUN sistema/generico/procedures/b1wgen0092.p PERSISTENT SET h-b1wgen0092.
+
+    RUN busca_convenio_nome IN h-b1wgen0092 (INPUT aux_cdcooper,
+                                             INPUT aux_cdempcon,
+                                             INPUT aux_cdsegmto,
+                                             OUTPUT aux_nmempcon).
+    DELETE PROCEDURE h-b1wgen0092.
+      
+    IF aux_nmempcon = "" THEN
+    DO:
+        ASSIGN aux_dscritic = "Convenio não encontrado.".
+
+        RETURN "NOK".    
+    END.
+
+    IF  aux_dscritic = "" THEN
+        DO:
+            /* ---------- */
+            xDoc:CREATE-NODE(xField,"NMEXTCON","ELEMENT").
+            xRoot:APPEND-CHILD(xField).
+        
+            xDoc:CREATE-NODE(xText,"","TEXT").
+            xText:NODE-VALUE = aux_nmempcon.
+            xField:APPEND-CHILD(xText).
+
+        END.
+    
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 76 */
 
 
 /* .......................................................................... */
