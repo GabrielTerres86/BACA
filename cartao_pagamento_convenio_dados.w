@@ -53,6 +53,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                
                   28/08/2017 - #705000 Adicionado o nome do convenio e o codigo de barras
                                ao log (Carlos)
+                               
+                  16/10/2017 - #765295 Criada a rotina busca_convenio_nome, operacao 76,
+                               para logar o nome do convenio (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -279,8 +282,8 @@ DEFINE FRAME f_cartao_pagto_convenio_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
-     "Convênio:" VIEW-AS TEXT
-          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
+     "Data do Pagamento:" VIEW-AS TEXT
+          SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
           FONT 14
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
@@ -294,12 +297,12 @@ DEFINE FRAME f_cartao_pagto_convenio_dados
      "Valor do Pagamento:" VIEW-AS TEXT
           SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
+     "Convênio:" VIEW-AS TEXT
+          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
+          FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
-     "Data do Pagamento:" VIEW-AS TEXT
-          SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
-          FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
      RECT-135 AT ROW 13.62 COL 46 WIDGET-ID 154
@@ -537,12 +540,11 @@ DO:
             h_principal:MOVE-TO-TOP().
             
             /* Pegar nome do convenio */
-            RUN procedures/busca_convenios_codbarras.p(INPUT par_cdbarra1,
+            RUN procedures/busca_convenio_nome.p(INPUT par_cdbarra1,
                                                        INPUT par_cdbarra2,
                                                        INPUT par_cdbarra3,
                                                        INPUT par_cdbarra4,
                                                        INPUT par_dscodbar,
-                                                       INPUT "V",
                                                        OUTPUT aux_nmextcon,
                                                        OUTPUT aux_flgderro).
             IF aux_flgderro OR aux_nmextcon = "" THEN
