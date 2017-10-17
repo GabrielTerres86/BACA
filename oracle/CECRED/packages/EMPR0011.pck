@@ -6285,6 +6285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_idorigem VARCHAR2(100);
 
     BEGIN
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'pc_gera_pagto_pos_web'
+                                ,pr_action => NULL);
+
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
