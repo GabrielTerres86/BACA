@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/09/2017
+    Data    : Maio/2010                   Ultima atualizacao: 16/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -204,6 +204,10 @@
                              PRJ339 - CRM (Odirlei-AMcom)
 
                 13/09/2017 - Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Jaison/Elton - M459)
+
+                16/10/2017 - Remocao de Tratamento temporario para nao permitir solicitacao
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
@@ -483,7 +487,7 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
-
+/*
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
         IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
@@ -500,8 +504,7 @@ PROCEDURE Busca_Dados:
                ASSIGN tt-conta-corr.btencitg = NO
                       tt-conta-corr.btsolitg = NO.
             END.
-        
-
+*/
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
                 PERSISTENT SET h-b1wgen0060.
