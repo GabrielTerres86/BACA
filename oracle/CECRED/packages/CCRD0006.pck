@@ -344,6 +344,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   PROCEDURE pc_verif_arq_nao_enviados (pr_cdcritic OUT crapcri.cdcritic%TYPE
                                       ,pr_dscritic OUT VARCHAR2);
 
+  PROCEDURE gera_arquivo_xml_33_cancel (pr_dscritic IN OUT VARCHAR2);
+
   PROCEDURE teste2 (pr_cmd    IN VARCHAR2);
   
 END CCRD0006;
@@ -551,6 +553,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             RAISE vr_exc_saida;
           END IF;
        END IF;
+    END IF;
+
+    -- executa o processo CCRD0006.gera_arquivo_33_cancel para enviar informações sobre as antecipações que não foram liquidadas
+    if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi') then
+      CCRD0006.gera_arquivo_xml_33_cancel(pr_dscritic => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
     END IF;
 
     -- Gera log de arquivo processado
@@ -2811,6 +2822,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     w_indice_cab            NUMBER;
     vr_exc_saida            EXCEPTION;
 
+    -- Cursor sobre a tabela de motivos de erro
+    CURSOR cr_moterro (pr_cderro IN VARCHAR2) IS
+      SELECT dsmotivo_erro
+        FROM tbdomic_liqtrans_motivo_erro
+       WHERE cderro = pr_cderro; 
+    rw_moterro cr_moterro%ROWTYPE;
+
+    -- Cursor para trazer o nome do arquivo origem relacionado ao arquivo de erro
+    CURSOR cr_arqorigem (pr_nmarquivoerro IN VARCHAR2) IS
+      SELECT idarquivo 
+        FROM tbdomic_liqtrans_arquivo 
+       WHERE nmarquivo_gerado = substr(pr_nmarquivoerro,1,length(pr_nmarquivoerro)-4);  --Eliminar final "_ERR.XML"
+    rw_arqorigem cr_arqorigem%ROWTYPE;
+
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
@@ -2848,6 +2873,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
+      ELSE         
+         --Busca descrição do erro na tabela de motivos de erro
+         OPEN cr_moterro(vr_erro);
+         FETCH cr_moterro INTO rw_moterro;
+         IF cr_moterro%NOTFOUND THEN
+           rw_moterro.dsmotivo_erro := NULL;
+         END IF;
+         CLOSE cr_moterro;
+         
+         --Busca nome do arquivo Original
+         OPEN cr_arqorigem(vr_nomarq);
+         FETCH cr_arqorigem INTO rw_arqorigem;
+         IF cr_arqorigem%NOTFOUND THEN
+           rw_arqorigem.idarquivo := NULL;
+         END IF;
+         CLOSE cr_arqorigem;
+          IF rw_arqorigem.idarquivo IS NOT NULL THEN
+           BEGIN
+             UPDATE tbdomic_liqtrans_pdv a
+                SET a.dserro = vr_erro||' - '||rw_moterro.dsmotivo_erro
+              WHERE a.idcentraliza IN
+                    (SELECT b.idcentraliza from tbdomic_liqtrans_centraliza b
+                      WHERE b.idlancto IN
+                            (SELECT c.idlancto from tbdomic_liqtrans_lancto c
+                              WHERE c.idarquivo = rw_arqorigem.idarquivo));
+           EXCEPTION
+             WHEN NO_DATA_FOUND THEN NULL;
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao tentar atualizar tabela TBDOMIG_LIQTRANS_PDV: '||SQLERRM;
+               RAISE;
+           END;
+         END IF;
       END IF;
 
     EXCEPTION
@@ -4463,6 +4520,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     w_indice_cab            NUMBER;
     vr_exc_saida            EXCEPTION;
 
+    -- Cursor sobre a tabela de motivos de erro
+    CURSOR cr_moterro (pr_cderro IN VARCHAR2) IS
+      SELECT dsmotivo_erro
+        FROM tbdomic_liqtrans_motivo_erro
+       WHERE cderro = pr_cderro; 
+    rw_moterro cr_moterro%ROWTYPE;
+
+    -- Cursor para trazer o nome do arquivo origem relacionado ao arquivo de erro
+    CURSOR cr_arqorigem (pr_nmarquivoerro IN VARCHAR2) IS
+      SELECT idarquivo 
+        FROM tbdomic_liqtrans_arquivo 
+       WHERE nmarquivo_gerado = substr(pr_nmarquivoerro,1,length(pr_nmarquivoerro)-4);  --Eliminar final "_ERR"
+    rw_arqorigem cr_arqorigem%ROWTYPE;
+
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
@@ -4491,7 +4562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       IF vr_executado = 'S' THEN
          RETURN;
       END  IF;
-
+       
       vr_erro := CCRD0006.fn_busca_valor(pr_table_of(w_indice_cab).dslinha,'CodErro','S');
       IF vr_erro IS NULL THEN
          vr_dscritic:= vr_nomarq||' - Campo não encontrado no XML';
@@ -4500,6 +4571,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
+      ELSE
+         --Busca descrição do erro na tabela de motivos de erro
+         OPEN cr_moterro(vr_erro);
+         FETCH cr_moterro INTO rw_moterro;
+         IF cr_moterro%NOTFOUND THEN
+           rw_moterro.dsmotivo_erro := NULL;
+         END IF;
+         CLOSE cr_moterro;
+         
+         --Busca nome do arquivo Original
+         OPEN cr_arqorigem(vr_nomarq);
+         FETCH cr_arqorigem INTO rw_arqorigem;
+         IF cr_arqorigem%NOTFOUND THEN
+           rw_arqorigem.idarquivo := NULL;
+         END IF;
+         CLOSE cr_arqorigem;
+
+         IF rw_arqorigem.idarquivo IS NOT NULL THEN
+           BEGIN
+             UPDATE tbdomic_liqtrans_pdv a
+                SET a.dserro = vr_erro||' - '||rw_moterro.dsmotivo_erro
+              WHERE a.idcentraliza IN
+                    (SELECT b.idcentraliza from tbdomic_liqtrans_centraliza b
+                      WHERE b.idlancto IN
+                            (SELECT c.idlancto from tbdomic_liqtrans_lancto c
+                              WHERE c.idarquivo = rw_arqorigem.idarquivo));
+           EXCEPTION
+             WHEN NO_DATA_FOUND THEN NULL;
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao tentar atualizar tabela TBDOMIG_LIQTRANS_PDV: '||SQLERRM;
+               RAISE;
+           END;
+         END IF;
       END IF;
 
     EXCEPTION
@@ -4533,7 +4637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_assunto  := 'Domicílio Bancário - arquivo '||vr_nomarq||' com erro';
         vr_mensagem := 'Erro no processamento do arquivo '||vr_nomarq||
                        ':<br /><br />'||
-                       vr_erro;
+                       vr_erro||' - '||rw_moterro.dsmotivo_erro;
 
         pc_envia_email(pr_cdcooper   => 1
                       ,pr_dspara     => vr_para
@@ -5508,23 +5612,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       vr_nomarq := 'ASLC033_'||r0.nrispb_destinatario||'_'||to_char(sysdate,'YYYYMMDD')||'_'||lpad(vr_nrsequencia,5,'0');
       vr_arquivo :=  vr_nomarq ||'.XML';
-      -- Cria o nó inicial do XML
-/*      vr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><ASLC033/>');
---
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC033',pr_posicao => 0, pr_tag_nova => NULL, pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      -- Gera o cabeçalho do arquivo.
-
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC033',pr_posicao => 0, pr_tag_nova => 'BCARQ', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      -- Gera o cabeçalho do arquivo.
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NomArq', pr_tag_cont => vr_arquivo, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlEmis', pr_tag_cont => r0.nrcontrole_emissor, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'NumCtrlDestOr', pr_tag_cont => r0.nrcontrole_dest_original, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'ISPBDestinatario', pr_tag_cont => r0.nrispb_destinatario, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'DtHrArq', pr_tag_cont => to_char(SYSDATE,'yyyy-mm-dd hh24:mi:ss'), pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'BCARQ',pr_posicao => 0, pr_tag_nova => 'DtRef', pr_tag_cont => to_char(SYSDATE,'yyyy-mm-dd'), pr_des_erro => vr_dscritic);
-
-      gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'ASLC033',pr_posicao => 0, pr_tag_nova => 'SISARQ', pr_tag_cont => NULL, pr_des_erro =>   vr_dscritic);
-*/
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<ASLCDOC xmlns="http://www.cip-bancos.org.br/ARQ/ASLC033.xsd">'||
@@ -5539,17 +5626,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                                    '</BCARQ>'||
                                                    '<SISARQ>'||
                                                    '<ASLC033>');
-      -- Efetua loop sobre os registros do arquivo 023
+      -- Efetua loop sobre os registros do arquivo 033
       FOR r1 IN c1 (pr_idarquivo => r0.idarquivo) LOOP
         -- Gera os detalhes
-/*        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'SISARQ',pr_posicao => 0, pr_tag_nova => 'Grupo_ASLC033_LiquidTranscCarts', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Grupo_ASLC033_LiquidTranscCarts',   pr_posicao => vr_contador, pr_tag_nova => 'IdentdPartPrincipal', pr_tag_cont => to_char(r1.nrcnpjbase_principal), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Grupo_ASLC033_LiquidTranscCarts',   pr_posicao => vr_contador, pr_tag_nova => 'IdentdPartAdmtd', pr_tag_cont => to_char(r1.nrcnpjbase_administrado), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Grupo_ASLC033_LiquidTranscCarts',   pr_posicao => vr_contador, pr_tag_nova => 'NumCtrlIF', pr_tag_cont => to_char(r1.nrispb_devedor), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Grupo_ASLC033_LiquidTranscCarts',   pr_posicao => vr_contador, pr_tag_nova => 'NULiquid', pr_tag_cont => to_char(r1.nrliquidacao), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Grupo_ASLC033_LiquidTranscCarts',   pr_posicao => vr_contador, pr_tag_nova => 'CodOcorc', pr_tag_cont => to_char(r1.cdocorrencia), pr_des_erro => vr_dscritic);
-
-        vr_contador := vr_contador + 1;*/
         GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     =>  '<Grupo_ASLC033_LiquidTranscCarts>'||
@@ -6173,6 +6252,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     w_indice_cab            NUMBER;
     vr_exc_saida            EXCEPTION;
 
+    -- Cursor sobre a tabela de motivos de erro
+    CURSOR cr_moterro (pr_cderro IN VARCHAR2) IS
+      SELECT dsmotivo_erro
+        FROM tbdomic_liqtrans_motivo_erro
+       WHERE cderro = pr_cderro; 
+    rw_moterro cr_moterro%ROWTYPE;
+
+    -- Cursor para trazer o nome do arquivo origem relacionado ao arquivo de erro
+    CURSOR cr_arqorigem (pr_nmarquivoerro IN VARCHAR2) IS
+      SELECT idarquivo 
+        FROM tbdomic_liqtrans_arquivo 
+       WHERE nmarquivo_gerado = substr(pr_nmarquivoerro,1,length(pr_nmarquivoerro)-4);  --Eliminar final "_ERR.XML"
+    rw_arqorigem cr_arqorigem%ROWTYPE;
+
   BEGIN
 ------------- BUSCA OS DADOS DA TAB TBDOMIC_LIQTRANS_ARQUIVO -------------
     BEGIN
@@ -6210,6 +6303,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                         ,pr_idcampo => vr_idcampo
                         ,pr_dscritic => vr_dscritic);
          vr_iderro := 1;
+      ELSE
+         --Busca descrição do erro na tabela de motivos de erro
+         OPEN cr_moterro(vr_erro);
+         FETCH cr_moterro INTO rw_moterro;
+         IF cr_moterro%NOTFOUND THEN
+           rw_moterro.dsmotivo_erro := NULL;
+         END IF;
+         CLOSE cr_moterro;
+         
+         --Busca nome do arquivo Original
+         OPEN cr_arqorigem(vr_nomarq);
+         FETCH cr_arqorigem INTO rw_arqorigem;
+         IF cr_arqorigem%NOTFOUND THEN
+           rw_arqorigem.idarquivo := NULL;
+         END IF;
+         CLOSE cr_arqorigem;
+
+         IF rw_arqorigem.idarquivo IS NOT NULL THEN
+           BEGIN
+             UPDATE tbdomic_liqtrans_pdv a
+                SET a.dserro = vr_erro||' - '||rw_moterro.dsmotivo_erro
+              WHERE a.idcentraliza IN
+                    (SELECT b.idcentraliza from tbdomic_liqtrans_centraliza b
+                      WHERE b.idlancto IN
+                            (SELECT c.idlancto from tbdomic_liqtrans_lancto c
+                              WHERE c.idarquivo = rw_arqorigem.idarquivo));
+           EXCEPTION
+             WHEN NO_DATA_FOUND THEN NULL;
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao tentar atualizar tabela TBDOMIG_LIQTRANS_PDV: '||SQLERRM;
+               RAISE;
+           END;
+         END IF;
       END IF;
 
     EXCEPTION
@@ -6750,6 +6876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             ,pdv.vlpagamento
             ,to_date(pdv.dtpagamento,'YYYY-MM-DD') dtpagamento
             ,pdv.idpdv
+            ,pdv.tpforma_transf
         FROM tbdomic_liqtrans_centraliza ctz
             ,tbdomic_liqtrans_pdv pdv
        WHERE ctz.idlancto = pr_idlancto
@@ -6887,6 +7014,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             IF rw_tabela.vlpagamento = 0 OR rw_tabela.vlpagamento < 0 THEN
               vr_dserro := 'Valor do lancamento zerado ou negativo';
               vr_cdocorr := '99';
+              RAISE vr_erro;
+            END IF;
+
+            IF rw_tabela.tpforma_transf = 4  THEN
+              vr_dserro := 'Indicador de Forma de Transferência 4 (Débito em conta corrente) não tratado nesse processo';
+              vr_cdocorr := '32';
               RAISE vr_erro;
             END IF;
 
@@ -9644,6 +9777,174 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       ROLLBACK;
 
   END; -- pc_processa_reg_pendentes --
+
+  PROCEDURE gera_arquivo_xml_33_cancel (pr_dscritic IN OUT VARCHAR2) IS
+
+    CURSOR c0 IS
+      SELECT d.idarquivo
+            ,d.nrispb_emissor
+            ,nrcontrole_emissor
+            ,nrcontrole_dest_original
+            ,nrispb_destinatario
+            ,d.dtreferencia
+        FROM tbdomic_liqtrans_arquivo d
+       WHERE SUBSTR(d.nmarquivo_origem,1,7) = 'ASLC032'
+         AND nmarquivo_gerado IS NULL
+         AND EXISTS
+             (select 'x'
+                FROM tbdomic_liqtrans_lancto tll
+                    ,tbdomic_liqtrans_centraliza tlc
+                    ,tbdomic_liqtrans_pdv tlp
+               WHERE tll.idlancto = tlc.idlancto
+               AND tll.idarquivo = d.idarquivo
+               AND tlc.idcentraliza = tlp.idcentraliza
+               AND tll.insituacao in (0)); -- os pendentes e os com erro
+
+    CURSOR c1 (pr_idarquivo IN NUMBER) IS
+      SELECT tll.nrcnpjbase_principal
+            ,tll.nrcnpjbase_administrado
+            ,tll.nrcnpj_credenciador
+            ,tll.nrispb_devedor
+            ,tlp.nrliquidacao
+            ,tlp.cdocorrencia
+            ,tlp.idpdv
+       FROM tbdomic_liqtrans_lancto tll
+           ,tbdomic_liqtrans_centraliza tlc
+           ,tbdomic_liqtrans_pdv tlp
+      WHERE tll.idlancto = tlc.idlancto
+        AND tll.idarquivo = pr_idarquivo
+        AND tlc.idcentraliza = tlp.idcentraliza
+        AND tll.insituacao in (0); -- os pendentes e os com erro
+
+    CURSOR c2 IS
+      SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
+                                        ,pr_nmdcampo => 'TPARQUIVO'
+                                        ,pr_dsdchave => 3),4,'0'))  seq
+        FROM dual;
+      r2 c2%ROWTYPE;
+
+    vr_dscritic      VARCHAR2(32000);
+    vr_contador      PLS_INTEGER := 0;
+    vr_caminho       VARCHAR2(1000);
+    vr_arquivo       VARCHAR2(1000);
+    vr_retxml        XMLTYPE;
+    vr_nrsequencia   NUMBER;
+    vr_clob          CLOB;
+    vr_xml_temp      VARCHAR2(32726) := '';
+
+    vr_nomarq        VARCHAR2(1000);
+    vr_exc_saida           EXCEPTION;
+  BEGIN
+    FOR r0 IN c0 LOOP
+      -- busca a sequencia para o nome do arquivo
+      OPEN c2;
+      FETCH c2 INTO r2;
+      vr_nrsequencia := r2.seq;
+      CLOSE c2;
+
+      -- Monta documento XML
+      dbms_lob.createtemporary(vr_clob, TRUE);
+      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      -- Criar cabeçalho do XML
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?>');
+
+
+      vr_nomarq := 'ASLC033_'||r0.nrispb_destinatario||'_'||to_char(sysdate,'YYYYMMDD')||'_'||lpad(vr_nrsequencia,5,'0');
+      vr_arquivo :=  vr_nomarq ||'.XML';
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<ASLCDOC xmlns="http://www.cip-bancos.org.br/ARQ/ASLC033.xsd">'||
+                                                   '<BCARQ>'||
+                                                   '<NomArq>'     || vr_nomarq     ||'</NomArq>'||
+                                                   '<NumCtrlEmis>'    || to_char(to_date(r0.dtreferencia,'yyyy-mm-dd'),'yyyymmdd')||lpad(r0.idarquivo,12,'0')    ||'</NumCtrlEmis>'||
+                                                --   '<NumCtrlDestOr>'    || r0.nrcontrole_dest_original  ||'</NumCtrlDestOr>'||
+                                                   '<ISPBEmissor>' || r0.nrispb_destinatario ||'</ISPBEmissor>'||
+                                                   '<ISPBDestinatario>' || r0.nrispb_emissor ||'</ISPBDestinatario>'||
+                                                   '<DtHrArq>'   || to_char(SYSDATE,'yyyy-mm-dd')||'T'||to_char(SYSDATE,'hh24:mi:ss')   ||'</DtHrArq>'||
+                                                   '<DtRef>'       || to_char(SYSDATE,'yyyy-mm-dd')     ||'</DtRef>'||
+                                                   '</BCARQ>'||
+                                                   '<SISARQ>'||
+                                                   '<ASLC033>');
+      -- Efetua loop sobre os registros do arquivo 033
+      FOR r1 IN c1 (pr_idarquivo => r0.idarquivo) LOOP
+        -- Gera os detalhes
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     =>  '<Grupo_ASLC033_LiquidTranscCarts>'||
+                                                     '<IdentdPartPrincipal>'     || to_char(r1.nrcnpjbase_principal)     ||'</IdentdPartPrincipal>'||
+                                                     '<IdentdPartAdmtd>'    || to_char(r1.nrcnpjbase_administrado)    ||'</IdentdPartAdmtd>'||
+                                                     '<NumCtrlIF>'    ||   to_char(to_date(r0.dtreferencia,'yyyy-mm-dd'),'yyyymmdd')||lpad(r1.idpdv,12,'0')  ||'</NumCtrlIF>'||
+                                                     '<NULiquid>' || to_char(r1.nrliquidacao) ||'</NULiquid>'||
+                                                     '<CodOcorc>'   || '30'  ||'</CodOcorc>'||
+                                                     '</Grupo_ASLC033_LiquidTranscCarts>');
+
+        --Atualiza para 30 a ocorrência do registro na tabela TBDOMIC_LIQTRANS_PDV
+        UPDATE tbdomic_liqtrans_pdv
+           SET cdocorrencia = '30'
+         WHERE idpdv = r1.idpdv;
+
+      END LOOP;
+
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</ASLC033></SISARQ></ASLCDOC>'
+                             ,pr_fecha_xml      => TRUE);
+
+      -- Atualiza o XML de retorno
+      -- vr_retxml := xmltype(vr_clob);
+      BEGIN
+        vr_caminho := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                pr_cdacesso => 'ROOT_DOMICILIO_SLC');
+        IF substr(vr_caminho, length(vr_caminho)) != '/' then
+          vr_caminho := vr_caminho ||'/'||'envia';
+        ELSE
+          vr_caminho := vr_caminho ||'envia';
+        END IF;
+
+        IF vr_database_name = 'AYLLOSD' THEN
+          vr_caminho := '/usr/sistemas/SLC/envia';
+        END IF;
+        --vr_caminho := '/usr/sistemas/SLC/envia';
+
+      EXCEPTION
+        WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao ler o caminho cadastrado na gene0001.fn_pam_sistema'||SQLERRM;
+           pc_gera_critica(pr_nomearq => vr_arquivo
+                          ,pr_idcampo => 'Caminho'
+                          ,pr_dscritic => vr_dscritic);
+      END;
+
+      -- gera o arquivo no diretório padrão
+      GENE0002.pc_XML_para_arquivo (pr_XML       => vr_clob    --> Instância do CLOB Type
+                                   ,pr_caminho   => vr_caminho --> Diretório para saída
+                                   ,pr_arquivo   => vr_arquivo --> Nome do arquivo de saída
+                                   ,pr_des_erro  => vr_dscritic );
+
+      -- Atualiza arquivo origem com o nome do arquivo gerado.
+      atualiza_nome_arquivo (pr_idtipoarquivo    => 1
+                            ,pr_nomearqorigem    => r0.idarquivo
+                            ,pr_nomearqatualizar => vr_nomarq
+                            ,pr_dscritic         => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+         pc_gera_critica(pr_nomearq => vr_arquivo
+                        ,pr_idcampo => 'XML_Arquivo'
+                        ,pr_dscritic => vr_dscritic);
+      END  IF;
+
+    END LOOP;
+    COMMIT;
+
+  EXCEPTION
+     WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        RETURN;
+     WHEN OTHERS THEN
+        pr_dscritic := 'ERRO geral ao gerar o arquivo 33 '||SQLERRM;
+        RETURN;
+
+  END gera_arquivo_xml_33_cancel;
 
 END CCRD0006;
 /
