@@ -4698,7 +4698,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                        ,pr_flg_impri => 'S'                 --> Chamar a impress¿o (Imprim.p)
                                        ,pr_nmformul  => '234dh'             --> Nome do formul¿rio para impress¿o
                                        ,pr_nrcopias  => 1                   --> N¿mero de c¿pias
-                                       ,pr_flg_gerar => 'S'                 --> gerar PDF
+                                       ,pr_flg_gerar => 'N'                 --> gerar PDF
                                        ,pr_des_erro  => vr_dscritic);       --> Sa¿da com erro
                                       
             --Se ocorreu erro
