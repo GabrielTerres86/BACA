@@ -2,7 +2,7 @@
 
     Programa: b1wgen0051.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 22/02/2013
+    Data    : Janeiro/2010                   Ultima atualizacao: 17/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS
 
@@ -19,6 +19,10 @@
    
                 02/10/2017 - Incluido campo idregtrb na tt-cabec 
                              (Projeto 410 - Diogo - Mouts)
+								
+				17/10/2017 - Adicionando a informacao nmctajur no cabecalho 
+				             da tela contas (Kelvin - PRJ339).
+
 .............................................................................*/
 
 
@@ -306,7 +310,7 @@ PROCEDURE obtem-cabecalho:
 
             END.
             OTHERWISE DO:
-                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia idregtrb)
+                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia idregtrb nmctajur)
                                   WHERE crapjur.cdcooper = crapass.cdcooper AND
                                         crapjur.nrdconta = crapass.nrdconta 
                                         NO-LOCK:
@@ -401,6 +405,10 @@ PROCEDURE obtem-cabecalho:
                                    crapjur.idregtrb
                                 ELSE 
                                    0 
+			tt-cabec.nmctajur = IF AVAIL crapjur THEN 
+								   crapjur.nmctajur
+								ELSE
+								   ""
             NO-ERROR.
 
         IF  ERROR-STATUS:ERROR THEN

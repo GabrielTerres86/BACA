@@ -25,6 +25,7 @@
  * 018: [27/03/2017] Reinert			  	 : Incluido function "dossieDigidoc". (Projeto 357)
  * 019: [11/07/2017] Andrino (MOUTS) 		 : Desenvolvimento da melhoria 364 - Grupo Economico
  * 020: [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
+ * 021: [17/10/2017] Kelvin (CECRED)         : Adicionando a informacao nmctajur no cabecalho da tela contas (PRJ339).
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
@@ -444,7 +445,7 @@ function formataCabecalho() {
     var grupoEditavel = $('#nrdconta,#idseqttl', '#frmCabContas');
     var grupoAmbos = $('#cdagenci,#nrmatric,#cdtipcta,#nrdctitg', '#frmCabContas');
     var grupoPF = $('#nmextttl,#inpessoa,#nrcpfcgc,#cdsexotl,#cdestcvl,#cdsitdct', '#divRotinaPF');
-    var grupoPJ = $('#nmextttl,#nmfansia,#nrcpfcgc,#inpessoa,#cdsitdct', '#divRotinaPJ');
+    var grupoPJ = $('#nmextttl,#nmfansia,#nrcpfcgc,#inpessoa,#cdsitdct,#nmctajur', '#divRotinaPJ');
 
     grupoEditavel.habilitaCampo();
     grupoAmbos.desabilitaCampo();
@@ -507,19 +508,20 @@ function formataCabecalho() {
         grupoPJ.desabilitaCampo();
 
         // Rótulos para PJ
-        $('label[for="nmextttl"],label[for="nmfansia"]', '#divRotinaPJ').addClass('rotulo rotulo-90');
+        $('label[for="nmextttl"],label[for="nmfansia"],label[for="nmctajur"]', '#divRotinaPJ').addClass('rotulo rotulo-90');
+		
         $('label[for="nrcpfcgc"]', '#divRotinaPJ').addClass('rotulo rotulo-40');
         $('label[for="inpessoa"],label[for="cdsitdct"]', '#divRotinaPJ').addClass('rotulo-linha');
 
         // Largura dos campos para PJ
-        $('#nmextttl,#nmfansia', '#divRotinaPJ').css({ 'width': '452px' });
+        $('#nmextttl,#nmfansia,#nmctajur', '#divRotinaPJ').css({ 'width': '452px' });
         $('#nrcpfcgc', '#divRotinaPJ').css({ 'width': '120px' });
         $('#inpessoa', '#divRotinaPJ').css({ 'width': '110px' });
         $('#cdsitdct', '#divRotinaPJ').css({ 'width': '159px' });
 
         // Hack IE
         if ($.browser.msie) {
-            $('#nmextttl,#nmfansia', '#divRotinaPJ').css({ 'width': '449px' });
+            $('#nmextttl,#nmfansia,#nmctajur', '#divRotinaPJ').css({ 'width': '449px' });
             $('#cdsitdct', '#divRotinaPJ').css({ 'width': '157px' });
         }
     }

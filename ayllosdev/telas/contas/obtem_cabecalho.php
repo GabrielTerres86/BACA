@@ -20,7 +20,10 @@
  * 011: [29/07/2015] Lucas Ranghetti (CECRED): Alterado logica rotina de procuradores para $cabecalho[6]->cdata > 1(inpessoa > 1).
  * 012: [01/09/2015] Gabriel (RKAM)       : Reformulacao Cadastral. 
  * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
- * 014: [02/10/2017] Diogo (MoutS)        : Adicionado campo idregtrb no formulário principal da contas (Projeto 410).
+ * 014: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364). 
+ * 015: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico 
+ * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo idregtrb no formulário principal da contas (Projeto 410).
+ * 017: [17/10/2017] Kelvin (CECRED)      : Adicionando a informacao nmctajur no cabecalho da tela contas (PRJ339).
  */
 
 	session_start();	
@@ -114,6 +117,9 @@
 		echo '    strHTML += \'<label for="nmfansia">Nome Fantasia:</label>\';';
 		echo '    strHTML += \'<input name="nmfansia" id="nmfansia" type="text" /><br />\';';
 		
+		echo '    strHTML += \'<label for="nmctajur">Nome da Conta:</label>\';';
+		echo '    strHTML += \'<input name="nmctajur" id="nmctajur" type="text" /><br />\';';
+		
 		echo '    strHTML += \'<label for="nrcpfcgc">CNPJ:</label>\';';
 		echo '    strHTML += \'<input name="nrcpfcgc" id="nrcpfcgc" type="text" />\';';
 		
@@ -171,6 +177,7 @@
 	echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
     echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
 	echo '$("#idregtrb","#frmCabContas").val("'.$cabecalho[20]->cdata.'");';
+	echo '$("#nmctajur","#frmCabContas").val("'.$cabecalho[21]->cdata.'");';
 	
 	echo 'var strHTMLTTL = \'\';'; 
 	// PJ
@@ -294,6 +301,16 @@
 					$urlRotina  = "liberar_bloquear";
 					break;
 				}				
+				case "GRUPO ECONOMICO": {
+					$nomeRotina = "Grupo Econômico"; 
+					$urlRotina  = "grupo_economico";
+					break;
+				}				
+				case "IMPEDIMENTOS DESLIGAMENTO": {
+					$nomeRotina = "Impedimentos Desligamento"; 
+					$urlRotina  = "impedimentos_desligamento";
+					break;					
+				}
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 
@@ -396,11 +413,11 @@
 					$urlRotina = "imunidade_tributaria";
 					break;
 				}
-				case "DESABILITAR OPERACOES": {
-					$nomeRotina = "Desabilitar Operações"; 
-					$urlRotina  = "liberar_bloquear";
-					break;
-				}				
+//				case "DESABILITAR OPERACOES": {
+//					$nomeRotina = "Desabilitar Operações"; 
+//					$urlRotina  = "liberar_bloquear";
+//					break;
+//				}				
 				case "FINANCEIRO-BANCO": { 
 					$nomeRotina = "Banco"; 
 					$urlRotina  = "banco"; 				
@@ -411,6 +428,16 @@
 					$urlRotina  = "faturamento"; 				
 					break;
 				}
+				case "GRUPO ECONOMICO": {
+					$nomeRotina = "Grupo Econômico"; 
+					$urlRotina  = "grupo_economico";
+					break;
+				}
+				case "IMPEDIMENTOS DESLIGAMENTO": {
+					$nomeRotina = "Impedimentos Desligamento"; 
+					$urlRotina  = "impedimentos_desligamento";
+					break;					
+				}				
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 

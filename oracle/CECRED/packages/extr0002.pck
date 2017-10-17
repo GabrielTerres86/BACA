@@ -38,7 +38,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,nrdconta crapass.nrdconta%TYPE
       ,cdagenci crapass.cdagenci%TYPE
       ,nmresage crapage.nmresage%TYPE
-      ,vllimcre crapass.vllimcre%TYPE);
+      ,vllimcre crapass.vllimcre%TYPE
+      ,nmctajur crapjur.nmctajur%TYPE);
     TYPE typ_tab_dados_cooperado IS TABLE OF typ_reg_dados_cooperado INDEX BY PLS_INTEGER;
     
     
@@ -6237,7 +6238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Objetivo   : Procedure para obter impressao do extrato do associado
   --
   -- Alterações : 02/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)
-  --
+  --			  17/10/2017 - Adicionando a informacao nmctajur no relatorio de extrato. (Kelvin - PRJ339)	
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                         
        -- Cursor para busca de associados
@@ -6289,6 +6290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE
                           ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
         SELECT crapjur.cdempres
+              ,crapjur.nmctajur
         FROM crapjur crapjur
         WHERE crapjur.cdcooper = pr_cdcooper 
         AND   crapjur.nrdconta = pr_nrdconta;
@@ -6297,6 +6299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         rw_crapdat btch0001.cr_crapdat%ROWTYPE;
         --Variaveis Locais
         vr_cdempres INTEGER;
+        vr_nmctajur crapjur.nmctajur%TYPE;
         vr_qtregist INTEGER;
         vr_nrdrowid ROWID;
         vr_flgtrans BOOLEAN;
@@ -6427,8 +6430,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               IF cr_crapjur%FOUND THEN
                 -- Pega código da empresa da PJ
                 vr_cdempres:= rw_crapjur.cdempres;
+                vr_nmctajur:= rw_crapjur.nmctajur;
               ELSE
                 vr_cdempres:= 0;  
+                vr_nmctajur:= '';
               END IF;
               -- Fecha cursor
               CLOSE cr_crapjur;
@@ -6527,6 +6532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_dados_cooperado(rw_crapass.nrdconta).cdagenci:= rw_crapage.cdagenci;
           pr_tab_dados_cooperado(rw_crapass.nrdconta).nmresage:= rw_crapage.nmresage;
           pr_tab_dados_cooperado(rw_crapass.nrdconta).vllimcre:= rw_crapass.vllimcre;
+          pr_tab_dados_cooperado(rw_crapass.nrdconta).nmctajur:= vr_nmctajur;
           
           --Buscar Lista Historicos Cheques
           vr_lshistor:= tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -6937,6 +6943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         BEGIN
+
           --Limpar tabela erro
           pr_tab_erro.DELETE;
           --Limpar tabela Saldos
@@ -7044,7 +7051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                        ,pr_tab_erro              => pr_tab_erro              --Tabela de Erros
                                        ,pr_des_reto              => vr_des_reto);            --Descricao Erro
           END IF;                           
-          
+                                  
           --Se ocorreu erro
           IF vr_des_reto <> 'OK' THEN
             --Se possui erro na tabela
@@ -7057,11 +7064,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             --Se possui dados na tabela de cooperado
             IF vr_tab_dados_cooperado.COUNT > 0 THEN
+               
               --Montar texto
               vr_dstexto:= '<conta cdagenci="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).cdagenci||
                      '" nmresage="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmresage||
                      '" nrdconta="'||to_char(pr_nrdconta,'fm9g999g999g0')||
                      '" nmprimtl="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmprimtl||
+                     '" nmctajur="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmctajur||
                      '" vllimcre="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).vllimcre,'fm9999g999g990d00')||
                      '" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N" flgmensag="N" flgconfir="S"'||
                      ' flgblqjud="N" dscmensag="" dsconfirm="'||vr_dscritic||'" dscblqjud=""></conta>';
@@ -7072,9 +7081,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               gene0002.pc_escreve_xml(vr_clobxml40, vr_dstexto40,vr_dstexto);
 
             ELSE
+
               --Montar texto
               vr_dstexto:= '<conta cdagenci="" nmresage="" nrdconta="'||to_char(pr_nrdconta,'fm9g999g999g0')||
-                     '" nmprimtl="" vllimcre="0" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N"'|| 
+                     '" nmprimtl="" nmctajur="" vllimcre="0" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N"'|| 
                      ' flgmensag="N" flgconfir="S" flgblqjud="N" dscmensag="" dsconfirm="'||vr_dscritic||
                      '" dscblqjud=""></conta>';
               --Escrever no Arquivo
@@ -7178,6 +7188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                    '" nmresage="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmresage||
                    '" nrdconta="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nrdconta,'fm9g999g999g0')||
                    '" nmprimtl="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmprimtl||
+                   '" nmctajur="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmctajur||
                    '" vllimcre="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).vllimcre,'fm9999g999g990d00')||
                    '" vlstotal="'||to_char(vr_vlstotal,'fm9999g999g999g990d00mi')||
                    '" vldiscpa="'||to_char(vr_vldiscpa,'fm9999g999g990d00')||
