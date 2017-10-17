@@ -81,7 +81,7 @@ body { background-color:#DFE0D6; behavior: url(csshover2.htc); }
 #divRotina 				{width:545px;z-index:90;}
 #divRotina2 				{width:650px;z-index:91;}
 #divPesquisaEndereco        {width:545px;z-index:99;height:300px;}
-#divPesquisaEnderecoAssociado {width:545px;z-index:99;height:300px;}
+#divPesquisaEnderecoAssociado {width:545px;z-index:99;height:267px;}
 #divFormularioEndereco    {width:545px;z-index:100;height:300px;}
 #divPesquisa		         {width:500px;z-index:101;height:300px;}
 #divPesquisaAssociado       {width:550px;z-index:102;}
