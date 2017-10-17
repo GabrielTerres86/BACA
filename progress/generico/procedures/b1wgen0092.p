@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 05/10/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 13/10/2017
     
    Dados referentes ao programa:
    
@@ -192,10 +192,13 @@
                            o primeiro titular da conta é de menor (Tiago/Thiago #652776)
                            
               29/09/2017 - Validar identificacao de consumidor também para casos
-			               em que for digitado zero (Lucas Ranghetti #765804)
+			                     em que for digitado zero (Lucas Ranghetti #765804)
                            
               05/10/2017 - Adicionar tratamento de 9 posições para a CERSAR e 8 para 
                            o SANEPAR (Lucas Ranghetti #712492)
+
+              13/10/2017 - #765295 Criada a rotina busca_convenio_nome para logar no TAA o
+                           nome do convenio que esta sendo pago (Carlos)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1447,7 +1450,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -6251,4 +6254,27 @@ PROCEDURE atualiza_inassele:
    
     RETURN "OK".
     
+END PROCEDURE.    
+
+/* Retorna nome do convenio */
+PROCEDURE busca_convenio_nome:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
+
+    DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
+        
+    FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
+                             crapcon.cdempcon = par_cdempcon AND
+                             crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
+             
+    IF AVAILABLE crapcon THEN    
+    DO:
+      ASSIGN pr_nmempcon = crapcon.nmextcon.
+    END.    
+
+    RELEASE crapcon.
+  
+    RETURN "OK".
 END PROCEDURE.    

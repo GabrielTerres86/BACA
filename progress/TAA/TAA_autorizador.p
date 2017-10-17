@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 25/07/2017
+      Data: Janeiro/2010                        Ultima alteracao: 13/10/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -301,6 +301,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
                          operacao 75, para verificar se o TAA utiliza notas de cem 
 						 (Carlos)
+                         
+            13/10/2017 - #765295 Criada a rotina busca_convenio_nome, operacao 
+                         76, para logar o nome do convenio (Carlos)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -1687,7 +1690,15 @@ DO:
         IF   aux_operacao = 75   THEN
              DO:
                  RUN verifica_notas_cem.
-                 
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 76   THEN
+             DO:
+                 RUN busca_convenio_nome.
+
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
@@ -6432,7 +6443,7 @@ PROCEDURE verifica_comprovantes:
                   xText:NODE-VALUE = aux_dspagador.
                                
                   xField:APPEND-CHILD(xText).
-                                    
+                  
                   xDoc:CREATE-NODE(xField,"NRCPFCGC_PAGAD","ELEMENT").
                   xRoot2:APPEND-CHILD(xField).
 
@@ -6480,7 +6491,7 @@ PROCEDURE verifica_comprovantes:
                   xText:NODE-VALUE = aux_nrcpfcgc_benef.
                                
                   xField:APPEND-CHILD(xText).
-                
+                                    
               END.         
 
               END.         
@@ -9090,7 +9101,7 @@ PROCEDURE calcula_valor_titulo:
 	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
   RUN STORED-PROCEDURE pc_consultar_valor_titulo
-	  aux_handproc = PROC-HANDLE NO-ERROR
+      aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT aux_cdcooper       /* Cooperativa             */
                          ,INPUT aux_nrdconta       /* Número da conta         */
                          ,INPUT 91                 /* Agencia                 */
@@ -9147,7 +9158,7 @@ PROCEDURE calcula_valor_titulo:
 	CLOSE STORED-PROC pc_retorna_vlr_tit_vencto
 		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 	*/
-
+	
 	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 	
 	/* Busca possíveis erros */ 
@@ -9265,7 +9276,7 @@ PROCEDURE calcula_valor_titulo:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(aux_nrdocbnf).
     xField:APPEND-CHILD(xText). 
-
+    
     /*---------------*/    
     
     IF aux_nmbenefi <> ?  AND 
@@ -9279,7 +9290,7 @@ PROCEDURE calcula_valor_titulo:
       xField:APPEND-CHILD(xText).
     END.
 
-    /*---------------*/
+    /*---------------*/             
     IF aux_cdctrlcs <> ?  AND 
        aux_cdctrlcs <> "" THEN
     DO: 
@@ -10187,15 +10198,15 @@ PROCEDURE efetua_recarga:
               INPUT aux_nrterfin,        /* Nr. terminal financeiro */
               INPUT aux_nrcartao,        /* Nr. cartao */
               INPUT aux_nrsequni,        /* Nr. sequencial unico */
-		      INPUT 4,             /* Id origem (4-TAA)*/
+						  INPUT 4,             /* Id origem (4-TAA)*/
               INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-			  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
 			  INPUT 0,             /* Indicador se origem é mobile (Não) */
               OUTPUT 0,            /* Indicador de assinatura conjunta */
               OUTPUT "",           /* Protocolo */
               OUTPUT "",           /* NSU Operadora */
-			  OUTPUT 0,            /* Código da crítica.*/
-			  OUTPUT "").          /* Desc. da crítica */
+						  OUTPUT 0,            /* Código da crítica.*/
+						  OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_manter_recarga
@@ -10318,6 +10329,7 @@ PROCEDURE exclui_agendamentos_recarga:
 
 END PROCEDURE.
 
+/* Operacao 75 */
 PROCEDURE verifica_notas_cem:
 
     RUN sistema/generico/procedures/b1wgen0123.p PERSISTENT SET h-b1wgen0123.
@@ -10343,6 +10355,56 @@ PROCEDURE verifica_notas_cem:
 
 END PROCEDURE.
 /* Fim 75 - verifica notas cem */
+
+
+/* Operacao 76 */
+PROCEDURE busca_convenio_nome:
+    DEF     VAR     aux_nmextcon    AS      CHAR.
+    DEF     VAR     aux_cdbarras    AS      CHAR.
+    DEF     VAR     aux_cdempcon    AS      INTE.
+    DEF     VAR     aux_cdsegmto    AS      INTE.
+
+    DEF     VAR     aux_nmempcon    AS      CHAR.
+
+    ASSIGN aux_cdbarras = SUBSTR(aux_cdbarra1, 1 ,11) + aux_cdbarra2.
+
+    IF  aux_dscodbar <> "" THEN
+        ASSIGN aux_cdempcon  = INT(SUBSTR(aux_dscodbar,16,4)) 
+               aux_cdsegmto  = INT(SUBSTR(aux_dscodbar,2,1)). 
+    ELSE
+        ASSIGN aux_cdempcon = INT(SUBSTR(aux_cdbarras,16,4))
+               aux_cdsegmto = INT(SUBSTR(aux_cdbarras,2,1)).
+
+    RUN sistema/generico/procedures/b1wgen0092.p PERSISTENT SET h-b1wgen0092.
+
+    RUN busca_convenio_nome IN h-b1wgen0092 (INPUT aux_cdcooper,
+                                             INPUT aux_cdempcon,
+                                             INPUT aux_cdsegmto,
+                                             OUTPUT aux_nmempcon).
+    DELETE PROCEDURE h-b1wgen0092.
+      
+    IF aux_nmempcon = "" THEN
+    DO:
+        ASSIGN aux_dscritic = "Convenio não encontrado.".
+
+        RETURN "NOK".    
+    END.
+
+    IF  aux_dscritic = "" THEN
+        DO:
+            /* ---------- */
+            xDoc:CREATE-NODE(xField,"NMEXTCON","ELEMENT").
+            xRoot:APPEND-CHILD(xField).
+        
+            xDoc:CREATE-NODE(xText,"","TEXT").
+            xText:NODE-VALUE = aux_nmempcon.
+            xField:APPEND-CHILD(xText).
+
+        END.
+    
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 76 */
 
 
 /* .......................................................................... */
