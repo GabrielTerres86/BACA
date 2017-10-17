@@ -413,7 +413,7 @@ function formataFormularioConsulta() {
     $('#hhvrbini', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hhvrbfim', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#cdagebcb', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '6').setMask("INTEGER", "zz.zzz", "", "");
-    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
+    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("INTEGER", "zzzzzzz.z", "", "");
     $('#cdageitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
     $('#cdcnvitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '9').desabilitaCampo();
     $('#cdmasitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '5').desabilitaCampo();
