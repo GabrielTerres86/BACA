@@ -67,7 +67,7 @@ BEGIN
          AND crappep.nrctremp = crapepr.nrctremp
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.cdagenci = pr_cdagenci
-         AND crapepr.nrdconta > pr_cdrestart
+         AND crapepr.nrdconta > NVL(pr_cdrestart,0)
          AND crapepr.tpemprst = 2 -- Pos-Fixado
          AND crappep.inliquid = 0 -- Pendente
          AND crappep.dtvencto > ADD_MONTHS(pr_dtmvtoan,1) 
