@@ -1,40 +1,50 @@
-/*
-31/03/2017 - #633147 Retirar o programa da cadeia da CECRED e colocá-lo em job as 11h (JBCRD_BANCOOB_ENVIA_DEB_FAT) 
-             Modificada a solicitação de 40 para 999 e a ordem de 2 para 104.
-             Verificar o inproces da CECRED para definir a data de referência da execução. (Carlos)
+/*   Criação do Job para rodar CRPS675
+     todos os dias as 11H exceto finais de semana e feriados   17/10/2017
+     
+     Alteração:  
 */
+DECLARE
+  vr_dsplsql  VARCHAR2(1500);
+  vr_jobname  VARCHAR2(50);
+  vr_dscritic VARCHAR2(1000);
 BEGIN
+  
+  vr_dsplsql := 'DECLARE  
+                   vr_dataexec DATE;
+                   ww_dscritic VARCHAR2(500);
+                   ww_cdcritic crapcri.cdcritic%TYPE;               
+                 BEGIN 
+                   vr_dataexec := gene0005.fn_valida_dia_util(pr_cdcooper => 3, pr_dtmvtolt => SYSDATE);
+                  
+                   IF TRUNC(vr_dataexec) = TRUNC(SYSDATE) THEN
+                      PC_CRPS675(3, ww_cdcritic, ww_dscritic);
+                      
+                      IF ww_dscritic IS NOT NULL THEN
+                        raise_application_error(-20001,ww_dscritic);
+                      END IF;
+                   END IF;
+                 END;';
+                   
+  -- Montar o prefixo do código do programa para o jobname
+  vr_jobname := 'JBCRD_BANCOOB_ENVIA_DEB_FAT';
+  
+  dbms_scheduler.drop_job(job_name => 'CECRED.'||vr_jobname);
+  
+  -- Faz a chamada ao programa paralelo atraves de JOB
+  gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/               --> Código da cooperativa
+                        ,pr_cdprogra  => 'JBCRD_BANCOOB_ENVIA_DEB_FAT' --> Código do programa
+                        ,pr_dsplsql   => vr_dsplsql                 --> Bloco PLSQL a executar
+                        ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 11:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR') --> Executar nesta hora
+                                         -- configurar para rodar diariamente as 18h
+                        ,pr_interva   => 'Freq=daily;Interval=1;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=11;ByMinute=00;BySecond=0'
+                                         --'freq=Daily; interval=1;'  --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                        ,pr_jobname   => vr_jobname                   --> Nome randomico criado
+                        ,pr_des_erro  => vr_dscritic);
+                        
+  -- Testar saida com erro
+  IF vr_dscritic IS NOT NULL THEN
+    -- Levantar exceçao
+    RAISE_application_error(-20500,'Erro: '||vr_dscritic);
+  END IF;
 
-  -- Retirar programa 675 do processo
-  UPDATE crapprg p
-     SET p.nrsolici = 999
-        ,p.nrordprg = 104 -- ordem disponível
-   WHERE p.cdprogra = 'CRPS675'
-     AND p.cdcooper = 3
-     AND p.nrsolici = 40
-     AND p.nrordprg = 2;
-
-  -- Create do job do mesmo
-  sys.dbms_scheduler.create_job(
-    job_name            => 'CECRED.JBCRD_BANCOOB_ENVIA_DEB_FAT',
-    job_type            => 'PLSQL_BLOCK',
-    job_action          => 'DECLARE
-    ww_dscritic VARCHAR2(500);
-    ww_cdcritic crapcri.cdcritic%TYPE;
-    BEGIN
-      PC_CRPS675(3, ww_cdcritic, ww_dscritic);
-      
-      IF ww_dscritic IS NOT NULL THEN
-        raise_application_error(-20001,ww_dscritic);
-      END IF;
-    END;',
-    start_date          => '30/03/2017 11:00:00,000000 AMERICA/SAO_PAULO',
-    repeat_interval     => 'Freq=Daily;Interval=1;ByHour=11;ByDay=MON,TUE,WED,THU,FRI',
-    end_date            => to_date(null),
-    job_class           => 'DEFAULT_JOB_CLASS',
-    enabled             => true,
-    auto_drop           => true,
-    comments            => 'Gerar arquivo de retorno de Débito em conta das faturas (Bancoob/CABAL)');
-    
-    COMMIT;
 END;
