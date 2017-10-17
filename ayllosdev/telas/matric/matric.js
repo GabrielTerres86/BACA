@@ -3356,6 +3356,19 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 	var bo = 'b1wgen0059.p';	
 	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
 	
+	if(residencialNrCep != ""){
+	
+		if (operacao == 'CA' || operacao == "PA") { // Evitar a validacao quando acessada a opcao de ALTERACAO
+			operacao = 'CC';
+			return false;
+		}
+		
+		operacao = "CC";
+		
+		manterOutros(nomeForm);
+						
+	}
+	
 	$('#tpdocptl', '#' + nomeForm).val(tpdocumento);
 	$('#nrdocptl', '#' + nomeForm).val(nrdocumento);
 	$('#nmttlrfb', '#' + nomeForm).val(nmpessoaReceita);
