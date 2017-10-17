@@ -1683,7 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
 
       --Criar registro limite internet
-      vr_index:= pr_idseqttl;--nvl(rw_crapsnh.idseqttl,pr_idseqttl);
+      vr_index:= pr_idseqttl; --nvl(rw_crapsnh.idseqttl,pr_idseqttl);
       pr_tab_internet(vr_index).idseqttl:= rw_crapsnh.idseqttl;
       pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
       pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
@@ -1732,7 +1732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Fechar Cursor
         CLOSE cr_crapsnh;
         --Criar registro limite internet
-        vr_index:= pr_idseqttl; --rw_crapsnh.idseqttl;
+        vr_index:= rw_crapsnh.idseqttl;
         pr_tab_internet(vr_index).idseqttl:= vr_index;
         pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
         pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
