@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 15/09/2017
+ Data : Agosto/2016                Última Alteração: 17/10/2017
 
  Objetivo  : Cadastro de servicos ofertados na tela CADCOP
 
@@ -14,6 +14,7 @@
 
              15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
+			 17/10/2017 - Adicionar flgofatr para o form frmConsulta5 (Lucas Ranghetti #772863)
 ************************************************************************/
 var cddepart;
 
@@ -412,7 +413,7 @@ function formataFormularioConsulta() {
     $('#hhvrbini', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hhvrbfim', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#cdagebcb', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '6').setMask("INTEGER", "zz.zzz", "", "");
-    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("INTEGER", "zzzzzzz.z", "", "");
+    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
     $('#cdageitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
     $('#cdcnvitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '9').desabilitaCampo();
     $('#cdmasitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '5').desabilitaCampo();
@@ -3377,7 +3378,7 @@ function alterarCooperativa() {
     var qtmeatel = $("#qtmeatel", "#frmConsulta5").val();
     var permaxde = isNaN(parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var cdloggrv = $("#cdloggrv", "#frmConsulta5").val();
-    var flgofatr = $("#flgofatr", "#frmConsulta").val();
+    var flgofatr = $("#flgofatr", "#frmConsulta5").val();
     var qtdiasus = $("#qtdiasus", "#frmConsulta5").val();
     var cdcliser = $("#cdcliser", "#frmConsulta5").val();
     var vlmiplco = isNaN(parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
