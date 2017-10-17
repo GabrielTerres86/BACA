@@ -50,6 +50,8 @@ BEGIN
             ,crapepr.dtmvtolt
             ,crapepr.qtpreemp
             ,crapepr.vlsprojt
+            ,crapepr.dtdpagto
+            ,crapepr.vlemprst
             ,crawepr.txmensal
             ,crawepr.cddindex
             ,crappep.nrparepr
@@ -72,7 +74,10 @@ BEGIN
          AND crappep.inliquid = 0 -- Pendente
          AND crappep.dtvencto > ADD_MONTHS(pr_dtmvtoan,1) 
          AND crappep.dtvencto <= ADD_MONTHS(pr_dtmvtolt,1)
-    ORDER BY crapepr.nrdconta;
+    ORDER BY crappep.cdcooper,
+             crappep.nrdconta,
+             crappep.nrctremp,
+             crappep.nrparepr;
 
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Registro para armazenar informacoes do contrato
@@ -104,6 +109,7 @@ BEGIN
     -- Grava os dados das parcelas, emprestimo e controle do batch
     PROCEDURE pc_grava_dados(pr_tab_parc_pep IN typ_tab_parc_atu
                             ,pr_tab_parc_epr IN typ_tab_parc_atu) IS
+      vr_nrdconta  crapass.nrdconta%TYPE;
     BEGIN
       -- Atualizar Parcelas
       BEGIN
@@ -137,13 +143,19 @@ BEGIN
           RAISE vr_exc_saida;
       END;
 
+      -- Condicao para verificar se foi processado numero da conta
+      vr_nrdconta := 0;
+      IF pr_tab_parc_epr.COUNT > 0 THEN
+        vr_nrdconta := pr_tab_parc_epr(pr_tab_parc_epr.LAST).nrdconta;
+      END IF;
+
       -- Grava agencia no controle do batch
       GENE0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper
                                       ,pr_cdprogra    => vr_cdprogra
                                       ,pr_dtmvtolt    => pr_dtmvtolt
                                       ,pr_tpagrupador => 1 -- PA
                                       ,pr_cdagrupador => pr_cdagenci
-                                      ,pr_cdrestart   => pr_tab_parc_epr(pr_tab_parc_epr.LAST).nrdconta
+                                      ,pr_cdrestart   => vr_nrdconta
                                       ,pr_nrexecucao  => 1
                                       ,pr_idcontrole  => vr_idcontrole
                                       ,pr_cdcritic    => vr_cdcritic
@@ -195,22 +207,23 @@ BEGIN
       vr_tab_parcelas.DELETE;
 
       -- Chama o calculo da proxima parcela
-      EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper        => pr_cdcooper
-                                          ,pr_flgbatch        => TRUE
-                                          ,pr_dtcalcul        => pr_dtmvtolt
-                                          ,pr_dtefetiv        => rw_epr_pep.dtmvtolt
-                                          ,pr_dtpripgt        => -- JFF
-                                          ,pr_dtcarenc        => -- JFF
-                                          ,pr_txmensal        => rw_epr_pep.txmensal
-                                          ,pr_qtpreemp        => rw_epr_pep.qtpreemp
-                                          ,pr_vlsprojt        => rw_epr_pep.vlsprojt
-                                          ,pr_qtdias_carencia => -- JFF
-                                          ,pr_vlrdtaxa        => -- JFF
-                                          ,pr_nrparepr        => rw_epr_pep.nrparepr
-                                          ,pr_dtvencto        => rw_epr_pep.dtvencto
-                                          ,pr_tab_parcelas    => vr_tab_parcelas
-                                          ,pr_cdcritic        => vr_cdcritic
-                                          ,pr_dscritic        => vr_dscritic);
+      EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper => pr_cdcooper, 
+                                           pr_flgbatch => TRUE, 
+                                           pr_dtcalcul => pr_dtmvtolt, 
+                                           pr_dtefetiv => rw_epr_pep.dtmvtolt, 
+                                           pr_dtdpagto => rw_epr_pep.dtdpagto, 
+                                           pr_txmensal => rw_epr_pep.txmensal,
+                                           pr_vlrdtaxa => 7.50,  -- JFF
+                                           pr_qtpreemp => rw_epr_pep.qtpreemp, 
+                                           pr_vlsprojt => rw_epr_pep.vlsprojt, 
+                                           pr_vlemprst => rw_epr_pep.vlemprst, 
+                                           pr_nrparepr => rw_epr_pep.nrparepr,
+                                           pr_dtvencto => rw_epr_pep.dtvencto,
+                                           pr_qtdias_carencia => 0, -- JFF 
+                                           pr_tab_parcelas => vr_tab_parcelas, 
+                                           pr_cdcritic => vr_cdcritic, 
+                                           pr_dscritic => vr_dscritic);
+      
       -- Se houve erro
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
