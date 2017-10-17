@@ -34,6 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qtimpctr crapepr.qtimpctr%TYPE
     ,portabil VARCHAR2(100)
     ,dsorgrec craplcr.dsorgrec%TYPE
-    ,dtinictr DATE);
+    ,dtinictr DATE
+    ,dsratpro VARCHAR2(30)
+    ,dsratatu VARCHAR2(30));
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -233,7 +236,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es calculadas at¿ momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de presta¿¿es paga at¿ momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es paga at¿ momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no m¿s
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no m¿s corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -251,7 +254,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -810,7 +813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/05/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 12/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -867,6 +870,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
   --
   --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+  --
+  --             12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
+  --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
+  --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -998,7 +1005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestações calculadas até momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestações paga até momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestações paga até momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mês
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mês corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -1666,7 +1673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -2581,7 +2588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 14/02/2017
+       Data    : 06/03/2012                         Ultima atualizacao: 11/07/2017
     
        Dados referentes ao programa:
     
@@ -2616,6 +2623,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     14/02/2017 - Foi inicializada a vr_vlsderel com zero. (Jaison/James)
 
+                    11/07/2017 - P337 - Não estava se comportando de acordo quando 
+                                  emprestimo nao liberado, usada rw_crapepr e 
+                                  nao rw_crawepr (Marcos-Supero)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2623,11 +2634,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%type
                      ,pr_nrdconta crawepr.nrdconta%type
                      ,pr_nrctremp crawepr.nrctremp%type) is
-      SELECT dtlibera
-        FROM crawepr
-       WHERE crawepr.cdcooper = pr_cdcooper
-             AND crawepr.nrdconta = pr_nrdconta
-             AND crawepr.nrctremp = pr_nrctremp;
+      SELECT wpr.dtlibera
+            ,epr.inliquid
+        FROM crapepr epr
+            ,crawepr wpr
+       WHERE epr.cdcooper = wpr.cdcooper
+         AND epr.nrdconta = wpr.nrdconta
+         AND epr.nrctremp = wpr.nrctremp
+         AND wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%rowtype;
   
     -- Busca as parcelas do contrato de emprestimos e seus respectivos valores
@@ -2947,7 +2963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END LOOP;
       
       IF pr_dtmvtolt <= rw_crawepr.dtlibera AND
-         rw_crapepr.inliquid <> 1 THEN
+         rw_crawepr.inliquid <> 1 THEN
         /* Nao liberado */
         vr_vlsdeved := pr_vlemprst;
         vr_vlprepag := 0;
@@ -4409,7 +4425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 16/11/2016
+       Data    : Abril/2013.                         Ultima atualizacao: 06/10/2017
     
        Dados referentes ao programa:
     
@@ -4464,6 +4480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     16/11/2016 - Realizado ajuste para corrigir o problema ao abrir o detalhamento
                                  do emprestimo na tela prestações, conforme solicitado no chamado
                                  553330. (Kelvin)
+
+                    06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
+					             convertida (Marcos-Supero)
 
     ............................................................................. */
     DECLARE
@@ -4666,6 +4685,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND craplcm.dtmvtolt = pr_dtmvtolt_dat;
       rw_craplcm cr_craplcm%ROWTYPE;
       
+      cursor c_rating is
+        select 1 idrating
+             , t.indrisco||'-'||to_char(t.dtmvtolt,'DD/MM/RRRR')||' '||decode(t.insitrat,1,'(Pr.)','(Ef.)') dsrating
+          from tbrat_hist_nota_contrato t
+         where t.cdcooper (+) = pr_cdcooper
+           and t.nrdconta (+) = pr_nrdconta
+           and t.nrctrrat (+) = pr_nrctremp
+           and t.tpctrrat (+) = 90
+           and t.nrseqrat (+) = 1
+        union
+        select 2 idrating
+             , t.indrisco||'-'||to_char(t.dtmvtolt,'DD/MM/RRRR')||' '||decode(t.insitrat,1,'(Pr.)','(Ef.)') dsrating
+          from crapnrc t
+         where t.cdcooper (+) = pr_cdcooper
+           and t.nrdconta (+) = pr_nrdconta
+           and t.nrctrrat (+) = pr_nrctremp
+           and t.tpctrrat (+) = 90;
       -- variaveis auxiliares a busca
       vr_nmprimtl crapass.nmprimtl%TYPE; --> Nome do associado
       vr_dsdpagto VARCHAR2(100); --> Descrição auxiliar do débito
@@ -5392,14 +5428,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
         
           -- Montar descrição de parcelas a pagar
-          pr_tab_dados_epr(vr_indadepr).dspreapg := '   ' ||
-                                                    to_char(vr_qtprecal
-                                                           ,'990d0000') || '/' ||
-                                                    to_char(rw_crapepr.qtpreemp
-                                                           ,'fm000') ||
-                                                    ' ->' ||
-                                                    to_char(vr_qtpreapg
-                                                           ,'990d0000');
+          pr_tab_dados_epr(vr_indadepr).dspreapg := lpad(to_char(vr_qtprecal,'fm990d0000'),11,' ')
+                                                 || '/' 
+                                                 || to_char(rw_crapepr.qtpreemp,'fm000')
+                                                 || ' ->' 
+                                                 || lpad(to_char(vr_qtpreapg,'fm990d0000'),8,' ')||' ';
           pr_tab_dados_epr(vr_indadepr).qtpreapg := vr_qtpreapg;
           -- Guardar o valor prestações a pagar cfme já calculado
           IF rw_crapepr.tpemprst = 1 THEN
@@ -5499,6 +5532,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
           -- Fechar o cursor
           CLOSE cr_crapass;
+          for r_rating in c_rating loop
+            if r_rating.idrating = 1 then
+              pr_tab_dados_epr(vr_indadepr).dsratpro := r_rating.dsrating;
+            else
+              pr_tab_dados_epr(vr_indadepr).dsratatu := r_rating.dsrating;
+            end if;
+          end loop;
           -- atribuicao para controle da paginacao
           vr_nrregist := vr_nrregist - 1;
         
@@ -5927,6 +5967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
+                        '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                       '</inf>' );
 
       -- buscar proximo
@@ -6391,7 +6433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_vltotpre := pr_vltotpre + rw_crapepr.vlpreemp;
         END IF;
         -- Acumular a quantidade de parcelas calculadas
-        pr_qtprecal := pr_qtprecal + vr_qtprecal_lem;
+        pr_qtprecal := pr_qtprecal + nvl(vr_qtprecal_lem,0);
         -- Acumular o saldo devedor calculado
         pr_vlsdeved := pr_vlsdeved + nvl(vr_vlsdeved,0);
       END LOOP; -- Fim leitura dos empréstimos
