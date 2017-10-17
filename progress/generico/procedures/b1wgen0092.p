@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 29/09/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 05/10/2017
     
    Dados referentes ao programa:
    
@@ -193,6 +193,9 @@
                            
               29/09/2017 - Validar identificacao de consumidor também para casos
 			               em que for digitado zero (Lucas Ranghetti #765804)
+                           
+              05/10/2017 - Adicionar tratamento de 9 posições para a CERSAR e 8 para 
+                           o SANEPAR (Lucas Ranghetti #712492)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1107,7 +1110,7 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:   
+            DO:                                 
                 IF  par_cdrefere = 0 THEN              
                     DO:
                         ASSIGN aux_dscritic = "Informe o Codigo Identificador "
@@ -1121,6 +1124,40 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "dshistor".
                         LEAVE Valida.
                     END.
+                ELSE
+                IF  par_cdhistor = 2291 THEN /* CERSAD */
+                    DO:                    
+                        IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 654
+                                       par_nmdcampo = "cdrefere".
+                                LEAVE Valida.
+                            END.   
+                    END.
+                ELSE
+                IF par_cdhistor = 2263 THEN /* SANEPAR */
+                   DO:                   
+                       IF  LENGTH(STRING(par_cdrefere)) > 8 THEN
+                           DO:
+                               ASSIGN aux_cdcritic = 654
+                                      par_nmdcampo = "cdrefere".
+                               LEAVE Valida.
+                           END. 
+                           
+                       ASSIGN aux_cdrefere = par_cdrefere.
+                       
+                       RUN dig_sanepar ( INPUT-OUTPUT aux_cdrefere,
+                                        OUTPUT aux_stsnrcal ).
+                       
+                       ASSIGN aux_cdrefere = 0.
+                       
+                       IF  NOT aux_stsnrcal THEN
+                           DO:
+                               ASSIGN aux_cdcritic = 008
+                                      par_nmdcampo = "cdrefere".
+                               LEAVE Valida.
+                           END. 
+                   END.
                 ELSE
                 IF  par_cdhistor = 509   THEN   /* UNIMED */
                     DO:
@@ -1196,8 +1233,7 @@ PROCEDURE valida-dados:
                     END.
                 ELSE    
                 IF  par_cdhistor = 667 OR
-                    par_cdhistor = 624 OR /*Celesc */
-                    par_cdhistor = 928 THEN /* CERSAD */
+                    par_cdhistor = 624 THEN /*Celesc */                    
                     DO:
                          IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
                             DO:
@@ -1283,7 +1319,7 @@ PROCEDURE valida-dados:
                             END.                              
                     END.
                 ELSE                                 
-                IF  par_cdhistor = 674 THEN /* SEMASA Itajai*/
+                IF  par_cdhistor = 674  THEN   /* SEMASA Itajai*/
                     DO:
                         ASSIGN aux_cdrefere = par_cdrefere.
 
@@ -4653,6 +4689,57 @@ PROCEDURE dig_semasa:
     ASSIGN aux_resto = aux_calculo MODULO 11.
     
     IF  aux_resto > 1 AND aux_resto < 10 THEN 
+        ASSIGN aux_digito = 11 - aux_resto.
+    ELSE
+        ASSIGN aux_digito = 0.
+    
+    IF  (INTEGER(SUBSTRING(STRING(par_nrcalcul),
+                           LENGTH(STRING(par_nrcalcul)),1))) <> aux_digito THEN
+         ASSIGN par_stsnrcal = FALSE.
+    ELSE
+         ASSIGN par_stsnrcal = TRUE.
+    
+    /** Substituicao do numero do digito errado pelo numero correto **/
+    ASSIGN par_nrcalcul = DECIMAL(SUBSTRING(STRING(par_nrcalcul),1,
+                                            LENGTH(STRING(par_nrcalcul)) - 1) +
+                                  STRING(aux_digito)).
+
+END PROCEDURE.
+
+PROCEDURE dig_sanepar:
+
+    DEF INPUT-OUTPUT PARAM par_nrcalcul AS DECIMAL FORMAT ">>>>>>>>>>>>>9" 
+                                                                      NO-UNDO.
+    DEF OUTPUT PARAM par_stsnrcal       AS LOGICAL                    NO-UNDO.
+
+    DEF VAR aux_digito  AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_posicao AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_peso    AS INT     EXTENT 7  INIT [2,7,6,5,4,3,2]
+                                                                      NO-UNDO.
+    DEF VAR aux_calculo AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_resto   AS INT     INIT 0                             NO-UNDO.
+    DEF VAR aux_indice  AS INT                                        NO-UNDO.
+                 
+    IF  LENGTH(STRING(par_nrcalcul)) < 2   THEN
+        DO:
+            ASSIGN par_stsnrcal = FALSE.
+            RETURN.
+        END.
+    
+    ASSIGN  aux_indice = 7.
+    
+    DO  aux_posicao = (LENGTH(STRING(par_nrcalcul)) - 1) TO 1 BY -1:
+                                
+        ASSIGN aux_calculo = aux_calculo + 
+                            (INTEGER(SUBSTRING(STRING(par_nrcalcul),
+                                     aux_posicao,1)) * aux_peso[aux_indice]).
+        ASSIGN aux_indice = aux_indice - 1.
+        
+    END.  /*  Fim do DO .. TO  */
+    
+    ASSIGN aux_resto = aux_calculo MODULO 11.
+    
+    IF  aux_resto > 1 THEN 
         ASSIGN aux_digito = 11 - aux_resto.
     ELSE
         ASSIGN aux_digito = 0.
