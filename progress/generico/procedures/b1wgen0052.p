@@ -1756,8 +1756,7 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.nrdconta = par_nrdconta AND
                                                            crapdoc.tpdocmto = 10           AND
                                                            crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                           crapdoc.idseqttl = aux_idseqttl AND
-                                                           crapdoc.nrcpfcgc = par_nrcpfcgc
+                                                           crapdoc.idseqttl = aux_idseqttl 
                                                            NO-LOCK NO-ERROR.
                                                 
                                                 IF  NOT AVAILABLE crapdoc THEN
@@ -1768,8 +1767,8 @@ PROCEDURE Grava_Dados:
                                                                crapdoc.flgdigit = FALSE
                                                                crapdoc.dtmvtolt = par_dtmvtolt
                                                                crapdoc.tpdocmto = 10
-                                                               crapdoc.idseqttl = aux_idseqttl
-                                                               crapdoc.nrcpfcgc = par_nrcpfcgc.
+                                                               crapdoc.idseqttl = aux_idseqttl.
+                                                               
                                                         VALIDATE crapdoc.
                                                     END.
                                             END.
@@ -1835,8 +1834,7 @@ PROCEDURE Grava_Dados:
                                                                    crapdoc.nrdconta = par_nrdconta AND
                                                                    crapdoc.tpdocmto = 7            AND
                                                                    crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                                   crapdoc.idseqttl = aux_idseqttl AND
-                                                                   crapdoc.nrcpfcgc = par_nrcpfcgc
+                                                                   crapdoc.idseqttl = aux_idseqttl 
                                                                    EXCLUSIVE NO-ERROR.
             
                                                 IF NOT AVAILABLE crapdoc THEN
@@ -1862,8 +1860,8 @@ PROCEDURE Grava_Dados:
                                                                        crapdoc.flgdigit = FALSE
                                                                        crapdoc.dtmvtolt = par_dtmvtolt
                                                                        crapdoc.tpdocmto = 7
-                                                                       crapdoc.idseqttl = aux_idseqttl
-                                                                       crapdoc.nrcpfcgc = par_nrcpfcgc.
+                                                                       crapdoc.idseqttl = aux_idseqttl.
+                                                                       
                                                                 VALIDATE crapdoc.
                                                             END.
                                                     END.

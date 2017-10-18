@@ -1845,8 +1845,7 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = aux_idseqttl AND
-                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
+                                             crapdoc.idseqttl = aux_idseqttl 
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1872,8 +1871,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = aux_idseqttl
-                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
+                                           crapdoc.idseqttl = aux_idseqttl.
+                                           
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.
