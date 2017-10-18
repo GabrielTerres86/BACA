@@ -533,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
-  --                          esteja cadastrado na cooperativa. (Kelvin)  
+  --                          esteja cadastrado na cooperativa. (Kelvin)
   --
   --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
   --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
@@ -1846,6 +1846,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --                            PRJ339-CRM  (Odirlei-AMcom)
     --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de 
     --                            duplicacao de contas. (PRJ339  - Kelvin/Andrino)
+    --                
+    --               18/10/2017 - Ajuste para duplicar o campo nmctajur. (PRJ339 - Kelvin).
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2681,7 +2683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nrinfcad,
              nrperger,
              nrpatlvr,
-             nrlicamb)
+             nrlicamb,
+             nmctajur)
           SELECT cdcooper,
                  pr_nrdconta_dst,
                  nmfansia,
@@ -2709,7 +2712,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nrinfcad,
                  nrperger,
                  nrpatlvr,
-                 nrlicamb
+                 nrlicamb,
+                 nmctajur
             FROM crapjur
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta_org;
