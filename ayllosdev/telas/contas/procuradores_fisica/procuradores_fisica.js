@@ -11,6 +11,7 @@
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
  *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */
 
 var nrcpfcgc = '';
@@ -285,7 +286,7 @@ function manterRotinaProcuradores(operacao) {
 	dtemddoc = $('#dtemddoc','#frmDadosProcuradores').val(); 
 	nmdavali = $('#nmdavali','#frmDadosProcuradores').val(); 
 	nrdocava = $('#nrdocava','#frmDadosProcuradores').val(); 
-	dsnacion = $('#dsnacion','#frmDadosProcuradores').val(); 
+	cdnacion = $('#cdnacion','#frmDadosProcuradores').val(); 
 	dsnatura = $('#dsnatura','#frmDadosProcuradores').val(); 
 	complend = $('#complend','#frmDadosProcuradores').val(); 
 	nmcidade = $('#nmcidade','#frmDadosProcuradores').val(); 
@@ -315,7 +316,7 @@ function manterRotinaProcuradores(operacao) {
 	cdoeddoc = trim( cdoeddoc );
 	nmdavali = trim( nmdavali );
 	nrdocava = trim( nrdocava );
-	dsnacion = trim( dsnacion );
+	cdnacion = trim( cdnacion );
 	dsnatura = trim( dsnatura );
 	complend = trim( complend );
 	nmcidade = trim( nmcidade );
@@ -345,7 +346,7 @@ function manterRotinaProcuradores(operacao) {
 			nrcpfcgc: nrcpfcgc,	cdoeddoc: cdoeddoc,	dtnascto: dtnascto, 
 			dtemddoc: dtemddoc,	nrdctato: nrdctato, nmdavali: nmdavali,	
 			cdufddoc: cdufddoc, tpdocava: tpdocava, nrdocava: nrdocava,	
-			cdestcvl: cdestcvl,	dsnacion: dsnacion, dsnatura: dsnatura,	
+			cdestcvl: cdestcvl,	cdnacion: cdnacion, dsnatura: dsnatura,	
 			complend: complend, nmcidade: nmcidade, nmbairro: nmbairro,	
 			dsendres: dsendres,	nmpaicto: nmpaicto, nmmaecto: nmmaecto,	
 			nrendere: nrendere,	nrcepend: nrcepend, dsrelbem: dsrelbem,	
@@ -375,10 +376,11 @@ function estadoInicialProcuradores() {
 
 	var cNrConta		= $('#nrdctato','#frmDadosProcuradores');
 	var cCPF			= $('#nrcpfcgc','#frmDadosProcuradores');
-	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
 	var camposGrupo3	= $('#dtvalida','#frmDadosProcuradores');		
 	var sexo			= $('input[name="cdsexcto"]');	
 	var cDescBem		= $('#dsrelbem','#frmDadosProcuradores');
+    var cDsnacion		= $('#dsnacion','#frmDadosProcuradores');
 	
 	$("input,select","#frmDadosProcuradores").removeClass("campoErro");
 	$('#frmDadosProcuradores').limpaFormulario();
@@ -388,6 +390,7 @@ function estadoInicialProcuradores() {
 	camposGrupo3.desabilitaCampo();
 	sexo.desabilitaCampo();	
 	cDescBem.desabilitaCampo();
+    cDsnacion.desabilitaCampo();
 	removeOpacidade('divConteudoOpcao');	
 	cNrConta.focus();
 	
@@ -464,6 +467,7 @@ function controlaLayoutProcuradores( operacao ) {
 		var cDataEmissao	= $('#dtemddoc','#frmDadosProcuradores');
 		var cEstadoCivil	= $('#cdestcvl','#frmDadosProcuradores');
 		var cNacionalidade	= $('#dsnacion','#frmDadosProcuradores');
+        var cCodnacionali	= $('#cdnacion','#frmDadosProcuradores');
 		var cNaturalidade	= $('#dsnatura','#frmDadosProcuradores');
 		
 		cNrConta.css('width','70px').addClass('conta pesquisa');
@@ -479,6 +483,7 @@ function controlaLayoutProcuradores( operacao ) {
 		cDataEmissao.addClass('data').css('width','70px');
 		cEstadoCivil.css('width','300px');
 		cNacionalidade.css('width','140px');
+        cCodnacionali.css('width','65px');
 		cNaturalidade.css('width','185px');
 		
 		// FIELDSET ENDEREÇO
@@ -548,7 +553,7 @@ function controlaLayoutProcuradores( operacao ) {
 		$('#persemon,#qtprebem','#frmProcBens').css({'width':'40px'});			
 		
 		// INICIA CONTROLE DA TELA
-		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
 		var camposGrupo3  = $('#dtvalida','#frmDadosProcuradores');		
 		var sexo 		  = $('input[name="cdsexcto"]');
 
@@ -897,13 +902,13 @@ function controlaPesquisasProcuradores() {
 					return false;					
 				
 				// Nacionalidade
-				} else if ( campoAnterior == 'dsnacion' ) {
+				} else if ( campoAnterior == 'cdnacion' ) {
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_nacionalidade';
 					titulo      = 'Nacionalidade';
 					qtReg		= '50';
-					filtros 	= 'Nacionalidade;dsnacion;200px;S;';
-					colunas 	= 'Nacionalidade;dsnacion;100%;left';
+					filtros 	= 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
+					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;				
 				// Naturalidade
@@ -939,6 +944,15 @@ function controlaPesquisasProcuradores() {
 	
 	// Cep
 	$('#nrcepend','#'+nomeFormProcuradores).buscaCEP(nomeFormProcuradores, camposOrigem, divRotina);
+	
+    //  Nacionalidade
+	$('#cdnacion','#'+nomeFormProcuradores).unbind('change').bind('change',function() {
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormProcuradores);        
+	return false;
+	}); 
 	
 	return false;
 }
@@ -1335,7 +1349,6 @@ function controlaLayoutPoder() {
 }
 
 function controlaOperacaoPoderes(operacao) {
-
     switch (operacao) {
 		
 		case 'SP':
