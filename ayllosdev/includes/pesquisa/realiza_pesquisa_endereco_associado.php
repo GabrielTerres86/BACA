@@ -151,7 +151,7 @@
 						<? echo $vCep; ?>
 						<span class='spanComplemento'><? echo substr($vComplemento,0,80) ?></span>
 					</td>
-					<td style="width:180px;"><? echo $vEndereco; ?></td>
+					<td style="width:180px;"><? echo utf8_decode($vEndereco . ", " . $vNumero); ?></td>
 					<td style="width:100px;"><? echo $vBairro; ?></td>
 					<td style="width:100px;"><? echo $vCidade; ?></td>
 					<td style="text-align:center"><? echo $vUf; ?></td>					

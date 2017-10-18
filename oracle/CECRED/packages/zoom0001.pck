@@ -6245,13 +6245,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     -------------------------------------------------------------------------------------------------------------*/                                    
   
   CURSOR cr_endereco(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
-    SELECT pen.nmlogradouro
+    SELECT DISTINCT pen.nmlogradouro
           ,pen.nrlogradouro
           ,pen.dscomplemento
           ,pen.nmbairro
           ,pen.nrcep  
           ,mun.dscidade   
-          ,pen.tpendereco 
           ,mun.cdestado    
           ,pen.tporigem_cadastro tporigem
       FROM tbcadast_pessoa pes
@@ -6307,7 +6306,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
             pr_tab_endereco(vr_index).nmbairro      := rw_gncdnto.nmbairro;
             pr_tab_endereco(vr_index).nrcep         := rw_gncdnto.nrcep;
             pr_tab_endereco(vr_index).dscidade      := rw_gncdnto.dscidade;
-            pr_tab_endereco(vr_index).tpendereco    := rw_gncdnto.tpendereco;  
             pr_tab_endereco(vr_index).cdestado      := rw_gncdnto.cdestado; 
             pr_tab_endereco(vr_index).tporigem      := rw_gncdnto.tporigem;             
                        
