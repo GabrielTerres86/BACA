@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
     Sistema  : Rotinas genéricas para mascaras e relatórios
     Sigla    : GENE
     Autor    : Marcos E. Martini - Supero
-    Data     : Novembro/2012.                   Ultima atualizacao: 05/02/2016
+    Data     : Novembro/2012.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -24,6 +24,11 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                05/02/2016 - Realizado ajustes na rotina para efetuar a copia 
                             correta dos arquivos para a intranet
                             (Adriano ).
+      
+               22/06/2017 - Tratamento de erros 
+                          - setado modulo
+                          - Chamado 660322 - Belli - Envolti
+      
   ------------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela de memória para armazenar os separadores de milhar e casas decimais
@@ -333,7 +338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 27/07/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -363,6 +368,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
   --                          apenas quando tiverem relatórios pendentes para execução (Carlos)
+  --    
+  --             22/06/2017 - Tratamento de erros                         
+  --                        - setado modulo
+  --                        - Chamado 660322 - Belli - Envolti
+  --
+  --             04/08/2017 - Retirado pc_set_modulo da procedure fn_quebra_string
+  --                        - Chamado 678813 - Belli - Envolti
+  --    
   --
   --             27/07/2017 - #724054 retirada a exclusão da coop 3 do cursor cr_crapcop, rotina 
   --                          pc_publicar_arq_intranet (Carlos)
@@ -429,6 +442,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_tam_mask  integer;
     vr_tam_var   integer;
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask');        
+      
     -- Deixar em maiusculo para facilitar testes
     vr_dsforma := upper(pr_dsforma);
     vr_dsauxil := nvl(pr_dsorigi,' ');
@@ -476,6 +492,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     return vr_dsconve;
   EXCEPTION
     when others then
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => NULL);     
       -- Incluir log de que houve problema na mascara
       gene0001.pc_print(pr_des_mensag => to_char(SYSDATE,'hh24:mi:ss')||' - GENE0002.fn_mask --> Problema ao montar a mascara "'||pr_dsforma||'" ao campo "'||pr_dsorigi||'".');
       -- Retonar como resultado o valor original
@@ -485,6 +503,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar o Nro da Conta */
   FUNCTION fn_mask_conta(pr_nrdconta IN crapass.nrdconta%TYPE) RETURN VARCHAR2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_conta');   
     -- Se ainda não foi buscado
     IF vr_des_mask_conta IS NULL THEN
       vr_des_mask_conta := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTA'), 'zzzz.zzz.z');
@@ -496,6 +516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar a Conta Integração */
   FUNCTION fn_mask_ctitg(pr_nrdctitg IN crapass.nrdctitg%TYPE) RETURN VARCHAR2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_ctitg');   
     -- Se ainda não foi buscado
     IF vr_des_mask_ctitg IS NULL THEN
       vr_des_mask_ctitg := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTA_ITG'), 'z.zzz.zzz.z');
@@ -508,6 +530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   FUNCTION fn_mask_cpf_cnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%type,
                             pr_inpessoa in crapass.inpessoa%type) RETURN varchar2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_cpf_cnpj');   
     -- Se ainda não foi buscado
     IF vr_des_mask_cpf IS NULL THEN
       vr_des_mask_cpf := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CPF'), '999.999.999-99');
@@ -529,6 +553,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar o CEP */
   FUNCTION fn_mask_cep(pr_nrcepend IN crapenc.nrcepend%TYPE) RETURN VARCHAR2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_cep');   
     -- Se ainda não foi buscado
     IF vr_des_mask_cep IS NULL THEN
       vr_des_mask_cep := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CEP'), 'zzzzz-zz9');
@@ -540,6 +566,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar a matrícula */
   FUNCTION fn_mask_matric(pr_nrmatric IN crapass.nrmatric%TYPE) RETURN VARCHAR2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_matric'); 
     -- Se ainda não foi buscado
     IF vr_des_mask_matric IS NULL THEN
       vr_des_mask_matric := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_MATRICULA'), 'zzzzz-zz9');
@@ -551,6 +579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar o contrato */
   FUNCTION fn_mask_contrato(pr_nrcontrato IN crapepr.nrctremp%TYPE) RETURN VARCHAR2 IS
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_contrato'); 
    -- Se ainda não foi buscado
     IF vr_des_mask_contrato IS NULL THEN
       vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'zz.zzz.zz9');
@@ -604,6 +634,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_qvalor         VARCHAR2(1);
 
     BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_numerico'); 
       -- Se o parametro for enviado sozinho retorna false.
       IF pr_vlrteste IS NULL THEN
         vr_ctrteste := FALSE;
@@ -647,6 +679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_pos    NUMBER;
       vr_string VARCHAR2(4000):= pr_dstext;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_busca_entrada'); 
       --Se o valor desejado for o 1º parametro
       IF pr_postext = 1 THEN
         --Encontrar a posição do delimitador na string
@@ -707,6 +741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_idx      NUMBER;
 
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    -- Retirado pc_set_modulo da procedure fn_quebra_string - Chamado 678813 04/08/2017
     --Se a string estiver nula retorna count = 0 no vetor
     IF nvl(pr_string,'#') = '#' THEN
       RETURN vr_vlret;
@@ -757,6 +793,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_result  VARCHAR2(1) := 'N';
 
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_existe_valor'); 
     -- Quebra a string pelo delimitador informado
     vr_buscar := fn_quebra_string(pr_base, pr_delimite);
     -- Verifica se a quebra resultou em um array válido
@@ -783,6 +821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Guardar a chave atual
       vr_dspalav VARCHAR2(4000);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_verifica_contem'); 
       -- Se existir mais de uma palavra na chave de procura
       IF instr(pr_dsprocu,' ') > 0 THEN
         -- Separar da chave de procura a primeira palavra
@@ -878,6 +918,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_bytes_to_read pls_integer;
       vr_read_sofar    pls_integer := 0;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_arq_para_blob'); 
       -- Criar um LOB para armazenar o arquivo
       DBMS_LOB.CREATETEMPORARY(vr_blob, TRUE);
       -- Abrir o arquivo local e escrevê-lo ao Blob
@@ -925,6 +967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- CLOB para saida
     vr_clob CLOB;
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_arq_para_clob'); 
     vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);
     RETURN vr_clob;
   END fn_arq_para_clob;
@@ -957,6 +1001,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_bytes_total   NUMBER := 32767;
       vr_raw_readed    RAW(32767);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_blob_para_arquivo'); 
       -- Abrir o arquivo local para escrita dos bytes
       vr_output_file := utl_file.fopen(pr_caminho,pr_arquivo,'WB',32767);
       -- Guardar o tamanho do Blob
@@ -992,6 +1038,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_caminho||'/'||pr_arquivo);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL);     
         pr_des_erro := 'GENE0002.pc_blob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_blob_para_arquivo;
@@ -1028,6 +1076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_comando    VARCHAR2(32767);
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_clob_para_arquivo'); 
       -- Nome do arquivo
       vr_nom_arquiv := pr_arquivo;
 
@@ -1078,6 +1128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       WHEN vr_exc_erro THEN
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_clob_para_arquivo;
@@ -1127,6 +1179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
 
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_efetua_copia_pdf'); 
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
     FETCH cr_crapcop
@@ -1182,6 +1236,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                            ,pr_dscritic => vr_dsc_erro
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
       -- Retornando a critica para o programa chamdador
       vr_cod_erro := 0;
       vr_dsc_erro := 'Erro na rotina GENE0002.pc_efetua_copia_pdf. '||sqlerrm;
@@ -1238,6 +1294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
 
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_efetua_copia_arq_ib'); 
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
     FETCH cr_crapcop
@@ -1278,6 +1336,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     WHEN vr_exc_saida THEN
       pr_des_erro := vr_dsc_erro;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
       -- Retornando a critica para o programa chamdador
       pr_des_erro := 'Erro na rotina GENE0002.pc_efetua_copia_pdf_ib. '||sqlerrm;
   END pc_efetua_copia_arq_ib;
@@ -1334,6 +1394,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_dthora_inic  DATE;
     vr_dthora_fim   DATE;
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_publicar_arq_intranet'); 
     
     vr_cdcooper := 1;
     vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
@@ -1469,17 +1531,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         WHEN vr_exc_erro THEN
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                      pr_ind_tipo_log => 2, --> erro tratado
-                                     pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                        ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                     pr_nmarqlog     => vr_nmarqlog);
+                                     pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                        ' - ' || vr_cdprogra || ' --> ' || 
+                                                        'ERRO: ' || '1 - pc_publicar_arq_intranet ' || vr_dscritic,
+                                     pr_nmarqlog     => vr_nmarqlog,
+                                     pr_cdprograma   => vr_cdprogra);
 
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper); 
           vr_dscritic := 'Erro ao enviar arquivo de controle para intranet: '||SQLERRM;
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                      pr_ind_tipo_log => 2, --> erro tratado
-                                     pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                        ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                     pr_nmarqlog     => vr_nmarqlog);
+                                     pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                        ' - ' || vr_cdprogra || ' --> ' || 
+                                                        'ERRO: ' || '2 - pc_publicar_arq_intranet ' || vr_dscritic,
+                                     pr_nmarqlog     => vr_nmarqlog,
+                                     pr_cdprograma   => vr_cdprogra);
       END; 
     END LOOP; --> Fim loop coop
     
@@ -1489,18 +1557,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     WHEN vr_exc_erro THEN
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                  pr_ind_tipo_log => 2, --> erro tratado
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                 pr_nmarqlog     => vr_nmarqlog);
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || vr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || '3 - pc_publicar_arq_intranet ' || vr_dscritic,
+                                 pr_nmarqlog     => vr_nmarqlog,
+                                 pr_cdprograma   => vr_cdprogra);
 
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper); 
       vr_dscritic := 'Erro ao enviar arquivo de controle para intranet: '||SQLERRM;
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                                  pr_ind_tipo_log => 2, --> erro tratado
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
-                                 pr_nmarqlog     => vr_nmarqlog);
-
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || vr_cdprogra || ' --> ' || 
+                                                    'ERRO: ' || '4 - pc_publicar_arq_intranet ' || vr_dscritic,
+                                 pr_nmarqlog     => vr_nmarqlog,
+                                 pr_cdprograma   => vr_cdprogra);
 
   END pc_publicar_arq_intranet;
 
@@ -1531,6 +1604,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
 
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_gera_pdf_impressao'); 
 
     /** Retirar caracteres especiais para impressoras matriciais **/
     vr_script := 'cat '||pr_nmarqimp||' | '||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_CONVERTEPCL')||
@@ -1592,6 +1667,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       pr_des_erro := 'GENE0002.pc_gera_pdf_impressao --> '||vr_des_erro;
 
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
       -- Retornar erro
       pr_des_erro := 'GENE0002.pc_gera_pdf_impressao --> '||sqlerrm;
   END pc_gera_pdf_impressao;
@@ -1665,6 +1742,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Flag para indicar se houve cópia do arquivo origem para o diretório /usr/coop/<nmrescop>/rl
       vr_flg_copiou  boolean := false;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_cria_PDF'); 
       -- Buscar dsdircop
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop
@@ -1777,14 +1856,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Enviar ao Log também
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratado
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||pr_des_erro);
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || 'GENE0002' || ' --> ' || 
+                                                    'ERRO: ' || '1 - PC_CRIA_PDF ' || pr_des_erro
+                                  ,pr_nmarqlog     => NULL
+                                  ,pr_cdprograma   => 'GENE0002');
+
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         -- Retornar erro
         pr_des_erro := 'GENE0002.pc_cria_pdf --> Erro não tratado a gerar o arquivo origem: "'||pr_nmorigem||'". Erro: '||sqlerrm;
         -- Enviar ao Log também
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 3 -- Erro crítico
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||pr_des_erro);
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || 'GENE0002' || ' --> ' || 
+                                                    'ERRO: ' || '2 - PC_CRIA_PDF ' || pr_des_erro
+                                  ,pr_nmarqlog     => NULL
+                                  ,pr_cdprograma   => 'GENE0002');
     END;
   END pc_cria_PDF;
 
@@ -1814,6 +1904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_typsaida   VARCHAR2(100);
     
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_Juntar_Pdf'); 
    
     IF pr_dsdirarq IS NULL THEN
       vr_dscritic := 'Diretorio dos arquivos PDFs não informado.';
@@ -1857,6 +1949,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => NULL); 
       pr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||SQLERRM;
   END pc_Juntar_Pdf;
   
@@ -1903,6 +1997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dsdestin VARCHAR2(4000);
       vr_dsorigem VARCHAR2(4000);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_zipcecred'); 
 
       -- Montar comando Perl compactação ZIP
       vr_script := vr_script||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_ZIPCECRED');
@@ -1969,28 +2065,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  ,pr_des_saida   => vr_des_erro);
       -- Testar erro
       IF vr_typ_said = 'ERR' THEN
+        -- Retornar no erro
+        pr_des_erro := 'GENE0002.pc_cria_ZIP --> Erro ao zippar o(s) arquivos:"'||
+                       pr_dsorigem||'" para: "'||vr_dsdestin||'". Erro> '|| vr_des_erro;
         -- O comando shell executou com erro, gerar log e sair do processo
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 3 -- Erro crítico
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0002.pc_cria_ZIP --> Erro ao zippar o(s) arquivos:"'||pr_dsorigem||'" para: "'||vr_dsdestin||'". Erro> '|| vr_des_erro);
-        -- Retornar no erro
-        pr_des_erro := 'GENE0002.pc_cria_ZIP --> Erro ao zippar o(s) arquivos:"'||pr_dsorigem||'" para: "'||vr_dsdestin||'". Erro> '|| vr_des_erro;
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                              ' - ' || 'GENE0002' || ' --> ' || 
+                                                              'ERRO: ' || 'pc_cria_ZIP ao zippar o(s) arquivos:"'||
+                                                              pr_dsorigem||'" para: "'||vr_dsdestin||
+                                                              '" - '|| vr_des_erro
+                                  ,pr_nmarqlog     => NULL
+                                  ,pr_cdprograma   => 'GENE0002');
       ELSIF pr_tpfuncao = 'A' THEN -- Verifica apenas se a função for de criação do ZIP
         -- Testa se o arquivo não foi criado com sucesso
         IF NOT gene0001.fn_exis_arquivo(vr_dsdestin) THEN
           -- Gerar LOG avisando que o arquivo não foi criado
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 3 -- Erro crítico
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0002.pc_cria_ZIP --> Não gerou arquivo "'||vr_dsdestin||'" do(s) arquivos: "'||pr_dsorigem||'"');
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                                ' - ' || 'GENE0002' || ' --> ' || 
+                                                                'ERRO: ' || 'pc_cria_ZIP Não gerou arquivo "'||vr_dsdestin||
+                                                                '" do(s) arquivos: "'||pr_dsorigem||'"'
+                                    ,pr_nmarqlog     => NULL
+                                    ,pr_cdprograma   => 'GENE0002');
           -- Retornar no erro
           pr_des_erro := 'GENE0002.pc_cria_ZIP --> Não gerou arquivo "'||vr_dsdestin||'" do(s) arquivos: "'||pr_dsorigem||'"';
         END IF;
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 3 -- Erro crítico
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0002.pc_zipcecred --> Erro não tratado na rotina: '||sqlerrm);
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||
+                                                              ' - ' || 'GENE0002' || ' --> ' || 
+                                                              'ERRO: ' || 'pc_zipcecred - '||sqlerrm
+                                  ,pr_nmarqlog     => NULL
+                                  ,pr_cdprograma   => 'GENE0002');
         -- Retornar no erro
         pr_des_erro := 'GENE0002.pc_zipcecred --> Erro não tratao na rotina: '||sqlerrm;
     END;
@@ -2149,6 +2263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       rw_craptab cr_craptab%ROWTYPE;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_imprim'); 
       -- Testar se o arquivo existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho|| '/' || pr_nmarqimp) THEN
         -- Levantar exceção
@@ -2240,6 +2356,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqtxt);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
           pr_dscritic := 'Problema ao fechar o arquivo <'||vr_dircop_txt||'/'||vr_nmarqtmp||'>: ' || sqlerrm;
           RAISE vr_exc_erro;
@@ -2262,6 +2380,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         pr_cdcritic := Nvl(pr_cdcritic,0);
         pr_dscritic := 'GENE0002.pc_imprim--> '||pr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         pr_cdcritic := 0;
         pr_dscritic := 'GENE0002.pc_imprim --> Erro não tratado ao processar a solicitação. Erro: '||sqlerrm;
     END;
@@ -2290,12 +2410,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Variáveis para tratamento do arquivo
       vr_xML    XMLType;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_XML_para_arquivo');
       -- Efetuar parser para gerar mensagens de erro e validar XML
       vr_xML := XMLType.createXML(pr_XML);
 
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do Clob para arquivo: '||sqlerrm;
     END;
   END pc_XML_para_arquivo;
@@ -2321,6 +2445,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Variáveis para tratamento do arquivo
       vr_dom_doc DBMS_XMLDOM.DOMDocument;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_XML_para_arquivo - 2');
       -- Se o XMLTYpe possui informações
       IF pr_XML IS NOT NULL THEN
         -- Inicializar o processador Dom
@@ -2332,6 +2458,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do XMLType para arquivo: '||sqlerrm;
     END;
   END pc_XML_para_arquivo;
@@ -2365,6 +2493,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_des_diretor VARCHAR2(100);
       vr_des_arquivo VARCHAR2(100);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_gera_log_relato');
       -- Busca o diretório de log da Cooperativa
       vr_des_complet := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => pr_cdcooper
@@ -2389,6 +2519,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,pr_des_log);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
           vr_des_erro := 'Problema ao escrever no arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
           RAISE vr_exc_saida;
@@ -2398,6 +2530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           -- Gerar erro
           vr_des_erro := 'Problema ao fechar o arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
           RAISE vr_exc_saida;
@@ -2407,6 +2541,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Enviar a mensagem de erro ao DMBS_OUTPUT e ignorar o log
         gene0001.pc_print(to_char(sysdate,'hh24:mi:ss')||' - '|| 'GENE0002.pc_gera_log_relato --> '||vr_des_erro);
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         -- Temporariamente apenas imprimir na tela
         gene0001.pc_print(pr_des_mensag => to_char(sysdate,'hh24:mi:ss')||' - '
                                            || 'GENE0002.pc_gera_log_relato'
@@ -2424,7 +2560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 02/08/2016
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2454,6 +2590,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --              08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
     --                           append, para garantir processo.
     --                           SD572620 (Odirlei-AMcom)         
+    --    
+    --              22/06/2017 - Tratamento de erros 
+    --                         - setado modulo
+    --                         - Chamado 660322 - Belli - Envolti         
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2526,7 +2666,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       vr_scriptrl  VARCHAR2(100);
 
+      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
+      vr_acao             VARCHAR2   (100); 
+
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017      
+      vr_acao := 'GENE0002.pc_gera_relato';      
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_acao);    
+        
       -- Busca das informaçoes do relatório solicitado
       OPEN cr_crapslr;
       FETCH cr_crapslr
@@ -2677,6 +2824,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_des_saida);
 
+                    
+        -- 22/06/2017 - Forçado erro - Ch 660322
+        --vr_des_saida := 'NOK --> com.ximpleware.ParseException: Other Error: XML not terminated properly: by Belli ';
+
         -- Testa se a saída da execução acusou erro
         IF length(trim(vr_des_saida)) > 4 THEN
           vr_des_saida := 'Erro na chamada ao Shell: '||vr_des_saida;
@@ -2697,10 +2848,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapslr.cdcooper
                                     ,pr_ind_tipo_log => 2 --> Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss')
-                                                     || ' - '
-                                                     || rw_crapslr.cdprogra
-                                                     || ' --> ' || 'GENE0002.pc_gera_relato--> '|| REPLACE(vr_des_saida,chr(10),''));
+                                    ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss') ||
+                                                                ' - ' || rw_crapslr.cdprogra || ' --> ' ||
+                                                                'ERRO: ' || ' 1 - GENE0002 pc_gera_relato '|| 
+                                                                 REPLACE(vr_des_saida,chr(10),'')
+                                    ,pr_cdprograma   => rw_crapslr.cdprogra);
 
         END IF;
         -- Se foi solicitado o append
@@ -2779,6 +2931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       WHEN vr_exc_erro THEN
         pr_des_erro := 'GENE0002.pc_gera_relato--> '||vr_des_saida;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pr_des_erro := 'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação. Erro: '||sqlerrm;
     END;
   END pc_gera_relato;
@@ -2950,6 +3104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_qtd_bytes NUMBER;
       
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_process_relato_penden');
       
       -- Efetuar laço para processar a quantidade maxima de relatórios
       LOOP
@@ -3313,6 +3469,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END LOOP;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         -- Gerar Log
         pc_gera_log_relato(0,to_char(sysdate,'hh24:mi:ss')||' --> Erro não tratado ao processar relatórios pendentes --> '|| sqlerrm);
     END;
@@ -3373,7 +3531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/09/2015
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3413,6 +3571,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               02/08/2016 - Inclusao do paramtro pr_nrvergrl, para permitir informar em qual versao da rotina
     --                            java de geração de relatorio deve ser gerado.
     --                            PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
+    --    
+    --               22/06/2017 - Tratamento de erros 
+    --                          - setado modulo
+    --                          - Chamado 660322 - Belli - Envolti
+    --
     -- ............................................................................. */
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -3462,8 +3625,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dsextmail crapslr.dsextmail%TYPE;
       vr_dsextcop  crapslr.dsextcop%TYPE;
 
+      -- Tratamento de erros - 22/06/2017 - Chamado 660322
+      vr_exc_saida        EXCEPTION;
+     
+      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
+      vr_acao             VARCHAR2   (100); 
+
     BEGIN
       -- Criação de bloco para tratar todos os possíveis problemas na solicitação
+      
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017      
+      vr_acao := 'GENE0002.pc_solicita_relato';      
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
+      
       BEGIN
         -- Busca do indicador do processo no calendário
         OPEN cr_crapdat;
@@ -3656,6 +3830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                   RETURNING nrseqsol INTO vr_nrseqsol;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           vr_dserrger := 'Solicitação do Relatorio '||pr_dsarqsaid||' com erro ao inserir. Motivo: '|| sqlerrm;
       END;
       -- Se foi solicitado o envio na hora e não houve erro na solicitação
@@ -3663,6 +3839,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Chamar o processamento de solicitações pendentes passando-a
         pc_process_relato_penden(pr_nrseqsol => vr_nrseqsol
                                 ,pr_des_erro => vr_dserrger);
+                             
+       -- Em caso de erro vai retornar a mensagem - 22/06/2017 - Chamado 660322 - Envolti  
+              
+       if pr_cdprogra = 'BCAIXA' then
+         if vr_dserrger is not null then
+           RAISE vr_exc_saida; 
+         end if;
+       end if;
+       --
+        
       END IF;
 
       -- Se não saimos pela exceção acima e houve erro
@@ -3672,23 +3858,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           -- Enviar ao LOG Batch
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 --> Erro tratato
-                                    ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss')
-                                                     || ' - '
-                                                     || pr_cdprogra
-                                                     || ' --> ' || vr_dserrger);
+                                    ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss') ||
+                                                                ' - ' || pr_cdprogra || ' --> ' ||
+                                                                'ERRO : ' || 
+                                                                '2 - GENE0002 pc_solicita_relato ' || 
+                                                                vr_dserrger
+                                    ,pr_nmarqlog     => NULL
+                                    ,pr_cdprograma   => pr_cdprogra);
         ELSE
+                             
+          -- Em caso diferente da tela bcaixa continua gerando registro de critica 
+          -- 22/06/2017 - Chamado 660322 - Envolti                  
+          if pr_cdprogra <> 'BCAIXA' then
+            
           -- Escrever No LOG proc_message
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 --> Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss')
-                                                     || ' - '
-                                                     || pr_cdprogra
-                                                     || ' --> ' || vr_dserrger);
+                                      ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss') ||
+                                                                  ' - ' || pr_cdprogra  || ' --> ' ||
+                                                                  'ERRO : ' || 
+                                                                  '3 - GENE0002 pc_solicita_relato ' || 
+                                                                  vr_dserrger
+                                      ,pr_cdprograma   => pr_cdprogra);
+          End if;
         END IF;
       END IF;
     EXCEPTION
+      -- Rotina de geracao de erro - Chamado 660322 - Envolti
+      WHEN vr_exc_saida THEN
+        
+        pr_des_erro := vr_dserrger; 
+        
       WHEN OTHERS THEN -- Gerar log de erro
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         -- Retornar o erro contido na sqlerrm
         pr_des_erro := 'GENE0002.pc_solicita_relato --> ' || sqlerrm;
     END;
@@ -3793,6 +3997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dsextmail crapslr.dsextmail%TYPE;
       vr_dsextcop  crapslr.dsextcop%TYPE;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_solicita_relato_arquivo');
       -- Criação de bloco para tratar todos os possíveis problemas na solicitação
       BEGIN
         -- Busca do indicador do processo no calendário
@@ -3953,6 +4159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                   RETURNING nrseqsol INTO vr_nrseqsol;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           vr_dserrger := 'Solicitação do Relatorio '||pr_dsarqsaid||' com erro ao inserir. Motivo: '|| sqlerrm;
       END;
       -- Se foi solicitado o envio na hora e não houve erro na solicitação
@@ -3966,13 +4174,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Enviar ao LOG Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 --> Erro tratato
-                                  ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss')
-                                                   || ' - '
-                                                   || pr_cdprogra
-                                                   || ' --> ' || vr_dserrger);
+                                  ,pr_des_log      => to_char(sysdate, 'hh24:mi:ss') ||
+                                                              ' - '  || pr_cdprogra || ' --> ' || 
+                                                              'ERRO: ' || 
+                                                              '1 - GENE0002 pc_solicita_relato_arquivo ' || 
+                                                              vr_dserrger
+                                  ,pr_nmarqlog     => NULL
+                                  ,pr_cdprograma   => pr_cdprogra);
       END IF;
     EXCEPTION
       WHEN OTHERS THEN -- Gerar log de erro
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         -- Retornar o erro contido na sqlerrm
         pr_des_erro := 'GENE0002.pc_solicita_relato --> ' || sqlerrm;
     END;
@@ -4038,6 +4251,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Erro no envio
       vr_dserro varchar2(4000);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_aviso_erros_procrel');
       -- Se tiver sido alcançando o horário para alertas
       IF vr_hhalerta IS NOT NULL AND to_char(sysdate,'hh24:mi') >= vr_hhalerta THEN
         -- Agrupar todos os relatórios por cooperativa
@@ -4136,6 +4351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         -- Gerar log
         pc_gera_log_relato(pr_cdcooper => 1
                           ,pr_des_log  => to_char(SYSDATE,'hh24:mi:ss')||' Erro ao processar avisos de relatórios com problema no processo--> '||sqlerrm);
@@ -4255,6 +4472,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END pc_controla_log_batch;     
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_controle_filas_relato');
 
       -- Somente trabalhar com os arquivos de controle na base de produção
       IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
@@ -4294,6 +4513,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
              AND slr.flgerado = 'S';
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+            CECRED.pc_internal_exception (pr_cdcooper => NULL); 
             pc_gera_log_relato(pr_cdcooper => 0
                               ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema ao eliminar os relatórios antigos da fila: '
                                            || rw_crapfil.cdfilrel ||'. Detalhes: '||sqlerrm||'.');
@@ -4409,6 +4630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pc_gera_log_relato(pr_cdcooper => 0
                           ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
     END;
@@ -4426,6 +4649,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  pr_tipsaida in varchar2 default 'M') RETURN varchar2 IS
     vr_nrsegs    integer := pr_nrsegs;
   BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_converte_time_data');
     -- Reduz a quantidade de segundos para apenas 1 dia
     while vr_nrsegs >= 86400 loop
       vr_nrsegs := vr_nrsegs - 86400;
@@ -4480,6 +4705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Guardar o ultimo separador encontrado
       vr_dsultsep VARCHAR2(1);
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_char_para_number');
       -- Se a tabela de dados estiver vazia vai carregar
       IF vr_nlspar.count = 0 THEN
         FOR rw_sep IN cr_sep LOOP
@@ -4525,6 +4752,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       RETURN to_number(vr_dsnumtex, 'FM999999999999999999999999999d9999999999', 'NLS_NUMERIC_CHARACTERS='''||vr_nlspar(1).dssepdec||vr_nlspar(1).dssepmil||'');
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         RETURN NULL;
     END;
   END fn_char_para_number;
@@ -4601,6 +4830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END pc_xml_tag;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_clob_buffer');
       -- Verifica se é gravação final
       IF NOT pr_gravfim THEN
         -- Valida o tamanho do buffer para gravação
@@ -4658,6 +4889,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     end;
     --
   begin
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_escreve_xml');
     -- Concatena o novo texto
     pc_concatena(pr_xml, pr_texto_completo, pr_texto_novo);
     -- Se for o último texto do arquivo, inclui no CLOB
@@ -4734,6 +4967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       rw_craprel cr_craprel%ROWTYPE;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_gera_arquivo_intranet');
       -- Consultar dados da cooperativa
       OPEN cr_crapcop(pr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
@@ -4874,6 +5109,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       WHEN vr_exc_erro THEN
         pr_des_erro := 'Erro em GENE0002.pc_gera_arquivo_intranet: ' || pr_des_erro;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         pr_des_erro := 'Erro em GENE0002.pc_gera_arquivo_intranet: ' || SQLERRM;
     END;
   END pc_gera_arquivo_intranet;
@@ -4986,6 +5223,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_tipsplit gene0002.typ_split;
 
       BEGIN
+	      -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_envia_arquivo_web');
         --Limpar parametros erro
         pr_des_reto:= 'OK';
 
@@ -5077,6 +5316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -5144,6 +5385,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_buffer    PLS_INTEGER := 32767;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_arquivo_para_xml');
 
       /* Verificar se o arquivo existe */
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => pr_nmarquiv) THEN
@@ -5208,6 +5451,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               --Sair do LOOP
               EXIT;
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+              CECRED.pc_internal_exception (pr_cdcooper => NULL); 
               --Erro no processamento
               vr_dscritic:= 'Erro ao processar arquivo '||pr_nmarquiv||' - '||SQLERRM;
 
@@ -5266,6 +5511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+          CECRED.pc_internal_exception (pr_cdcooper => NULL); 
           vr_dscritic:= 'Resposta invalida (XML).'||' - '||SQLERRM;
 
           --Fechar Clob e Liberar Memoria
@@ -5282,6 +5529,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         pr_des_reto:= 'NOK';
         pr_dscritic:= 'Erro na gene0002.pc_arquivo_para_xml. '||vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         pr_des_reto:= 'NOK';
         pr_dscritic:= 'Erro na gene0002.pc_arquivo_para_xml. '||sqlerrm;
     END;
@@ -5331,6 +5580,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_abreviar_string');
 
       --Nome Abreviado
       vr_nmabrevi:= TRIM(pr_nmdentra);
@@ -5476,6 +5727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       WHEN vr_exc_erro THEN
         return(vr_nmabrevi);
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
         return(vr_nmabrevi);
     END;
   END fn_abreviar_string;
@@ -5516,6 +5769,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_centraliza_texto');
 
       --Retirar espacos da string
       vr_texto:= TRIM(pr_dstexto);
@@ -5581,6 +5836,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_numero    NUMBER;
     
   BEGIN
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_valor_extenso');
   
     valor_conv := to_char(trunc((abs(pr_valor) * 100), 0), '0999999999999999999');
     valor_conv := substr(valor_conv, 1, 18) || '0' || substr(valor_conv, 19, 2);
@@ -5798,6 +6055,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     RETURN(rtrim(valor_string));
   EXCEPTION
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => NULL); 
       RETURN('*** VALOR INVALIDO ***');
   END;
 
