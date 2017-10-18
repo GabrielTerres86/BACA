@@ -1333,7 +1333,7 @@ PROCEDURE paga_convenio:
                         , INPUT par_cdagetfn /* Codigo Agencia transacao */
                         , INPUT par_nrterfin /* Numero terminal financeiro */
                         , INPUT par_nrcpfope /* Numero cpf operador */
-                        , INPUT 0, /* flgmobile */
+                        , INPUT 0 /* flgmobile */
                         ,OUTPUT ""   /* Descricao transacao */
                         ,OUTPUT ""   /* Descricao Protocolo */
                         ,OUTPUT ""   /* Codigo Banco Centralizador*/
