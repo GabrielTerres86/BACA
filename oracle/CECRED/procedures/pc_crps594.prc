@@ -187,6 +187,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                 retirada raise em algumas situações, cfe Cechet, inclusão parâmetros msgs insert
                                 e update.
                                 (Ana - Envolti - Chamado 743443)
+
+                   18/10/2017 - Alteração em relação ao padrão pc_set_modulo:
+                              - Setar o parâmetro pr_module = CRPS594.nome_procedures e pr_action = NULL
+                                (Ana - Envolti - Chamado 743443)
     ............................................................................ */
 
     DECLARE
@@ -847,9 +851,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         DECLARE
           vr_dtdiautil DATE;
         BEGIN
-
           -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
-          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_verifica_vencimento_titulo');
+          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_verifica_vencimento_titulo', pr_action => NULL);
 
           --Inicializar Variaveis Erro
           pr_cdcritic:= NULL;
@@ -890,7 +893,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic:= 0;
-            pr_dscritic:= 'Erro na rotina pc_verifica_vencimento_titulo. '||sqlerrm;
+            pr_dscritic:= 'Erro na rotina pc_verifica_vencimento_titulo: '||sqlerrm;
 
             --Inclusão na tabela de erros Oracle - Chamado 743443
             CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -908,7 +911,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
   
       BEGIN           
         -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_busca_nome_arquivos');
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_busca_nome_arquivos', pr_action => NULL);
 
         -- Ler parametros do cadastro de cobranca
         FOR rw_crapcco IN cr_crapcco_nome(pr_cdcooper => pr_cdcooper,
@@ -948,7 +951,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
       EXCEPTION  
         WHEN OTHERS THEN
           vr_nrsequen := NVL(vr_nrsequen,0) + 1;
-          vr_dscritic := 'Erro na pc_busca_nome_arquivos: '||SQLErrm;
+          vr_dscritic := 'Erro na rotina pc_busca_nome_arquivos: '||SQLErrm;
 
           --Inclusão na tabela de erros Oracle - Chamado 743443
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -1025,7 +1028,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
           vr_exc_erro   EXCEPTION;
         BEGIN
           -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_cria_rejeitados');
+          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_cria_rejeitados', pr_action => NULL);
 
           -- Se o codigo da critica for nulo e a descri¿¿o do historico n¿o
           IF nvl(pr_cdcritic,0) = 0 AND trim(pr_dshistor) is not null THEN
@@ -1064,7 +1067,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
               END IF;
               --Fechar Cursor      
               CLOSE cr_crapmot;
-              
+
               -- inserindo na tabela de rejei¿¿o
               BEGIN
                 -- Sequencial para formar a chave da temp-table
@@ -1162,7 +1165,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
               EXCEPTION
                 WHEN OTHERS THEN
                   -- gera critica e aborta a execucao do programa
-                  pr_dscritic := 'Erro ao inserir na tabela craprej na rotina pc_cria_rejeitados. '||SQLERRM;
+                  pr_dscritic := 'Erro ao inserir na tabela craprej na rotina pc_cria_rejeitados: '||SQLERRM;
                   -- retorna para o programa chamador da rotina
                   RAISE vr_exc_erro;
               END;
@@ -1266,7 +1269,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             EXCEPTION
               WHEN OTHERS THEN
                 -- gera critica e aborta a execucao do programa
-                pr_dscritic := 'Erro ao inserir na tabela craprej na rotina pc_cria_rejeitados. '||SQLERRM;
+                pr_dscritic := 'Erro ao inserir na tabela craprej na rotina pc_cria_rejeitados: '||SQLERRM;
                 -- retorna para o programa chamador da rotina
                 RAISE vr_exc_erro;
             END; 
@@ -1277,7 +1280,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         END;
       EXCEPTION
         WHEN OTHERS THEN
-          pr_dscritic := 'Erro no procedimento pc_cria_rejeitados: '||SQLErrm;  
+          pr_dscritic := 'Erro na rotina pc_cria_rejeitados: '||SQLErrm;  
 
           --Inclusão na tabela de erros Oracle - Chamado 743443
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -1365,10 +1368,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         vr_dstitdsc VARCHAR2(100);
        
       BEGIN
-
         -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_cria_relatorio_594');
-         
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_cria_relatorio_594', pr_action => NULL);
+       
         -- localizar index da temptable, existe apenas um registro por vez
         vr_index_reg:= pr_tab_regimp.first;
 
@@ -1487,7 +1489,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
       EXCEPTION
          WHEN OTHERS THEN
            pr_cdcritic:= 0;
-           pr_dscritic:= 'Erro na rotina pc_crps594.pc_cria_relatorio_594 '||sqlerrm;  
+           pr_dscritic:= 'Erro na rotina pc_cria_relatorio_594: '||sqlerrm;  
+
+           --Inclusão na tabela de erros Oracle - Chamado 743443
+           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+
            --Levantar Excecao
            RAISE vr_exc_saida;
       END pc_cria_relatorio_594;                               
@@ -1614,9 +1620,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         vr_cdocorr_carga INTEGER;
         
       BEGIN
-
         -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_processa_arq_compensacao', pr_action => NULL);
 
         -- Inicializar retorno erro
         pr_cdcritic:= NULL;
@@ -1667,9 +1672,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
               vr_cdremret  := gene0002.fn_char_para_number(SUBSTR(vr_setlinha,143,1));
               vr_nrremret  := gene0002.fn_char_para_number(SUBSTR(vr_setlinha,158,6));
 
-              -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-              GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
-              
               /* Verifica se o arquivo = Retorno (2) */
               IF vr_cdremret <> 2 THEN
                 /* Arquivo nao eh do tipo retorno */
@@ -1861,8 +1863,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                     vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
                     vr_dscritic := vr_dscritic||'Trailler: 4a posição:'||SUBSTR(vr_setlinha,4,5)
                                    ||', Lote:'||to_char(vr_loteserv)||', Arq:'||vr_nmarquiv;
-                    -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
 
                     --Incrementar Sequencia                   
                     vr_nrsequen := NVL(vr_nrsequen,0)+ 1;                  
@@ -1895,8 +1895,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                      ||' Convenio:'||vr_nrconven||', Convenio Arq:'||SUBSTR(vr_setlinha,34,9)
                                      ||', Lote:'||to_char(vr_loteserv)||', Arq:'||vr_nmarquiv;
 
-                      -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                       --Incrementar Sequencia                   
                       vr_nrsequen := NVL(vr_nrsequen,0)+ 1;                  
                       GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
@@ -1918,8 +1916,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                      ||' Conta:'||vr_nrdctabb||', Conta Arq:'||SUBSTR(REPLACE(vr_setlinha,'X','0'),60,13)
                                      ||', Lote:'||to_char(vr_loteserv)||', Arq:'||vr_nmarquiv;
 
-                      -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                       --Incrementar Sequencia                   
                       vr_nrsequen := NVL(vr_nrsequen,0)+ 1;                  
                       GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
@@ -1984,8 +1980,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                    ||', Banco:'||vr_cdbancbb||', Banco Arq:'||SUBSTR(vr_setlinha,1,3)
                                    ||', Arq:'||vr_nmarquiv;
 
-                    -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                     vr_nrsequen := nvl(vr_nrsequen,0) + 1;
                     GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => pr_cdagenci,
@@ -2133,8 +2127,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                    ||', Banco:'||vr_cdbancbb||', Banco Arq:'||gene0002.fn_char_para_number(SUBSTR(vr_setlinha,1,3))
                                    ||', Arq:'||vr_nmarquiv;
 
-                    -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                     vr_nrsequen := nvl(vr_nrsequen,0) + 1;
                     GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => pr_cdagenci,
@@ -2183,8 +2175,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                    ||', Banco:'||vr_cdbancbb||', Banco Arq:'||gene0002.fn_char_para_number(SUBSTR(vr_setlinha,1,3))
                                    ||', Arq:'||vr_nmarquiv;
 
-                    -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                     vr_nrsequen := nvl(vr_nrsequen,0) + 1;
                     GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => pr_cdagenci,
@@ -2216,9 +2206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                     --Levantar Excecao
                     RAISE vr_exc_erro;
                   END IF;
-                  -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_processa_arq_compensacao');
-                                               
+
                 ELSIF  SUBSTR(vr_setlinha,8,1) = '5' THEN    /* Trailer  Lote */
                   
                   --Incrementar Contador Arquivo
@@ -2234,8 +2222,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                    ||', Banco:'||vr_cdbancbb||', Banco Arq:'||gene0002.fn_char_para_number(SUBSTR(vr_setlinha,1,3))
                                    ||', Arq:'||vr_nmarquiv;
                     
-                    -- Inclusão do módulo e ao logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_processa_arq_compensacao');
                     vr_nrsequen := nvl(vr_nrsequen,0) + 1;
                     GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => pr_cdagenci,
@@ -2377,7 +2363,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         WHEN OTHERS THEN
           --Montar mensagem
           pr_cdcritic:= 0;
-          pr_dscritic:= 'Erro ao processar a rotina pc_processa_arq_compensacao. '||sqlerrm;            
+          pr_dscritic:= 'Erro na rotina pc_processa_arq_compensacao: '||sqlerrm;            
 
           --Inclusão na tabela de erros Oracle - Chamado 743443
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2563,9 +2549,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         vr_tab_regimp_rel      typ_tab_regimp;
         
       BEGIN
-
         -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
         
         --Inicializar retorno
         pr_des_erro:= 'OK';
@@ -2772,7 +2757,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                               ,pr_qtregrej    => vr_qtregrej
                                               ,pr_vlregrej    => vr_vlregrej
                                               ,pr_dscritic    => vr_dscritic);
-
                           -- Tratando a critica
                           IF trim(vr_dscritic) IS NOT NULL THEN
                             -- Padronização de logs - Chamado 743443 - 02/10/2017
@@ -2781,8 +2765,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                         pr_dscritic   =>  vr_dscritic,
                                         pr_tpocorrencia => 2);  --Erro Tratado
                           END IF;
+
                           -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
+                          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
                         END IF;
                         
                         /* Assume como padrao pessoa juridica*/
@@ -2843,8 +2828,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                           vr_dscritic := ' '; 
                           pr_tab_erro.delete; 
                         END IF; --Fim trim(pr_dscritic) IS NOT NULL      
-                        -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
                         
                         IF pr_tab_regimp(vr_index_reg).cdocorre IN (6,17) THEN
                           vr_cdtarhis := vr_cdhistor;
@@ -2948,7 +2931,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                             ,pr_qtregrej    => vr_qtregrej
                                             ,pr_vlregrej    => vr_vlregrej
                                             ,pr_dscritic    => vr_dscritic);
-
                         -- Tratando a critica
                         IF trim(vr_dscritic) IS NOT NULL THEN
                             -- Padronização de logs - Chamado 743443 - 02/10/2017
@@ -2960,6 +2942,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
                         -- Proximo registro
                         RAISE vr_exc_prox_det;
+                        -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
+
                       ELSE
                         --Fechar Cursor
                         CLOSE cr_crapcob;  
@@ -2971,9 +2956,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                       ELSE
                         vr_cdocorre := pr_tab_regimp(vr_index_reg).cdocorre;   
                       END IF;  
-
-                      -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
 
                       /* Titulo Existe - Efetuar processamento */
                       CASE vr_cdocorre
@@ -2993,7 +2975,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                      ,pr_ret_nrremret => vr_nrretcoo                            -- Numero Remessa Retorno Cooperado
                                                      ,pr_cdcritic     => vr_cdcritic                            -- Codigo da critica
                                                      ,pr_dscritic     => vr_dscritic);                          -- Descricao critica
-
                           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                             -- Buscar a descricao
                             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic,vr_dscritic);
@@ -3024,7 +3005,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                 ,pr_qtregrej    => vr_qtregrej
                                                 ,pr_vlregrej    => vr_vlregrej
                                                 ,pr_dscritic    => vr_dscritic);
-
                               -- Tratando a critica
                               IF trim(vr_dscritic) IS NOT NULL THEN
                                 -- Padronização de logs - Chamado 743443 - 02/10/2017
@@ -3033,6 +3013,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                             pr_dscritic   => vr_dscritic,
                                             pr_tpocorrencia => 2);  --Erro Tratado
                               END IF;
+                              -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                              GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
+
                           END IF;     
                                            
                         WHEN 3 THEN         --Entrada Rejeitada
@@ -3094,6 +3077,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                         pr_dscritic   =>  vr_dscritic,
                                         pr_tpocorrencia => 2);  --Erro Tratado
                           END IF;                    
+                          -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
                       
                         WHEN 6 THEN --Liquidacao
                           
@@ -3110,7 +3095,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                         ,pr_critica_data  => vr_flgvenci            --Critica na validacao
                                                         ,pr_cdcritic      => vr_cdcritic            --Codigo da Critica
                                                         ,pr_dscritic      => vr_dscritic);          --Descricao do erro
-                                              
                           --Se ocorreu erro
                           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                             -- Buscar a descricao
@@ -3121,10 +3105,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                         pr_dscritic   =>  vr_dscritic,
                                         pr_tpocorrencia => 2);  --Erro Tratado
                           END IF;
-
                           -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
-                            
+                          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
+
                           /* calculo de abatimento deve ser antes da aplicacao de juros e multa */
                           IF nvl(vr_vlabatim,0) > 0 THEN
                             vr_vlfatura := nvl(vr_vlfatura,0) - nvl(vr_vlabatim,0);
@@ -3200,9 +3183,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                           pr_dscritic   =>  vr_dscritic,
                                           pr_tpocorrencia => 2);  --Erro Tratado
                             END IF;  
+                            -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                            GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
+
                           END IF;
-                          -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
                           
                           --Processar liquidacao
                           PAGA0001.pc_processa_liquidacao (pr_idtabcob     => rw_crapcob.rowid                        --Rowid da Cobranca
@@ -3229,7 +3213,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                           ,pr_dscritic     => vr_dscritic                             --Descricao Critica
                                                           ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada           --Tabela lancamentos consolidada
                                                           ,pr_tab_descontar       => vr_tab_descontar);               --Tabela de titulos
-
                           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                             -- Buscar a descricao
                             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic,vr_dscritic);
@@ -3508,7 +3491,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                               ,pr_qtregrej    => vr_qtregrej
                                               ,pr_vlregrej    => vr_vlregrej
                                               ,pr_dscritic    => vr_dscritic);
-
                           -- Tratando a critica
                           IF trim(vr_dscritic) IS NOT NULL THEN
                             -- Padronização de logs - Chamado 743443 - 02/10/2017
@@ -3517,6 +3499,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                         pr_dscritic   =>  vr_dscritic,
                                         pr_tpocorrencia => 2);  --Erro Tratado
                           END IF; 
+                          -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
 
                         WHEN 28 THEN    --Debito de Tarifas/Custas
 
@@ -3573,8 +3557,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                           END IF;
 
                       END CASE;      
-                      -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
 
                       /* Havendo retorno de critica, cria rejeitados */
                       IF nvl(vr_cdcritic,0) > 0 or TRIM(vr_dscritic) IS NOT NULL THEN
@@ -3618,12 +3600,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                       pr_dscritic   =>  vr_dscritic,
                                       pr_tpocorrencia => 2);  --Erro Tratado
                         END IF; 
+                        -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
+                        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
                         
                         -- Proximo registro
                         RAISE vr_exc_prox_det;
                       END IF;                    
-                      -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
 
                       --Data Movimento
                       IF pr_nmtelant <> 'COMPEFORA' THEN
@@ -3678,9 +3660,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                       END IF;
                     END IF; -- Fim  NOT vr_flagtco OR tt-regimp.dsorgarq = "MIGRACAO" 
 
-                    -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
-
                     --Se for migracao              
                     IF NOT vr_flagtco OR pr_tab_regimp(vr_index_reg).dsorgarq IN ('MIGRACAO','INCORPORACAO') THEN
                       -- Limpar tem-table de reg para o relatorio
@@ -3717,7 +3696,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                         RAISE vr_exc_erro;
                       END IF;  
                       -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_efetiva_atualiz_compensacao');
+                      GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_efetiva_atualiz_compensacao', pr_action => NULL);
+
                     END IF;
                     
                     /* se for ocorrencia de entrada confirmada 
@@ -3774,8 +3754,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                           IF vr_cdcritic2 IS NOT NULL OR vr_dscritic2 IS NOT NULL THEN
                               NULL;
                           END IF;
-                          -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
                         END IF;
                       END IF;
                     END IF;
@@ -3818,9 +3796,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                             pr_tpocorrencia => 2);  --Erro Tratado
               END IF;
                   
-              -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
-
               /* realiza liquidacao dos titulos descontados (se houver) */
               --Montar indice para acesso a tabela descontar
               vr_index_desc:= vr_tab_descontar.FIRST;
@@ -3863,9 +3838,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                       vr_tab_erro(vr_index_erro):= vr_tab_erro2(idx);
                     END LOOP;
                   END IF;
-
-                  -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_efetiva_atualiz_compensacao');
 
                   --Limpar tabela titulos
                   vr_tab_titulos.DELETE;
@@ -3911,8 +3883,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
               
               --Verificar se Existe tabela Migracao
               vr_index_migracao:= vr_tab_migracao.FIRST;
-
-
 
               -- Varrer contas migradas
               WHILE vr_index_migracao IS NOT NULL LOOP
@@ -4186,14 +4156,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
           END LOOP;                 
         END;  
         --Final com Sucesso
-        pr_des_erro:= 'OK';        
+        pr_des_erro := 'OK';        
       EXCEPTION  
         WHEN vr_exc_erro then
-          pr_des_erro:= 'NOK';
-          pr_dscritic:= vr_dscritic;
+          pr_des_erro := 'NOK';
+          pr_dscritic := vr_dscritic;
         WHEN OTHERS THEN
-          pr_des_erro:= 'NOK';
-          pr_dscritic := 'Erro na pc_efetiva_atualiz_compensacao: '||SQLErrm;
+          pr_des_erro := 'NOK';
+          pr_dscritic := 'Erro na rotina pc_efetiva_atualiz_compensacao: '||SQLErrm;
 
           --Inclusão na tabela de erros Oracle - Chamado 743443
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -4222,17 +4192,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             AND   crapmot.tpocorre = pr_tpocorre /* Mot. do retorno */
             AND   crapmot.cdmotivo = pr_cdmotivo
             ORDER BY crapmot.progress_recid ASC;
-      rw_crapmot cr_crapmot%ROWTYPE;
+          rw_crapmot cr_crapmot%ROWTYPE;
           
           --Variaveis Locais
           vr_indice   INTEGER:= 1;
           vr_dsmotrel VARCHAR2(1000):= NULL;
           vr_dsfinal  VARCHAR2(1000):= NULL;
           vr_cdmotivo crapmot.cdmotivo%TYPE;
-        BEGIN
 
+        BEGIN
           -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'fn_busca_lista_motivo');
+          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.fn_busca_lista_motivo', pr_action => NULL);
 
           --Percorrer a String de motivos
           WHILE vr_indice < LENGTH(TRIM(NVL(pr_dsmotivo,' '))) LOOP
@@ -4268,7 +4238,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
           RETURN(vr_dsfinal); 
         EXCEPTION    
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro na fn_busca_lista_motivo: '||SQLErrm;
+            vr_dscritic := 'Erro na rotina fn_busca_lista_motivo: '||SQLErrm;
+
+            --Inclusão na tabela de erros Oracle - Chamado 743443
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+
             RAISE vr_exc_saida;
         END;    
       END fn_busca_lista_motivo;  
@@ -4319,10 +4293,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_migracao_aux typ_tab_migracao;
           --Excecoes
           vr_exc_erro EXCEPTION;
-        BEGIN
 
+        BEGIN
           -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-          GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_gera_relatorio_594');
+          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_gera_relatorio_594', pr_action => NULL);
 
           --Inicializar Variaveis retorno erro
           pr_cdcritic:= NULL;
@@ -4515,7 +4489,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                     ,pr_dsmotivo => pr_tab_rel_analitico(vr_index_analit).dsmotivo);
 
                 -- Inclusão do módulo e ação logado - Chamado 743443 - 02/10/2017
-                GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_gera_relatorio_594');
+                GENE0001.pc_set_modulo(pr_module => 'PC_CRPS594.pc_gera_relatorio_594', pr_action => NULL);
 
                 --Colocar as descricoes na tabela de memoria
                 vr_tab_motivo:= gene0002.fn_quebra_string(pr_string => vr_dsmotrel); 
@@ -4737,7 +4711,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             END IF;
           WHEN OTHERS THEN
             pr_cdcritic:= 0;
-            pr_dscritic:= 'Erro no procedimento pc_gera_relatorio_594: '||SQLErrm;          
+            pr_dscritic:= 'Erro na rotina pc_gera_relatorio_594: '||SQLErrm;          
 
             --Inclusão na tabela de erros Oracle - Chamado 743443
             CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -4927,7 +4901,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         --Se tabela erros possui informacao
         IF vr_tab_erro.count > 0 THEN
           FOR vr_idx in vr_tab_erro.first..vr_tab_erro.last LOOP
-
             -- Padronização de logs - Chamado 743443 - 02/10/2017
             pc_gera_log(pr_cdcooper   => pr_cdcooper,
                         pr_dstiplog   => 'E',
