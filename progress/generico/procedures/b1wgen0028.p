@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 19/09/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 16/10/2017
     
     Dados referentes ao programa:
 
@@ -518,7 +518,7 @@
 
                 13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
-							 
+
 				19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
 							 solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
 							 onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
@@ -1354,7 +1354,7 @@ PROCEDURE carrega_dados_inclusao:
     FOR EACH crapadc WHERE crapadc.cdcooper = par_cdcooper   AND
                            crapadc.insitadc = 0 NO-LOCK 
                            BY crapadc.cdadmcrd DESCENDING:
-
+/*
         /* Tratamento para nao permitir solicitacao de novos Cartoes BB */
         IF  CAN-DO ("83,85", STRING(crapadc.cdadmcrd))  THEN
             DO:
@@ -1370,7 +1370,7 @@ PROCEDURE carrega_dados_inclusao:
                     par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
                     NEXT.
             END.
-
+*/
         IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN   /* 2-CARTÕES */
             NEXT.
 
