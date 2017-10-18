@@ -52,7 +52,9 @@ BEGIN
             ,crapepr.vlsprojt
             ,crapepr.dtdpagto
             ,crapepr.vlemprst
+            ,crapepr.cdlcremp
             ,crawepr.txmensal
+            ,crawepr.idcarenc
             ,crawepr.cddindex
             ,crappep.nrparepr
             ,crappep.dtvencto
@@ -79,6 +81,27 @@ BEGIN
              crappep.nrctremp,
              crappep.nrparepr;
 
+    -- Busca os dados da carencia
+    CURSOR cr_carencia IS
+      SELECT param.idcarencia,
+             param.qtddias
+        FROM tbepr_posfix_param_carencia param
+       WHERE param.idparametro = 1;
+
+    -- Busca os dados da linha de credito
+    CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE) IS
+      SELECT cdlcremp
+            ,cddindex
+        FROM craplcr
+       WHERE cdcooper = pr_cdcooper;
+
+    -- Buscar a taxa acumulada do CDI
+    CURSOR cr_craptxi(pr_dtiniper IN craptxi.dtiniper%TYPE) IS
+      SELECT cddindex
+            ,vlrdtaxa
+        FROM craptxi
+       WHERE dtiniper = pr_dtiniper;
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Registro para armazenar informacoes do contrato
     TYPE typ_parc_atu IS RECORD (cdcooper crappep.cdcooper%TYPE
@@ -94,16 +117,20 @@ BEGIN
     vr_tab_parc_epr typ_tab_parc_atu;
     vr_tab_parc_pep typ_tab_parc_atu;
     vr_tab_parcelas EMPR0011.typ_tab_parcelas;
+    vr_tab_carencia CADA0001.typ_tab_number;
+    vr_tab_craplcr  CADA0001.typ_tab_number;
+    vr_tab_craptxi  CADA0001.typ_tab_number;
 
     ------------------------------- VARIAVEIS -------------------------------
-    vr_infimsol     PLS_INTEGER;
-    vr_stprogra     PLS_INTEGER;
-    vr_idx_parc_epr PLS_INTEGER;
-    vr_idx_parc_pep PLS_INTEGER;
-    vr_idx_parcelas INTEGER;
-    vr_qtdconta     INTEGER;
-    vr_ultconta     INTEGER;
-    vr_idcontrole   tbgen_batch_controle.idcontrole%TYPE;
+    vr_infimsol        PLS_INTEGER;
+    vr_stprogra        PLS_INTEGER;
+    vr_idx_parc_epr    PLS_INTEGER;
+    vr_idx_parc_pep    PLS_INTEGER;
+    vr_idx_parcelas    INTEGER;
+    vr_qtdconta        INTEGER;
+    vr_ultconta        INTEGER;
+    vr_idcontrole      tbgen_batch_controle.idcontrole%TYPE;
+    vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Grava os dados das parcelas, emprestimo e controle do batch
@@ -197,6 +224,21 @@ BEGIN
     vr_tab_parc_epr.DELETE;
     vr_tab_parc_pep.DELETE;
 
+    -- Carregar tabela de carencia
+    FOR rw_carencia IN cr_carencia LOOP
+      vr_tab_carencia(rw_carencia.idcarencia):= rw_carencia.qtddias;
+    END LOOP;
+
+    -- Carregar tabela de linha de credito
+    FOR rw_craplcr IN cr_craplcr(pr_cdcooper => pr_cdcooper) LOOP
+      vr_tab_craplcr(rw_craplcr.cdlcremp):= rw_craplcr.cddindex;
+    END LOOP;
+
+    -- Carregar tabela de taxa
+    FOR rw_craptxi IN cr_craptxi(pr_dtiniper => pr_dtmvtoan) LOOP
+      vr_tab_craptxi(rw_craptxi.cddindex):= rw_craptxi.vlrdtaxa;
+    END LOOP;
+
     -- Listagem dos contratos e parcelas
     FOR rw_epr_pep IN cr_epr_pep(pr_cdcooper  => pr_cdcooper
                                 ,pr_cdagenci  => pr_cdagenci
@@ -206,6 +248,25 @@ BEGIN
       -- Limpa PL Table
       vr_tab_parcelas.DELETE;
 
+      vr_qtdias_carencia := 0; -- Inicializa
+
+      -- Se for Pos-Fixado e existir carencia
+      IF vr_tab_carencia.EXISTS(rw_epr_pep.idcarenc) THEN
+        vr_qtdias_carencia := vr_tab_carencia(rw_epr_pep.idcarenc);
+      END IF;
+
+      -- Se NAO achou linha de credito
+      IF NOT vr_tab_craplcr.EXISTS(rw_epr_pep.cdlcremp) THEN
+        vr_cdcritic := 363;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se NAO achou taxa
+      IF NOT vr_tab_craptxi.EXISTS(vr_tab_craplcr(rw_epr_pep.cdlcremp)) THEN
+        vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR');
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Chama o calculo da proxima parcela
       EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper => pr_cdcooper, 
                                            pr_flgbatch => TRUE, 
@@ -213,17 +274,16 @@ BEGIN
                                            pr_dtefetiv => rw_epr_pep.dtmvtolt, 
                                            pr_dtdpagto => rw_epr_pep.dtdpagto, 
                                            pr_txmensal => rw_epr_pep.txmensal,
-                                           pr_vlrdtaxa => 7.50,  -- JFF
+                                           pr_vlrdtaxa => vr_tab_craptxi(vr_tab_craplcr(rw_epr_pep.cdlcremp)),
                                            pr_qtpreemp => rw_epr_pep.qtpreemp, 
                                            pr_vlsprojt => rw_epr_pep.vlsprojt, 
                                            pr_vlemprst => rw_epr_pep.vlemprst, 
                                            pr_nrparepr => rw_epr_pep.nrparepr,
                                            pr_dtvencto => rw_epr_pep.dtvencto,
-                                           pr_qtdias_carencia => 0, -- JFF 
+                                           pr_qtdias_carencia => vr_qtdias_carencia,
                                            pr_tab_parcelas => vr_tab_parcelas, 
                                            pr_cdcritic => vr_cdcritic, 
                                            pr_dscritic => vr_dscritic);
-      
       -- Se houve erro
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
