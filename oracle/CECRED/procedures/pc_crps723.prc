@@ -42,6 +42,9 @@ BEGIN
     CURSOR cr_crapepr(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
       SELECT crapepr.nrdconta
             ,crapepr.nrctremp
+            ,crapepr.qtmesdec
+            ,crapepr.dtdpagto
+            ,crapepr.vlsprojt
             ,crapepr.ROWID
         FROM crapepr
         JOIN crawepr
@@ -55,29 +58,52 @@ BEGIN
     -- Buscar parcelas nao liquidadas
     CURSOR cr_crappep(pr_cdcooper IN crappep.cdcooper%TYPE
                      ,pr_nrdconta IN crappep.nrdconta%TYPE
-                     ,pr_nrctremp IN crappep.nrctremp%TYPE) IS
+                     ,pr_nrctremp IN crappep.nrctremp%TYPE
+                     ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS
       SELECT crappep.dtvencto
+            ,crappep.inliquid
+            ,crappep.vlparepr
         FROM crappep
        WHERE crappep.cdcooper = pr_cdcooper
          AND crappep.nrdconta = pr_nrdconta
          AND crappep.nrctremp = pr_nrctremp
-         AND crappep.inliquid = 0;
-    
+         AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan));
+         
+    -- Buscar parcelas nao liquidadas
+    CURSOR cr_total_juros(pr_cdcooper IN crappep.cdcooper%TYPE
+                         ,pr_nrdconta IN crappep.nrdconta%TYPE
+                         ,pr_nrctremp IN crappep.nrctremp%TYPE
+                         ,pr_dtultdma IN crapdat.dtultdma%TYPE
+                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS	
+      SELECT SUM(vllanmto) valor
+        FROM craplem
+       WHERE craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.nrctremp = pr_nrctremp
+         AND craplem.cdhistor IN (2343, 2342, -- Lancamento de Juros Remuneratorio
+                                  2345, 2344) -- Lancamento de Juros de Correcao
+         AND craplem.dtmvtolt BETWEEN pr_dtultdma AND pr_dtmvtolt;
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     TYPE typ_reg_crapepr IS RECORD
-      (dtdpagto crapepr.dtdpagto%TYPE,
-       vr_rowid ROWID);
+      (dtdpagto crapepr.dtdpagto%TYPE
+      ,qtmesdec crapepr.qtmesdec%TYPE
+      ,vlsprojt crapepr.vlsprojt%TYPE       
+      ,vr_rowid ROWID);
     TYPE typ_tab_crapepr IS TABLE OF typ_reg_crapepr INDEX BY PLS_INTEGER;
     vr_tab_crapepr typ_tab_crapepr;   
 
     ------------------------------- VARIAVEIS -------------------------------
-    vr_flgachou BOOLEAN;
-    vr_fldtpgto BOOLEAN;
-    vr_dtdpagto DATE;
-    vr_index    PLS_INTEGER;
+    vr_vlsprojt      crapepr.vlsprojt%TYPE;
+    vr_vltotal_juros NUMBER(25,2);
+    vr_flgachou      BOOLEAN;
+    vr_fldtpgto      BOOLEAN;
+    vr_dtdpagto      crapepr.dtdpagto%TYPE;
+    vr_dtultdma_util DATE;
+    vr_qtmesdec      crapepr.qtmesdec%TYPE;
+    vr_index         PLS_INTEGER;
 
   BEGIN
-
     --------------- VALIDACOES INICIAIS -----------------
 
     -- Incluir nome do módulo logado
@@ -96,6 +122,11 @@ BEGIN
       vr_cdcritic := 1;
       RAISE vr_exc_saida;
     END IF;
+    
+    -- Buscar o ultimo dia util do mês anterior
+    vr_dtultdma_util := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                                    pr_dtmvtolt  => rw_crapdat.dtultdma, --> Data do movimento
+                                                    pr_tipo      => 'A');
 
     -- Validacoes iniciais do programa
     BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
@@ -112,16 +143,40 @@ BEGIN
     FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
       -- Reseta as variaveis
       vr_fldtpgto := FALSE;
+      vr_dtdpagto := rw_crapepr.dtdpagto;
+      vr_qtmesdec := rw_crapepr.qtmesdec;
+      vr_vlsprojt := rw_crapepr.vlsprojt;
 
       -- Leitura das parcelas em aberto
       FOR rw_crappep IN cr_crappep(pr_cdcooper
                                   ,rw_crapepr.nrdconta
-                                  ,rw_crapepr.nrctremp) LOOP
+                                  ,rw_crapepr.nrctremp
+                                  ,rw_crapdat.dtmvtoan) LOOP
         -- Se for primeira vez
-        IF NOT vr_fldtpgto THEN
+        IF NOT vr_fldtpgto AND rw_crappep.inliquid = 0 THEN
           -- Armazena a data de pagamento da primeira parcela
           vr_dtdpagto := rw_crappep.dtvencto;
           vr_fldtpgto := TRUE;
+        END IF;
+        
+        -- Condicao para verificar se a parcela vence hoje
+        IF rw_crappep.dtvencto > rw_crapdat.dtmvtoan AND rw_crappep.dtvencto <= rw_crapdat.dtmvtolt THEN
+          vr_vltotal_juros := 0;
+          -- Incrementa os meses decorridos
+          vr_qtmesdec      := NVL(vr_qtmesdec,0) + 1;
+          -- Vamos atualizar o Saldo Projetado
+          OPEN cr_total_juros(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_crapepr.nrdconta
+                             ,pr_nrctremp => rw_crapepr.nrctremp
+                             ,pr_dtultdma => vr_dtultdma_util
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+          FETCH cr_total_juros
+            INTO vr_vltotal_juros;
+          --Fechar Cursor
+          CLOSE cr_total_juros;
+          
+          -- Saldo Projetado Atualizado
+          vr_vlsprojt := NVL(vr_vlsprojt,0) + NVL(vr_vltotal_juros,0) - rw_crappep.vlparepr;
         END IF;
 
       END LOOP; -- cr_crappep
@@ -129,8 +184,9 @@ BEGIN
       -- Alterar data de pagamento do emprestimo
       vr_index := vr_tab_crapepr.COUNT + 1;
       vr_tab_crapepr(vr_index).dtdpagto := vr_dtdpagto;
+      vr_tab_crapepr(vr_index).qtmesdec := vr_qtmesdec;
+      vr_tab_crapepr(vr_index).vlsprojt := vr_vlsprojt;
       vr_tab_crapepr(vr_index).vr_rowid := rw_crapepr.ROWID;
-
     END LOOP; -- cr_crapepr
   
     -- Atualizar Emprestimo
@@ -138,6 +194,8 @@ BEGIN
       FORALL idx IN INDICES OF vr_tab_crapepr SAVE EXCEPTIONS
         UPDATE crapepr
            SET dtdpagto = vr_tab_crapepr(idx).dtdpagto
+              ,qtmesdec = vr_tab_crapepr(idx).qtmesdec
+              ,vlsprojt = vr_tab_crapepr(idx).vlsprojt
          WHERE ROWID = vr_tab_crapepr(idx).vr_rowid;
     EXCEPTION
       WHEN OTHERS THEN
