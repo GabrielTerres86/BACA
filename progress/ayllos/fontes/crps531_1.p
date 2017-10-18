@@ -210,6 +210,8 @@
 			                da tabela craplfp
 							(Adriano - SD 733103).
 
+			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
+
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -304,7 +306,8 @@ DEF VAR aux_DtHRBC        AS CHAR                                   NO-UNDO.
 DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
 DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
 DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
-DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
+DEF VAR aux_TpCtDebtd     AS CHAR                                   NO-UNDO.
+DEF VAR aux_CNPJNLiqdant  AS CHAR                                   NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -651,7 +654,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_nrctremp      = 0
            aux_tpemprst      = 2
            aux_qtregist      = 0
-           aux_vlsldliq      = 0.
+           aux_vlsldliq      = 0
+           aux_CNPJNLiqdant  = "".
                               
     EMPTY TEMP-TABLE tt-situacao-if.   
 
@@ -749,6 +753,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
         
          "STR0005R2,STR0007R2,STR0008R2,PAG0107R2," +
          "STR0025R2,PAG0121R2," + /* Transferencia Judicial - Andrino */
+         "LTR0005R2," + /* Antecipaçao de Recebíveis - LTR - Mauricio */
          "PAG0108R2,PAG0143R2," +     /* TED */
 
          "STR0037R2,PAG0137R2," +     /* TEC */
@@ -806,6 +811,30 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
             RUN deleta_objetos.
          END.
 		 
+    /* Antecipaçao de Recebíveis - LTR - Mauricio */
+    IF  CAN-DO("LTR0005R2",aux_CodMsg) THEN
+         DO:
+         
+		 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + glb_cdprogra + "' --> '"  +
+                           glb_dscritic + " >> log/proc_batch.log"). 
+
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+            /* Efetuar a chamada a rotina Oracle */
+            RUN STORED-PROCEDURE pc_insere_msg_domicilio
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)  /* Valor Lancamento */
+                                                      ,INPUT aux_CNPJNLiqdant  /* CPNJ Liquidante */
+                                                      ,OUTPUT ?).             /* Retorno do Erro */
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_insere_msg_domicilio
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+            RUN salva_arquivo.
+            RUN deleta_objetos.
+            NEXT.
+         END.
     /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
@@ -3567,6 +3596,10 @@ PROCEDURE trata_dados_transferencia.
        ELSE
        IF  hNameTag:NAME = "DtMovto"  THEN
            ASSIGN aux_DtMovto = aux_descrica.
+       ELSE
+       /* CNPJ Liquidante - antecipaçao de recebíveis - Mauricio*/
+       IF  hNameTag:NAME = "CNPJNLiqdant"  THEN
+           ASSIGN aux_CNPJNLiqdant = aux_descrica.
                    
    END.
 
