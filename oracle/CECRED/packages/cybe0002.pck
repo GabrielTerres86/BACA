@@ -7644,14 +7644,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
+      vr_nomdojob    VARCHAR2(30) := 'JBCYB_CONTROLE_REMESSAS';
   
       -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017
 	    -- Excluida PROCEDURE pc_controla_log_batch interna e incluida como externa - Chamado 719114 - 07/08/2017          
       
       -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
       vr_dstiplog    VARCHAR2(1);
-      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
       vr_flgerlog    BOOLEAN := FALSE;
 
     BEGIN
@@ -8132,7 +8131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
-  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcyb_arquivo_reafor';
+  vr_nomdojob  CONSTANT VARCHAR2(30) := 'JBCYB_ARQUIVO_REAFOR';
   
   -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017  
 
