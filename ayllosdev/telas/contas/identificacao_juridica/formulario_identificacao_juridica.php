@@ -17,8 +17,10 @@
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
  * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
  * 010: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
- * 011: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'idregtrb' (Projeto 410)
- * 012: [06/10/2017] Kelvin 			  : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
+ * 011: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'idregtrb' (Projeto 410)	 
+ * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
+ *                                          Documentos Cadastrais e Documentos de Conta.
+ * 013: [06/10/2017] Kelvin 			  : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
  */
 ?>
 
@@ -127,7 +129,7 @@
 	<? if ( in_array($operacao,array('FA','')) ) { ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina);" />
 		<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('CA');" />
-		<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigdoc(8);return false;"/>
+		<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigidoc();"/>
 	<? } else if ($flgcadas != 'M')  { ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="controlaOperacao('AC');" />
 		<input type="image" id="btSalvar"  src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="controlaOperacao('AV')"  />

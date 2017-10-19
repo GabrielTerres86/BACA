@@ -30,7 +30,10 @@
 				             licença (Tiago/Thiago).
                      
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             nome fantasia para o CDC. (Reinert Prj 289) 		  
+                             nome fantasia para o CDC. (Reinert Prj 289) 
+
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)		                  		  
                  
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
@@ -510,7 +513,8 @@ PROCEDURE grava_dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 10            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = aux_idseqttl 
+                                       crapdoc.idseqttl = aux_idseqttl AND
+                                       crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                     IF NOT AVAILABLE crapdoc THEN
@@ -536,8 +540,8 @@ PROCEDURE grava_dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 10
-                                           crapdoc.idseqttl = aux_idseqttl.
-                                           
+                                           crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc10.
@@ -613,6 +617,7 @@ PROCEDURE grava_dados:
                                           INPUT par_dtmvtolt,
                                           INPUT par_idseqttl,
                                           INPUT par_cdoperad,
+                                          INPUT crapass.nrcpfcgc,
                                           OUTPUT aux_cdcritic).
 
                IF  aux_cdcritic > 0 THEN
@@ -812,6 +817,7 @@ PROCEDURE cria_pendencia_digidoc:
     DEF INPUT PARAM par_dtmvtolt    LIKE    crapdat.dtmvtolt    NO-UNDO.
     DEF INPUT PARAM par_idseqttl    LIKE    crapttl.idseqttl    NO-UNDO.
     DEF INPUT PARAM par_cdoperad    LIKE    crapope.cdoperad    NO-UNDO.
+    DEF INPUT PARAM par_nrcpfcgc    LIKE    crapass.nrcpfcgc    NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic   LIKE    crapcri.cdcritic    NO-UNDO.
 
     DEF VAR aux_contador    AS  INTEGER                     NO-UNDO.
@@ -826,7 +832,8 @@ PROCEDURE cria_pendencia_digidoc:
                    crapdoc.nrdconta = par_nrdconta AND
                    crapdoc.tpdocmto = 40           AND
                    crapdoc.dtmvtolt = par_dtmvtolt AND
-                   crapdoc.idseqttl = par_idseqttl 
+                   crapdoc.idseqttl = par_idseqttl AND
+                   crapdoc.nrcpfcgc = par_nrcpfcgc
                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
         IF  NOT AVAILABLE crapdoc THEN
@@ -853,7 +860,8 @@ PROCEDURE cria_pendencia_digidoc:
                                crapdoc.dtmvtolt = par_dtmvtolt
                                crapdoc.tpdocmto = 40
                                crapdoc.idseqttl = par_idseqttl
-                               crapdoc.cdoperad = par_cdoperad.
+                               crapdoc.cdoperad = par_cdoperad
+                               crapdoc.nrcpfcgc = par_nrcpfcgc.
                         VALIDATE crapdoc.    
                         
                         LEAVE ContadorDoc131.

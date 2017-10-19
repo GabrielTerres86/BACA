@@ -159,6 +159,9 @@
               12/08/2015 - Projeto Reformulacao cadastral
                            Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+              11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                           Projeto 339 - CRM. (Lombardi)		 
+
 .............................................................................*/
 
 /* Handle para a BO */
@@ -676,13 +679,25 @@ PROCEDURE proc_duplica:
                    ON ERROR  UNDO Contador, LEAVE Contador
                    ON STOP   UNDO Contador, LEAVE Contador:
     
+        FIND crapttl WHERE crapttl.cdcooper = glb_cdcooper AND
+                           crapttl.nrdconta = tel_nrsconta AND
+                           crapttl.idseqttl = 1
+                           NO-LOCK NO-ERROR.
+
+        IF NOT AVAILABLE crapttl THEN
+            DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Titular nao cadastrado.".
+            UNDO Grava, LEAVE Grava.
+        END.
 
         DO aux_contador = 1 TO 10:
         
             FIND FIRST crapdoc WHERE crapdoc.cdcooper = glb_cdcooper AND
                                crapdoc.nrdconta = tel_nrsconta AND
                                crapdoc.dtmvtolt = glb_dtmvtolt AND
-                               crapdoc.idseqttl = 1
+                               crapdoc.idseqttl = 1 AND 
+                               crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
             IF NOT AVAILABLE crapdoc THEN
@@ -708,7 +723,8 @@ PROCEDURE proc_duplica:
                                                    crapdoc.nrdconta = tel_nrsconta AND
                                                    crapdoc.tpdocmto = aux_tiposdoc AND
                                                    crapdoc.dtmvtolt = glb_dtmvtolt AND
-                                                   crapdoc.idseqttl = 1 NO-LOCK NO-ERROR.
+                                                   crapdoc.idseqttl = 1 AND 
+                                                   crapdoc.nrcpfcgc = crapttl.nrcpfcgc NO-LOCK NO-ERROR.
 
                                 IF NOT AVAILABLE crapdoc THEN
                                     DO:
@@ -718,7 +734,8 @@ PROCEDURE proc_duplica:
                                                crapdoc.flgdigit = FALSE
                                                crapdoc.dtmvtolt = glb_dtmvtolt
                                                crapdoc.tpdocmto = aux_tiposdoc
-                                               crapdoc.idseqttl = 1.
+                                               crapdoc.idseqttl = 1
+                                               crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                     END.
                             END.
                                       
@@ -1323,13 +1340,26 @@ PROCEDURE proc_registro_documentos:
 
     glb_cdcritic = 0.
 
+    FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                       crapttl.nrdconta = par_nrdconta AND
+                       crapttl.idseqttl = 1
+                       NO-LOCK NO-ERROR.
+
+    IF NOT AVAILABLE crapttl THEN
+        DO:
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = "Titular nao cadastrado.".
+        UNDO Grava, LEAVE Grava.
+    END.
+    
     DO aux_contador = 1 TO 10:
         
         FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                            crapdoc.nrdconta = par_nrdconta AND
                            crapdoc.tpdocmto = 1            AND
                            crapdoc.dtmvtolt = par_dtmvtolt AND
-                           crapdoc.idseqttl = 1
+                           crapdoc.idseqttl = 1 AND 
+                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
         IF NOT AVAILABLE crapdoc THEN
@@ -1354,7 +1384,8 @@ PROCEDURE proc_registro_documentos:
                                                crapdoc.nrdconta = par_nrdconta AND
                                                crapdoc.tpdocmto = aux_contador AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = 1 NO-LOCK NO-ERROR.
+                                               crapdoc.idseqttl = 1 AND 
+                                               crapdoc.nrcpfcgc = crapttl.nrcpfcgc NO-LOCK NO-ERROR.
 
                             IF NOT AVAILABLE crapdoc THEN
                                 DO:
@@ -1364,7 +1395,8 @@ PROCEDURE proc_registro_documentos:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = aux_contador
-                                           crapdoc.idseqttl = 1.
+                                           crapdoc.idseqttl = 1
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                 END.
                         END.
                         LEAVE.
@@ -1383,7 +1415,8 @@ PROCEDURE proc_registro_documentos:
                            crapdoc.nrdconta = par_nrdconta AND
                            crapdoc.tpdocmto = 7            AND
                            crapdoc.dtmvtolt = par_dtmvtolt AND
-                           crapdoc.idseqttl = 1
+                           crapdoc.idseqttl = 1            AND
+                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
         IF NOT AVAILABLE crapdoc THEN
@@ -1407,7 +1440,8 @@ PROCEDURE proc_registro_documentos:
                                                crapdoc.nrdconta = par_nrdconta AND
                                                crapdoc.tpdocmto = aux_contador AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = 1 NO-LOCK NO-ERROR.
+                                               crapdoc.idseqttl = 1            AND
+                                               crapdoc.nrcpfcgc = crapttl.nrcpfcgc NO-LOCK NO-ERROR.
 
                             IF NOT AVAILABLE crapdoc THEN
                                 DO:
@@ -1417,7 +1451,8 @@ PROCEDURE proc_registro_documentos:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = aux_contador
-                                           crapdoc.idseqttl = 1.
+                                           crapdoc.idseqttl = 1
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                 END.
                         END.
                         LEAVE.

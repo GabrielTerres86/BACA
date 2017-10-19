@@ -99,7 +99,10 @@
                              departamento passando a considerar o código (Renato Darosci)      
                
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             endereco para o CDC. (Reinert Prj 289)
+                             endereco para o CDC. (Reinert Prj 289)	   	
+
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)
                             
 				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
 							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino) 
@@ -1869,7 +1872,8 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = par_idseqttl
+                                             crapdoc.idseqttl = par_idseqttl AND
+                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1895,8 +1899,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = aux_idseqttl.
-                                           
+                                           crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.

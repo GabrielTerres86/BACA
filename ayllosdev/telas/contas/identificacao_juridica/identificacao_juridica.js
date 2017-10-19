@@ -17,8 +17,9 @@
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
  * 010: [13/07/2017] Diogo (M410)         	   : Incluido campo Identificador do Regime tributário 'idregtrb'
- * 011: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.    
- * 012: [06/10/2017] Kelvin (CECRED)           : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
+ * 011: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.       
+ * 012: [12/08/2017] Lombardi                  : Criada a função dossieDigidoc.	PRJ339 CRM
+ * 013: [06/10/2017] Kelvin (CECRED)           : Adicionado o campo Nome da conta (PRJ339 - Kelvin).
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -412,4 +413,37 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('REGISTRO','Registro','registro');		
+}
+
+function dossieDigidoc() {
+	showMsgAguardo('Aguarde...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/contas/dossie_digidoc.php',
+		data: {
+      nrcpfcgc: $('#nrcpfcgc','#frmDadosIdentJuridica').val(),
+      nrdconta: nrdconta,
+      redirect: 'html_ajax'
+    },
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			exibeRotina($('#divUsoGenerico'));
+      $('#divUsoGenerico').css({'margin-top': '170px'});
+      $('#divUsoGenerico').css({'width': '400px'});
+      $('#divUsoGenerico').centralizaRotinaH();
+			bloqueiaFundo( $('#divUsoGenerico') );
+      layoutPadrao();
+
+      return false;
+		}
+	});
 }
