@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 03/10/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 17/10/2017
 
      Dados referentes ao programa:
 
@@ -353,6 +353,10 @@ BEGIN
                  03/10/2017 - SD761668 - Alteração da descrição do histórico OB 12 STN de 
                               DEBITO para CREDITO (Marcos-Supero)             
                               
+                              
+                 17/10/2017 - Atualizar descricao do historico 0729 enviado no arquivo pelo BB,
+                              de: '0729TRANSFERENCIA' para: '0729TRANSF RECEBIDA'.
+                              (Chamado 775188) - (Fabricio)
      ............................................................................. */
 
   DECLARE
@@ -1468,7 +1472,7 @@ BEGIN
 
          IF vr_nrdctabb = vr_rel_nrdctabb    AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
+            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSF RECEBIDA','0144TRANSF PERIODIC') THEN
            NULL;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN  /* Deposito */
            IF INSTR(vr_dshstblq,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito Bloqueado */
@@ -2828,7 +2832,7 @@ BEGIN
                IF SUBSTR(vr_setlinha,123,1) <> '*' AND
                   vr_dshistor NOT IN ('0144TRANSF AGENDADA',
                                       '0144TRANSFERENCIA',
-                                      '0729TRANSFERENCIA',
+                                      '0729TRANSF RECEBIDA',
                                       '0144TRANSF PERIODIC') THEN
                    CONTINUE;
                END IF;
@@ -2890,7 +2894,7 @@ BEGIN
              IF vr_dshistor <> '0144TRF SEM CPMF'    AND
                vr_dshistor <> '0144TRANSF AGENDADA' AND
                vr_dshistor <> '0144TRANSFERENCIA'   AND
-               vr_dshistor <> '0729TRANSFERENCIA'   AND
+               vr_dshistor <> '0729TRANSF RECEBIDA'   AND
                vr_dshistor <> '0144TRANSF PERIODIC' THEN
 
                 /* B.Brasil modificou historico TEC SALARIO*/
@@ -2962,7 +2966,7 @@ BEGIN
          /*   Outros Historicos Lancados na conta Centralizadora  */
          IF vr_nrdctabb = vr_rel_nrdctabb AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
+            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSF RECEBIDA','0144TRANSF PERIODIC') THEN
            vr_cdcritic:= 245;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito */
            vr_flgdepos:= TRUE;
