@@ -50,7 +50,6 @@
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae. 
  * 028: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
- * 029: [15/09/2017] Kelvin			  (CECRED): Alterações referente a melhoria 339 (Kelvin).
  * 030: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  * 031: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
  */
@@ -361,16 +360,6 @@ function manterRotina() {
         idorigee = $('#idorigee', '#frmFisico').val();
 		// Indicador se esta conectado no banco de producao
         inbcprod = $('#inbcprod', '#frmCabMatric').val();
-		//Endereco de correspondencia
-		nrcepcor = normalizaNumero($('#nrcepcor', '#frmFisico').val());
-		dsendcor = $('#dsendcor', '#frmFisico').val();
-		nrendcor = normalizaNumero($('#nrendcor', '#frmFisico').val());
-		complcor = $('#complcor', '#frmFisico').val();
-		nrpstcor = normalizaNumero($('#nrpstcor', '#frmFisico').val());
-		nmbaicor = normalizaTexto($('#nmbaicor', '#frmFisico').val());
-		cdufcorr = $('#cdufcorr option:selected', '#frmFisico').val();
-		nmcidcor = normalizaTexto($('#nmcidcor', '#frmFisico').val());
-		idoricor = $('#idoricor', '#frmFisico').val();
 		
 		//Normalilza os campos de valor
         vlparcel = number_format(parseFloat(vlparcel.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -431,16 +420,13 @@ function manterRotina() {
 				nmpaittl: nmpaittl, dsendere: dsendere, nrendere: nrendere, 
 				complend: complend, nmbairro: nmbairro, nrcepend: nrcepend, 
 				nmcidade: nmcidade, cdufende: cdufende, dtadmiss: dtadmiss, 
-				dtdemiss: dtdemiss, cdmotdem: cdmotdem,	rowidass: rowidass, 
-				operacao: operacao, qtparcel: qtparcel,	dtdebito: dtdebito, 
+				dtdemiss: dtdemiss, cdmotdem: cdmotdem, rowidass: rowidass, 
+				operacao: operacao, qtparcel: qtparcel, dtdebito: dtdebito, 
 				vlparcel: vlparcel, nmttlrfb: nmttlrfb, dsproftl: dsproftl, 
 				nmmaeptl: nmmaeptl, nmpaiptl: nmpaiptl,	nmsegntl: nmsegntl, 
 				cdtipcta: cdtipcta, inhabmen: inhabmen, dthabmen: dthabmen, 
 				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
-				inconrfb: inconrfb, hrinicad: hrinicad, nrcepcor: nrcepcor, 
-				dsendcor: dsendcor, nrendcor: nrendcor, complcor: complcor, 
-				nrpstcor: nrpstcor, nmbaicor: nmbaicor, cdufcorr: cdufcorr, 
-				nmcidcor: nmcidcor, idoricor: idoricor, arrayFilhos: arrayFilhos, 
+				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
 				idorigee: idorigee,
 				redirect: 'script_ajax'
 			}, 
@@ -489,7 +475,7 @@ function manterRotina() {
         nmbairro = normalizaTexto($('#nmbairro', '#frmJuridico').val());
         nrcepend = normalizaNumero($('#nrcepend', '#frmJuridico').val());
         nmcidade = normalizaTexto($('#nmcidade', '#frmJuridico').val());
-        cdufende = $('#cdufende', '#frmJuridico').val();        
+        cdufende = $('#cdufende', '#frmJuridico').val();
         dtadmiss = $('#dtadmiss', '#frmJuridico').val();
         dtdemiss = $('#dtdemiss', '#frmJuridico').val();
         cdmotdem = $('#cdmotdem', '#frmJuridico').val();
@@ -500,16 +486,6 @@ function manterRotina() {
         nrlicamb = $('#nrlicamb', '#frmJuridico').val();
 		// Indicador se estã conectado no banco de producao
         inbcprod = $('#inbcprod', '#frmCabMatric').val();
-		//Endereco de correspondencia
-		nrcepcor = normalizaNumero($('#nrcepcor', '#frmJuridico').val());
-		dsendcor = $('#dsendcor', '#frmJuridico').val();
-		nrendcor = normalizaNumero($('#nrendcor', '#frmJuridico').val());
-		complcor = $('#complcor', '#frmJuridico').val();
-		nrpstcor = normalizaNumero($('#nrpstcor', '#frmJuridico').val());
-		nmbaicor = normalizaTexto($('#nmbaicor', '#frmJuridico').val());
-		cdufcorr = $('#cdufcorr option:selected', '#frmJuridico').val();
-		nmcidcor = normalizaTexto($('#nmcidcor', '#frmJuridico').val());
-		idoricor = $('#idoricor', '#frmJuridico').val();
 					
 		//Normalilza os campos de valor
         vlparcel = number_format(parseFloat(vlparcel.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -565,10 +541,8 @@ function manterRotina() {
 				rowidass: rowidass, qtparcel: qtparcel,	dtdebito: dtdebito, 
 				vlparcel: vlparcel, operacao: operacao, cdtipcta: cdtipcta, 
 				cdcnae: cdcnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
-				hrinicad: hrinicad, arrayFilhos: arrayFilhos, nrcepcor: nrcepcor, 
-				dsendcor: dsendcor, nrendcor: nrendcor, complcor: complcor, 
-				nrpstcor: nrpstcor, nmbaicor: nmbaicor, cdufcorr: cdufcorr, 
-				nmcidcor: nmcidcor, idoricor: idoricor, arrayFilhosAvtMatric: arrayFilhosAvtMatric, 
+				hrinicad: hrinicad, arrayFilhos: arrayFilhos,  
+				arrayFilhosAvtMatric: arrayFilhosAvtMatric, 
 				arrayBensMatric: arrayBensMatric, idorigee: idorigee,
 				nrlicamb: nrlicamb,
 				redirect: 'script_ajax'
@@ -1111,86 +1085,42 @@ function formataEndereco(nomeForm) {
     var rCep = $('label[for="nrcepend"]', '#' + nomeForm);
     var rEnd = $('label[for="dsendere"]', '#' + nomeForm);
     var rNum = $('label[for="nrendere"]', '#' + nomeForm);
-    var rCom = $('label[for="complend"]', '#' + nomeForm);    
+    var rCom = $('label[for="complend"]', '#' + nomeForm);
     var rBai = $('label[for="nmbairro"]', '#' + nomeForm);
     var rEst = $('label[for="cdufende"]', '#' + nomeForm);
     var rCid = $('label[for="nmcidade"]', '#' + nomeForm);
     var rOri = $('label[for="idorigee"]', '#' + nomeForm);
-	var rCepCor = $('label[for="nrcepcor"]', '#' + nomeForm); 
-    var rEndCor = $('label[for="dsendcor"]', '#' + nomeForm); 
-    var rNumCor = $('label[for="nrendcor"]', '#' + nomeForm); 
-    var rComCor = $('label[for="complcor"]', '#' + nomeForm); 
-    var rCaxCor = $('label[for="nrpstcor"]', '#' + nomeForm); 
-    var rBaiCor = $('label[for="nmbaicor"]', '#' + nomeForm); 
-    var rEstCor = $('label[for="cdufcorr"]', '#' + nomeForm); 
-    var rCidCor = $('label[for="nmcidcor"]', '#' + nomeForm); 
-    var rOriCor = $('label[for="idoricor"]', '#' + nomeForm); 
-	var rFlgutires = $('label[for="flgutires"]', '#' + nomeForm);
-	var rLovendco = $('label[for="lovendco"]', '#' + nomeForm);	
 
     rCep.addClass('rotulo').css('width', '72px');
     rEnd.addClass('rotulo-linha').css('width', '36px');
     rNum.addClass('rotulo').css('width', '72px');
-    rCom.addClass('rotulo-linha').css('width', '54px');    
+    rCom.addClass('rotulo-linha').css('width', '54px');
     rBai.addClass('rotulo-linha').css('width', '54px');
     rEst.addClass('rotulo').css('width', '72px');
     rCid.addClass('rotulo-linha').css('width', '54px');
     rOri.addClass('rotulo').css('width', '72px');
-	rCepCor.addClass('rotulo').css('width', '72px');
-    rEndCor.addClass('rotulo-linha').css('width', '36px');
-    rNumCor.addClass('rotulo').css('width', '72px');
-    rComCor.addClass('rotulo-linha').css('width', '54px');
-    rCaxCor.addClass('rotulo').css('width', '72px');
-    rBaiCor.addClass('rotulo-linha').css('width', '54px');
-    rEstCor.addClass('rotulo').css('width', '72px');
-    rCidCor.addClass('rotulo-linha').css('width', '54px');
-    rOriCor.addClass('rotulo').css('width', '72px');
-	rFlgutires.addClass('rotulo').css('width', '208px');
-	rLovendco.addClass('rotulo-linha').css('width', '413px');
 	
 	// campo endereco
-    var cTodos = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee,#nrcepcor,#dsendcor,#nrendcor,#complcor,#nrpstcor,#nmbaicor,#cdufcorr,#nmcidcor,#idoricor,#flgutires,#lovendcoinput', '#' + nomeForm);
-    var endDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade,#dsendcor,#cdufcorr,#nmbaicor,#nmcidcor,#flgutires,#lovendcoinput', '#' + nomeForm);
+    var cTodos = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#' + nomeForm);
+    var endDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#' + nomeForm);
     var cCep = $('#nrcepend', '#' + nomeForm);		
     var cEnd = $('#dsendere', '#' + nomeForm);      
     var cNum = $('#nrendere', '#' + nomeForm);      
-    var cCom = $('#complend', '#' + nomeForm);          
+    var cCom = $('#complend', '#' + nomeForm);      
     var cBai = $('#nmbairro', '#' + nomeForm);      
     var cEst = $('#cdufende', '#' + nomeForm);      
     var cCid = $('#nmcidade', '#' + nomeForm);      
     var cOri = $('#idorigee', '#' + nomeForm);	    
-	var cCepCor = $('#nrcepcor', '#' + nomeForm);
-	var cEndCor = $('#dsendcor', '#' + nomeForm);
-	var cNumCor = $('#nrendcor', '#' + nomeForm);
-	var cComCor = $('#complcor', '#' + nomeForm);
-	var cCaxCor = $('#nrpstcor', '#' + nomeForm);
-	var cBaiCor = $('#nmbaicor', '#' + nomeForm);
-	var cEstCor = $('#cdufcorr', '#' + nomeForm);
-	var cCidCor = $('#nmcidcor', '#' + nomeForm);
-	var cOriCor = $('#idoricor', '#' + nomeForm);
-	var cFlgutires = $('#flgutires', '#' + nomeForm);
 	
 	cTodos.desabilitaCampo();
     cCep.addClass('cep pesquisa').css('width', '100px').attr('maxlength', '9');
     cEnd.addClass('alphanum').css('width', '427px').attr('maxlength', '40');
     cNum.addClass('numerocasa').css('width', '100px').attr('maxlength', '6');
-    cCom.addClass('alphanum').css('width', '426px').attr('maxlength', '40');    
+    cCom.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
     cBai.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
     cEst.css('width', '100px');
     cCid.addClass('alphanum').css('width', '426px').attr('maxlength', '25');
     cOri.css('width', '100px');
-	cCepCor.addClass('cep pesquisa').css('width', '100px').attr('maxlength', '9');
-    cEndCor.addClass('alphanum').css('width', '427px').attr('maxlength', '40');
-    cNumCor.addClass('numerocasa').css('width', '100px').attr('maxlength', '6');
-    cComCor.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
-    cCaxCor.addClass('caixapostal').css('width', '100px').attr('maxlength', '6');
-    cBaiCor.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
-    cEstCor.css('width', '100px');
-    cCidCor.addClass('alphanum').css('width', '426px').attr('maxlength', '25');
-    cOriCor.css('width', '100px');
-	cFlgutires.addClass('rotulo-linha');
-	
-	
 	
 	// Validar que o CEP do cooperado seja numa cidade de atuacao da cooperativa. Somente alerta, nao trava
     cNum.unbind('blur').bind('blur', function () {
@@ -1208,57 +1138,14 @@ function formataEndereco(nomeForm) {
 		
 		operacao = "CC";
 		
-		manterOutros(nomeForm,$(this).attr("id"));
+		manterOutros(nomeForm);
 		
 		return false;
 	
 	});
 	
-	// Validar que o CEP do cooperado seja numa cidade de atuacao da cooperativa. Somente alerta, nao trava
-    cNumCor.unbind('blur').bind('blur', function () {
-		
-        inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
-		
-		if (isHabilitado($(this)) == false || cCidCor.val() == "") {
-			return false;
-		}	
-				
-		if (operacao == 'CA' || operacao == "PA") { // Evitar a validacao quando acessada a opcao de ALTERACAO
-			operacao = 'CC';
-			return false;
-		}
-		
-		operacao = "CC";
-		
-		manterOutros(nomeForm, $(this).attr("id"));
-		
-		return false;
 	
-	});
-	
-	cCaxCor.unbind('keypress').bind('keypress', function (e) {
-		if (e.keyCode == 13) { 
-			$("#btProsseguirInc").click();	
-			return false;			
-		}
 		
-	});
-	
-	cFlgutires.bind("click", function() {
-		if (cFlgutires.is(':checked')) {
-		  $('#nrcepcor', '#' + nomeForm).val($('#nrcepend', '#' + nomeForm).val());
-		  $('#dsendcor', '#' + nomeForm).val($('#dsendere', '#' + nomeForm).val());
-		  $('#nrendcor', '#' + nomeForm).val($('#nrendere', '#' + nomeForm).val());
-		  $('#complcor', '#' + nomeForm).val($('#complend', '#' + nomeForm).val());
-		  $('#nmbaicor', '#' + nomeForm).val($('#nmbairro', '#' + nomeForm).val());
-		  $('#cdufcorr', '#' + nomeForm).val($('#cdufende', '#' + nomeForm).val());
-		  $('#nmcidcor', '#' + nomeForm).val($('#nmcidade', '#' + nomeForm).val());
-		  $('#idoricor', '#' + nomeForm).val($('#idorigee', '#' + nomeForm).val());
-		  $('#nrpstcor', '#' + nomeForm).val($('#nrcxapst', '#' + nomeForm).val());
-		  
-		} 
-	});
-	
 	return false;
 
 }
@@ -1403,9 +1290,7 @@ function formataPessoaFisica() {
     var cOperadoras = $('#cdopetfn', '#frmFisico');
     var cSexo = $('input[name=\'cdsexotl\']', '#frmFisico');
     var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#frmFisico');
-	var cTodosCor = $('#dsendcor,#nrendcor,#complcor,#nmbaicor,#nrcepcor,#nmcidcor,#cdufcorr,#nrpstcor,#idoricor,#flgutires,#lovendcoinput', '#frmFisico');
     var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmFisico');
-	var cEndDesabilitaCor = $('#dsendcor,#cdufcorr,#nmbaicor,#nmcidcor', '#frmFisico');
 	
 	cTodosPF2.desabilitaCampo();
     cCodigoPF1.addClass('codigo pesquisa').css({ 'width': '40px' });
@@ -1559,10 +1444,8 @@ function formataPessoaFisica() {
 					cTodosPF1.habilitaCampo();	
 					cTodosPF2.habilitaCampo();
 					cTodosEnd.habilitaCampo();
-					cTodosCor.habilitaCampo();
 					cNomeRFB.desabilitaCampo();
 					cEndDesabilita.desabilitaCampo();
-					cEndDesabilitaCor.desabilitaCampo();
 					cNomesPais.habilitaCampo();	
 					cDescricaoPF1.desabilitaCampo();
 					controlaNomeConjuge();
@@ -1641,10 +1524,8 @@ function formataPessoaJuridica() {
     var cDesRamoAtiv = $('#dsrmativ', '#frmJuridico');
     var cDDD = $('#nrdddtfc', '#frmJuridico');
     var cTelefone = $('#nrtelefo', '#frmJuridico');
-    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#frmJuridico');
-	var cTodosCor = $('#dsendcor,#nrendcor,#complcor,#nmbaicor,#nrcepcor,#nmcidcor,#cdufcorr,#nrpstcor,#idoricor,#flgutires,#lovendcoinput', '#frmJuridico');
+    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#frmJuridico');	
     var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmJuridico');
-	var cEndDesabilitaCor = $('#dsendcor,#cdufcorr,#nmbaicor,#nmcidcor', '#frmJuridico');
     var cEmail = $('#dsdemail', '#frmJuridico');
     var cCnae = $('#cdcnae', '#frmJuridico');
     var cDscnae = $('#dscnae', '#frmJuridico');
@@ -1699,7 +1580,7 @@ function formataPessoaJuridica() {
 			manterOutros('frmJuridico');
 		}
 	});	
-		
+	
     cCNPJ.unbind('blur').bind('blur', function (e) {
 		
 		if ($(this).val() != normalizaNumero(nrcpfcgc)) {
@@ -1772,10 +1653,8 @@ function formataPessoaJuridica() {
                 if (bloqueiaCabecalho()) {
 					cTodosPJ1.habilitaCampo();
 					cTodosEnd.habilitaCampo();
-					cTodosCor.habilitaCampo();
 					cNomeRFB.desabilitaCampo();
 					cEndDesabilita.desabilitaCampo();
-					cEndDesabilitaCor.desabilitaCampo();
 					cDescricaoPJ1.desabilitaCampo();
 					controlaBotoes();
 					controlaPesquisas();
@@ -1792,7 +1671,6 @@ function formataPessoaJuridica() {
 		cCNPJ.habilitaCampo();
 	} else if (operacao == 'CA') {
 		cEndDesabilita.desabilitaCampo();
-		cEndDesabilitaCor.desabilitaCampo();
 		controlaPesquisas();
 	}	
 	
@@ -1832,10 +1710,7 @@ function controlaPesquisas() {
     var filtrosPesq = '';
     var filtrosDesc = '';	
     var colunas = '';
-	var inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();	
-	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
     var camposOrigem = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade';
-	var camposCor = 'nrcepcor;dsendcor;nrendcor;complcor;nrpstcor;nmbaicor;cdufcorr;nmcidcor;idoricor';
 	
 	/*---------------------*/
 	/*  CONTROLE CONTA/DV  */
@@ -2070,7 +1945,7 @@ function controlaPesquisas() {
 		});
 	}
 	
-    var linkMotivo = $('a:eq(9)', '#frmFisico');
+    var linkMotivo = $('a:eq(7)', '#frmFisico');
     if (linkMotivo.prev().hasClass('campoTelaSemBorda')) {
         linkMotivo.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -2228,6 +2103,7 @@ function controlaPesquisas() {
 		});
 	}
 
+
 	/*-----------------------------------------------*/
 	/*    CONTROLE ENDEREÇO FISICO E JURIDICO        */
 	/*-----------------------------------------------*/
@@ -2247,52 +2123,11 @@ function controlaPesquisas() {
         linkEnderecoJuridico.css('cursor', 'pointer');
 		linkEnderecoJuridico.prev().buscaCEP('frmJuridico', camposOrigem, $('#divMatric'));
 	}
-	/*--------------------------------------------------------*/
-	/*    CONTROLE ENDEREÇO COBRANÇA FISICO E JURIDICO        */
-	/*--------------------------------------------------------*/
-	var linkEnderecoAssociadoFisico = $('a:eq(7)', '#frmFisico');		
-	var nrcpfcgc = $('#nrcpfcgc', '#' + nomeForm).val();
-	
-	if (linkEnderecoAssociadoFisico.prev().hasClass('campoTelaSemBorda')) {
-		linkEnderecoAssociadoFisico.addClass('lupa').css('cursor', 'auto');		
-	} else {
-		linkEnderecoAssociadoFisico.css('cursor', 'pointer');
-		linkEnderecoAssociadoFisico.buscaEnderecoAssociado('frmFisico', camposCor, $('#divMatric'), 'frmFisico');	
-	}
-	
-	var linkEnderecoAssociadoJuridico = $('a:eq(5)', '#frmJuridico');	
-	
-	if (linkEnderecoAssociadoJuridico.prev().hasClass('campoTelaSemBorda')) {
-		linkEnderecoAssociadoJuridico.addClass('lupa').css('cursor', 'auto');		
-	} else {
-		linkEnderecoAssociadoJuridico.css('cursor', 'pointer');
-		linkEnderecoAssociadoJuridico.buscaEnderecoAssociado('frmJuridico', camposCor, $('#divMatric'), 'frmJuridico');	
-	}
-	
-	
-	/*--------------------------------------------------------*/
-	/*    CONTROLE ENDEREÇO CORRESPONDENCIA FISICO E JURIDICO */
-	/*--------------------------------------------------------*/
-	var linkEnderecoFisico = $('a:eq(8)', '#frmFisico');
-    if (linkEnderecoFisico.prev().hasClass('campoTelaSemBorda')) {
-        linkEnderecoFisico.addClass('lupa').css('cursor', 'auto');
-	} else {
-        linkEnderecoFisico.css('cursor', 'pointer');
-		linkEnderecoFisico.prev().buscaCEP('frmFisico', camposCor, $('#divMatric'));
-	}	
 
-    var linkEnderecoJuridico = $('a:eq(6)', '#frmJuridico')
-    if (linkEnderecoJuridico.prev().hasClass('campoTelaSemBorda')) {
-        linkEnderecoJuridico.addClass('lupa').css('cursor', 'auto');
-	} else {
-        linkEnderecoJuridico.css('cursor', 'pointer');
-		linkEnderecoJuridico.prev().buscaCEP('frmJuridico', camposCor, $('#divMatric'));
-	}
-	
 	/*-------------------------------*/
 	/*    CONTROLE MOTOVO DEMISSAO   */
 	/*-------------------------------*/		
-    var linkMotivo = $('a:eq(7)', '#frmJuridico');
+    var linkMotivo = $('a:eq(5)', '#frmJuridico');
     if (linkMotivo.prev().hasClass('campoTelaSemBorda')) {
         linkMotivo.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -2463,18 +2298,15 @@ function formataInclusao() {
             var cNomesPais = $('#nmmaettl,#nmpaittl', '#frmFisico');
             var cDescricaoPF1 = $('#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
             var cCPF = $('#nrcpfcgc', '#frmFisico');
-            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende', '#frmFisico');
-			var cTodosCor = $('#dsendcor,#nrendcor,#complcor,#nmbaicor,#nrcepcor,#nmcidcor,#cdufcorr,#nrpstcor,#idoricor,#flgutires,#lovendcoinput', '#frmFisico');
+            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende', '#frmFisico');			
             var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmFisico');
-			var cEndDesabilitaCor = $('#dsendcor,#cdufcorr,#nmbaicor,#nmcidcor', '#frmFisico');
+			
 			
 			cTodosPF1.habilitaCampo();	
 			cTodosPF2.habilitaCampo();
 			cTodosEnd.habilitaCampo();
-			cTodosCor.habilitaCampo();
 			cNomeRFB.desabilitaCampo();
 			cEndDesabilita.desabilitaCampo();
-			cEndDesabilitaCor.desabilitaCampo();
 			cNomesPais.habilitaCampo();	
 			cDescricaoPF1.desabilitaCampo();
 			controlaNomeConjuge();
@@ -2493,16 +2325,12 @@ function formataInclusao() {
             var cCNPJ = $('#nrcpfcgc', '#frmJuridico');
             var cNomeRFB = $('#nmttlrfb', '#frmJuridico');
             var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende', '#frmJuridico');
-			var cTodosCor = $('#dsendcor,#nrendcor,#complcor,#nmbaicor,#nrcepcor,#nmcidcor,#cdufcorr,#nrpstcor,#idoricor,#flgutires,#lovendcoinput', '#frmJuridico');
             var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmJuridico');
-			var cEndDesabilitaCor = $('#dsendcor,#cdufcorr,#nmbaicor,#nmcidcor', '#frmJuridico');
 			
 			cTodosPJ1.habilitaCampo();
 			cTodosEnd.habilitaCampo();
-			cTodosCor.habilitaCampo();
 			cNomeRFB.desabilitaCampo();
 			cEndDesabilita.desabilitaCampo();
-			cEndDesabilitaCor.desabilitaCampo();
 			cDescricaoPJ1.desabilitaCampo();
 			controlaBotoes();
 			controlaPesquisas();
@@ -3076,7 +2904,7 @@ function validarSenha(operacao) {
 	return false;
 }
 
-function manterOutros(nomeForm, elementoId) {
+function manterOutros(nomeForm) {
 	
     inmatric = $('#inmatric', '#frmCabMatric').val();
     cdagepac = $('#cdagepac', '#frmCabMatric').val();
@@ -3087,21 +2915,8 @@ function manterOutros(nomeForm, elementoId) {
     dtcnscpf = $('#dtcnscpf', '#' + nomeForm).val();
     dtnasctl = (nomeForm == 'frmFisico') ? $('#dtnasctl', '#' + nomeForm).val() : '';
     nmmaettl = (nomeForm == 'frmFisico') ? $('#nmmaettl', '#' + nomeForm).val() : '';	
-	
-	nmcidade = $("#nmcidade", '#' + nomeForm).val();
-	cdufende = $("#cdufende", '#' + nomeForm).val();
-	
-	if(typeof(elementoId) != "undefined"){
-		
-		if(elementoId == "nrendere"){
 			nmcidade = $("#nmcidade", '#' + nomeForm).val();
 			cdufende = $("#cdufende", '#' + nomeForm).val();
-		}else if (elementoId == "nrendcor"){
-			nmcidade = $("#nmcidcor", '#' + nomeForm).val();
-			cdufende = $("#cdufcorr", '#' + nomeForm).val();
-		}
-	}
-	
     inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
 	inhabmen = (nomeForm == 'frmFisico') ? $('#inhabmen', '#' + nomeForm).val() : '';
 	dthabmen = (nomeForm == 'frmFisico') ? $('#dthabmen', '#' + nomeForm).val() : '';	

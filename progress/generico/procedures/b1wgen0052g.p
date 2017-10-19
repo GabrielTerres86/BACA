@@ -159,14 +159,12 @@
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)  
-
-                15/09/2017 - Alterações referente a melhoria 339 (Kelvin).	   
                              
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 
 				05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
-							 (PRJ339 - Kelvin/Andrino).				  
+							 (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
                                                      
 
@@ -280,16 +278,6 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	
-	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
-	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -402,15 +390,6 @@ PROCEDURE Grava_Dados :
                              INPUT par_hrinicad,
                              INPUT par_idorigee,
                              INPUT par_nrlicamb,
-							 INPUT par_nrcepcor,
-							 INPUT par_dsendcor,
-							 INPUT par_nrendcor,
-							 INPUT par_complcor,
-							 INPUT par_nrpstcor,
-							 INPUT par_nmbaicor,
-							 INPUT par_cdufcorr,
-							 INPUT par_nmcidcor,
-							 INPUT par_idoricor,
                             OUTPUT par_rowidass,
                             OUTPUT aux_rowidttl,               
                             OUTPUT aux_rowidjur,
@@ -586,15 +565,6 @@ PROCEDURE Grava_Dados :
                       INPUT par_dthabmen,
                       INPUT par_idorigee,
                       INPUT par_nrlicamb,
-					  INPUT par_nrcepcor,
-					  INPUT par_dsendcor,
-					  INPUT par_nrendcor,
-					  INPUT par_complcor,
-					  INPUT par_nrpstcor,
-					  INPUT par_nmbaicor,
-					  INPUT par_cdufcorr,
-					  INPUT par_nmcidcor,
-					  INPUT par_idoricor,
                      OUTPUT par_cdcritic,
                      OUTPUT par_dscritic ) NO-ERROR.
                 
@@ -818,15 +788,6 @@ PROCEDURE Altera PRIVATE :
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -1226,15 +1187,6 @@ PROCEDURE Altera PRIVATE :
               INPUT UPPER(par_cdufende),			  
               INPUT par_nrcxapst,
               INPUT par_idorigee,
-			  INPUT par_nrcepcor,
-			  INPUT UPPER(par_dsendcor),
-			  INPUT par_nrendcor,
-			  INPUT UPPER(par_complcor),
-			  INPUT par_nrpstcor,
-			  INPUT UPPER(par_nmbaicor),
-			  INPUT UPPER(par_cdufcorr),
-			  INPUT UPPER(par_nmcidcor),
-			  INPUT par_idoricor,
              OUTPUT par_dscritic ) NO-ERROR.
 
         IF  ERROR-STATUS:ERROR THEN
@@ -3418,15 +3370,6 @@ PROCEDURE Atualiza_End PRIVATE:
     DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxapst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
@@ -3540,68 +3483,6 @@ PROCEDURE Atualiza_End PRIVATE:
 
             UNDO Endereco, LEAVE Endereco.
         END.
-		
-		IF  NOT VALID-HANDLE(h-b1wgen0038) THEN
-            RUN sistema/generico/procedures/b1wgen0038.p 
-                PERSISTENT SET h-b1wgen0038.
-        
-        RUN alterar-endereco IN h-b1wgen0038
-            ( INPUT par_cdcooper,
-              INPUT 0, 
-              INPUT 0, 
-              INPUT par_cdoperad, 
-              INPUT par_nmdatela, 
-              INPUT par_idorigem, 
-              INPUT par_nrdconta, 
-              INPUT 1, /* idseqttl */
-              INPUT par_cddopcao, 
-              INPUT par_dtmvtolt, 
-              INPUT aux_incasprp,
-              INPUT aux_dtinires, /* Formato 99/9999 */
-              INPUT aux_vlalugue,
-              INPUT par_dsendcor, 
-              INPUT par_nrendcor, 
-              INPUT par_nrcepcor, 
-              INPUT par_complcor, 
-              INPUT aux_nrdoapto,
-              INPUT aux_cddbloco,
-              INPUT par_nmbaicor, 
-              INPUT par_nmcidcor, 
-              INPUT par_cdufcorr, 
-              INPUT par_nrpstcor,
-              INPUT 0, /* Valor e qtd de parcelas */
-              INPUT 0, /* Atualizados somente via tela CONTAS */ 
-              INPUT 12,
-              INPUT NO,
-              INPUT par_idoricor,	
-             OUTPUT aux_msgalert,
-             OUTPUT aux_tpatlcad,
-             OUTPUT aux_msgatcad,
-             OUTPUT aux_chavealt,
-             OUTPUT aux_msgrvcad,
-             OUTPUT TABLE tt-erro ) NO-ERROR.
-        
-        IF  ERROR-STATUS:ERROR THEN
-            DO:
-               ASSIGN par_dscritic = {&GET-MSG}.
-               UNDO Endereco, LEAVE Endereco.
-            END.
-        
-        IF  RETURN-VALUE <> "OK" THEN DO:
-            FIND FIRST tt-erro NO-ERROR.
-
-            IF  AVAILABLE tt-erro THEN 
-                DO: 
-                   ASSIGN par_dscritic = tt-erro.dscritic.
-
-                   EMPTY TEMP-TABLE tt-erro.
-                END.
-            ELSE
-                ASSIGN par_dscritic = "Erro na gravacao do Endereco".
-
-            UNDO Endereco, LEAVE Endereco.
-        END.
-		
 		
         ASSIGN aux_returnvl = "OK".
 
@@ -4341,15 +4222,6 @@ PROCEDURE Inclui PRIVATE :
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidass AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
@@ -4647,15 +4519,6 @@ PROCEDURE Inclui PRIVATE :
               INPUT UPPER(par_cdufende),			  		
               INPUT par_nrcxapst,
               INPUT par_idorigee,
-			  INPUT par_nrcepcor,
-			  INPUT UPPER(par_dsendcor),
-			  INPUT par_nrendcor,
-			  INPUT UPPER(par_complcor),
-			  INPUT par_nrpstcor,
-			  INPUT UPPER(par_nmbaicor),
-			  INPUT UPPER(par_cdufcorr),
-			  INPUT UPPER(par_nmcidcor),
-			  INPUT par_idoricor,
              OUTPUT par_dscritic ) NO-ERROR.
 
         IF  ERROR-STATUS:ERROR THEN 

@@ -14,7 +14,6 @@
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					          (Adriano - P339). 
- *				  15/09/2017 - Alterações referente a melhoria 339 (Kelvin).	
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).   
  *
  * -------------- 
@@ -221,65 +220,13 @@
 			<option value="2" <? if (getByTagName($registro,'idorigee') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($registro,'idorigee') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
-
+		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
 		
 		<br style="clear:both" />
 		
 	</fieldset>	
-	<fieldset>
-		<legend><? echo utf8ToHtml('Endereço de Correspondência') ?></legend>		
-		
-		<label style="line-height: 15px;" for="flgutires"><? echo utf8ToHtml('Utilizar endereço residencial') ?></label>
-		<input type="checkbox" id="flgutires" name="flgutires" style="margin:0px 0px 0px 3px;"/>			
-		
-		<label style="line-height: 15px; margin-left:3px;" for="lovendco"><? echo utf8ToHtml('Buscar endereço cobrança') ?></label>
-		<input name="lovendcoinput" id="lovendcoinput" type="text" style="display:none;"/>
-		<a id="lovendco"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>			
-		
-		<label for="nrcepcor"><? echo utf8ToHtml('CEP:') ?></label>
-		<input name="nrcepcor" id="nrcepcor" type="text" value="<? echo getByTagName($registro,'nrcepcor') ?>" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-
-		<label for="dsendcor"><? echo utf8ToHtml('End.:') ?></label>
-		<input name="dsendcor" id="dsendcor" type="text" value="<? echo getByTagName($registro,'dsendcor') ?>" />		
-		<br />
-
-		<label for="nrendcor"><? echo utf8ToHtml('Nro.:') ?></label>
-		<input name="nrendcor" id="nrendcor" type="text" value="<? echo getByTagName($registro,'nrendcor') ?>" />
-
-		<label for="complcor"><? echo utf8ToHtml('Comple.:') ?></label>
-		<input name="complcor" id="complcor" type="text" value="<? echo getByTagName($registro,'complcor') ?>" />
-		<br />
-
-		<label for="nrpstcor"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="nrpstcor" id="nrpstcor" type="text" value="<? echo getByTagName($registro,'nrpstcor') ?>" />		
-
-		<label for="nmbaicor"><? echo utf8ToHtml('Bairro:') ?></label>
-		<input name="nmbaicor" id="nmbaicor" type="text" value="<? echo getByTagName($registro,'nmbaicor') ?>" />								
-		<br />	
-
-		<label for="cdufcorr"><? echo utf8ToHtml('U.F.:') ?></label>
-		<? echo selectEstado('cdufcorr', getByTagName($registro,'cdufcorr'), 1); ?>	
-
-		<label for="nmcidcor"><? echo utf8ToHtml('Cidade:') ?></label>
-		<input name="nmcidcor" id="nmcidcor" type="text"  value="<? echo getByTagName($registro,'nmcidcor') ?>" />
-
-		<br style="clear:both" />
-		
-		<label for="idoricor" class="rotulo"><? echo utf8ToHtml('Origem:'); ?></label>
-		<select id="idoricor" name="idoricor">
-			<option value=""> - </option>
-			<option value="1" <? if (getByTagName($registro,'idoricor') == '1' ){ echo ' selected'; } ?>> Cooperado </option>
-			<option value="2" <? if (getByTagName($registro,'idoricor') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
-			<option value="3" <? if (getByTagName($registro,'idoricor') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
-		</select>
-		
-		<br style="clear:both" />
-		
-	</fieldset>
-	
 
 	<fieldset>
 		<legend><? echo utf8ToHtml('Entrada/Saída Cooperado') ?></legend>

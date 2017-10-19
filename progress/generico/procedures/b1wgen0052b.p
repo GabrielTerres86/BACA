@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 15/09/2017
+    Data    : Junho/2010                      Ultima atualizacao: 09/09/2016
   
     Dados referentes ao programa:
   
@@ -57,8 +57,7 @@
 				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
 						     aux_qtminast referente a quantidade minima de assinatura
 						     conjunta, SD 514239 (Jean Michel).
-				
-				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
+			 
 .............................................................................*/
 
 
@@ -1225,28 +1224,6 @@ PROCEDURE Pesquisa_Associado PRIVATE :
             ASSIGN  tt-crapass.idorigee = crabenc.idorigem.
 
         END.
-		
-		
-		/* buscar o endereco, 12 = Correspondencia */
-        FOR FIRST crabenc FIELDS({&CAMPOS-ENC} idorigem)
-                          WHERE crabenc.cdcooper = tt-crapass.cdcooper AND  
-                                crabenc.nrdconta = tt-crapass.nrdconta AND  
-                                crabenc.idseqttl = 1                   AND                                  
-                                crabenc.tpendass = 12
-                                NO-LOCK:
-
-            ASSIGN 	tt-crapass.nrcepcor = crabenc.nrcepend 
-					tt-crapass.dsendcor	= crabenc.dsendere 
-					tt-crapass.nrendcor	= crabenc.nrendere 
-					tt-crapass.complcor	= crabenc.complend
-					tt-crapass.nmbaicor	= crabenc.nmbairro 
-					tt-crapass.nmcidcor	= crabenc.nmcidade 
-					tt-crapass.cdufcorr	= crabenc.cdufende 
-					tt-crapass.nrpstcor	= crabenc.nrcxapst
-					tt-crapass.idoricor = crabenc.idorigem.
-			
-        END.
-		
 
         /* Buscar o email */
         FOR FIRST crapcem FIELDS(dsdemail)

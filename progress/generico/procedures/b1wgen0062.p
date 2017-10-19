@@ -59,7 +59,7 @@
 
                 04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
                              (Jaison/Anderson)
-							 				
+							 
 				19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                              PRJ339 - CRM (Odirlei-AMcom)  
                              
@@ -76,9 +76,7 @@
 
                 09/10/2017 - Projeto 410 - RF 52/62 - Adicionado indicador de 
                              impressão da declaração do simples nacional na 
-                             crapjur (Diogo - Mouts).
-							 
-				11/10/2017 - Ajuste referente ao projeto 339. (Kelvin)
+                             crapjur (Diogo - Mouts).							 				
 				
 .............................................................................*/
 
@@ -247,19 +245,8 @@ PROCEDURE Busca_Impressao:
                                 crapenc.tpendass = (IF tt-fcad.inpessoa = 1
                                                     THEN 10 ELSE 9) NO-LOCK:
 
-            ASSIGN tt-fcad.nrcepend = STRING(crapenc.nrcepend,"99999,999")
-				   tt-fcad.incasprp = crapenc.incasprp
-				   tt-fcad.dsendere = crapenc.dsendere 
-				   tt-fcad.cdufende = crapenc.cdufende             
-				   tt-fcad.dtinires = crapenc.dtinires
-				   tt-fcad.nrendere = crapenc.nrendere
-				   tt-fcad.nrcxapst = crapenc.nrcxapst
-				   tt-fcad.vlalugue = crapenc.vlalugue
-				   tt-fcad.complend = crapenc.complend
-				   tt-fcad.nrdoapto = crapenc.nrdoapto
-				   tt-fcad.nmcidade = crapenc.nmcidade
-				   tt-fcad.nmbairro = crapenc.nmbairro
-				   tt-fcad.cddbloco = crapenc.cddbloco.
+            BUFFER-COPY crapenc USING {&CAMPOS-END} TO tt-fcad
+                ASSIGN tt-fcad.nrcepend = STRING(crapenc.nrcepend,"99999,999").
 				   
             CASE tt-fcad.incasprp:
                 WHEN 1 THEN ASSIGN tt-fcad.dscasprp = "QUITADO".
@@ -270,24 +257,6 @@ PROCEDURE Busca_Impressao:
                 OTHERWISE ASSIGN tt-fcad.dscasprp = "".
             END CASE.                          
         END.
-		
-		FOR FIRST crapenc FIELDS({&CAMPOS-END} nrcepend)
-                          WHERE crapenc.cdcooper = par_cdcooper   AND
-                                crapenc.nrdconta = par_nrdconta   AND
-                                crapenc.idseqttl = par_idseqttl   AND
-                                crapenc.tpendass = 12 NO-LOCK:
-
-			ASSIGN tt-fcad.nrcepcor =  STRING(crapenc.nrcepend,"99999,999")
-				   tt-fcad.dsendcor =  crapenc.dsendere 
-				   tt-fcad.nrendcor =  crapenc.nrendere 
-				   tt-fcad.complcor =  crapenc.complend 
-				   tt-fcad.nmbaicor =  crapenc.nmbairro 
-				   tt-fcad.nmcidcor =  crapenc.nmcidade 
-				   tt-fcad.cdufcorr =  crapenc.cdufende 
-				   tt-fcad.nrpstcor =  crapenc.nrcxapst 
-				   tt-fcad.nraptcor =  crapenc.nrdoapto
-				   tt-fcad.cddblcor =  crapenc.cddbloco.
-		END.	       
 		
         /* tratar data resumida de inicio de res. e tempo de res. */
         IF  tt-fcad.dtinires <> ?  THEN
@@ -502,7 +471,7 @@ PROCEDURE Busca_Impressao:
                 END.
           END.
                               
-        ASSIGN aux_retorno = "OK".        
+        ASSIGN aux_retorno = "OK".
       END.
 
     IF  par_flgerlog THEN
@@ -928,7 +897,7 @@ PROCEDURE Busca_PF:
                      DO:
                         tt-fcad-cjuge.cdoedcje = 'NAO CADAST'.
                  END.
-                 
+
                  END.
 
                  FOR FIRST crapttl FIELDS(nrdconta nrcpfcgc nrcpfemp
@@ -2082,7 +2051,7 @@ PROCEDURE Busca_PJ:
                                                      "xxx.xxx.xxx-xx")
                             tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen
                             tt-fcad-respl.nrctamen = crapcrl.nrctamen.
-
+           
                      /* Buscar a Nacionalidade */
                      FOR FIRST crapnac FIELDS(dsnacion)
                                        WHERE crapnac.cdnacion = crapcrl.cdnacion

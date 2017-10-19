@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062tt.i
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 15/09/2017
+    Data    : Marco/2010                   Ultima atualizacao: 12/08/2015
 
     Objetivo  : Definicao das Temp-Tables para impressao da FICHA CADASTRAL
 
@@ -29,8 +29,6 @@
                              
                 12/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-							 
-				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
 .............................................................................*/
 
 
@@ -67,17 +65,7 @@ DEFINE TEMP-TABLE tt-fcad NO-UNDO
     FIELD cddbloco AS CHAR
     FIELD dtabrres AS CHAR
     FIELD dstemres AS CHAR
-    FIELD dscidade LIKE crapmun.dscidade
-	FIELD nrcepcor AS CHAR 
-    FIELD dsendcor AS CHAR
-    FIELD nrendcor AS INTE
-    FIELD complcor AS CHAR
-    FIELD nmbaicor AS CHAR
-    FIELD nmcidcor AS CHAR
-    FIELD cdufcorr AS CHAR
-    FIELD nrpstcor AS INTE
-	FIELD nraptcor AS INTE
-	FIELD cddblcor AS CHAR.
+    FIELD dscidade LIKE crapmun.dscidade.
 
 DEFINE TEMP-TABLE tt-fcad-telef NO-UNDO
     /* f_telefones */
