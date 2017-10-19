@@ -614,15 +614,15 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['C_PREJU']) ) {
 
 		nomeForm = 'frmPreju';
-		altura   = '240px';
+		altura   = '270px';
 		largura  = '485px';
 		
-		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlsdprej"],label[for="vlttmupr"],label[for="vlpgmupr"]','#'+nomeForm);
+		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"],label[for="tpdrisco"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="vlsdprej"]','#'+nomeForm);
 
-		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr','#'+nomeForm);
+		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
 
 
 		
@@ -1707,6 +1707,7 @@ function atualizaTela(){
 		$('#vlrpagos','#frmPreju').val( arrayRegistros['vlrpagos'] );
 		$('#vlacresc','#frmPreju').val( arrayRegistros['vlacresc'] );
 		$('#vlsdprej','#frmPreju').val( arrayRegistros['vlsdprej'] );
+		$('#vliofcpl','#frmPreju').val( arrayRegistros['vliofcpl'] );
 		
 		/* Daniel */
 		$('#vlttmupr','#frmPreju').val( arrayRegistros['vlttmupr'] );
