@@ -2812,7 +2812,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
   BEGIN
     DECLARE    
--- PRJ339 REINERT - INICIO
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT ope.vlapvcap
@@ -2899,7 +2898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           RAISE vr_exc_erro;           
         END IF;
       END IF;     
--- PRJ339 REINERT - FIM
+        
     EXCEPTION
       WHEN vr_exc_erro THEN
 

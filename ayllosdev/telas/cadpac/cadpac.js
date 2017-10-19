@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Biblioteca de funções da tela CADPAC
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */
 $(document).ready(function() {
@@ -151,6 +151,7 @@ function formataCamposTela(cddopcao){
         var rCdagedoc = $('label[for="cdagedoc"]', '#frmCadpac');
         var rFlgdsede = $('label[for="flgdsede"]', '#frmCadpac');
         var rCdagepac = $('label[for="cdagepac"]', '#frmCadpac');
+		var rFlmajora = $('label[for="flmajora"]', '#frmCadpac');
 
         var rDsendcop = $('label[for="dsendcop"]', '#frmCadpac');
         var rNrendere = $('label[for="nrendere"]', '#frmCadpac');
@@ -219,6 +220,7 @@ function formataCamposTela(cddopcao){
         var cCdagedoc = $('#cdagedoc', '#frmCadpac');
         var cFlgdsede = $('#flgdsede', '#frmCadpac');
         var cCdagepac = $('#cdagepac', '#frmCadpac');
+		var cFlmajora = $('#flmajora', '#frmCadpac');
 
         var cDsendcop = $('#dsendcop', '#frmCadpac');
         var cNrendere = $('#nrendere', '#frmCadpac');
@@ -288,6 +290,7 @@ function formataCamposTela(cddopcao){
         rCdagedoc.addClass('rotulo-linha').css({'width': '285px'});
         rFlgdsede.addClass('rotulo').css({'width': '130px'});
         rCdagepac.addClass('rotulo-linha').css({'width': '285px'});
+		rFlmajora.addClass('rotulo').css({'width': '130px'});
 
         rDsendcop.addClass('rotulo').css({'width': '130px'});
         rNrendere.addClass('rotulo').css({'width': '130px'});
@@ -356,7 +359,8 @@ function formataCamposTela(cddopcao){
         cCdagedoc.addClass('campo').css({'width':'60px'}).attr('maxlength','6').setMask('INTEGER','zzzz.z','','');
         cFlgdsede.addClass('campo').css({'width':'60px'});
         cCdagepac.addClass('campo').css({'width':'60px'}).attr('maxlength','6').setMask('INTEGER','zz.zzz','','');
-
+		cFlmajora.addClass('campo').css({'width':'60px'});
+		
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
         cNmbairro.addClass('campo').css({'width':'270px'}).attr('maxlength','15');
@@ -565,6 +569,14 @@ function formataCamposTela(cddopcao){
             });
 
             cCdagepac.unbind('keypress').bind('keypress', function(e) {
+                if ( divError.css('display') == 'block' ) { return false; }
+                if ( e.keyCode == 9 || e.keyCode == 13 ) {
+                    cFlmajora.focus();
+                    return false;
+                }
+            });
+			
+			cFlmajora.unbind('keypress').bind('keypress', function(e) {
                 if ( divError.css('display') == 'block' ) { return false; }
                 if ( e.keyCode == 9 || e.keyCode == 13 ) {
                     acessaOpcaoAba(1);
@@ -1522,6 +1534,7 @@ function gravarPAC() {
     var cdorgins = $('#cdorgins','#frmCadpac').val();
     var vlminsgr = $('#vlminsgr','#frmCadpac').val();
     var vlmaxsgr = $('#vlmaxsgr','#frmCadpac').val();
+	var flmajora = $('#flmajora','#frmCadpac').val();
 
     showMsgAguardo("Aguarde, processando...");
 
@@ -1596,6 +1609,7 @@ function gravarPAC() {
             cdorgins: normalizaNumero(cdorgins),
             vlminsgr: vlminsgr,
             vlmaxsgr: vlmaxsgr,
+			flmajora: flmajora,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {

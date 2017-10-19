@@ -89,6 +89,10 @@
 			   13/11/2015 - Inclusao de verificacao estado de crise. 
                             (Jaison/Andrino)
                             
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
 
@@ -1609,8 +1613,26 @@ PROCEDURE atualiza-outros:
                          NO-LOCK NO-ERROR.
 
                     IF   AVAIL crapass   THEN
-                         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                                c-nome-titular2 = crapass.nmsegntl.
+					   DO:
+				          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+						  IF crapass.inpessoa = 1 THEN
+						     DO:
+								 FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+								                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+												           crapttl.nrdconta = crapass.nrdconta AND
+							 					           crapttl.idseqttl = 2
+							 						       NO-LOCK:
+
+								 
+								    ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+								 END.
+
+							 END.
+
+					   END.
+
                  END.
              ELSE  
                  DO:
@@ -2147,16 +2169,16 @@ PROCEDURE valida-permissao-saldo-conta:
                                         
                   /* Apresenta a crítica */
                   IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                      DO: 
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
+                  DO:
+                      RUN cria-erro (INPUT p-cooper,
+                                     INPUT p-cod-agencia,
+                                     INPUT p-nro-caixa,
+                                     INPUT i-cod-erro,
                                          INPUT "",
-                                         INPUT YES).
+                                     INPUT YES).
 
-                          RETURN "NOK".
-                      END.
+                      RETURN "NOK".
+                  END.
                 END.
           /* PRJ339 - REINERT (FIM) */
         

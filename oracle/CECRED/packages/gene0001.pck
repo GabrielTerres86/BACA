@@ -24,6 +24,13 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  
   -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom)
   --
+  --
+  --  08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
+  --  09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo  (Belli-Envolti)
+  --  09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
+  --  16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
+  --  29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
+  --
   -- 23/08/2017 - Incluido procedure pc_valida_senha_AD. (PRJ339 - Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
@@ -286,6 +293,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_abre_arquivo(pr_nmdireto IN VARCHAR2            --> Diretório do arquivo
                            ,pr_nmarquiv IN VARCHAR2            --> Nome do arquivo
                            ,pr_tipabert IN VARCHAR2            --> Modo de abertura (R,W,A)
+                           ,pr_flaltper IN INTEGER DEFAULT 1   --> Altera permissão de acesso do arquivo (0 - Não altera / 1 - Altera)
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2);         --> Saída de erros
 
@@ -363,6 +371,35 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
 
+  -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
+  -- Chamado 665812
+  TYPE typ_reg_crapcri IS
+    RECORD(
+     cdcritic            crapcri.cdcritic%TYPE
+    ,dscritic            crapcri.dscritic%TYPE
+    ,progress_recid      crapcri.progress_recid%TYPE
+    ,tpcritic            crapcri.tpcritic%TYPE
+    ,flgchama            crapcri.flgchama%TYPE);
+
+  TYPE typ_tab_crapcri IS
+    TABLE OF typ_reg_crapcri
+    INDEX BY BINARY_INTEGER;
+
+  -- Vetor para armazenar as informações de crapcri
+  vr_tab_crapcri typ_tab_crapcri; 
+  
+  /* Retorno do cadastro de critica crapcri */
+  -- Chamado 665812
+  PROCEDURE pc_le_crapcri(pr_cdcritic     IN  crapcri.cdcritic%TYPE
+                         ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
+                         ,pr_dsretorno    OUT varchar2
+                         ,pr_cdretorno    OUT number);
+
+  /* Informação do modulo em execução na sessão */
+  -- Chamado 660327
+  PROCEDURE pc_set_modulo(pr_module IN VARCHAR2
+                         ,pr_action IN VARCHAR2 DEFAULT NULL);
+--           
   /* Validar senha dos operadores no AD */
   PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
                               ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    
@@ -381,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 30/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -402,6 +439,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             09/05/2017 - #660297 Alterado o tipo do parâmetro pr_cdprogra de crapprg.cdprogra para 
   --                          VARCHAR2 na rotina pc_submit_job (Carlos)
   --
+  --             08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
+  --             09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo (Belli-Envolti)
+  --             09/06/2017 - #660327 informa acesso dispara a procedure pc_set_modulo (Belli-Envolti)
+  --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal (Belli-Envolti)
+  --             29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
+  --
+  --             30/08/2017 - Ajuste para verificar se deve mudar permissões do arquivo ou não 
+  --                          (Adriano - SD 734960).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -417,23 +463,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /* Informação do modulo em execução na sessão */
   PROCEDURE pc_informa_acesso(pr_module IN VARCHAR2
                              ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_informa_acesso
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     :                                  Ultima atualizacao: 09/06/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : Sempre que chamado por outros programas.
+    --   Objetivo    : Setar padrões de banco para data e number
+    --
+    --   Alterações  : 09/06/2017 - Setar padrões de data e number em um só comando
+    --                              (Belli - Envolti) Chamado 660327
+    -- .............................................................................
   BEGIN
-    -- Se estivermos na cadeia Progress
-    --IF NVL(gene0001.fn_param_sistema('CRED',0,'FL_CADEIA_PROGRESS'),'N') = 'N' THEN
-      -- Setar o formato de data cfme padrão do Progress
-      EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''MM/DD/YYYY''';
-    --ELSE
-      -- Setar o formato de data cfme os padrões BR
-      --EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
-    --END IF;
-    -- Setar configuração caracteres separadores cfme padrão
-    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '',.''';
-    -- Limpar qualquer informação anterior
-    DBMS_APPLICATION_INFO.SET_MODULE('','');
-    -- Inclui na sessão o modulo em execução
-    -- Isto facilita monitoramento posterior
-    DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
-                                    ,action_name => pr_action);
+    -- Chamado 660327
+    -- Alteração incluindo num comando setar a forma de data e o decimal
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''MM/DD/YYYY''
+                                         NLS_NUMERIC_CHARACTERS = '',.''';
+    
+    -- Seta modulo
+		GENE0001.pc_set_modulo(pr_module => pr_module, pr_action => pr_action);      
+    
   END;
 
   /* Função que retorna o database name conectado */
@@ -1926,13 +1980,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   PROCEDURE pc_abre_arquivo(pr_nmdireto IN VARCHAR2            --> Diretório do arquivo
                            ,pr_nmarquiv IN VARCHAR2            --> Nome do arquivo
                            ,pr_tipabert IN VARCHAR2            --> Modo de abertura (R,W,A)
+                           ,pr_flaltper IN INTEGER DEFAULT 1   --> Altera permissão de acesso do arquivo (0 - Não altera / 1 - Altera)
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2) IS       --> Saída de erros
     /*..............................................................................
 
        Programa: pc_abre_arquivo (Caminho e nome do arquivos passados separadamente)
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 13/03/2015
+       Data    : Maio/2013                      Ultima atualizacao: 30/08/2017
 
        Dados referentes ao programa:
 
@@ -1948,6 +2003,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes: 13/03/2015 - Adicionado parametro linesize 32767 na utl_file.fopen
                                 (Alisson AMcom)
+
+                   30/08/2017 - Ajuste para verificar se deve mudar permissões do arquivo ou não
+                               (Adriano - SD 734960).             
+                   
 
     ..............................................................................*/
   BEGIN
@@ -1965,8 +2024,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           pr_des_erro := 'Problema ao abrir o arquivo <'||pr_nmdireto||'/'||pr_nmarquiv||'>: ' || sqlerrm;
           RAISE vr_exc_erro;
       END;
+      
+      IF pr_flaltper = 1                                                    AND 
+         NVL(gene0001.fn_param_sistema('CRED',0,'ALTERA_PERMIS_ARQ'),0) = 1 THEN
+         
       -- Ao final, tenta setar as propriedades para garantir que o arquivo seja acessível por outros usuários
       pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_nmdireto||'/'||pr_nmarquiv);
+        
+      END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Montar o erro
@@ -2617,6 +2683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       
     EXCEPTION
       WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => '_'||pr_jobname ||'_');  
+      
         ROLLBACK;
         -- Preparar saída com erro
         pr_des_erro := 'Erro na rotina gene0001.pc_submit_job --> '||sqlerrm;
@@ -2831,6 +2899,142 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     END;
   END pc_lista_cooperativas;
 
+/* Retorno do cadastro de critica crapcri */
+  PROCEDURE pc_le_crapcri 
+    (pr_cdcritic     IN  crapcri.cdcritic%TYPE
+    ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
+    ,pr_dsretorno    OUT varchar2
+    ,pr_cdretorno    OUT number)
+  IS
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_le_crapcri
+       Autor   : Belli (Envolti)
+       Data    : Junho/2017                    Ultima atualizacao: 08/06/2017
+
+       Dados referentes ao programa:
+
+       Objetivo  : Rotina que retorna ás informações do cadastro de critica.
+
+       Alteracoes:
+    ..............................................................................*/
+
+    DECLARE
+  	  CURSOR cr_crapcri IS
+  	    SELECT dscritic
+              ,progress_recid
+              ,tpcritic
+              ,flgchama 
+  		  FROM crapcri
+  	     WHERE cdcritic = pr_cdcritic;
+         
+      vr_dscritic         crapcri.dscritic%TYPE := NULL;
+      vr_progress_recid   crapcri.progress_recid%TYPE := NULL;
+      vr_tpcritic         crapcri.tpcritic%TYPE := NULL;
+      vr_flgchama         crapcri.flgchama%TYPE := NULL;
+      vr_seq              BINARY_INTEGER;
+      vr_teste            number (1) := 0;
+      
+    PROCEDURE MONTA_TYPE 
+      IS
+    BEGIN  
+      -- Guardar a próxima sequencia para gravação na tabela de erros
+      vr_seq := pr_tab_crapcri.COUNT;
+      -- Criar o registro de erro (Rowtype da CRAPERR)
+      pr_tab_crapcri(vr_seq).cdcritic       := pr_cdcritic;
+      pr_tab_crapcri(vr_seq).dscritic       := vr_dscritic;
+      pr_tab_crapcri(vr_seq).progress_recid := vr_progress_recid;
+      pr_tab_crapcri(vr_seq).tpcritic       := vr_tpcritic;
+      pr_tab_crapcri(vr_seq).flgchama       := vr_flgchama;
+    END;
+    --
+    --   INICIO  PROCESSO
+    BEGIN
+      
+      pr_cdretorno   := 0;
+      pr_dsretorno   := 'Inicio';
+      vr_seq         := 0;
+      
+      IF pr_cdcritic is NULL THEN
+        
+          pr_cdretorno   := 3;
+          pr_dsretorno   := 'Paramêtro de entrada nulo';
+      
+      ELSE          
+          -- Busca cadastro da critica cfme parâmetro passado
+          OPEN cr_crapcri;
+          BEGIN
+            FETCH cr_crapcri
+            INTO 
+             vr_dscritic
+            ,vr_progress_recid
+            ,vr_tpcritic
+            ,vr_flgchama
+            ;
+      
+            IF cr_crapcri%NOTFOUND THEN
+               -- Se não encontrou nenhum registro
+               pr_cdretorno      := 2; 
+               pr_dsretorno      := 'Cadastro crapcri não existe';
+            ELSE
+               -- Se encontrou o registro
+               MONTA_TYPE;      
+               pr_cdretorno      := 1; 
+               pr_dsretorno      := 'Sucesso';        
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              pr_cdretorno := 8;
+              pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FETCH --> ' || SQLERRM;
+          END;
+         
+          -- Apenas fechar o cursor
+          CLOSE cr_crapcri;    
+      END IF; 
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdretorno := 9;
+        pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FINAL --> ' || SQLERRM;
+    END;
+  END pc_le_crapcri;
+
+  /* Informação do modulo em execução na sessão */
+  PROCEDURE pc_set_modulo    (pr_module IN VARCHAR2
+                             ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : pc_set_modulo
+   Autor    : Cesar Belli
+   Data     : 09/06/2017                        Ultima atualizacao: 29/06/2017   
+   Chamado  : 660327
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Seta modulo e ação no banco de dados Oracle
+
+   Alteracoes: 
+               29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
+      
+  ---------------------------------------------------------------------------------------------------------------*/
+
+    if pr_module is null then
+      -- Limpar qualquer informação anterior
+      DBMS_APPLICATION_INFO.SET_ACTION('');
+      -- Isto facilita monitoramento posterior
+      DBMS_APPLICATION_INFO.SET_ACTION(action_name => pr_action);
+    else
+      -- Limpar qualquer informação anterior
+      DBMS_APPLICATION_INFO.SET_MODULE('','');
+      -- Isto facilita monitoramento posterior
+      DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
+                                    ,action_name => pr_action);
+    end if;       
+  END;
+
+--  
   /* Validar senha dos operadores no AD */
   PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
                               ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    

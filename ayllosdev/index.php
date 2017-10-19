@@ -28,6 +28,7 @@
  * 015: [23/08/2017] - Lucas Reinert (Cecred)	: Removido campo senha; removido campo Operador nos ambientes que não são produção; alterado para 
  *												  efetuar login através do usuário do AD. (PRJ339)
  */
+ 
 ?> 
 <?php	
 	session_start();	
@@ -73,7 +74,7 @@
             $xmlLogin .= "      <cdagenci>".$cdpactra."</cdagenci>";
             $xmlLogin .= "      <nrdcaixa>0</nrdcaixa>";
             $xmlLogin .= "      <cdoperad>".$cdoperad."</cdoperad>";
-            $xmlLogin .= "      <idorigem>5</idorigem>";			
+            $xmlLogin .= "      <idorigem>5</idorigem>";
             $xmlLogin .= "      <vldsenha>no</vldsenha>";
             $xmlLogin .= "      <cddsenha></cddsenha>";
             $xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
@@ -364,7 +365,7 @@ $(document).ready(function () {
 														<td height="25"></td>
 														<td class="txtNormalBold">Operador:</td>
 														<td><input name="cdoperad" id="cdoperad" type="text" class="campo" style="width:120px;" maxlength="10"></td>
-													</tr>									
+													</tr>													
 													<? }else{ ?>
 														<input name="cdoperad" id="cdoperad" type="hidden" class="campo" style="width:120px;" maxlength="10" value="<?php if (isset($cdoperad)) { echo $cdoperad; } ?>">
 													<? } ?>

@@ -54,6 +54,10 @@
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+                            
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
 
@@ -593,16 +597,16 @@ PROCEDURE valida-permissao-saldo-conta:
                                     
               /* Apresenta a crítica */
               IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                  DO: 
-                      RUN cria-erro (INPUT p-cooper,
-                                     INPUT p-cod-agencia,
-                                     INPUT p-nro-caixa,
-                                     INPUT i-cod-erro,
+                DO:
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
                                      INPUT "",
-                                     INPUT YES).
+                                   INPUT YES).
 
-                      RETURN "NOK".
-                  END.
+                    RETURN "NOK".
+                END.
             END.
         /* PRJ339 - REINERT (FIM) */
 
@@ -836,8 +840,7 @@ PROCEDURE atualiza-cheque-avulso:
          
     IF  AVAIL crapass THEN 
         DO:
-            ASSIGN c-nome-titular1 = crapass.nmprimtl
-                   c-nome-titular2 = crapass.nmsegntl.
+            ASSIGN c-nome-titular1 = crapass.nmprimtl.
 
             FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
                                crapttl.nrdconta = crapass.nrdconta AND
@@ -850,7 +853,8 @@ PROCEDURE atualiza-cheque-avulso:
                        
                    IF AVAIL crapttl THEN
                       ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
-                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99"). 
+                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
+							 c-nome-titular2 = crapttl.nmextttl. 
                 END.
             ELSE 
                 ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")
