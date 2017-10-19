@@ -160,10 +160,13 @@
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)  
 
-                15/09/2017 - Alterações referente a melhoria 339 (Kelvin).	
+                15/09/2017 - Alterações referente a melhoria 339 (Kelvin).	   
+                             
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 
 				05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
-							 (PRJ339 - Kelvin/Andrino).
+							 (PRJ339 - Kelvin/Andrino).				  
 .............................................................................*/
                                                      
 
@@ -2702,6 +2705,7 @@ PROCEDURE Altera_Jur PRIVATE :
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR h-b1craptfc  AS HANDLE                                  NO-UNDO.
 
@@ -2758,6 +2762,8 @@ PROCEDURE Altera_Jur PRIVATE :
                 
         END. /* ContadorJur */
 
+        ASSIGN aux_idseqttl = 0.
+
         IF  par_natjurid <> crabjur.natjurid OR
             par_nmfansia <> crabjur.nmfansia OR 
             par_cdrmativ <> crabjur.cdrmativ THEN
@@ -2769,7 +2775,7 @@ PROCEDURE Altera_Jur PRIVATE :
         					   crapdoc.nrdconta = crabjur.nrdconta AND
         					   crapdoc.tpdocmto = 10               AND
         					   crapdoc.dtmvtolt = par_dtmvtolt     AND
-        					   crapdoc.idseqttl = 1 
+        					   crapdoc.idseqttl = aux_idseqttl     
         					   EXCLUSIVE NO-ERROR.
         
         			IF  NOT AVAILABLE crapdoc THEN
@@ -2795,7 +2801,8 @@ PROCEDURE Altera_Jur PRIVATE :
         								   crapdoc.flgdigit = FALSE
         								   crapdoc.dtmvtolt = par_dtmvtolt
         								   crapdoc.tpdocmto = 10
-        								   crapdoc.idseqttl = 1.
+        								   crapdoc.idseqttl = aux_idseqttl.
+                           
         							VALIDATE crapdoc.
         						END.
         				END.
@@ -6631,12 +6638,6 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
                                     END.
-                                    WHEN 2 THEN DO:
-                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 3 THEN DO:
-                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
-                                    END.
                                 END CASE.
 
                                 LEAVE ContadorAss.
@@ -6716,12 +6717,6 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                 CASE crapttl.idseqttl:
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 2 THEN DO:
-                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 3 THEN DO:
-                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
                                     END.
                                 END CASE.
 

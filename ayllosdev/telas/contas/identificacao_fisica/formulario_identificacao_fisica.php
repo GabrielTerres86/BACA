@@ -18,6 +18,11 @@
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
  * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
+ * 012: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
+    							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
+ * 013: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
+ * 014: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -30,7 +35,6 @@
 	<input type="hidden" id="nrcpfemp" name="nrcpfemp" value="<? echo getByTagName($IdentFisica,'nrcpfemp') ?>" />
 	<input type="hidden" id="dsproftl" name="dsproftl" value="<? echo getByTagName($IdentFisica,'dsproftl') ?>" />
 	<input type="hidden" id="cdnvlcgo" name="cdnvlcgo" value="<? echo getByTagName($IdentFisica,'cdnvlcgo') ?>" />
-	<input type="hidden" id="nrfonemp" name="nrfonemp" value="<? echo getByTagName($IdentFisica,'nrfonemp') ?>" />
 	<input type="hidden" id="cdturnos" name="cdturnos" value="<? echo getByTagName($IdentFisica,'cdturnos') ?>" />
 	<input type="hidden" id="dtadmemp" name="dtadmemp" value="<? echo getByTagName($IdentFisica,'dtadmemp') ?>" />
 	<input type="hidden" id="vlsalari" name="vlsalari" value="<? echo getByTagName($IdentFisica,'vlsalari') ?>" />	
@@ -86,8 +90,12 @@
 		</select>
 		<input name="nrdocttl" id="nrdocttl" type="text" value="<? echo getByTagName($IdentFisica,'nrdocttl') ?>" />
 
+		<br />
+
 		<label for="cdoedttl">Org. Emi.:</label>
 		<input name="cdoedttl" id="cdoedttl" type="text" value="<? echo getByTagName($IdentFisica,'cdoedttl') ?>" />	
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedttl" id="nmoedttl" type="text" style="display:none;" />
 								
 		<label for="cdufdttl" class="rotulo-linha">U.F.:</label>
 		<? echo selectEstado('cdufdttl', getByTagName($IdentFisica,'cdufdttl'),1) ?>
@@ -107,10 +115,12 @@
 		<input name="destpnac" id="destpnac" type="text" value="<? echo getByTagName($IdentFisica,'destpnac') ?>" />
 		<br />
 		
-		<label for="dsnacion">Nacional.:</label>
-		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
+        <label for="cdnacion">Nacional.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" maxlength="5" class="codigo pesquisa" value="<? echo getByTagName($IdentFisica,'cdnacion') ?>" />        
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
 		
+		<br />
 		<label for="cdsexotl">Sexo:</label>
 		<input name="cdsexotl" type="radio" class="radio" value="1" <? if (getByTagName($IdentFisica,'cdsexotl') == '1') { echo ' checked'; } ?> />
 		<label for="sexoMas" class="radio">Masculino</label>
