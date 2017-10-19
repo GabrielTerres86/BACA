@@ -18,11 +18,13 @@ Alteraçoes: 29/01/2008 - Nao permitir a digitaçao do Número da proposta,
             
             09/12/2015 - Inclusão do campo cdcopope (Vanessa)
 
-			19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
+						19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
             
             30/05/2016 - Ajustes PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
-			28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
+						28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
+						
+						11/10/2017 - Aumento da máscara do campo nrctrpro (Jean Michel).
 
 ......................................................................... */
 
@@ -97,12 +99,6 @@ DEFINE VARIABLE aux_gnapetp           AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_flgescol          AS LOGICAL                        NO-UNDO.
 DEFINE VARIABLE aux_nrpropos          AS CHAR                           NO-UNDO.
 
-DEFINE VARIABLE vetorevento           AS CHAR FORMAT "x(2000)"          NO-UNDO.
-DEFINE VARIABLE vetorfacili           AS CHAR FORMAT "x(2000)"          NO-UNDO.
-DEFINE VARIABLE vetoreixo             AS CHAR FORMAT "x(2000)"          NO-UNDO.
-DEFINE VARIABLE vetorecurso           AS CHAR FORMAT "x(2000)"          NO-UNDO. 
-DEFINE VARIABLE vetopubalvo           AS CHAR FORMAT "x(2000)"          NO-UNDO.
-DEFINE VARIABLE vetoforma             AS CHAR FORMAT "x(2000)"          NO-UNDO.                                                               
 /*** Declaraçao de BOs ***/
 DEFINE VARIABLE h-b1wpgd0012c          AS HANDLE                         NO-UNDO.
 DEFINE VARIABLE h-b1wpgd0012d          AS HANDLE                         NO-UNDO.
@@ -333,19 +329,15 @@ PROCEDURE CriaListaEixos :
   RUN RodaJavaScript("var meixos = new Array();").
   
   FOR EACH gnapetp NO-LOCK BY gnapetp.dseixtem: 
-   
-   IF TRIM(vetoreixo) <> "" AND TRIM(vetoreixo) <> ? THEN
-     ASSIGN vetoreixo = vetoreixo + ",".     
-     
-   ASSIGN vetoreixo = vetoreixo + "~{idevento:'" + TRIM(string(gnapetp.idevento))  
-                                + "',cdcooper:'" + TRIM(string(gnapetp.cdcooper))
-                                + "',cdeixtem:'" + TRIM(string(gnapetp.cdeixtem))
-                                + "',dseixtem:'" + TRIM(string(gnapetp.dseixtem))+ "'~}".   
-  END. /* for each */
+  
+  RUN RodaJavaScript("meixos.push(~{idevento:'" + TRIM(string(gnapetp.idevento))  
+                               + "',cdcooper:'" + TRIM(string(gnapetp.cdcooper))
+                               + "',cdeixtem:'" + TRIM(string(gnapetp.cdeixtem))
+                               + "',dseixtem:'" + TRIM(string(gnapetp.dseixtem))+ "'~});").
 
-  RUN RodaJavaScript("meixos.push(" + STRING(vetoreixo) + ");").
-
+	END. /* for each */
 END PROCEDURE.
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEvento w-html 
 PROCEDURE CriaListaEvento :
 
@@ -355,29 +347,13 @@ PROCEDURE CriaListaEvento :
                      AND crapedp.dtanoage = 0
                      AND crapedp.flgativo = TRUE  NO-LOCK 
                       BY crapedp.nmevento:
-
-    IF TRIM(vetorevento) <> "" AND TRIM(vetorevento) <> ? THEN
-      ASSIGN vetorevento = vetorevento + ",".
                             
-    ASSIGN vetorevento = vetorevento + "~{cdeixtem:"    + "'" + TRIM(string(crapedp.cdeixtem)) 
-                                     + "',nrseqtem:'" + TRIM(string(crapedp.nrseqtem))
-                                     + "',cdevento:'" + TRIM(string(crapedp.cdevento))
-                                     + "',nmevento:'" + TRIM(string(crapedp.nmevento)) + "'~}".
-          
-
-    ASSIGN aux_registros  = aux_registros  + 1.
-      
-    IF aux_registros > 50 THEN
-      DO:
-        RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
-    
-        ASSIGN vetorevento = ""
-               aux_registros = 0.
-      END.
-        
+    RUN RodaJavaScript("mevento.push(~{cdeixtem:'" + TRIM(string(crapedp.cdeixtem)) 
+                                  + "',nrseqtem:'" + TRIM(string(crapedp.nrseqtem))
+                                  + "',cdevento:'" + TRIM(string(crapedp.cdevento))
+                                  + "',nmevento:'" + TRIM(string(crapedp.nmevento)) + "'~});").
+		        
   END. /* for each */
-    
-  RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
     
 END PROCEDURE.
 
@@ -423,17 +399,12 @@ PROCEDURE CriaListaFacili :
         ELSE
            aux_flgescol = FALSE.
     END.
-    
-    IF TRIM(vetorfacili) <> "" AND TRIM(vetorfacili) <> ? THEN
-      ASSIGN vetorfacili = vetorfacili + ",".
-        
-    ASSIGN vetorfacili = vetorfacili + "~{idfacili:'" + string(rowid(gnapfep))
-                                     + "',nmfacili:'" + TRIM(string(gnapfep.nmfacili))
-                                     + "',flgescol:'" + STRING(aux_flgescol,"yes/no") + "'~}".
-    
-  END. /* for each */
-
-  RUN RodaJavaScript("mfacili.push(" + vetorfacili + ");").
+      
+		RUN RodaJavaScript("mfacili.push(~{idfacili:'" + string(rowid(gnapfep))
+                                  + "',nmfacili:'" + UPPER(TRIM(string(gnapfep.nmfacili)))
+                                  + "',flgescol:'" + STRING(aux_flgescol,"yes/no") + "'~});").
+		
+  END. /* for each */  
 
 END PROCEDURE.
 
@@ -481,8 +452,6 @@ PROCEDURE CriaListaRecurso :
   IF REQUEST_METHOD = "GET"  THEN
     RUN LimpaRecurso.
     
-  ASSIGN vetorecurso = "".
-  
   FOR EACH gnaprdp WHERE gnaprdp.idevento = INTEGER(ab_unmap.aux_idevento)
                       AND  gnaprdp.cdcooper = 0
                       BY   gnaprdp.dsrecurs: 
@@ -496,18 +465,13 @@ PROCEDURE CriaListaRecurso :
                       
     IF AVAIL craprdf THEN
       DO:
-        IF TRIM(vetorecurso) <> "" AND TRIM(vetorecurso) <> ? THEN
-          ASSIGN vetorecurso = vetorecurso + ",".
-            
-        ASSIGN vetorecurso = vetorecurso + "~{nrseqdig:'" + TRIM(string(gnaprdp.nrseqdig))
-                                         + "',dsrecurs:'" + TRIM(string(gnaprdp.dsrecurs))
-                                         + "',rowidrec:'" + TRIM(string(ROWID(craprdf)))+ "'~}".
+        RUN RodaJavaScript("mrecurso.push(~{nrseqdig:'" + TRIM(string(gnaprdp.nrseqdig))
+                                       + "',dsrecurs:'" + TRIM(string(gnaprdp.dsrecurs))
+                                       + "',rowidrec:'" + TRIM(string(ROWID(craprdf)))+ "'~});").			
       END.
     
   END. /* for each */
-    
-  RUN RodaJavaScript("mrecurso.push(" + vetorecurso + ");").
-
+  
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -719,7 +683,7 @@ PROCEDURE local-assign-record:
                        gnatpdp.nmevefor = INPUT gnappdp.nmevefor
                        gnatpdp.nrcpfcgc = DEC(ab_unmap.aux_nrcpfcgc)
                        gnatpdp.nrpropos = INPUT gnappdp.nrpropos
-                       gnatpdp.nrctrpro = INT(SUBSTRING(gnatpdp.nrpropos,1,3))
+                       gnatpdp.nrctrpro = INT(SUBSTRING(gnatpdp.nrpropos,1,5))
                        gnatpdp.qtcarhor = DEC(aux_qtcarhor)
                        gnatpdp.vlinvest = INPUT gnappdp.vlinvest
                        gnatpdp.idforrev = INT(ab_unmap.aux_idforrev)
@@ -1107,13 +1071,13 @@ PROCEDURE process-web-request :
                                        
            IF AVAIL b-gnappdp  THEN
              DO:
-               ASSIGN gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(b-gnappdp.nrctrpro + 1,"999") + "/" + STRING(YEAR(TODAY),"9999")
-                      aux_nrpropos = STRING(b-gnappdp.nrctrpro + 1,"999") + "/" + STRING(YEAR(TODAY),"9999").
+               ASSIGN gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(b-gnappdp.nrctrpro + 1,"99999") + "/" + STRING(YEAR(TODAY),"9999")
+                      aux_nrpropos = STRING(b-gnappdp.nrctrpro + 1,"99999") + "/" + STRING(YEAR(TODAY),"9999").
              END.
            ELSE
              DO:
-               ASSIGn gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = "001/" + STRING(YEAR(TODAY),"9999") /* Primeira Proposta do ano */ 
-                      aux_nrpropos = "001/" + STRING(YEAR(TODAY),"9999").
+               ASSIGn gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = "00001/" + STRING(YEAR(TODAY),"9999") /* Primeira Proposta do ano */ 
+                      aux_nrpropos = "00001/" + STRING(YEAR(TODAY),"9999").
              END.
        END.
   ELSE

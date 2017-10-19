@@ -863,6 +863,7 @@ PROCEDURE consulta-boleto-2via.
 								   INPUT crapcob.tpdmulta,           
 								   INPUT crapcob.tpjurmor,           
 								   INPUT YES,           
+                                   INPUT crapcob.flgcbdda,
 								   OUTPUT aux_dtvencut,           
 								   OUTPUT aux_vltituut,           
 								   OUTPUT aux_vlmormut,           
@@ -890,6 +891,14 @@ PROCEDURE consulta-boleto-2via.
        ASSIGN aux_vltituut = ?.
 	END.
 			
+    IF AVAIL(tt-consulta-blt) THEN
+    DO:
+        ASSIGN tt-consulta-blt.dtvencto            = IF aux_critdata = YES THEN aux_dtvencut ELSE crapcob.dtvencto 
+               tt-consulta-blt.vltitulo            = aux_vltituut
+               tt-consulta-blt.vlmormul            = aux_vlmormut
+               tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+               tt-consulta-blt.nmprimtl 	         = aux_nmdobnfc.
+               
 	/* Consulta Rollout */
     RUN verifica-rollout(INPUT crapcob.cdcooper,
                          INPUT crapdat.dtmvtolt,
@@ -898,29 +907,19 @@ PROCEDURE consulta-boleto-2via.
 					
     IF aux_rollout = 1 THEN 
 	 DO:
-       
 	    /* Se estiver na faixa do rollout, data de vencimento e valor do título devem ser mantidos os originais */
-       
          ASSIGN aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori
                 aux_vltituut_atualizado = crapcob.vltitulo
                 aux_dtvencut_atualizado = aux_dtvencut.
-
 	 END.
 
-	IF AVAIL(tt-consulta-blt) THEN
-	   DO:
-			ASSIGN tt-consulta-blt.dtvencto            = IF aux_critdata = YES THEN aux_dtvencut ELSE crapcob.dtvencto
-				   tt-consulta-blt.vltitulo            = aux_vltituut
-				   tt-consulta-blt.vlmormul            = aux_vlmormut
-
-				   tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+        ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
 				   tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
 				   tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-				   tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-				   tt-consulta-blt.nmprimtl 	       = aux_nmdobnfc
-
 				   tt-consulta-blt.nrdconta = crapcob.nrdconta
 				   tt-consulta-blt.vldocmto = crapcob.vltitulo
+                   /* Valor de desconto calculado */
+                   tt-consulta-blt.vldescto = aux_vldescut 
 				   tt-consulta-blt.dtvctori = aux_dtvencut
 				   tt-consulta-blt.flgaceit = "N"
 				   tt-consulta-blt.flgcbdda = (IF aux_rollout = 1 THEN "S" ELSE "N").
@@ -1281,6 +1280,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.tpdmulta,           
                                                                 INPUT crapcob.tpjurmor,           
                                                                 INPUT NO,           
+                                                                INPUT crapcob.flgcbdda,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -1295,7 +1295,8 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
-										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
+										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc
+                                        tt-consulta-blt.vldescto            = aux_vldescut.
                                  END.
                                           
                              END.
@@ -1507,6 +1508,7 @@ PROCEDURE consulta-bloqueto.
                                                             INPUT crapcob.tpdmulta,           
                                                             INPUT crapcob.tpjurmor,           
                                                             INPUT NO,           
+                                                            INPUT crapcob.flgcbdda,
                                                             OUTPUT aux_dtvencut,           
                                                             OUTPUT aux_vltituut,           
                                                             OUTPUT aux_vlmormut,           
@@ -1521,7 +1523,8 @@ PROCEDURE consulta-bloqueto.
                                     tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                     tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
-									tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
+                                    tt-consulta-blt.nmprimtl            = aux_nmdobnfc
+                                    tt-consulta-blt.vldescto            = aux_vldescut.
                                  END.
                              END.    
 
@@ -1732,6 +1735,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.tpdmulta,           
                                                                 INPUT crapcob.tpjurmor,           
                                                                 INPUT NO,           
+                                                                INPUT crapcob.flgcbdda,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -1746,7 +1750,8 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
+                                        tt-consulta-blt.nmprimtl 			= aux_nmdobnfc
+                                        tt-consulta-blt.vldescto            = aux_vldescut.
                                 END.
                                 END.
                              END.
@@ -1960,6 +1965,7 @@ PROCEDURE consulta-bloqueto.
                                                                 INPUT crapcob.tpdmulta,           
                                                                 INPUT crapcob.tpjurmor,           
                                                                 INPUT NO,           
+                                                                INPUT crapcob.flgcbdda,
                                                                 OUTPUT aux_dtvencut,           
                                                                 OUTPUT aux_vltituut,           
                                                                 OUTPUT aux_vlmormut,           
@@ -1974,7 +1980,8 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
+                                        tt-consulta-blt.nmprimtl 		    = aux_nmdobnfc
+                                        tt-consulta-blt.vldescto            = aux_vldescut.
                                  
                                 END.
                                 END.
@@ -2372,6 +2379,7 @@ PROCEDURE consulta-bloqueto.
                                                               INPUT crapcob.tpdmulta,           
                                                               INPUT crapcob.tpjurmor,           
                                                               INPUT NO,           
+                                                              INPUT crapcob.flgcbdda,
                                                               OUTPUT aux_dtvencut,           
                                                               OUTPUT aux_vltituut,           
                                                               OUTPUT aux_vlmormut,           
@@ -2386,7 +2394,8 @@ PROCEDURE consulta-bloqueto.
                                       tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                       tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                       tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-									  tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
+									                    tt-consulta-blt.nmprimtl 			      = aux_nmdobnfc
+                                      tt-consulta-blt.vldescto            = aux_vldescut.
                                 END.
                             END.
 
@@ -3775,6 +3784,7 @@ PROCEDURE cria_tt-consulta-blt.
                            NO-LOCK NO-ERROR.
     END.
    
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -3972,7 +3982,11 @@ PROCEDURE cria_tt-consulta-blt.
                                         ELSE
                                            crapcob.dtdocmto)
             tt-consulta-blt.cddespec = crapcob.cddespec
-            tt-consulta-blt.vldescto = crapcob.vldescto
+            tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
+                                            crapcob.cdmensag = 2) THEN /* Desconto apos o vencimento */ 
+                                            crapcob.vldescto
+                                        ELSE
+                                            0)
             tt-consulta-blt.vlabatim = crapcob.vlabatim
             tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
                                        "S" ELSE "N").
@@ -5103,7 +5117,6 @@ PROCEDURE proc_nosso_numero.
                    ASSIGN tt-consulta-blt.dsendsac = REPLACE(aux_na_dsendsac,"&","%26")
                           tt-consulta-blt.flgemail = FALSE.
 
-                                             
                ASSIGN tt-consulta-blt.complend = REPLACE(aux_na_complend,"&","%26")
                tt-consulta-blt.nmbaisac = REPLACE(aux_na_nmbaisac,"&","%26")
                tt-consulta-blt.nmcidsac = REPLACE(aux_na_nmcidsac,"&","%26")
@@ -5145,7 +5158,11 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.dtelimin = crapcob.dtelimin
                tt-consulta-blt.vltitulo = crapcob.vltitulo
                tt-consulta-blt.vldpagto = crapcob.vldpagto
-               tt-consulta-blt.vldescto = crapcob.vldescto
+               tt-consulta-blt.vldescto = (IF (crapcob.cdmensag = 1  OR   /* Desconto ate o vencimento */
+                                               crapcob.cdmensag = 2) THEN /* Desconto apos o vencimento */ 
+                                               crapcob.vldescto
+                                           ELSE
+                                               0)
                tt-consulta-blt.vlabatim = crapcob.vlabatim
                tt-consulta-blt.cdmensag = crapcob.cdmensag
                tt-consulta-blt.idbaiexc = IF (crapcob.incobran = 0  OR
@@ -5169,7 +5186,6 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.insitpro = crapcob.insitpro
                tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
                                           "S" ELSE "N").
-
 
            /* Tratamento para Negativaçao Serasa e Protesto */ 
            ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
@@ -8731,6 +8747,7 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF INPUT PARAM par_tpdmulta             AS INTE              NO-UNDO.
     DEF INPUT PARAM par_tpjurmor             AS INTE              NO-UNDO.
     DEF INPUT PARAM par_flag2via             AS LOGI              NO-UNDO.
+    DEF INPUT PARAM par_flgcbdda             AS INTE              NO-UNDO.
     DEF OUTPUT PARAM par_dtvencut            AS DATE              NO-UNDO.
     DEF OUTPUT PARAM par_vltituut            AS DECI              NO-UNDO.
     DEF OUTPUT PARAM par_vlmormut            AS DECI              NO-UNDO.
@@ -8750,6 +8767,8 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF VAR aux_vlfatura                     AS DECI              NO-UNDO.
     DEF VAR aux_dscritic                     AS CHAR              NO-UNDO.
    
+    DEF VAR aux_rollout                      AS INTE              NO-UNDO.
+   
     /* rotina para criticar data de vencimento */
     RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
     
@@ -8763,6 +8782,10 @@ PROCEDURE calcula_multa_juros_boleto:
     ASSIGN aux_vldescto = 0
            aux_vlabatim = par_vlabatim
            aux_vlfatura = par_vltitulo.
+
+    /* Nao possui desconto, vmaos zerar o valor de desconto */
+    IF  par_cdmensag = 0 THEN
+        ASSIGN par_vldescto = 0. 
 
     /* abatimento deve ser calculado antes dos juros/multa */
     IF par_vlabatim > 0 THEN
@@ -8813,9 +8836,20 @@ PROCEDURE calcula_multa_juros_boleto:
     /* valor final da tarifa */
     ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
 
+    /* Consulta Rollout */
+    RUN verifica-rollout(INPUT par_cdcooper,
+                         INPUT par_dtmvtocd,
+                         INPUT par_vltitulo,
+                         OUTPUT aux_rollout).  
+					
     IF  par_flag2via  THEN
         DO:
-			ASSIGN par_dtvencut = (IF aux_critdata THEN 
+            
+            /* Verificar se o titulo está vencido e se está fora do rollout
+               para atualizar a data de vencimento */
+            ASSIGN par_dtvencut = (IF aux_critdata    AND /* Titulo Vencido */ 
+                                     (aux_rollout = 0  OR /* Fora do ROLLOUT */
+                                      par_flgcbdda = 0) THEN  /* Nao esta na CIP */
                                        par_dtmvtocd 
                                    ELSE
                                        par_dtvencto)
@@ -8836,10 +8870,12 @@ PROCEDURE calcula_multa_juros_boleto:
                    par_vlmormut_atualizado = (aux_vlrmulta + aux_vlrjuros)      
                    par_dtvencut = par_dtvencto
                    par_vltituut = par_vltitulo.
-           
         END.
 
-    ASSIGN par_cridatut = aux_critdata.
+    ASSIGN par_cridatut = aux_critdata
+           /* Devolver o valor do desconto calculado */
+           par_vldescut = aux_vldescto.
+           
 
     RETURN "OK".
 END PROCEDURE.

@@ -422,18 +422,18 @@
       oOption.value = 0;
 
       for(i=0;i<mevento.length;i++){
-      if(mevento[i].nrseqtem == nrseqtem){
-      oOption = document.createElement("OPTION");
-      document.all.aux_cdevento.options.add(oOption);
-      oOption.innerText = mevento[i].nmevento;
-      oOption.value = mevento[i].cdevento;
+		  if(parseInt(mevento[i].nrseqtem) == parseInt(nrseqtem)){
+			  oOption = document.createElement("OPTION");
+			  document.all.aux_cdevento.options.add(oOption);
+			  oOption.innerText = mevento[i].nmevento;
+			  oOption.value = mevento[i].cdevento;
 
-      if(mevento[i].cdevento == cdevento){
-      oOption.selected = mevento[i].cdevento;
+			  if(mevento[i].cdevento == cdevento){
+				oOption.selected = mevento[i].cdevento;
+			  }
+		  }
       }
-
-      }
-      }
+	  
     }
 
     function MostraFormaRealizacao(){
