@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao:  19/07/2017
+  Data    : Abril/2017.                    Ultima atualizacao:  07/08/2017
 
   Dados referentes ao programa:
 
@@ -27,6 +27,9 @@ BEGIN
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
   
               19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
+
+              07/08/2017 - Correção da execução do relatório 135, que não estava sendo
+                           gerado na execução em paralelo.
 
     ............................................................................. */
 
@@ -76,11 +79,14 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,ass.cdagenci  --ews
               ,epr.cdfinemp
               ,epr.vlemprst
-          FROM crapepr epr
-         WHERE epr.cdcooper = pr_cdcooper          --> Coop conectada
+          FROM crapepr epr,
+               crapass ass
+         WHERE epr.cdcooper = ass.cdcooper   --ews
+           AND epr.nrdconta = ass.nrdconta
+           AND epr.cdcooper = pr_cdcooper          --> Coop conectada
            AND epr.inliquid = 0                    --> Somente não liquidados
            AND epr.indpagto = 0                    --> Nao pago no mês ainda
            AND epr.flgpagto = 0                    --> Débito em conta
@@ -192,11 +198,27 @@ BEGIN
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
+
+    vr_idprglog   NUMBER;
       
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
+       --
+       --
+       IF pr_cdcooper = 3 then
+        -- gera log para futuros rastreios
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Inicio pc_gera_tabela_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
+                           
+       END IF;
+       -- 
        --
        -- Leitura do indicador de uso da tabela de taxa de juros
        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -332,6 +354,18 @@ BEGIN
            RAISE vr_exc_erro;
        END;
        --
+       IF pr_cdcooper = 3 then
+       -- gera log para futuros rastreios
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Após DELETE tbepr_tr_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
+       --
+       END IF;
+       --
        -- Carregar Contratos de Acordos
        FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
          vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
@@ -403,6 +437,21 @@ BEGIN
                                                   ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
        --
        FOR rw_crapepr IN cr_crapepr LOOP
+         --
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Início loop cr_crapepr:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp,
+                          PR_IDPRGLOG           => vr_idprglog);                            
+                           
+         END IF;  
+
          -- acerto de datas
          IF to_char(rw_crapepr.dtdpagto,'dd') <> to_char(rw_crapepr.dtdpagto_nova,'dd') THEN
            rw_crapepr.dtdpagto_nova := rw_crapepr.dtdpagto_nova - 1;
@@ -628,8 +677,25 @@ BEGIN
               vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
               vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
            END IF;
-           --
-         END IF;
+         --
+         --
+		 END IF;
+
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Antes insert tbepr_tr_parcelas:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp||
+                                                   ' Data pgto:'||to_char(vr_dtdpagto,'dd/mm/yyyy')||
+                                                   ' Saldo Dev:'||to_char(vr_vlsdeved),
+                          PR_IDPRGLOG           => vr_idprglog);
+                           
+         END IF;  
          --
          -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
@@ -796,7 +862,7 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,prc.cdagenci --ews
               ,epr.cdfinemp
               ,epr.vlemprst
               ,prc.dtdpagto dtdpagtoprc
@@ -807,7 +873,7 @@ BEGIN
           FROM crapepr epr,
                tbepr_tr_parcelas prc
          WHERE epr.cdcooper = prc.cdcooper
-           AND epr.cdagenci = prc.cdagenci
+         --  AND epr.cdagenci = prc.cdagenci  --ews
            AND epr.nrdconta = prc.nrdconta
            AND epr.nrctremp = prc.nrctremp
            AND epr.cdcooper = pr_cdcooper
@@ -1067,6 +1133,8 @@ BEGIN
       -- de saldo, lançamentos do dia, associados, cpmf
       IF vr_flgprc = 1 THEN
         vr_flgrejei := TRUE;
+        --
+        --
       ELSE
         --
         -- Procedimento padrão de busca de informações de CPMF
@@ -1780,7 +1848,8 @@ BEGIN
       
     --Fase processo 3
     --Procedure para gerar o movimento de rejeitados
-    PROCEDURE pc_gera_movimento_rejeitados(pr_cdcooper IN crapcop.cdcooper%TYPE) IS    
+    PROCEDURE pc_gera_movimento_rejeitados(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                           pr_cdagenci IN crapass.cdagenci%TYPE) IS    
 
       -- Buscar o cadastro dos associados da Cooperativa
       CURSOR cr_crapass IS
@@ -1830,8 +1899,8 @@ BEGIN
               ,nraplica
               ,min(dtmvtolt) dtmvtolt
               ,sum(gene0002.fn_char_para_number(cdpesqbb)) cdpesqbb
-              ,max(vlsdapli) vlsdapli
-              ,sum(vldaviso) vldaviso
+              ,max(vlsdapli)- sum(vllanmto) vlsdapli --ews
+              ,max(vldaviso) vldaviso
               ,sum(vllanmto) vllanmto
               ,ROW_NUMBER () OVER (PARTITION BY cdagenci
                                        ORDER BY cdagenci) sqregpac
@@ -1839,6 +1908,7 @@ BEGIN
               ,COUNT (*)  qtparcelas
           FROM craprej
          WHERE cdcooper = pr_cdcooper
+           AND cdagenci = pr_cdagenci
            AND cdbccxlt = 171
            AND cdcritic = 171
         GROUP BY cdagenci
@@ -2180,6 +2250,7 @@ BEGIN
       BEGIN
         DELETE craprej rej
          WHERE rej.cdcooper = pr_cdcooper
+           AND rej.cdagenci = pr_cdagenci
            AND rej.cdbccxlt = 171
            AND rej.cdcritic = 171;
       EXCEPTION
@@ -2236,7 +2307,8 @@ BEGIN
                          ,pr_nrctremp
                          ,pr_nrparepr);
       ELSIF pr_faseprocesso = 3 THEN
-        pc_gera_movimento_rejeitados(pr_cdcooper);
+        pc_gera_movimento_rejeitados(pr_cdcooper,
+                                     pr_cdagenci);
       END IF;
       --
   EXCEPTION
