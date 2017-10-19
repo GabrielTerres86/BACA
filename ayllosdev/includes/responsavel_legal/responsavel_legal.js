@@ -13,6 +13,7 @@
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
  *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
+ *                19/10/2017 - Ajuste da lov de nacionalidades na tela de responsavel legal. (PRJ339 - Kelvin).
  */
 
 var nrcpfcto = "";
@@ -914,10 +915,10 @@ function controlaLupasResp() {
 	
     //  Nacionalidade
 	$('#cdnacion','#'+nomeFormResp).unbind('change').bind('change',function() {
-		procedure	= 'BUSCAR_NACIONALIDADE';
+		procedure	= 'BUSCANACIONALIDADES';
 		titulo      = ' Nacionalidade';
 		filtrosDesc = '';
-		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormResp);        
+		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormResp);        
 	return false;
 	}); 
 	
