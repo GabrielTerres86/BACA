@@ -1014,7 +1014,7 @@ PROCEDURE valida-valores:
                                    c-desc-erro = 
                                          "Preenchimento de campo agencia nao e permitido para o " +
                                          "tipo de conta: Conta de Pagamento.". 
-                             
+
                             RUN cria-erro (INPUT p-cooper,
                                            INPUT p-cod-agencia,
                                            INPUT p-nro-caixa,
@@ -3051,7 +3051,7 @@ PROCEDURE verifica-operador:
 /* PRJ339 - REINERT (INICIO) */         
     /* Validacao de senha do usuario no AD somente no ambiente de producao */
     IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-      DO:
+         DO:
       
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -3088,7 +3088,6 @@ PROCEDURE verifica-operador:
                              INPUT i-cod-erro,
                             INPUT "",
                             INPUT YES).
-
              RETURN "NOK".
          END.
     END.
@@ -3221,7 +3220,6 @@ PROCEDURE verifica-operador-ted:
                                    INPUT i-cod-erro,
                                    INPUT "",
                                    INPUT YES).
-
                     RETURN "NOK".
                 END.
           END.

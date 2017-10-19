@@ -165,7 +165,7 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
             ELSE
                  tel_dsmensag = "".
         END.
-
+        
    IF   tel_dsmensag <> "" THEN
         DO:
             tel_dsmensag = FILL(" ",INT((78 - LENGTH(tel_dsmensag)) / 2)) +
@@ -180,54 +180,54 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
       DO:
          ASSIGN tel_cdoperad = OS-GETENV("USER").
          DISPLAY tel_cdoperad WITH FRAME f_identi.
-         
+
          UPDATE glb_nmdatela 
                 tel_cdpactra WITH FRAME f_identi
          EDITING:
-         
+
             IF FRAME-FIELD = "tel_cdpactra" AND 
                CAN-DO("RETURN,CURSOR-DOWN,TAB",KEYFUNCTION(LASTKEY)) THEN
                DO:
                   RUN sistema/generico/procedures/b1wgen0000.p 
                       PERSISTENT SET h-b1wgen0000.
 
-                  IF NOT VALID-HANDLE(h-b1wgen0000)  THEN
-                     MESSAGE "Handle invalido h-b1wgen0000".
-                                   
-                  RUN consulta-pac-ope IN h-b1wgen0000
-                                        (INPUT  glb_cdcooper,
-                                         INPUT  1,
-                                         INPUT  0,
-                                         INPUT  INPUT tel_cdoperad,
-                                         INPUT  0,
-                                         OUTPUT tel_cdpactra).
+            IF NOT VALID-HANDLE(h-b1wgen0000)  THEN
+               MESSAGE "Handle invalido h-b1wgen0000".
 
-                  DELETE PROCEDURE h-b1wgen0000. 
+            RUN consulta-pac-ope IN h-b1wgen0000
+                                  (INPUT  glb_cdcooper,
+                                   INPUT  1,
+                                   INPUT  0,
+                                   INPUT  INPUT tel_cdoperad,
+                                   INPUT  0,
+                                   OUTPUT tel_cdpactra).
 
-                  DISPLAY tel_cdpactra WITH FRAME f_identi.    
-               END.
+            DELETE PROCEDURE h-b1wgen0000. 
 
-            aux_stimeout = 0.
+            DISPLAY tel_cdpactra WITH FRAME f_identi.    
+         END.
 
-            DO WHILE TRUE:
+      aux_stimeout = 0.
 
-               READKEY PAUSE 1.
+      DO WHILE TRUE:
 
-               IF   LASTKEY = -1   THEN
-                    DO:
-                        aux_stimeout = aux_stimeout + 1.
+         READKEY PAUSE 1.
 
-                        IF   aux_stimeout > glb_stimeout  THEN
-                             QUIT.
+         IF   LASTKEY = -1   THEN
+              DO:
+                  aux_stimeout = aux_stimeout + 1.
 
-                        NEXT.
-                    END.
+                  IF   aux_stimeout > glb_stimeout  THEN
+                       QUIT.
 
-               APPLY LASTKEY.
+                  NEXT.
+              END.
 
-               LEAVE.
+         APPLY LASTKEY.
 
-            END.  /*  Fim do DO WHILE TRUE  */
+         LEAVE.
+
+      END.  /*  Fim do DO WHILE TRUE  */
 
          END.  /*  Fim do EDITING  */                
       END.
@@ -368,12 +368,12 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
    ASSIGN glb_nmtelant = glb_nmdatela
           glb_nmdatela = CAPS(glb_nmdatela)
           glb_cdoperad = crapope.cdoperad
-          glb_cddepart = crapope.cddepart 
+		  glb_cddepart = crapope.cddepart 
           glb_dsdepart = aux_dsdepart
           glb_nmoperad = crapope.nmoperad
           glb_cdagenci = tel_cdpactra
           aux_dtdoltab = ?.
-   
+
    HIDE FRAME f_identi   NO-PAUSE.
 
    RETURN.

@@ -111,7 +111,7 @@ DEFINE VARIABLE cdcooper AS CHARACTER FORMAT "x(256)":U
 DEFINE VARIABLE vusuario AS CHARACTER FORMAT "x(256)":U 
      VIEW-AS FILL-IN
      SIZE 20 BY 1 NO-UNDO.
-                 
+
 DEFINE VARIABLE dsmsgerr AS CHARACTER FORMAT "x(256)":U 
      VIEW-AS FILL-IN
      SIZE 20 BY 1 NO-UNDO.
@@ -292,29 +292,29 @@ IF REQUEST_METHOD = "POST" THEN
         ASSIGN coops = coops + 'carregaCoops("' + cdcooper + '");'.
                                                 
         RUN dispatch IN THIS-PROCEDURE ('input-fields':U).
-        
+
         IF  INPUT vusuario <> "" THEN DO:
             ASSIGN v-tipo = "".                  
                 
         IF CAPS(OS-GETENV("PKGNAME")) = "PKGPROD" THEN
            ASSIGN vusuario = des_login.
-           
+                
         FIND FIRST crapope WHERE crapope.cdoperad = INPUT vusuario AND
                                  crapope.cdcooper = INTE(cdcooper)  
                                  NO-LOCK NO-WAIT NO-ERROR.
                                 
         IF  AVAIL crapope  THEN DO:
-            ASSIGN v-tipo   = "USU"
+			ASSIGN v-tipo   = "USU"
                    v-codigo = 1.
         END. /* Fim do IF AVAIL crapope */
                                 
         IF  v-tipo <> "" and v-ok  THEN DO:
-        IF  v-tipo = "USU"  THEN
+			IF  v-tipo = "USU"  THEN
             DO:
-                IF   AVAIL crapope  AND crapope.flgdopgd = FALSE  AND
+				IF   AVAIL crapope  AND crapope.flgdopgd = FALSE  AND
                      crapope.cddepart <> 20 THEN    /* TI */
                 DO:
-                    RUN output-header.
+					RUN output-header.
                     RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
                     RUN dispatch IN THIS-PROCEDURE ('output-fields':U). 
                     RUN rodajava(coops).
@@ -340,13 +340,13 @@ IF REQUEST_METHOD = "POST" THEN
                     ELSE
                     DO:
                         IF crapope.flgdopgd AND NOT crapope.flgacres THEN
-                          ASSIGN aux_nvoperad = 3.
-                        ELSE
-                        IF crapope.flgacres THEN
-                          ASSIGN aux_nvoperad = crapope.nvoperad.
-                                                                                                                    
-                                END.
-                            
+							ASSIGN aux_nvoperad = 3.
+						ELSE
+						IF crapope.flgacres THEN
+							ASSIGN aux_nvoperad = crapope.nvoperad.
+
+                    END.
+
                                 CREATE gnapses.
                                 ASSIGN gnapses.cdoperad = crapope.cdoperad
                                        gnapses.cdcooper = INT(cdcooper)

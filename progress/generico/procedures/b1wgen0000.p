@@ -298,8 +298,8 @@ PROCEDURE efetua_login:
 
                  RETURN "NOK".
 
-              END.
-    
+        END.
+        
         END.
         
     FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.

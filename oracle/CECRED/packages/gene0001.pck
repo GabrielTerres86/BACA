@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --
   -- 11/11/2016 - Inclusao da origem MOBILE e ACORDO no type de origens. PRJ335 - Analise Fraudes(Odirlei-AMcom)
   --  
-  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom)
+  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom) 
   --
   --
   --  08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)

@@ -2139,7 +2139,7 @@ PROCEDURE valida-permissao-saldo-conta:
           /* PRJ339 - REINERT (INICIO) */         
              /* Validacao de senha do usuario no AD somente no ambiente de producao */
              IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-                DO:
+                  DO:
                   
                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -2176,7 +2176,6 @@ PROCEDURE valida-permissao-saldo-conta:
                                      INPUT i-cod-erro,
                                          INPUT "",
                                      INPUT YES).
-
                       RETURN "NOK".
                   END.
                 END.

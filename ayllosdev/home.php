@@ -11,7 +11,7 @@
 	//***                          Login do sistema (David).               ***//
 	//***																   ***//
 	//***             05/10/2017 - Adicionado tratamento para armazenar    ***//
-	//***                          parâmetros do CRM em sessio. (Reinert)  ***//
+	//***                          parâmetros do CRM em session. (Reinert)  ***//
 	//************************************************************************//
 	
 	session_start();

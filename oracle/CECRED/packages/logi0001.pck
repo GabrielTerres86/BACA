@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
 
 				23/08/2017 - Alterado para validar senha do coordenador através da senha do usuario no AD. (PRJ339 - Reinert)
   ---------------------------------------------------------------------------------------------------------------*/
--- PRJ339 REINERT - INICIO
+
   ------------------------------- CURSORES ---------------------------------
   -- Busca os dados do operador
   CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE,
@@ -251,7 +251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
 				-- Buscar descrição da crítica
 				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 			END IF;
--- PRJ339 REINERT - FIM
+
       -- Retorno não OK          
       pr_des_erro := vr_retornvl;
       
