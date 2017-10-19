@@ -2864,6 +2864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_tab_parcelas typ_tab_parcelas;
       vr_txdiaria     craplcr.txdiaria%TYPE;
       vr_vlpreemp     crapepr.vlpreemp%TYPE := 0;
+      vr_dtdpagto     crapepr.dtdpagto%TYPE;
 
       -- Variaveis tratamento de erros
       vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -2916,9 +2917,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Percorrer todos os registros
       WHILE vr_ind_parcelas IS NOT NULL LOOP
 
-        -- Guarda a prestacao apenas uma vez
+        -- Guarda a prestacao e data apenas uma vez
         IF vr_vlpreemp = 0 THEN
           vr_vlpreemp := vr_tab_parcelas(vr_ind_parcelas).vlparepr;
+          vr_dtdpagto := vr_tab_parcelas(vr_ind_parcelas).dtvencto;
         END IF;
 
         BEGIN
@@ -2970,6 +2972,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       EXCEPTION
 	      WHEN OTHERS THEN
           vr_dscritic := 'Problema ao alterar dados da crawepr: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+
+      BEGIN
+        UPDATE crapepr
+           SET dtdpagto = vr_dtdpagto
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrctremp = pr_nrctremp;
+      EXCEPTION
+	      WHEN OTHERS THEN
+          vr_dscritic := 'Problema ao alterar dados da crapepr: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
 
