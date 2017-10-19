@@ -12,6 +12,8 @@
  * [18/12/2012] Zé                      : Retirar o campo Conta da TIC
  * [30/06/2014] Reinert					: Adicionado campo cdageaco nos detalhes do cheque
  * [10/06/2016] Lucas Ranghetti         : Alterado Width da frame dos detalhes (#422753)
+ * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
  * --------------
  */
 
@@ -167,6 +169,11 @@ function controlaLayout() {
 	$("#tdConteudoTela").show();
 	$('#btDetalhar','#divBotoes').css({'display':'none'});
 	cNrdconta.focus();
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCabCheque").val() == 1) {
+        $("#nrdconta","#frmCabCheque").val($("#crm_nrdconta","#frmCabCheque").val());
+    }
 }
 
 function formataCabecalho() {
@@ -465,7 +472,7 @@ function estadoInicial() {
 	frmCheque.css({'display':'none'}).limpaFormulario();
 	divTabela.css({'display':'block'});
 	cNrdconta.val('').focus();
-	
+	cNrcheque.val('0');
 	$('table > tbody', 'div.divRegistros').html('');
 	$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });	
 }
