@@ -14,6 +14,10 @@
  * 004: [01/06/2012] Ajustes referente ao projeto GP - Sócios Menores. ( Adriano).
  * 005: [19/02/2015] Incluir campo hidden fltemcrd, para controle de cartões, conforme SD 251759 ( Renato - Supero )
  * 006: [22/09/2015] Reformulacao cadastral (Gabriel-RKAM).
+ * 007: [25/04/2017] Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ * 008: [12/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava (Adriano - P339).
+ * 009: [31/07/2017] Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  */	
  
 ?>
@@ -66,7 +70,9 @@
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nrdocava; ?>" />
 			
-			<label for="cdoeddoc" class="rotulo-linha">Org.Emi.:</label>
+			<br />
+
+			<label for="cdoeddoc" class="rotulo rotulo-80">Org.Emi.:</label>
 			<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo $frm_cdoeddoc; ?>" />
 			
 			<label for="cdufddoc" class="rotulo-linha">U.F.:</label>
@@ -89,12 +95,14 @@
 			<label for="sexoFem" class="radio">Fem.</label>
 			<br />
 				
-			<label for="dsnacion" class="rotulo rotulo-80">Nacional.:</label>
-			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo $frm_dsnacion; ?>" />
+			<label for="cdnacion" class="rotulo rotulo-80">Nacional.:</label>
+            <input name="cdnacion" id="cdnacion" type="text" class="pesquisa" maxlength="15" value="<? echo $frm_cdnacion; ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo $frm_dsnacion; ?>" />
+			<br />
 			
-			<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
-			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="25" value="<? echo $frm_dsnatura; ?>" />
+			<label for="dsnatura" class="rotulo rotulo-80">Natural de:</label>
+			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="50" value="<? echo $frm_dsnatura; ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		</fieldset>
 		

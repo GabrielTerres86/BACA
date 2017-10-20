@@ -159,7 +159,7 @@
 
 				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
 							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
-							  
+
                 18/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 							  
 				 26/04/2017 - Ajustado o problema que não carregava os procuradores na tela contas,
@@ -169,8 +169,8 @@
                              PRJ339 - CRM (Odirlei-AMcom)
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
-                             PRJ339 - CRM (Odirlei-AMcom)    
-
+                             PRJ339 - CRM (Odirlei-AMcom)               
+                
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		            
                 
@@ -179,7 +179,7 @@
 
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
-							 
+
 				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
  
 .....................................................................................*/
@@ -1516,7 +1516,7 @@ PROCEDURE Valida_Dados:
         END.				
 
         IF  NOT AVAIL crapmun     AND 
-            par_cdufddoc <> "EX"                                        THEN
+            par_cdufddoc <> "EX"  THEN
             DO:
                ASSIGN aux_cdcritic = 29.
                LEAVE Valida.
@@ -3284,13 +3284,13 @@ PROCEDURE Grava_Dados:
                                                    crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
                                             VALIDATE crapdoc.        
                                             LEAVE ContadorDoc50.
-                                        END.
-                                END.
+                        END.
+                    END.
                             ELSE
                                 DO:
                                     ASSIGN crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt.
-            
+
                                     LEAVE ContadorDoc50.
                                 END.
                         END.
@@ -3674,7 +3674,7 @@ PROCEDURE Grava_Dados:
                                   END.
                   END.
           END.
-        
+
         IF aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
            UNDO Grava, LEAVE Grava.
            

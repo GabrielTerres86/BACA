@@ -149,8 +149,8 @@
                              PRJ339 - CRM (Odirlei-AMcom)                
                              
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
-                             PRJ339 - CRM (Odirlei-AMcom) 		   
-
+                             PRJ339 - CRM (Odirlei-AMcom)               
+                             
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)	
 

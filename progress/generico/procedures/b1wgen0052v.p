@@ -386,14 +386,14 @@ PROCEDURE Valida_Dados :
                                   OUTPUT par_dscritic).
 
               DELETE PROCEDURE h-b1wgen0052b.   
-              
+        
               IF  RETURN-VALUE = "NOK" THEN
               DO:
                   LEAVE Valida.
               END.
               
            END.
-        
+
 
         /* validacao especifica por operacao */
         CASE par_cddopcao:

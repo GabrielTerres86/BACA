@@ -13,6 +13,9 @@
  * 004: [23/08/2013] David               : Incluir campo UF Naturalidade - cdufnatu
  * 005: [27/02/2015] Jaison/Gielow       : Substituicao de caracteres especiais. (SD: 257871)
  * 006: [17/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
+ * 007: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 							
+ * 008: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
+ 
  */
 ?>
  
@@ -39,8 +42,8 @@
 	$cdoedttl = (isset($_POST['cdoedttl'])) ? $_POST['cdoedttl'] : '';     
 	$cdufdttl = (isset($_POST['cdufdttl'])) ? $_POST['cdufdttl'] : '';     
 	$dtemdttl = (isset($_POST['dtemdttl'])) ? $_POST['dtemdttl'] : '';     
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '';     
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '';     
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '';     
 	$dtnasttl = (isset($_POST['dtnasttl'])) ? $_POST['dtnasttl'] : '';     
 	$dsnatura = (isset($_POST['dsnatura'])) ? $_POST['dsnatura'] : '';     
 	$cdufnatu = (isset($_POST['cdufnatu'])) ? $_POST['cdufnatu'] : '';     
@@ -61,7 +64,6 @@
 	$nrcpfemp = (isset($_POST['nrcpfemp'])) ? $_POST['nrcpfemp'] : '';	
 	$dsproftl = (isset($_POST['dsproftl'])) ? $_POST['dsproftl'] : '';	
 	$cdnvlcgo = (isset($_POST['cdnvlcgo'])) ? $_POST['cdnvlcgo'] : '';	
-	$nrfonemp = (isset($_POST['nrfonemp'])) ? $_POST['nrfonemp'] : '';	
 	$cdturnos = (isset($_POST['cdturnos'])) ? $_POST['cdturnos'] : '';	
 	$dtadmemp = (isset($_POST['dtadmemp'])) ? $_POST['dtadmemp'] : '';	
 	$vlsalari = (isset($_POST['vlsalari'])) ? $_POST['vlsalari'] : '';
@@ -126,7 +128,7 @@
 	$xml .= '       <cdufdttl>'.$cdufdttl.'</cdufdttl>';
 	$xml .= '       <dtemdttl>'.$dtemdttl.'</dtemdttl>';
 	$xml .= '       <tpnacion>'.$tpnacion.'</tpnacion>';
-	$xml .= '       <dsnacion>'.$dsnacion.'</dsnacion>';
+	$xml .= '       <cdnacion>'.$cdnacion.'</cdnacion>';
 	$xml .= '       <dtnasttl>'.$dtnasttl.'</dtnasttl>';
 	$xml .= '       <dsnatura>'.$dsnatura.'</dsnatura>';
 	$xml .= '       <cdufnatu>'.$cdufnatu.'</cdufnatu>';
@@ -148,7 +150,6 @@
 	$xml .= '		<nrcpfemp>'.$nrcpfemp.'</nrcpfemp>';
 	$xml .= '		<dsproftl>'.$dsproftl.'</dsproftl>';
 	$xml .= '		<cdnvlcgo>'.$cdnvlcgo.'</cdnvlcgo>';
-	$xml .= '		<nrfonemp>'.$nrfonemp.'</nrfonemp>';
 	$xml .= '		<cdturnos>'.$cdturnos.'</cdturnos>';
 	$xml .= '		<dtadmemp>'.$dtadmemp.'</dtadmemp>';
 	$xml .= '		<vlsalari>'.$vlsalari.'</vlsalari>';
@@ -336,7 +337,8 @@
 			if ($GLOBALS['tpnacion'] == 0) exibirErro('error','Tipo Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Nacionalidade
-			if ($GLOBALS['dsnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnacion\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
+            if ($GLOBALS['cdnacion'] == 0) exibirErro('error','Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Sexo 
 			if (($GLOBALS['cdsexotl'] != 1)&&($GLOBALS['cdsexotl'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsexotl\',\'frmDadosIdentFisica\')',false);			

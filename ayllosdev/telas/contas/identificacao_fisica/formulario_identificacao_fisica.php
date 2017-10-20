@@ -16,7 +16,7 @@
  * 007: [09/08/2013] Jean Michel		  : Inclusão de botão Dossiê
  * 008: [23/08/2013] David                : Incluir campo UF Naturalidade - cdufnatu
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
- * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
+ * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral		 
  * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
  * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
  

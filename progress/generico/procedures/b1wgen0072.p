@@ -545,7 +545,7 @@ PROCEDURE Busca_Dados_Id:
                   ASSIGN tt-crapcrl.dsestcvl = gnetcvl.rsestcvl.
 
               END.
-
+              
               /* Retornar orgao expedidor */
               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                   RUN sistema/generico/procedures/b1wgen0052b.p 

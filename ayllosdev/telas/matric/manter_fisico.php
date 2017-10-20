@@ -11,7 +11,7 @@
  *                28/01/2015 - #239097 Ajustes para cadastro de Resp. legal 0 menor/maior (Carlos)
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
-				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.				  
+				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  */
@@ -320,7 +320,7 @@
 		//Cidade
 		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmcidade\',\'frmFisico\');',false);
 		
-				
+		
 		//-----------------------------
 		//   Entrada/Saída Cooperado	  
 		//-----------------------------
