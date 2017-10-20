@@ -625,6 +625,8 @@ function carregaConsulta(cdMensagem){
 function editarMsg(){
 	$("#frmMsgConsulta :input").removeAttr('disabled');
 	$("#dtenvio_mensagem").datepicker('enable');
+	$("#btnEditarMsg").hide();
+	$("#btnCancelarEnvio").hide();
 	$("#btnSalvar").show();
 }
 
@@ -659,9 +661,11 @@ function cancelarEnvioMsg(cdmensagem){
 
 function reenviarMsg(){
 	$("#frmMsgConsulta :input").removeAttr('disabled');
+	CKEDITOR.instances['dshtml_mensagem'].setReadOnly(false);
 	$("#hdnCdmensagem").val(0);
 	$("#dtenvio_mensagem").datepicker('enable');
 	$("#dtenvio_mensagem").val("");
 	$("#hrenvio_mensagem").val("");
+	$("#btnReenviarMsg").hide();
 	$("#btnSalvar").show();
 }

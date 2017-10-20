@@ -160,11 +160,17 @@
 		
 		if($moveImg){
 			try {
-				shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg.' -u '.$user.':'.$pass.' '.$_UP['srvImg']);			
+				$resultExec = shell_exec('curl -T '.$_UP['pasta'] . $nmarqimg.' -u '.$user.':'.$pass.' '.$_UP['srvImg']);			
 			} catch(Exception $e){
 				gerarErro(utf8_decode("Erro ao carregar arquivo!"));
 				exit;
-			}			
+			}	
+			
+			if(trim($resultExec) == ""){
+				gerarErro(utf8_decode("Erro ao acessar servidor de imagens!"));
+				exit;
+			}
+			
 		}		
 	}else{
 		$nmarqimg = end(explode("/", $_POST["nmimagem_banner"]));
@@ -215,7 +221,7 @@
 				$msgErroArq = "Erro ao deletar arquivo!";
 			}			
 		}
-		gerarErro(utf8_decode(str_replace("'","",$xmlObjetoMantemMsgAuto->roottag->tags[0]->tags[0]->tags[4]->cdata) . $msgErroArq));
+		gerarErro(str_replace("'","",$xmlObjetoMantemMsgAuto->roottag->tags[0]->tags[0]->tags[4]->cdata) . $msgErroArq);
 		exit;
 	}else{
 		gerarErro(utf8_decode("Mensagem salva com sucesso!"));

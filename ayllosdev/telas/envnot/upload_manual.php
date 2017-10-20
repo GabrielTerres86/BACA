@@ -270,11 +270,15 @@
 	function gerarErro($dserro){
 		if(($moveImg) && $nmarqimg <> ""){
 			try {
-			  shell_exec('curl -X DELETE '.$_UP['srvImg'] . $nmarqimg.' -u '.$user.':'.$pass);	
+			  $resultExec = shell_exec('curl -X DELETE '.$_UP['srvImg'] . $nmarqimg.' -u '.$user.':'.$pass);	
 				$msgErroArq = "";
 			} catch(Exception $e){
 				$msgErroArq = " Erro ao deletar arquivo!";
-			}			
+			}
+			if(trim($resultExec) == ""){
+				gerarErro(utf8_decode("Erro ao acessar servidor de imagens!"));
+				exit;
+			}	
 		}
 		echo "<script>parent.framePrincipal.eval(\"showError('error','".$dserro . $msgErroArq."','Alerta - Ayllos','hideMsgAguardo();');\");</script>";
 		exit;
