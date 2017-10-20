@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 19/07/2017
+    Data    : Marco/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -37,6 +37,9 @@
                  19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                               PRJ339 - CRM (Odirlei-AMcom)  
                               
+				 22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
+						      onde o telefone comercial do conjugue estava sendo
+							  carregado errado. PRJ339 (Kelvin).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -433,7 +436,8 @@ PROCEDURE Busca_Dados_Id:
                /* Telefone Comercial*/
                FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
-                                       craptfc.tptelefo = 3 NO-LOCK:
+                                       craptfc.tptelefo = 3				   AND
+									   craptfc.idseqttl = 1  NO-LOCK:
                    ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
 				          tt-crapcje.nrramemp = craptfc.nrdramal.
                END.

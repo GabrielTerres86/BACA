@@ -50,9 +50,10 @@
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae. 
  * 027: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
- * 028: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
- * 029: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
- * 030: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 028: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
+ * 029: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 030: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
+ * 031: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 // Definição de algumas variáveis globais 
@@ -1583,15 +1584,17 @@ function formataPessoaJuridica() {
 	});	
 	
     cCNPJ.unbind('blur').bind('blur', function (e) {
-		
+		if ($('#opcao', '#frmCabMatric').val() == "CI") {
 		if ($(this).val() != normalizaNumero(nrcpfcgc)) {
             $("#nmttlrfb", "#frmJuridico").val("");
             $("#cdsitcpf", "#frmJuridico").val(0);
             $("#dtcnscpf", "#frmJuridico").val("");
             $("#inconrfb", "#frmJuridico").val("");
-		}
 		
 		nrcpfcgc = $(this).val();
+		    }
+	    }
+				
 	});
 	// Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());

@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
+    Data    : Junho/2010                      Ultima atualizacao: 29/09/2017
   
     Dados referentes ao programa:
   
@@ -150,7 +150,8 @@
 				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
 							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
 							
-                             
+                29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
+							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).             
 ........................................................................*/
 
 
@@ -368,9 +369,9 @@ PROCEDURE Valida_Dados :
             LEAVE Valida.
         
         
-        IF par_inpessoa <> 2 AND
-           par_cddopcao <> "X" AND
-		   par_cddopcao <> "J" THEN
+        IF par_inpessoa = 1    AND
+           (par_cddopcao = "I" OR
+		   par_cddopcao = "A") THEN
            DO:
               /* Identificar orgao expedidor */
               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
