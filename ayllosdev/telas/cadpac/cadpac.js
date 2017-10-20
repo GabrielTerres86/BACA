@@ -360,7 +360,7 @@ function formataCamposTela(cddopcao){
         cFlgdsede.addClass('campo').css({'width':'60px'});
         cCdagepac.addClass('campo').css({'width':'60px'}).attr('maxlength','6').setMask('INTEGER','zz.zzz','','');
 		cFlmajora.addClass('campo').css({'width':'60px'});
-		
+
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
         cNmbairro.addClass('campo').css({'width':'270px'}).attr('maxlength','15');
@@ -1018,30 +1018,54 @@ function formataCamposTela(cddopcao){
         var rNmpasite = $('label[for="nmpasite"]', '#frmCadpac');
         var rDstelsit = $('label[for="dstelsit"]', '#frmCadpac');
         var rDsemasit = $('label[for="dsemasit"]', '#frmCadpac');
-        var rDshorsit = $('label[for="dshorsit"]', '#frmCadpac');
+		var rDssitpaa = $('label[for="dssitpaa"]', '#frmCadpac');		
+		var rHrinipaa = $('label[for="hrinipaa"]', '#frmCadpac');
+		var rHrfimpaa = $('label[for="hrfimpaa"]', '#frmCadpac');
+		var rIndsptaa = $('label[for="indsptaa"]', '#frmCadpac');
+		var rIndspcxa = $('label[for="indspcxa"]', '#frmCadpac');
         var rNrlatitu = $('label[for="nrlatitu"]', '#frmCadpac');
         var rNrlongit = $('label[for="nrlongit"]', '#frmCadpac');
 
         var cNmpasite = $('#nmpasite', '#frmCadpac');
         var cDstelsit = $('#dstelsit', '#frmCadpac');
         var cDsemasit = $('#dsemasit', '#frmCadpac');
-        var cDshorsit = $('#dshorsit', '#frmCadpac');
+        var cDssitpaa = $('#dssitpaa', '#frmCadpac');
+        var cHrinipaa = $('#hrinipaa', '#frmCadpac');
+        var cHrfimpaa = $('#hrfimpaa', '#frmCadpac');
+        var cIndsptaa = $('#indsptaa', '#frmCadpac');
+        var cIndspcxa = $('#indspcxa', '#frmCadpac');
         var cNrlatitu = $('#nrlatitu', '#frmCadpac');
         var cNrlongit = $('#nrlongit', '#frmCadpac');
+		var rRotulo_h = $('label[for="rotulo_h"]', '#frmCadpac');
 
+        rRotulo_h.addClass('rotulo-linha').css({'width': '10px','text-align':'center'});
         rNmpasite.addClass('rotulo').css({'width': '165px'});
         rDstelsit.addClass('rotulo').css({'width': '165px'});
         rDsemasit.addClass('rotulo').css({'width': '165px'});
-        rDshorsit.addClass('rotulo').css({'width': '165px'});
+		rDssitpaa.addClass('rotulo').css({'width': '165px'}).attr('disabled','true');
+		rHrinipaa.addClass('rotulo').css({'width': '165px'});		
+		rHrfimpaa.addClass('rotulo-linha').css({'width': '25px','text-align':'center'});
+		rIndsptaa.addClass('rotulo').css({'width': '165px'});
+		rIndspcxa.addClass('rotulo').css({'width': '165px'}).attr('disabled','true');
         rNrlatitu.addClass('rotulo').css({'width': '165px'});
         rNrlongit.addClass('rotulo').css({'width': '165px'});
 
         cNmpasite.addClass('campo').css({'width':'340px'}).attr('maxlength','200');
         cDstelsit.addClass('campo').css({'width':'340px'}).attr('maxlength','50');
         cDsemasit.addClass('campo').css({'width':'340px'}).attr('maxlength','60');
-        cDshorsit.addClass('campo').css({'width':'340px','height':'70px','float':'left','margin':'3px 0px 3px 3px'}).attr('maxlength','200');
+		cDssitpaa.addClass('campo').css({'width':'80px'});
+		cHrinipaa.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
+		cHrfimpaa.addClass('campo').css({'width':'50px','text-align':'center'}).attr('maxlength','5').setMask('STRING','99:99',':','');
+		cIndsptaa.addClass('campo').css({'width':'80px'});
+		cIndspcxa.addClass('campo').css({'width':'80px'});
         cNrlatitu.addClass('campo').css({'width':'340px'});
         cNrlongit.addClass('campo').css({'width':'340px'});
+
+		cHrinipaa.mask('00:00');
+		cHrfimpaa.mask('00:00');
+		
+		cDssitpaa.desabilitaCampo();
+		cIndsptaa.desabilitaCampo();
 
         cNmpasite.unbind('keypress').bind('keypress', function(e) {
             if ( divError.css('display') == 'block' ) { return false; }
@@ -1054,30 +1078,32 @@ function formataCamposTela(cddopcao){
         cDstelsit.unbind('keypress').bind('keypress', function(e) {
             if ( divError.css('display') == 'block' ) { return false; }
             if ( e.keyCode == 9 || e.keyCode == 13 ) {
-                cDsemasit.focus();
+                cHrinipaa.focus();
                 return false;
             }
         });
 
-        cDsemasit.unbind('keypress').bind('keypress', function(e) {
+        cHrinipaa.unbind('keypress').bind('keypress', function(e) {
             if ( divError.css('display') == 'block' ) { return false; }
             if ( e.keyCode == 9 || e.keyCode == 13 ) {
-                cDshorsit.focus();
+                cHrfimpaa.focus();
                 return false;
             }
         });
 
-        cDshorsit.unbind('keypress').bind('keypress', function(e) {
+		cHrfimpaa.unbind('keypress').bind('keypress', function(e) {
             if ( divError.css('display') == 'block' ) { return false; }
-            if ( e.keyCode == 9 || (e.keyCode == 13 && !e.shiftKey) ) {
-                cNrlatitu.focus();
+            if ( e.keyCode == 9 || e.keyCode == 13 ) {
+                cIndspcxa.focus();
                 return false;
             }
         });
-        cDshorsit.bind('input propertychange', function() {
-            var maxLength = $(this).attr('maxlength');
-            if ($(this).val().length > maxLength) {
-                $(this).val($(this).val().substring(0, maxLength));
+		
+		cIndspcxa.unbind('keypress').bind('keypress', function(e) {
+            if ( divError.css('display') == 'block' ) { return false; }
+            if ( e.keyCode == 9 || e.keyCode == 13 ) {
+                cNrlatitu.focus();
+                return false;
             }
         });
 
@@ -1309,7 +1335,9 @@ function gravarDadosSite() {
     var nmpasite = $('#nmpasite','#frmCadpac').val();
     var dstelsit = $('#dstelsit','#frmCadpac').val();
     var dsemasit = $('#dsemasit','#frmCadpac').val();
-    var dshorsit = $('#dshorsit','#frmCadpac').val();
+    var hrinipaa = $('#hrinipaa','#frmCadpac').val();
+    var hrfimpaa = $('#hrfimpaa','#frmCadpac').val();
+    var indspcxa = $('#indspcxa','#frmCadpac').val();
     var nrlatitu = $('#nrlatitu','#frmCadpac').val();
     var nrlongit = $('#nrlongit','#frmCadpac').val();
 
@@ -1325,7 +1353,9 @@ function gravarDadosSite() {
             nmpasite: nmpasite,
             dstelsit: dstelsit,
             dsemasit: dsemasit,
-            dshorsit: dshorsit,
+			hrinipaa: hrinipaa,
+			hrfimpaa: hrfimpaa,
+			indspcxa: indspcxa,
             nrlatitu: nrlatitu,
             nrlongit: nrlongit,
 			redirect: "script_ajax"
