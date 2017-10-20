@@ -81,6 +81,31 @@
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
 	}
+
+	
+	//Busca se deve mostrar o botão para impressão da declaração de isenção de IOF
+	$xml = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+	$xml .= '		<nrdconta>' . $_POST['nrdconta'] . '</nrdconta>';
+	$xml .= '		<nrctremp>' . $_POST['nrctremp'] . '</nrctremp>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "ATENDA", "CONS_DEC_ISENC_IOF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjDados = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
+		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+	}
+	
+	$isencaoIOF = $xmlObjDados->roottag->tags[0]->cdata;
     
 ?>
 <script>
@@ -146,6 +171,12 @@
                                             <?php
                                                 if ($portabil == 'S') {
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(9); return false;">Termo Portabilidade</a>';
+                                                }
+                                            ?>
+
+											<?php
+                                                if ($isencaoIOF == 'S') {
+                                                    echo '<a href="#" class="botao" onClick="verificaImpressao(23);return false;">Declara&ccedil;&atilde;o de Utiliza&ccedil;&atilde;o de Recursos</a>';
                                                 }
                                             ?>
 											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
