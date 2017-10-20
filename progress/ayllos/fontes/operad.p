@@ -663,7 +663,7 @@ DO WHILE TRUE:
                   log_flgacres = tel_flgacres
                   log_vlapvcap = tel_vlapvcap
                   log_flgutcrm = tel_flgutcrm
-
+                                               
                   aux_inposniv = crapope.nvoperad
                   aux_inpostip = crapope.tpoperad.
  
@@ -959,7 +959,7 @@ DO WHILE TRUE:
                     END.
               
                UPDATE tel_vlapvcap WITH FRAME f_operad.
-
+               
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
                ASSIGN crapope.flgdopgd = tel_flgdopgd
@@ -986,7 +986,7 @@ DO WHILE TRUE:
                     RUN gera_log ("Vlr da Alcada de Captacao",
                                    STRING(log_vlapvcap),
                                    STRING(tel_vlapvcap)).
-
+                                   
                IF   log_flgutcrm <> tel_flgutcrm THEN
                     RUN gera_log ("Acesso CRM",
                                    STRING(log_flgutcrm,"Sim/Nao"),
@@ -1388,7 +1388,7 @@ DO WHILE TRUE:
                    END. 
                
                UPDATE tel_vlapvcap WITH FRAME f_operad.
-
+               
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:

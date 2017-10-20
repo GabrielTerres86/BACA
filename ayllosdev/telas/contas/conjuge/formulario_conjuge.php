@@ -55,7 +55,7 @@
 		<input name="cdoedcje" id="cdoedcje" type="text" value="<? echo getByTagName($conjuge,'cdoedcje') ?>" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
         <input name="nmoedcje" id="nmoedcje" type="text" style="display:none;" />
-					
+		
 		<label for="cdufdcje">U.F.:</label>
 		<? echo selectEstado('cdufdcje', getByTagName($conjuge,'cdufdcje'), 1) ?>
 		

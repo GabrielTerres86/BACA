@@ -2,7 +2,7 @@
 
     Programa: b1wgen0072.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 11/08/2017
+    Data    : Maio/2010                   Ultima atualizacao: 28/08/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - RESPONSAVEL LEGAL
 
@@ -79,7 +79,7 @@
                              do responsavel legal, para atender o chamado 430472. (Kelvin)
                 
                 13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
-
+                
                 20/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)                
 
@@ -87,7 +87,11 @@
                              PRJ339 - CRM (Odirlei-AMcom)    
                 
                 11/08/2017 - Incluído criacao do registro na tabela crapdoc com tipo do documento 51.
-                             Projeto 339 - CRM. (Lombardi)	           
+                             Projeto 339 - CRM. (Lombardi)	 
+							           
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
+                
  .............................................................................*/
 
 DEF STREAM str_1.
@@ -355,6 +359,7 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.nmrespon = crapcrl.nmrespon
                           tt-crapcrl.nridenti = crapcrl.nridenti
                           tt-crapcrl.tpdeiden = crapcrl.tpdeiden
+
                                                                 
                           tt-crapcrl.cdufiden = crapcrl.cdufiden
                           tt-crapcrl.dtemiden = crapcrl.dtemiden
@@ -564,7 +569,7 @@ PROCEDURE Busca_Dados_Id:
               DO:
                   tt-crapcrl.dsorgemi = 'NAO CADAST.'.
               END.
-              
+
 
            END.
         ELSE 
@@ -893,6 +898,7 @@ PROCEDURE Valida_Dados:
   DEF VAR aux_menorida AS LOG                                     NO-UNDO.
   DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
 
+
   DEF BUFFER b-tt-cratcrl FOR tt-cratcrl.
   
   &SCOPED-DEFINE CPF-RESP STRING(STRING(par_nrcpfcto,"99999999999"),"999.999.999-99")
@@ -1036,7 +1042,7 @@ PROCEDURE Valida_Dados:
                    
                    
       /* tipo de documento */
-      IF  LOOKUP(par_tpdocava,"CI,CH,CP,CT") = 0 THEN
+      IF  LOOKUP(par_tpdocava,"CI,CN,CH,RE,PP,CT") = 0 THEN
           DO:
              ASSIGN par_nmdcampo = "tpdocava"
                     aux_cdcritic = 21.
@@ -1579,7 +1585,6 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
     
-
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "E" THEN 
                               "Exclui" 
@@ -1705,7 +1710,7 @@ PROCEDURE Grava_Dados:
         
         IF aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
            UNDO Grava, LEAVE Grava.
-
+        
         IF par_nmrotina = "RESPONSAVEL LEGAL" AND 
            CAN-DO("A,I", par_cddopcao)        THEN DO:
             

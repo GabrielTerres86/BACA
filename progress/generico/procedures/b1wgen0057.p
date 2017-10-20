@@ -37,9 +37,15 @@
                  19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                               PRJ339 - CRM (Odirlei-AMcom)  
                               
+				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
+
 				 22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
 						      onde o telefone comercial do conjugue estava sendo
 							  carregado errado. PRJ339 (Kelvin).
+							  
+				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
+							  registro da crapttl. (PRJ339 - Reinert)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -434,7 +440,7 @@ PROCEDURE Busca_Dados_Id:
                    ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
 
                /* Telefone Comercial*/
-               FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
+               FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
                                        craptfc.tptelefo = 3				   AND
 									   craptfc.idseqttl = 1  NO-LOCK:
@@ -586,7 +592,7 @@ PROCEDURE Busca_Dados_Cje:
                                  tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl
-                                 cdgraupr)
+                                 cdgraupr nmextemp)
                           WHERE crapttl.cdcooper = crapass.cdcooper AND
                                 crapttl.nrdconta = crapass.nrdconta AND 
                                 crapttl.nrcpfcgc = crapass.nrcpfcgc NO-LOCK:
@@ -671,11 +677,15 @@ PROCEDURE Busca_Dados_Cje:
                                 NO-LOCK:
         END.
 
+        IF  crapttl.nmextemp <> "" THEN
+            ASSIGN tt-crapcje.nmextemp = crapttl.nmextemp.
+        ELSE
+          DO:
         IF  AVAILABLE crapemp THEN
             ASSIGN tt-crapcje.nmextemp = crapemp.nmextemp.
         ELSE
             ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
-
+          END.
 
         /* Telefone Comercial*/
         FOR FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
@@ -900,7 +910,7 @@ PROCEDURE Valida_Dados:
            DO:
                
                /* tipo de documento - ultima posicao eh o vazio */
-               IF  LOOKUP(par_tpdoccje,"CI,CH,CP,CT,") = 0 THEN
+               IF  LOOKUP(par_tpdoccje,"CI,CN,CH,RE,PP,CT,") = 0 THEN
                    DO:
                       ASSIGN aux_cdcritic = 21.
                       LEAVE Valida.

@@ -1593,8 +1593,8 @@ function formataPessoaJuridica() {
 		
 		nrcpfcgc = $(this).val();
 		    }
-	    }
-				
+		}
+		
 	});
 	// Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
@@ -3285,6 +3285,9 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
 		
+        // Disparar trigger de Capac. Civil para controlar rotina
+		$('#inhabmen', '#' + nomeForm).change();
+		$('#cdestcvl', '#' + nomeForm).blur();
 	}
 	else if (inpessoa == 2){		
 		$('#nmfansia', '#' + nomeForm).val(nmfantasia);

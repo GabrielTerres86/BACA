@@ -170,10 +170,13 @@
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
-                
+
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		            
                 
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
+
                 20/09/2017 - Alterado validacao naturalidade CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)  
 
@@ -728,7 +731,7 @@ PROCEDURE Busca_Dados_Cto:
 						ASSIGN par_cdcritic = 64.
                LEAVE BuscaCto.
             END.
-			END.
+            END.
 
         IF  par_nrdconta = crabass.nrdconta  THEN
             DO:
@@ -824,7 +827,6 @@ PROCEDURE Busca_Dados_Ass:
                    ASSIGN par_dscritic = "Endereco nao cadastrado.".
                    LEAVE BuscaAss.
                 END.
-                
             CREATE tt-crapavt.
             ASSIGN tt-crapavt.cddconta = TRIM(STRING(crabass.nrdconta,
                                                      "zzzz,zzz,9"))
@@ -1361,7 +1363,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  LOOKUP(par_tpdocava,"CI,CH,CP,CT") = 0 THEN
+        IF  LOOKUP(par_tpdocava,"CI,CN,CH,RE,PP,CT") = 0 THEN
             DO:
                ASSIGN aux_cdcritic = 21.
                LEAVE Valida.
@@ -3020,7 +3022,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_inpessoa AS INT                                     NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
-    
+
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "I" THEN 
                               "Inclusao" 
@@ -3284,13 +3286,13 @@ PROCEDURE Grava_Dados:
                                                    crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
                                             VALIDATE crapdoc.        
                                             LEAVE ContadorDoc50.
-                        END.
-                    END.
+                                        END.
+                                END.
                             ELSE
                                 DO:
                                     ASSIGN crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt.
-
+            
                                     LEAVE ContadorDoc50.
                                 END.
                         END.
@@ -3674,7 +3676,7 @@ PROCEDURE Grava_Dados:
                                   END.
                   END.
           END.
-
+        
         IF aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
            UNDO Grava, LEAVE Grava.
            

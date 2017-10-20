@@ -139,7 +139,7 @@
 				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
                              Transulcred (Daniel)
 
-                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+				25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 					
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)               
@@ -148,10 +148,13 @@
                              PRJ339 - CRM (Odirlei-AMcom)        
 				
 				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
-							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
-							
-                29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
-							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).             
+							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvin)
+
+                28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
+							 
+				29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
+							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).
 ........................................................................*/
 
 
@@ -386,7 +389,7 @@ PROCEDURE Valida_Dados :
                                   OUTPUT par_dscritic).
 
               DELETE PROCEDURE h-b1wgen0052b.   
-        
+              
               IF  RETURN-VALUE = "NOK" THEN
               DO:
                   LEAVE Valida.
@@ -1083,7 +1086,7 @@ PROCEDURE Valida_Procurador :
                END.
 
             /* Tipo do documento */
-            IF NOT CAN-DO("CH,CI,CP,CT",tt-crapavt.tpdocava) THEN  
+            IF NOT CAN-DO("CI,CN,CH,RE,PP,CT",tt-crapavt.tpdocava) THEN  
                DO:                                      
                   ASSIGN par_nmdcampo = "tpdocava"         
                          par_dscritic = "O tipo de documento do Procurador " +
@@ -2599,7 +2602,7 @@ PROCEDURE Valida_Fis PRIVATE :
             END.
 
         /* Documento - tipo */
-        IF  LOOKUP(par_tpdocptl,"CI,CH,CP,CT") = 0 THEN
+        IF  LOOKUP(par_tpdocptl,"CI,CN,CH,RE,PP,CT") = 0 THEN
             DO:
                ASSIGN par_nmdcampo = "tpdocptl"
                       par_cdcritic = 21.

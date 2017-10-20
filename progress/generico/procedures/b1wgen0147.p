@@ -33,6 +33,8 @@
 							
 			   01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
+			   28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							CH, RE, PP E CT. (PRJ339 - Reinert)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0147tt.i }
@@ -157,13 +159,17 @@ PROCEDURE cria_dados_totvs:
                     IF    crapttl.tpdocttl = "CH" THEN
                           ASSIGN aux_tpdocttl = "CNH".
                     ELSE
-                    IF    crapttl.tpdocttl = "CI"   THEN
+                    IF    (crapttl.tpdocttl = "CI"  OR
+                           crapttl.tpdocttl = "RE"  OR
+                           crapttl.tpdocttl = "PP") THEN
                           ASSIGN aux_tpdocttl = "RG".                       
                     ELSE
-                    IF   (crapttl.tpdocttl = "CP" OR 
-                          crapttl.tpdocttl = "CT") THEN
+                    IF    crapttl.tpdocttl = "CT" THEN
                           ASSIGN aux_tpdocttl = "CIP".
-                    
+                    ELSE
+                    IF    crapttl.tpdocttl = "CN" THEN
+                          ASSIGN aux_tpdocttl = "CN".
+                          
                     /* Sexo */
                     IF   crapttl.cdsexotl = 1 THEN
                          ASSIGN aux_dssexttl = "M".
@@ -1862,4 +1868,3 @@ PROCEDURE gera-log-prcbnd:
                           " >> /usr/coop/cecred/log/prcbnd.log").
     END.
 
-END PROCEDURE.

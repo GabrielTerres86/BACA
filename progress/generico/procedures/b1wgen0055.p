@@ -152,8 +152,10 @@
                              PRJ339 - CRM (Odirlei-AMcom)               
                              
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)	
+                             Projeto 339 - CRM. (Lombardi)		 
 
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
 		        13/10/2017 - Removido a funcao que atualizava o nome do talao para segundo titular. (PRJ339 - Kelvin/Andrino).
                              
 .............................................................................*/
@@ -1145,7 +1147,6 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_cdorgexp AS CHARACTER                               NO-UNDO. 
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
- 
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF  par_cddopcao = "I" THEN
@@ -3686,7 +3687,7 @@ PROCEDURE Valida_Dados:
            END.
 
         /* validar o tipo de documento */
-        IF LOOKUP(par_tpdocttl,"CI,CH,CP,CT") = 0 THEN
+        IF LOOKUP(par_tpdocttl,"CI,CN,CH,RE,PP,CT") = 0 THEN
            DO:
               ASSIGN par_nmdcampo = "tpdocttl"
                      aux_cdcritic = 21.

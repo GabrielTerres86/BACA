@@ -15,7 +15,8 @@
  * 006: [17/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
  * 007: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 							
  * 008: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
- 
+ * 009: [28/08/2017] Lucas Reinert		 : Alterado tipos de documento para utilizarem CI, CN, 
+ *										   CH, RE, PP E CT. (PRJ339 - Reinert)
  */
 ?>
  
@@ -318,7 +319,7 @@
 			if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentFisica\')',false);
 			
 			// Tipo de Documento
-			if (!in_array($GLOBALS['tpdocttl'],array('CH','CI','CP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
+			if (!in_array($GLOBALS['tpdocttl'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Numero de Documento
 			if ($GLOBALS['nrdocttl']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocttl\',\'frmDadosIdentFisica\')',false);

@@ -102,6 +102,10 @@
                            
               19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)               
+
+		      28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+						   CH, RE, PP E CT. (PRJ339 - Reinert)
+
 ............................................................................. */
 
 DEF STREAM str_1.     /*  Para relatorio de Aceitos      */
@@ -409,7 +413,7 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                          NEXT.
                       END.
                 
-                 IF   NOT CAN-DO("CH,CI,CT,CP",crapttl.tpdocttl) THEN
+                 IF   NOT CAN-DO("CI,CN,CH,RE,PP,CT",crapttl.tpdocttl) THEN
                       DO TRANSACTION:
 
                          CREATE crapeca.
