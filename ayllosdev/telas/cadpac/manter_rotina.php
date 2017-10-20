@@ -89,7 +89,9 @@
     $nmpasite = (isset($_POST['nmpasite'])) ? $_POST['nmpasite'] : '';
     $dstelsit = (isset($_POST['dstelsit'])) ? $_POST['dstelsit'] : '';
     $dsemasit = (isset($_POST['dsemasit'])) ? $_POST['dsemasit'] : '';
-    $dshorsit = (isset($_POST['dshorsit'])) ? $_POST['dshorsit'] : '';
+    $hrinipaa = (isset($_POST['hrinipaa'])) ? $_POST['hrinipaa'] : '';
+    $hrfimpaa = (isset($_POST['hrfimpaa'])) ? $_POST['hrfimpaa'] : '';
+    $indspcxa = (isset($_POST['indspcxa'])) ? $_POST['indspcxa'] : '';	
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
 
@@ -174,7 +176,9 @@
     $xml .= "   <nmpasite>".utf8_decode($nmpasite)."</nmpasite>";
     $xml .= "   <dstelsit>".$dstelsit."</dstelsit>";
     $xml .= "   <dsemasit>".$dsemasit."</dsemasit>";
-    $xml .= "   <dshorsit><![CDATA[".utf8_decode($dshorsit)."]]></dshorsit>";
+	$xml .= "   <hrinipaa>".$hrinipaa."</hrinipaa>";
+	$xml .= "   <hrfimpaa>".$hrfimpaa."</hrfimpaa>";	
+	$xml .= "   <indspcxa>".$indspcxa."</indspcxa>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
     $xml .= " </Dados>";
