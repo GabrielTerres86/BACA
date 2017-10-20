@@ -12,6 +12,7 @@
  *				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
  *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+*                 25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)
  */
 
@@ -501,7 +502,7 @@ function controlaLayoutProcuradores( operacao ) {
 		rCom.addClass('rotulo-linha').css('width','52px');
 		rEst.addClass('rotulo').css('width','70px');
 		rBai.addClass('rotulo-linha').css('width','52px');		
-		rCid.addClass('rotulo').css('width','70');
+		rCid.addClass('rotulo').css('width','70px');
 		
 		// campo endereco
 		var cCep		= $('#nrcepend','#'+nomeFormProcuradores);
@@ -904,6 +905,16 @@ function controlaPesquisasProcuradores() {
 					filtros 	= 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
 					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
+					return false;
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoeddoc'){			
+					bo 		    = "ZOOM0001"
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoeddoc;100px;S;|Descrição;nmoeddoc;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
 					return false;				
 				// Naturalidade
 				} else if ( campoAnterior == 'dsnatura' ) {

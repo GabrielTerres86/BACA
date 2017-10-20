@@ -13,6 +13,10 @@
  *											tela quando efetuado busca atraves lupa.
  * 005: [01/09/2015] Gabriel (RKAM)       : Reformulacao cadastral. 
  * 006: [03/03/2017] Adriano              : Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao - SD 614408.
+ * 007: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
+ * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 // Definindo variáveis globais 
@@ -254,7 +258,7 @@ function controlaLayout(operacao) {
 	$('#divConteudoOpcao').css('height',altura);
 	
 	// FIELDSET IDENDIFICAÇÃO 
-	var rotulos_1     = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"]','#'+nomeForm );	
+	var rotulos_1 = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"],label[for="nrdoccje"]', '#' + nomeForm);
 	var rCPF          = $('label[for="nrcpfcjg"]','#'+nomeForm );
 	var rDatas_1      = $('label[for="dtnasccj"],label[for="dtemdcje"]','#'+nomeForm );
 	var rLinha_1      = $('label[for="cdoedcje"],label[for="cdufdcje"]','#'+nomeForm );
@@ -281,7 +285,7 @@ function controlaLayout(operacao) {
 	cNome.addClass('alphanum').css('width','306px').attr('maxlength','40');
 	cDataNasc.addClass('data');	
 	cTpDocumento.css('width','45px');
-	cDocumento.addClass('alphanum').css('width','85px').attr('maxlength','11');
+	cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 	cOrgEmissor.addClass('alphanum').css('width','45px').attr('maxlength','5');
 	cEstados.css('width','45px');
 	cDataEmissao.addClass('data');
@@ -298,7 +302,7 @@ function controlaLayout(operacao) {
 	cCodigo_2.addClass('codigo pesquisa');
 	
 // FIELDSET INF. PROFISSIONAIS	
-	var rotulos_3	= $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"]','#'+nomeForm );	
+	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
 	var rColuna_2	= $('label[for="nmextemp"],label[for="dsproftl"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
 	var rLinha_3   	= $('label[for="nrramemp"],label[for="vlsalari"]','#'+nomeForm );
 	var cColuna_1  	= $('#tpcttrab,#nrdocnpj,#cdturnos,#cdnvlcgo','#'+nomeForm );
@@ -580,7 +584,15 @@ function controlaPesquisas() {
 					colunas 	= 'Código;grescola;20%;right|Escolaridade;dsescola;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
 					return false;
-				
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoedcje'){								
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoedcje;100px;S;|Descrição;nmoedcje;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa("ZOOM0001", procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
+					return false;
 				// Curso Superior
 				} else if ( campoAnterior == 'cdfrmttl' ) {
 					procedure	= 'busca_formacao';

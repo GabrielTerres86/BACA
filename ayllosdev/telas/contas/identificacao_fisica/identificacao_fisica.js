@@ -1070,10 +1070,10 @@ function dossieDigidoc() {
       $('#divUsoGenerico').css({'margin-top': '170px'});
       $('#divUsoGenerico').css({'width': '400px'});
       $('#divUsoGenerico').centralizaRotinaH();
-			bloqueiaFundo( $('#divUsoGenerico') );
+			bloqueiaFundo( $('#divUsoGenerico') );			
       layoutPadrao();
 
-      return false;
-		}
+			return false;
+		}				
 	});
 }

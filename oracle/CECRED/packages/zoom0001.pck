@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 08/05/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -20,6 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                             (Andrei - RKAM).
                             
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
+               04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
                
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
@@ -442,6 +443,14 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                    
   PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
                                        ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_cdoedptl          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedptl          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoedttl          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedttl          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoeddoc          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoeddoc          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoedcje          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedcje          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
                                        ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
                                        ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
                                        ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
@@ -5149,6 +5158,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   
   PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
                                        ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_cdoedptl          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedptl          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoedttl          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedttl          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoeddoc          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoeddoc          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
+                                       ,pr_cdoedcje          IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE                                       
+                                       ,pr_nmoedcje          IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE
                                        ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
                                        ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
                                        ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
@@ -5171,8 +5188,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   Frequencia: -----
   Objetivo   : Rotina para buscar orgão expedidor
     
-  Alterações : 
+  Alterações : 26/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
   -------------------------------------------------------------------------------------------------------------*/    
+  --Variaveis auxiliares
+  vr_cdorgao_expedidor tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
+  vr_nmorgao_expedidor tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
                         
   --Variaveis de Criticas
   vr_cdcritic INTEGER;
@@ -5212,8 +5232,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       RAISE vr_exc_erro;
     END IF;
     
-    TELA_CADORG.pc_consulta_orgao_expedidor(pr_cdorgao_expedidor => pr_cdorgao_expedidor 
-                                           ,pr_nmorgao_expedidor => pr_nmorgao_expedidor
+    IF TRIM(pr_cdorgao_expedidor) IS NOT NULL THEN
+      vr_cdorgao_expedidor := pr_cdorgao_expedidor;    
+    END IF;
+    
+    IF TRIM(pr_nmorgao_expedidor) IS NOT NULL THEN
+      vr_nmorgao_expedidor := pr_nmorgao_expedidor;
+    END IF;      
+    
+    IF TRIM(pr_cdoedptl) IS NOT NULL THEN
+      vr_cdorgao_expedidor := pr_cdoedptl;    
+    END IF;
+    
+    IF TRIM(pr_nmoedptl) IS NOT NULL THEN
+      vr_nmorgao_expedidor := pr_nmoedptl;
+    END IF;
+    
+    IF TRIM(pr_cdoedttl) IS NOT NULL THEN
+      vr_cdorgao_expedidor := pr_cdoedttl;    
+    END IF;
+    
+    IF TRIM(pr_nmoedttl) IS NOT NULL THEN
+      vr_nmorgao_expedidor := pr_nmoedttl;
+    END IF;
+    
+    IF TRIM(pr_cdoeddoc) IS NOT NULL THEN
+      vr_cdorgao_expedidor := pr_cdoeddoc;    
+    END IF;
+    
+    IF TRIM(pr_nmoeddoc) IS NOT NULL THEN
+      vr_nmorgao_expedidor := pr_nmoeddoc;
+    END IF;
+    
+    IF TRIM(pr_cdoedcje) IS NOT NULL THEN
+      vr_cdorgao_expedidor := pr_cdoedcje;    
+    END IF;
+    
+    IF TRIM(pr_nmoedcje) IS NOT NULL THEN
+      vr_nmorgao_expedidor := pr_nmoedcje;
+    END IF;
+    
+    TELA_CADORG.pc_consulta_orgao_expedidor(pr_cdorgao_expedidor => vr_cdorgao_expedidor 
+                                           ,pr_nmorgao_expedidor => vr_nmorgao_expedidor
                                            ,pr_nrregist => pr_nrregist
                                            ,pr_nriniseq => pr_nriniseq
                                            ,pr_xmllog   => pr_xmllog

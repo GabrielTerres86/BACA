@@ -14,6 +14,7 @@
 							  (Adriano - P339).
  *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  *                19/10/2017 - Ajuste da lov de nacionalidades na tela de responsavel legal. (PRJ339 - Kelvin).
+ * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339 - Kelvin)			                          
  */
 
 var nrcpfcto = "";
@@ -887,7 +888,16 @@ function controlaLupasResp() {
 					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina,'',nomeFormResp);
 					return false;				
-					
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoeddoc'){			
+					bo 		    = "ZOOM0001"
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoeddoc;100px;S;|Descrição;nmoeddoc;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina,'',nomeFormResp);									
+					return false;	
 				// Naturalidade
 				} else if ( campoAnterior == 'dsnatura' ) {
 					bo			= 'b1wgen0059.p';
