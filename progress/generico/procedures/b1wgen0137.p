@@ -1963,7 +1963,7 @@ PROCEDURE efetua_batimento_ged_credito:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("84,85,86,87,88,89,102",ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("23,84,85,86,87,88,89,102",ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(4,craptab.dstextab,";"))
