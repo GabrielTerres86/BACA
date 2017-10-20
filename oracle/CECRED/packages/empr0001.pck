@@ -40,7 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
   --                          Heitor (Mouts) - Chamado 718395
   --															
-  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
+  --             19/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
   --            
   ---------------------------------------------------------------------------------------------------------------
 
