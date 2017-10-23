@@ -3,7 +3,7 @@
 Programa: siscaixa/web/crap014b.w
 Sistema : Caixa On-line                                       
 Sigla   : CRED    
-                                             Ultima atualizacao: 29/12/2016
+                                             Ultima atualizacao: 20/10/2017
    
 Dados referentes ao programa:
 
@@ -68,6 +68,9 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
             11/09/2015 - Melhoria 21 (Tiago/Fabricio).               
 
             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
+
+			20/10/2017 - Ajuste para pegar o erro corretamente ao retornar da pc_atualz_situac_titulo_sacado
+			             (Adriano - SD 773635).
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -1200,25 +1203,22 @@ PROCEDURE process-web-request :
                                               WHEN pc_atualz_situac_titulo_sacado.pr_dscritic <> ?.
                        
                        
-                       IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+                       IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+					   DO:
                            ASSIGN l-houve-erro = YES.
                            FOR EACH w-craperr:
                                DELETE w-craperr.
                            END.
-                           FOR EACH craperr NO-LOCK WHERE
-                                    craperr.cdcooper = crapcop.cdcooper  AND
-                                    craperr.cdagenci =  INT(v_pac)       AND
-                                    craperr.nrdcaixa =  INT(v_caixa):
+                           
+						   CREATE w-craperr.
+                           ASSIGN w-craperr.cdagenci = INT(v_pac) 
+                                  w-craperr.nrdcaixa = INT(v_caixa)
+                                  w-craperr.nrsequen = 1
+                                  w-craperr.cdcritic = aux_cdcritic
+                                  w-craperr.dscritic = aux_dscritic.
 
-                              CREATE w-craperr.
-                              ASSIGN w-craperr.cdagenci   = craperr.cdagenc
-                                     w-craperr.nrdcaixa   = craperr.nrdcaixa
-                                     w-craperr.nrsequen   = craperr.nrsequen
-                                     w-craperr.cdcritic   = craperr.cdcritic
-                                     w-craperr.dscritic   = craperr.dscritic
-                                     w-craperr.erro       = craperr.erro.
-                           END.
                            UNDO.
+
                        END.
                      
                      END. /* Fim atualizar titulo CIP */
