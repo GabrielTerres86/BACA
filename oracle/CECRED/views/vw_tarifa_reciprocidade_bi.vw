@@ -9,4 +9,4 @@ select cco.cdcooper, cco.nrconven,
        fn_retorna_val_trf_reciproc(cco.cdcooper,cco.nrconven,2,'P1',2) as vltarceereg_pj,
        fn_retorna_val_trf_reciproc(cco.cdcooper,cco.nrconven,76,'',2) as vltarceeliq_pj
 from crapcco cco
-where cco.flrecipr = 1;
+/*where cco.flrecipr = 1*/;
