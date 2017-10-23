@@ -1868,3 +1868,4 @@ PROCEDURE gera-log-prcbnd:
                           " >> /usr/coop/cecred/log/prcbnd.log").
     END.
 
+END PROCEDURE.
