@@ -20,6 +20,11 @@
  *                03/11/2015 - Incluida a funcao selecionaPoder(), PRJ. 131 - Ass. Conjunta (Jean Michel).
  *                26/08/2016 - Inclusao da function validaResponsaveis e alteracao controlaOperacaoPoderes, SD 510426 (Jean Michel).
  *				  10/02/2017 - Ajuste realizado para remover caracteres invalidos de "Outros poderes". SD 558355 (Kelvin).
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
+
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -464,7 +469,7 @@ function manterRotinaProc(operacao_proc) {
 	dtadmsoc = $('#dtadmsoc','#frmDadosProcuradores').val();
 	nmdavali = $('#nmdavali','#frmDadosProcuradores').val(); 
 	nrdocava = $('#nrdocava','#frmDadosProcuradores').val(); 
-	dsnacion = $('#dsnacion','#frmDadosProcuradores').val(); 
+	cdnacion = $('#cdnacion','#frmDadosProcuradores').val(); 
 	dsnatura = $('#dsnatura','#frmDadosProcuradores').val(); 
 	complend = $('#complend','#frmDadosProcuradores').val(); 
 	nmcidade = $('#nmcidade','#frmDadosProcuradores').val(); 
@@ -503,7 +508,7 @@ function manterRotinaProc(operacao_proc) {
 	cdoeddoc = trim( cdoeddoc );
 	nmdavali = trim( nmdavali );
 	nrdocava = trim( nrdocava );
-	dsnacion = trim( dsnacion );
+	cdnacion = trim( cdnacion );
 	dsnatura = trim( dsnatura );
 	complend = trim( complend );
 	nmcidade = trim( nmcidade );
@@ -544,7 +549,7 @@ function manterRotinaProc(operacao_proc) {
 			nrcpfcgc_proc: nrcpfcgc_proc, cdoeddoc: cdoeddoc, dtnascto: dtnascto, 
 			dtemddoc: dtemddoc,	dtadmsoc: dtadmsoc,	nrdctato: nrdctato, 
 			nmdavali: nmdavali,	cdufddoc: cdufddoc, tpdocava: tpdocava, 
-			nrdocava: nrdocava,	cdestcvl: cdestcvl,	dsnacion: dsnacion, 
+			nrdocava: nrdocava,	cdestcvl: cdestcvl,	cdnacion: cdnacion, 
 			dsnatura: dsnatura,	complend: complend, nmcidade: nmcidade, 
 			nmbairro: nmbairro,	dsendres: dsendres,	nmpaicto: nmpaicto, 
 			nmmaecto: nmmaecto,	nrendere: nrendere,	nrcepend: nrcepend, 
@@ -578,10 +583,12 @@ function estadoInicialProc() {
 
 	var cNrConta		= $('#nrdctato','#frmDadosProcuradores');
 	var cCPF			= $('#nrcpfcgc','#frmDadosProcuradores');
-	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestcvl,#dthabmen,#inhabmen,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestcvl,#dthabmen,#inhabmen,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
 	var camposGrupo3	= $('#dtvalida, #dtadmsoc, #dsproftl','#frmDadosProcuradores');	
 	var sexo			= $('input[name="cdsexcto"]');	
 	var cDescBem		= $('#dsrelbem','#frmDadosProcuradores');
+    var cDescnac		= $('#dsnacion','#frmDadosProcuradores');
+	
 	
 	$('#frmDadosProcuradores').limpaFormulario();
 	cNrConta.habilitaCampo();
@@ -590,6 +597,7 @@ function estadoInicialProc() {
 	camposGrupo3.desabilitaCampo();
 	sexo.desabilitaCampo();	
 	cDescBem.desabilitaCampo();
+    cDescnac.desabilitaCampo();
 	
 	controlaSocioProprietario();
 	removeOpacidade('divConteudoOpcao');
@@ -605,7 +613,7 @@ function controlaLayoutProc( operacao_proc ) {
 	
 	if(operacao_proc == 'CT'){
 		altura 	= '205px';
-		largura = '670px';
+		largura = '750px';
 	}else if(operacao_proc == 'P'){
 		altura 	= '360px';
 		largura = '570px';
@@ -630,9 +638,9 @@ function controlaLayoutProc( operacao_proc ) {
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '70px';
-		arrayLargura[1] = '125px';
-		arrayLargura[2] = '113px';
-		arrayLargura[3] = '75px';
+		arrayLargura[1] = '135px';
+		arrayLargura[2] = '125px';
+		arrayLargura[3] = '100px';
 		arrayLargura[4] = '60px';
 		
 		var arrayAlinha = new Array();
@@ -661,6 +669,7 @@ function controlaLayoutProc( operacao_proc ) {
 		var cDataEmissao	= $('#dtemddoc','#frmDadosProcuradores');
 		var cEstadoCivil	= $('#cdestcvl','#frmDadosProcuradores');
 		var cNacionalidade	= $('#dsnacion','#frmDadosProcuradores');
+        var cCodnacionali	= $('#cdnacion','#frmDadosProcuradores');
 		var cNaturalidade	= $('#dsnatura','#frmDadosProcuradores');
 		
 		cNrConta.css('width','70px').addClass('conta pesquisa');
@@ -670,12 +679,13 @@ function controlaLayoutProc( operacao_proc ) {
 		cDthabmen.css('width','76px').addClass('data');
 		cInhabmen.css('width','273px');
 		cTpDocumento.css('width','40px');
-		cDocumento.addClass('alphanum').css('width','84px').attr('maxlength','15');
+		cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 		cOrgEmissor.addClass('alphanum').css('width','52px').attr('maxlength','5');
 		cEstados.css('width','45px');
 		cDataEmissao.addClass('data').css('width','70px');
 		cEstadoCivil.css('width','298px');
 		cNacionalidade.css('width','140px');
+        cCodnacionali.css('width','65px');
 		cNaturalidade.css('width','200px');
 		
 		// FIELDSET ENDEREÇO
@@ -758,10 +768,11 @@ function controlaLayoutProc( operacao_proc ) {
 		$('#persemon,#qtprebem','#frmProcBens').css({'width':'40px'});			
 		
 		// INICIA CONTROLE DA TELA
-		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
 		var camposGrupo3  = $('#dtvalida, #dtadmsoc, #dsproftl','#frmDadosProcuradores');		
 		var sexo 		  = $('input[name="cdsexcto"]');
 		var cCampos       = $('#vloutren,#dsoutren','#frmDadosProcuradores');
+
 
 		// Sempre inicia com tudo bloqueado
 		cNrConta.desabilitaCampo();
@@ -772,6 +783,7 @@ function controlaLayoutProc( operacao_proc ) {
 		sexo.desabilitaCampo();	
 		cDescBem.desabilitaCampo();	
 		cCampos.desabilitaCampo();
+        cNacionalidade.desabilitaCampo();
 		
 				
 		switch (operacao_proc) {
@@ -1158,13 +1170,13 @@ function controlaPesquisasProc() {
 					return false;					
 				
 				// Nacionalidade
-				} else if ( campoAnterior == 'dsnacion' ) {
+				} else if ( campoAnterior == 'cdnacion' ) {
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_nacionalidade';
 					titulo      = 'Nacionalidade';
 					qtReg		= '50';
-					filtros 	= 'Nacionalidade;dsnacion;200px;S;';
-					colunas 	= 'Nacionalidade;dsnacion;100%;left';
+					filtros 	= 'Codigo;cdnacion;30px;N;;N|Nacionalidade;dsnacion;200px;S;';
+					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;				
 				// Naturalidade
@@ -1198,6 +1210,15 @@ function controlaPesquisasProc() {
 	
 	// Cep
 	$('#nrcepend','#'+nomeFormProc).buscaCEP(nomeFormProc, camposOrigem, divRotina);
+	
+    //  Nacionalidade
+	$('#cdnacion','#'+nomeFormProc).unbind('change').bind('change',function() {
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormProc);        
+	return false;
+	});
 	
 	return false;
 }
@@ -1999,6 +2020,7 @@ function carregaDadosProc() {
 	} 
 				
 	$('#dsnacion','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['dsnacion'] );	
+    $('#cdnacion','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['cdnacion'] );	
 	$('#dsnatura','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['dsnatura'] );	
 	$('#nrcepend','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['nrcepend'] );	
 	$('#dsendres','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['dsendres.1'] );	
@@ -2060,6 +2082,7 @@ function controlaArrayProc(op){
 					}
 								
 				arrayFilhosAvtMatric[indarray_proc]["dsnacion"] = $('#dsnacion','#frmDadosProcuradores').val();
+                arrayFilhosAvtMatric[indarray_proc]["cdnacion"] = $('#cdnacion','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["dsnatura"] = $('#dsnatura','#frmDadosProcuradores').val();
 				
 				arrayFilhosAvtMatric[indarray_proc]['nrcepend'] = normalizaNumero($('#nrcepend','#frmDadosProcuradores').val());
@@ -2138,6 +2161,7 @@ function controlaArrayProc(op){
 				}
 								
 				eval('regFilhoavt'+i+'["dsnacion"] = $(\'#dsnacion\',\'#frmDadosProcuradores\').val();');
+                eval('regFilhoavt'+i+'["cdnacion"] = $(\'#cdnacion\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["dsnatura"] = $(\'#dsnatura\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["nrcepend"] = \''+cep+'\';');
 				eval('regFilhoavt'+i+'["dsendres.1"] = $(\'#dsendres\',\'#frmDadosProcuradores\').val();');
