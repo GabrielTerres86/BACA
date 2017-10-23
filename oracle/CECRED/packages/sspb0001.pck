@@ -374,7 +374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 27/06/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 19/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -406,6 +406,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --             27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
   --                          estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
   --                          ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
+  --
+  --             19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -2738,7 +2740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 19/10/2017
 
       Dados referentes ao programa:
 
@@ -2761,6 +2763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
+                               
+                  19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
                               
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
@@ -3136,7 +3140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --Se ocorreu erro dar RAISE
     IF vr_typ_saida = 'ERR' THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Nao foi possivel executar comando unix. Erro '|| vr_dscritic;
+      vr_dscritic := 'Erro ao executar o comando ' || vr_comando || '. Saida ' || vr_typ_saida || ' . Erro '|| vr_dscritic;
       RAISE vr_exc_erro;
     END IF;
     -- Uma vez executado o script não pode mais abortar o envio
