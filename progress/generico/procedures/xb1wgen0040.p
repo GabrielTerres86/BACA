@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0040.p
    Autor   : André (DB1)
-   Data    : Maio/2011                     Ultima atualizacao: 20/08/2012
+   Data    : Maio/2011                     Ultima atualizacao: 19/10/2017
 
    Dados referentes ao programa:
 
@@ -15,6 +15,11 @@
 
 			    18/03/2016 - Proj 316 - Passar novo cdcooper (Tela) para 
 				             consultar o cheque (Guilherme/SUPERO)
+
+				19/10/2017 - Ajuste para remover a chamada da rotina busca-cheques,
+				             pois a mesma foi convertida para oracle
+							 (Adriano - SD 774552).
+				          
 ............................................................................ */
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -97,53 +102,6 @@ PROCEDURE valores_entrada:
     
 END PROCEDURE.
 
-/*****************************************************************************/
-/*                            Buscar dados dos cheques                       */
-/*****************************************************************************/
-PROCEDURE busca-cheques:
-
-    RUN busca-cheques IN hBO (INPUT aux_cdcooper,
-                              INPUT aux_cdagenci,
-                              INPUT aux_nrdcaixa,
-                              INPUT aux_cdoperad,
-                              INPUT aux_nmdatela,
-                              INPUT aux_idorigem,
-                              INPUT aux_nrdconta,
-                              INPUT aux_idseqttl,
-                              INPUT TRUE, /* LOG */
-                              INPUT aux_nrtipoop,
-                              INPUT aux_nrcheque,
-                              INPUT aux_nrregist,
-                              INPUT aux_nriniseq,
-                             OUTPUT aux_qtregist,
-                             OUTPUT TABLE tt-erro, 
-                             OUTPUT TABLE tt-cheques).
-    
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-      
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                              "operacao.".
-                END.
-
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-cheques:HANDLE,
-                             INPUT "Dados").
-            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
-            RUN piXmlSave.
-        END.
-
-        
-END PROCEDURE.
 
 /*****************************************************************************/
 /*                         Verifica Conta para buscar cheques                */

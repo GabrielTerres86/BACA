@@ -219,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 19/10/2017
 
    Dados referentes ao programa:
   
@@ -241,6 +241,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+
+              19/10/2017 - Ajsute para pegar corretamente a observação do cheque
+			               (Adriano - SD 774552)
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -1508,7 +1511,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : WEB
    Autor   : David
-   Data    : Maio/2013.                        Ultima atualizacao: 10/06/2016
+   Data    : Maio/2013.                        Ultima atualizacao: 20/10/2017
 
    Dados referentes ao programa:
 
@@ -1522,6 +1525,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
                10/06/2016 - Ajustado para gerar os registros conforme era gerado no 
                             fonte progress (Lucas Ranghetti #422753)
+
+               19/10/2017 - Ajsute para pegar corretamente a observação do cheque
+			               (Adriano - SD 774552)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -1629,8 +1635,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         -- Validar indicador do cheque
         IF pr_incheque = 1 OR pr_incheque = 2 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Contra-Ordem';
-        ELSIF pr_incheque = 8 THEN
+        ELSIF pr_incheque = 8 THEN 
           pr_tab_cheques(vr_index)('dsobserv') := 'Cancelado';
+        ELSE
+          pr_tab_cheques(vr_index)('dsobserv') := ' ';
         END IF;
 
         -- Validar data do cheque
@@ -1642,7 +1650,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
           -- Verifica se forma encontrados registros
           IF cr_crapped%FOUND THEN
-            pr_tab_cheques(vr_index)('dsobserv') := 'Ped. ' || to_char(pr_nrpedido, 'FM99D990');
+            pr_tab_cheques(vr_index)('dsobserv') := nvl(trim(pr_tab_cheques(vr_index)('dsobserv')),'Ped. ' || trim(to_char(pr_nrpedido, '99999999')));
             pr_tab_cheques(vr_index)('dtemschq') := rw_crapped.dtsolped;
           END IF;
         ELSE
