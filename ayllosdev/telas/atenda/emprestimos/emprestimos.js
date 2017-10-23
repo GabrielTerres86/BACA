@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 21/09/2017
+ * FONTE        : emprestimos.js                            Última alteração: 23/10/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -108,6 +108,7 @@
  * 087: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * 088: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
  * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
+ * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -6026,6 +6027,9 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
+	
+	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+	return false;
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
