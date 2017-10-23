@@ -7,7 +7,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme/Supero
-       Data    : Novembro/2010                      Ultima atualizacao: 22/08/2017
+       Data    : Novembro/2010                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -38,6 +38,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
 	                 26/05/2017 - Alterado ordem de atualizacao tabela cst e cdb (Daniel).
 
            			   22/08/2017 - Conversao para Progress >>>>> Oracle (Adriano)
+                   
+                   17/10/2017 - Ajuste para não abrir chamado ao encontrar erros, será apenas
+                                efetuado log de acordo com a situação ocorrida
+                                (Adriano - SD 770823).
+                               
     ............................................................................ */
 
     DECLARE
@@ -47,9 +52,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS584';
 
-      --E-mail destino
-      vr_dsremete  VARCHAR2(1000) := gene0001.fn_param_sistema('CRED',0,'CRPS584_EMAIL');
-      
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -148,17 +150,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
         -- Leitura do calendário da cooperativa
         IF NOT vr_tab_crapdat.EXISTS(rw_crapcop.cdcooper) THEN                
                  
-          -- Enviar detalhamento do erro ao LOG 
-          CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                ,pr_cdprograma => vr_cdprogra
-                                ,pr_tpexecucao => 0
-                                ,pr_tpocorrencia => 4
-                                ,pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                                   vr_cdprogra || 
-                                                   ' Cooperativa: ' || rw_crapcop.nmrescop || 
-                                                   ' - Sem data de sistema(crapdat).')
-                                ,pr_flgsucesso => 0
-                                ,pr_idprglog => vr_idprglog);
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                    ,pr_ind_tipo_log => 2 -- Erro tratado
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                    ,pr_des_log      => to_char(SYSDATE,
+                                                                'hh24:mi:ss') ||
+                                                        ' - ' || vr_cdprogra ||
+                                                        ' -->  Cooperativa: ' || rw_crapcop.nmrescop || 
+                                                        ' - Sem data de sistema(crapdat).'
+                                    ,pr_cdcriticidade => 3);
                                
           CONTINUE;
           
@@ -267,22 +268,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
               
               gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
               
-              -- Enviar detalhamento do erro ao LOG 
-              CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                    ,pr_cdprograma => vr_cdprogra
-                                    ,pr_tpexecucao => 0
-                                    ,pr_tpocorrencia => 4
-                                    ,pr_cdmensagem => 1
-                                    ,pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                                       vr_cdprogra || ' --> ' || 
-                                                       vr_dscritic ||
-                                                       ' Arquivo: ' || vr_tab_crawarq(idx) || 
-                                                       '.')
-                                    ,pr_flgsucesso => 0
-                                    ,pr_flabrechamado => 1
-                                    ,pr_destinatario_email => vr_dsremete
-                                    ,pr_flreincidente => 1
-                                    ,pr_idprglog => vr_idprglog); 
+              -- Envio centralizado de log de erro
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                        ,pr_ind_tipo_log => 2 -- Erro tratado
+                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                        ,pr_des_log      => to_char(SYSDATE,
+                                                                    'hh24:mi:ss') ||
+                                                            ' - ' || vr_cdprogra ||
+                                                            ' --> ' || vr_dscritic || 
+                                                            '- Arquivo: ' || vr_tab_crawarq(idx) || 
+                                                            '.'
+                                        ,pr_cdcriticidade => 3);
                                     
               --Move o arquivo XML fisico de envio
               GENE0001.pc_OScommand (pr_typ_comando => 'S'
@@ -298,26 +294,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
               CONTINUE;
             
             WHEN OTHERS THEN
+              
+              cecred.pc_internal_exception(3); 
+            
               gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
               
-              vr_dscritic:='Nao foi possivel efetuar as validacoes iniciais do arquivo.';
+              vr_dscritic:='Nao foi possivel efetuar as validacoes iniciais do arquivo: ' || SQLERRM;
               
-              -- Enviar detalhamento do erro ao LOG 
-              CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                    ,pr_cdprograma => vr_cdprogra
-                                    ,pr_tpexecucao => 0
-                                    ,pr_tpocorrencia => 4
-                                    ,pr_cdmensagem => 2
-                                    ,pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                                       vr_cdprogra || ' --> ' || 
-                                                       vr_dscritic ||
-                                                       ' Arquivo: ' || vr_tab_crawarq(idx) || 
-                                                       '.')
-                                    ,pr_flgsucesso => 0
-                                    ,pr_flabrechamado => 1
-                                    ,pr_destinatario_email => vr_dsremete
-                                    ,pr_flreincidente => 1
-                                    ,pr_idprglog => vr_idprglog);  
+              -- Envio centralizado de log de erro
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                        ,pr_ind_tipo_log => 3 -- Erro não tratado
+                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                        ,pr_des_log      => to_char(SYSDATE,
+                                                                    'hh24:mi:ss') ||
+                                                            ' - ' || vr_cdprogra ||
+                                                            ' --> ' || vr_dscritic || 
+                                                            '- Arquivo: ' || vr_tab_crawarq(idx) || 
+                                                            '.'
+                                        ,pr_cdcriticidade => 3);
                      
               --Move o arquivo XML fisico de envio
               GENE0001.pc_OScommand (pr_typ_comando => 'S'
@@ -610,23 +604,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
                 
                 vr_flarqerr :=TRUE;
                 
-                -- Enviar detalhamento do erro ao LOG 
-                CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                      ,pr_cdprograma => vr_cdprogra
-                                      ,pr_tpexecucao => 0
-                                      ,pr_tpocorrencia => 4
-                                      ,pr_cdmensagem => 3
-                                      ,pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                                         vr_cdprogra || ' --> ' || 
-                                                         vr_dscritic ||
-                                                         ' Cooperativa: ' || rw_crapcop.nmrescop ||
-                                                         ' Arquivo: ' || vr_tab_crawarq(idx) || 
-                                                         '.')
-                                      ,pr_flgsucesso => 0
-                                      ,pr_flabrechamado => 1
-                                      ,pr_destinatario_email => vr_dsremete
-                                      ,pr_flreincidente => 1
-                                      ,pr_idprglog => vr_idprglog);
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                          ,pr_ind_tipo_log => 2 -- Erro tratado
+                                          ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                          ,pr_des_log      => to_char(SYSDATE,
+                                                                      'hh24:mi:ss') ||
+                                                              ' - ' || vr_cdprogra ||
+                                                              ' --> ' || vr_dscritic || 
+                                                              ' - Cooperativa: ' || rw_crapcop.nmrescop ||
+                                                              ' - Arquivo: ' || vr_tab_crawarq(idx) || 
+                                                              '.'
+                                          ,pr_cdcriticidade => 3);
                                       
                 EXIT;
               
@@ -637,22 +626,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
                 
                 vr_flarqerr :=TRUE;
                 
-                -- Enviar detalhamento do erro ao LOG 
-                CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                      ,pr_cdprograma => vr_cdprogra
-                                      ,pr_tpexecucao => 0
-                                      ,pr_tpocorrencia => 4
-                                      ,pr_cdmensagem => 4
-                                      ,pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                                         vr_cdprogra || ' --> ' || 
-                                                         ' Cooperativa: ' || rw_crapcop.nmrescop ||
-                                                         ' Arquivo: ' || vr_tab_crawarq(idx) || 
-                                                         'Erro ao ler arquivo -->  ' || SQLERRM || '.')
-                                      ,pr_flgsucesso => 0
-                                      ,pr_flabrechamado => 1
-                                      ,pr_destinatario_email => vr_dsremete
-                                      ,pr_flreincidente => 1
-                                      ,pr_idprglog => vr_idprglog);                                          
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                          ,pr_ind_tipo_log => 3 -- Erro não tratado
+                                          ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                          ,pr_des_log      => to_char(SYSDATE,
+                                                                      'hh24:mi:ss') ||
+                                                              ' - ' || vr_cdprogra ||
+                                                              ' --> Cooperativa: ' || rw_crapcop.nmrescop ||
+                                                              ' - Arquivo: ' || vr_tab_crawarq(idx) || 
+                                                              ' - Erro ao ler arquivo -->  ' || SQLERRM || '.'
+                                          ,pr_cdcriticidade => 3);
                 
                 EXIT;
                     
@@ -718,15 +702,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
         -- Efetuar rollback
         ROLLBACK;
         
-        cecred.pc_log_programa(pr_dstiplog   => 'E' 
-                              ,pr_cdprograma => vr_cdprogra
-                              ,pr_cdcriticidade => 2
-                              ,pr_cdmensagem    => 5
-                              ,pr_dsmensagem    => pr_dscritic
-                              ,pr_flgsucesso    => 0
-                              ,pr_tpocorrencia  => 1 -- erro de negócio
-                              ,pr_tpexecucao    => 1 -- batch
-                              ,pr_idprglog      => vr_idprglog);
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,
+                                                              'hh24:mi:ss') ||
+                                                      ' - ' || vr_cdprogra ||
+                                                      ' --> ' || pr_dscritic
+                                  ,pr_cdcriticidade => 3);
 
         cecred.pc_log_programa(pr_dstiplog   => 'F' 
                               ,pr_cdprograma => vr_cdprogra
@@ -743,21 +727,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps584 (pr_cdcritic OUT crapcri.cdcritic%
         -- Efetuar rollback
         ROLLBACK;
         
-        cecred.pc_log_programa(pr_dstiplog   => 'E' 
-                              ,pr_cdprograma => vr_cdprogra
-                              ,pr_cdcriticidade => 2
-                              ,pr_cdmensagem    => 6
-                              ,pr_dsmensagem    => pr_dscritic
-                              ,pr_flgsucesso    => 0
-                              ,pr_tpocorrencia  => 2 -- erro não tratado
-                              ,pr_tpexecucao    => 1 -- batch
-                              ,pr_flabrechamado => 1 -- Abrir chamado (Sim=1/Nao=0)
-                              ,pr_texto_chamado => ' Verificar execução do programa ' || vr_cdprogra || 
-                                                  ': Integra Protocolo Eletronico - Atualizacao de Cheques para ' ||
-                                                  'Processados - Tratar arquivo de retorno da Truncagem.'
-                              ,pr_destinatario_email => vr_dsremete
-                              ,pr_flreincidente => 1 --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                              ,pr_idprglog      => vr_idprglog);
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 3 -- Erro não tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',0,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,
+                                                              'hh24:mi:ss') ||
+                                                      ' - ' || vr_cdprogra ||
+                                                      ' --> ' || pr_dscritic
+                                  ,pr_cdcriticidade => 3);
 
        cecred.pc_log_programa(pr_dstiplog   => 'F' 
                              ,pr_cdprograma => vr_cdprogra
