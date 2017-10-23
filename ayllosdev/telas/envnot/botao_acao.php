@@ -26,7 +26,7 @@
 	$qtTelas = count($telas);
 	 
 ?>
-	<div class="condensado" style="padding-top: 30px;">
+	<div class="condensado" style="padding-top: 15px;">
 		<fieldset>
 			<legend><b><? echo utf8ToHtml('Botão de A&ccedil;&atilde;o no Cecred Mobile') ?></b></legend>
 			<div id="divBtnAcao" name="divBtnAcao" >

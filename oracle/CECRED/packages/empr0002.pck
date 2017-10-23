@@ -207,7 +207,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                         ,pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                         ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
-
+  
+  -- Function para buscar os cooperados com crédito pré-aprovado ativo - Utilizada para envio de Notificações/Push
+  FUNCTION fn_sql_contas_com_preaprovado RETURN CLOB;
+    
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -3182,6 +3185,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         ROLLBACK;
     END;
   END pc_habilita_contas_suspensas;
-
+  
+  -- Function para buscar os cooperados com crédito pré-aprovado ativo - Utilizada para envio de Notificações/Push
+  FUNCTION fn_sql_contas_com_preaprovado RETURN CLOB IS
+  BEGIN
+    RETURN 'SELECT usu.cdcooper
+                  ,usu.nrdconta
+                  ,usu.idseqttl
+                  ,''#valorcalculado=R$ '' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valorcontratado=R$ '' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valordisponivel=R$ '' || to_char(val.vllimdis, ''fm99g999g990d00'') dsvariaveis
+              FROM (SELECT *
+                      FROM (SELECT cpa.cdcooper
+                                  ,cpa.nrdconta
+                                  ,cpa.vlcalpre -- Valor Total Calculado
+                                  ,cpa.vlctrpre -- Valor Contratado
+                                  ,cpa.vllimdis -- Valor Disponível
+                                  ,row_number() OVER(PARTITION BY cpa.cdcooper, cpa.nrdconta ORDER BY car.tpcarga ASC, car.dtcalculo DESC) prioridade -- Prioriza as Manuais e mais recentes
+                              FROM crapcpa              cpa
+                                  ,tbepr_carga_pre_aprv car
+                                  ,tbepr_param_conta    par
+                             WHERE cpa.iddcarga = car.idcarga
+                               AND cpa.cdcooper = par.cdcooper(+)
+                               AND cpa.nrdconta = par.nrdconta(+)
+                               AND car.indsituacao_carga = 1 -- Gerada
+                               AND car.flgcarga_bloqueada = 0 -- Liberada
+                               AND (car.dtfinal_vigencia IS NULL OR
+                                   car.dtfinal_vigencia >= TRUNC(SYSDATE)) -- Vigente
+                               AND NVL(par.flglibera_pre_aprv, 1) = 1 -- Valida se Pré-Aprovado está liberado para a conta específica
+                            )
+                     WHERE prioridade = 1) val
+                  ,vw_usuarios_internet usu
+             WHERE val.cdcooper = usu.cdcooper
+               AND val.nrdconta = usu.nrdconta
+               AND val.vllimdis > 0
+               AND ROWNUM <= 5';
+  END fn_sql_contas_com_preaprovado;
+  
 END EMPR0002;
 /

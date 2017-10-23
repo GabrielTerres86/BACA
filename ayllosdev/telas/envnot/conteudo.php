@@ -21,7 +21,7 @@
 			</script>
 		</div>
 		<br/>
-		<label for="dsvariaveis_mensagem" style="height: 50px; text-align: left;" ><? echo utf8ToHtml('(Variáveis disponíveis: ').$dsvariaveis_mensagem.')'; ?></label>
+		<div for="dsvariaveis_mensagem" ><? echo utf8ToHtml('Variáveis disponíveis: ').$dsvariaveis_mensagem; ?></div>
 		
 	</fieldset>
 </div>

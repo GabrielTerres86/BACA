@@ -9,7 +9,7 @@
 	 * --------------
 	 */
 ?>
-<div class="condensado" style="padding-top: 30px;">
+<div class="condensado" style="padding-top: 15px;">
 	<fieldset>
 		<legend><b>Banner no Detalhamento</b></legend>
 		</br>

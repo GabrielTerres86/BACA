@@ -99,7 +99,7 @@
 			</tr>
 			<tr style="height: 25px;">
 				<td colspan="3">
-					<label for="dstexto_mensagem" style="text-align: left;"><?php echo utf8ToHtml('(Variáveis disponíveis: ') . $dsvariaveis_mensagem .')'; ?></label>
+					<div for="dstexto_mensagem"><?php echo utf8ToHtml('<b>Variáveis disponíveis: </b>') . $dsvariaveis_mensagem; ?></div>
 				</td>
 			</tr>
 		</table>
