@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 03/07/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 17/07/2017
     
     Dados referente ao programa:
     
@@ -144,6 +144,10 @@
 							  
                  03/07/2017 - Incluido condicao para nao pegar convenios com data de cancelamento
                               no for each da crapscn (Tiago/Fabricio #678625)
+				 
+                 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                              conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                              diferentes (Lucas Ranghetti #684123) 
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -284,6 +288,7 @@ DEF VAR aux_nmarq674 AS CHAR                                          NO-UNDO.
 DEF VAR aux_dsnomcnv AS CHAR                                          NO-UNDO.
 DEF VAR aux_nmconsor AS CHAR                                          NO-UNDO.
 DEF VAR aux_nrdgrupo LIKE crapcns.nrdgrupo                            NO-UNDO.
+DEF VAR aux_nrcrcard AS DECIMAL                                       NO-UNDO.
 
 DEF VAR aux_conteudo AS CHAR                                          NO-UNDO.
 DEF VAR h-b1wgen0011 AS HANDLE                                        NO-UNDO.
@@ -969,9 +974,49 @@ FOR EACH crapcop NO-LOCK.
                 NEXT.
             END.
 
+        /* Consorcios continuam utilizando o nrdocmto, a regra nao foi alterada */
+        IF craplau.cdhistor <> 1019 THEN                         
+           ASSIGN aux_nrcrcard = craplau.nrdocmto.        
+
         /* retornar o valor do documento formatado corretamente */
         IF  craplcm.cdhistor = 1019 THEN
             DO:
+                /* Verificar se referencia(novas) ainda existe */
+                FIND crapatr WHERE
+                     crapatr.cdcooper = crapcop.cdcooper AND
+                     crapatr.nrdconta = craplcm.nrdconta AND             
+                     crapatr.cdhistor = craplau.cdhistor AND
+                     crapatr.cdrefere = craplau.nrcrcard  
+                     NO-LOCK NO-ERROR.
+                    
+                    IF  NOT AVAILABLE crapatr THEN
+                        DO:
+                            /* Verificar referencias antigas */
+                              FIND crapatr WHERE 
+                                   crapatr.cdcooper = crapcop.cdcooper AND
+                                   crapatr.nrdconta = craplcm.nrdconta AND
+                                   crapatr.cdhistor = craplau.cdhistor AND
+                                   crapatr.cdrefere = craplau.nrdocmto 
+                                   NO-LOCK NO-ERROR.
+                     
+                          IF  NOT AVAILABLE crapatr THEN
+                              DO:
+                                  glb_cdcritic = 453.
+                                  RUN fontes/critic.p.
+                                  UNIX SILENT
+                                       VALUE("echo " + STRING(TODAY,"99/99/9999") + " " 
+                                       + STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '" +
+                                       glb_dscritic + " Conta = " +
+                                       STRING(craplcm.nrdconta,"zzzz,zz9,9") +
+                                       " Documento = " + STRING(craplcm.nrdocmto) +
+                                       " >> log/prccon.log").
+                                  NEXT.
+                              END.
+                        END.   
+
+                ASSIGN aux_nrcrcard = crapatr.cdrefere. 
+            
                 FIND crapscn WHERE crapscn.cdempres = aux_emprelau 
                                    NO-LOCK NO-ERROR NO-WAIT.
 
@@ -1032,24 +1077,24 @@ FOR EACH crapcop NO-LOCK.
                    para completar 12 posicoes ex:(40151016407-) chamado 453337 */
                 IF  crapscn.cdempres = "045" THEN
                     DO:
-                        IF  LENGTH(STRING(craplcm.nrdocmto)) = 11 THEN
-                            aux_cdrefere = STRING(craplcm.nrdocmto) + "-" + FILL(" ",13).
+                        IF  LENGTH(STRING(aux_nrcrcard)) = 11 THEN
+                            aux_cdrefere = STRING(aux_nrcrcard) + "-" + FILL(" ",13).
                         ELSE 
                             RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                                          INPUT 25,
                                                          INPUT crapscn.tppreenc,
-                                                         INPUT craplcm.nrdocmto,
+                                                         INPUT aux_nrcrcard,
                                                         OUTPUT aux_cdrefere).
                     END.
                 ELSE 
                 RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                              INPUT 25,
                                              INPUT crapscn.tppreenc,
-                                             INPUT craplcm.nrdocmto,
+                                             INPUT aux_nrcrcard,
                                             OUTPUT aux_cdrefere).
             END.
         ELSE 
-            ASSIGN aux_cdrefere = STRING(craplcm.nrdocmto,"9999999999999999999999") 
+            ASSIGN aux_cdrefere = STRING(aux_nrcrcard,"9999999999999999999999") 
                                   + FILL(" ",3).
 
         /* formatar codigo da empresa */
@@ -1079,7 +1124,7 @@ FOR EACH crapcop NO-LOCK.
 
         IF  craplcm.cdhistor <> 1019 THEN
             DO:
-                aux_nrctrato = STRING(craplcm.nrdocmto,"9999999999999999999999").
+                aux_nrctrato = STRING(aux_nrcrcard,"9999999999999999999999").
                                                         
                 /*  tabela referente aos consorcios sicredi */
                 FOR EACH crapcns WHERE 
@@ -1362,6 +1407,41 @@ FOR EACH crapcop NO-LOCK.
         IF  NOT AVAIL crablau THEN
             NEXT.
 
+        /* Verificar se referencia(novas) ainda existe */
+        FIND crapatr WHERE
+             crapatr.cdcooper = crapcop.cdcooper AND
+             crapatr.nrdconta = craplcm.nrdconta AND             
+             crapatr.cdhistor = craplau.cdhistor AND
+             crapatr.cdrefere = craplau.nrcrcard  
+             NO-LOCK NO-ERROR.
+            
+            IF  NOT AVAILABLE crapatr THEN
+                DO:
+                    /* Verificar referencias antigas */
+                      FIND crapatr WHERE 
+                           crapatr.cdcooper = crapcop.cdcooper AND
+                           crapatr.nrdconta = craplcm.nrdconta AND
+                           crapatr.cdhistor = craplau.cdhistor AND
+                           crapatr.cdrefere = craplau.nrdocmto 
+                           NO-LOCK NO-ERROR.
+             
+                  IF  NOT AVAILABLE crapatr THEN
+                      DO:
+                          glb_cdcritic = 453.
+                          RUN fontes/critic.p.
+                          UNIX SILENT
+                               VALUE("echo " + STRING(TODAY,"99/99/9999") + " " 
+                               + STRING(TIME,"HH:MM:SS") +
+                               " - " + glb_cdprogra + "' --> '" +
+                               glb_dscritic + " Conta = " +
+                               STRING(craplcm.nrdconta,"zzzz,zz9,9") +
+                               " Documento = " + STRING(craplcm.nrdocmto) +
+                               " >> log/prccon.log").
+                          NEXT.
+                      END.
+                END.   
+
+        ASSIGN aux_nrcrcard = crapatr.cdrefere. 
 
         FIND FIRST craplcm WHERE craplcm.cdcooper = craptco.cdcooper AND
                                  craplcm.dtmvtolt = glb_dtmvtolt     AND
@@ -1433,20 +1513,20 @@ FOR EACH crapcop NO-LOCK.
                  para completar 12 posicoes ex:(40151016407-) chamado 453337 */
               IF  crapscn.cdempres = "045" THEN
                   DO:
-                      IF  LENGTH(STRING(craplcm.nrdocmto)) = 11 THEN
-                          aux_cdrefere = STRING(craplcm.nrdocmto) + "-" + FILL(" ",13).
+                      IF  LENGTH(STRING(aux_nrcrcard)) = 11 THEN
+                          aux_cdrefere = STRING(aux_nrcrcard) + "-" + FILL(" ",13).
                       ELSE 
                           RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                                        INPUT 25,
                                                        INPUT crapscn.tppreenc,
-                                                       INPUT craplcm.nrdocmto,
+                                                       INPUT aux_nrcrcard,
                                                       OUTPUT aux_cdrefere).
                   END.
               ELSE 
               RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                            INPUT 25,
                                            INPUT crapscn.tppreenc,
-                                           INPUT craplcm.nrdocmto,
+                                           INPUT aux_nrcrcard,
                                           OUTPUT aux_cdrefere).
 
               /* formatar codigo da empresa */
@@ -1501,7 +1581,7 @@ FOR EACH crapcop NO-LOCK.
                                          crapndb.dtmvtolt = glb_dtmvtolt 
                                          NO-LOCK NO-ERROR.
 
-                IF   DECI(SUBSTR(crapndb.dstexarq,2,25)) <> craplau.nrdocmto THEN 
+                IF   DECI(SUBSTR(crapndb.dstexarq,2,25)) <> aux_nrcrcard THEN 
                      NEXT.
 
 
