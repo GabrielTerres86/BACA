@@ -1805,27 +1805,24 @@ PROCEDURE Valida_Dados:
         /* alimenta o percentual da conta em questao */
         ASSIGN tot_persocio = par_persocio.
         
-        IF par_nmrotina = "PROCURADORES"             OR
-           par_nmrotina = "PROCURADORES_FISICA"       OR
-           par_nmrotina = "Representante/Procurador" THEN
-           DO:
-               /* procuradores da conta */
-               FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
-                                      crapavt.tpctrato = 6 /*procurad*/ AND
-                                      crapavt.nrdconta = par_nrdconta   AND
-                                      crapavt.nrctremp = par_idseqttl   
-                                      NO-LOCK:
-                   /* despreza a conta em questao pois ja alimentou no variavel tot_persocio */
-                  /* IF  crapavt.nrdctato = par_nrdctato  THEN 
-                       NEXT. */
-               
-                   IF  crapavt.nrcpfcgc = aux_nrcpfcto  THEN 
-                       NEXT.
-               
-               
-                   ASSIGN tot_persocio = tot_persocio + crapavt.persocio.
-               
-               END.
+        
+	    /* procuradores da conta */
+	    FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
+	 	 					   crapavt.tpctrato = 6 /*procurad*/ AND
+							   crapavt.nrdconta = par_nrdconta   AND
+							   crapavt.nrctremp = par_idseqttl   
+							   NO-LOCK:
+		   /* despreza a conta em questao pois ja alimentou no variavel tot_persocio */
+		   /* IF  crapavt.nrdctato = par_nrdctato  THEN 
+			    NEXT. */
+	   
+		    IF  crapavt.nrcpfcgc = aux_nrcpfcto  THEN 
+			    NEXT.
+	   
+	   
+		    ASSIGN tot_persocio = tot_persocio + crapavt.persocio.
+	   
+	    END.
 
         IF par_nmrotina <> "PROCURADORES"             AND
            par_nmrotina <> "PROCURADORES_FISICA"       AND
