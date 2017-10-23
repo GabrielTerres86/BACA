@@ -350,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 27/06/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 19/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -382,6 +382,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --             27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
   --                          estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
   --                          ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
+  --
+  --             19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -2714,7 +2716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 19/10/2017
 
       Dados referentes ao programa:
 
@@ -2737,6 +2739,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
+                              
+                  19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
                               
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
@@ -3112,7 +3116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --Se ocorreu erro dar RAISE
     IF vr_typ_saida = 'ERR' THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Nao foi possivel executar comando unix. Erro '|| vr_dscritic;
+      vr_dscritic := 'Erro ao executar o comando ' || vr_comando || '. Saida ' || vr_typ_saida || ' . Erro '|| vr_dscritic;
       RAISE vr_exc_erro;
     END IF;
     -- Uma vez executado o script não pode mais abortar o envio
@@ -5575,18 +5579,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				ROLLBACK;
 	  END;
 	END pc_proc_pag0101;
+
   
-  
-	PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
-														 ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
+  PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
+                             ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
                              ,pr_nmarqlog IN VARCHAR2 -- Nome do arquivo de log
-														 ,pr_cdmensag IN VARCHAR2 -- Código da mensagem
-														 ,pr_nrispbif IN INTEGER  -- Número do ISPB
-														 ,pr_cddbanco IN INTEGER  -- Código do banco
-														 ,pr_nmdbanco IN VARCHAR2 -- Nome do banco
-														 ,pr_dtinispb IN VARCHAR2 -- Data início ISPB
-														 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
-    BEGIN																						 
+                             ,pr_cdmensag IN VARCHAR2 -- Código da mensagem
+                             ,pr_nrispbif IN INTEGER  -- Número do ISPB
+                             ,pr_cddbanco IN INTEGER  -- Código do banco
+                             ,pr_nmdbanco IN VARCHAR2 -- Nome do banco
+                             ,pr_dtinispb IN VARCHAR2 -- Data início ISPB
+                             ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
+  BEGIN
     ------------------------------------------------------------------------------
     --
     --  Programa : pc_proc_opera_str             Antigo: b1wgen0046.p/proc_opera_str
@@ -5599,20 +5603,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para integrar mensagens STR0018 e STR0019
-		--
+    --
     --  Alterações : 25/09/2017 - Quando receber uma exclução de Banco, vamos gerar um e-mail
     --                            alertando ao financeiro as contas que recebem salário
     --                            no banco que foi inativado (Douglas - Chamado 647346)
-    ------------------------------------------------------------------------------	
-		DECLARE	
-		
+    ------------------------------------------------------------------------------    
+    DECLARE
+    
       vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext     => 6,
                                                               pr_dstext      => pr_nmarqlog,
                                                               pr_delimitador => '/');
-		  vr_dsdemail VARCHAR2(1000);
-			vr_dscritic VARCHAR2(4000);
-			vr_exc_erro EXCEPTION;
-		
+      vr_dsdemail VARCHAR2(1000);
+      vr_dscritic VARCHAR2(4000);
+      vr_exc_erro EXCEPTION;
+      
       vr_cddbanco crapban.cdbccxlt%TYPE;
       vr_emaildst crapprm.dsvlrprm%TYPE;
       vr_flexists BOOLEAN;
@@ -5622,22 +5626,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_nom_arquivo  VARCHAR2(100);
       vr_nom_direto   VARCHAR2(400);
   
-		  -- Busca o banco pelo código e número ispb
-		  CURSOR cr_crapban IS
+      -- Busca o banco pelo código e número ispb
+      CURSOR cr_crapban IS
         SELECT CASE
                  WHEN pr_cddbanco > 0 THEN
-								 (SELECT ROWID
-										FROM crapban ban
+                  (SELECT ROWID
+                     FROM crapban ban
                     WHERE ban.cdbccxlt = pr_cddbanco
                       AND ban.nrispbif = pr_nrispbif)
-							ELSE 
-								 (SELECT ROWID
-									  FROM crapban ban
+                 ELSE
+                  (SELECT ROWID
+                     FROM crapban ban
                     WHERE ban.nrispbif = pr_nrispbif)
                END AS rowid_ban
-					FROM dual;
-			rw_crapban cr_crapban%ROWTYPE;
-		
+          FROM dual;
+      rw_crapban cr_crapban%ROWTYPE;
+      
       CURSOR cr_contas (pr_cdbantrf IN INTEGER) IS
         SELECT cop.nmrescop,
                ccs.nrdconta,
@@ -5653,20 +5657,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
          ORDER BY ccs.cdcooper, ccs.nrdconta, ccs.nmfuncio;
     
     BEGIN
-			-- Tratar mensagem STR0019 - Inclusão IF STR
-		  IF (pr_cdmensag = 'STR0019') THEN
-				 -- Busca banco pelo código do banco e número ispb
-				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-					INTO rw_crapban;
-				 
-				 -- Se encontrou banco
-				 IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					  -- Fecha cursor
-						CLOSE cr_crapban;
-						
-						-- Atualiza IF
-						UPDATE crapban ban
+      -- Tratar mensagem STR0019 - Inclusão IF STR
+      IF (pr_cdmensag = 'STR0019') THEN
+        -- Busca banco pelo código do banco e número ispb
+        OPEN cr_crapban;
+        FETCH cr_crapban
+          INTO rw_crapban;
+      
+        -- Se encontrou banco
+        IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
+          -- Fecha cursor
+          CLOSE cr_crapban;
+        
+          -- Atualiza IF
+          UPDATE crapban ban
              SET ban.dtaltstr = CASE
                                   WHEN ban.flgdispb <> 1 THEN
                                    trunc(SYSDATE)
@@ -5677,10 +5681,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                  ban.nmresbcc = pr_nmdbanco,
                  ban.nmextbcc = pr_nmdbanco,
                  ban.dtinispb = to_date(pr_dtinispb, 'DD/MM/RRRR')
-						 WHERE ban.rowid = rw_crapban.rowid_ban;
-					ELSE
-						 -- Cria nova IF
-						 INSERT INTO crapban 
+           WHERE ban.rowid = rw_crapban.rowid_ban;
+        ELSE
+          -- Cria nova IF
+          INSERT INTO crapban
             (cdoperad,
              dtmvtolt,
              cdbccxlt,
@@ -5700,20 +5704,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              1,
              to_date(pr_dtinispb, 'DD/MM/RRRR'),
              trunc(SYSDATE));
-					END IF;
+        END IF;
       ELSE
         -- Tratar mensagem STR0018 - Exclusão IF STR
-				 -- Busca banco pelo código do banco e número ispb
-				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-				 INTO rw_crapban;
-				 
-				 -- Se encontrou banco
-				IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					-- Fecha cursor
-					CLOSE cr_crapban;
-					-- Atualiza IF
-					UPDATE crapban ban
+        -- Busca banco pelo código do banco e número ispb
+        OPEN cr_crapban;
+        FETCH cr_crapban
+          INTO rw_crapban;
+      
+        -- Se encontrou banco
+        IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
+          -- Fecha cursor
+          CLOSE cr_crapban;
+          -- Atualiza IF
+          UPDATE crapban ban
              SET ban.dtaltstr = CASE
                                   WHEN ban.flgdispb <> 0 THEN
                                    trunc(SYSDATE)
@@ -5808,12 +5812,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             END IF;
           END IF;
           
-				ELSE
+        ELSE
           vr_dsdemail := 'Nao foi possivel excluir registro de participante no STR: ' ||
                          'Instituicao Financeira nao encontrada: ISPB: ' ||
-												 to_char(pr_nrispbif, '00000000');
-													
-					-- Envia email para o spb
+                         to_char(pr_nrispbif, '00000000');
+        
+          -- Envia email para o spb
           gene0003.pc_solicita_email(pr_cdcooper      => 3,
                                      pr_cdprogra      => pr_cdprogra,
                                      pr_des_destino   => 'spb@cecred.coop.br',
@@ -5823,30 +5827,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                      pr_flg_log_batch => 'N' --> Incluir inf. no log
                                     ,
                                      pr_des_erro      => vr_dscritic);
-					--Se ocorreu erro
-					IF trim(vr_dscritic) IS NOT NULL THEN
-						--Levantar Excecao
-						RAISE vr_exc_erro;
-					END IF;
-					-- Retorno NOK
+          --Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+          -- Retorno NOK
           pr_des_erro := 'NOK';
-					RETURN;
-				END IF;
-			END IF;
-			
-			-- Retorno OK
-			pr_des_erro := 'OK';
-			-- Efetua commit
-			COMMIT;
-			
-		EXCEPTION
-			WHEN vr_exc_erro THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
+          RETURN;
+        END IF;
+      END IF;
+    
+      -- Retorno OK
+      pr_des_erro := 'OK';
+      -- Efetua commit
+      COMMIT;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Houve erro, retornar NOK
+        pr_des_erro := 'NOK';
+        -- Grava erro em log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_nmarqlog     => vr_nmarqlog,
+                                   pr_ind_tipo_log => 1, -- Normal
                                    pr_des_log      => TO_CHAR(SYSDATE,
                                                               'DD/MM/RRRR - HH24:MI:SS') ||
                                                       ' - ' || pr_cdprogra ||
@@ -5856,13 +5860,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                       pr_nmarqxml ||
                                                       '. Codigo Erro: Erro ao enviar email ' ||
                                                       vr_dscritic);
-			WHEN OTHERS THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
+      WHEN OTHERS THEN
+        -- Houve erro, retornar NOK
+        pr_des_erro := 'NOK';
+        -- Grava erro em log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_nmarqlog     => vr_nmarqlog,
+                                   pr_ind_tipo_log => 1, -- Normal
                                    pr_des_log      => TO_CHAR(SYSDATE,
                                                               'DD/MM/RRRR - HH24:MI:SS') ||
                                                       ' - ' || pr_cdprogra ||
@@ -5872,10 +5876,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                       pr_nmarqxml ||
                                                       '. Codigo Erro: Atualizacao abortada -> ' ||
                                                       SQLERRM);
-
-				ROLLBACK;
-	  END;
-	END pc_proc_opera_str;
+      
+        ROLLBACK;
+    END;
+  END pc_proc_opera_str;
   
   
   /** Procedimento para listar TEDs estornadas e gerar TempTable **/
