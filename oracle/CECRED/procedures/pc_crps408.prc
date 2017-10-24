@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 26/09/2017
+   Data    : Setembro/2004.                  Ultima atualizacao: 24/10/2017
 
    Dados referentes ao programa:
 
@@ -186,6 +186,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 			   26/09/2017 - Ajuste para alimentar corretamente a vr_nmsegtal, 
 			                para evitar que impacte no layout dos arquivos
 							(Adriano - SD 762235).
+              
+              
+               24/10/2017 - Buscar idorgexp apenas para PF.
+                            PRJ339-CRM  (Odirlei-AMcom)
  
 ............................................................................. */
 
@@ -1118,17 +1122,24 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_auxiliar); -- O retorno é ignorado, pois a variável vr_agencia é atualiza pelo programa
           vr_nrdigtc2 := MOD(vr_auxiliar,10);
 
-          --> Buscar orgão expedidor
-          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
-                                            pr_cdorgao_expedidor => vr_cdorgexp, 
-                                            pr_nmorgao_expedidor => vr_nmorgexp, 
-                                            pr_cdcritic          => vr_cdcritic, 
-                                            pr_dscritic          => vr_dscritic);
-          IF nvl(vr_cdcritic,0) > 0 OR 
-            TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_cdorgexp := 'NAO CADAST.';
-            vr_nmorgexp := NULL; 
-          END IF;  
+          --> apenas buscar para pessoa fisica
+          IF rw_crapass.inpessoa = 1 THEN
+            --> Buscar orgão expedidor
+            cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                              pr_cdorgao_expedidor => vr_cdorgexp, 
+                                              pr_nmorgao_expedidor => vr_nmorgexp, 
+                                              pr_cdcritic          => vr_cdcritic, 
+                                              pr_dscritic          => vr_dscritic);
+            IF nvl(vr_cdcritic,0) > 0 OR 
+              TRIM(vr_dscritic) IS NOT NULL THEN
+              --> Caso nao encontrar enviar embranco 
+              vr_cdorgexp := ' ';
+              vr_nmorgexp := NULL; 
+            END IF;
+          ELSE
+            vr_cdorgexp := ' ';
+            vr_nmorgexp := NULL;   
+          END IF;
 
           -- Busca os dados cadastrais do titular
           IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
