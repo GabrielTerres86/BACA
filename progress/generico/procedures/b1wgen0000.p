@@ -21,7 +21,7 @@
 
    Programa: b1wgen0000.p                  
    Autor(a): David
-   Data    : 09/07/2007                        Ultima atualizacao: 27/06/2016
+   Data    : 09/07/2007                        Ultima atualizacao: 23/08/2017
 
    Dados referentes ao programa:
 
@@ -111,6 +111,8 @@
 
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)
+
+			  23/08/2017 - Alterado para efetuar a validacao do login no AD. (PRJ339 - Reinert)
 ..............................................................................*/
 
 
@@ -255,19 +257,49 @@ PROCEDURE efetua_login:
             RETURN "NOK".
         END.
 
-    IF  par_vldsenha AND crapope.cddsenha <> par_cddsenha  THEN
-        DO:
-            ASSIGN aux_cdcritic = 3
-                   aux_dscritic = "".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-             
-            RETURN "NOK".
+	/* PRJ339 - Reinert */
+    IF  par_vldsenha THEN
+        DO:        
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+          /* Efetuar a chamada da rotina Oracle */ 
+          RUN STORED-PROCEDURE pc_valida_senha_AD
+              aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper, /*Cooperativa*/
+                                                  INPUT par_cdoperad, /*Operador   */
+                                                  INPUT par_cddsenha, /*Nr.da Senha*/
+                                                 OUTPUT 0,          /*Cod. critica */
+                                                 OUTPUT "").        /*Desc. critica*/
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_valida_senha_AD
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+          HIDE MESSAGE NO-PAUSE.
+
+          /* Busca possíveis erros */ 
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = pc_valida_senha_AD.pr_cdcritic 
+                                WHEN pc_valida_senha_AD.pr_cdcritic <> ?
+                 aux_dscritic = pc_valida_senha_AD.pr_dscritic 
+                                WHEN pc_valida_senha_AD.pr_dscritic <> ?.
+
+          /* Apresenta a crítica */
+          IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+              DO: 
+                 RUN gera_erro (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT 1,          /** Sequencia **/
+                                INPUT aux_cdcritic,
+                                INPUT-OUTPUT aux_dscritic).
+
+                 RETURN "NOK".
+
+        END.
+        
         END.
         
     FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -344,8 +376,8 @@ PROCEDURE efetua_login:
                                ELSE
                                    INTE(craptab.dstextab)
                                       
-           tt-login.flgdsenh = 
-                (crapdat.dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias 
+           tt-login.flgdsenh = FALSE /* Senha do operador nao sera mais atualizada, 
+                                        portanto nao deve-se mais tratar expiracao da senha (CRM) */
            tt-login.cdpactra = crapope.cdpactra
            tt-login.flgperac = crapope.flgperac
            tt-login.nvoperad = crapope.nvoperad
@@ -360,7 +392,59 @@ PROCEDURE efetua_login:
 	ELSE
 	    ASSIGN tt-login.dsdepart = crapdpo.dsdepart.
 
-	
+  /* PRJ339 - Reinert */
+  /* Se login foi feito pelo AyllosWeb*/
+	IF  par_idorigem = 5 THEN
+      DO:
+        /* Verificar se CRM esta liberado na prm */
+        FOR FIRST crapprm FIELDS(dsvlrprm)
+                           WHERE crapprm.cdcooper = 0
+                             AND crapprm.nmsistem = "CRED"
+                             AND crapprm.cdacesso = "LIBCRM"
+                             NO-LOCK:
+          IF CAPS(crapprm.dsvlrprm) = "N" THEN
+             DO:      
+                /* Se operador tiver acesso ao CRM */
+                IF  crapope.flgutcrm THEN
+                    DO:
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM.".
+                        
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,            /** Sequencia **/
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+                         
+                       RETURN "NOK".                    
+                    END. /* IF  crapope.flgutcrm THEN */
+                /*Buscar registro do PA*/
+                FOR FIRST crapage FIELDS(flgutcrm)
+                                   WHERE crapage.cdcooper = par_cdcooper
+                                     AND crapage.cdagenci = par_cdagenci
+                                     NO-LOCK:
+                  /* Se PA utiliza CRM */
+                  IF  crapage.flgutcrm THEN
+                      DO:
+                         ASSIGN aux_cdcritic = 0
+                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM".
+                          
+                         RUN gera_erro (INPUT par_cdcooper,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT 1,            /** Sequencia **/
+                                        INPUT aux_cdcritic,
+                                        INPUT-OUTPUT aux_dscritic).
+                           
+                         RETURN "NOK".
+
+                      END. /* IF  crapage.flgutcrm THEN */
+                END. /* FOR FIRST crapage  */                    
+             END. /* IF CAPS(crapprm.dsvlrprm) = "N" THEN */
+        END. /* FOR FIRST crapprm */
+      END. /* IF  par_idorigem = 5 THEN */
+  
     RETURN "OK".
         
 END PROCEDURE.

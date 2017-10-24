@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/06/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 23/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -31,6 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
   --  29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
   --
+  -- 23/08/2017 - Incluido procedure pc_valida_senha_AD. (PRJ339 - Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -399,6 +400,14 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_set_modulo(pr_module IN VARCHAR2
                          ,pr_action IN VARCHAR2 DEFAULT NULL);
 --           
+  /* Validar senha dos operadores no AD */
+  PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
+                              ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    
+															,pr_nrdsenha IN VARCHAR2               --Numero da senha                                            
+															,pr_cdcritic OUT PLS_INTEGER           --Código da crítica
+                              ,pr_dscritic OUT VARCHAR2);            --Descrição da crítica
+
+
 END GENE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
@@ -3026,5 +3035,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   END;
 
 --  
+  /* Validar senha dos operadores no AD */
+  PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
+                              ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    
+															,pr_nrdsenha IN VARCHAR2               --Numero da senha                                            
+															,pr_cdcritic OUT PLS_INTEGER           --Código da crítica
+                              ,pr_dscritic OUT VARCHAR2) IS          --Descrição da crítica
+		/*..............................................................................
+			 Programa: pc_valida_senha_AD
+			 Autor   : Lucas Reinert
+			 Data    : Agosto/2017                        Ultima atualizacao: --/--/----
+
+			 Dados referentes ao programa:
+
+			 Objetivo  : Rotina responsável em fazer a validação da senha dos operadores 
+									 no AD (Active Directory).
+
+			 Alteracoes:
+		..............................................................................*/
+		-- Tratamento de erros
+		vr_exc_erro  EXCEPTION;
+		vr_cdcritic  PLS_INTEGER;
+		vr_dscritic  VARCHAR2(4000);
+		vr_typ_saida VARCHAR2(100);
+		
+		-- Variáveis auxiliares
+		vr_dscomando VARCHAR2(1000);
+	  BEGIN
+			-- Montar comando UNIX
+			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /micros/cecred/andrino/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
+			-- Executar o comando UNIX
+			GENE0001.pc_Oscommand_Shell(pr_des_comando => vr_dscomando
+																 ,pr_flg_aguard => 'S'
+																 ,pr_typ_saida   => vr_typ_saida
+																 ,pr_des_saida   => vr_dscritic);
+	                         
+			IF vr_typ_saida = 'ERR' OR TRIM(vr_dscritic) LIKE '%FALHA%' THEN
+			  -- Retorna código referente mensagem de senha errada
+				vr_cdcritic := 3;
+				vr_dscritic := '';
+				RAISE vr_exc_erro;
+			END IF;    
+			
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Se possui código da crítica
+        IF vr_cdcritic > 0  AND TRIM(vr_dscritic) IS NULL THEN
+					-- Busca a descrição da crítica
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+				-- Retornar críticas parametrizadas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_valida_senha_AD --> ' || SQLERRM;
+
+	END pc_valida_senha_AD;
+															 
 END GENE0001;
 /
