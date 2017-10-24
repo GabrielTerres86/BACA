@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 05/04/2016
 
    Dados referentes ao programa:
 
@@ -54,13 +54,6 @@
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-                            
-			   23/08/2017 - Alterado para validar as informacoes do operador 
-							pelo AD. (PRJ339 - Reinert)
-
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -564,50 +557,18 @@ PROCEDURE valida-permissao-saldo-conta:
                     RETURN "NOK".
                 END.
            
-        /* PRJ339 - REINERT (INICIO) */         
-            /* Validacao de senha do usuario no AD somente no ambiente de producao */
-            IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
+            IF  p-senha <> crapope.cddsenha  THEN 
                 DO:
-              
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-               /* Efetuar a chamada da rotina Oracle */ 
-               RUN STORED-PROCEDURE pc_valida_senha_AD
-                   aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                                       INPUT p-codigo,         /*Operador   */
-                                                       INPUT p-senha,          /*Nr.da Senha*/
-                                                      OUTPUT 0,                /*Cod. critica */
-                                                      OUTPUT "").              /*Desc. critica*/
-
-               /* Fechar o procedimento para buscarmos o resultado */ 
-               CLOSE STORED-PROC pc_valida_senha_AD
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-               HIDE MESSAGE NO-PAUSE.
-
-               /* Busca possíveis erros */ 
-               ASSIGN i-cod-erro  = 0
-                      c-desc-erro = ""
-                      i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                                    WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                      c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                                    WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                                    
-              /* Apresenta a crítica */
-              IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                DO:
+                    ASSIGN i-cod-erro  = 3
+                           c-desc-erro = " ".
                     RUN cria-erro (INPUT p-cooper,
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
                                    INPUT i-cod-erro,
-                                     INPUT "",
+                                   INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
                 END.
-            END.
-        /* PRJ339 - REINERT (FIM) */
 
             /******* Comentado em 28/05/2014 *******
             IF   p-opcao = "crap051a2"  THEN
@@ -839,7 +800,8 @@ PROCEDURE atualiza-cheque-avulso:
          
     IF  AVAIL crapass THEN 
         DO:
-            ASSIGN c-nome-titular1 = crapass.nmprimtl.
+            ASSIGN c-nome-titular1 = crapass.nmprimtl
+                   c-nome-titular2 = crapass.nmsegntl.
 
             FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
                                crapttl.nrdconta = crapass.nrdconta AND
@@ -852,8 +814,7 @@ PROCEDURE atualiza-cheque-avulso:
                        
                    IF AVAIL crapttl THEN
                       ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
-                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
-							 c-nome-titular2 = crapttl.nmextttl. 
+                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99"). 
                 END.
             ELSE 
                 ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")

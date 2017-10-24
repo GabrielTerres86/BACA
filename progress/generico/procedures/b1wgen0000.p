@@ -112,7 +112,7 @@
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)
 
-			  23/08/2017 - Alterado para efetuar a validacao do login no AD. (PRJ339 - Reinert)
+			  24/10/2017 - Adicionado validacao para autenticacao pelo CRM. (PRJ339 - Reinert)
 ..............................................................................*/
 
 
@@ -257,38 +257,11 @@ PROCEDURE efetua_login:
             RETURN "NOK".
         END.
 
-	/* PRJ339 - Reinert */
-    IF  par_vldsenha THEN
+    IF  par_vldsenha AND crapope.cddsenha <> par_cddsenha  THEN
         DO:        
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    
-          /* Efetuar a chamada da rotina Oracle */ 
-          RUN STORED-PROCEDURE pc_valida_senha_AD
-              aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper, /*Cooperativa*/
-                                                  INPUT par_cdoperad, /*Operador   */
-                                                  INPUT par_cddsenha, /*Nr.da Senha*/
-                                                 OUTPUT 0,          /*Cod. critica */
-                                                 OUTPUT "").        /*Desc. critica*/
-
-          /* Fechar o procedimento para buscarmos o resultado */ 
-          CLOSE STORED-PROC pc_valida_senha_AD
-                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-          HIDE MESSAGE NO-PAUSE.
-
-          /* Busca possíveis erros */ 
-          ASSIGN aux_cdcritic = 0
-                 aux_dscritic = ""
-                 aux_cdcritic = pc_valida_senha_AD.pr_cdcritic 
-                                WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                 aux_dscritic = pc_valida_senha_AD.pr_dscritic 
-                                WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-
-          /* Apresenta a crítica */
-          IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-              DO: 
+            ASSIGN aux_cdcritic = 3
+                   aux_dscritic = "".
+            
                  RUN gera_erro (INPUT par_cdcooper,
                                 INPUT par_cdagenci,
                                 INPUT par_nrdcaixa,
@@ -297,9 +270,6 @@ PROCEDURE efetua_login:
                                 INPUT-OUTPUT aux_dscritic).
 
                  RETURN "NOK".
-
-        END.
-        
         END.
         
     FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -376,8 +346,8 @@ PROCEDURE efetua_login:
                                ELSE
                                    INTE(craptab.dstextab)
                                       
-           tt-login.flgdsenh = FALSE /* Senha do operador nao sera mais atualizada, 
-                                        portanto nao deve-se mais tratar expiracao da senha (CRM) */
+           tt-login.flgdsenh = 
+                (crapdat.dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias 
            tt-login.cdpactra = crapope.cdpactra
            tt-login.flgperac = crapope.flgperac
            tt-login.nvoperad = crapope.nvoperad

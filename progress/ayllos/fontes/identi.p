@@ -48,11 +48,6 @@
 			   23/12/2016 - P341-Automatização BACENJUD - Alteração para que 
 			                o programa passe a utilizar a descrição do departamento
 							da tabela CRAPDPO (Renato Darosci).
-
-			   23/08/2017 - Alteracao referente a validacao do usuario apenas pelo AD.
-							Removido campo operador no ambiente de producao.
-							Removido campo senha. (PRJ339 - Reinert)
-
 ............................................................................. */
 { includes/var_online.i }
 { sistema/generico/includes/var_internet.i }
@@ -75,15 +70,19 @@ FORM SKIP(5)
      tel_cdoperad AT 27 LABEL "Codigo do Operador" AUTO-RETURN
                         HELP "Informe o seu codigo de operador."
      SKIP(1)
+     tel_cddsenha AT 34 LABEL "Senha Atual" BLANK AUTO-RETURN
+                        HELP "Informe a sua senha."
+     SKIP(1)
      glb_nmdatela AT 33 LABEL "Nome da Tela" AUTO-RETURN
        HELP "Informe o nome da tela desejada ou FIM para sair sistema AYLLOS."
      SKIP(1)
      tel_cdpactra AT 33 LABEL "PA trabalho" AUTO-RETURN
                                HELP "Informe o PA de trabalho do operador."
-     SKIP(5)
+     SKIP(3)
      tel_dsmensag AT  1 NO-LABEL
      WITH ROW 4 SIDE-LABELS TITLE glb_tldatela OVERLAY WIDTH 80 FRAME f_identi.
-     
+
+
 glb_nmdatela = "".
 
 DO WHILE TRUE ON ENDKEY UNDO, RETRY:
@@ -175,25 +174,20 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
             DISPLAY tel_dsmensag WITH FRAME f_identi.
         END.
 
-   /* Ambiente de producao nao informa operador*/
-   IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-      DO:
-         ASSIGN tel_cdoperad = OS-GETENV("USER").
-         DISPLAY tel_cdoperad WITH FRAME f_identi.
+   UPDATE tel_cdoperad tel_cddsenha 
+          glb_nmdatela tel_cdpactra WITH FRAME f_identi
 
-         UPDATE glb_nmdatela 
-                tel_cdpactra WITH FRAME f_identi
-         EDITING:
+   EDITING:
 
-            IF FRAME-FIELD = "tel_cdpactra" AND 
-               CAN-DO("RETURN,CURSOR-DOWN,TAB",KEYFUNCTION(LASTKEY)) THEN
-               DO:
-                  RUN sistema/generico/procedures/b1wgen0000.p 
-                      PERSISTENT SET h-b1wgen0000.
+      IF FRAME-FIELD = "tel_cddsenha" AND 
+         CAN-DO("RETURN,CURSOR-DOWN,TAB",KEYFUNCTION(LASTKEY)) THEN
+         DO:
+            RUN sistema/generico/procedures/b1wgen0000.p 
+                PERSISTENT SET h-b1wgen0000.
 
             IF NOT VALID-HANDLE(h-b1wgen0000)  THEN
                MESSAGE "Handle invalido h-b1wgen0000".
-
+                             
             RUN consulta-pac-ope IN h-b1wgen0000
                                   (INPUT  glb_cdcooper,
                                    INPUT  1,
@@ -206,7 +200,7 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
 
             DISPLAY tel_cdpactra WITH FRAME f_identi.    
          END.
-
+           
       aux_stimeout = 0.
 
       DO WHILE TRUE:
@@ -229,61 +223,8 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
 
       END.  /*  Fim do DO WHILE TRUE  */
 
-         END.  /*  Fim do EDITING  */                
-      END.
-   ELSE
-      DO:
-         UPDATE tel_cdoperad  
-                glb_nmdatela 
-                tel_cdpactra WITH FRAME f_identi            
-         EDITING:
-         
-            IF FRAME-FIELD = "glb_nmdatela" AND 
-               CAN-DO("RETURN,CURSOR-DOWN,TAB",KEYFUNCTION(LASTKEY)) THEN
-               DO:
-                  RUN sistema/generico/procedures/b1wgen0000.p 
-                      PERSISTENT SET h-b1wgen0000.
+   END.  /*  Fim do EDITING  */
 
-                  IF NOT VALID-HANDLE(h-b1wgen0000)  THEN
-                     MESSAGE "Handle invalido h-b1wgen0000".
-                                   
-                  RUN consulta-pac-ope IN h-b1wgen0000
-                                        (INPUT  glb_cdcooper,
-                                         INPUT  1,
-                                         INPUT  0,
-                                         INPUT  INPUT tel_cdoperad,
-                                         INPUT  0,
-                                         OUTPUT tel_cdpactra).
-
-                  DELETE PROCEDURE h-b1wgen0000. 
-
-                  DISPLAY tel_cdpactra WITH FRAME f_identi.    
-               END.
-
-            aux_stimeout = 0.
-
-            DO WHILE TRUE:
-
-               READKEY PAUSE 1.
-
-               IF   LASTKEY = -1   THEN
-                    DO:
-                        aux_stimeout = aux_stimeout + 1.
-
-                        IF   aux_stimeout > glb_stimeout  THEN
-                             QUIT.
-
-                        NEXT.
-                    END.
-
-               APPLY LASTKEY.
-
-               LEAVE.
-
-            END.  /*  Fim do DO WHILE TRUE  */
-
-         END.  /*  Fim do EDITING  */
-      END.
 
 
    IF  glb_nmdatela = "FIM" THEN LEAVE.
@@ -319,6 +260,16 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
             NEXT.
         END.
    
+   IF   crapope.cddsenha <> tel_cddsenha   THEN
+        DO:
+            glb_cdcritic = 3.
+            RUN fontes/critic.p.
+            BELL.
+            MESSAGE glb_dscritic.
+            NEXT-PROMPT tel_cddsenha WITH FRAME f_identi.
+            NEXT.
+        END.   
+
    RUN sistema/generico/procedures/b1wgen0000.p PERSISTENT SET h-b1wgen0000.
    
    IF  NOT VALID-HANDLE(h-b1wgen0000)  THEN
@@ -365,6 +316,24 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
 
    { includes/termimpr.i }          /*  Verifica se tem impressora conectada  */
  
+   IF  (glb_dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias   THEN
+        DO:
+            ASSIGN glb_nmtelant = CAPS(glb_nmdatela)
+                   glb_cdoperad = crapope.cdoperad
+                   glb_nmoperad = crapope.nmoperad
+				   glb_cddepart = crapope.cddepart 
+                   glb_dsdepart = aux_dsdepart
+                   glb_nmdatela = "MUDSEN"
+                   glb_cdcritic = 4.
+
+            RUN fontes/critic.p.
+            HIDE FRAME f_identi   NO-PAUSE.
+            BELL.
+            MESSAGE glb_dscritic.
+
+            RETURN.
+        END.
+
    ASSIGN glb_nmtelant = glb_nmdatela
           glb_nmdatela = CAPS(glb_nmdatela)
           glb_cdoperad = crapope.cdoperad
@@ -374,6 +343,39 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
           glb_cdagenci = tel_cdpactra
           aux_dtdoltab = ?.
 
+   /****** Nao eh mais necessario o cadastramento do dolar - Julio 05/02/2007
+   
+   IF   CAN-DO("3",STRING(crapope.nvoperad)) AND 
+        glb_cddepart <> 20         THEN   /* TI */ 
+        DO:
+            FOR EACH craptab WHERE craptab.cdcooper = glb_cdcooper  AND
+                                   craptab.nmsistem = "CRED"        AND
+                                   craptab.tptabela = "USUARI"      AND
+                                   craptab.cdempres = 11            AND
+                                   craptab.cdacesso begins "DC"     AND
+                                   craptab.tpregist = 000           AND
+                                   DECIMAL(craptab.dstextab) = 0    NO-LOCK.
+                                   
+                aux_dtdoltab = DATE(INT(SUBSTRING(craptab.cdacesso,7,2)),
+                                    INT(SUBSTRING(craptab.cdacesso,9,2)),
+                                    INT(SUBSTRING(craptab.cdacesso,3,4))).
+                                    
+                LEAVE.
+            END.
+
+            IF   aux_dtdoltab <> ? THEN
+                 DO:
+                      MESSAGE "ATENCAO!! - Falta tabela do dolar para"
+                        "fatura Visa do dia" STRING(aux_dtdoltab,"99/99/9999").
+                      IF   glb_nmdatela <> "MUDSEN" THEN
+                           glb_nmdatela = "DOLFAT".
+                 END.
+        END.
+   
+   
+   
+   *********************** Julio 05/02/2007 */
+   
    HIDE FRAME f_identi   NO-PAUSE.
 
    RETURN.

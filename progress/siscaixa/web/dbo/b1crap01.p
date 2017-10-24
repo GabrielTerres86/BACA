@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 20/10/2009.
 
    Dados referentes ao programa:
 
@@ -28,9 +28,6 @@
 			   06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
 			                do departamento para que a mesma seja feita através
 							do código e não da descrição (Renato Darosci)
-
-			   23/08/2017 - Alterado para validar as informacoes do operador 
-							pelo AD. (PRJ339 - Reinert)
 ............................................................................ */
 
 
@@ -92,51 +89,32 @@ PROCEDURE valida-operador:
                   END.
          END.
 
-/* PRJ339 - REINERT (INICIO) */         
-   /* Validacao de senha do usuario no AD somente no ambiente de producao */
-   IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-      DO:
-      
-       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    IF  p-senha <> crapope.cddsenha  THEN 
+        DO:
+            ASSIGN i-cod-erro  = 3
+                   c-desc-erro = " ".
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
 
-       /* Efetuar a chamada da rotina Oracle */ 
-       RUN STORED-PROCEDURE pc_valida_senha_AD
-           aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                               INPUT p-cod-operador,   /*Operador   */
-                                               INPUT p-senha,          /*Nr.da Senha*/
-                                              OUTPUT 0,                /*Cod. critica */
-                                              OUTPUT "").              /*Desc. critica*/
-
-       /* Fechar o procedimento para buscarmos o resultado */ 
-       CLOSE STORED-PROC pc_valida_senha_AD
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-       HIDE MESSAGE NO-PAUSE.
-
-       /* Busca possíveis erros */ 
-       ASSIGN i-cod-erro  = 0
-              c-desc-erro = ""
-              i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                            WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-              c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                            WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                            
-      /* Apresenta a crítica */
-      IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-          DO: 
-              RUN cria-erro (INPUT p-cooper,
-                             INPUT p-cod-agencia,
-                             INPUT p-nro-caixa,
-                             INPUT i-cod-erro,
-                             INPUT "",
-                             INPUT YES).
-
-              RETURN "NOK".
-          END.
-    END.
-/* PRJ339 - REINERT (FIM) */
+    IF  AVAIL crapdat                                               AND
+      ((crapdat.dtmvtolt - crapope.dtaltsnh) >= crapope.nrdedias)   THEN 
+        DO:
+            ASSIGN i-cod-erro  = 4
+                   c-desc-erro = " ".
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.
     
     IF  crapope.cdsitope <> 1 THEN 
         DO:

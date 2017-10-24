@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 23/08/2017
+    Ultima Atualizacao: 02/06/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -241,14 +241,7 @@
 						
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339). 
-
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
-									 		 
-			    23/08/2017 - Alterado para validar as informacoes do operador 
-							 pelo AD. (PRJ339 - Reinert)
 									 		 
 -----------------------------------------------------------------------------*/
                              
@@ -391,32 +384,29 @@ PROCEDURE retorna-conta-de:
             ELSE
                 DO:
                     ASSIGN p-nome-de1    = crapass.nmprimtl
+                           p-nome-de2    = crapass.nmsegntl
+                           
                            p-pessoa-de   = IF crapass.inpessoa = 1 THEN 
                                               'V1' 
                                            ELSE 'V2'.
 
                     IF   crapass.inpessoa = 1   THEN
-					   DO:
-					       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999")
-                                  p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
-
-					       FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
-						                      WHERE crapttl.cdcooper = crapass.cdcooper AND
-											        crapttl.nrdconta = crapass.nrdconta AND
-											        crapttl.idseqttl = 2
-											        NO-LOCK:
-						   
-						      ASSIGN p-cpfcnpj-de2 = STRING(crapttl.nrcpfcgc,"99999999999")
-				                     p-cpfcnpj-de2 = STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx")
-									 p-nome-de2    = crapttl.nmextttl.
-
-						   END.
-
-					   END.
+                         ASSIGN p-cpfcnpj-de1 = 
+                                   STRING(crapass.nrcpfcgc,"99999999999")
+                                p-cpfcnpj-de1 =
+                                   STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
                     ELSE
-                       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999999")
-                              p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
+                         ASSIGN p-cpfcnpj-de1 = 
+                                   STRING(crapass.nrcpfcgc,"99999999999999")
+                                p-cpfcnpj-de1 = 
+                                   STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
 
+                    IF   crapass.nrcpfstl <> 0   THEN
+                         ASSIGN p-cpfcnpj-de2 =
+                                     STRING(crapass.nrcpfstl,"99999999999")
+
+                                p-cpfcnpj-de2 = 
+                                     STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx").
 
                 END.
 
@@ -1014,7 +1004,7 @@ PROCEDURE valida-valores:
                                    c-desc-erro = 
                                          "Preenchimento de campo agencia nao e permitido para o " +
                                          "tipo de conta: Conta de Pagamento.". 
-
+                             
                             RUN cria-erro (INPUT p-cooper,
                                            INPUT p-cod-agencia,
                                            INPUT p-nro-caixa,
@@ -3048,50 +3038,16 @@ PROCEDURE verifica-operador:
              RETURN "NOK".
          END.
 
-/* PRJ339 - REINERT (INICIO) */         
-    /* Validacao de senha do usuario no AD somente no ambiente de producao */
-    IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-         DO:
-      
-       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-       /* Efetuar a chamada da rotina Oracle */ 
-       RUN STORED-PROCEDURE pc_valida_senha_AD
-           aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                               INPUT p-cod-operador,   /*Operador   */
-                                               INPUT p-senha-operador, /*Nr.da Senha*/
-                                              OUTPUT 0,                /*Cod. critica */
-                                              OUTPUT "").              /*Desc. critica*/
-
-       /* Fechar o procedimento para buscarmos o resultado */ 
-       CLOSE STORED-PROC pc_valida_senha_AD
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-       HIDE MESSAGE NO-PAUSE.
-
-       /* Busca possíveis erros */ 
-       ASSIGN i-cod-erro  = 0
-              c-desc-erro = ""
-              i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                            WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-              c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                            WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                            
-      /* Apresenta a crítica */
-      IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
+    IF   crapope.cddsenha <> p-senha-operador   THEN
          DO:
              RUN cria-erro (INPUT p-cooper,        
                             INPUT p-cod-agencia,
                             INPUT p-nro-caixa,
-                             INPUT i-cod-erro,
+                            INPUT 003,
                             INPUT "",
                             INPUT YES).
              RETURN "NOK".
          END.
-    END.
-/* PRJ339 - REINERT (FIM) */
 
     /* Nivel 2-Coordenador / 3-Gerente */
     IF   crapope.nvoperad < 2   THEN
@@ -3180,51 +3136,16 @@ PROCEDURE verifica-operador-ted:
     IF  TRIM(p-cod-operador) <> ""   AND
         TRIM(p-senha-operador) <> "" THEN
         DO:
-      /* PRJ339 - REINERT (INICIO) */         
-          /* Validacao de senha do usuario no AD somente no ambiente de producao */
-          IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
-            DO:
-            
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-             /* Efetuar a chamada da rotina Oracle */ 
-             RUN STORED-PROCEDURE pc_valida_senha_AD
-                 aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                                     INPUT p-cod-operador,   /*Operador   */
-                                                     INPUT p-senha-operador, /*Nr.da Senha*/
-                                                    OUTPUT 0,                /*Cod. critica */
-                                                    OUTPUT "").              /*Desc. critica*/
-
-             /* Fechar o procedimento para buscarmos o resultado */ 
-             CLOSE STORED-PROC pc_valida_senha_AD
-                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-             HIDE MESSAGE NO-PAUSE.
-
-             /* Busca possíveis erros */ 
-             ASSIGN i-cod-erro  = 0
-                    c-desc-erro = ""
-                    i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                                  WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                    c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                                  WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                                  
-            /* Apresenta a crítica */
-            IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
+            IF  crapope.cddsenha <> p-senha-operador THEN
                 DO:
                     RUN cria-erro (INPUT p-cooper,        
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
-                                   INPUT i-cod-erro,
+                                   INPUT 003,
                                    INPUT "",
                                    INPUT YES).
                     RETURN "NOK".
                 END.
-          END.
-      /* PRJ339 - REINERT (FIM) */
-
         END.
 
     /* Validar quando o valor do TED ultrapassar o limite 

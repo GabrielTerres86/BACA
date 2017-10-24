@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 13/11/2015
 
    Dados referentes ao programa:
 
@@ -89,12 +89,6 @@
 			   13/11/2015 - Inclusao de verificacao estado de crise. 
                             (Jaison/Andrino)
                             
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
-			   23/08/2017 - Alterado para validar as informacoes do operador 
-							pelo AD. (PRJ339 - Reinert)
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -1613,26 +1607,8 @@ PROCEDURE atualiza-outros:
                          NO-LOCK NO-ERROR.
 
                     IF   AVAIL crapass   THEN
-					   DO:
-				          ASSIGN c-nome-titular1 = crapass.nmprimtl.
-
-						  IF crapass.inpessoa = 1 THEN
-						     DO:
-								 FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-								                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-												           crapttl.nrdconta = crapass.nrdconta AND
-							 					           crapttl.idseqttl = 2
-							 						       NO-LOCK:
-
-								 
-								    ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-								 END.
-
-							 END.
-
-					   END.
-
+                         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                                c-nome-titular2 = crapass.nmsegntl.
                  END.
              ELSE  
                  DO:
@@ -2136,50 +2112,18 @@ PROCEDURE valida-permissao-saldo-conta:
                       RETURN "NOK".
                   END.
 
-          /* PRJ339 - REINERT (INICIO) */         
-             /* Validacao de senha do usuario no AD somente no ambiente de producao */
-             IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
+             IF   p-senha <> crapope.cddsenha   THEN 
                   DO:
-                  
-                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-                   /* Efetuar a chamada da rotina Oracle */ 
-                   RUN STORED-PROCEDURE pc_valida_senha_AD
-                       aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                                           INPUT p-codigo,         /*Operador   */
-                                                           INPUT p-senha,          /*Nr.da Senha*/
-                                                          OUTPUT 0,                /*Cod. critica */
-                                                          OUTPUT "").              /*Desc. critica*/
-
-                   /* Fechar o procedimento para buscarmos o resultado */ 
-                   CLOSE STORED-PROC pc_valida_senha_AD
-                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-                   HIDE MESSAGE NO-PAUSE.
-
-                   /* Busca possíveis erros */ 
-                   ASSIGN i-cod-erro  = 0
-                          c-desc-erro = ""
-                          i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                                        WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                          c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                                        WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                                        
-                  /* Apresenta a crítica */
-                  IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                  DO:
+                      ASSIGN i-cod-erro  = 3
+                             c-desc-erro = " ".
                       RUN cria-erro (INPUT p-cooper,
                                      INPUT p-cod-agencia,
                                      INPUT p-nro-caixa,
                                      INPUT i-cod-erro,
-                                         INPUT "",
+                                     INPUT c-desc-erro,
                                      INPUT YES).
                       RETURN "NOK".
                   END.
-                END.
-          /* PRJ339 - REINERT (FIM) */
         
              IF   crapope.vlpagchq < de-valor-libera   THEN 
                   DO:
