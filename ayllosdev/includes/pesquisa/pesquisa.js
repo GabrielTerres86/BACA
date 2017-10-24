@@ -731,7 +731,7 @@ function realizaPesquisaDominios(nriniseq, quantReg, businessObject, nomeProcedu
 		    $("#divResultadoPesquisa").html(response);
 			zebradoLinhaTabela($('#divPesquisaItens > table > tbody > tr'));
 			$('#divPesquisaRodape').formataRodapePesquisa();
-}
+		}			
 	});	
 }
 
