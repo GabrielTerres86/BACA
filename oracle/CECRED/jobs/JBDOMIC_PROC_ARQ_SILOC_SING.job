@@ -20,9 +20,8 @@ begin
                                 job_action          => 'declare 
   vr_dscritic varchar(2000);
   vr_cdcritic number;
-  vr_dtprocessoexec date := to_date(null);
 begin
-  cecred.ccrd0006.pc_lancamentos_singulares(pr_cdcritic => :pr_cdcritic, pr_dscritic => :pr_dscritic);
+  cecred.ccrd0006.pc_lancamentos_singulares(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN     
     -- Levantar exceçao     
     RAISE_application_error(-20500,vr_dscritic);
