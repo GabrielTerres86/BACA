@@ -17,10 +17,10 @@
 				<label for="cddopcao"><? echo utf8ToHtml('Op&ccedil;&atilde;o:&nbsp;') ?></label>
 				<select id="cddopcao" name="cddopcao" onChange="$('#divConteudo').empty();" class="Campo" style="width:85%">
 					<?php if ($glbvars["cdcooper"] == 3) { ?>
-						<option value="A" >A - Alterar par&acirc;metros de notifica&ccedil;&atilde;o autom&aacute;tica</option>
+						<option value="A" >A - Alterar notifica&ccedil;&otilde;es autom&aacute;ticas</option>
 					<?php } ?>
-					<option value="C" >C - Consultar notifica&ccedil;&otilde;es cadastradas</option>
-					<option value="N" >N - Cadastrar/Enviar uma notifica&ccedil;&atilde;o</option>
+					<option value="C" >C - Consultar notifica&ccedil;&otilde;es enviadas</option>
+					<option value="N" >N - Enviar notifica&ccedil;&atilde;o manual</option>
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" onClick = "escolheOpcao($('#cddopcao').val());" style = "text-align:right;">OK</a>
 			</td>

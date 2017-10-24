@@ -69,9 +69,9 @@
 					<label for="inmensagem_ativa" ><? echo utf8ToHtml('Situação da Notificação:'); ?></label>
 				</td>
 				<td style="text-align:left;" colspan="2" >
-					<select id="inmensagem_ativa" name="inmensagem_ativa" class="Campo" style="width:340px;">
+					<select id="inmensagem_ativa" name="inmensagem_ativa" class="Campo" style="width:340px;" onChange="desabilitaPush();">
 						<option value="1" <?php if($inmensagem_ativa == 1){ echo "SELECTED"; } ?>>Habilitada</option>
-						<option value="2" <?php if($inmensagem_ativa == 0){ echo "SELECTED"; } ?>>Desabilitada</option>
+						<option value="0" <?php if($inmensagem_ativa == 0){ echo "SELECTED"; } ?>>Desabilitada</option>
 					</select>
 				</td>
 			</tr>

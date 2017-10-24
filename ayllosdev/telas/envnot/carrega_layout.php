@@ -134,9 +134,11 @@
 			echo "</div>";
 			echo "<div style=\"padding-top:20px;\">&nbsp;</div>";
 			include 'titulo.php';
+			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';
+			echo "</fieldset>";
 			include 'enviar_para.php';
 			include 'enviar_em.php';
 			echo "<script>$('#frmMsgConsulta :input').attr('disabled','disabled');$('#dtenvio_mensagem').datepicker('disable'); </script>";
@@ -195,9 +197,11 @@
 			echo "<input type=\"hidden\" name=\"cdoperad\" id=\"cdoperad\" value=\"".$glbvars["cdoperad"]."\" />";
 			
 			include 'titulo.php';
+			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';
+			echo "</fieldset>";
 			
 			if($cdtipo_mensagem == 1){
 				include 'recorrencia.php';
@@ -284,9 +288,11 @@
 			echo "<input type=\"hidden\" name=\"idorigem\" id=\"idorigem\" value=\"".$glbvars["idorigem"]."\" />";
 			echo "<input type=\"hidden\" name=\"cdoperad\" id=\"cdoperad\" value=\"".$glbvars["cdoperad"]."\" />";
 			include 'titulo.php';
+			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';
+			echo "</fieldset>";
 			include 'enviar_para.php';
 			include 'enviar_em.php';
 		echo "</form>";

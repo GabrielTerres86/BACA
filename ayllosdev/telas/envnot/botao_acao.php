@@ -28,17 +28,10 @@
 ?>
 	<div class="condensado" style="padding-top: 15px;">
 		<fieldset>
-			<legend><b><? echo utf8ToHtml('Botão de A&ccedil;&atilde;o no Cecred Mobile') ?></b></legend>
-			<div id="divBtnAcao" name="divBtnAcao" >
-				<table style="width: 100%">
-					<tr style="height: 30px;">
-						<td>
-							<label for="inexibe_botao_acao_mobile"><? echo utf8ToHtml('Exibir bot&atilde;o de a&ccedil;&atilde;o:') ?></label>
-							<input type="checkbox" name="inexibe_botao_acao_mobile" id="inexibe_botao_acao_mobile" <?php echo($inexibe_botao_acao_mobile);?> onClick="exibeAcao();" />
-						</td>
-					</tr>
-				</table>
-			</div>
+			<legend>
+				<label for="inexibe_botao_acao_mobile"><? echo utf8ToHtml('Botão de A&ccedil;&atilde;o no Cecred Mobile:') ?></label>
+				<input type="checkbox" name="inexibe_botao_acao_mobile" id="inexibe_botao_acao_mobile" <?php echo($inexibe_botao_acao_mobile);?> onClick="exibeAcao();" />
+			</legend>
 			<div id="divBtnAcaoConteudo" name="divBtnAcaoConteudo" >
 				<table>
 					<tr style="height: 30px;">
@@ -68,15 +61,10 @@
 							</select>
 						</td>
 					</tr>
-					<tr style="height: 30px;">
-						<td>
-							<p style="font-size: 8pt;">&nbsp;&nbsp;Obs.: Caso seja necess&aacute;rio enviar par&acirc;mentros para a tela no Cecred Mobile, estes devem
-							ser implementados no c&oacute;digo-fonte do Cecred Mobile.</p>
-						</td>
 					<tr>
 						<td>
 							<input type="checkbox" name="chk_dsmensagem_acao_mobile" id="chk_dsmensagem_acao_mobile" <?php echo($chk_dsmensagem_acao_mobile); ?> onClick="msgAcaoMobile('');" />
-							<label for="chk_dsmensagem_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Exibir mensagem de confirmação ao executar ação:') ?></label>
+							<label for="chk_dsmensagem_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Solicitar confirmação ao clicar no botão de ação:') ?></label>
 						</td>
 					</tr>
 					<tr style="height: 30px;">

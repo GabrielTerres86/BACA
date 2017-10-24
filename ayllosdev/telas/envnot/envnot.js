@@ -184,6 +184,16 @@ function carregaIcone(){
 	$("#divIcone").html(conteudo);
 }
 
+function desabilitaPush(){
+	if ($("#inmensagem_ativa").val() == 0)
+	{
+		$('#inenviar_push option[value=0]').attr('selected','selected');
+		$('#inenviar_push').attr('disabled','disabled');
+	}
+	else
+		$('#inenviar_push').removeAttr('disabled');
+}
+
 function tabela(){
 	var divRegistro = $('div.divRegistros');		
 	var tabela      = $('table', divRegistro );

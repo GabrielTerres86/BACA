@@ -296,7 +296,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
     vr_exception EXCEPTION;
   
   BEGIN
+    
+    -- Obtém os dados da notificação
+    OPEN cr_notificacao;
+    FETCH cr_notificacao
+      INTO rw_notificacao;
+    cr_notificacao_found := cr_notificacao%FOUND;
+    CLOSE cr_notificacao;
   
+    -- Se não encontrou, dispara exceção
+    IF NOT cr_notificacao_found THEN
+      vr_dscritic := 'Notificação não encontrada';
+      RAISE vr_exception;
+    END IF;
+    
     -- Criar documento XML
     dbms_lob.createtemporary(pr_xml_ret, TRUE);
     dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
@@ -310,19 +323,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
        AND noti.nrdconta = pr_nrdconta
        AND noti.idseqttl = pr_idseqttl
        AND noti.dhleitura IS NULL; -- Somente se não possui data de leitura
-  
-    OPEN cr_notificacao;
-    FETCH cr_notificacao
-      INTO rw_notificacao;
-    cr_notificacao_found := cr_notificacao%FOUND;
-    CLOSE cr_notificacao;
-  
-    -- Se não encontrou, dispara exceção
-    IF NOT cr_notificacao_found THEN
-      vr_dscritic := 'Notificação não encontrada';
-      RAISE vr_exception;
-    END IF;
-  
+     
+    -- Cria o XML de retorno
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
                            ,pr_texto_completo => vr_xml_tmp
                            ,pr_texto_novo     => '<NOTIFICACAO>' ||

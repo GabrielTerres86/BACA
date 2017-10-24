@@ -11,9 +11,15 @@
 
 CKEDITOR.editorConfig = function( config ) {
 	config.toolbarEnvnot = [
-		{ name: 'styles', items: [ 'Format' ] },
+		//{ name: 'styles', items: [ 'Format' ] },
 		{ name: 'basicstyles', items: ['Bold','Italic','Underline'] },
 		{ name: 'paragraph', items: ['NumberedList', 'BulletedList'] }
 	];
-	config.removeButtons = 'Source,Cut,Copy,Paste,PasteText,PasteFromWord,Undo,Redo,Scayt,Strike,Blockquote,Unlink,Link,Anchor,Subscript,Superscript,RemoveFormat,About,Image,Styles,Maximize,HorizontalRule,Table,SpecialChar,Outdent,Indent,';
+	config.removeButtons = 'Format,Source,Cut,Copy,Paste,PasteText,PasteFromWord,Undo,Redo,Scayt,Strike,Blockquote,Unlink,Link,Anchor,Subscript,Superscript,RemoveFormat,About,Image,Styles,Maximize,HorizontalRule,Table,SpecialChar,Outdent,Indent,';
+	config.removePlugins = 'elementspath';
+	//config.resize_enabled = false;
 };
+CKEDITOR.appendTo('container', {
+    removePlugins: 'elementspath',
+    resize_enabled: false
+});

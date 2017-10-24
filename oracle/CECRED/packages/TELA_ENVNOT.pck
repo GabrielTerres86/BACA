@@ -1634,7 +1634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     -- Cursor para buscar a situação da mensagem
     CURSOR cr_menumobile IS
      SELECT men.menumobileid AS menumobileid
-           ,NVL2(men.menupaiid, pai.nome || ' - ','') || men.nome AS nome
+           ,replace(NVL2(men.menupaiid, pai.nome || ' - ','') || men.nome,'–','-') AS nome
        FROM menumobile men
            ,menumobile pai
       WHERE men.menupaiid = pai.menumobileid(+)

@@ -13,7 +13,7 @@
 <div class="condensado" >
 	<br/>
 	<fieldset>
-		<legend><b><? echo utf8ToHtml('Conteúdo')?></b>(Tela de Detalhamento)</legend>
+		<legend><b><? echo utf8ToHtml('Conteúdo')?></b></legend>
 		<div style="width: 100%; height: 100%; padding-top: 25px;">
 			<textarea id="dshtml_mensagem" name="dshtml_mensagem"><?php echo($dshtml_mensagem); ?></textarea>
 			<script type="text/javascript">
@@ -21,7 +21,7 @@
 			</script>
 		</div>
 		<br/>
-		<div for="dsvariaveis_mensagem" ><? echo utf8ToHtml('Variáveis disponíveis: ').$dsvariaveis_mensagem; ?></div>
+		<div for="dsvariaveis_mensagem" ><? echo utf8ToHtml('<b>Variáveis disponíveis: </b>').$dsvariaveis_mensagem; ?></div>
 		
 	</fieldset>
 </div>

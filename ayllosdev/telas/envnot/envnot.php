@@ -55,6 +55,9 @@
 				font-size: 11px;	
 				text-decoration: none;
 			}
+			input[type='checkbox'], input[type='radio'] {
+				margin-top: 4px !important;
+			}
 		</style>
 	</head>
 	<body>

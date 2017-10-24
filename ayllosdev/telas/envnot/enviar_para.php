@@ -10,6 +10,7 @@
 	 */
 ?>
 <div class="condensado">
+	<br/>
 	<fieldset>
 		<legend><b><? echo utf8ToHtml('Enviar para')?></b></legend>		
 			<select id="tpfiltro" name="tpfiltro" class="campo" style="width:300px;" onChange="carregaEnviar(this.value);">
@@ -17,9 +18,15 @@
 				<option value="2" >Importar arquivo CSV</option>
 			</select>
 		
-		<div id="divFile" name="divFile" style="padding-top: 20px;">
-			<input name="arq_upload[]" id="nmarquivo_csv" type="file" class="campo" style="width:85%; height: 100%;" alt="<? echo utf8ToHtml('Informe o caminho do arquivo.'); ?>" />
-			<span id="SpanJTxt" style="font-size:10px;font-style:italic;">&nbsp;&nbsp;Apenas arquivos '.csv, .txt'</span>
+		<div id="divFile" name="divFile" style="padding-top: 20px; width: 100%; clear:both;">
+			<input name="arq_upload[]" id="nmarquivo_csv" type="file" class="campo" style="width:49%; height: 100%;" alt="<? echo utf8ToHtml('Informe o caminho do arquivo.'); ?>" />
+			<div id="divCSVObs" name="divCSVObs" style="width:50%; float: right;">
+				<b>Observa&ccedil;&otilde;es:</b>
+				</br>
+				- Apenas arquivos .csv e .txt
+				</br>
+				- <? echo utf8ToHtml('As únicas informações que devem constar no arquivo são: cooperativa, conta e titular (1;999;1). Caso não seja informado o titular, a notificação será enviada para todos os titulares da conta.')?>
+			</div>
 		</div>
 		<?php if($glbvars["cdcooper"] == 3){ ?>
 			<div id="divCooperativas" name="divCooperativas" style="padding-top: 20px; width: 100%; clear:both;">
