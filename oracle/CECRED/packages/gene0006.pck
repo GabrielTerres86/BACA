@@ -150,6 +150,29 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                              ,pr_des_erro OUT VARCHAR2);            --> Descrição dos erros de processo
 
   /* Procedure para gerar protocolos de segurança */
+  PROCEDURE pc_gera_protocolo_car(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                 ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                                 ,pr_hrtransa  IN craplcm.hrtransa%TYPE  --> Hora da transação
+                                 ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                 ,pr_nrdocmto  IN craplcm.nrdocmto%TYPE  --> Número do documento
+                                 ,pr_nrseqaut  IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                                 ,pr_vllanmto  IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                                 ,pr_nrdcaixa  IN crapaut.nrdcaixa%TYPE  --> Número do caixa
+                                 ,pr_gravapro  IN INTEGER                --> Controle de gravação (0-Nao/1-Sim)
+                                 ,pr_cdtippro  IN crappro.cdtippro%TYPE  --> Código de operação
+                                 ,pr_dsinfor1  IN VARCHAR2               --> Descrição 1
+                                 ,pr_dsinfor2  IN VARCHAR2               --> Descrição 2
+                                 ,pr_dsinfor3  IN VARCHAR2               --> Descrição 3
+                                 ,pr_dscedent  IN VARCHAR2               --> Descritivo
+                                 ,pr_flgagend  IN INTEGER                --> Controle de agenda (0-Nao/1-Sim)
+                                 ,pr_nrcpfope  IN NUMBER                 --> Número de operação
+                                 ,pr_nrcpfpre  IN NUMBER                 --> Número pré operação
+                                 ,pr_nmprepos  IN VARCHAR2               --> Nome
+                                 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE  --> Descrição do protocolo
+                                 ,pr_dscritic OUT VARCHAR2               --> Descrição crítica
+                                 ,pr_des_erro OUT VARCHAR2);             --> Descrição dos erros de processo
+
+  /* Procedure para gerar protocolos de segurança */
   PROCEDURE pc_gera_protocolo_md5(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
                                  ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
@@ -219,6 +242,70 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                  ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da critica
                                                                
+  /* Procedure para montar o protocolo de segurança */
+  PROCEDURE pc_monta_protocolo(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                              ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
+                              ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                              ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
+                              ,pr_nrseqaut IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                              ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                              ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  --> Número do caixa
+                              ,pr_tipo_protocolo IN INTEGER          --> Tipo de Protocolo (1-Velho/2-Novo)
+                              ,pr_utiliza_seq IN INTEGER             --> Utilizar Sequence para gerar o protocolo novo (0-Nao / 1-Sim)
+                              ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Descrição do protocolo
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição crítica
+                              ,pr_des_erro OUT VARCHAR2);            --> Descrição dos erros de processo
+
+  /* Procedure para calcular o protocolo de segurança */
+  PROCEDURE pc_criptografa_protocolo(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                                    ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
+                                    ,pr_sequence IN INTEGER                --> Sequence utilizada no protocolo
+                                    ,pr_nrprotoc IN NUMBER                 --> Número do Protocolo
+                                    ,pr_tipo_protocolo IN INTEGER          --> Tipo de Protocolo (1-Velho/2-Novo)
+                                    ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Descrição do protocolo
+                                    ,pr_dscritic OUT VARCHAR2);            --> Descricao do Erro
+
+  /* Procedure para calcular o protocolo de segurança */
+  PROCEDURE pc_calcula_protocolo(pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
+                                ,pr_nrseqaut IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                                ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                                ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  --> Numero do Caixa
+                                ,pr_nrprotoc OUT NUMBER                --> Numero do Protocolo
+                                ,pr_dscritic OUT VARCHAR2);            --> Descricao do Erro
+
+  /* Procedure para desmontar o protocolo de segurança */
+  PROCEDURE pc_desmonta_protocolo(pr_dsprotoc  IN VARCHAR2     --> Protocolo
+                                 ,pr_tipo_protocolo IN INTEGER --> Tipo de Protocolo (1-Velho/2-Novo)
+                                 ,pr_nrprotoc OUT INTEGER      --> Número do protocolo
+                                 ,pr_cdcooper OUT INTEGER      --> Cooperativa
+                                 ,pr_dtmvtolt OUT DATE         --> Data
+                                 ,pr_hrtransa OUT INTEGER      --> Hora
+                                 ,pr_nrsequen OUT INTEGER      --> Sequencia
+                                 ,pr_is_valid OUT VARCHAR2     --> Valido ? "OK" / "NOK"
+                                 ,pr_dscritic OUT VARCHAR2);   --> Descricao do Erro
+
+  /* Procedure para validar o protocolo de segurança */
+  PROCEDURE pc_valida_protocolo(pr_cdcooper  IN INTEGER    --> Cooperativa
+                               ,pr_cddopcao  IN VARCHAR2   --> Opcao
+                               ,pr_nrdconta  IN INTEGER    --> Conta
+                               ,pr_nrdocmto  IN INTEGER    --> Numero do Documento
+                               ,pr_dtmvtolx  IN DATE       --> Data do Protocolo
+                               ,pr_horproto  IN INTEGER    --> Hora do Protocolo
+                               ,pr_minproto  IN INTEGER    --> Minuto do Protocolo
+                               ,pr_segproto  IN INTEGER    --> Segundo do Protocolo
+                               ,pr_vlprotoc  IN NUMBER     --> Valor do Protocolo
+                               ,pr_dsprotoc  IN VARCHAR2   --> Protocolo
+                               ,pr_nrseqaut  IN VARCHAR2   --> Sequencia de Autenticacao
+                               ,pr_nmdcampo OUT VARCHAR2   --> Nome do Campo
+                               ,pr_returnvl OUT VARCHAR2   --> Retorno "OK" / "NOK"
+                               ,pr_msgretur OUT VARCHAR2   --> Mensagem de Retorno
+                               ,pr_msgerror OUT VARCHAR2   --> Mensagem de Erro
+                               ,pr_cdcritic OUT INTEGER    --> Codigo da Critica
+                               ,pr_dscritic OUT VARCHAR2); --> Descricao da Critica
+
 END GENE0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
@@ -792,70 +879,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     -- .............................................................................
   BEGIN
     DECLARE
-      vr_multipli  CONSTANT NUMBER := 4;  --> Fator multiplicador
-      vr_nrprotoc  NUMBER;                --> Número protocolo
       vr_dsprotoc  crappro.dsprotoc%TYPE; --> Descrição protocolo
       vr_flgtrans  BOOLEAN;               --> Controle das transações
-      vr_itera     PLS_INTEGER;           --> Controle para as iterações
-      vr_contador  PLS_INTEGER;           --> Contador de registros
       vr_flgagend  NUMBER;                --> Conversão de flag booleano
+      
+      -- Erros 
+      vr_dscritic  VARCHAR2(5000);        --> Descrição do erro
+      vr_des_erro  VARCHAR2(3);           --> Retorno do processo "OK" / "NOK"
       vr_exc_erro  EXCEPTION;             --> Controle de erros
 
     BEGIN
-      -- Conta
-      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdconta * vr_multipli);
-      -- Documento
-      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdocmto * vr_multipli);
+      -- Montar o protocolo, sempre no formato novo, e utilizar a sequence
+      GENE0006.pc_monta_protocolo(pr_cdcooper => pr_cdcooper   --> Código da cooperativa
+                                 ,pr_dtmvtolt => pr_dtmvtolt   --> Data movimento
+                                 ,pr_hrtransa => pr_hrtransa   --> Hora da transação
+                                 ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                 ,pr_nrdocmto => pr_nrdocmto   --> Número do documento
+                                 ,pr_nrseqaut => pr_nrseqaut   --> Número da sequencia
+                                 ,pr_vllanmto => pr_vllanmto   --> Valor lançamento
+                                 ,pr_nrdcaixa => pr_nrdcaixa   --> Número do caixa
+                                 ,pr_tipo_protocolo => 2       --> Tipo de Protocolo (1-Velho/2-Novo)
+                                 ,pr_utiliza_seq => 1          --> Utilizar Sequence para gerar o protocolo novo (0-Nao / 1-Sim)
+                                 ,pr_dsprotoc => vr_dsprotoc   --> Descrição do protocolo
+                                 ,pr_dscritic => vr_dscritic   --> Descrição crítica
+                                 ,pr_des_erro => vr_des_erro); --> Descrição do processo "OK" / "NOK"
 
-      -- Autenticação
-      IF pr_nrseqaut > 0 THEN
-        vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrseqaut * vr_multipli);
+      -- Verificar se ocorreu erro na geração do protocolo
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
       END IF;
 
-      -- Valor
-      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_vllanmto * 100 * vr_multipli);
-      -- Caixa
-      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdcaixa * vr_multipli);
-
-      -- Cooperativa / Data / Horario
-      vr_dsprotoc := to_char(vr_nrprotoc) ||
-                     gene0002.fn_mask(pr_cdcooper, '999') ||
-                     to_char(pr_dtmvtolt, 'DDMMYYYY') ||
-                     gene0002.fn_mask(pr_hrtransa, '99999');
-
-      -- Deixa um número PAR de caracteres
-      IF MOD(length(vr_dsprotoc), 2) <> 0 THEN
-        vr_dsprotoc := '0' || vr_dsprotoc;
-      END IF;
-
-      -- Converte em HEXADECIMAL de 2 em 2 caracteres
-      vr_itera := 1;
-
-      FOR vr_contador IN 1..(length(vr_dsprotoc) - 1) LOOP
-        -- Verifica se é o segundo caracter por iteração
-        IF vr_itera = 1 OR mod(vr_itera,2) <> 0  THEN
-          pr_dsprotoc := pr_dsprotoc || fn_converte_hex(substr(vr_dsprotoc, vr_contador, 2));
-        END IF;
-        --Incrementar iteracao
-        vr_itera:= vr_itera+1;
-      END LOOP;
-
-      -- Assimila valores nas variáveis
-      vr_dsprotoc := pr_dsprotoc;
-      pr_dsprotoc := NULL;
-
-      -- Itera de 4 em 4 posições para gerar protocolo
-      vr_contador := 1;
-      WHILE vr_contador < length(vr_dsprotoc) LOOP
-        -- Verifica se é o quarto caracter por iteração
-        pr_dsprotoc := pr_dsprotoc || TRIM(substr(vr_dsprotoc, vr_contador, 4));
-
-        IF (vr_contador + 4) < length(vr_dsprotoc) THEN
-          pr_dsprotoc:= pr_dsprotoc || '.';
-        END IF;
-        --Incrementar iteracao em 4
-        vr_contador := vr_contador + 4;
-      END LOOP;
+      -- Devolver o protocolo que geramos
+      pr_dsprotoc := vr_dsprotoc;
 
       -- Verifica se irá criar registro
       IF pr_gravapro THEN
@@ -948,13 +1003,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         
         -- Verifica se ocorreu a transação
         IF NOT vr_flgtrans THEN          
-          pr_dscritic := 'Nao foi possivel gerar o protocolo. Tente novamente.';
+          vr_dscritic := 'Nao foi possivel gerar o protocolo. Tente novamente.';
           RAISE vr_exc_erro;
         END IF;
         
       END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
         pr_des_erro := 'NOK';
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo: ' || SQLERRM;
@@ -962,6 +1019,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     END;
   END pc_gera_protocolo;
 
+
+  /* Procedure para gerar protocolos de segurança */
+  PROCEDURE pc_gera_protocolo_car(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                                 ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
+                                 ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                 ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
+                                 ,pr_nrseqaut IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                                 ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                                 ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  --> Número do caixa
+                                 ,pr_gravapro IN INTEGER                --> Controle de gravação (0-Nao/1-Sim)
+                                 ,pr_cdtippro IN crappro.cdtippro%TYPE  --> Código de operação
+                                 ,pr_dsinfor1 IN VARCHAR2               --> Descrição 1
+                                 ,pr_dsinfor2 IN VARCHAR2               --> Descrição 2
+                                 ,pr_dsinfor3 IN VARCHAR2               --> Descrição 3
+                                 ,pr_dscedent IN VARCHAR2               --> Descritivo
+                                 ,pr_flgagend IN INTEGER                --> Controle de agenda (0-Nao/1-Sim)
+                                 ,pr_nrcpfope IN NUMBER                 --> Número de operação
+                                 ,pr_nrcpfpre IN NUMBER                 --> Número pré operação
+                                 ,pr_nmprepos IN VARCHAR2               --> Nome
+                                 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Descrição do protocolo
+                                 ,pr_dscritic OUT VARCHAR2              --> Descrição crítica
+                                 ,pr_des_erro OUT VARCHAR2) IS          --> Descrição dos erros de processo
+    -- ..........................................................................
+    --
+    --  Programa : pc_gera_protocolo_car
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017                       Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Possibilitar a chamada da procedures pc_gera_protocolo pelo Progress
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_gravapro BOOLEAN; --> Controle de gravação (0-Nao/1-Sim)
+      vr_flgagend BOOLEAN; --> Controle de agenda (0-Nao/1-Sim)
+
+    BEGIN
+      vr_gravapro := sys.diutil.int_to_bool(pr_gravapro);
+      vr_flgagend := sys.diutil.int_to_bool(pr_flgagend);
+
+      GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper   --> Código da cooperativa
+                                ,pr_dtmvtolt => pr_dtmvtolt   --> Data movimento
+                                ,pr_hrtransa => pr_hrtransa   --> Hora da transação
+                                ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                ,pr_nrdocmto => pr_nrdocmto   --> Número do documento
+                                ,pr_nrseqaut => pr_nrseqaut   --> Número da sequencia
+                                ,pr_vllanmto => pr_vllanmto   --> Valor lançamento
+                                ,pr_nrdcaixa => pr_nrdcaixa   --> Número do caixa
+                                ,pr_gravapro => vr_gravapro   --> Controle de gravação
+                                ,pr_cdtippro => pr_cdtippro   --> Código de operação
+                                ,pr_dsinfor1 => pr_dsinfor1   --> Descrição 1
+                                ,pr_dsinfor2 => pr_dsinfor2   --> Descrição 2
+                                ,pr_dsinfor3 => pr_dsinfor3   --> Descrição 3
+                                ,pr_dscedent => pr_dscedent   --> Descritivo
+                                ,pr_flgagend => vr_flgagend   --> Controle de agenda
+                                ,pr_nrcpfope => pr_nrcpfope   --> Número de operação
+                                ,pr_nrcpfpre => pr_nrcpfpre   --> Número pré operação
+                                ,pr_nmprepos => pr_nmprepos   --> Nome
+                                ,pr_dsprotoc => pr_dsprotoc   --> Descrição do protocolo
+                                ,pr_dscritic => pr_dscritic   --> Descrição crítica
+                                ,pr_des_erro => pr_des_erro); --> Descrição dos erros de processo
+      
+                                
+      -- O progress aguarda um retorno
+      IF TRIM(pr_des_erro) IS NULL THEN
+        -- Se chegou ate aqui, foi executado com sucesso
+        pr_des_erro := 'OK';
+      END IF;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro em GENE0006.pc_gera_protocolo_car: ' || SQLERRM;
+        pr_des_erro := 'NOK';
+    END;
+  END pc_gera_protocolo_car;
 
   /* Procedure para gerar protocolos de segurança com criptografia MD5 */
   PROCEDURE pc_gera_protocolo_md5(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
@@ -1856,6 +1995,769 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       END LOOP;
     END IF;
   END pc_busca_protocolo_wt;
+  
+  /* Procedure para montar o protocolo de segurança */
+  PROCEDURE pc_monta_protocolo(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                              ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
+                              ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                              ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
+                              ,pr_nrseqaut IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                              ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                              ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  --> Número do caixa
+                              ,pr_tipo_protocolo IN INTEGER          --> Tipo de Protocolo (1-Velho/2-Novo)
+                              ,pr_utiliza_seq IN INTEGER             --> Utilizar Sequence para gerar o protocolo novo (0-Nao / 1-Sim)
+                              ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Descrição do protocolo
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição crítica
+                              ,pr_des_erro OUT VARCHAR2) IS          --> Descrição dos erros de processo
+    -- ..........................................................................
+    --
+    --  Programa : pc_monta_protocolo
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Recebe os parâmetros e gera um protocolo único em hexadecimal.
+    --
+    --   Observação: Os parâmetros são convertidos para números, multiplicados
+    --               pela variável "aux_multipli" e depois somados.
+    --               São adicionados alguns campos sem multiplicação para serem
+    --               identificadores únicos. Após isto são transformados em
+    --               hexadecimal de 2 em 2 caracteres.
+    --               Quando o parâmetro par_gravapro for igual a YES/TRUE, será
+    --               gravado um registro na tabela crappro.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_nrprotoc  NUMBER;                --> Número protocolo
+      vr_dsprotoc  crappro.dsprotoc%TYPE; --> Descrição protocolo
+      
+      vr_sequence  INTEGER;               --> Sequencial do Protocolo
+
+      -- Erros
+      vr_dscritic  VARCHAR2(5000);
+      vr_exec_erro EXCEPTION;
+
+    BEGIN
+      -- Cacular o numero do protocolo, multiplica o valor dos parametros por 4
+      pc_calcula_protocolo(pr_nrdconta => pr_nrdconta   --> Número da conta
+                          ,pr_nrdocmto => pr_nrdocmto   --> Número do documento
+                          ,pr_nrseqaut => pr_nrseqaut   --> Número da sequencia
+                          ,pr_vllanmto => pr_vllanmto   --> Valor lançamento
+                          ,pr_nrdcaixa => pr_nrdcaixa   --> Numero do Caixa
+                          ,pr_nrprotoc => vr_nrprotoc   --> Numero do protocolo calculado
+                          ,pr_dscritic => vr_dscritic); --> Descricao do erro
+                          
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exec_erro;
+      END IF;
+
+      -- Verifica se deve utilizar sequence na geração do protocolo
+      IF pr_utiliza_seq = 1 THEN
+        vr_sequence := seq_crappro.nextval;
+      ELSE
+        vr_sequence := 0;
+      END IF;
+
+      -- Criptografar o numero do protocolo
+      pc_criptografa_protocolo(pr_cdcooper => pr_cdcooper             --> Código da cooperativa
+                              ,pr_dtmvtolt => pr_dtmvtolt             --> Data movimento
+                              ,pr_hrtransa => pr_hrtransa             --> Hora da transação
+                              ,pr_sequence => vr_sequence             --> Sequence utilizada no protocolo
+                              ,pr_nrprotoc => vr_nrprotoc             --> Número do Protocolo
+                              ,pr_tipo_protocolo => pr_tipo_protocolo --> Tipo de Protocolo (1-Velho/2-Novo)
+                              ,pr_dsprotoc => vr_dsprotoc             --> Descrição do protocolo
+                              ,pr_dscritic => vr_dscritic);           --> Descricao do Erro
+    
+
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exec_erro;
+      END IF;
+      
+      pr_dsprotoc := vr_dsprotoc;
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exec_erro THEN
+        pr_dscritic := vr_dscritic;
+        pr_des_erro := 'NOK';
+        
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro em GENE0006.pc_monta_protocolo: ' || SQLERRM;
+        pr_des_erro := 'NOK';
+    END;
+  END pc_monta_protocolo;
+
+  /* Procedure para calcular o protocolo de segurança */
+  PROCEDURE pc_criptografa_protocolo(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data movimento
+                                    ,pr_hrtransa IN craplcm.hrtransa%TYPE  --> Hora da transação
+                                    ,pr_sequence IN INTEGER                --> Sequence utilizada no protocolo
+                                    ,pr_nrprotoc IN NUMBER                 --> Número do Protocolo
+                                    ,pr_tipo_protocolo IN INTEGER          --> Tipo de Protocolo (1-Velho/2-Novo)
+                                    ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Descrição do protocolo
+                                    ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_criptografa_protocolo
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Recebe os parâmetros e gera um protocolo único em hexadecimal.
+    --
+    --   Observação: Os parâmetros são convertidos para números, multiplicados
+    --               pela variável "aux_multipli" e depois somados.
+    --               São adicionados alguns campos sem multiplicação para serem
+    --               identificadores únicos. Após isto são transformados em
+    --               hexadecimal de 2 em 2 caracteres.
+    --               Quando o parâmetro par_gravapro for igual a YES/TRUE, será
+    --               gravado um registro na tabela crappro.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_dsprotoc  crappro.dsprotoc%TYPE; --> Descrição protocolo
+      vr_itera     PLS_INTEGER;           --> Controle para as iterações
+      vr_contador  PLS_INTEGER;           --> Contador de registros
+    BEGIN
+
+      IF pr_tipo_protocolo = 2 THEN /* Novo formato */
+        -- Cooperativa / Data / Horario
+        vr_dsprotoc := to_char(pr_nrprotoc) ||
+                       gene0002.fn_mask(pr_cdcooper, '99') ||
+                       to_char(pr_dtmvtolt, 'DDMMYY') ||
+                       gene0002.fn_mask(pr_hrtransa, '99999')  ||
+                       gene0002.fn_mask(pr_sequence,'999');
+                       
+      ELSE /* Formato antigo do protocolo */
+
+        -- Cooperativa / Data / Horario
+        vr_dsprotoc := to_char(pr_nrprotoc) ||
+                       gene0002.fn_mask(pr_cdcooper, '999') ||
+                       to_char(pr_dtmvtolt, 'DDMMYYYY') ||
+                       gene0002.fn_mask(pr_hrtransa, '99999');
+                       
+      END IF;
+
+      -- Deixa um número PAR de caracteres
+      IF MOD(length(vr_dsprotoc), 2) <> 0 THEN
+        vr_dsprotoc := '0' || vr_dsprotoc;
+      END IF;
+
+      -- Converte em HEXADECIMAL de 2 em 2 caracteres
+      vr_itera := 1;
+
+      FOR vr_contador IN 1..(length(vr_dsprotoc) - 1) LOOP
+        -- Verifica se é o segundo caracter por iteração
+        IF vr_itera = 1 OR mod(vr_itera,2) <> 0  THEN
+          pr_dsprotoc := pr_dsprotoc || fn_converte_hex(substr(vr_dsprotoc, vr_contador, 2));
+        END IF;
+        --Incrementar iteracao
+        vr_itera:= vr_itera+1;
+      END LOOP;
+
+      -- Assimila valores nas variáveis
+      vr_dsprotoc := pr_dsprotoc;
+      pr_dsprotoc := NULL;
+
+      -- Itera de 4 em 4 posições para gerar protocolo
+      vr_contador := 1;
+      WHILE vr_contador < length(vr_dsprotoc) LOOP
+        -- Verifica se é o quarto caracter por iteração
+        pr_dsprotoc := pr_dsprotoc || TRIM(substr(vr_dsprotoc, vr_contador, 4));
+
+        IF (vr_contador + 4) < length(vr_dsprotoc) THEN
+          pr_dsprotoc:= pr_dsprotoc || '.';
+        END IF;
+        --Incrementar iteracao em 4
+        vr_contador := vr_contador + 4;
+      END LOOP;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dsprotoc:= NULL;
+        pr_dscritic:= 'Erro na GENE0006.pc_criptografa_protocolo -> ' || SQLERRM;
+    END;
+  END pc_criptografa_protocolo;
+
+
+  /* Procedure para calcular o protocolo de segurança */
+  PROCEDURE pc_calcula_protocolo(pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
+                                ,pr_nrseqaut IN crapaut.nrseqaut%TYPE  --> Número da sequencia
+                                ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor lançamento
+                                ,pr_nrdcaixa IN crapaut.nrdcaixa%TYPE  --> Numero do Caixa
+                                ,pr_nrprotoc OUT NUMBER                --> Numero do Protocolo
+                                ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_calcula_protocolo
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Recebe os parâmetros e gera um protocolo único em hexadecimal.
+    --
+    --   Observação: Os parâmetros são convertidos para números, multiplicados
+    --               pela variável "aux_multipli" e depois somados.
+    --               São adicionados alguns campos sem multiplicação para serem
+    --               identificadores únicos. Após isto são transformados em
+    --               hexadecimal de 2 em 2 caracteres.
+    --               Quando o parâmetro par_gravapro for igual a YES/TRUE, será
+    --               gravado um registro na tabela crappro.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_multipli  CONSTANT NUMBER := 4;  --> Fator multiplicador
+      vr_nrprotoc  NUMBER;                --> Número protocolo
+    BEGIN
+      -- Conta
+      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdconta * vr_multipli);
+      -- Documento
+      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdocmto * vr_multipli);
+
+      -- Autenticação
+      IF pr_nrseqaut > 0 THEN
+        vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrseqaut * vr_multipli);
+      END IF;
+
+      -- Valor
+      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_vllanmto * 100 * vr_multipli);
+      -- Caixa
+      vr_nrprotoc := nvl(vr_nrprotoc,0) + (pr_nrdcaixa * vr_multipli);
+
+      -- Devolver o valor calculado para o protocolo
+      pr_nrprotoc:= nvl(vr_nrprotoc,0);
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_nrprotoc:= 0;
+        pr_dscritic:= 'Erro na GENE0006.pc_calcula_protocolo -> ' || SQLERRM;
+    END;
+  END pc_calcula_protocolo;
+
+  /* Procedure para desmontar o protocolo de segurança */
+  PROCEDURE pc_desmonta_protocolo(pr_dsprotoc  IN VARCHAR2     --> Protocolo
+                                 ,pr_tipo_protocolo IN INTEGER --> Tipo de Protocolo (1-Velho/2-Novo)
+                                 ,pr_nrprotoc OUT INTEGER      --> Número do protocolo
+                                 ,pr_cdcooper OUT INTEGER      --> Cooperativa
+                                 ,pr_dtmvtolt OUT DATE         --> Data
+                                 ,pr_hrtransa OUT INTEGER      --> Hora
+                                 ,pr_nrsequen OUT INTEGER      --> Sequencia
+                                 ,pr_is_valid OUT VARCHAR2     --> Valido ? "OK" / "NOK"
+                                 ,pr_dscritic OUT VARCHAR2) IS --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_desmonta_protocolo
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Recebe os parâmetros e gera um protocolo único em hexadecimal.
+    --
+    --   Observação: Os parâmetros são convertidos para números, multiplicados
+    --               pela variável "aux_multipli" e depois somados.
+    --               São adicionados alguns campos sem multiplicação para serem
+    --               identificadores únicos. Após isto são transformados em
+    --               hexadecimal de 2 em 2 caracteres.
+    --               Quando o parâmetro par_gravapro for igual a YES/TRUE, será
+    --               gravado um registro na tabela crappro.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_itera     INTEGER;
+      vr_contador  INTEGER;
+      
+      vr_dsprotoc  crappro.dsprotoc%TYPE;
+      vr_dsprotoc2 crappro.dsprotoc%TYPE;
+      
+      vr_pos       INTEGER;
+      
+    BEGIN
+      
+      -- Remover a pontuação
+      vr_dsprotoc := REPLACE(SRCSTR => pr_dsprotoc, OLDSUB => '.', NEWSUB => '');
+
+      -- Converte em HEXADECIMAL de 2 em 2 caracteres
+      vr_itera := 1;
+
+      FOR vr_contador IN 1 .. (length(vr_dsprotoc) - 1) LOOP
+        -- Verifica se é o segundo caracter por iteração
+        IF vr_itera = 1 OR mod(vr_itera, 2) <> 0 THEN
+          vr_dsprotoc2 := vr_dsprotoc2 || TO_CHAR(TO_NUMBER(substr(vr_dsprotoc,
+                                                            vr_contador,
+                                                            2),'XX') , 'FM00');
+        END IF;
+        --Incrementar iteracao
+        vr_itera := vr_itera + 1;
+      END LOOP;
+      
+      -- Verificar o tipo de protocolo que estamos desmontando
+      IF pr_tipo_protocolo = 2 THEN
+        -- Formato do Protocolo: Valor calculado + 
+        --                       cdcooper "2" + 
+        --                       dtmvtolt "6" + 
+        --                       hrtransa "5" +
+        --                       nrsequen "3"
+        
+        -- Posição inicial da "nrsequen"
+        vr_pos := length(vr_dsprotoc2) - 2;
+        -- Sequencial está no fim do protocolo
+        pr_nrsequen := TO_NUMBER(substr(vr_dsprotoc2,vr_pos,3));
+
+        -- Posição inicial da "hrtransa"
+        vr_pos := vr_pos - 5;
+        pr_hrtransa := TO_NUMBER(substr(vr_dsprotoc2,vr_pos,5));
+        
+
+        -- Posição inicial da "hrtransa"
+        vr_pos := vr_pos - 6;
+        pr_dtmvtolt := to_date(substr(vr_dsprotoc2,vr_pos,6),'DDMMYY');
+
+        -- Posição inicial da "cdcooper"
+        vr_pos := vr_pos - 2;
+        pr_cdcooper := TO_NUMBER(substr(vr_dsprotoc2,vr_pos, 2));
+
+        -- Posição inicial da "nrprotoc"
+        pr_nrprotoc := TO_NUMBER(substr(vr_dsprotoc2,1, vr_pos));
+      ELSE
+        -- Formato do Protocolo: Valor calculado + 
+        --                       cdcooper "3" + 
+        --                       dtmvtolt "8" + 
+        --                       hrtransa "5"
+
+        -- Não tem sequencial
+        pr_nrsequen := 0;
+
+        -- Posição inicial da "hrtransa"
+        vr_pos := length(vr_dsprotoc2) - 4;
+        pr_hrtransa := TO_NUMBER(substr(vr_dsprotoc2,vr_pos,5));
+        
+        -- Posição inicial da "dtmvtolt"
+        vr_pos := vr_pos - 8;
+        pr_dtmvtolt := to_date(substr(vr_dsprotoc2,vr_pos,8),'DDMMYYYY');
+
+        -- Posição inicial da "cdcooper"
+        vr_pos := vr_pos - 3;
+        pr_cdcooper := TO_NUMBER(substr(vr_dsprotoc2,vr_pos, 3));
+
+        -- Posição inicial da "nrprotoc"
+        pr_nrprotoc := TO_NUMBER(substr(vr_dsprotoc2,1, vr_pos));
+      END IF;
+
+      pr_is_valid:= 'OK';
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_nrprotoc:= 0;
+        pr_is_valid:= 'NOK';
+        pr_dscritic:= 'Erro na GENE0006.pc_desmonta_protocolo -> ' || SQLERRM;
+    END;
+  END pc_desmonta_protocolo;
+
+
+  /* Procedure para validar o protocolo de segurança */
+  PROCEDURE pc_valida_protocolo(pr_cdcooper  IN INTEGER      --> Cooperativa
+                               ,pr_cddopcao  IN VARCHAR2     --> Opcao
+                               ,pr_nrdconta  IN INTEGER      --> Conta
+                               ,pr_nrdocmto  IN INTEGER      --> Numero do Documento
+                               ,pr_dtmvtolx  IN DATE         --> Data do Protocolo
+                               ,pr_horproto  IN INTEGER      --> Hora do Protocolo
+                               ,pr_minproto  IN INTEGER      --> Minuto do Protocolo
+                               ,pr_segproto  IN INTEGER      --> Segundo do Protocolo
+                               ,pr_vlprotoc  IN NUMBER       --> Valor do Protocolo
+                               ,pr_dsprotoc  IN VARCHAR2     --> Protocolo
+                               ,pr_nrseqaut  IN VARCHAR2     --> Sequencia de Autenticacao
+                               ,pr_nmdcampo OUT VARCHAR2     --> Nome do Campo
+                               ,pr_returnvl OUT VARCHAR2     --> Retorno "OK" / "NOK"
+                               ,pr_msgretur OUT VARCHAR2     --> Mensagem de Retorno
+                               ,pr_msgerror OUT VARCHAR2     --> Mensagem de Erro
+                               ,pr_cdcritic OUT INTEGER      --> Codigo da Critica
+                               ,pr_dscritic OUT VARCHAR2) IS --> Descricao da Critica
+    -- ..........................................................................
+    --
+    --  Programa : pc_valida_protocolo     Antigo: b1wgen0127.Valida_Protocolo
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Douglas Quisinski
+    --  Data     : Maio/2017.                   Ultima atualização: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: ---
+    --   Objetivo  : Validar o protocolo gerado, com os dados informados em tela
+    --
+    --   Observação: Conversão da procedure b1wgen0127.Valida_Protocolo, com ajustes
+    --               devido ao novo tipo de formatacao do protocolo, para evitar duplicidade
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_tempotot INTEGER;
+      
+      -- Campos desmontados do protocolo no formato antigo
+      vr_nrprotoc_des1 NUMBER;
+      vr_cdcooper_des1 INTEGER;
+      vr_dtmvtolt_des1 DATE;
+      vr_hrtransa_des1 INTEGER;
+      vr_nrsequen_des1 INTEGER;
+      vr_is_valid1     VARCHAR2(5);
+      
+      -- Campos desmontados do protocolo no formato novo
+      vr_nrprotoc_des2 NUMBER;
+      vr_cdcooper_des2 INTEGER;
+      vr_dtmvtolt_des2 DATE;
+      vr_hrtransa_des2 INTEGER;
+      vr_nrsequen_des2 INTEGER;
+      vr_is_valid2     VARCHAR2(5);
+
+      -- Calculo do protocolo (procedure multiplica os campos por 4 para totalizar)
+      vr_nrprotoc_calc NUMBER;
+      vr_dsprotoc_novo VARCHAR2(70);
+      
+      -- Erros
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+      vr_exec_err EXCEPTION;
+      vr_exec_ok  EXCEPTION;
+      vr_exec_nok EXCEPTION;
+    
+      -- Busca informacoes do associado
+      CURSOR cr_crapass(p_cdcooper IN crapcop.cdcooper%TYPE,
+                        p_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT ass.nrdconta
+          FROM crapass ass
+         WHERE ass.cdcooper = p_cdcooper
+           AND ass.nrdconta = p_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+    
+      -- Busca informacoes da cooperativa anterior
+      CURSOR cr_craptco(p_cdcooper IN crapcop.cdcooper%TYPE
+                       ,p_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT tco.nrctaant
+              ,tco.cdcopant
+          FROM craptco tco
+         WHERE tco.cdcooper = p_cdcooper
+           AND tco.nrdconta = p_nrdconta
+           AND tco.tpctatrf = 1;
+      rw_craptco cr_craptco%ROWTYPE;
+      
+    BEGIN
+      
+      pr_msgretur := NULL;
+      pr_msgerror := NULL;
+    
+      IF pr_cddopcao <> 'C' THEN
+        vr_cdcritic := 14;
+        pr_nmdcampo := 'cddopcao';
+        RAISE vr_exec_err;
+      END IF;
+    
+      OPEN cr_crapass(p_cdcooper => pr_cdcooper
+                     ,p_nrdconta => pr_nrdconta);
+      FETCH cr_crapass
+        INTO rw_crapass;
+      -- Se nao encontrou o associado     
+      IF cr_crapass%NOTFOUND THEN
+        -- Apenas fecha cursor
+        CLOSE cr_crapass;
+        -- Fecha cursor
+        vr_cdcritic := 9;
+        pr_nmdcampo := 'nrdconta';
+        RAISE vr_exec_err;
+      END IF;
+      -- Apenas fecha cursor
+      CLOSE cr_crapass;
+    
+      -- Se o nro do documento nao foi preenchido
+      IF pr_nrdocmto = 0 THEN
+        -- Gera critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Numero de documento invalido.';
+        pr_nmdcampo := 'nrdocmto';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Se a data nao foi preenchida
+      IF pr_dtmvtolx IS NULL THEN
+        -- Gera critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Data incorreta.';
+        pr_nmdcampo := 'dtmvtolt';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Valida o campo de horas informado
+      IF pr_horproto >= 24 THEN
+        -- Gera critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Campo de Horas Invalido.';
+        pr_nmdcampo := 'horproto';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Valida o campo de minutos informado
+      IF pr_minproto >= 60 THEN
+        -- Gera critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Campo de Minutos Invalido.';
+        pr_nmdcampo := 'minproto';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Valida o campo de segundos informado
+      IF pr_segproto >= 60 THEN
+        -- Gera critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Campo de Segundos Invalido.';
+        pr_nmdcampo := 'segproto';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Verifica se o valor do protocolo foi preenchido
+      IF pr_vlprotoc <= 0 THEN
+        -- Gera critica
+        pr_dscritic := 'Valor do protocolo nao pode ser 0,00.';
+        pr_nmdcampo := 'vlprotoc';
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Verifica se o protocolo foi preenchido
+      IF TRIM(pr_dsprotoc) IS NULL THEN
+        -- Gera critica
+        pr_dscritic := 'Protocolo nao informado';
+        pr_nmdcampo := 'dsprotoc';
+        RAISE vr_exec_err;
+      END IF;
+      
+      -- Transforma os campos de horas, minutios e segundo
+      vr_tempotot := TO_CHAR(pr_segproto
+                           +(pr_minproto*60)
+                           +(pr_horproto*3600));
+
+      -- Calcular o total para o protocolo, com os parametros informados em tela
+      GENE0006.pc_calcula_protocolo(pr_nrdconta => pr_nrdconta
+                                   ,pr_nrdocmto => pr_nrdocmto
+                                   ,pr_nrseqaut => pr_nrseqaut
+                                   ,pr_vllanmto => pr_vlprotoc
+                                   ,pr_nrdcaixa => 900 -- Esta fixo na b1wgen0127
+                                   ,pr_nrprotoc => vr_nrprotoc_calc
+                                   ,pr_dscritic => vr_dscritic);
+            
+      -- verificar se ocorreu erro no calculo do protocolo
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exec_err;
+      END IF;
+    
+      -- Desmontar o protocolo para buscar a sequencia que foi gerado o boleto
+      GENE0006.pc_desmonta_protocolo(pr_dsprotoc => pr_dsprotoc
+                                    ,pr_tipo_protocolo => 2 -- Desmontar protocolo pelo tipo novo
+                                    ,pr_nrprotoc => vr_nrprotoc_des2
+                                    ,pr_cdcooper => vr_cdcooper_des2
+                                    ,pr_dtmvtolt => vr_dtmvtolt_des2
+                                    ,pr_hrtransa => vr_hrtransa_des2
+                                    ,pr_nrsequen => vr_nrsequen_des2
+                                    ,pr_is_valid => vr_is_valid2
+                                    ,pr_dscritic => vr_dscritic);
+
+      -- Desmontar o protocolo no formato antigo
+      GENE0006.pc_desmonta_protocolo(pr_dsprotoc => pr_dsprotoc
+                                    ,pr_tipo_protocolo => 1 -- Desmontar protocolo pelo tipo novo
+                                    ,pr_nrprotoc => vr_nrprotoc_des1
+                                    ,pr_cdcooper => vr_cdcooper_des1
+                                    ,pr_dtmvtolt => vr_dtmvtolt_des1
+                                    ,pr_hrtransa => vr_hrtransa_des1
+                                    ,pr_nrsequen => vr_nrsequen_des1
+                                    ,pr_is_valid => vr_is_valid1
+                                    ,pr_dscritic => vr_dscritic);
+
+      -- ############## VALIDACAO DO PROTOCOLO PELO FORMATO NOVO ############## --
+      IF vr_is_valid2 = 'OK' THEN
+        -- Criptografar o protocolo no formato novo
+        GENE0006.pc_criptografa_protocolo(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => pr_dtmvtolx
+                                         ,pr_hrtransa => vr_tempotot
+                                         ,pr_sequence => vr_nrsequen_des2
+                                         ,pr_nrprotoc => vr_nrprotoc_calc
+                                         ,pr_tipo_protocolo => 2
+                                         ,pr_dsprotoc => vr_dsprotoc_novo
+                                         ,pr_dscritic => vr_dscritic);
+
+        -- verificar se ocorreu erro na criptografia do protocolo
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exec_err;
+        END IF;
+      
+        -- Verificar se os dois protocolos são iguais
+        IF TRIM(vr_dsprotoc_novo) = TRIM(pr_dsprotoc) AND 
+           TRIM(vr_dsprotoc_novo) IS NOT NULL         THEN
+          RAISE vr_exec_ok;
+        END IF;
+      END IF;
+    
+      -- Se nao foi validado pelo formato novo, devemos validar o formato antigo
+      -- ############## VALIDACAO DO PROTOCOLO PELO FORMATO ANTIGO ############## --
+      IF vr_is_valid1 = 'OK' THEN
+        -- Criptografar o protocolo no formato antigo
+        GENE0006.pc_criptografa_protocolo(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => pr_dtmvtolx
+                                         ,pr_hrtransa => vr_tempotot
+                                         ,pr_sequence => 0
+                                         ,pr_nrprotoc => vr_nrprotoc_calc
+                                         ,pr_tipo_protocolo => 1
+                                         ,pr_dsprotoc => vr_dsprotoc_novo
+                                         ,pr_dscritic => vr_dscritic);
+
+        -- verificar se ocorreu erro na criptografia do protocolo
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exec_err;
+        END IF;
+      
+        -- Verificar se os dois protocolos são iguais
+        IF TRIM(vr_dsprotoc_novo) = TRIM(pr_dsprotoc) AND 
+           TRIM(vr_dsprotoc_novo) IS NOT NULL         THEN
+          RAISE vr_exec_ok;
+        END IF;
+      END IF;
+    
+      -- Verifica se eh uma conta migrada, e se for, valida novamente
+      -- com a cooperativa e conta antiga, pois o comprovante tambem
+      -- pode ter sido migrado
+      OPEN cr_craptco(p_cdcooper => pr_cdcooper
+                     ,p_nrdconta => pr_nrdconta);
+      FETCH cr_craptco INTO rw_craptco;
+      -- Se nao encotra
+      IF cr_craptco%NOTFOUND THEN
+        -- Fecha Cursor
+        CLOSE cr_craptco;
+        RAISE vr_exec_nok;
+      END IF;
+      -- Apenas Fecha Cursor
+      CLOSE cr_craptco;
+      
+      -- Como encontramos o protocolo de uma conta migrada temos que fazer as mesmas validações
+      -- Montar o protocolo com os dados da tela, junto com o sequencial que encontramos na desmontagem
+      GENE0006.pc_calcula_protocolo(pr_nrdconta => rw_craptco.nrctaant
+                                   ,pr_nrdocmto => pr_nrdocmto
+                                   ,pr_nrseqaut => pr_nrseqaut
+                                   ,pr_vllanmto => pr_vlprotoc
+                                   ,pr_nrdcaixa => 900 -- Esta fixo na b1wgen0127
+                                   ,pr_nrprotoc => vr_nrprotoc_calc
+                                   ,pr_dscritic => vr_dscritic);
+        
+      -- verificar se ocorreu erro no calculo do protocolo
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exec_err;
+      END IF;
+      
+      IF vr_is_valid2 = 'OK' THEN
+        -- Criptografar o protocolo no formato novo
+        GENE0006.pc_criptografa_protocolo(pr_cdcooper => rw_craptco.cdcopant
+                                         ,pr_dtmvtolt => pr_dtmvtolx
+                                         ,pr_hrtransa => vr_tempotot
+                                         ,pr_sequence => vr_nrsequen_des2
+                                         ,pr_nrprotoc => vr_nrprotoc_calc
+                                         ,pr_tipo_protocolo => 2
+                                         ,pr_dsprotoc => vr_dsprotoc_novo
+                                         ,pr_dscritic => vr_dscritic);
+
+        -- verificar se ocorreu erro na criptografia do protocolo
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exec_err;
+        END IF;
+    
+        -- Verificar se os dois protocolos são iguais
+        IF TRIM(vr_dsprotoc_novo) = TRIM(pr_dsprotoc) AND 
+           TRIM(vr_dsprotoc_novo) IS NOT NULL         THEN
+          RAISE vr_exec_ok;
+        END IF;
+      END IF;
+    
+      -- Se nao foi validado pelo formato novo, devemos validar o formato antigo
+      -- ############## VALIDACAO DO PROTOCOLO PELO FORMATO ANTIGO ############## --
+      IF vr_is_valid1 = 'OK' THEN
+        -- Criptografar o protocolo no formato antigo
+        GENE0006.pc_criptografa_protocolo(pr_cdcooper => rw_craptco.cdcopant
+                                         ,pr_dtmvtolt => pr_dtmvtolx
+                                         ,pr_hrtransa => vr_tempotot
+                                         ,pr_sequence => 0
+                                         ,pr_nrprotoc => vr_nrprotoc_calc
+                                         ,pr_tipo_protocolo => 1
+                                         ,pr_dsprotoc => vr_dsprotoc_novo
+                                         ,pr_dscritic => vr_dscritic);
+
+        -- verificar se ocorreu erro na criptografia do protocolo
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exec_err;
+        END IF;
+      
+        -- Verificar se os dois protocolos são iguais
+        IF TRIM(vr_dsprotoc_novo) = TRIM(pr_dsprotoc) AND 
+           TRIM(vr_dsprotoc_novo) IS NOT NULL         THEN
+          RAISE vr_exec_ok;
+        END IF;
+      END IF;
+      
+      -- Se nao eh um protocolo valido, enviamos mensagem de "Protocolo incorreto"
+      RAISE vr_exec_nok;
+    EXCEPTION
+      WHEN vr_exec_ok  THEN
+        -- A execução ocorreu com sucesso
+        pr_returnvl := 'OK';
+        pr_msgretur := 'Protocolo informado esta correto.';
+
+      WHEN vr_exec_nok  THEN
+        -- A execução ocorreu com sucesso
+        pr_returnvl := 'OK';
+        pr_msgerror := 'Protocolo informado esta incorreto.';
+
+      
+      WHEN vr_exec_err THEN
+        IF vr_cdcritic > 0 THEN
+          IF TRIM(vr_dscritic) IS NULL THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE
+            vr_dscritic := vr_dscritic || ' - ' ||
+                           gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;
+        END IF;
+      
+        pr_returnvl := 'NOK';
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      
+      WHEN OTHERS THEN
+        
+        pr_returnvl := 'NOK';
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na GENE0006.pc_valida_protocolo -> ' ||
+                       SQLERRM;
+    END;
+  END pc_valida_protocolo;
   
 END GENE0006;
 /
