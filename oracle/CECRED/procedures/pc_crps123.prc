@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 02/08/2017
+   Data    : Junho/95.                       Ultima atualizacao: 18/10/2017
 
    Dados referentes ao programa:
 
@@ -222,8 +222,8 @@ BEGIN
                  02/03/2017 - Incluido nas consultas da craplau 
                               craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
-				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-				              (Jonata - RKAM M311).
+				         04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                      (Jonata - RKAM M311).
 
                  26/07/2017 - Inclusão na tabela de erros Oracle
                             - Padronização de logs
@@ -232,6 +232,9 @@ BEGIN
 
                  02/08/2017 - Inclusão parâmetros nas mensagens de erro de insert e update
                             - Chamado 709894 (Ana Volles - Envolti)
+                            
+                 18/10/2017 - Ajustar para não verificar mais os consorcios nesta rotina
+                              e sim no crps663 (Lucas Ranghetti #739738)
   ............................................................................................*/
   
   DECLARE
@@ -373,7 +376,7 @@ BEGIN
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
                                  ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
-         AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
+         AND lau.cdhistor NOT IN( 1019,1230,1231,1232,1233,1234) --> 1019 será processado pelo crps642, consorcio no debcns
        ORDER BY lau.cdagenci
                ,lau.cdbccxlt
                ,lau.cdbccxpg
@@ -1458,7 +1461,7 @@ BEGIN
         EXIT;
 
       END LOOP; -- FINAL DO LOOP
-
+      
       -- LEITURA DE SALDO EM DEPOSITO AVISTA
       OPEN cr_crapsld(pr_cdcooper => vr_cdcooper,  -- CODIGO DA COOPERATIVA
                       pr_nrdconta => vr_nrdconta); -- NUMERO DA CONTA
@@ -1621,19 +1624,12 @@ BEGIN
 
       END IF;
 
-      -- VERIFICA SE CRITICA NÃO EXISTE E QTD. DIAS SALDO NEGATIVO OU FOR HISTORICO DE CONSORCIO
-      IF (vr_cdcritic = 0 AND rw_crapsld.qtddsdev > 0) OR
-        (rw_craplau.cdhistor IN (1230,1231,1232,1233,1234) AND rw_crapsld.qtddsdev > 0) THEN
+      -- VERIFICA SE CRITICA NÃO EXISTE E QTD. DIAS SALDO NEGATIVO
+      IF (vr_cdcritic = 0 AND rw_crapsld.qtddsdev > 0) THEN
 
         vr_cdcritic := 722;                                                   -- SALDO NEGATIVO
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
-
-        -- VERIFICA CODIGO DO HISTORICO
-        IF rw_craplau.cdhistor IN (1230,1231,1232,1233,1234) THEN
-          vr_flgentra := 0;
-        ELSE
-          vr_flgentra := 1;
-        END IF;
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA        
+        vr_flgentra := 1;       
 
       END IF;
 

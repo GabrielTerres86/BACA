@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 24/10/2016
+   Data    : Julho/2013                        Ultima atualizacao: 23/10/2017
 
    Dados referentes ao programa:
 
@@ -32,6 +32,9 @@
 				
    24/10/2016 - Inserido nova opcao na tela "S - Sumario" para contabilizar
                 os lancamentos do dia - Melhoria349 (Tiago/Elton).       
+                
+   23/10/2017 - Ajustar relatorio e tambem para chamar a rotina efetua-debito-consorcio
+                como 3 "Ultima execucao" (Lucas Ranghetti #739738)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -138,22 +141,17 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          SKIP(2)
          WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_titulo.
 
-    FORM SKIP(1)
-         "->"
-         aux_dstiptra FORMAT "x(19)" SKIP
-         "--->"
-         aux_dscooper
-         SKIP(1)
+    FORM SKIP(1)         
          " PA  "
          "CONTA/DV"
          "CTA.CONSOR"
-         "NOME                         "
+         "NOME                       "
          "TIPO     "
          "GRUPO "
          "      COTA"
-         "     VALOR"
+         "     VALOR"         
          SKIP
-         " --- --------- ---------- ----------------------------- ---------"
+         " --- --------- ---------- --------------------------- ---------"
          "------ ---------- ----------"
          WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao.
     
@@ -168,31 +166,32 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          " PA  "
          "CONTA/DV"
          "CTA.CONSOR"
-         "NOME                         "
+         "NOME                       "
          "TIPO     "
          "GRUPO "
          "      COTA"
          "     VALOR"
+         "CRITICA"
          SKIP
-         " --- --------- ---------- ----------------------------- ---------"
-         "------ ---------- ----------"
+         " --- --------- ---------- --------------------------- ---------"
+         "------ ---------- ---------- ---------------------------------------"
          WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao2.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"        
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9" 
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9" 
-         tt-obtem-consorcio.nmprimtl FORMAT "x(29)"      
+         tt-obtem-consorcio.nmprimtl FORMAT "x(27)"      
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"       
          tt-obtem-consorcio.nrdgrupo FORMAT "999999"
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9" 
          tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99"
-         tt-obtem-consorcio.dscritic FORMAT "x(44)"
+         tt-obtem-consorcio.dscritic FORMAT "x(39)"
          WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_nao_efetuados.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"   
-         tt-obtem-consorcio.nmprimtl FORMAT "x(29)"        
+         tt-obtem-consorcio.nmprimtl FORMAT "x(27)"        
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"         
          tt-obtem-consorcio.nrdgrupo FORMAT "999999"
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9"   
@@ -462,11 +461,11 @@ DO  WHILE TRUE:
                                                   + "desabilitada.".
                         
                         /** Verifica se horario para pagamentos nao esgotou */
-                        IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
+                        /*IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
                             TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
                             ASSIGN glb_dscritic = crapcop.nmrescop +
                                                   " - Horario para " + 
-                                           "pagamentos CONSORCIO nao esgotou". 
+                                           "pagamentos CONSORCIO nao esgotou". */
                     END.
    
                     IF  glb_dscritic <> ""  THEN
@@ -542,7 +541,7 @@ DO  WHILE TRUE:
             MESSAGE "Aguarde, debitando consorcios ...".
             
             RUN efetua-debito-consorcio(INPUT TRUE,
-			                                  INPUT 2).
+			                                  INPUT 3).
             
             HIDE MESSAGE NO-PAUSE.
             

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 17/07/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 24/10/2017
 
    Dados referentes ao programa:
 
@@ -316,6 +316,9 @@
                17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                             conta e referencia no mesmo dia(dtmvtolt) porem com valores
                             diferentes (Lucas Ranghetti #684123)    
+                            
+               24/10/2017 - Tratamento para buscar o nrcrcard "referencia original" caso 
+                            tenha valor no campo somente para consorcios (Lucas Ranghetti #739738)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1244,8 +1247,14 @@ DO WHILE TRUE:
                             craplcm.cdhistor = 1231 OR
                             craplcm.cdhistor = 1232 OR
                             craplcm.cdhistor = 1233 OR
-                            craplcm.cdhistor = 1234 THEN                             
-                            ASSIGN aux_cdrefere = craplau.nrdocmto.
+                            craplcm.cdhistor = 1234 THEN
+                            DO:
+                               IF  craplau.nrcrcard <> 0 THEN
+                                   ASSIGN aux_cdrefere = craplau.nrcrcard.
+                               ELSE 
+                                   ASSIGN aux_cdrefere = craplau.nrdocmto.
+                               
+                            END.
                     END.
 
                IF   aux_flgerros  THEN

@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 13/04/2017
+     Data    : Junho/2014                       Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -141,8 +141,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               craplau utilizar o vllanaut como filtro pois estava retornando
                               mais de um registro (Tiago/Fabricio SD615681).
 
-				 13/04/2017 - Ajuste devido a importação de arquivos de débito automático com o layout FEBRABAN na versão 5
-				              (Jonata - RKAM / M311). 
+        				 13/04/2017 - Ajuste devido a importação de arquivos de débito automático com o layout FEBRABAN na versão 5
+				                      (Jonata - RKAM / M311). 
+                              
+                 18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -266,15 +268,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
   CURSOR cr_craplcm(pr_cdcooper IN crapcop.cdcooper%TYPE,
                     pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
                     pr_nrdconta IN craplcm.nrdconta%TYPE,
-                    pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+                    pr_nrdocmto IN craplcm.nrdocmto%TYPE,
+                    pr_cdhistor IN craplcm.cdhistor%TYPE) IS
     SELECT lcm.nrdolote
       FROM craplcm lcm
      WHERE lcm.cdcooper = pr_cdcooper  -- CODIGO DA COOPERATIVA
        AND lcm.nrdconta = pr_nrdconta  -- CONTA/DV
        AND lcm.dtmvtolt = pr_dtmvtolt  -- DATA DE MOVIMENTACAO
-       AND lcm.cdhistor = 1019         -- BANCO/CAIXA
+       AND lcm.cdhistor = pr_cdhistor  -- HISTORICO
        AND lcm.nrdocmto = pr_nrdocmto  -- NUMERO DO DOCUMENTO
-       AND lcm.nrdolote = 6651;         -- NUMERO DO LOTE
+       AND lcm.nrdolote = 6651;        -- NUMERO DO LOTE
   rw_craplcm cr_craplcm%ROWTYPE;
     
   CURSOR cr_crapatr(pr_cdcooper IN crapatr.cdcooper%TYPE,
@@ -316,7 +319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
         craphis.inautori = 1                AND /*Debito Automatico*/
         gnconve.flgativo = 1;
     BEGIN
-      pr_lshistor := '1019';
+      pr_lshistor := '1019,1230,1231,1232,1233,1234';
       FOR vr_craphis IN cr_craphis (pr_cdcooper) LOOP
         pr_lshistor := pr_lshistor || ',' || to_char(vr_craphis.cdhistor);
       END LOOP;
@@ -350,12 +353,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                                  pr_dtmvtopg => pr_dtmvtolt, 
                                  pr_lshistor => vr_lshistor) LOOP
 
-      IF rw_craplau.cdhistor = 1019 THEN
+      IF rw_craplau.cdhistor = 1019 THEN      
         SELECT crapscn.dsnomcnv INTO vr_nmempres 
           FROM crapscn
-        WHERE crapscn.cdempres = rw_craplau.cdempres;
-        
+        WHERE crapscn.cdempres = rw_craplau.cdempres;        
         vr_cdempres := rw_craplau.cdempres;
+        
+      ELSIF rw_craplau.cdhistor IN(1230,1231,1232,1233,1234) THEN
+        vr_cdempres := rw_craplau.cdempres;
+        CASE rw_craplau.cdhistor
+          WHEN 1230 THEN vr_nmempres:= 'CONSORCIO - MOTO';
+          WHEN 1231 THEN vr_nmempres:= 'CONSORCIO - AUTO';
+          WHEN 1232 THEN vr_nmempres:= 'CONSORCIO - PESADOS';
+          WHEN 1233 THEN vr_nmempres:= 'CONSORCIO - IMOVEIS';
+          WHEN 1234 THEN vr_nmempres:= 'CONSORCIO - SERVICOS';
+        END CASE;         
       ELSE
         SELECT gnconve.nmempres, TO_CHAR(gnconve.cdconven) INTO vr_nmempres, vr_cdempres
           FROM gnconve
@@ -415,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : 
-   Data    :                        Ultima atualizacao: 11/10/2016
+   Data    :                        Ultima atualizacao: 18/10/2017
   
    Dados referentes ao programa:
   
@@ -438,6 +450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt (Lucas Ranghetti/Fabricio #524588)
                
                11/10/2016 - Incluir valor do lancamento como parametro na verificacao da craplau (Lucas Ranghetti #537385)
+               
+               18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
   --------------------------------------------------------------------------------------------------------------------*/ 
   
    ---------->>> CURSORES <<<--------
@@ -490,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     IF cr_craplau_2%FOUND THEN
       CLOSE cr_craplau_2;
       vr_cdcritic:= 0; --  Lancamento ja efetivado pela DEBNET/DEBSIC 
-      vr_dscritic:= 'Lancamento ja efetivado pela DEBNET/DEBSIC.'; 
+      vr_dscritic:= 'Lancamento ja efetivado pela DEBNET/DEBSIC/DEBCNS.'; 
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
@@ -616,7 +630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     OPEN cr_craplcm(pr_cdcooper => pr_cdcooper,
                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
                     pr_nrdconta => pr_nrdconta,
-                    pr_nrdocmto => pr_nrdocmto);
+                    pr_nrdocmto => pr_nrdocmto,
+                    pr_cdhistor => pr_cdhistor);
 
     FETCH cr_craplcm INTO rw_craplcm;
 
@@ -759,103 +774,106 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           RAISE vr_exc_erro;
       END;  -- fim do update craplau
       
-      -- Atualiza data do último débito da autorização
-      OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
-                      pr_nrdconta => pr_nrdconta,
-                      pr_cdhistor => pr_cdhistor,
-                      pr_cdrefere => pr_nrdocmto);
-      FETCH cr_crapatr INTO rw_crapatr;
+      IF pr_cdhistor NOT IN (1230,1231,1232,1233,1234) THEN
+        -- Atualiza data do último débito da autorização
+        OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_cdhistor => pr_cdhistor,
+                        pr_cdrefere => pr_nrdocmto);
+        FETCH cr_crapatr INTO rw_crapatr;
 
-      IF cr_crapatr%NOTFOUND THEN
-        -- FECHAR O CURSOR
-        CLOSE cr_crapatr;
-        -- retorna erro para procedure chamadora
-        vr_dscritic := 'Autorizacao de debito nao encontrada.';
-        RAISE vr_exc_erro;
-      ELSE
-        -- FECHAR O CURSOR
-        CLOSE cr_crapatr;
+        IF cr_crapatr%NOTFOUND THEN
+          -- FECHAR O CURSOR
+          CLOSE cr_crapatr;
+          -- retorna erro para procedure chamadora
+          vr_dscritic := 'Autorizacao de debito nao encontrada.';
+          RAISE vr_exc_erro;
+        ELSE
+          -- FECHAR O CURSOR
+          CLOSE cr_crapatr;
 
-        -- VERIFICA DATA DO ULTIMO DEBITO
-        IF NVL(to_char(rw_crapatr.dtultdeb,'MMYYYY'),'0') <> to_char(rw_craplot.dtmvtolt,'MMYYYY') THEN          BEGIN
-            -- ATUALIZA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
-            UPDATE crapatr
-               SET dtultdeb = rw_craplot.dtmvtolt -- ATUALIZA DATA DO ULTIMO DEBITO
-             WHERE ROWID = rw_crapatr.rowid;
-          -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Problema ao atualizar registro na tabela CRAPATR: ' || sqlerrm;
-              RAISE vr_exc_erro;
-          END;
-        END IF;
-        
-        /* TEMPORARIAMENTE NÃO SERÁ GERADO PROTOCOLO para os pr_nrdocmto > 15
-             DEVIDO EXISTIR DIFERENÇA NO TAMANHO DO CAMPO DE PROTOCOLO ENTRE A TABELA CRAPPRO E CRAPAUT
-        */
-        IF length(pr_nrdocmto) <= 15 THEN
-          rw_crapcon := NULL;
-          --> Buscar o nome do convenio
-          OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
-                          ,pr_cdempcon => rw_crapatr.cdempcon
-                          ,pr_cdsegmto => rw_crapatr.cdsegmto);
-          --Posicionar no proximo registro
-          FETCH cr_crapcon INTO rw_crapcon;                  
-          CLOSE cr_crapcon; 
+          -- VERIFICA DATA DO ULTIMO DEBITO
+          IF NVL(to_char(rw_crapatr.dtultdeb,'MMYYYY'),'0') <> to_char(rw_craplot.dtmvtolt,'MMYYYY') THEN          BEGIN
+              -- ATUALIZA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
+              UPDATE crapatr
+                 SET dtultdeb = rw_craplot.dtmvtolt -- ATUALIZA DATA DO ULTIMO DEBITO
+               WHERE ROWID = rw_crapatr.rowid;
+            -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Problema ao atualizar registro na tabela CRAPATR: ' || sqlerrm;
+                RAISE vr_exc_erro;
+            END;
+          END IF;
           
-          -- GERAR PROTOCOLO
-          -->Campos gravados na crappro para visualizacao na internet
-          vr_dsinfor1 := 'Pagamento';
-          vr_dsinfor2 := ' ';
-          vr_dsinfor3 := 'Convênio: '||rw_crapcon.nmextcon||
-                         '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
+          /* TEMPORARIAMENTE NÃO SERÁ GERADO PROTOCOLO para os pr_nrdocmto > 15
+               DEVIDO EXISTIR DIFERENÇA NO TAMANHO DO CAMPO DE PROTOCOLO ENTRE A TABELA CRAPPRO E CRAPAUT
+          */
+          -- Para historicos de consorcio, não deve gerar também, contem 20 posições o documento
+          IF length(pr_nrdocmto) <= 15 THEN
+            rw_crapcon := NULL;
+            --> Buscar o nome do convenio
+            OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
+                            ,pr_cdempcon => rw_crapatr.cdempcon
+                            ,pr_cdsegmto => rw_crapatr.cdsegmto);
+            --Posicionar no proximo registro
+            FETCH cr_crapcon INTO rw_crapcon;                  
+            CLOSE cr_crapcon; 
+            
+            -- GERAR PROTOCOLO
+            -->Campos gravados na crappro para visualizacao na internet
+            vr_dsinfor1 := 'Pagamento';
+            vr_dsinfor2 := ' ';
+            vr_dsinfor3 := 'Convênio: '||rw_crapcon.nmextcon||
+                           '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
 
-          --> Se TAA 
-          IF vr_lau_dsorigem = 'TAA' THEN
-            vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(vr_lau_cdcoptfn,'9999')||'/'||
-                                                  gene0002.fn_mask(vr_lau_cdagetfn,'9999')||'/'||
-                                                  gene0002.fn_mask(vr_lau_nrterfin,'9999');
+            --> Se TAA 
+            IF vr_lau_dsorigem = 'TAA' THEN
+              vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(vr_lau_cdcoptfn,'9999')||'/'||
+                                                    gene0002.fn_mask(vr_lau_cdagetfn,'9999')||'/'||
+                                                    gene0002.fn_mask(vr_lau_nrterfin,'9999');
+            END IF;
+            --> Gera um protocolo para o pagamento
+            GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper          --> Código da cooperativa
+                                      ,pr_dtmvtolt => rw_craplot.dtmvtolt  --> Data movimento
+                                      ,pr_hrtransa => gene0002.fn_busca_time --> Hora da transação
+                                      ,pr_nrdconta => pr_nrdconta          --> Número da conta
+                                      ,pr_nrdocmto => pr_nrdocmto          --> Número do documento
+                                      ,pr_nrseqaut => vr_nrautdoc          --> Número da sequencia
+                                      ,pr_vllanmto => pr_vllanaut          --> Valor lançamento
+                                      ,pr_nrdcaixa => 900                  --> Número do caixa
+                                      ,pr_gravapro => TRUE                 --> Controle de gravação do crappro
+                                      ,pr_cdtippro => 15 -- convenio       --> Código do tipo protocolo
+                                      ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
+                                      ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
+                                      ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
+                                      ,pr_dscedent => rw_crapcon.nmextcon  --> Descritivo Cedente
+                                      ,pr_flgagend => FALSE                --> Controle de agenda
+                                      ,pr_nrcpfope => vr_lau_nrcpfope      --> Número de operação
+                                      ,pr_nrcpfpre => vr_lau_nrcpfpre      --> Número pré operação
+                                      ,pr_nmprepos => vr_lau_nmprepos      --> Nome
+                                      ,pr_dsprotoc => vr_dsprotoc          --> Descrição do protocolo
+                                      ,pr_dscritic => vr_dscritic          --> Descrição crítica
+                                      ,pr_des_erro => vr_des_erro);        --> Descrição dos erros de processo
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+                  
+            --> Armazena protocolo na autenticacao 
+            BEGIN
+              UPDATE crapaut 
+                 SET crapaut.dsprotoc = vr_dsprotoc
+               WHERE crapaut.ROWID = vr_nrdrecid;
+            EXCEPTION
+              WHEN OTHERS THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END;                
           END IF;
-          --> Gera um protocolo para o pagamento
-          GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper          --> Código da cooperativa
-                                    ,pr_dtmvtolt => rw_craplot.dtmvtolt  --> Data movimento
-                                    ,pr_hrtransa => gene0002.fn_busca_time --> Hora da transação
-                                    ,pr_nrdconta => pr_nrdconta          --> Número da conta
-                                    ,pr_nrdocmto => pr_nrdocmto          --> Número do documento
-                                    ,pr_nrseqaut => vr_nrautdoc          --> Número da sequencia
-                                    ,pr_vllanmto => pr_vllanaut          --> Valor lançamento
-                                    ,pr_nrdcaixa => 900                  --> Número do caixa
-                                    ,pr_gravapro => TRUE                 --> Controle de gravação do crappro
-                                    ,pr_cdtippro => 15 -- convenio       --> Código do tipo protocolo
-                                    ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
-                                    ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
-                                    ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
-                                    ,pr_dscedent => rw_crapcon.nmextcon  --> Descritivo Cedente
-                                    ,pr_flgagend => FALSE                --> Controle de agenda
-                                    ,pr_nrcpfope => vr_lau_nrcpfope      --> Número de operação
-                                    ,pr_nrcpfpre => vr_lau_nrcpfpre      --> Número pré operação
-                                    ,pr_nmprepos => vr_lau_nmprepos      --> Nome
-                                    ,pr_dsprotoc => vr_dsprotoc          --> Descrição do protocolo
-                                    ,pr_dscritic => vr_dscritic          --> Descrição crítica
-                                    ,pr_des_erro => vr_des_erro);        --> Descrição dos erros de processo
-          --Se ocorreu erro
-          IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-                
-          --> Armazena protocolo na autenticacao 
-          BEGIN
-            UPDATE crapaut 
-               SET crapaut.dsprotoc = vr_dsprotoc
-             WHERE crapaut.ROWID = vr_nrdrecid;
-          EXCEPTION
-            WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END;                
         END IF;
       END IF;
     ELSE

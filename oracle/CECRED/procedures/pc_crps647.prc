@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 13/09/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 23/10/2017
 
   Dados referentes ao programa:
 
@@ -154,6 +154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               13/09/2017 - Atribuir ao nome resumido o nome completo limitando em 20
                            caracteres. (Jaison/Aline - #744121)
 
+              23/10/2017 - Tratamento para lancamentos duplicados também para os consorcios 
+                           (Lucas Ranghetti #739738)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -580,7 +582,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
       -- 502 - Conta nao emitida.
       IF vr_vllanmto = 0 THEN
         pr_cdcritic := 502;     
-    END IF;
+      END IF;
     END IF;
     -- Se encontrarmos critica, somente gerar NDB no tipo de registro E
     IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN 
@@ -1044,41 +1046,38 @@ BEGIN
                   vr_cdcrindb := '30';
               END;
               
-              IF nvl(vr_cdcritic,0) = 0 THEN      
-                -- Somente vamos verificar se for deb. aut. sicredi        
-                IF vr_cdhistor = 1019 THEN                
-                  LOOP
-                    -- Busca os lancamentos automaticos
-                    IF cr_craplau_dup%ISOPEN THEN
-                      CLOSE cr_craplau_dup;
-                    END IF;
-                    -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
-                    -- conta e valor do debito ou data de pagamento forem diferentes, vamos
-                    -- incrementar um zero no final para permitir a inclusão do lançamento
-                    OPEN cr_craplau_dup(pr_cdcooper, -- cdcooper
-                                        vr_nrdconta, -- nrdconta
-                                        rw_crapdat.dtmvtolt, -- dtmvtolt
-                                        vr_dtrefere, -- dtmvtopg
-                                        vr_cdhistor, -- cdhistor
-                                        vr_nrdocmto_int); -- nrdocmto
-                    FETCH cr_craplau_dup INTO rw_craplau_dup;
-                         
-                    IF cr_craplau_dup%FOUND THEN
-                                    
-                      IF rw_craplau_dup.dtmvtopg = vr_dtrefere AND
-                         rw_craplau_dup.vllanaut = vr_vllanmto THEN
-                         CLOSE cr_craplau_dup;
-                         EXIT;
-                      ELSE                              
-                        vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
-                      END IF;
-                    ELSE
-                      CLOSE cr_craplau_dup;
-                      EXIT;
-                    END IF;
+              IF nvl(vr_cdcritic,0) = 0 THEN                      
+                LOOP
+                  -- Busca os lancamentos automaticos
+                  IF cr_craplau_dup%ISOPEN THEN
                     CLOSE cr_craplau_dup;
-                  END LOOP;
-                END IF;
+                  END IF;
+                  -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
+                  -- conta e valor do debito ou data de pagamento forem diferentes, vamos
+                  -- incrementar um zero no final para permitir a inclusão do lançamento
+                  OPEN cr_craplau_dup(pr_cdcooper, -- cdcooper
+                                      vr_nrdconta, -- nrdconta
+                                      rw_crapdat.dtmvtolt, -- dtmvtolt
+                                      vr_dtrefere, -- dtmvtopg
+                                      vr_cdhistor, -- cdhistor
+                                      vr_nrdocmto_int); -- nrdocmto
+                  FETCH cr_craplau_dup INTO rw_craplau_dup;
+                         
+                  IF cr_craplau_dup%FOUND THEN
+                                    
+                    IF rw_craplau_dup.dtmvtopg = vr_dtrefere AND
+                       rw_craplau_dup.vllanaut = vr_vllanmto THEN
+                       CLOSE cr_craplau_dup;
+                       EXIT;
+                    ELSE                              
+                      vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
+                    END IF;
+                  ELSE
+                    CLOSE cr_craplau_dup;
+                    EXIT;
+                  END IF;
+                  CLOSE cr_craplau_dup;
+                END LOOP;
                 
               -- Inclusao deve verificar duplicidade 
               OPEN cr_craplau(pr_nrdconta => vr_nrdconta
@@ -1309,7 +1308,8 @@ BEGIN
                    AND nrdconta = vr_nrdconta       
                    AND (nrdocmto = vr_cdrefere
                     OR nrcrcard = vr_cdrefere)
-                   AND insitlau = 1;
+                   AND insitlau = 1
+                   AND vllanaut = vr_vllanmto;
                 -- Se encontrou registro 
                 IF sql%ROWCOUNT > 0 THEN 
                   -- Gerar critica 739 e NDB 99
