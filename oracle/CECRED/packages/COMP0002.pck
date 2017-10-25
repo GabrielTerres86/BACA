@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -315,7 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: Inclusão do campo
 
      ..................................................................................*/  
     
@@ -481,7 +481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -491,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -551,6 +551,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||
                                   '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                             || '</cdagenda>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -601,7 +605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -611,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -673,6 +677,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrcpffav>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')) || '</nrcpffav>' ||
                                   '<dsfinali>' || TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dsfinali>' ||
                                   '<dstransf>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dstransf>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -723,7 +731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -733,7 +741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -803,6 +811,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<dtcaren>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtcaren>' ||
                                   '<dsbanco>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsbanco>' ||
                                   '<cnpjban>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cnpjban>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -887,7 +899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -897,7 +909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -960,6 +972,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<vlbruto>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlbruto>' ||
                                   '<dsbanco>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsbanco>' ||
                                   '<cnpjban>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cnpjban>' ||
+                                  '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
+                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
+                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                             || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1009,7 +1025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : CECRED
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1019,7 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -1120,6 +1136,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																 '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
 																 '<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
 																 '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||                                  
+                                 '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
+                                 '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||
+                                 '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                                                                      || '</nmoperad>' ||
+                                 '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                                                                      || '</nrcpfope>' ||
                                  '<infosac>'  ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1170,7 +1190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017 
 
      Dados referentes ao programa:
 
@@ -1180,7 +1200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -1252,10 +1272,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||
 															    '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+                                  '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
 																	'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+                                  '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
 															    '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
 																	'<nmopetel>' || vr_protocolo(vr_ind).nmoperadora                                                            || '</nmopetel>' ||
-																	'<nrdddtel>' || vr_protocolo(vr_ind).nrcelular                                                              || '</nrdddtel>' ||
+																	'<nrdddtel>' || to_char(substr(vr_protocolo(vr_ind).nrcelular,2,2))                                         || '</nrdddtel>' ||
+                                  '<nrtelefo>' || to_char(REPLACE(substr(vr_protocolo(vr_ind).nrcelular,6,10),'-',''))                        || '</nrtelefo>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
                                   '<dtdpagto>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                        || '</dtdpagto>' ||
@@ -1313,7 +1336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1323,7 +1346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -1399,6 +1422,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+                                  '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+                                  '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1450,7 +1477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1460,7 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusao dos campos nrcpfpre e nrcpfope, Prj. 285 (JeanMichel).
 
      ..................................................................................*/  
     
@@ -1532,7 +1559,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																 
 																	'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																	'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                	'<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																	'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
 																	'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
 																	'<cdpagmto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdpagmto>' ||
@@ -1598,7 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1608,7 +1637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -1665,6 +1694,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
                                   '<dscedent>' || vr_protocolo(vr_ind).dscedent                                                                                      || '</dscedent>' ||
                                   '<nridenti>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nridenti>' ||
+                                  '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                  '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                  '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
                                   '<infosac>' ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -1716,7 +1749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1726,7 +1759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campo nrcpfope e nrcpfpre, Prj. 285 (Jean Michel)
 
      ..................................................................................*/  
     
@@ -1807,11 +1840,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                    '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																		'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                    '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
-																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagearr>' ||
+																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||																
+ 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -1876,7 +1912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
-																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
+																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||																
 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
@@ -1948,7 +1984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1958,7 +1994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfpre e nrcpfope, Prj. 285 (Jean Michel).
 
      ..................................................................................*/  
     
@@ -2045,11 +2081,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                    '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																		'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                    '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
-																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagearr>' ||
+                                    '<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
+																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||																
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -2198,7 +2237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017 
 
      Dados referentes ao programa:
 
@@ -2208,7 +2247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel)
 
      ..................................................................................*/  
     
@@ -2283,7 +2322,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
 																'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
@@ -2352,7 +2393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : Ricardo Linhares
-     Data    : Junho/17.                    Ultima atualizacao: 
+     Data    : Junho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -2362,7 +2403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfope e nrcpfpre, Prj. 285 (Jean Michel)
 
      ..................................................................................*/  
     
@@ -2443,7 +2484,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+																'<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
 																'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||

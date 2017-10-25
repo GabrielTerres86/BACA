@@ -156,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -166,7 +166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Alterado o parametro de consulta de recarga de 3 para 5
+                              (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 (Jean Michel).
 
      ..................................................................................*/   
      
@@ -205,7 +206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
       CLOSE cr_crapdat;    
 									
-			IF pr_cdtipmod = 3 THEN -- Recarga de Celular
+			IF pr_cdtipmod = 5 THEN -- Recarga de Celular
 				
 				rcel0001.pc_carrega_agend_recarga(pr_cdcooper        => pr_cdcooper
 															           ,pr_nrdconta        => pr_nrdconta
@@ -386,7 +387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -396,7 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/217 - Inclusão do campo nrcpfpre, Prj. 285 (Jean Michel).
 
      ..................................................................................*/     
      
@@ -405,9 +406,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     vr_exc_erro EXCEPTION;
     vr_xml_temp VARCHAR2(32726) := '';
     vr_des_erro    VARCHAR2(4000);
-    
+    vr_nmoperad crapopi.nmoperad%TYPE := '';
+
     CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
       SELECT to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+            ,lau.cdcooper
+            ,lau.nrdconta 
             ,lau.hrtransa
             ,lau.nrdocmto
             ,lau.insitlau
@@ -423,6 +427,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) || ' - ' || cti.nmtitula AS dstitula
             ,lau.nmprepos
+            ,lau.nrcpfpre
+            ,lau.nrcpfope
        FROM craplau lau
   LEFT JOIN crapban ban
          ON ban.cdbccxlt = lau.cddbanco
@@ -440,6 +446,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
   
     BEGIN
       
+      vr_nmoperad := '';
+
       -- Busca o Lançamento
       OPEN cr_agendamento(pr_idlancto);
       FETCH cr_agendamento INTO rw_agendamento;
@@ -452,6 +460,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
       CLOSE cr_agendamento;
       
+      IF rw_agendamento.nrcpfope > 0 THEN 
+        OPEN cr_crapopi(pr_cdcooper => rw_agendamento.cdcooper
+                       ,pr_nrdconta => rw_agendamento.nrdconta
+                       ,pr_nrcpfope => rw_agendamento.nrcpfope);
+
+        FETCH cr_crapopi INTO rw_crapopi;
+
+        IF cr_crapopi%FOUND THEN
+          -- Fecha cursor
+          CLOSE cr_crapopi;
+          vr_nmoperad := nvl(rw_crapopi.nmoperad, '');
+        ELSE
+          -- Fecha cursor
+          CLOSE cr_crapopi;
+        END IF;
+      END IF;
+
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
@@ -473,7 +498,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                               '<dsdbanco>' || rw_agendamento.dsdbanco || '</dsdbanco>' ||
                               '<dsdagenc>' || rw_agendamento.dsdagenc || '</dsdagenc>' ||
                               '<dstitula>' || rw_agendamento.dstitula || '</dstitula>' ||
-                              '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>');   
+                              '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+                              '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
+                              '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
+                              '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>');   
      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
@@ -512,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -522,7 +550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão do campo nrcpfpre, Prj. 285 (Jean Michel)
 
      ..................................................................................*/       
        
@@ -531,9 +559,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       vr_exc_erro EXCEPTION;
       vr_xml_temp VARCHAR2(32726) := '';
       vr_des_erro VARCHAR2(4000);
-      
+      vr_nmoperad crapopi.nmoperad%TYPE := '';
+
       CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
         SELECT lau.dttransa
+              ,lau.cdcooper
+              ,lau.nrdconta
               ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
               ,lau.nrdocmto
               ,lau.insitlau
@@ -548,6 +579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
               ,LPAD(cop.cdagectl,4,'0') || ' - ' || cop.nmrescop AS dsdcoper
               ,TRIM(GENE0002.fn_mask_conta(lau.nrctadst)) || ' - ' || ass.nmprimtl AS dstitula
               ,lau.nmprepos
+              ,lau.nrcpfpre
+              ,lau.nrcpfope
          FROM craplau lau
     LEFT JOIN crapcop cop
            ON cop.cdagectl = lau.cdageban
@@ -565,6 +598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     
       BEGIN
         
+        vr_nmoperad := '';
+
         -- Busca o Lançamento
         OPEN cr_agendamento(pr_idlancto);
         FETCH cr_agendamento INTO rw_agendamento;
@@ -577,6 +612,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
         CLOSE cr_agendamento;
         
+        IF rw_agendamento.nrcpfope > 0 THEN 
+          OPEN cr_crapopi(pr_cdcooper => rw_agendamento.cdcooper
+                         ,pr_nrdconta => rw_agendamento.nrdconta
+                         ,pr_nrcpfope => rw_agendamento.nrcpfope);
+
+          FETCH cr_crapopi INTO rw_crapopi;
+
+          IF cr_crapopi%FOUND THEN
+            -- Fecha cursor
+            CLOSE cr_crapopi;
+            vr_nmoperad := nvl(rw_crapopi.nmoperad, '');
+          ELSE
+            -- Fecha cursor
+            CLOSE cr_crapopi;
+          END IF;
+        END IF;
+
         dbms_lob.createtemporary(pr_retxml, TRUE);
         dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
          
@@ -597,7 +649,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                 '<dtdebito>' || rw_agendamento.dtdebito || '</dtdebito>' ||
                                 '<dsdcoper>' || rw_agendamento.dsdcoper || '</dsdcoper>' ||
                                 '<dstitula>' || rw_agendamento.dstitula || '</dstitula>' ||
-                                '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>');   
+                                '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+                                '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
+                                '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
+                                '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>');
        
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp
@@ -634,7 +689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -644,7 +699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campo nrcpfpre e nrcpfope, Prj. 285 (Jean Michel).
 
      ..................................................................................*/       
        
@@ -677,9 +732,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 						,lau.dttransa
 						,lau.dtvencto
             ,lau.dtdebito
-						,lau.dtmvtopg						
+						,lau.dtmvtopg	
 						,lau.nrcpfope
             ,lau.nmprepos
+            ,lau.nrcpfpre
             ,lau.dscedent
             ,nvl(lau.dslindig, '') AS dslindig
 						,lau.nrseqagp
@@ -763,7 +819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
 																'<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+																'<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
 																'<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||																																
+																'<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||
 																'<dscedent>' || rw_agendamento.dscedent || '</dscedent>' ||
                                 '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
@@ -820,7 +878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -830,7 +888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfpre e nrcpfope, Prj. 285 (Jean Michel) 
 
      ..................................................................................*/       
        
@@ -860,6 +918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                 END AS dssituac
               ,lau.dtdebito
               ,nvl(lau.nmprepos, '') AS nmprepos
+              ,lau.nrcpfpre
 							,lau.nrcpfope
               ,lau.dtvencto
 							,lau.cdtiptra
@@ -956,7 +1015,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
 																'<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+                                '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
 																'<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||																
+                                '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||
                                 '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
 																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||
@@ -1041,7 +1102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1051,7 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfpre e nrcpfope ,Prj. 285 (Jean Michel)
 
      ..................................................................................*/       
        
@@ -1080,7 +1141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                        WHEN 4 THEN 'Nao Efetivado'
                   END AS dssituac
                 ,lau.dtdebito
-                ,nvl(lau.nmprepos, '') AS nmprepos                
+                ,nvl(lau.nmprepos, '') AS nmprepos 
+                ,lau.nrcpfpre               
 								,lau.nrcpfope
                 ,lau.dtvencto
 							  ,lau.cdtiptra
@@ -1164,7 +1226,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
 																'<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
-																'<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||																
+                                '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
+																'<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
+                                '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||																
                                 '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
 																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||
@@ -1263,6 +1327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 						,lau.dtmvtopg						
 						,lau.nrcpfope
             ,lau.nmprepos
+            ,lau.nrcpfpre
             ,lau.dscedent
             ,nvl(lau.dslindig, '') AS dslindig						
 						,TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, pro.dsinform##3, '#')), ':')) cddpagto
@@ -1349,8 +1414,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>'  ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>'  ||
 																'<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>'  ||
+                                '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>'  ||
 																'<nmoperad>' || vr_nmoperad             || '</nmoperad>'  ||																																
-																'<dscedent>' || rw_agendamento.dscedent || '</dscedent>'  ||
+																'<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>'  ||
+                                '<dscedent>' || rw_agendamento.dscedent || '</dscedent>'  ||
 																'<dslinhad>' || rw_agendamento.dslindig || '</dslinhad>'  ||																																
 																'<cdpagmto>' || rw_agendamento.cddpagto || '</cdpagmto>'  ||
 																'<dtcompet>' || rw_agendamento.dscompet || '</dtcompet>'  ||
@@ -1405,7 +1472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Lucas Lunelli
-     Data    : Set/2017.                    Ultima atualizacao: 
+     Data    : Set/2017.                    Ultima atualizacao: 18/10/2017 
 
      Dados referentes ao programa:
 
@@ -1415,7 +1482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: Inclusçao dos campos nrcpfpre e nrcpfope, Prj. 285 (Jean Michel)
 
      ..................................................................................*/       
        
@@ -1448,7 +1515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 							,opc.nrddd 
 							,opc.nrcelular
 							,opa.nmoperadora
-							,'(' || opc.nrddd || ') ' || gene0002.fn_mask(opc.nrcelular,'99999-9999') AS nrdddtel
+							,opc.nrddd AS nrdddtel
+              ,opc.nrcelular AS nrtelefo
 							,to_char(opc.dttransa,'hh24:mi:ss') AS hrautent
 					FROM tbrecarga_operacao opc
 		 LEFT JOIN crapcop cop
@@ -1505,9 +1573,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>'  ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>'  ||
 																'<nmprepos></nmprepos>'  ||
+																'<nrcpfpre></nrcpfpre>'  ||
 																'<nmoperad></nmoperad>'  ||																
+																'<nrcpfope></nrcpfope>'  ||
 																'<nmopetel>' || rw_agendamento.nmoperadora || '</nmopetel>'  ||
 																'<nrdddtel>' || rw_agendamento.nrdddtel || '</nrdddtel>'  ||
+                                '<nrtelefo>' || rw_agendamento.nrtelefo || '</nrtelefo>'  ||
                                 '<dttransa>' || TO_CHAR(rw_agendamento.dttransa,'DD/MM/RRRR') || '</dttransa>'  ||																
                                 '<hrautent>' || rw_agendamento.hrautent || '</hrautent>'  ||
 																'<dtmvtopg>' || TO_CHAR(rw_agendamento.dtmvtopg,'DD/MM/RRRR') || '</dtmvtopg>'  ||																
@@ -1557,7 +1628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 
+     Data    : Julho/17.                    Ultima atualizacao:
 
      Dados referentes ao programa:
 
