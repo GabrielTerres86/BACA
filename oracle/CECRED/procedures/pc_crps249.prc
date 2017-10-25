@@ -1060,11 +1060,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- Informações do associado
   cursor cr_crapass (pr_cdcooper in crapass.cdcooper%type,
                      pr_nrdconta in crapass.nrdconta%type) is
-    select cdagenci,
-           inpessoa,
-           dtdemiss
-      from crapass
-     where crapass.cdcooper = pr_cdcooper
+    select crapass.cdagenci,  
+           crapass.inpessoa,
+           crapass.dtdemiss,
+           crapage.insitage
+      from crapass,
+           crapage
+     where crapass.cdcooper = crapage.cdcooper
+       and crapass.cdagenci = crapage.cdagenci
+       and crapass.cdcooper = pr_cdcooper
        and crapass.nrdconta = pr_nrdconta;
   rw_crapass     cr_crapass%rowtype;
   -- Borderôs de desconto de títulos
@@ -4570,9 +4574,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         fetch cr_crapass into rw_crapass;
       close cr_crapass;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  if rw_crapass.insitage = 1 then --somente PAs Ativos
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  end if;
+	  --
     end loop;
     --
     vr_flgrvorc := false; -- Lancamento do dia
@@ -4601,9 +4608,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         fetch cr_crapass into rw_crapass;
       close cr_crapass;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  if rw_crapass.insitage = 1 then --somente PAs Ativos
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  end if;
+	  --
     end loop;
     --
     vr_flgrvorc := false; -- Lancamento do dia
@@ -4632,9 +4642,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         fetch cr_crapass into rw_crapass;
       close cr_crapass;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  if rw_crapass.insitage = 1 then --somente PAs Ativos
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  end if;
+	  --
     end loop;
     --
     vr_flgrvorc := false; -- Lancamento do dia
@@ -4681,9 +4694,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         fetch cr_crapass into rw_crapass;
       close cr_crapass;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  if rw_crapass.insitage = 1 then --somente PAs Ativos
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
+        vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+	  end if;
+	  --
     end loop;
     --
     vr_flgrvorc := false; -- Lancamento do dia
