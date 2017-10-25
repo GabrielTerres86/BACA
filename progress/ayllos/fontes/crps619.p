@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Adriano     
-   Data    : Marco/2012.                        Ultima atualizacao: 23/06/2016
+   Data    : Marco/2012.                        Ultima atualizacao: 25/10/2017
 
    Dados referentes ao programa:
 
@@ -45,8 +45,11 @@
                
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
 
-			   23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
-			                6 - WebService (Marcos)
+			         23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
+			                      6 - WebService (Marcos)
+                            
+               25/10/2017 - Enviar o cdagectl no arquivo ao invés de mandar a cooperativa 
+                            mais o PA (Lucas Ranghetti #767689)
 ............................................................................. */
                                       
 { includes/var_batch.i "NEW" } 
@@ -90,6 +93,7 @@ DEF VAR aux_nrautdoc  AS CHAR      FORMAT "x(14)"                    NO-UNDO.
 
 DEF BUFFER b-gnconve FOR gnconve.
 DEF BUFFER b-crapcop FOR crapcop.
+DEF BUFFER crabcop FOR crapcop.
 
 DEF STREAM str_1.  
 
@@ -323,8 +327,12 @@ PROCEDURE efetua_geracao_arquivos.
               tot_vlfatura = tot_vlfatura + craplft.vllanmto
               tot_vltarifa = tot_vltarifa + aux_vltarifa.
        
-       ASSIGN aux_cdcoppac = STRING(gncvcop.cdcooper, "99") + 
-                             STRING(craplft.cdagenci, "999").
+       
+       /* Buscar a agencia do pagamento */
+       FIND FIRST crabcop WHERE crabcop.cdcooper = gncvcop.cdcooper
+                          NO-LOCK NO-ERROR.       
+       
+       ASSIGN aux_cdcoppac = STRING(crabcop.cdagectl, "99999").
               
        ASSIGN aux_nrautdoc = STRING(craplft.cdcooper,"99")          + 
                              STRING(craplft.cdagenci,"999")         +
