@@ -13,6 +13,7 @@
  *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
+ *				  25/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -108,15 +109,12 @@
 		<input name="complend" id="complend" type="text" value="<? echo $frm_dscomres; ?>" />
 		<br />
 		
-		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo $frm_nrcxpost; ?>" />		
+		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
+		<? echo selectEstado('cdufende', $frm_dsdufres, 1); ?>	
 		
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo $frm_dsbaires; ?>" />								
 		<br />	
-		
-		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
-		<? echo selectEstado('cdufende', $frm_dsdufres, 1); ?>	
 		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo $frm_dscidres ?>" />
