@@ -14,6 +14,7 @@
  *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)
  *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
  */
 ?>
  
@@ -59,7 +60,7 @@
 	$vledvmto = (isset($_POST["vledvmto"])) ? $_POST["vledvmto"] : "";
 	$cdsexcto = (isset($_POST["cdsexcto"])) ? $_POST["cdsexcto"] : "";
 	$cdufresd = (isset($_POST["cdufresd"])) ? $_POST["cdufresd"] : "";
-	$nrcxapst = (isset($_POST["nrcxapst"])) ? $_POST["nrcxapst"] : "";	
+	$nrcxapst = 0;
 	$dadosXML = (isset($_POST['dadosXML'])) ? $_POST['dadosXML'] : '';
 	$camposXML = (isset($_POST['camposXML'])) ? $_POST['camposXML'] : '';
 	
