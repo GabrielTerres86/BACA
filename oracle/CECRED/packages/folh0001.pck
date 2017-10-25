@@ -7846,6 +7846,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             22/12/2015 - Chamar a rotina de debito na mesma frequencia do crédito (Marcos-Suoero)
   --
+  --             25/10/2017 - Realizando o processamento dos pagamentos antigos cadastrados na tela SOL062,
+  --                          para ajustar o problema relatado no chamado 654712 (Kelvin)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca as cooperativas
@@ -8095,6 +8098,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
             -- Acionar a rotina 06.03
             pc_atualiza_xml_comprov_liquid(vr_cdcooper, rw_crapdat);
+            
+            --Faz o processamanento dos pagamentos carregados pela tela SOL062 (Antigos)
+            SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => vr_cdcooper
+                                      ,pr_cdagenci => 0
+                                      ,pr_nrdcaixa => 1
+                                      ,pr_cdoperad => 1
+                                      ,pr_cdempres => 0
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
           END IF;
 
   -------- ROTINA 07 - Cobrança das tarifas pendentes -----------------------------------------------
