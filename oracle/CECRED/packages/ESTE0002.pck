@@ -46,6 +46,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
 
       Alteracoes: 12/09/2017 - Ajuste nacionalidade e orgao emissor. PRJ339 - CRM (Odirlei-AMcom)
 
+                  25/10/2017 - Removida verificacao de tipo de telefone do conjuge, registros com DDD
+                               na frente ocasionam problemas devido ao parenteses.
+                               Heitor (Mouts) - Chamado 778505
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -4238,11 +4242,13 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
             -- Criar objeto só para este telefone
             vr_obj_generico := json();
             vr_obj_generico.put('especie', 'COMERCIAL');
-            IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
+            /*
+			IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
               vr_obj_generico.put('tipo', 'FIXO');
             ELSE
               vr_obj_generico.put('tipo', 'MOVEL');
             END IF;
+			*/
             
             vr_obj_generico.put('numero', fn_somente_numeros_telefone(rw_crapcje.nrfonemp));
             -- Adicionar telefone na lista
