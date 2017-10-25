@@ -908,9 +908,9 @@ PROCEDURE consulta-boleto-2via.
     IF aux_rollout = 1 THEN 
 	 DO:
 	    /* Se estiver na faixa do rollout, data de vencimento e valor do título devem ser mantidos os originais */
-         ASSIGN aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori
-                aux_vltituut_atualizado = crapcob.vltitulo
-                aux_dtvencut_atualizado = aux_dtvencut.
+         ASSIGN aux_vltituut_atualizado = crapcob.vltitulo
+                aux_dtvencut_atualizado = aux_dtvencut
+				aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori.
 	 END.
 
         ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
@@ -8767,8 +8767,6 @@ PROCEDURE calcula_multa_juros_boleto:
     DEF VAR aux_vlfatura                     AS DECI              NO-UNDO.
     DEF VAR aux_dscritic                     AS CHAR              NO-UNDO.
    
-    DEF VAR aux_rollout                      AS INTE              NO-UNDO.
-   
     /* rotina para criticar data de vencimento */
     RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
     
@@ -8836,20 +8834,12 @@ PROCEDURE calcula_multa_juros_boleto:
     /* valor final da tarifa */
     ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
 
-    /* Consulta Rollout */
-    RUN verifica-rollout(INPUT par_cdcooper,
-                         INPUT par_dtmvtocd,
-                         INPUT par_vltitulo,
-                         OUTPUT aux_rollout).  
-					
     IF  par_flag2via  THEN
         DO:
             
             /* Verificar se o titulo está vencido e se está fora do rollout
                para atualizar a data de vencimento */
-            ASSIGN par_dtvencut = (IF aux_critdata    AND /* Titulo Vencido */ 
-                                     (aux_rollout = 0  OR /* Fora do ROLLOUT */
-                                      par_flgcbdda = 0) THEN  /* Nao esta na CIP */
+            ASSIGN par_dtvencut = (IF aux_critdata THEN /* Titulo Vencido */
                                        par_dtmvtocd 
                                    ELSE
                                        par_dtvencto)
