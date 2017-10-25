@@ -7785,7 +7785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ,tbdomic_liqtrans_centraliza ctz
              ,tbdomic_liqtrans_pdv pdv
        WHERE lct.idarquivo = arq.idarquivo
-         AND lct.insituacao = 1 -- Processado (atualizado pelo pc_processo_reg_pendentes)
+         AND lct.insituacao = 2 -- Processado (atualizado pelo pc_processo_reg_pendentes)
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND to_date(pdv.dtpagamento,'YYYY-MM-DD') = pr_dtmvtolt
