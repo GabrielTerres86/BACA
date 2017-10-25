@@ -22,7 +22,8 @@
  * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
  * 014: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico
  * 015: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364).
- */ 
+ * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo idregtrb no formulário principal da contas (Projeto 410).
+ */
 
 	session_start();	
 	require_once("../../includes/config.php");
@@ -101,7 +102,8 @@
 	//Atribuições
 	$cabecalho  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	$Titulares  = ( isset($xmlObjeto->roottag->tags[2]->tags) ) ? $xmlObjeto->roottag->tags[2]->tags : array();
-	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+
 	$tpNatureza = $cabecalho[6]->cdata;
 	
 	// Monta div com os dados de Pessoa Jurídica
@@ -122,6 +124,8 @@
 		
 		echo '    strHTML += \'<label for="cdsitdct">Situa&ccedil;&atilde;o:</label>\';';
 		echo '    strHTML += \'<input name="cdsitdct" id="cdsitdct" type="text" /><br />\';';
+
+        echo '    strHTML += \'<input name="idregtrb" id="idregtrb" type="hidden" />\';';
 	
 		// Coloca conteúdo HTML no div e exibe
 		echo '$("#divRotinaPJ").html(strHTML);';
@@ -167,7 +171,8 @@
 	echo '$("#cdestcvl","#frmCabContas").val("'.$cabecalho[10]->cdata.' - '.$cabecalho[11]->cdata.'");'; 
 	echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
 	echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
-    echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';	
+    echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';
+	echo '$("#idregtrb","#frmCabContas").val("'.$cabecalho[20]->cdata.'");';
 	
 	echo 'var strHTMLTTL = \'\';'; 
 	// PJ
@@ -300,7 +305,7 @@
 					$nomeRotina = "Impedimentos Desligamento"; 
 					$urlRotina  = "impedimentos_desligamento";
 					break;					
-				}
+				}				
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 
@@ -461,7 +466,8 @@
 	echo 'cpfprocu = "'.$cabecalho[8]->cdata.'";';
 	echo 'dtdenasc = "'.$cabecalho[18]->cdata.'";';
 	echo 'cdhabmen = "'.$cabecalho[19]->cdata.'";';
-	
+	echo 'idregtrb = "'.$cabecalho[20]->cdata.'";';
+
 	if ( $opbackgr == 'true' ) echo 'hideMsgAguardo();';
 		
 	/*Alteração: Mostrar mensagens de alerta em uma tabela de mensagens*/	
