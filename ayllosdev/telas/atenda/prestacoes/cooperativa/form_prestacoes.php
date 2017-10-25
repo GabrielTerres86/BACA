@@ -19,6 +19,7 @@
                      (Chamado 181988) - (Fabricio)
  * 008: [23/04/2015] Alteracao do label "Saldo" para "Saldo Liquida". (Jaison/Gielow - SD: 262029)
  * 009: [10/10/2016] Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
+ * 010: [05/10/2017] Adicionado campo vliofcpl no formulário (Diogo - MoutS - Projeto 410 - RF 23)
  */	
 ?>	
 <form id="formEmpres" ></form>
@@ -86,6 +87,10 @@
 		<label for="vlmrapar">Juros Mora:</label>
 		<input name="vlmrapar" id="vlmrapar" type="text" value="" />		
 		<br />
+
+        <label for="vliofcpl">IOF Atraso:</label>
+        <input name="vliofcpl" id="vliofcpl" type="text" value="" />
+        <br />
 		
 		<label for="vltotpag">Total Pagar:</label>
 		<input name="vltotpag" id="vltotpag" type="text" value="" />		

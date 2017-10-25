@@ -171,11 +171,13 @@
 			               (Projeto Esteira de Credito - Daniel/Oscar) 	
                            
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
-                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).    
                            
               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
                            (Jaison/Marcos Martini - PRJ337)
-                           
+              20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
+                           tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
+
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
               
@@ -281,7 +283,8 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD liquidia AS INTE
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
-    FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
+    FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
+	FIELD vliofcpl LIKE crapepr.vliofcpl.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -361,7 +364,11 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
-    FIELD inobriga AS CHAR.
+    FIELD inobriga AS CHAR
+	FIELD idfiniof AS INTE
+    FIELD vliofepr LIKE crapepr.vliofepr
+    FIELD vlrtarif AS DECI
+    FIELD vlrtotal AS DECI.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0051tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 21/07/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 24/11/2015   
 
     Objetivo  : Definicao das Temp-Tables
 
@@ -25,6 +25,8 @@
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)               
                              
+				02/10/2017 - Incluido campo idregtrb na tt-cabec 
+				            (Projeto 410 - RF 2 e 3 - Diogo - Mouts)							 
 ..............................................................................*/
 
 
@@ -48,7 +50,8 @@ DEFINE TEMP-TABLE tt-cabec NO-UNDO
     FIELD nrdctitg LIKE crapass.nrdctitg
     FIELD nmfansia AS CHAR
     FIELD dtnasttl AS DATE
-    FIELD inhabmen AS INT.
+    FIELD inhabmen AS INT
+	FIELD idregtrb AS INT.
 
 DEFINE TEMP-TABLE tt-dados-ass NO-UNDO
     FIELD inpessoa LIKE crapass.inpessoa.

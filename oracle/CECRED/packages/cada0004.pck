@@ -4117,8 +4117,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
-    --   
-    -- ..........................................................................*/
+    --
+    --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
+	-- ..........................................................................*/
     
     ---------------> CURSORES <----------------
     --> Buscar dados associado
@@ -4573,6 +4574,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                  ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
        WHERE rownum <= 1; 
       
+	--> Buscar alerta para impressão da declaração de optante do simples nacional
+		CURSOR cr_impdecsn(pr_cdcooper crapsnh.cdcooper%TYPE
+											,pr_nrdconta crapsnh.nrdconta%TYPE) IS
+				SELECT idimpdsn, idregtrb
+				FROM crapjur
+				WHERE cdcooper = pr_cdcooper
+							AND nrdconta = pr_nrdconta;
+		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -5719,6 +5728,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
+
+	-- Verifica se foi impressa a declaração de optante do simples nacional
+	OPEN cr_impdecsn(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+
+	FETCH cr_impdecsn
+			INTO rw_cr_impdecsn;
+
+	IF cr_impdecsn%FOUND AND (rw_cr_impdecsn.idimpdsn <> 2) AND
+		 (rw_cr_impdecsn.idregtrb = 1 OR rw_cr_impdecsn.idregtrb = 2) THEN
+	
+			vr_dsmensag := 'Imprimir a Declaração de Optante do Simples Nacional';
+	
+			--> Incluir na temptable
+			pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+													 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+	END IF;
+	CLOSE cr_impdecsn;
+
     pr_des_reto := 'OK';
     
   EXCEPTION    

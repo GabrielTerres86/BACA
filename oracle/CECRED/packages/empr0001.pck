@@ -34,6 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +129,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qtimpctr crapepr.qtimpctr%TYPE
     ,portabil VARCHAR2(100)
     ,dsorgrec craplcr.dsorgrec%TYPE
-    ,dtinictr DATE);
+    ,dtinictr DATE
+	,vliofcpl crapepr.vliofcpl%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -810,7 +812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/05/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 19/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -868,6 +870,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
 
+  --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
+  --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -4418,7 +4422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 16/11/2016
+       Data    : Abril/2013.                         Ultima atualizacao: 19/10/2017
     
        Dados referentes ao programa:
     
@@ -4474,6 +4478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  do emprestimo na tela prestações, conforme solicitado no chamado
                                  553330. (Kelvin)
 
+                    19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4524,6 +4529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vlpgjmpr
               ,cdorigem
               ,qtimpctr
+			  ,vliofcpl
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5213,6 +5219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
         
+          pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
@@ -5936,6 +5943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
                       '</inf>' );
 
       -- buscar proximo

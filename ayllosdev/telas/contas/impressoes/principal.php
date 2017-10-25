@@ -1,17 +1,18 @@
 <?php 
 /*!
  * FONTE         : principal.php
- * CRIA«√O       : Gabriel Capoia (DB1)
- * DATA CRIA«√O  : 05/05/2010 
- * OBJETIVO      : Mostrar opcao Principal da rotina de Impressıes da tela de CONTAS
+ * CRIA√á√ÉO       : Gabriel Capoia (DB1)
+ * DATA CRIA√á√ÉO  : 05/05/2010 
+ * OBJETIVO      : Mostrar opcao Principal da rotina de Impress√µes da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- * ALTERACOES   : 23/07/2013 - Inclus„o da opÁ„o de Cart„o Assinatura (Jean Michel).
+ * ALTERACOES   : 23/07/2013 - Inclus√£o da op√ß√£o de Cart√£o Assinatura (Jean Michel).
  *                02/09/2015 - Projeto Reformulacao cadastral. (Tiago Castro - RKAM)
  *                14/07/2016 - Correcao na forma de recuperacao de informacoes do XML. SD 479874. Carlos R.
  *
- *                01/12/2016 - P341-AutomatizaÁ„o BACENJUD - Removido passagem do departamento como parametros
- *                             pois a BO n„o utiliza o mesmo (Renato Darosci)
+ *                01/12/2016 - P341-Automatiza√ß√£o BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO n√£o utiliza o mesmo (Renato Darosci)
+ * 				        03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impress√£o declara√ß√£o optante simples nacional (Diogo - Mouts)
  */
  
 	session_start();
@@ -21,22 +22,23 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();		
 	
-	// Verifica permissıes de acessa a tela
+	// Verifica permiss√µes de acessa a tela
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)');
 	
-	// Verifica se o n˙mero da conta foi informado
+	// Verifica se o n√∫mero da conta foi informado
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 
-	// Guardo os par‚metos do POST em vari·veis	
+	// Guardo os par√¢metos do POST em vari√°veis	
 	$nrdconta = $_POST["nrdconta"] == "" ?  0  : $_POST["nrdconta"];
 	$idseqttl = $_POST["idseqttl"] == "" ?  0  : $_POST["idseqttl"];
 	$inpessoa = $_POST["inpessoa"] == "" ?  0  : $_POST["inpessoa"];
-	
-	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
+	$idregtrb = $_POST["idregtrb"] == "" ?  0  : $_POST["idregtrb"];
+
+	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -72,6 +74,9 @@
 	<div id="declaracao_pep">Declara&ccedil;&atilde;o PEP</div>
 	<? } ?>
 	<div id="cartao_assinatura">Cart&atilde;o Assinatura</div>
+    <? if (($idregtrb == 1) || ($idregtrb == 2)) { ?>
+        <div id="declaracao_optante_simples_nacional">Declara&ccedil;&atilde;o de Optante Simples Nacional</div>
+    <? } ?>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>
@@ -80,7 +85,7 @@
 	
 	var relatorios = new Object();
 	
-	<? for($i = 0; $i <= 7; $i++ ){ ?>
+	<? for($i = 0; $i <= 8; $i++ ){ ?>
 		
 	 var relatorio = new Object();	 
 		 relatorio['msg']  = '<?php echo ( isset($xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata) ) ? $xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata : '';?>';

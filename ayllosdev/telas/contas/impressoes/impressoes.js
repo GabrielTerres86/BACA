@@ -12,7 +12,7 @@
  * 01/08/2013 - Jean Michel  (CECRED) : Ajuste p/ impressão de cartões de assinatura de proc/tit.
  * 02/09/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
  * 19/10/2015 - Ajuste no layout na div DivConteudoOpcao que estava quebrando. SD 310056 (Kelvin)
-				
+ * 03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)				
  * --------------
  */
 
@@ -58,6 +58,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             nrdconta: nrdconta,
             idseqttl: idseqttl,
             inpessoa: inpessoa,
+            idregtrb: idregtrb, //vem da contas/obtem_cabecalho
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -119,6 +120,9 @@ function controlaImpressao(idImpressao, inpessoa) {
         telaCartaoAssinatura(inpessoa);
     } else if (idImpressao == 'declaracao_pep') {
         showConfirmacao('Deseja visualizar a impress&atilde;o da declara&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracao();', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        return true;
+    } else if (idImpressao == 'declaracao_optante_simples_nacional'){
+		showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracaoSimplesNacional(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
     } else if (idImpressao != '') {
         showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
@@ -259,6 +263,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#_nrdconta', '#frmCabContas').remove();
     $('#_idseqttl', '#frmCabContas').remove();
     $('#sidlogin', '#frmCabContas').remove();
+	$('#idregtrb', '#frmCabContas').remove();
 
     // Insiro input do tipo hidden do formulário para enviá-los posteriormente
     $('#frmCabContas').append('<input type="hidden" id="tprelato" name="tprelato" />');
@@ -267,6 +272,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#frmCabContas').append('<input type="hidden" id="_nrdconta" name="_nrdconta" />');
     $('#frmCabContas').append('<input type="hidden" id="_idseqttl" name="_idseqttl" />');
     $('#frmCabContas').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+	$('#frmCabContas').append('<input type="hidden" id="idregtrb" name="idregtrb" />');
 
     // Agora insiro os devidos valores nos inputs criados
     $('#tprelato', '#frmCabContas').val(idImpressao);
@@ -274,6 +280,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#inpessoa', '#frmCabContas').val(inpessoa);
     $('#_nrdconta', '#frmCabContas').val(normalizaNumero(nrdconta));
     $('#_idseqttl', '#frmCabContas').val(idseqttl);
+	$('#idregtrb', '#frmCabContas').val(idregtrb);
     $('#sidlogin', '#frmCabContas').val($('#sidlogin', '#frmMenu').val());
 
     var action = UrlSite + 'telas/contas/impressoes/imp_impressoes.php';
@@ -281,6 +288,29 @@ function imprime(idImpressao, flgpreen, inpessoa) {
 
     carregaImpressaoAyllos("frmCabContas", action, callafter);
 
+}
+
+function imprimeDeclaracaoSimplesNacional(divBloqueio){
+	
+    $('#sidlogin', '#frmCabContas').remove();
+    $('#tpregist', '#frmCabContas').remove();
+	$('#idregtrb', '#frmCabContas').remove();
+	$('#imprimirsodeclaracaosn', '#frmCabContas').remove();
+
+    $('#frmCabContas').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+    $('#frmCabContas').append('<input type="hidden" id="tpregist" name="tpregist" value="' + inpessoa + '" />');
+	$('#frmCabContas').append('<input type="hidden" id="idregtrb" name="idregtrb" value="' + idregtrb + '" />');
+	$('#frmCabContas').append('<input type="hidden" id="imprimirsodeclaracaosn" name="imprimirsodeclaracaosn" value="1" />');
+
+    var action = UrlSite + 'telas/contas/ficha_cadastral/imp_fichacadastral.php';
+    var callafter = "";
+
+    if (typeof divBloqueio != "undefined") { callafter = "bloqueiaFundo(" + divBloqueio.attr("id") + ");"; }
+
+    carregaImpressaoAyllos("frmCabContas", action, callafter);
+	//Remove para não afetar a rotina de ficha cadastral
+	$('#imprimirsodeclaracaosn', '#frmCabContas').remove();
+	
 }
 
 function telaCartaoAssinatura(inpessoa) {

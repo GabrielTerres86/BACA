@@ -30,6 +30,7 @@
  * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  */
 ?>
 
@@ -158,7 +159,8 @@
 	$dtnasct1 = (isset($_POST['dtnasct1'])) ? $_POST['dtnasct1'] : '' ;
 	$inpesso2 = (isset($_POST['inpesso2'])) ? $_POST['inpesso2'] : '' ;
 	$dtnasct2 = (isset($_POST['dtnasct2'])) ? $_POST['dtnasct2'] : '' ;
-	
+
+	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -460,6 +462,7 @@
 		$xml .= '		<dsjusren>'.$dsjusren.'</dsjusren>';
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
+	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

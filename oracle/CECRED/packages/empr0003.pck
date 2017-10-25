@@ -122,6 +122,18 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                                         ,pr_nmarqpdf OUT VARCHAR2             --> Nome Arquivo PDF
                                         ,pr_des_reto OUT VARCHAR2);           --> Descrição do retorno
 
+    /******************************************************************************/
+	/**   Procedure para imprimir declaração de isenção do IOF                   **/
+	/******************************************************************************/
+	PROCEDURE pc_impr_dec_rec_ise_iof_xml(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+										 ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da conta
+										 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF
+										 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+										,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
+										,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+										,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+										,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+										,pr_des_erro OUT VARCHAR2);
 
   /******************************************************************************/
   /**            Procedure para buscar operações dos avalistas.                **/
@@ -2953,7 +2965,213 @@ BEGIN
                      SQLERRM;      
   END pc_gera_co_responsavel_prog;
   
-  
+  PROCEDURE pc_impr_dec_rec_ise_iof_xml(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+																				 ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da conta
+																				 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF
+																				 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																				 ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
+																				 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																				 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+																				 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																				 ,pr_des_erro OUT VARCHAR2) IS
+				--> Erros do processo        
+				/* .............................................................................
+        
+           Programa: pc_imprime_declaracao_recursos_isencao_iof_xml
+           Sistema : Conta-Corrente - Cooperativa de Credito
+           Sigla   : CRED
+           Autor   : Diogo (Mouts)
+           Data    : Outubro/2017.                         Ultima atualizacao: 04/10/2017
+        
+           Dados referentes ao programa:
+        
+           Frequencia: Sempre que for chamado.
+           Objetivo  : Efetuar a impressao da Declaração de Utilização de Recursos para Isenção de IOF
+        
+           Alteracoes: 
+        
+        ............................................................................. */
+		
+				-- Cursor com os dados do cooperado
+				CURSOR cr_crapass IS
+						SELECT crapass.nrdconta,
+									 gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) AS nrcpfcgc,
+									 crapass.nmprimtl,
+									 crapenc.nrcepend,
+									 crapenc.dsendere,
+									 crapenc.nrendere,
+									 crapenc.complend,
+									 crapenc.nmbairro,
+									 crapenc.nmcidade,
+									 crapenc.cdufende,
+									 crapenc.nrcxapst
+						FROM crapass
+						LEFT JOIN crapenc
+						ON crapenc.nrdconta = crapass.nrdconta
+							 AND crapenc.idseqttl = 1
+							 AND crapenc.cdseqinc = 1
+							 AND crapenc.cdcooper = pr_cdcooper
+						--               AND crapenc.tpendass = 9
+						WHERE crapass.nrdconta = pr_nrdconta
+									AND crapass.nrcpfcgc = pr_nrcpfcgc;
+				rw_crapass cr_crapass%ROWTYPE;
+		
+				-- Tratamento de erros
+				vr_exc_saida EXCEPTION;
+				vr_cdcritic PLS_INTEGER;
+				vr_dscritic VARCHAR2(4000);
+		
+				-- Variaveis gerais
+				vr_texto_completo VARCHAR2(32600); --> Variável para armazenar os dados do XML antes de incluir no CLOB
+				vr_des_xml        CLOB; --> XML do relatorio
+				vr_cdprogra       VARCHAR2(10) := 'EMPR0003'; --> Nome do programa
+				rw_crapdat        btch0001.cr_crapdat%ROWTYPE; --> Cursor genérico de calendário
+				vr_nom_direto     VARCHAR2(200); --> Diretório para gravação do arquivo
+				vr_nmarqimp       VARCHAR2(50); --> nome do arquivo PDF
+				vr_temp           VARCHAR2(1000); --> Temporária para gravação do texto XML
+		
+				-- variaveis de críticas
+				vr_tab_erro  GENE0001.typ_tab_erro;
+				vr_des_reto  VARCHAR2(10);
+				vr_typ_saida VARCHAR2(3);
+		
+		BEGIN
+				-- Leitura do calendário da cooperativa
+				OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+				FETCH btch0001.cr_crapdat
+						INTO rw_crapdat;
+				CLOSE btch0001.cr_crapdat;
+		
+				--Informações do associado
+				OPEN cr_crapass;
+				FETCH cr_crapass
+						INTO rw_crapass;
+				CLOSE cr_crapass;
+		
+				vr_des_xml := NULL;
+		
+				--XML de envio
+				vr_temp := '<?xml version="1.0" encoding="utf-8"?>' || '<associado>' || '<nrdconta>' ||
+									 rw_crapass.nrdconta || '</nrdconta>' || '<nrcpfcgc>' || rw_crapass.nrcpfcgc ||
+									 '</nrcpfcgc>' || '<nmprimtl>' || rw_crapass.nmprimtl || '</nmprimtl>' ||
+									 '<nrcepend>' || rw_crapass.nrcepend || '</nrcepend>' || '<dsendere>' ||
+									 rw_crapass.dsendere || '</dsendere>' || '<nrendere>' || rw_crapass.nrendere ||
+									 '</nrendere>' || '<complend>' || rw_crapass.complend || '</complend>' ||
+									 '<nmbairro>' || rw_crapass.nmbairro || '</nmbairro>' || '<nmcidade>' ||
+									 rw_crapass.nmcidade || '</nmcidade>' || '<cdufende>' || rw_crapass.cdufende ||
+									 '</cdufende>' || '<nrcxapst>' || rw_crapass.nrcxapst || '</nrcxapst>' ||
+									 '</associado>';
+		
+				-- Inicializar o CLOB
+				vr_des_xml := NULL;
+				dbms_lob.createtemporary(vr_des_xml, TRUE);
+				dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+		
+				-- Escreve o XML no CLOB
+				vr_texto_completo := NULL;
+				gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, vr_temp, TRUE);
+		
+				-- Busca diretorio padrao da cooperativa
+				vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+																							,
+																							 pr_cdcooper => pr_cdcooper,
+																							 pr_nmsubdir => 'arquivos');
+		
+				-- Solicita geracao do PDF
+				vr_nmarqimp := '/dec_isencao_iof_' || pr_nrdconta || pr_nrcpfcgc || '.pdf';
+				gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,
+																		pr_cdprogra  => vr_cdprogra,
+																		pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+																		pr_dsxml     => vr_des_xml,
+																		pr_dsxmlnode => '/',
+																		pr_dsjasper  => 'dec_isencao_iof.jasper',
+																		pr_dsparams  => NULL,
+																		pr_dsarqsaid => vr_nom_direto || vr_nmarqimp,
+																		pr_flg_gerar => 'S',
+																		pr_qtcoluna  => 234,
+																		pr_sqcabrel  => 1,
+																		pr_flg_impri => 'S',
+																		pr_nmformul  => ' ',
+																		pr_nrcopias  => 1,
+																		pr_nrvergrl  => 1,
+																		pr_parser    => 'R' --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
+																	 ,
+																		pr_des_erro  => vr_dscritic);
+		
+				IF vr_dscritic IS NOT NULL THEN
+						-- verifica retorno se houve erro
+						RAISE vr_exc_saida; -- encerra programa
+				END IF;
+		
+				-- copia o pdf do diretorio da cooperativa para servidor web
+				gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper,
+																		 pr_cdagenci => NULL,
+																		 pr_nrdcaixa => NULL,
+																		 pr_nmarqpdf => vr_nom_direto || vr_nmarqimp,
+																		 pr_des_reto => vr_des_reto,
+																		 pr_tab_erro => vr_tab_erro);
+		
+				-- caso apresente erro na operação
+				IF nvl(vr_des_reto, 'OK') <> 'OK' THEN
+						IF vr_tab_erro.COUNT > 0 THEN
+								-- verifica pl-table se existe erros
+								vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+								vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+								RAISE vr_exc_saida; -- encerra programa
+						END IF;
+				END IF;
+		
+				-- Remover relatorio do diretorio padrao da cooperativa
+				gene0001.pc_OScommand(pr_typ_comando => 'S',
+															pr_des_comando => 'rm ' || vr_nom_direto || vr_nmarqimp,
+															pr_typ_saida   => vr_typ_saida,
+															pr_des_saida   => vr_dscritic);
+				-- Se retornou erro
+				IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+						-- Concatena o erro que veio
+						vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
+						RAISE vr_exc_saida; -- encerra programa
+				END IF;
+		
+				-- Liberando a memória alocada pro CLOB
+				dbms_lob.close(vr_des_xml);
+				dbms_lob.freetemporary(vr_des_xml);
+				vr_nmarqimp := substr(vr_nmarqimp, 2); -- retornar somente o nome do PDF sem a barra"/"
+		
+				-- Criar XML de retorno para uso na Web
+				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
+																			 vr_nmarqimp || '</nmarqpdf>');
+		
+				COMMIT;
+		
+		EXCEPTION
+				WHEN vr_exc_saida THEN
+						-- Se foi retornado apenas código
+						IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+								-- Buscar a descrição
+								vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+						END IF;
+						-- Devolvemos código e critica encontradas das variaveis locais
+						pr_cdcritic := NVL(vr_cdcritic, 0);
+						pr_dscritic := vr_dscritic;
+				
+						-- Carregar XML padrão para variável de retorno não utilizada.
+						-- Existe para satisfazer exigência da interface.
+						pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' ||
+																					 upper(pr_dscritic) || '</Erro></Root>');
+						ROLLBACK;
+				WHEN OTHERS THEN
+						-- Efetuar retorno do erro não tratado
+						pr_cdcritic := 0;
+						pr_dscritic := SQLERRM;
+						-- Carregar XML padrão para variável de retorno não utilizada.
+						-- Existe para satisfazer exigência da interface.
+						pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' ||
+																					 upper(pr_dscritic) || '</Erro></Root>');
+						ROLLBACK;
+				
+		END pc_impr_dec_rec_ise_iof_xml;
+
   
 
 END EMPR0003;

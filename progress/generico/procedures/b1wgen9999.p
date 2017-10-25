@@ -278,7 +278,10 @@
                             buscas em tabelas exclusivamente progress, que não 
                             são utilizadas no oracle, podendo causar lentidão
                             quando requisitada por programas que tratam LOCK
-                            (Carlos)
+                            (Carlos)		
+
+                20/10/2017 - Criada procedure busca_iof_simples_nacional 
+                             (Diogo - MoutS - Projeto 410 - RF 43 a 46)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -4875,6 +4878,61 @@ PROCEDURE busca_iof:
                                   INT(SUBSTRING(craptab.dstextab,12,2)),
                                   INT(SUBSTRING(craptab.dstextab,18,4)))
            tt-iof.txccdiof = IF par_dtmvtolt >= tt-iof.dtiniiof AND
+                                par_dtmvtolt <= tt-iof.dtfimiof THEN
+                                DECIMAL(SUBSTR(craptab.dstextab,23,14))
+                             ELSE 0.
+
+END PROCEDURE.
+
+
+/*****************************************************************************/
+/*                 Buscar dados sobre IOF - Simples Nacional                 */
+/*****************************************************************************/
+PROCEDURE busca_iof_simples_nacional:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-iof-sn.
+    
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-iof-sn.
+    
+    /*  Tabela com a taxa do IOF */
+    FIND craptab WHERE craptab.cdcooper = par_cdcooper       AND
+                       craptab.nmsistem = "CRED"             AND
+                       craptab.tptabela = "USUARI"           AND
+                       craptab.cdempres = 11                 AND
+                       craptab.cdacesso = "VLIOFOPSN"        AND
+                       craptab.tpregist = 1
+                       USE-INDEX craptab1 NO-LOCK NO-ERROR.
+
+    IF   NOT AVAILABLE craptab   THEN
+         DO:
+             ASSIGN aux_cdcritic = 915
+                    aux_dscritic = "".
+
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+                                                       
+             RETURN "NOK".
+         END.
+ 
+    CREATE tt-iof-sn.
+    ASSIGN tt-iof-sn.dtiniiof = DATE(INT(SUBSTRING(craptab.dstextab,4,2)),
+                                  INT(SUBSTRING(craptab.dstextab,1,2)),
+                                  INT(SUBSTRING(craptab.dstextab,7,4)))
+           tt-iof-sn.dtfimiof = DATE(INT(SUBSTRING(craptab.dstextab,15,2)),
+                                  INT(SUBSTRING(craptab.dstextab,12,2)),
+                                  INT(SUBSTRING(craptab.dstextab,18,4)))
+           tt-iof-sn.txccdiof = IF par_dtmvtolt >= tt-iof.dtiniiof AND
                                 par_dtmvtolt <= tt-iof.dtfimiof THEN
                                 DECIMAL(SUBSTR(craptab.dstextab,23,14))
                              ELSE 0.
