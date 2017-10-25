@@ -128,7 +128,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   -- Tabela de memória de pessoas juridicas
   TYPE typ_copass  IS TABLE OF rec_copass INDEX BY VARCHAR2(14); -- Lista com indice pelo CNPJ completo
   TYPE typ_cpbase  IS TABLE OF typ_copass INDEX BY VARCHAR2(10); -- Lista indexada pela base do CNPJ
-  
+
   -- Record para dados do XML
   TYPE rec_crapvop IS RECORD (nrcpfcgc crapvop.nrcpfcgc%TYPE
                              ,dtrefere crapvop.dtrefere%TYPE
@@ -161,6 +161,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   TYPE typ_tab_crapopf IS TABLE OF rec_crapopf INDEX BY VARCHAR2(400);
   -- Tabela de memória para ordenar os arquivos
   TYPE typ_sortarq IS TABLE OF VARCHAR2(100) INDEX BY VARCHAR2(100);
+
+  --tabela de memória utilizada para atualizar a data de fim de carga dos dados do arquivo
+  TYPE rec_tbbi_opf_header IS RECORD (idopf_header tbbi_opf_header.idopf_header%TYPE);
+  TYPE typ_tbbi_opf_header IS TABLE OF rec_tbbi_opf_header INDEX BY BINARY_INTEGER;
+  vr_tbbi_opf_header typ_tbbi_opf_header;
+  vr_dhprocesso date;
+  vr_existe_opf varchar2(1);
 
   -- VARIÁVEIS
   -- Código do programa
@@ -209,6 +216,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   -- Arquivo de log do processamento
   vr_nmarqdat      CONSTANT VARCHAR2(15) := 'proc3046.log';
   vr_filelog       utl_file.file_type;
+  vr_regfilelog    number(20);
+  vr_limregfilelog number(20) := 2000;
   -- Diretório das cooperativas
   vr_dsdireto      VARCHAR2(200);
   vr_dsdirzip      VARCHAR2(200);
@@ -224,6 +233,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   -- PL Table para tabelas acessadas constantemente
   vr_tab_crapvop   typ_tab_crapvop;
   vr_tab_crapopf   typ_tab_crapopf;
+  vr_idprglog      tbgen_prglog.idprglog%TYPE := 0;
 
   PROCEDURE pc_grava_header_3046(pr_nmarquivo          IN VARCHAR2
                                 ,pr_nrcnpj_if          IN NUMBER
@@ -235,9 +245,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                                 ,pr_idopf_header      OUT NUMBER
                                 ,pr_dscritic          OUT VARCHAR2) IS
   BEGIN 
-
-
-BEGIN
+    BEGIN
       INSERT INTO cecred.tbbi_opf_header
         (nmarquivo,
          dhprocesso,
@@ -249,7 +257,7 @@ BEGIN
          pevol_operacoes_if)
       VALUES
         (pr_nmarquivo,
-         SYSDATE,
+         to_date('31122999','ddmmyyyy'),
          pr_nrcnpj_if,
          pr_dtbase,
          pr_nrprotocolo,
@@ -257,6 +265,9 @@ BEGIN
          pr_peif_dados_individ,
          pr_pevol_operacoes_if)
       RETURNING idopf_header INTO pr_idopf_header;
+      --
+      vr_tbbi_opf_header((nvl(vr_tbbi_opf_header.count,0)+1)).idopf_header := pr_idopf_header;
+      --
     EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic:= 'Erro ao inserir os dados do Header do Arquivo 3046 - cecred.tbbi_opf_header: '||SQLERRM;
@@ -268,6 +279,13 @@ BEGIN
   END pc_grava_header_3046;
 
 BEGIN
+
+  -- Gera log no início da execução
+  pc_log_programa(PR_DSTIPLOG   => 'I'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                 ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                 ,pr_tpexecucao => 1             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                  -- Parametros para Ocorrencia
+                 ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
 
   /********** TRATAMENTOS INICIAIS **********/
   -- Incluir nome do modulo logado
@@ -440,6 +458,7 @@ BEGIN
                           ,pr_tipabert => 'W'
                           ,pr_utlfileh => vr_filelog
                           ,pr_des_erro => vr_dscritic);
+  vr_regfilelog := 0;
 
   -- Se retornar critica
   IF vr_dscritic IS NOT NULL THEN
@@ -476,6 +495,9 @@ BEGIN
     -- Abrir o arquivo
     vr_filexml := utl_file.fopen(vr_dsdirzip || '/', vr_array_arquivo(ind), 'r');
     eof := FALSE;
+
+    --inicializa indicador da existencia de registros OPF para serem inseridos
+    vr_existe_opf := 'N';
 
     -- Abrir Clob para gravação 
     DBMS_LOB.createtemporary(vr_clobarq , TRUE , DBMS_LOB.session);
@@ -799,17 +821,26 @@ BEGIN
         IF vr_crapopf(vr_ixOPFv).dtrefere = vr_xml_dtrefere 
           -- Buscar o registro da crapopf se encontrar registros na CRAPOPF
           AND vr_tab_crapopf.exists(LPAD(vr_crapopf(vr_ixOPFv).nrcpfcgc, 25, '0') || TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere, 'DDMMRRRR')) THEN
-          
+
+            --necessário limitar quantidade de registros, arquivo de log atinge mais de 1Gb
+            if vr_regfilelog < vr_limregfilelog then
+              -- Escreve no log do arquivo
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
+                                            ,pr_des_text => TO_CHAR(vr_dtmvtolt,'dd/mm/yyyy')||' '||
+                                                            TO_CHAR(SYSDATE,'hh24:mi:ss')    ||' => '||
+                                                            'CRAPOPF: Arquivo '||vr_dsdirzip||'/'||vr_array_arquivo(ind)||' '||
+                                                            'DATABASE: '||TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere,'dd/mm/yyyy')||' '||
+                                                            'CPF_CNPJ: '||TO_CHAR(vr_crapopf(vr_ixOPFv).nrcpfcgc)||' ERRO: Registro ja existente');
+            elsif vr_regfilelog = vr_limregfilelog then
+              -- Escreve no log do arquivo
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
+                                            ,pr_des_text => 'Log limitado a '||vr_limregfilelog||' registros. Existem mais registros com a mesma situacao...');
+            end if;
+            vr_regfilelog := vr_regfilelog + 1;
+
             -- Eliminar registro da PL Table
             vr_crapopf.delete(vr_ixOPFv);
-            
-            -- Escreve no log do arquivo
-            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
-                                          ,pr_des_text => TO_CHAR(vr_dtmvtolt,'dd/mm/yyyy')||' '||
-                                                          TO_CHAR(SYSDATE,'hh24:mi:ss')    ||' => '||
-                                                          'CRAPOPF: Arquivo '||vr_dsdirzip||'/'||vr_array_arquivo(ind)||' '||
-                                                          'DATABASE: '||TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere,'dd/mm/yyyy')||' '||
-                                                          'CPF_CNPJ: '||TO_CHAR(vr_crapopf(vr_ixOPFv).nrcpfcgc)||' ERRO: Registro ja existente');
+
           END IF;
 
         -- Buscar a próxima chave
@@ -858,7 +889,14 @@ BEGIN
           vr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
           RAISE vr_exc_saida;
       END;
-      
+
+      --se passou pela validação e inseriu registros na crapopf então marca o indicador
+      if nvl(vr_crapopfi.count,0) > 0 then
+        --
+        vr_existe_opf := 'S';
+        --
+      end if;
+
       -- Limpar PL Table
       vr_crapopfi.delete;
 
@@ -896,18 +934,28 @@ BEGIN
                                    LPAD(vr_crapvop(vr_ixVOP).cdmodali, 10, '0') ||
                                    LPAD(vr_crapvop(vr_ixVOP).cdvencto, 10, '0') ||
                                    LPAD(vr_crapvop(vr_ixVOP).flgmoest, 3, '0')) THEN
+
+            --necessário limitar quantidade de registros, arquivo de log atinge mais de 1Gb
+            if vr_regfilelog < vr_limregfilelog then
+              -- Escreve no log do arquivo
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
+                                            ,pr_des_text => TO_CHAR(vr_dtmvtolt,'dd/mm/yyyy') || ' ' || TO_CHAR(SYSDATE,'hh24:mi:ss') || ' => ' ||
+                                                            'CRAPVOP: Arquivo ' || vr_dsdirzip || '/' || vr_array_arquivo(ind) || ' ' ||
+                                                            'DATABASE: ' || TO_CHAR(vr_crapvop(vr_ixVOP).dtrefere, 'DD/MM/RRRR') || ' ' ||
+                                                            'CPF_CNPJ: ' || TO_CHAR(vr_crapvop(vr_ixVOP).nrcpfcgc) || ' ' ||
+                                                            'MODALIDADE: ' || vr_crapvop(vr_ixVOP).cdmodali || ' ' ||
+                                                            'VENCIMENTO: ' || TO_CHAR(vr_crapvop(vr_ixVOP).cdvencto, 'FM000') || ' ' ||
+                                                            'MOEDA_EST: ' || REPLACE(REPLACE(vr_crapvop(vr_ixVOP).flgmoest, 1, 'yes'), 0, 'no') || ' ERRO: Registro ja existente'); 
+            elsif vr_regfilelog = vr_limregfilelog then
+              -- Escreve no log do arquivo
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
+                                            ,pr_des_text => 'Log limitado a '||vr_limregfilelog||' registros. Existem mais registros com a mesma situacao...');
+            end if;
+            vr_regfilelog := vr_regfilelog + 1;
+
             -- Eliminar registro da PL Table antes da gravação
             vr_crapvop.delete(vr_ixVOP);
-            
-            -- Escreve no log do arquivo
-            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_filelog
-                                          ,pr_des_text => TO_CHAR(vr_dtmvtolt,'dd/mm/yyyy') || ' ' || TO_CHAR(SYSDATE,'hh24:mi:ss') || ' => ' ||
-                                                          'CRAPVOP: Arquivo ' || vr_dsdirzip || '/' || vr_array_arquivo(ind) || ' ' ||
-                                                          'DATABASE: ' || TO_CHAR(vr_crapvop(vr_ixVOP).dtrefere, 'DD/MM/RRRR') || ' ' ||
-                                                          'CPF_CNPJ: ' || TO_CHAR(vr_crapvop(vr_ixVOP).nrcpfcgc) || ' ' ||
-                                                          'MODALIDADE: ' || vr_crapvop(vr_ixVOP).cdmodali || ' ' ||
-                                                          'VENCIMENTO: ' || TO_CHAR(vr_crapvop(vr_ixVOP).cdvencto, 'FM000') || ' ' ||
-                                                          'MOEDA_EST: ' || REPLACE(REPLACE(vr_crapvop(vr_ixVOP).flgmoest, 1, 'yes'), 0, 'no') || ' ERRO: Registro ja existente'); 
+
           END IF;
         
         -- Capturar próximo índice
@@ -957,9 +1005,9 @@ BEGIN
         -- Pular para próximo arquivo
         CONTINUE;
       WHEN OTHERS THEN
-        
+
         cecred.pc_internal_exception(pr_cdcooper);
-      
+
         -- Verifica se retornou endereços de e-mail para envio do arquivo
         IF vr_des_destino IS NULL THEN
           -- Mensagem de erro
@@ -971,15 +1019,24 @@ BEGIN
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic );
         ELSE
-          -- Enviar e-mail com o log gerado
-          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                    ,pr_cdprogra        => vr_cdprogra
-                                    ,pr_des_destino     => vr_des_destino
-                                    ,pr_des_assunto     => 'Proc3046.log'
-                                    ,pr_des_corpo       => 'Erro ao importar arquivo xml 3046 => ' || vr_array_arquivo(ind) || '.' || chr(10) || SQLERRM
-                                    ,pr_des_anexo       => vr_dsdireto || '/converte/' || vr_nmarqdat
-                                    ,pr_flg_remove_anex => 'N'
-                                    ,pr_des_erro        => vr_dscritic);
+
+          -- Converte o arquivo para enviar
+          gene0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper
+                                      ,pr_nmarquiv => vr_dsdireto || '/log/' || vr_nmarqdat
+                                      ,pr_nmarqenv => vr_nmarqdat
+                                      ,pr_des_erro => vr_dscritic);
+                                      
+          IF vr_dscritic IS NULL THEN
+            -- Enviar e-mail com o log gerado
+            gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                      ,pr_cdprogra        => vr_cdprogra
+                                      ,pr_des_destino     => vr_des_destino
+                                      ,pr_des_assunto     => 'Proc3046.log'
+                                      ,pr_des_corpo       => 'Erro ao importar arquivo xml 3046 => ' || vr_array_arquivo(ind) || '.' || chr(10) || SQLERRM
+                                      ,pr_des_anexo       => vr_dsdireto || '/converte/' || vr_nmarqdat
+                                      ,pr_flg_remove_anex => 'N'
+                                      ,pr_des_erro        => vr_dscritic);
+          END IF;
 
           -- Verificar se houve erro ao solicitar e-mail
           IF vr_dscritic IS NOT NULL THEN
@@ -1006,7 +1063,40 @@ BEGIN
                                ,pr_flg_aguard  => 'S'
                                ,pr_typ_saida   => vr_typ_said
                                ,pr_des_saida   => vr_dscritic);
-    
+
+    --inicializa a data de processamento do arquivo com sysdate e
+    --atualiza a tabela somente no final do processo, que é o momento do commit
+    --e que os registros ficam disponíveis para consulta no Ayllos (SD#770804)
+    --
+    if nvl(vr_tbbi_opf_header.count,0) > 0 then
+      --
+      vr_dhprocesso := sysdate;
+      --
+      for i in vr_tbbi_opf_header.first .. vr_tbbi_opf_header.last
+      loop
+        --
+        --se foram inseridos registros na opf então também marca a data,
+        --senão deleta cabecalho pois não existem registros filhos
+        if vr_existe_opf = 'S' then
+          --
+          update tbbi_opf_header opfh
+          set opfh.dhprocesso = vr_dhprocesso
+          where opfh.idopf_header = vr_tbbi_opf_header(i).idopf_header;
+          --
+        else
+          --
+          delete tbbi_opf_header opfh
+          where opfh.idopf_header = vr_tbbi_opf_header(i).idopf_header;
+          --
+        end if;
+        --
+      end loop;
+      --
+      vr_tbbi_opf_header.delete;
+      --
+    end if;
+    --
+
     -- Efetuar gravação ao processar cada arquivo, pois o mesmo foi movido a salvar
     COMMIT;
 
@@ -1064,6 +1154,13 @@ BEGIN
   -- Salvar informações atualizada
   COMMIT;
 
+  pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                 ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                 ,pr_tpexecucao => 1             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                 ,pr_flgsucesso => 0
+                  -- Parametros para Ocorrencia
+                 ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
 EXCEPTION
   WHEN vr_exc_fimprg THEN
 
@@ -1085,6 +1182,13 @@ EXCEPTION
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
 
+    pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 1             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_flgsucesso => 0
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
   WHEN vr_exc_saida THEN
 
     -- Devolvemos código e critica encontradas
@@ -1095,6 +1199,15 @@ EXCEPTION
 
     -- Efetuar rollback
     ROLLBACK;
+
+    pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 1             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_cdmensagem => pr_cdcritic
+                   ,pr_dsmensagem => pr_dscritic
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
   WHEN OTHERS THEN
 
     cecred.pc_internal_exception(pr_cdcooper);
@@ -1104,5 +1217,14 @@ EXCEPTION
     pr_dscritic := SQLERRM;
     -- Efetuar rollback
     ROLLBACK;
+
+    pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 1             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_cdmensagem => pr_cdcritic
+                   ,pr_dsmensagem => pr_dscritic
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
 END PC_CRPS572;
 /
