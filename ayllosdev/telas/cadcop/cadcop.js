@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 15/09/2017
+ Data : Agosto/2016                Última Alteração: 17/10/2017
 
  Objetivo  : Cadastro de servicos ofertados na tela CADCOP
 
@@ -14,6 +14,7 @@
 
              15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
+			 17/10/2017 - Adicionar flgofatr para o form frmConsulta5 (Lucas Ranghetti #772863)
 ************************************************************************/
 var cddepart;
 
@@ -3377,7 +3378,7 @@ function alterarCooperativa() {
     var qtmeatel = $("#qtmeatel", "#frmConsulta5").val();
     var permaxde = isNaN(parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var cdloggrv = $("#cdloggrv", "#frmConsulta5").val();
-    var flgofatr = $("#flgofatr", "#frmConsulta").val();
+    var flgofatr = $("#flgofatr", "#frmConsulta5").val();
     var qtdiasus = $("#qtdiasus", "#frmConsulta5").val();
     var cdcliser = $("#cdcliser", "#frmConsulta5").val();
     var vlmiplco = isNaN(parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));

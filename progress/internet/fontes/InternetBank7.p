@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 13/04/2017
+   Data    : Marco/2007                        Ultima atualizacao: 18/08/2017
 
    Dados referentes ao programa:
 
@@ -53,15 +53,17 @@
 			                e de sobras na Conta Corrente (Marcos-Supero).
                       
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
-                            (Marcos-Supero)      
+                            (Marcos-Supero)             
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-			                sem desconto IR (Marcos-Supero) 
+			                sem desconto IR (Marcos-Supero)
 
 			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+               18/08/2017 - Incluida validacao de IR para pessoa juridica
+                            (Rafael Faria-Supero)
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -604,12 +606,22 @@ PROCEDURE proc_ir_juridica:
     /* se for ano vigente */
     IF  par_anorefer = YEAR(par_dtmvtolt)  THEN
         DO:
+
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+
             ASSIGN aux_nrmesref = MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
             FIND crapcot WHERE crapcot.cdcooper = par_cdcooper AND
                                crapcot.nrdconta = par_nrdconta 
                                NO-LOCK NO-ERROR.
  
-            IF  NOT AVAILABLE crapcot  THEN
+            IF  NOT AVAILABLE crapcot or NOT AVAILABLE craptab THEN
                 DO:
                     aux_dscritic = "Nao ha dados para imposto de renda " +
                                    "referente ao ano de " + 
@@ -702,7 +714,16 @@ PROCEDURE proc_ir_juridica:
                        YEAR(crapdir.dtmvtolt) = par_anorefer
                        USE-INDEX crapdir1 NO-LOCK NO-ERROR.
 
-            IF NOT AVAILABLE crapdir THEN
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+			
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+
+            IF NOT AVAILABLE crapdir or NOT AVAILABLE craptab THEN
                DO:
                    ASSIGN aux_dscritic = "Conta/dv: " + STRING(par_nrdconta) +
                                          " - Nao ha dados para imposto de " +

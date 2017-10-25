@@ -448,7 +448,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                          ,pr_retxml   IN OUT NOCOPY XMLType       --> Arquivo de retorno do XML
                                          ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
                                          ,pr_des_erro OUT VARCHAR2);              --> Erros do processo                                    
-
+	
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa
@@ -561,7 +561,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);                --> Descricao da critica                                     
-
+                                     
   PROCEDURE pc_buscar_cnae_bloqueado(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
                                     ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
                                     ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
@@ -572,7 +572,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-
+                                    
   PROCEDURE pc_cria_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
                                      ,pr_dsmotivo   IN  tbcc_cnae_bloqueado.dsmotivo%TYPE
                                      ,pr_tpbloqueio IN  tbcc_cnae_bloqueado.tpbloqueio%TYPE
@@ -722,8 +722,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                               
-                                     
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo      
+								
   PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
                                       ,pr_cdcritic OUT INTEGER
@@ -791,14 +791,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                           Prj. 302 (Jean Michel).
   --
   --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
-  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).      
   --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
   --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --			                crapass, crapttl, crapjur 
   --						   (Adriano - P339).
----------------------------------------------------------------------------------------------------------------
+  ---------------------------------------------------------------------------------------------------------------
 
 
   
@@ -4108,7 +4108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           PRJ-300 - Desconto de Cheque (Odirlei-AMcom) 
     --                          
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
-    --                           empréstimos, Prj. 302 (Jean Michel).	
+    --                           empréstimos, Prj. 302 (Jean Michel).
     --
     --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
     --                           PRJ-300 Desconto de Cheque (Daniel)
@@ -4550,7 +4550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND snh.nrcpfcgc = pr_nrcpfcgc;
 
     rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;     
-
+      
     -- Cursor para buscar os bloqueios judiciais
     CURSOR cr_crapblj IS
       SELECT DISTINCT a.nrproces,
@@ -4603,6 +4603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_epr_portabilidade   VARCHAR2(1000);
     vr_tab_dados_epr       empr0001.typ_tab_dados_epr;
     vr_tab_dados_cpa       empr0002.typ_tab_dados_cpa;
+    vr_tab_mensagens       TELA_CONTAS_GRUPO_ECONOMICO.typ_tab_mensagens;
     vr_inusatab     BOOLEAN;
     vr_flgexist     BOOLEAN;
     vr_qtregist     INTEGER;
@@ -4847,7 +4848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;                           
     END IF;
     CLOSE cr_craplim;
-
+        
     --> Tabela de limite de desconto de cheques
     vr_dstextab := tabe0001.fn_busca_dstextab ( pr_cdcooper => pr_cdcooper 
                                                ,pr_nmsistem => 'CRED'
@@ -4883,7 +4884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-    END IF;
+      END IF;        
     
     END IF;
     CLOSE cr_craprli;
@@ -5517,7 +5518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
     END LOOP;
-	
+    
     --> Procedimento para buscar dados do credito pré-aprovado (crapcpa)
     EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
                                 ,pr_cdagenci  => pr_cdagenci   --> Código da agencia
@@ -5538,17 +5539,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
       IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
-        --> Incluir na temptable
+      --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
                             ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    
+       
       ELSE
-          --> Incluir na temptable
-          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-        END IF;
-      END IF;
+        --> Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+    END IF;   
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
@@ -5703,22 +5704,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
 
 	-- Verifica se a conta possui algum grupo economico novo
-    TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ(pr_cdcooper => pr_cdcooper, 
-                                                           pr_nrdconta => pr_nrdconta, 
-                                                           pr_flgativo => vr_flgativo, 
-                                                           pr_nrdconta_grp => vr_nrdconta_grp, 
-                                                           pr_dsvinculo => vr_dsvinculo, 
-                                                           pr_cdcritic => vr_cdcritic, 
-                                                           pr_dscritic => vr_dscritic);
+    vr_tab_mensagens.DELETE;
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_obtem_mensagem_grp_econ(pr_cdcooper      => pr_cdcooper 
+                                                          ,pr_nrdconta      => pr_nrdconta
+                                                          ,pr_tab_mensagens => vr_tab_mensagens
+                                                          ,pr_cdcritic      => vr_cdcritic
+                                                          ,pr_dscritic      => vr_dscritic);
     
     IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
     
-    IF vr_flgativo = 1 THEN
-      pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    -- Condicao para verificar se possui mensagem para exibir do grupo economico
+    IF vr_tab_mensagens.COUNT > 0 THEN
+      FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END LOOP; 
     END IF;
+    
     pr_des_reto := 'OK';
     
   EXCEPTION    
@@ -6018,7 +6022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --   Objetivo  : Procedure para carregar dos dados para a tela ATENDA
     --
     --  Alteração : 23/10/2015 - Conversão Progress -> Oracle (Odirlei)
-    --              
+    --
     --              23/03/2015 - Adicionar novos parametros na chamada da
     --                           EXTR0002.pc_consulta_lancamento - Melhoria 157 (Lucas Ranghetti)
 
@@ -6786,7 +6790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     OPEN cr_limite_saque;
     FETCH cr_limite_saque INTO vr_vllimite_saque;
     CLOSE cr_limite_saque;
-    
+
     --> Cria TEMP-TABLE com valores referente a conta
     vr_idxval := pr_tab_valores_conta.count + 1;
     
@@ -7253,7 +7257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Erro não tratado na pc_carrega_dados_atenda_web ' ||
                      SQLERRM;
   END pc_carrega_dados_atenda_web;  
-
+	
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa
@@ -8604,9 +8608,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_nmdcampo => 'Valor do lancamento'
                                  ,pr_dsdadant => ' '
                                  ,pr_dsdadatu => to_char(pr_vllanmto,'fm999g999g990d00'));
-        END IF;
       END IF;
-
+      END IF;
+      
       -- Se possuir banco de destino
       IF nvl(pr_cdbccrcb,0) > 0 THEN
         -- Busca o banco de destino

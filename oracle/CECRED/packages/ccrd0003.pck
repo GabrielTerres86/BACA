@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/08/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -75,6 +75,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             
   --             08/08/2017 - #724754 Ajuste no procedimento pc_crps672 para filtrar apenas as cooperativas 
   --                          ativas para não solicitar relatórios para as inativas (Carlos)
+  --
+  --             21/09/2017 - Validar ultima linha do arquivo corretamente no pc_crps672 (Lucas Ranghetti #753170)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -2022,7 +2024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 07/12/2016 - Tratamento Incorporacao Transposul. (Fabricio)
                 
                 16/12/2016 - Ajustes para incorporacao/migracao. (Fabricio)
-                             
+
                 03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do 
                              procedimento pc_internal_exception no procedimento pc_crps670 (Carlos)
 
@@ -2658,12 +2660,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END LOOP;
 
         -- Fechar as tags e descarregar o buffer        
-         pc_escreve_xml('</agenci>');
+        pc_escreve_xml('</agenci>');
       
 
         -- GERAR RESUMO POR COOPERATIVA
-         pc_resumo_coop;
-         pc_escreve_xml('</cooper>');
+        pc_resumo_coop;
+        pc_escreve_xml('</cooper>');         
 
          
         pc_escreve_xml('</crrl685>',TRUE);
@@ -3004,8 +3006,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         IF TRIM(vr_listarq) IS NULL THEN
           vr_cdcritic := 182;
           vr_dscritic := NULL;
-          RAISE vr_exc_fimprg;
-        END IF;
+            RAISE vr_exc_fimprg;
+          END IF;
 
         vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
 									                           ,pr_delimit => ',');
@@ -3014,7 +3016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_cdcritic := 182;
           vr_dscritic := NULL;
           RAISE vr_exc_fimprg;
-          END IF;
+        END IF;
 
         FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
           vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
@@ -6459,7 +6461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           END LOOP;
 
-        END LOOP;
+          END LOOP;
 
         -- monta TRAILER do arquivo
         vr_dstraile := ('CCB3'                         /* Pedido         */      ||
@@ -6570,7 +6572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 04/07/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
 
        Dados referentes ao programa:
 
@@ -6696,6 +6698,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    18/07/2017 - Utilizar o nome do titular do cartão na importação do arquivo CCR3
                                 para atualizar no Ayllos, a fim de manter as informalçoes identicas
                                 com o SIPAG (Douglas - Chamado 709215) 
+                                
+                   21/09/2017 - Validar ultima linha do arquivo corretamente (Lucas Ranghetti #753170)
+                   
+                   25/09/2017 - Ajustado importação do arquivo CCR3, para integrar os cartões PURO CREDITO
+                                quando o titular do cartão não possuir vinculo com a conta
+                              - Ajustado a flgdebit para verificar na linha do arquivo se o cartão possui
+                                conta para debitar
+                              (Douglas - Chamado 746057)
     ............................................................................ */
 
     DECLARE
@@ -6733,6 +6743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_nrdctitg   NUMBER;
       vr_nmtitcrd   VARCHAR2(50);                                      --> Nome do Titular do cartão
       vr_dtentr2v   DATE;                                              --> Data de entrada do registro de segunda via
+      vr_valida_avt BOOLEAN;                                           --> Identifica se devemos validar o avalista
       -- Tratamento de registros do arquivo
       vr_nrctatp1   NUMBER          := 0;                              --> Número da conta do registro Tipo 1
       vr_nrctatp2   NUMBER          := 0;                              --> Número da conta do registro Tipo 2
@@ -7905,9 +7916,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
           CONTINUE;
         END IF;
-
-        /* Verificar se o arquivo esta completo - Ultima linha */
-        vr_comando:= 'tail -2 '||vr_direto_connect||'/'||vr_vet_nmarquiv(i);
+        
+        /* o comando abaixo ignora quebras de linha atraves do 'grep -v' e o 'tail -1' retorna
+             a ultima linha do resultado do grep */
+        vr_comando:= 'grep -v '||'''^$'' '||vr_direto_connect||'/'||vr_vet_nmarquiv(i)||'| tail -1';
 
         --Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -7921,16 +7933,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
           CONTINUE;
         END IF;
-                              
+                 
         --Verificar se a ultima linha é o Trailer
-        IF SUBSTR(vr_saida_tail,001,06) <> 'CCR309' AND   -- Antigo 
-           SUBSTR(vr_saida_tail,351,06) <> 'CCR309' THEN  -- Servidor "_AIX"             
+        IF SUBSTR(vr_saida_tail,1,6) <> 'CCR309' THEN  
           vr_cdcritic:= 999;
           vr_dscritic:= 'Arquivo incompleto.';  
           -- gerar o log
           pc_log_arq_invalido(pr_nmdarqui => vr_vet_nmarquiv(i));
-          -- levantar excecao
-          CONTINUE;
+            
+          CONTINUE; -- Proximo arquivo
         END IF;
 
         -- Guardar a maior sequencia processada
@@ -9050,6 +9061,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         CLOSE cr_crapjur;
                       END IF;
 
+                      -- A regra de negócio da área de Cartões é que cartão múltiplo ou 
+                      -- puro débito somente poderá ser solicitado para o representante legal 
+                      -- que assine isoladamente pela empresa. 
+                      -- E o cartão puro crédito para pessoas vinculadas a empresa e 
+                      -- não necessariamente a conta corrente.
+
+                      -- Inicialmente vamos validar o REPRESENTANTE
+                      vr_valida_avt := TRUE;
+                      --  Verificar o cartão que estamos processando possui uma conta de débito vinculada
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
+                        -- Se o cartão for PURO CREDITO, não validamos o representante
+                        vr_valida_avt := FALSE;
+                      END IF;
+
                       -- Busca registro de representante para pessoa jurídica
                       OPEN cr_crapavt(pr_cdcooper => rw_crapass.cdcooper,
                                       pr_nrdconta => rw_crapass.nrdconta,
@@ -9060,6 +9085,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       IF cr_crapavt%NOTFOUND THEN
                         -- Fechar o cursor
                         CLOSE cr_crapavt;
+                        
+                        -- Se não encontramos o representante, e conforme regra acima 
+                        -- para cartão PURO CREDITO não validamos o representante 
+                        IF vr_valida_avt THEN
+                          -- Se o cartão possui conta vinculada e nao encontramos o 
+                          -- representante, vamos levantar a exceção
+
                         -- Montar mensagem de critica
                         vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || rw_crapass.nrdconta ||
                                        ' CPF: '                                   || vr_nrcpfcgc;
@@ -9070,11 +9102,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         CLOSE cr_crapass;
                         CLOSE cr_crawcrd;
                         CONTINUE;
+                        END IF;
                       ELSE
                         -- Apenas fechar o cursor
                         CLOSE cr_crapavt;
+                        -- Se encontramos o avalista vamos utilizar para carregar 
+                        -- os dados de saldo
+                        vr_valida_avt := TRUE;
                       END IF;
 
+                      IF vr_valida_avt THEN
                       -- Verifica se representante encontrado é cooperado
                       OPEN cr_crapass_avt(pr_cdcooper => rw_crapass.cdcooper,
                                           pr_nrcpfcgc => rw_crapavt.nrcpfcgc);
@@ -9091,6 +9128,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                       -- fechar o cursor
                       CLOSE cr_crapass_avt;
+                      ELSE
+                        -- Se não encontramos o avalista, vamos utilizar os dados do 
+                        -- arquivo
+                        -- Buscar o nome embossado no plastico do cartao 
+                        vr_nmextttl := TRIM(substr(vr_des_text,57,23));
+                        vr_vlsalari := 0;
+                      END IF;
                     END IF;
                   ELSE
                     -- fechar os cursores
@@ -9124,7 +9168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   
                   /* Caso a Conta vinculada estiver 0, significa que o cartao eh do tipo OUTROS,
                      para os cartoes do tipo OUTROS sera puro CREDITO... */
-                  IF vr_nrctatp2 = 0 THEN
+                  IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
                      vr_flgdebit := 0;
                   ELSE
                      vr_flgdebit := 1;
@@ -9434,7 +9478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_nrseqcrd := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => vr_cdcooper);
                       
                       -- olha o indicador de funcao debito direto na linha que esta sendo processada
-                      IF vr_nrctatp2 = 0 THEN
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
                         vr_flgdebit := 0;
                       ELSE
                         vr_flgdebit := 1;
@@ -10232,7 +10276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Pegar a data de referencia do periodo    
       vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt - vr_qtddiapg, pr_tipo => 'A');
       vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A');
-      
+
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;

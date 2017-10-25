@@ -618,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -632,11 +632,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --                          enviado como anexo no e-mail, de ERRO_ARQ_SEG% para RESUMO_ARQ_SEG% (Carlos)
   --
   --             26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --		                  crapass, crapttl, crapjur 
-  --				  		  (Adriano - P339).
+  --    		                  crapass, crapttl, crapjur 
+  --		          		  		  (Adriano - P339).
+  --
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                        - Implementado Log no padrão
   --                          ( Belli - Envolti - #667957)
+  --
+  --             22/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+  --                         (Ana - Envolti - Chamado 745575)
   --
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
@@ -1530,19 +1534,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
         IF nvl(rw_crapass.idorgexp,0) <> 0 THEN 
-          --> Buscar orgão expedidor
-          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
-                                            pr_cdorgao_expedidor => vr_cdorgexp, 
-                                            pr_nmorgao_expedidor => vr_nmorgexp, 
-                                            pr_cdcritic          => vr_cdcritic, 
-                                            pr_dscritic          => vr_dscritic);
-          IF nvl(vr_cdcritic,0) > 0 OR 
-             TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_cdorgexp := NULL;
-            vr_nmorgexp := NULL; 
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
-          END IF;                                     
+        END IF;                                     
         END IF;                                   
 
         pr_tab_associado(vr_index).nrmatric:= rw_crapass.nrmatric;
@@ -1607,39 +1611,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
         IF nvl(rw_crapttl2.idorgexp,0) <> 0 THEN
-          --> Buscar orgão expedidor
-          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl2.idorgexp, 
-                                            pr_cdorgao_expedidor => vr_cdorgexp, 
-                                            pr_nmorgao_expedidor => vr_nmorgexp, 
-                                            pr_cdcritic          => vr_cdcritic, 
-                                            pr_dscritic          => vr_dscritic);
-          IF nvl(vr_cdcritic,0) > 0 OR 		  
-             TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_cdorgexp := NULL;
-            vr_nmorgexp := NULL; 
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl2.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
           END IF; 
-        END IF;
+        END IF; 
         pr_tab_associado(vr_index).cdoedstl:= vr_cdorgexp;
         
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
         --> Buscar orgão expedidor
         IF nvl(rw_crapcrl.idorgexp,0) <> 0 THEN
-          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
-                                            pr_cdorgao_expedidor => vr_cdorgexp, 
-                                            pr_nmorgao_expedidor => vr_nmorgexp, 
-                                            pr_cdcritic          => vr_cdcritic, 
-                                            pr_dscritic          => vr_dscritic);
-          IF nvl(vr_cdcritic,0) > 0 OR 
-             TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_cdorgexp := NULL;
-            vr_nmorgexp := NULL; 
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
             vr_cdcritic := NULL;
             vr_dscritic := NULL;          
           END IF; 
-        END IF;
+        END IF; 
         
         pr_tab_associado(vr_index).cdoedrsp:= vr_cdorgexp;
         
@@ -1662,19 +1666,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_nmorgexp := NULL;
         --> Buscar orgão expedidor
         IF nvl(rw_crapttl3.idorgexp,0) <> 0 THEN
-          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl3.idorgexp, 
-                                            pr_cdorgao_expedidor => vr_cdorgexp, 
-                                            pr_nmorgao_expedidor => vr_nmorgexp, 
-                                            pr_cdcritic          => vr_cdcritic, 
-                                            pr_dscritic          => vr_dscritic);
-          IF nvl(vr_cdcritic,0) > 0 OR 
-             TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_cdorgexp := NULL;
-            vr_nmorgexp := NULL; 
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl3.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
           END IF; 
-        END IF;
+        END IF; 
         
         pr_tab_associado(vr_index).cdoedttl:= vr_cdorgexp;
         
@@ -5556,6 +5560,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                       ) IS
                                       
       BEGIN
+        vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
+                               || ' --> ' 
+                               || pr_dsfixa_in    || pr_dscritic_in                 
+                               || ' - Module: ' || vr_cdprogra 
+                               || ' - Action: ' || vr_acao;
 
         vr_nmarqlog := 'proc_batch.log';           
         vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
@@ -5573,7 +5582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                pr_cdcriticidade => 0,           -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                                pr_dsmensagem    => vr_dscriti2, -- tbgen_prglog_ocorrencia
                                pr_flgsucesso    => 1,           -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
-                               pr_nmarqlog      => vr_nmarqlog,
+                               pr_nmarqlog      => NULL,
                                pr_idprglog      => vr_idprglog
                                );                                 
 
@@ -5604,7 +5613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
         IF pr_indierro = 1 THEN
-          vr_nmarqlog := 'proc_batch.log';
+          vr_nmarqlog := 'log_SEGUROS_' || to_char(rw_crapdat.dtmvtocd,'RRRRMMDD');
           vr_flfinmsg := 'S';
           pc_controla_log_batch(pr_dstiplog_in => 'E',
                                 pr_dscritic_in => 'Falta Tratar - ' || vr_dscriti2);                          
@@ -5624,7 +5633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                  || ' --> ' 
                                  || 'ALERTA: '       || vr_dscriti2;
 
-        -- Envio centralizado de log de erro
+          -- Envio centralizado de log de erro - Como esse arquivo de log é específico, manter
           btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1
                                   ,pr_des_log      => vr_dscriti2
@@ -5780,7 +5789,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      END fn_valida_seguradora;
 
   BEGIN
-
     -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => vr_acao);      
 
@@ -5789,7 +5797,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     vr_dsdirenv  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_ENV');
     vr_dsdirmov  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_OK');
     vr_nmarquiv  := 'SEGURO_CECRED_%'; -- Todos os arquivos com esse nome existentes na pasta
-
 
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
@@ -5947,7 +5954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       -- Navegar em cada linha do arquivo aberto para leitura
       FOR vr_indice2 IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
 
-        -- Pociona chave Novo Vetor - Chamado 667957 - 07/07/2017   
+        -- Posiciona chave Novo Vetor - Chamado 667957 - 07/07/2017   
         
         IF vr_tab_linhas(vr_indice2).exists('$ERRO$') THEN
           vr_cdchave :=
@@ -7532,7 +7539,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_flgsegur := TRUE;
       END IF;
 
-
       -- Se chegou até aqui, deu sucesso
       pr_flgsegur := TRUE;
       pr_des_erro := '';
@@ -7549,9 +7555,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_des_erro := 'Erro na rotina pc_insere_seguro: '||SQLERRM;
     END;
 
-
   END pc_insere_seguro;
-
-
 END SEGU0001;
 /

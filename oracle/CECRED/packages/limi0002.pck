@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 29/06/2017
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 20/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -74,6 +74,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               Setar modulo
                               (Belli - Envolti - Chamado 660306)
      
+                 20/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                              (Ana - Envolti - Chamado 746134)
   */
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_lim_saque_consultar(pr_nrdconta tbtaa_limite_saque.nrdconta%TYPE  --> Numero da Conta
@@ -162,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       
       -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
       GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'LIMI0002.pc_tela_lim_saque_consultar');  
-      
+
       -- Cursor com os dados do limite de saque
       OPEN cr_tbtaa_limite_saque(pr_cdcooper => vr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta);
@@ -463,7 +465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Outubro/2008                    Ultima Atualizacao: 29/06/2017
+    Data    : Outubro/2008                    Ultima Atualizacao: 20/09/2017
 
     Dados referente ao programa:
     
@@ -540,6 +542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                             Setar modulo
                             (Belli - Envolti - Chamado 660306)
                             
+               20/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                            (Ana - Envolti - Chamado 746134)
     ............................................................................ */
 
     DECLARE
@@ -834,7 +838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               ,pr_dscritic => vr_dscritic);
 
       -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
-      GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
+      GENE0001.pc_set_modulo(pr_module => NVL(trim(vr_nmdatela),vr_cdprogra), pr_action => vr_acao); 
 
       IF vr_dscritic IS NOT NULL THEN 
         RAISE vr_exc_saida;
@@ -1038,6 +1042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                
           -- Se possuir tarifa a ser cobrada, cria o lancamento automatico    
           IF vr_vltarrnv > 0  THEN
+
             TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => vr_cdcooper,
                                              pr_nrdconta => rw_craplim.nrdconta,            
                                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -1102,9 +1107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                      pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                                      pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
                                      pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                     pr_dsmensagem    => vr_dscritic,-- tbgen_prglog_ocorrencia
+                                     pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                                      pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
-                                     pr_nmarqlog      => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE'),
+                                     pr_nmarqlog      => NULL,
                                      pr_idprglog      => vr_idprglog
                                      );
                             
@@ -1148,7 +1153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                         pr_des_reto => vr_des_reto,
                                         pr_tab_erro => vr_tt_erro);
 
-           -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+            -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
             GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
 
             -- Verifica se ocorreu erro
@@ -1192,9 +1197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                      pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                                      pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
                                      pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                     pr_dsmensagem    => vr_dscritic,-- tbgen_prglog_ocorrencia
+                                     pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                                      pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
-                                     pr_nmarqlog      => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE'),
+                                     pr_nmarqlog      => NULL, 
                                      pr_idprglog      => vr_idprglog
                                      );
               vr_dscritic := NULL;

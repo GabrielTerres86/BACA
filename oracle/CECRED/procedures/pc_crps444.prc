@@ -350,6 +350,10 @@ BEGIN
                  26/09/2017 - Integrar lancamentos referentes a nova conta centralizadora 205048.
                               (Jaison/Elton)
                               
+                 03/10/2017 - SD761668 - Alteração da descrição do histórico OB 12 STN de 
+                              DEBITO para CREDITO (Marcos-Supero)             
+                              
+                              
                  17/10/2017 - Atualizar descricao do historico 0729 enviado no arquivo pelo BB,
                               de: '0729TRANSFERENCIA' para: '0729TRANSF RECEBIDA'.
                               (Chamado 775188) - (Fabricio)
@@ -1127,7 +1131,7 @@ BEGIN
 
         vr_tab_historico('0632OB 12 STN').nrctaori := 1179;
         vr_tab_historico('0632OB 12 STN').nrctades := 4894;
-        vr_tab_historico('0632OB 12 STN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        vr_tab_historico('0632OB 12 STN').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
         vr_tab_historico('0633SEGURO').nrctaori := 1179;
         vr_tab_historico('0633SEGURO').nrctades := 4894;

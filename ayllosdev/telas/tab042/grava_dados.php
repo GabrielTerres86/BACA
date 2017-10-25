@@ -3,12 +3,14 @@
 	/*************************************************************************
 	  Fonte: valida_senha.php                                               
 	  Autor: Henrique                                                  
-	  Data : Junho/2011                       Última Alteração: 		   
+	  Data : Junho/2011                       Última Alteração: 13/09/2017		   
 	                                                                   
 	  Objetivo  : Validar a nova senha.              
 	                                                                 
 	  Alterações: 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
-                               departamento como parametros e passar o o código (Renato Darosci)		
+                               departamento como parametros e passar o o código (Renato Darosci)	
+							   
+				  13/09/2017 - Correcao na validacao de permissoes na tela. SD 750528 (Carlos Rafael Tanholi).							   	
 	                                                                  
 	***********************************************************************/
 
@@ -26,11 +28,17 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	// Função para exibir erros na tela através de javascript
+	function exibeErro($msgErro) { 		
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		exit();
 	}	
 	
-	$dstextab = $_POST["dstextab"];
+	if (($msgError = validaPermissao($glbvars['nmdatela'],' ','A',false)) <> '') {		
+		exibeErro($msgError);
+	}	
+	
+	$dstextab = ( isset($_POST["dstextab"]) ) ? $_POST["dstextab"] : '';
 
 	$xmlCarregaDados  = "";
 	$xmlCarregaDados .= "<Root>";
@@ -63,14 +71,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
-	
+	} else {
     echo "showError('inform','Contas alteradas','Contas para Libera&ccedil;&atilde;o de Prazo - Ayllos','150'); estadoConsulta();";
-	
-	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) { 		
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
-		exit();
 	}
-	
 ?>

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0065.p
     Autor   : Jose Luis (DB1)
-    Data    : Abril/2010                   Ultima atualizacao: 05/05/2014
+    Data    : Abril/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - REGISTRO
 
@@ -12,8 +12,12 @@
                              
                 13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)  
                 
-                05/05/2014 - Alterar tpdocmto de 16 para 11 (Lucas R.)
+                05/05/2014 - Alterar tpdocmto de 16 para 11 (Lucas R.)			    	
+
                 
+                
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -246,6 +250,8 @@ PROCEDURE Grava_Dados:
     DEF OUTPUT PARAM log_chavealt AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
+
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
         aux_dstransa = (IF par_cddopcao = "E" THEN "Exclui" 
@@ -340,7 +346,7 @@ PROCEDURE Grava_Dados:
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta 
                            NO-LOCK NO-ERROR.
-
+        
         { sistema/generico/includes/b1wgenalog.i }
 
         EMPTY TEMP-TABLE tt-registro-ant.
@@ -356,6 +362,8 @@ PROCEDURE Grava_Dados:
                    END.
             END.
 
+        ASSIGN aux_idseqttl = 0.
+
         IF  crapjur.dtregemp <> par_dtregemp OR
             crapjur.nrregemp <> par_nrregemp  THEN
             DO:
@@ -367,7 +375,7 @@ PROCEDURE Grava_Dados:
                                crapdoc.nrdconta = par_nrdconta AND
                                crapdoc.tpdocmto = 11           AND
                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                               crapdoc.idseqttl = par_idseqttl
+                               crapdoc.idseqttl = aux_idseqttl 
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
                     IF NOT AVAILABLE crapdoc THEN
@@ -393,7 +401,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 11
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = aux_idseqttl.
+                                           
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc11.
                                 END.

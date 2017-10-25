@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 04/10/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 16/10/2017
            
     Dados referentes ao programa:
                 
@@ -492,12 +492,14 @@
 			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 			 		       (Adriano - P339).
 
-			         29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+			   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                             de novo limite. (Chamado 768648) - (Fabricio)
+
+			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -863,6 +865,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_dtmvtolt AS DATE                                     NO-UNDO.
     DEF VAR aux_txdiaria AS DECIMAL                                  NO-UNDO.
     DEF VAR aux_vlborder AS DECIMAL                                  NO-UNDO.
+    DEF VAR aux_vlborderbrut AS DECIMAL                              NO-UNDO.
     DEF VAR aux_qtdprazo AS INTEGER                                  NO-UNDO.
     DEF VAR aux_vltitulo AS DECIMAL                                  NO-UNDO.
     DEF VAR aux_dtperiod AS DATE                                     NO-UNDO.
@@ -1643,6 +1646,7 @@ PROCEDURE efetua_liber_anali_bordero:
    ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
                                          1 / 30) - 1),7)
           aux_vlborder = 0
+          aux_vlborderbrut = 0
           aux_contamsg = 0
           aux_contareg = 0
           aux_vltotiof = 0.
@@ -1819,7 +1823,8 @@ PROCEDURE efetua_liber_anali_bordero:
          
        ASSIGN aux_vldjuros     = aux_vltitulo - craptdb.vltitulo
               craptdb.vlliquid = craptdb.vltitulo - aux_vldjuros
-              aux_vlborder     = aux_vlborder + craptdb.vlliquid.
+              aux_vlborder     = aux_vlborder + craptdb.vlliquid
+              aux_vlborderbrut = aux_vlborderbrut + craptdb.vltitulo.
 
        /* Daniel */
        IF par_cddopcao = "L" THEN 
@@ -1977,7 +1982,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                           INPUT par_nrdconta,
                                           INPUT par_cdagenci,
                                           INPUT par_nrdcaixa,
-                                          INPUT aux_vlborder,
+                                          INPUT aux_vlborderbrut,
                                           OUTPUT aux_vltarifa,
                                           OUTPUT aux_cdfvlcop,
                                           OUTPUT aux_cdhistor).
@@ -3144,7 +3149,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR aux_dsdidade         AS CHAR                    NO-UNDO.
     DEF VAR aux_dsoperac         AS CHAR                    NO-UNDO.
     DEF VAR aux_nriniseq 	       AS INTE					          NO-UNDO.
-	  DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
+	DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -3153,7 +3158,7 @@ PROCEDURE busca_dados_limite_incluir:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
-           
+
     RUN sistema/generico/procedures/b1wgen0001.p 
         PERSISTENT SET h-b1wgen0001.
         
@@ -4292,9 +4297,7 @@ PROCEDURE efetua_inclusao_limite:
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
-    DEF VAR aux_flgativo     AS INT                                 NO-UNDO.
-    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta                  NO-UNDO. 
-    DEF VAR aux_dsvinculo    AS CHAR                                NO-UNDO.    
+    DEF VAR aux_mensagens AS CHAR    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -4702,27 +4705,23 @@ PROCEDURE efetua_inclusao_limite:
         /* Verificar se a conta pertence ao grupo economico novo */	
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+        RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                               ,INPUT par_nrdconta
-                                              ,0
-                                              ,0
                                               ,""
                                               ,0
                                               ,"").
 
-        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+        CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic      = 0
-               aux_dscritic     = ""
-               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
-               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
-               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
-               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
-               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
+               aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+               aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+               aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
                         
         IF aux_cdcritic > 0 THEN
            DO:
@@ -4749,11 +4748,11 @@ PROCEDURE efetua_inclusao_limite:
               UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
           END.
                       
-        IF aux_flgativo = 1 THEN
+        IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
            DO:
                CREATE tt-msg-confirma.                        
                ASSIGN tt-msg-confirma.inconfir = 1
-                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+                      tt-msg-confirma.dsmensag = aux_mensagens.
            END.    
         
     END. /* Final da TRANSACAO */
@@ -6536,23 +6535,23 @@ PROCEDURE busca_dados_dsctit:
                                             INPUT par_idorigem, /* AYLLOS */
                                             OUTPUT TABLE tt-erro).
 
-            IF  RETURN-VALUE = "NOK"  THEN
-                DO:  
-                    IF  par_flgerlog  THEN
-                        RUN proc_gerar_log (INPUT par_cdcooper,
-                                            INPUT par_cdoperad,
-                                            INPUT aux_dscritic,
-                                            INPUT aux_dsorigem,
-                                            INPUT aux_dstransa,
-                                            INPUT FALSE,
-                                            INPUT par_idseqttl,
-                                            INPUT par_nmdatela,
-                                            INPUT par_nrdconta,
-                                           OUTPUT aux_nrdrowid). 
-                    
-                    DELETE PROCEDURE h-b1wgen0001.
-                    RETURN "NOK".
-                END.            
+                    IF  RETURN-VALUE = "NOK"  THEN
+                        DO:  
+                            IF  par_flgerlog  THEN
+                                RUN proc_gerar_log (INPUT par_cdcooper,
+                                                    INPUT par_cdoperad,
+                                                    INPUT aux_dscritic,
+                                                    INPUT aux_dsorigem,
+                                                    INPUT aux_dstransa,
+                                                    INPUT FALSE,
+                                                    INPUT par_idseqttl,
+                                                    INPUT par_nmdatela,
+                                                    INPUT par_nrdconta,
+                                                   OUTPUT aux_nrdrowid). 
+        
+                            DELETE PROCEDURE h-b1wgen0001.
+                            RETURN "NOK".
+                        END.
            DELETE PROCEDURE h-b1wgen0001.     
     END.
     
@@ -7783,10 +7782,10 @@ PROCEDURE valida_dados_inclusao:
                                              INPUT "LANBDTI",
                                              INPUT 1, /* AYLLOS */
                                              OUTPUT TABLE tt-erro).
-                                             
+
              IF RETURN-VALUE = "NOK" THEN
              DO:
-                DELETE PROCEDURE h-b1wgen0001.
+             DELETE PROCEDURE h-b1wgen0001.
                 RETURN "NOK".
              END.
              ELSE
@@ -7798,13 +7797,13 @@ PROCEDURE valida_dados_inclusao:
                                                  INPUT par_dtmvtolt,
                                                  INPUT par_idorigem,
                                                 OUTPUT TABLE tt-erro).
-
-
+             
+ 
                 IF  RETURN-VALUE = "NOK"  THEN
                 DO:                               
                     DELETE PROCEDURE h-b1wgen0001.
-                    RETURN "NOK".
-                END.        
+                 RETURN "NOK".
+         END.
              END.             
              DELETE PROCEDURE h-b1wgen0001.
          END.

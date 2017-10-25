@@ -160,8 +160,12 @@ create or replace package cecred.PAGA0002 is
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).
 
+             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  	  
+
 							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 
+			 17/04/2017 - Alterações referentes à Nova Plataforma de Cobrança - NPC (Renato-Amcom)
+                           
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -683,6 +687,10 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+  
+  /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -693,7 +701,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -773,6 +781,8 @@ create or replace package body cecred.PAGA0002 is
   --                        - Removido pc_monitora_ted, rotina será utilizada na AFRA0001
   --                          PRJ335 - Analise de fraudes (Odirlei-AMcom)
   --
+  --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
+  --
   --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
   --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
@@ -781,6 +791,15 @@ create or replace package body cecred.PAGA0002 is
   
                  03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2)
   --
+  --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
+  --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
+  --
+  --             10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
+  --                          um agendamento de Transferencia (Lucas Ranghetti #676219)
+  --
+  --             03/10/2017 - #765090 Nas transferências, na mensagem de horário para saldo em conta, 
+  --                          mostrar os minutos em múltiplos de 5 arredondando para baixo. 
+  --                          Ex.: Cadastrado: 21:04 -> Mostrar: 21:00 (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -865,7 +884,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 18/01/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2017
 
       Dados referentes ao programa:
 
@@ -1417,6 +1436,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
       END IF;
     END pc_grava_favorito;
+
+
 
   BEGIN
     -- Definir descrição da transação
@@ -2042,8 +2063,10 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN
-          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'sssss'), 'hh24:mi');
+        IF pr_cdtiptra IN(1,5) THEN          
+          -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
+                        to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
         ELSE
           vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
         END IF;
@@ -2334,7 +2357,7 @@ create or replace package body cecred.PAGA0002 is
                   14/05/2015 - Conversão Progress -> Oracle SD280901 (Odirlei-AMcom)
 
                   24/09/2015 - Realizado a inclusão do pr_nmdatela (Adriano - SD 328034).
-                  
+
                   03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2).                  
 
 
@@ -8122,6 +8145,14 @@ create or replace package body cecred.PAGA0002 is
             -- Utilizar a data do parâmetro
             vr_dtmvtoan := pr_dtmvtoan;
     END IF;
+          
+          -- Chamar rotina para realizar o processamento dos lançamentos
+          -- referentes a Tributacao de Juros ao Capital (22/08/2017 - Renato Darosci)
+          -- A rotina é autonoma e em caso de erro não irá para o processo, irá apenas
+          -- enviar o e-mail de erro.
+          pc_apura_lcm_his_emprestimo(pr_cdcooper => rw_coop.cdcooper
+                                     ,pr_dtrefere => vr_dtmvtoan);
+          
           -- Também devemos garantir que não tenha havido apuração no dia
           OPEN cr_apuracao(rw_coop.cdcooper,vr_dtmvtoan);
           FETCH cr_apuracao
@@ -9529,7 +9560,7 @@ create or replace package body cecred.PAGA0002 is
              lau.dslindig,
              lau.idtitdda,
              lau.dscodbar,
-			 lau.cdctrlcs
+             lau.cdctrlcs
 
         FROM craplau lau
        WHERE lau.cdcooper = pr_cdcooper
@@ -9960,6 +9991,93 @@ create or replace package body cecred.PAGA0002 is
 
   END pc_cancelar_agendamento;
 
+  -- Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   ) IS           -- Data de referencia
+    /* ..........................................................................
+    --
+    --  Programa : pc_apura_juros_capital        
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Renato Darosci - Supero
+    --  Data     : Agosto/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Realizar a apuração diária dos lançamentos dos históricos de 
+    --               pagamento de empréstimos e gravar os valores em uma tabela auxiliar
+    -- ..........................................................................*/
+    
+    -- ROTINA CRIADA COM PRAGMA AUTONOMO PARA QUE O COMMIT DA MESMA NÃO AFETE ROTINAS CHAMADORAS.
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    
+    ---------------> VARIAVEIS <-----------------
+    -- Variaveis de erro    
+    vr_cdcritic        crapcri.cdcritic%TYPE;
+    vr_dscritic        VARCHAR2(4000);
+    -- Variáveis de Excecao
+    vr_exc_erro        EXCEPTION;
+    -- Variáveis
+    vr_cdoperac_pagepr   NUMBER;
+    
+  BEGIN
+    
+    -- Buscar o código de operação para os registros
+    vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+    
+    -- Garantir que em caso de reprocessamento os registros sejam recalculados
+    DELETE TBCC_OPERACOES_DIARIAS  tab
+     WHERE tab.cdcooper   = pr_cdcooper
+       AND tab.cdoperacao = vr_cdoperac_pagepr
+       AND tab.dtoperacao = pr_dtrefere;
+    
+    -- Inserir os regitros referente aos lançamentos do dia
+    INSERT INTO TBCC_OPERACOES_DIARIAS(cdcooper, nrdconta, cdoperacao, dtoperacao, vloperacao)
+       (SELECT pr_cdcooper
+             , lcm.nrdconta
+             , vr_cdoperac_pagepr
+             , pr_dtrefere
+             , SUM(decode(lcm.cdhistor,
+                          108, lcm.vllanmto,
+                          275, lcm.vllanmto,
+                         1539, lcm.vllanmto,
+                          393, lcm.vllanmto,
+                         1706, lcm.vllanmto * -1,
+                           99, lcm.vllanmto * -1,
+                            0)) vllanmto
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.cdhistor IN (108, 275, 1539, 393, 1706, 99)
+           AND lcm.dtmvtolt = pr_dtrefere
+         GROUP BY pr_cdcooper
+               , lcm.nrdconta
+               , vr_cdoperac_pagepr
+               , pr_dtrefere);
+    
+    -- Efetivar os dados gerados
+    COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Desfazer alterações pendentes
+      ROLLBACK;
+      -- Efetuar montagem de e-mail
+      gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
+                                ,pr_cdprogra    => 'SOBR0001.pc_apura_juros_capital'
+                                ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'ERRO_EMAIL_JOB')
+                                ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||pr_cdcooper
+                                ,pr_des_corpo   => 'Olá, <br><br>'
+                                                || 'Foram encontrados problemas durante o processo de apuração '
+                                                || 'dos valores de Históricos dos Lançamentos de Empréstimos. <br> '
+                                                || 'Erro encontrado:<br>'||SQLERRM
+                                ,pr_des_anexo   => ''
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
+      -- Gravar a solictação do e-mail para envio posterior
+      COMMIT;
+  END pc_apura_lcm_his_emprestimo;
+  
 
 END PAGA0002;
 /

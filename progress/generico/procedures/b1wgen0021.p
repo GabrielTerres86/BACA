@@ -21,7 +21,7 @@
 
    Programa: b1wgen0021.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                     Ultima atualizacao: 03/08/2016
+   Data    : 21/06/2007                     Ultima atualizacao: 26/09/2017
 
    Objetivo  : BO CAPITAL
 
@@ -134,7 +134,8 @@
                27/09/2016 - Ajuste das Rotinade Integralização/Estorno integralizaçao
                             M169 (Ricardo Linhares)
                
-               
+               26/09/2017 - Alteracao da forma de atualizacao automatica do plano de cotas para
+							"Correcao por Valor Fixo". SD 761675 (Carlos Rafael Tanholi)
 ..............................................................................*/
 
 
@@ -784,7 +785,7 @@ PROCEDURE obtem-novo-plano:
             CREATE tt-novo-plano.
             ASSIGN tt-novo-plano.flcancel = FALSE
                    tt-novo-plano.vlprepla = 0
-                   tt-novo-plano.cdtipcor = 1 /* DEFAULD CORREÇÃO INDICE DE INFLACAO*/
+                   tt-novo-plano.cdtipcor = 2 /* DEFAULD CORREÇÃO POR VALOR FIXO */
                    tt-novo-plano.vlcorfix = 0
                    tt-novo-plano.qtpremax = 999
                    tt-novo-plano.dtdpagto = aux_dtdpagto

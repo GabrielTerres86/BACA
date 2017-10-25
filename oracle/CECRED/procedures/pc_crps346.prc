@@ -189,6 +189,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
                          - Padronização de logs
                          - Inclusão validação e log 191 para integrações com críticas
                          - Chamado 696499 (Ana Volles - Envolti)
+
+              21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                           (Ana - Envolti - Chamado 746134)
    ............................................................................. */
 
   -- Constantes do programa
@@ -812,9 +815,9 @@ BEGIN
                            pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                            pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                            pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                           pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                           pr_nmarqlog      => NULL, 
                            pr_idprglog      => vr_idprglog);
-
+      
     -- Efetuar abertura do arquivo 
     gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop||'/integra/'
                             ,pr_nmarquiv => vr_tab_crapcop(vr_idx).nmarquiv
@@ -1874,7 +1877,7 @@ BEGIN
                                pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                                pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                                pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                               pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                               pr_nmarqlog      => NULL, 
                                pr_idprglog      => vr_idprglog);
       END IF;
     ELSE 
@@ -2110,7 +2113,7 @@ BEGIN
                            pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                            pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                            pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                           pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                           pr_nmarqlog      => NULL, 
                            pr_idprglog      => vr_idprglog);
       
     -- Move arquivo integrado para o diretorio salvar
@@ -2181,7 +2184,7 @@ EXCEPTION
                              pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                              pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                             pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                             pr_nmarqlog      => NULL, 
                              pr_idprglog      => vr_idprglog);
     END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
@@ -2213,7 +2216,7 @@ EXCEPTION
                            pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                            pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                            pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                           pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                           pr_nmarqlog      => NULL, 
                            pr_idprglog      => vr_idprglog);
  
     -- Efetuar rollback
@@ -2236,7 +2239,7 @@ EXCEPTION
                            pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                            pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                            pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                           pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                           pr_nmarqlog      => NULL, 
                            pr_idprglog      => vr_idprglog);
 
     --Inclusão na tabela de erros Oracle - Chamado 696499

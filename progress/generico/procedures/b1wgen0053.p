@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 17/01/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -30,8 +30,12 @@
 				             licença (Tiago/Thiago).
                      
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             nome fantasia para o CDC. (Reinert Prj 289)                                       
-                   
+                             nome fantasia para o CDC. (Reinert Prj 289)     	
+
+                                    
+                 
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 ..................................................................................*/
 
 
@@ -376,6 +380,7 @@ PROCEDURE grava_dados:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
@@ -470,6 +475,8 @@ PROCEDURE grava_dados:
 
        END.
         
+       ASSIGN aux_idseqttl = 0.
+        
        IF  CAPS(par_nmfatasi) <> crapjur.nmfansia OR
            par_cdnatjur <> crapjur.natjurid OR 
            par_cdrmativ <> crapjur.cdrmativ THEN
@@ -480,7 +487,7 @@ PROCEDURE grava_dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 10            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl
+                                       crapdoc.idseqttl = aux_idseqttl 
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                     IF NOT AVAILABLE crapdoc THEN
@@ -506,7 +513,8 @@ PROCEDURE grava_dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 10
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = aux_idseqttl.
+                                           
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc10.

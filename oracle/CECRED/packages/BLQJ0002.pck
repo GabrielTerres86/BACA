@@ -17,6 +17,10 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
                              considerando nr da conta tambem.
                              Heitor (Mouts) - BACENJUD
 
+                09/10/2017 - Incluido substr no nome do favorecido para evitar estouro
+                             de campo e de variaveis
+                             Heitor (Mouts) - BACENJUD
+
   .............................................................................*/
 
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -2205,7 +2209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.nragencia_if_destino,
              b.nrcpfcnpj_favorecido,
              b.cdtransf_bacenjud,
-             b.nmfavorecido,
+             substr(b.nmfavorecido,1,60) nmfavorecido,
              SUM(b.vlordem) vllanmto
         FROM tbblqj_ordem_transf b,
              tbblqj_ordem_online a

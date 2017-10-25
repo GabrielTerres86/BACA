@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0106.p
     Autor   : Henrique
-    Data    : Agosto/2011               Ultima Atualizacao:
+    Data    : Agosto/2011               Ultima Atualizacao: 08/09/2017
      
     Dados referentes ao programa:
    
@@ -11,6 +11,8 @@
     Alteracoes: 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
+				08/09/2017 - Removi validacao de departamento na procedure altera_tab042
+							 Carlos Rafael Tanholi (SD 750528).
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -104,30 +106,11 @@ PROCEDURE altera_tab042:
 
     DEF VAR aux_flgtrans          AS LOGI                           NO-UNDO.
     DEF VAR log_dstextab          AS CHAR                           NO-UNDO.
-    
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
     FIND crapope WHERE crapope.cdcooper = par_cdcooper   AND
                        crapope.cdoperad = par_cdoperad    
                        NO-LOCK NO-ERROR.
-
-	/* Verificar se departamento eh 20-TI, 18-SUPORTE, 8-COORD.ADM/FINANCEIRO ou 9-COORD.PRODUTOS */
-    IF  NOT CAN-DO("20,18,8,9",STRING(par_cddepart)) 
-        AND crapope.nvoperad <>  3  THEN
-        DO:
-            ASSIGN aux_cdcritic = 36.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-
-            RETURN "NOK".
-
-        END.
-    
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))

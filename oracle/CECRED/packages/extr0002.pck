@@ -524,7 +524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 26/04/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 28/09/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -774,6 +774,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			         crapass, crapttl, crapjur 
 					(Adriano - P339).
+                     
+        11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
+      
+        28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -3667,7 +3671,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           acessar a tela ATENDA mesmo quando o limite estiver Em Estudo (Mateus - MoutS)
   --
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
-  --
+  -- 
+  --              29/09/2017 - Ajuste na hora de montar a campo dscedent qdo for pagamento de GPS (Tiago/Adriano)
   --              05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando 
   --                           esta em Transacao Pendente (Rafael Monteiro - Mouts)
   -- 
@@ -5738,8 +5743,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craplcm2.vllanmto;
 
         --Pagamentos Internet
-        IF rw_craphis.cdhistor = 508 THEN
-          pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| rw_craplcm2.dscedent,1,50);
+        IF rw_craphis.cdhistor = 508 THEN                                                    --*Nao remover replace os traços sao diferentes
+          pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| REPLACE(rw_craplcm2.dscedent,'–', '-'),1,50);
         ELSE
           IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,399,573,657) THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor || rw_craplcm2.cdpesqbb,1,50);
@@ -6827,7 +6832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 28/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -6840,6 +6845,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)
+  --
+  --              28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40
+  --                           pois estava estourando (Tiago #724513)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7233,7 +7241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  '<nrdocmto>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).nrdocmto,1,12) || '</nrdocmto>' ||
                   '<vllanmto>' || to_char(vr_tab_extrato_conta(vr_index_extrato).vllanmto,'fm999999g990d00') || '</vllanmto>' ||
                   '<indebcre>' || vr_tab_extrato_conta(vr_index_extrato).indebcre || '</indebcre>' ||
-                  '<vldiario>' || to_char(vr_vldiario,'fm999999g990d00mi') || '</vldiario>' ||
+                  '<vldiario>' || to_char(vr_vldiario,'fm9999999g990d00mi') || '</vldiario>' ||
               '</lancto>';
               --Escrever lancamento no XML
               gene0002.pc_escreve_xml(pr_clobxml, pr_dstexto,vr_dstexto);
@@ -11995,7 +12003,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 11/04/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -12021,6 +12029,8 @@ END pc_consulta_ir_pj_trim;
   -- 		                   crapass, crapttl, crapjur 
   -- 						  (Adriano - P339).
 
+  -- 
+  --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -12466,7 +12476,7 @@ END pc_consulta_ir_pj_trim;
                        '" cdmodali="' || rw_gnmodal.cdmodali                                        ||
                        '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
                        '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
-                       '" dssubmod="' || rw_gnsbmod.dssubmod                                        ||
+                       '" dssubmod="' || gene0007.fn_caract_acento(rw_gnsbmod.dssubmod,1,'#$&%¹²³ªº°*!?<>|','                  ') ||
                        '" nrconta_cartao="' || rw_tbcessao.nrconta_cartao                           ||
                        '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
                        '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
@@ -12882,7 +12892,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -12906,6 +12916,8 @@ END pc_consulta_ir_pj_trim;
   --              26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --			               crapass, crapttl, crapjur 
   --				  		  (Adriano - P339).
+  --
+  --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -13341,7 +13353,7 @@ END pc_consulta_ir_pj_trim;
                            '" cdmodali="' || vr_tab_dados_epr(vr_index).cdmodali                                  ||
                            '" dsmodali="' || vr_tab_dados_epr(vr_index).dsmodali                                  ||
                            '" cdsubmod="' || vr_tab_dados_epr(vr_index).cdsubmod                                  ||
-                           '" dssubmod="' || vr_tab_dados_epr(vr_index).dssubmod                                  ||
+                           '" dssubmod="' || gene0007.fn_caract_acento(vr_tab_dados_epr(vr_index).dssubmod,1,'#$&%¹²³ªº°*!?<>|','                  ') ||
                            '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                           ||
                            '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                          ||
                            '" qtpreapg="' || to_char(vr_tab_dados_epr(vr_index).qtpreapg,'fm990d0000')            ||

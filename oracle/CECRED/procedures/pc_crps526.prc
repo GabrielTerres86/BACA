@@ -32,6 +32,11 @@ BEGIN
                               crapcop.cdcooper (Ze/Rodrigo).
                               
                  11/07/2014 - Conversão Progress >> Oracle PLSQL (Jean Michel)
+
+                 27/09/2017 - Inclusão do módulo e ação logado no oracle
+                            - Inclusão da chamada de procedure em exception others
+                            - Colocado logs no padrão
+                              (Ana - Envolti - Chamado 744573)
   
   ............................................................................ */
 
@@ -41,6 +46,7 @@ BEGIN
   
     -- Código do programa
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS526';
+    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
     
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;
@@ -101,6 +107,8 @@ BEGIN
                            ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) IS --> Data de movimento
 
     BEGIN
+      -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
+      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => 'pc_cria_taxas');
 
       -- Monta nome do arquivo final                     
       vr_dscamarq := gene0001.fn_diretorio(pr_tpdireto => 'C',
@@ -225,30 +233,38 @@ BEGIN
 
     IF cr_craptxi%FOUND THEN
       -- Cria log para simples conferencia
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => TO_CHAR(SYSDATE,
-                                                            'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> TAXA JA CADASTRADA');
+      CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper, 
+                             pr_tpexecucao    => 2, --job
+                             pr_tpocorrencia  => 4,
+                             pr_cdcriticidade => 0, --baixa
+                             pr_dsmensagem    => 'TAXA JA CADASTRADA. Dtmvtolt: '||rw_crapdat.dtmvtolt, 
+                             pr_idprglog      => vr_idprglog,
+                             pr_nmarqlog      => NULL);
+
     ELSE
+
       -- Cria taxas
       pc_cria_taxas(pr_cdcooper => rw_crapcop.cdcooper   -- Codigo da cooperativa
                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt); -- Data de movimento atual
 
+      -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
+      GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => NULL);
+
       IF NVL(vr_valortax,0) > 0 THEN              
         BEGIN
-
           -- Insere registro
           INSERT INTO craptxi
             (cddindex,dtiniper,dtfimper,vlrdtaxa,dtcadast)
           VALUES
             (1,rw_crapdat.dtmvtolt,rw_crapdat.dtmvtolt, vr_valortax ,rw_crapdat.dtmvtolt);
-
         EXCEPTION
           WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros
-            vr_dscritic := 'Problema ao inserir CDI. Erro: ' || sqlerrm;
+            vr_dscritic := 'Erro ao inserir CDI: dtiniper:'||rw_crapdat.dtmvtolt
+                           ||', dtfimper:'||rw_crapdat.dtmvtolt||', vlrdtaxa:'||vr_valortax
+                           ||', dtcadast:'||rw_crapdat.dtmvtolt||'. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
 
@@ -262,21 +278,25 @@ BEGIN
                                          
         IF vr_cdcritic IS NOT NULL OR                                     
            vr_dscritic IS NOT NULL THEN
-
           RAISE vr_exc_saida;
-
         END IF;  
 
+        -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
+        GENE0001.pc_set_modulo(pr_module => 'PC_' || UPPER(vr_cdprogra), pr_action => NULL);
+
       ELSE
-        -- Cria log informando que as taxas ja estao cadastradas
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,
-                                                              'hh24:mi:ss') ||
-                                                      ' - ' || vr_cdprogra ||
-                                                      ' --> VALOR TAXRDC INEXISTENTE.');    
+        -- Cria log para simples conferencia
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpexecucao    => 2, --job
+                               pr_tpocorrencia  => 4,
+                               pr_cdcriticidade => 0, --baixa
+                               pr_dsmensagem    => 'VALOR TAXRDC INEXISTENTE',                             
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
+
       END IF;
-              
     END IF;
     
     COMMIT;
@@ -288,13 +308,17 @@ BEGIN
         -- Buscar a descrição
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
+
       -- Envio centralizado de log de erro
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => TO_CHAR(SYSDATE,
-                                                            'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> ' || vr_dscritic);
+      CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper, 
+                             pr_tpexecucao    => 2, --job
+                             pr_tpocorrencia  => 2,
+                             pr_cdcriticidade => 0, --baixa
+                             pr_dsmensagem    => vr_dscritic,                             
+                             pr_idprglog      => vr_idprglog,
+                             pr_nmarqlog      => NULL);
 
       -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
       BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
@@ -313,16 +337,32 @@ BEGIN
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := NVL(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
+
+      -- Envio centralizado de log de erro
+      CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper, 
+                             pr_tpexecucao    => 2, --job
+                             pr_tpocorrencia  => 2,
+                             pr_cdcriticidade => 0, --baixa
+                             pr_dsmensagem    => vr_dscritic,                             
+                             pr_idprglog      => vr_idprglog,
+                             pr_nmarqlog      => NULL);
+
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
+
+      --Inclusão na tabela de erros Oracle - Chamado 744573
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
+
       -- Efetuar rollback
       ROLLBACK;
   END;
 
 END PC_CRPS526;
 /
-

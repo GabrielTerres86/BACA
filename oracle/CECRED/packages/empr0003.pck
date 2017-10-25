@@ -2833,7 +2833,7 @@ BEGIN
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Abril/2017.                   Ultima atualizacao: 
+    --  Data     : Abril/2017.                   Ultima atualizacao: 06/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2841,6 +2841,8 @@ BEGIN
     --   Objetivo  : Procedure para retornar dados dos co-reponsaveis.
     --
     --  Alteração : 
+	--              06/10/2017 - SD770151 - Correção de informações na proposta de 
+	--              empréstimo convertida (Marcos-Supero)
     --
     -- ..........................................................................*/
     
@@ -2905,18 +2907,113 @@ BEGIN
       --Percorrer todos os beneficiarios
       WHILE vr_index IS NOT NULL LOOP
         vr_string := '<responsavel>'||
-                         '<nrdconta>'|| vr_tab_co_responsavel(vr_index).nrdconta  ||'</nrdconta>'||
-                         '<nrctremp>'|| vr_tab_co_responsavel(vr_index).nrctremp  ||'</nrctremp>'||
-                         '<vlsdeved>'|| vr_tab_co_responsavel(vr_index).vlsdeved  ||'</vlsdeved>'||
-                         '<dsfinemp>'|| vr_tab_co_responsavel(vr_index).dsfinemp  ||'</dsfinemp>'||
-                         '<dslcremp>'|| vr_tab_co_responsavel(vr_index).dslcremp  ||'</dslcremp>'||
-                         '<cdlcremp>'|| vr_tab_co_responsavel(vr_index).cdlcremp  ||'</cdlcremp>'||
-                         '<qtmesdec>'|| vr_tab_co_responsavel(vr_index).qtmesdec  ||'</qtmesdec>'||
-                         '<qtprecal>'|| vr_tab_co_responsavel(vr_index).qtprecal  ||'</qtprecal>'||
-                         '<vlpreemp>'|| vr_tab_co_responsavel(vr_index).vlpreemp  ||'</vlpreemp>'||
-                         '<dspreapg>'|| vr_tab_co_responsavel(vr_index).dspreapg  ||'</dspreapg>'||
-                         '<inprejuz>'|| vr_tab_co_responsavel(vr_index).inprejuz  ||'</inprejuz>'||
-                     '</responsavel>';
+                         '<nrdconta>' || vr_tab_co_responsavel(vr_index).nrdconta ||'</nrdconta>'||
+                         '<cdagenci>' || vr_tab_co_responsavel(vr_index).cdagenci ||'</cdagenci>'||
+                         '<nmprimtl>' || vr_tab_co_responsavel(vr_index).nmprimtl ||'</nmprimtl>'||
+                         '<nrctremp>' || vr_tab_co_responsavel(vr_index).nrctremp ||'</nrctremp>'||
+                         '<vlemprst>' || vr_tab_co_responsavel(vr_index).vlemprst ||'</vlemprst>'||
+                         '<vlsdeved>' || vr_tab_co_responsavel(vr_index).vlsdeved ||'</vlsdeved>'||
+                         '<vlpreemp>' || vr_tab_co_responsavel(vr_index).vlpreemp ||'</vlpreemp>'||
+                         '<vlprepag>' || vr_tab_co_responsavel(vr_index).vlprepag ||'</vlprepag>'||
+                         '<txjuremp>' || to_char(vr_tab_co_responsavel(vr_index).txjuremp,'990D00000000') || '</txjuremp>' ||
+                         '<vljurmes>' || vr_tab_co_responsavel(vr_index).vljurmes ||'</vljurmes>'||
+                         '<vljuracu>' || vr_tab_co_responsavel(vr_index).vljuracu ||'</vljuracu>'||
+                         '<vlprejuz>' || vr_tab_co_responsavel(vr_index).vlprejuz ||'</vlprejuz>'||
+                         '<vlsdprej>' || vr_tab_co_responsavel(vr_index).vlsdprej ||'</vlsdprej>'||
+                         '<dtprejuz>' || to_char(vr_tab_co_responsavel(vr_index).dtprejuz,'DD/MM/RRRR') ||'</dtprejuz>'||
+                         '<vljrmprj>' || vr_tab_co_responsavel(vr_index).vljrmprj ||'</vljrmprj>'||
+                         '<vljraprj>' || vr_tab_co_responsavel(vr_index).vljraprj ||'</vljraprj>'||
+                         '<inprejuz>' || vr_tab_co_responsavel(vr_index).inprejuz ||'</inprejuz>'||
+                         '<vlprovis>' || vr_tab_co_responsavel(vr_index).vlprovis ||'</vlprovis>'||
+                         '<flgpagto>' || (CASE vr_tab_co_responsavel(vr_index).flgpagto 
+                                            WHEN 1 THEN 'yes'
+                                            ELSE 'no' 
+                                          END)                                    || '</flgpagto>' ||
+                         '<dtdpagto>' || to_char(vr_tab_co_responsavel(vr_index).dtdpagto,'DD/MM/RRRR') || '</dtdpagto>' ||
+                         '<cdpesqui>' || vr_tab_co_responsavel(vr_index).cdpesqui ||'</cdpesqui>'||
+                         '<dspreapg>' || vr_tab_co_responsavel(vr_index).dspreapg ||'</dspreapg>'||
+                         '<cdlcremp>' || vr_tab_co_responsavel(vr_index).cdlcremp ||'</cdlcremp>'||
+                         '<dslcremp>' || vr_tab_co_responsavel(vr_index).dslcremp ||'</dslcremp>'||
+                         '<cdfinemp>' || vr_tab_co_responsavel(vr_index).cdfinemp ||'</cdfinemp>'||
+                         '<dsfinemp>' || vr_tab_co_responsavel(vr_index).dsfinemp ||'</dsfinemp>'||
+                         '<dsdaval1>' || vr_tab_co_responsavel(vr_index).dsdaval1 ||'</dsdaval1>'||
+                         '<dsdaval2>' || vr_tab_co_responsavel(vr_index).dsdaval2 ||'</dsdaval2>'||
+                         '<vlpreapg>' || nvl(vr_tab_co_responsavel(vr_index).vlpreapg,0) || '</vlpreapg>' ||
+                         '<qtmesdec>' || vr_tab_co_responsavel(vr_index).qtmesdec ||'</qtmesdec>'||
+                         '<qtprecal>' || vr_tab_co_responsavel(vr_index).qtprecal ||'</qtprecal>'||
+                         '<vlacresc>' || vr_tab_co_responsavel(vr_index).vlacresc ||'</vlacresc>'||
+                         '<vlrpagos>' || vr_tab_co_responsavel(vr_index).vlrpagos ||'</vlrpagos>'||
+                         '<slprjori>' || vr_tab_co_responsavel(vr_index).slprjori ||'</slprjori>'||
+                         '<dtmvtolt>' || to_char(vr_tab_co_responsavel(vr_index).dtmvtolt,'DD/MM/RRRR') || '</dtmvtolt>' ||
+                         '<qtpreemp>' || vr_tab_co_responsavel(vr_index).qtpreemp ||'</qtpreemp>'||
+                         '<dtultpag>' || to_char(vr_tab_co_responsavel(vr_index).dtultpag,'DD/MM/RRRR') || '</dtultpag>' ||
+                         '<vlrabono>' || vr_tab_co_responsavel(vr_index).vlrabono ||'</vlrabono>'||
+                         '<qtaditiv>' || vr_tab_co_responsavel(vr_index).qtaditiv ||'</qtaditiv>'||
+                         '<dsdpagto>' || vr_tab_co_responsavel(vr_index).dsdpagto ||'</dsdpagto>'||
+                         '<dsdavali>' || vr_tab_co_responsavel(vr_index).dsdavali ||'</dsdavali>'||
+                         '<qtmesatr>' || vr_tab_co_responsavel(vr_index).qtmesatr ||'</qtmesatr>'||
+                         '<qtpromis>' || vr_tab_co_responsavel(vr_index).qtpromis ||'</qtpromis>'||
+                         '<flgimppr>' || (CASE vr_tab_co_responsavel(vr_index).flgimppr 
+                                            WHEN 1 THEN 'yes'
+                                            ELSE 'no' 
+                                          END)                              || '</flgimppr>' ||
+                        '<flgimpnp>' || (CASE vr_tab_co_responsavel(vr_index).flgimpnp 
+                                            WHEN 1 THEN 'yes'
+                                            ELSE 'no' 
+                                          END) ||'</flgimpnp>' ||
+                         '<idseleca>' || vr_tab_co_responsavel(vr_index).idseleca ||'</idseleca>'||
+                         '<nrdrecid>' || vr_tab_co_responsavel(vr_index).nrdrecid ||'</nrdrecid>'||
+                         '<tplcremp>' || vr_tab_co_responsavel(vr_index).tplcremp ||'</tplcremp>'||
+                         '<tpemprst>' || vr_tab_co_responsavel(vr_index).tpemprst ||'</tpemprst>'||
+                         '<cdtpempr>' || vr_tab_co_responsavel(vr_index).cdtpempr ||'</cdtpempr>'||
+                         '<dstpempr>' || vr_tab_co_responsavel(vr_index).dstpempr ||'</dstpempr>'||
+                         '<permulta>' || vr_tab_co_responsavel(vr_index).permulta ||'</permulta>'||
+                         '<perjurmo>' || vr_tab_co_responsavel(vr_index).perjurmo ||'</perjurmo>'||
+                         '<dtpripgt>' || to_char(vr_tab_co_responsavel(vr_index).dtpripgt,'DD/MM/RRRR') || '</dtpripgt>' ||
+                         '<inliquid>' || vr_tab_co_responsavel(vr_index).inliquid ||'</inliquid>'||
+                         '<txmensal>' || vr_tab_co_responsavel(vr_index).txmensal ||'</txmensal>'||
+                         '<flgatras>' || (CASE vr_tab_co_responsavel(vr_index).flgatras
+                                            WHEN 1 THEN 'yes'
+                                            ELSE 'no' 
+                                          END)                              || '</flgatras>' ||
+                         '<dsidenti>' || vr_tab_co_responsavel(vr_index).dsidenti ||'</dsidenti>'||
+                         '<flgdigit>' || (CASE vr_tab_co_responsavel(vr_index).flgdigit
+                                            WHEN 1 THEN 'yes'
+                                            ELSE 'no' 
+                                          END)                              || '</flgdigit>' ||
+                         '<tpdocged>' || vr_tab_co_responsavel(vr_index).tpdocged ||'</tpdocged>'||
+                         '<vlpapgat>' || vr_tab_co_responsavel(vr_index).vlpapgat ||'</vlpapgat>'||
+                         '<vlsdevat>' || vr_tab_co_responsavel(vr_index).vlsdevat ||'</vlsdevat>'||
+                         '<qtpcalat>' || vr_tab_co_responsavel(vr_index).qtpcalat ||'</qtpcalat>'||
+                         '<qtmdecat>' || vr_tab_co_responsavel(vr_index).qtmdecat ||'</qtmdecat>'||
+                         '<tpdescto>' || vr_tab_co_responsavel(vr_index).tpdescto ||'</tpdescto>'||
+                         '<qtlemcal>' || vr_tab_co_responsavel(vr_index).qtlemcal ||'</qtlemcal>'||
+                         '<vlppagat>' || vr_tab_co_responsavel(vr_index).vlppagat ||'</vlppagat>'||
+                         '<vlmrapar>' || vr_tab_co_responsavel(vr_index).vlmrapar ||'</vlmrapar>'||
+                         '<vlmtapar>' || vr_tab_co_responsavel(vr_index).vlmtapar ||'</vlmtapar>'||
+                         '<vltotpag>' || vr_tab_co_responsavel(vr_index).vltotpag ||'</vltotpag>'||
+                         '<vlprvenc>' || vr_tab_co_responsavel(vr_index).vlprvenc ||'</vlprvenc>'||
+                         '<vlpraven>' || vr_tab_co_responsavel(vr_index).vlpraven ||'</vlpraven>'||
+                         '<flgpreap>' || (CASE WHEN vr_tab_co_responsavel(vr_index).flgpreap THEN 'yes'
+                                              ELSE 'no' END) || '</flgpreap>' ||
+                         '<cdorigem>' || vr_tab_co_responsavel(vr_index).cdorigem ||'</cdorigem>'||
+                         '<vlttmupr>' || vr_tab_co_responsavel(vr_index).vlttmupr ||'</vlttmupr>'||
+                         '<vlttjmpr>' || vr_tab_co_responsavel(vr_index).vlttjmpr ||'</vlttjmpr>'||
+                         '<vlpgmupr>' || vr_tab_co_responsavel(vr_index).vlpgmupr ||'</vlpgmupr>'||
+                         '<vlpgjmpr>' || vr_tab_co_responsavel(vr_index).vlpgjmpr ||'</vlpgjmpr>'||
+                         '<percetop>' || vr_tab_co_responsavel(vr_index).percetop ||'</percetop>'||
+                         '<cdmodali>' || vr_tab_co_responsavel(vr_index).cdmodali ||'</cdmodali>'||
+                         '<dsmodali>' || vr_tab_co_responsavel(vr_index).dsmodali ||'</dsmodali>'||
+                         '<cdsubmod>' || vr_tab_co_responsavel(vr_index).cdsubmod ||'</cdsubmod>'||
+                         '<dssubmod>' || vr_tab_co_responsavel(vr_index).dssubmod ||'</dssubmod>'||
+                         '<txanual> ' || vr_tab_co_responsavel(vr_index).txanual  ||'</txanual> '||
+                         '<qtpreapg>' || vr_tab_co_responsavel(vr_index).qtpreapg ||'</qtpreapg>'||
+                         '<liquidia>' || vr_tab_co_responsavel(vr_index).liquidia ||'</liquidia>'||
+                         '<qtimpctr>' || vr_tab_co_responsavel(vr_index).qtimpctr ||'</qtimpctr>'||
+                         '<portabil>' || vr_tab_co_responsavel(vr_index).portabil ||'</portabil>'||
+                         '<dsorgrec>' || vr_tab_co_responsavel(vr_index).dsorgrec ||'</dsorgrec>'||
+                         '<dtinictr>' || vr_tab_co_responsavel(vr_index).dtinictr ||'</dtinictr>'||
+                      '</responsavel>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 

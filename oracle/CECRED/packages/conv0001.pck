@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 10/07/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 29/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -470,6 +470,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
   --                          na pc_gerandb (Tiago/Fabricio #673343)  
+  --
+  --             29/09/2017 - Incluir validacao de 23 posicoes para a CHUBB(Lucas Ranghetti #766211)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1618,7 +1620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 10/07/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 29/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1732,6 +1734,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
   --                          (Tiago/Fabricio #673343)  
+  --
+  --             29/09/2017 - Incluir validacao de 23 posicoes para a CHUBB(Lucas Ranghetti #766211)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1855,7 +1859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         ELSE
           -- APENAS FECHAR O CURSOR
           CLOSE cr_tbconv_det_agendamento;
-        END IF;
+      END IF;
         
       END IF;
 
@@ -1900,6 +1904,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         ELSIF pr_cdhistor IN(2039,1517,2025) THEN -- PREVISC, SULAMERICA,UNIFIQUE POMERODE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
                                         RPAD(' ',3,' ');
+        ELSIF pr_cdhistor IN(2302) THEN -- CHUBB SEGUROS BRASIL
+          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999999999999999') ||
+                                        RPAD(' ',2,' ');
         ELSIF pr_cdhistor IN(834,901,993,1061,1723) THEN -- TIM Celular,HDI,LIBERTY SEGUROS,PORTO SEGURO,PREVISUL
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999999999999') ||
                                         RPAD(' ',5,' ');

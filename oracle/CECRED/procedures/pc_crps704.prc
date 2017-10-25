@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%TYPE ) IS   --> Cooperativa solicitada                                              
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%TYPE ) IS   --> Cooperativa solicitada
   /* .............................................................................
 
      Programa: pc_crps704 (Fontes/crps704.p)
@@ -17,6 +17,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
      08/11/2016 - #551196 padronizar os nomes do job por produto e monitorar a sua 
                   execução em log (Carlos)
 
+     13/09/2017 - Colocado Log no padrão
+                  Tratado Others
+                  Retirada rotina pc_controla_log_batch, pois não gravará o arquivo, apenas tabela de ocorrencia
+                  (Ana - Envolti - Chamado 731974)
+                            
   ............................................................................ */
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -31,6 +36,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
   vr_cdcritic   PLS_INTEGER;
   vr_dscritic   VARCHAR2(4000);
 
+  --Chamado 731974
+  vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;      
   ------------------------------- CURSORES ---------------------------------
 
   -- Busca dos dados da cooperativa
@@ -93,18 +100,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
   vr_nomdojob    VARCHAR2(40) := 'JBEPR_CANCELA_PROPOSTA';
   vr_flgerlog    BOOLEAN := FALSE;
 
-  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-BEGIN
-    --> Controlar geração de log de execução dos jobs 
-    BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                             ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-  END pc_controla_log_batch;
 BEGIN
 
   --------------- VALIDACOES INICIAIS -----------------
@@ -124,7 +119,7 @@ BEGIN
   ELSE
     vr_cdcooper := pr_cdcooper;
   END IF;
-  
+
   -- Leitura do calendário da cooperativa
   OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
   FETCH btch0001.cr_crapdat
@@ -153,7 +148,7 @@ BEGIN
   vr_qtmeslim := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                            pr_cdcooper => vr_cdcooper, 
                                            pr_cdacesso => 'QTD_MES_LIMPEZA_WEPR');
-  
+
   IF nvl(vr_qtmeslim,0) = 0 THEN
     vr_dscritic := 'Quantidade de meses para limpeza nao encontrado.';
     RAISE vr_exc_saida;
@@ -161,9 +156,6 @@ BEGIN
     -- primeiro dia de 4 meses atras (120 dias)
     vr_dtlimepr := TRUNC(add_months(rw_crapdat.dtmvtolt,vr_qtmeslim*-1),'MONTH');                                      
   END IF;
-  
-  -- Log de início da execução
-  pc_controla_log_batch('I');
 
   FOR rw_crapcop IN cr_crapcop LOOP 
   
@@ -171,26 +163,40 @@ BEGIN
     vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                         ,pr_cdcooper => rw_crapcop.cdcooper
                                         ,pr_nmsubdir => '');
-                                        
+
     /* Verificar se arquivo .limpezaok esta criado, significa que processo ja rodou no mês, 
        crps000 faz exclusao do arquivo no final do mês  */
+
     IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmdireto||'/'||vr_nmarqlmp) THEN
     
       vr_dscritic := to_char(rw_crapcop.cdcooper,'fm00')||' - Processo de limpeza ja rodou este mes para esta cooperativa.';  
-      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                   pr_ind_tipo_log => 2, 
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
-                                   
+
+      -- Colocado Log no padrão - 13/09/2017 - Chamado 731974
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' || vr_dscritic;
+
+      -- Envio centralizado de log de erro
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL,
+                             pr_idprglog      => vr_idprglog);
+
       vr_dscritic := NULL;                                    
       continue; --> Buscar proxima cooperativa
     END IF;
-    
+
     -->  Leitura do crawepr a ser enviado o cancelamento
     FOR rw_crawepr IN cr_crawepr( pr_cdcooper => rw_crapcop.cdcooper
                                  ,pr_dtmvtolt => vr_dtlimepr) LOOP
-    
+
+      vr_cdcritic := 0;
+      vr_dscritic := NULL;
       --> Enviar o cancelamento da proposta para a esteira
       ESTE0001.pc_cancelar_proposta_est ( pr_cdcooper  => rw_crawepr.cdcooper,  --> Codigo da cooperativa
                                           pr_cdagenci  => rw_crawepr.cdagenci,  --> Codigo da agencia                                          
@@ -202,29 +208,34 @@ BEGIN
                                           ---- OUT ----                           
                                           pr_cdcritic  => vr_cdcritic,          --> Codigo da critica
                                           pr_dscritic  => vr_dscritic);         --> Descricao da critica
-      
+
       -- Verificar se retornou critica
       IF nvl(vr_cdcritic,0) > 0 OR
          TRIM(vr_dscritic) IS NOT NULL THEN
         
-        IF nvl(vr_cdcritic,0) > 0 AND
-           TRIM(vr_dscritic) IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); 
-        END IF; 
-      
-        vr_dscritic := 'ERRO coop ' || rw_crawepr.cdcooper ||
-                       ' nrdconta ' || rw_crawepr.nrdconta ||
-                       ' nrctremp ' || rw_crawepr.nrctremp ||
-                       ': '|| vr_dscritic;                           
-        -- Gerar log
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                   pr_ind_tipo_log => 2, 
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
-      
-       
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+        -- Colocado Log no padrão - 13/09/2017 - Chamado 731974
+        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                               ' --> ' || 'ERRO: '|| vr_dscritic    ||
+                               ' - cdcooper:'|| rw_crawepr.cdcooper ||
+                               ' ,cdagenci:'||rw_crawepr.cdagenci   ||
+                               ' ,nrdconta:'|| rw_crawepr.nrdconta  ||
+                               ' ,nrctremp:'|| rw_crawepr.nrctremp  ||
+                               ' ,dtmvtolt:'|| rw_crapdat.dtmvtolt;
+
+        -- Envio centralizado de log de erro
+        cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                               pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                               pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                               pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                               pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                               pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                               pr_nmarqlog      => NULL,
+                               pr_idprglog      => vr_idprglog);
+
         vr_qtderros := vr_qtderros + 1; 
         continue; --> buscar proximo
       END IF;   
@@ -234,6 +245,12 @@ BEGIN
     END LOOP; --> Fim Loop crawepr
   END LOOP;
   
+  --Seta o módulo novamente - Chamado 731974
+  GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra
+                        ,pr_action => null);
+
+
+  --cancelamentos para Esteira,
   -- Gerar log
   IF (vr_qtderros + vr_qtsucess) > 0 THEN
     vr_dscritic := 'Foram enviados '|| (vr_qtderros + vr_qtsucess)||
@@ -243,18 +260,26 @@ BEGIN
   ELSE
     vr_dscritic := 'Nenhum cancelamento de proposta enviado.';
   END IF;               
+
+  -- Colocado Log no padrão - 13/09/2017 - Chamado 731974
+  vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                         ' --> ' || 'ERRO: '|| vr_dscritic;
   
-  btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                             pr_ind_tipo_log => 1, 
-                             pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                ' - '||vr_nomdojob ||' --> '|| vr_dscritic);                                 
+  -- Envio centralizado de log de erro
+  cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                         pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                         pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                         pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                         pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                         pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                         pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                         pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                         pr_nmarqlog      => NULL,
+                         pr_idprglog      => vr_idprglog);
 
   vr_dscritic := NULL;
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
-  
-  -- Log de fim da execução
-  pc_controla_log_batch('F');
-                 
+
   -- Salvar informações atualizadas
   COMMIT;
 
@@ -265,25 +290,49 @@ EXCEPTION
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
     END IF;
-    
+
+    -- Colocado Log no padrão - 13/09/2017 - Chamado 731974
+    vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                           ' --> ' || 'ERRO: ' || vr_dscritic;
+
     -- Envio centralizado de log de erro
-    btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || vr_dscritic );       
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL,
+                           pr_idprglog      => vr_idprglog);
+
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
+    -- No caso de erro de programa gravar tabela especifica de log - 13/09/2017 - Chamado 731974        
+    CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);       
+
     -- Efetuar retorno do erro não tratado
     vr_dscritic := sqlerrm;
+
+    --Colocado Log no padrão - 13/09/2017 - Chamado 731974
+    vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                           ' --> ' || 'ERRO: ' || vr_dscritic;
     
     -- Envio centralizado de log de erro
-    vr_flgerlog := TRUE;
-    pc_controla_log_batch('E', vr_dscritic);
-                                               
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL,
+                           pr_idprglog      => vr_idprglog);
     -- Efetuar rollback
-    ROLLBACK;
+    ROLLBACK;                             
 
 END pc_crps704;
 /

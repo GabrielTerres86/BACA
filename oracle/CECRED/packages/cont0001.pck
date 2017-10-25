@@ -58,13 +58,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --             lançamentos centralizados
   --  Sigla    : CONT
   --  Autor    : Jonatas Jaqmam Pereira - Supero
-  --  Data     : Maio/2017.                   Ultima atualizacao: 02/05/2017
+  --  Data     : Maio/2017.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Diário
   -- Objetivo  : Rotinas para geração de arquivos contábeis para o Radar/Matera de
   --             lançamentos centralizados
+  --
+  -- Alterações : 03/10/2017 - Ajustes na CC Debito Histórico 851 - Marcos(Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -84,6 +86,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   vr_dircon            VARCHAR2(200);
   vr_arqcon            VARCHAR2(200);   
 
+  vr_idprglog          tbgen_prglog.idprglog%TYPE := 0;
 
   --Variavel de Exceção
   vr_exc_erro  EXCEPTION;
@@ -141,8 +144,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                             pr_dtmvtolt  IN DATE,
                             pr_nmarquiv  IN VARCHAR2,
                             pr_retfile  OUT VARCHAR2) IS
-    
+  ---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_abre_arquivo
+  --  Sistema  : CONT
+  --  Sigla    : CONT
+  --  Autor    : Jonatas Jaqmam Pereira - Supero
+  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : 
+  --
+  -- Alteracoes:
+  -- 26/09/2017 - Inclusão do módulo e ação logado no oracle
+  --            - Inclusão da chamada de procedure em exception others
+  --            - Colocado logs no padrão
+  --              (Ana - Envolti - Chamado 744433)
+  ---------------------------------------------------------------------------------------------------------------
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_abre_arquivo');
     
          
     -- Define o diretório do arquivo
@@ -169,10 +191,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                             ,pr_utlfileh => vr_ind_arquivo      --> Handle do arquivo aberto
                             ,pr_des_erro => vr_dscritic);       --> Erro
  
-
   EXCEPTION
     WHEN OTHERS THEN
       vr_dscritic := 'Erro ao executar CONT0001.pc_abre_arquivo. Erro:'||sqlerrm;         
+
+      --Inclusão na tabela de erros Oracle - Chamado 744433
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => vr_dscritic );
   END pc_abre_arquivo;
   
   -- Escrever linha no arquivo
@@ -186,6 +211,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                      ,pr_dtmvtolt   IN DATE
                                      ,pr_retfile   OUT VARCHAR2
                                      ,pr_dscritic  OUT VARCHAR2) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_gera_arq_centralizacao
+  --  Sistema  : CONT
+  --  Sigla    : CONT
+  --  Autor    : Jonatas Jaqmam Pereira - Supero
+  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : 
+  --
+  -- Alteracoes:
+  -- 26/09/2017 - Inclusão do módulo e ação logado no oracle
+  --            - Inclusão da chamada de procedure em exception others
+  --            - Colocado logs no padrão
+  --              (Ana - Envolti - Chamado 744433)
+  ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar informações de lançamentos das filiadas na central
     CURSOR cr_craplcm IS
@@ -273,6 +316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
+	      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_inicia_historico 1');
         vr_tab_historico.DELETE;
 
         vr_tab_historico(1623).nrctaori := 1781;
@@ -450,12 +495,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(2221).nrctaori := 8311;
         vr_tab_historico(2221).nrctades := 1452;
         vr_tab_historico(2221).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DESPESA COM RESSARCIMENTO DO USO DO SISBACEN';
-
-
    END;  
     
-
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_centralizacao');
 
     -- Definir as datas das linhas do arquivo
     vr_con_dtmvtolt := '20' ||
@@ -464,6 +508,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        to_char(pr_dtmvtolt, 'dd');
 
     pc_inicia_historico;
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_centralizacao');
+
     vr_contador := 0;
     
     --leitura e lançamentos gravados em tabela acumulado nos programas de origem
@@ -480,6 +527,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_file_erro;
           END IF;
+          -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_centralizacao');
 
         END IF;  
           
@@ -518,9 +567,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_file_erro;
         END IF;
+        -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_centralizacao');
 
       END IF;
-      
       
       --Prefixo de código de acesso para busca de parametros.      
       IF rw_craplcm.cdhistor in (440,446,544,545,1024,1069,1160,1161) THEN
@@ -729,7 +779,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;
       
-
       IF vr_tab_historico.exists(rw_craplcm.cdhistor) THEN
   
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
@@ -768,6 +817,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_file_erro;
         END IF;
+        -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_centralizacao');
 
       END IF;    
     
@@ -843,7 +894,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
        vr_dscomando := 'ux2dos '||vr_utlfileh||'/'||pr_retfile||' > '||
                                   vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
-
       -- Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando
@@ -877,6 +927,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     WHEN OTHERS THEN
       -- Monta mensagem de erro
       pr_dscritic := 'Erro em CONT0001.pc_gera_arq_centralizacao: ' || SQLERRM;
+      --Inclusão na tabela de erros Oracle - Chamado 744433
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
   END pc_gera_arq_centralizacao;
 
   /*** Gerar arquivo AAMMDD_XX_LCTOSCOMPE.txt ***/
@@ -885,6 +938,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                       ,pr_retfile   OUT VARCHAR2
                                       ,pr_dscritic  OUT VARCHAR2) IS
   
+  ---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_gera_arq_compe_central
+  --  Sistema  : CONT
+  --  Sigla    : CONT
+  --  Autor    : Jonatas Jaqmam Pereira - Supero
+  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : 
+  --
+  -- Alteracoes:
+  -- 26/09/2017 - Inclusão do módulo e ação logado no oracle
+  --            - Inclusão da chamada de procedure em exception others
+  --            - Colocado logs no padrão
+  --              (Ana - Envolti - Chamado 744433)
+  ---------------------------------------------------------------------------------------------------------------
   
     vr_file_erro     EXCEPTION;
     
@@ -909,6 +980,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
+	      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_inicia_historico 2');
+
         vr_tab_historico.DELETE;
 
         vr_tab_historico(574).nrctaori := 4894;
@@ -938,11 +1012,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(2270).nrctaori := 4894;
         vr_tab_historico(2270).nrctades := 1455;
         vr_tab_historico(2270).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO REMETIDA DE COBRANCA';    
-        
    END;  
              
-    
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_compe_central');
 
     -- Definir as datas das linhas do arquivo
     vr_con_dtmvtolt := '20' ||
@@ -953,6 +1027,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     vr_contador := 0;
     
     pc_inicia_historico;
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_compe_central');
     
     --leitura e lançamentos gravados em tabela acumulado nos programas de origem
     FOR rw_lct_central IN cr_lct_central(pr_cdcooper/*, pr_dtmvtolt*/) LOOP
@@ -968,6 +1044,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_file_erro;
           END IF;
+          -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_compe_central');
 
         END IF;  
           
@@ -995,7 +1073,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     END LOOP;
     --
     
-
     FOR rw_craplcm in cr_craplcm LOOP
       
       vr_contador := vr_contador + 1;
@@ -1007,6 +1084,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_file_erro;
         END IF;
+	      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_compe_central');
 
       END IF;
       
@@ -1055,7 +1134,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
        vr_dscomando := 'ux2dos '||vr_utlfileh||'/'||pr_retfile||' > '||
                                   vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
-
       -- Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando
@@ -1088,6 +1166,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     WHEN OTHERS THEN
       -- Monta mensagem de erro
       pr_dscritic := 'Erro em CONT0001.pc_gera_arq_compe_central: ' || SQLERRM;
+      --Inclusão na tabela de erros Oracle - Chamado 744433
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
   END pc_gera_arq_compe_central; 
   --
   PROCEDURE pc_gera_arq_recuros_caixa(pr_cdcooper   IN NUMBER
@@ -1095,6 +1176,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                      ,pr_dtmvtopr   IN DATE
                                      ,pr_retfile   OUT VARCHAR2
                                      ,pr_dscritic  OUT VARCHAR2) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_gera_arq_recuros_caixa
+  --  Sistema  : CONT
+  --  Sigla    : CONT
+  --  Autor    : Jonatas Jaqmam Pereira - Supero
+  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : 
+  --
+  -- Alteracoes:
+  -- 26/09/2017 - Inclusão do módulo e ação logado no oracle
+  --            - Inclusão da chamada de procedure em exception others
+  --            - Colocado logs no padrão
+  --              (Ana - Envolti - Chamado 744433)
+  ---------------------------------------------------------------------------------------------------------------
   
     vr_vlsdeved      NUMBER := 0;    
     vr_file_erro     EXCEPTION;        
@@ -1115,6 +1214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       rw_vlsdeved cr_vlsdeved%ROWTYPE;
          
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_recuros_caixa');
 
     -- Definir as datas das linhas do arquivo
     vr_con_dtmvtolt := '50' ||
@@ -1130,7 +1231,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     END IF;
     CLOSE cr_vlsdeved;     
          
-         
     IF nvl(vr_vlsdeved,0) <> 0 then
 
       cont0001.pc_abre_arquivo(pr_cdcooper,pr_dtmvtolt,'RECURSOS_CAIXA',pr_retfile);
@@ -1138,6 +1238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_file_erro;
       END IF;
+      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arq_recuros_caixa');
            
       -- 1ª linha
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
@@ -1198,7 +1300,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
        vr_dscomando := 'ux2dos '||vr_utlfileh||'/'||pr_retfile||' > '||
                                   vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
-
       -- Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando
@@ -1231,19 +1332,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     WHEN OTHERS THEN
       -- Monta mensagem de erro
       pr_dscritic := 'Erro em CONT0001.pc_gera_arq_recuros_caixa: ' || SQLERRM;
+      --Inclusão na tabela de erros Oracle - Chamado 744433
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
   END pc_gera_arq_recuros_caixa;     
   --
   
   PROCEDURE pc_gera_arquivos_contabeis(pr_dtmvtolt IN DATE
                                       ,pr_dtmvtopr IN DATE) IS
     
+
+    ---------------------------------------------------------------------------------------------------------------
+    --  Programa : pc_gera_arquivos_contabeis
+    --  Sistema  : CONT
+    --  Sigla    : CONT
+    --  Autor    : Jonatas Jaqmam Pereira - Supero
+    --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Esta rotina será encarregada de controlar todo o Workflow
+    --
+    -- Alteracoes:
+    -- 26/09/2017 - Inclusão do módulo e ação logado no oracle
+    --            - Inclusão da chamada de procedure em exception others
+    --            - Colocado logs no padrão
+    --              (Ana - Envolti - Chamado 744433)
+    ---------------------------------------------------------------------------------------------------------------
+    vr_des_log     VARCHAR2(2000);
+    vr_cdprogra    VARCHAR2(30) := 'CONT0001';
+
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arquivos_contabeis');
     
-    btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                || 'CONT0001.pc_gera_arquivos_contabeis' || ' --> '
-                                                || 'Inicio gerarao arquivos contabeis de lancamentos centralizacao');
+    vr_des_log := 'Inicio geracao arquivos contabeis de lancamentos centralizacao.';
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => 'O', 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_cdcooper      => 3, 
+                           pr_tpexecucao    => 2, --job
+                           pr_tpocorrencia  => 4,
+                           pr_cdcriticidade => 0, --baixa
+                           pr_dsmensagem    => vr_des_log,                             
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
   
     FOR rw_crapcop IN cr_crapcop LOOP
 
@@ -1253,36 +1387,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       CONT0001.pc_gera_arq_centralizacao(rw_crapcop.cdcooper,pr_dtmvtolt,vr_retfile,vr_dscritic);
       
       IF vr_dscritic IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                    pr_ind_tipo_log => 2, -- Erro tratado
-                                    pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                    || 'CONT0001.pc_gera_arq_centralizacao' || ' --> '
-                                                    || vr_dscritic);    
+        --> Controlar geração de log de execução dos jobs                                
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_cdcooper      => 3, 
+                               pr_tpexecucao    => 2, --job
+                               pr_tpocorrencia  => 2,
+                               pr_cdcriticidade => 0, --baixa
+                               pr_dsmensagem    => vr_dscritic,                             
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
       END IF;
+      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arquivos_contabeis');
 
       vr_dscritic := null;       
       --Arquivos de lançamentos de compensação centralizado
       CONT0001.pc_gera_arq_compe_central(rw_crapcop.cdcooper,pr_dtmvtolt,vr_retfile,vr_dscritic); 
       
       IF vr_dscritic IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                    pr_ind_tipo_log => 2, -- Erro tratado
-                                    pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                    || 'CONT0001.pc_gera_arq_compe_central' || ' --> '
-                                                    || vr_dscritic);    
+        --> Controlar geração de log de execução dos jobs                                
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_cdcooper      => 3, 
+                               pr_tpexecucao    => 2, --job
+                               pr_tpocorrencia  => 2,
+                               pr_cdcriticidade => 0, --baixa
+                               pr_dsmensagem    => vr_dscritic,                             
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
       END IF; 
+      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arquivos_contabeis');
       
       vr_dscritic := null;       
       --Arquivos de lançamentos de recurso caixa
       CONT0001.pc_gera_arq_recuros_caixa(rw_crapcop.cdcooper,pr_dtmvtolt,pr_dtmvtopr,vr_retfile,vr_dscritic); 
       
       IF vr_dscritic IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                    pr_ind_tipo_log => 2, -- Erro tratado
-                                    pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                    || 'CONT0001.pc_gera_arq_recuros_caixa' || ' --> '
-                                                    || vr_dscritic);    
+        --> Controlar geração de log de execução dos jobs                                
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_cdcooper      => 3, 
+                               pr_tpexecucao    => 2, --job
+                               pr_tpocorrencia  => 2,
+                               pr_cdcriticidade => 0, --baixa
+                               pr_dsmensagem    => vr_dscritic,                             
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
       END IF;       
+      -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_gera_arquivos_contabeis');
       
     END LOOP;
     
@@ -1290,11 +1445,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     DELETE FROM TBCONTAB_LANCTOS_CENTRALIZA;
     COMMIT;
     
-    btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                || 'CONT0001.pc_gera_arquivos_contabeis' || ' --> '
-                                                || 'Fim gerarao arquivos contabeis de lancamentos centralizacao');
+    vr_des_log := 'Fim geracao arquivos contabeis de lancamentos centralizacao.';
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => 'O', 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_cdcooper      => 3, 
+                           pr_tpexecucao    => 2, --job
+                           pr_tpocorrencia  => 4,
+                           pr_cdcriticidade => 0, --baixa
+                           pr_dsmensagem    => vr_des_log,                             
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
+
     
   
   END pc_gera_arquivos_contabeis;
@@ -1312,7 +1474,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                   pr_cdcritic     OUT NUMBER,
                                   pr_dscritic     OUT VARCHAR2) IS
     
+  ---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_insere_lct_central
+  --  Sistema  : CONT
+  --  Sigla    : CONT
+  --  Autor    : Jonatas Jaqmam Pereira - Supero
+  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : 
+  --
+  -- Alteracoes:
+  -- 26/092017 - Inclusão do módulo e ação logado no oracle
+  --            - Inclusão da chamada de procedure em exception others
+  --            - Colocado logs no padrão
+  --              (Ana - Envolti - Chamado 744433)
+  ---------------------------------------------------------------------------------------------------------------
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 744433 - 26/09/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CONT0001.pc_insere_lct_central');
+
     BEGIN
       INSERT INTO tbcontab_lanctos_centraliza(dtmvtolt,
                                               cdcooper, 
@@ -1340,10 +1523,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic := 'Erro ao inserir tbcontab_lanctos_centraliza: ' ||SQLERRM;
+        --Inclusão na tabela de erros Oracle - Chamado 744433
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => pr_dscritic );
     END;
   EXCEPTION
     WHEN OTHERS THEN
       vr_dscritic := 'Erro na geral na procedure pc_insere_lct_central: ' ||SQLERRM;     
+      --Inclusão na tabela de erros Oracle - Chamado 744433
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => vr_dscritic );
   END;  
   --
 END CONT0001;

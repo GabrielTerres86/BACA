@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS365(pr_cdcooper  IN  crapcop.cdcooper%TYPE   --> Cooperativa
-                                             ,pr_flgresta  IN  PLS_INTEGER             --> Controle de restart
-                                             ,pr_stprogra  OUT PLS_INTEGER             --> Saída de termino da execução
-                                             ,pr_infimsol  OUT PLS_INTEGER             --> Saída de termino da solicitação
-                                             ,pr_cdcritic  OUT NUMBER                  --> Código crítica
-                                             ,pr_dscritic  OUT VARCHAR2) IS            --> Descrição crítica
+                                      ,pr_flgresta  IN  PLS_INTEGER             --> Controle de restart
+                                      ,pr_stprogra  OUT PLS_INTEGER             --> Saída de termino da execução
+                                      ,pr_infimsol  OUT PLS_INTEGER             --> Saída de termino da solicitação
+                                      ,pr_cdcritic  OUT NUMBER                  --> Código crítica
+                                      ,pr_dscritic  OUT VARCHAR2) IS            --> Descrição crítica
 BEGIN
   /* .............................................................................
 
@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/2003.                      Ultima atualizacao: 21/03/2017
+   Data    : Outubro/2003.                      Ultima atualizacao: 21/01/2014
 
    Dados referentes ao programa:
 
@@ -73,6 +73,8 @@ BEGIN
                
                21/03/2017 - Segregar informações de saldo de desconto de cheques em PF e PJ
                             Projeto 307 Automatização Arquivos Contábeis Ayllos (Jonatas - Supero)
+               
+               03/10/2017 - Chamado(767536), estouro de variavel, alterado o tamanho maximo do buffer de 32000 para 30000 (Junior - Mouts)
   ............................................................................. */
   DECLARE
     -- PL Table para borderos
@@ -157,7 +159,7 @@ BEGIN
 
     -- Definição de tipo para PL Table
     TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY VARCHAR2(15);
-    
+
     -- Pl Table para resumo de valores totais de desconto cheque por agência
     TYPE typ_tot_dsc_chq IS
       RECORD(vllimite NUMBER(20,2)
@@ -254,6 +256,7 @@ BEGIN
     vr_nrcopias     PLS_INTEGER := 1;                   --> Número de impressões em cópia
     vr_nmformul     VARCHAR2(40) := '';                 --> Nome do formulário
     vr_gerindex     VARCHAR2(300);                      --> Variável para gerar índices para as PL Tables
+    vr_pr_btam      PLS_INTEGER := 30000;               --> Variavel para especificar o tamanho do buffer da gene0002.pc_clob_buffer.
 
     /* Busca dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS  --> Cooperativa
@@ -572,10 +575,10 @@ BEGIN
 
         -- Criar mensagem no arquivo XML
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<pac><descricao>=>  PA: ' || vr_rel_dsagenci || '</descricao>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
         vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<pac><descricao>=>  PA: ' || vr_rel_dsagenci || '</descricao>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       END IF;
 
       -- Verifica se existe bordero criado
@@ -628,7 +631,7 @@ BEGIN
         -- Gerar dados para o relatório de auditoria
         vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<registro2><nrdconta>' || to_char(vr_rel_nrdconta, 'FM9999G999G999G9') || '</nrdconta>' ||
                                             '<nmprimtl><![CDATA[' || vr_rel_nmprimtl || ']]></nmprimtl>';
-       gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+       gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       END IF;
 
       -- Verificar se existe registro na CRAPCEC
@@ -652,33 +655,33 @@ BEGIN
       -- Gerar dados para relatório
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<corpo><dtlibera>' || to_char(vr_tab_crapcdb(vr_index).dtlibera, 'DD/MM/RRRR') || '</dtlibera>' ||
                                           '<dtlibbdc>' || to_char(vr_tab_crapcdb(vr_index).dtlibbdc, 'DD/MM/RRRR') || '</dtlibbdc>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<nrborder>' || to_char(vr_tab_crapcdb(vr_index).nrborder, 'FM999G999G999') || '</nrborder>' ||
                                           '<cdbanchq>' || vr_tab_crapcdb(vr_index).cdbanchq || '</cdbanchq>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<cdagechq>' || vr_tab_crapcdb(vr_index).cdagechq || '</cdagechq>' ||
                                           '<nrctachq>' || vr_tab_crapcdb(vr_index).nrctachq || '</nrctachq>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<nrcheque>' || to_char(vr_tab_crapcdb(vr_index).nrcheque, 'FM999G999G999') || '</nrcheque>' ||
                                           '<vlcheque>' || to_char(vr_tab_crapcdb(vr_index).vlcheque, 'FM999G999G999G990D00') || '</vlcheque>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<vlliquid>' || to_char(vr_tab_crapcdb(vr_index).vlliquid, 'FM999G999G999G990D00') || '</vlliquid>' ||
                                           '<rel_nmcheque><![CDATA[' || vr_rel_nmcheque || ']]></rel_nmcheque>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<rel_dscpfcgc>' || vr_rel_dscpfcgc || '</rel_dscpfcgc>' ||
                                           '<rel_vljurchq>' || to_char(vr_rel_vljurchq, 'FM999G999G999G990D00') || '</rel_vljurchq>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<cdagenciordena>' || lpad(vr_tab_crapcdb(vr_index).cdagenci, 10, '0') || '</cdagenciordena>' ||
                                           '<nrdcontaordena>' || lpad(vr_tab_crapcdb(vr_index).nrdconta, 20, '0')  || '</nrdcontaordena>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<dtliberaordena>' || to_char(vr_tab_crapcdb(vr_index).dtlibera, 'RRRRMMDD') || '</dtliberaordena>' ||
                                           '<cdbanchqordena>' || lpad(vr_tab_crapcdb(vr_index).cdbanchq, 20, '0')  || '</cdbanchqordena>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<cdagechqordena>' || lpad(vr_tab_crapcdb(vr_index).cdagechq, 10, '0') || '</cdagechqordena>' ||
                                           '<nrctachqordena>' || lpad(vr_tab_crapcdb(vr_index).nrctachq, 20, '0')  || '</nrctachqordena>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
       vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<nrchequeordena>' || lpad(vr_tab_crapcdb(vr_index).nrcheque, 20, '0') || '</nrchequeordena></corpo>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
 
 
       IF vr_tab_crapcdb.next(vr_index) IS NULL OR vr_tab_crapcdb(vr_index).nrdconta <> vr_tab_crapcdb(vr_tab_crapcdb.next(vr_index)).nrdconta THEN
@@ -715,16 +718,16 @@ BEGIN
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<registro1><rel_nrdconta>' || to_char(vr_rel_nrdconta, 'FM9999999G999G9') || '</rel_nrdconta>' ||
                                             '<rel_nmprimtl><![CDATA[' || vr_rel_nmprimtl || ']]></rel_nmprimtl>' ||
                                             '<rel_inpessoa><![CDATA[' || vr_rel_inpessoa || ']]></rel_inpessoa>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<rel_qtcheque>' || to_char(vr_rel_qtcheque, 'FM9999G999G999G999') || '</rel_qtcheque>' ||
                                             '<rel_qtdsocio>' || to_char(vr_rel_qtdsocio, 'FM9999G999G999G999') || '</rel_qtdsocio>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<rel_vllimite>' || to_char(vr_rel_vllimite, 'FM999G999G999G990D00') || '</rel_vllimite>' ||
                                             '<rel_vldescto>' || to_char(vr_rel_vldescto, 'FM999G999G999G990D00') || '</rel_vldescto>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<rel_vldjuros>' || to_char(vr_rel_vldjuros, 'FM999G999G999G990D00') || '</rel_vldjuros>' ||
                                             '<rel_disponiv>' || to_char(vr_rel_disponiv, 'FM999G999G999G990D00') || '</rel_disponiv></registro1>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
         -- Zerar quantidade
         vr_rel_qtdsocio := 0;
@@ -733,7 +736,7 @@ BEGIN
         vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<total><rel_qtcheque>' || to_char(vr_rel_qtcheque, 'FM9999G999G999G999') || '</rel_qtcheque>' ||
                                             '<rel_vldescto>' || to_char(vr_rel_vldescto, 'FM999G999G999G990D00') || '</rel_vldescto>' ||
                                             '<rel_vldjuros>' || to_char(vr_rel_vldjuros, 'FM999G999G999G990D00') || '</rel_vldjuros></total></registro2>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
 
         vr_controle := TRUE;
 
@@ -811,16 +814,16 @@ BEGIN
         -- Gera dados para relatório
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<total><rel_deschequ>' || vr_rel_deschequ || '</rel_deschequ>' ||
                                             '<tot_qtcheque>' || to_char(vr_tot_qtcheque, 'FM999G999G999G999') || '</tot_qtcheque>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_qtdgeral>' || to_char(vr_tot_qtdgeral, 'FM999G999G999G999') || '</tot_qtdgeral>' ||
                                             '<tot_vlrlimit>' || to_char(vr_tot_vlrlimit, 'FM999G999G999G990D00') || '</tot_vlrlimit>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_vldescto>' || to_char(vr_tot_vldescto, 'FM999G999G999G990D00') || '</tot_vldescto>' ||
                                             '<tot_vldjuros>' || to_char(vr_tot_vldjuros, 'FM999G999G999G990D00') || '</tot_vldjuros>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_vllimite>' || to_char(vr_tot_vllimite, 'FM999G999G999G999') || '</tot_vllimite>' ||
                                             '<tot_vlrdispo>' || to_char(vr_tot_vlrdispo, 'FM999G999G999G990D00') || '</tot_vlrdispo></total></pac>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
         -- Gerar dados para relatório
         vr_xmlbuffer_2 := vr_xmlbuffer_2 || '</pac>';
@@ -856,16 +859,16 @@ BEGIN
     -- Gera dados para relatório
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<totalRegistro1><rel_descgral>' || vr_rel_descgral || '</rel_descgral>' ||
                                         '<tot_geralchq>' || to_char(vr_tot_geralchq, 'FM999G999G999G999') || '</tot_geralchq>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_geralqtd>' || to_char(vr_tot_geralqtd, 'FM999G999G999G999') || '</tot_geralqtd>' ||
                                         '<tot_valorlim>' || to_char(vr_tot_valorlim, 'FM999G999G999G990D00') || '</tot_valorlim>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_valordes>' || to_char(vr_tot_valordes, 'FM999G999G999G990D00') || '</tot_valordes>' ||
                                         '<tot_valorjur>' || to_char(vr_tot_valorjur, 'FM999G999G999G990D00') || '</tot_valorjur>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_limitevl>' || to_char(vr_tot_limitevl, 'FM999G999G999G999') || '</tot_limitevl>' ||
                                         '<tot_dispovlr>' || to_char(vr_tot_dispovlr, 'FM999G999G999G990D00') || '</tot_dispovlr></totalRegistro1>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
     -- Consultar limites de crédito por conta contida na CRAPASS
     FOR rw_craplimass IN cr_craplimass(pr_cdcooper) LOOP
@@ -930,11 +933,11 @@ BEGIN
 
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<totalPrimeiro><cdagenci>' || vr_tab_work(vr_index).cdagenci || '</cdagenci>' ||
                                             '<qtd_utiliza>' || to_char(vr_qtd_utiliza, 'FM999G999G999G999') || '</qtd_utiliza>';
-        gene0002.pc_clob_buffer(pr_dados => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<vlr_utiliza>' || to_char(vr_vlr_utiliza, 'FM999G999G999G990D00') || '</vlr_utiliza>' ||
                                             '<qtd_naoutili>' || to_char(vr_qtd_nutiliza, 'FM999G999G999G999') || '</qtd_naoutili>' ||
                                             '<vlr_naoutili>' || to_char(vr_vlr_nutiliza, 'FM999G999G999G990D00') || '</vlr_naoutili></totalPrimeiro>';
-        gene0002.pc_clob_buffer(pr_dados => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob => vr_xml_1);
       END IF;
 
       -- Próximo registro
@@ -946,10 +949,10 @@ BEGIN
     -- Gera dados para relatório
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<totalGeralLimite><tot_utilizad>' || to_char(vr_tot_utilizad, 'FM999G999G999') || '</tot_utilizad>' ||
                                         '<tot_naoutili>' || to_char(vr_tot_naoutili, 'FM999G999G999') || '</tot_naoutili>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_vlrutili>' || to_char(vr_tot_vlrutili, 'FM999G999G999G990D00') || '</tot_vlrutili>' ||
                                         '<tot_vlrnaout>' || to_char(vr_tot_vlrnaout, 'FM999G999G999G990D00') || '</tot_vlrnaout></totalGeralLimite>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
     -- Gerar TAG pai
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<TipoPessoa>';
@@ -985,13 +988,13 @@ BEGIN
         -- Gera dados para relatório
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<totalPessoa' || vr_tipopess || '><cdagenci>' || vr_tab_work(vr_index).cdagenci || '</cdagenci>' ||
                                             '<qtd_utiliza>' || to_char(vr_tab_work(vr_index).qtd_utiliza(vr_contador), 'FM999G999G999G999') || '</qtd_utiliza>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<vlr_utiliza>' || to_char(vr_tab_work(vr_index).vlr_utiliza(vr_contador), 'FM999G999G999G990D00') || '</vlr_utiliza>' ||
                                             '<qtd_naoutili>' || to_char(vr_tab_work(vr_index).qtd_naoutili(vr_contador), 'FM999G999G999G999') || '</qtd_naoutili>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<vlr_naoutili>' || to_char(vr_tab_work(vr_index).vlr_naoutili(vr_contador), 'FM999G999G999G990D00') || '</vlr_naoutili>' ||
                                             '</totalPessoa' || vr_tipopess || '>';
-        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+        gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
         -- Próximo registro
         vr_index := vr_tab_work.next(vr_index);
@@ -1002,28 +1005,28 @@ BEGIN
       -- Gera dados para relatório
       vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<totalGeralPessoa><tot_utilizad>' || to_char(vr_tot_utilizad, 'FM999G999G999G999') || '</tot_utilizad>' ||
                                           '<tot_naoutili>' || to_char(vr_tot_naoutili, 'FM999G999G999G999') || '</tot_naoutili>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
       vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_vlrutili>' || to_char(vr_tot_vlrutili, 'FM999G999G999G990D00') || '</tot_vlrutili>' ||
                                           '<tot_vlrnaout>' || to_char(vr_tot_vlrnaout, 'FM999G999G999G990D00') || '</tot_vlrnaout></totalGeralPessoa>';
 
       vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</regPessoa' || vr_tipopess || '>';
       
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1); 
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1); 
     END LOOP;
 
     -- Fechar TAG pai
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</TipoPessoa>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => TRUE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => TRUE, pr_clob    => vr_xml_1);
 
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<totalFinal><tot_geralchq>' || to_char(vr_tot_geralchq, 'FM999G999G999G999') || '</tot_geralchq>' ||
                                         '<tot_valordes>' || to_char(vr_tot_valordes, 'FM999G999G999G990D00') || '</tot_valordes>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<tot_valorjur>' || to_char(vr_tot_valorjur, 'FM999G999G999G990D00') || '</tot_valorjur></totalFinal>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
     
     --Quadro de resumo de desconto de cheques
     vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'<resumo_dsc_chq>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
     
     --Resumo total por agencia de desconto de cheques
     vr_index := null;    
@@ -1040,7 +1043,7 @@ BEGIN
                                        ||  '<res_vldispon>'||to_char(vr_tab_tot_dsc_chq(vr_index).vldispon, 'FM999G999G999G990D00')||'</res_vldispon>'                                                                                                                                       
                                        ||'</total_geral>';    
 
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
       
       vr_index := vr_tab_tot_dsc_chq.NEXT(vr_index);
         
@@ -1063,7 +1066,7 @@ BEGIN
                                            ||  '<res_vldispon_pf>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldispon_pf, 'FM999G999G999G990D00')||'</res_vldispon_pf>'                                                                                                                                       
                                            ||'</total_pf>'; 
                                            
-          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
+          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
                                              
         ELSE
 
@@ -1075,7 +1078,7 @@ BEGIN
                                            ||  '<res_vldispon_pj>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldispon_pj, 'FM999G999G999G990D00')||'</res_vldispon_pj>'                                                                                                                                       
                                            ||'</total_pj>';   
                                            
-          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
+          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
                                                     
         END IF; 
 
@@ -1086,15 +1089,15 @@ BEGIN
     END LOOP;
     
     vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'</resumo_dsc_chq>';
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
-    
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
+
     -- Fechar TAG XML
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</registros1></base>';
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '</registros2></base>';
 
     -- Finalizar buffer
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => TRUE, pr_clob    => vr_xml_1);
-    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => TRUE, pr_clob    => vr_xml_2);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_btam => vr_pr_btam, pr_gravfim => TRUE, pr_clob    => vr_xml_1);
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_btam => vr_pr_btam, pr_gravfim => TRUE, pr_clob    => vr_xml_2);
 
     -- Gerar relatório 1
     gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
@@ -1105,7 +1108,7 @@ BEGIN
                                ,pr_dsjasper  => 'crrl311.jasper'
                                ,pr_dsparams  => 'PR_QUEBRA##S'
                                ,pr_dsarqsaid => vr_nom_dir || '/crrl311.lst'
-                               ,pr_flg_gerar => 'N' 
+                               ,pr_flg_gerar => 'N'
                                ,pr_qtcoluna  => 132
                                ,pr_sqcabrel  => 1
                                ,pr_cdrelato  => NULL
