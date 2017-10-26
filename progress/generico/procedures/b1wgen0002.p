@@ -692,6 +692,7 @@
 
               06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
                            calculadas nos meses anteriores, apenas do mes atual.
+                           (Mateus - Mouts - Chamado 671976)
 
 
 			  08/06/2017 - Inicializacao do parâmetro par_nrctremp nas rotinas grava-proposta-completa,
