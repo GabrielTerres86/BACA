@@ -1224,9 +1224,11 @@ DEF VAR aux_vlrlote AS DECI NO-UNDO.
 /* Operacao 194 */
 /* Operacao 195 */
 /* Operacao 196 */
+/* Operacao 197 */
 DEF VAR aux_cdorigem AS INTE               NO-UNDO.
 DEF VAR aux_cdtipmod AS INTE               NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR               NO-UNDO.
+DEF VAR aux_dttransa AS DATE               NO-UNDO.
 DEF VAR aux_idlancto LIKE craplau.idlancto NO-UNDO.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -2239,18 +2241,21 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 192 THEN /* Ler Mensagens de Confirmacao para Prepostos */
                 RUN proc_operacao192. 
-		ELSE
+        ELSE
             IF  aux_operacao = 193 THEN /* Listar Comprovantes  */
                 RUN proc_operacao193.                 
-    	ELSE
+        ELSE
             IF  aux_operacao = 194 THEN /* Detalhes Comprovante  */
                 RUN proc_operacao194.
-    	ELSE
+        ELSE
             IF  aux_operacao = 195 THEN /* Listar Agendamentos  */
                 RUN proc_operacao195.                
-    	ELSE
+        ELSE
             IF  aux_operacao = 196 THEN /* Detalhar Agendamento  */
                 RUN proc_operacao196. 
+        ELSE
+            IF  aux_operacao = 197 THEN /* Detalhar Comprovante Recebido  */
+                RUN proc_operacao197.                
     END.
 /*....................................................................*/
     
@@ -8561,6 +8566,35 @@ PROCEDURE proc_operacao196:
  
 	RUN sistema/internet/fontes/InternetBank196.p (INPUT aux_cdtiptra,
                                                  INPUT aux_idlancto,
+                                                OUTPUT aux_dsmsgerr,
+                                                OUTPUT TABLE xml_operacao).
+
+    IF RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+      FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Detalhes Comprovantes Recebidos */
+PROCEDURE proc_operacao197:	
+  
+  ASSIGN aux_cdtippro = INTE(GET-VALUE("cdtippro"))         
+         aux_nrdocmto = INTE(GET-VALUE("nrdocmto"))
+         aux_cdhistor = INTE(GET-VALUE("cdhistor"))
+         aux_dttransa = DATE(GET-VALUE("dttransa"))
+         aux_cdorigem = INTE(GET-VALUE("cdorigem")).
+  
+	RUN sistema/internet/fontes/InternetBank197.p (INPUT aux_cdcooper,
+                                                 INPUT aux_nrdconta,
+                                                 INPUT aux_cdorigem,
+                                                 INPUT aux_cdtippro,
+                                                 INPUT aux_nrdocmto,
+                                                 INPUT aux_cdhistor,
+                                                 INPUT aux_dttransa,                                                 
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
 

@@ -509,8 +509,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            
               14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
 			  
-			  21/09/2017 - Ajustar procedure convenios_aceitos para indicar os convenios que podem
-			               ser cadastrados para debito automatico (David).
+              21/09/2017 - Ajustar procedure convenios_aceitos para indicar os convenios que podem
+                           ser cadastrados para debito automatico (David).
 						   
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -2548,10 +2548,20 @@ PROCEDURE convenios_aceitos:
     DEF VAR aux_hrtitini AS CHAR                                           NO-UNDO.
     DEF VAR aux_hrtitfim AS CHAR                                           NO-UNDO.
     DEF VAR aux_hrcancel AS CHAR                                           NO-UNDO.
-	DEF VAR aux_fldebaut AS LOGI                                           NO-UNDO.
-	DEF VAR aux_cdhisdeb LIKE crapcon.cdhistor                             NO-UNDO.
+    DEF VAR aux_dssegmto AS CHAR EXTENT 8                                  NO-UNDO.
+    DEF VAR aux_fldebaut AS LOGI                                           NO-UNDO.
+    DEF VAR aux_cdhisdeb LIKE crapcon.cdhistor                             NO-UNDO.
     
     EMPTY TEMP-TABLE tt-convenios_aceitos.
+    
+    ASSIGN aux_dssegmto[1] = "Prefeituras"
+           aux_dssegmto[2] = "Saneamento"
+           aux_dssegmto[3] = "Energia Elétrica e Gás"
+           aux_dssegmto[4] = "Telecomunicaçoes"
+           aux_dssegmto[5] = "Órgaos Governamentais"
+           aux_dssegmto[6] = "Órgaos Identificados pelo CNPJ"
+           aux_dssegmto[7] = "Multas de Trânsito"
+           aux_dssegmto[8] = "Uso Exclusivo do Banco".
 
     FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
                        craptab.nmsistem = "CRED"       AND
@@ -2590,10 +2600,10 @@ PROCEDURE convenios_aceitos:
                                    crapcon.flginter = TRUE 
                                    BY crapcon.nmextcon:
 								   
-		ASSIGN aux_cdhisdeb = crapcon.cdhistor.
+        ASSIGN aux_cdhisdeb = crapcon.cdhistor.
 
         IF  crapcon.flgcnvsi = TRUE THEN
-			DO:		    				
+            DO:		    				
                 FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
                                           crapscn.cdempcon <> 0)                       AND
                                           crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
@@ -2635,12 +2645,13 @@ PROCEDURE convenios_aceitos:
                tt-convenios_aceitos.nmrescon = crapcon.nmrescon
                tt-convenios_aceitos.cdempcon = crapcon.cdempcon 
                tt-convenios_aceitos.cdsegmto = crapcon.cdsegmto
+               tt-convenios_aceitos.dssegmto = aux_dssegmto[crapcon.cdsegmto]
                tt-convenios_aceitos.hhoraini = IF crapcon.flgcnvsi THEN aux_hhsicini ELSE aux_hrtitini
                tt-convenios_aceitos.hhorafim = IF crapcon.flgcnvsi THEN aux_hhsicfim ELSE aux_hrtitfim
-			   tt-convenios_aceitos.fldebaut = aux_fldebaut
-			   tt-convenios_aceitos.cdhisdeb = aux_cdhisdeb.
+               tt-convenios_aceitos.fldebaut = aux_fldebaut
+               tt-convenios_aceitos.cdhisdeb = aux_cdhisdeb.
 
-        IF (((crapcon.cdempcon = 24 OR crapcon.cdempcon = 98) AND 
+        IF (((crapcon.cdempcon = 24 OR  crapcon.cdempcon = 98) AND 
               crapcon.cdsegmto = 5) OR (crapcon.cdempcon = 119 AND 
               crapcon.cdsegmto = 2)) THEN 
             tt-convenios_aceitos.hhoracan = "Estorno não permitido para este convênio".
