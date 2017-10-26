@@ -52,4 +52,4 @@ LEFT JOIN crapfer fer
 		  AND fer.dtferiad = TRUNC(SYSDATE)			 
     WHERE age.cdagenci NOT IN (90, 91, 999)
       AND age.insitage not in (0,2)
-	  AND trim(age.nmpasite) is not null;
+	  AND trim(age.nmpasite) is not null

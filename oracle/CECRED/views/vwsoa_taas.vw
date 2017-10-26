@@ -55,4 +55,4 @@ left join crapage age
 LEFT JOIN crapcop cop
        ON cop.cdcooper = tfn.cdcooper
 left join crapmun mun
-       on mun.idcidade = nvl(age.idcidade,taa.idcidade);
+       on mun.idcidade = nvl(age.idcidade,taa.idcidade)
