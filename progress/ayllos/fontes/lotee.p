@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 14/02/2017
+   Data    : Outubro/91.                         Ultima atualizacao: 26/10/2017
 
    Dados referentes ao programa:
 
@@ -185,7 +185,10 @@
                           
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
-
+			   
+			   26/10/2017 - Remocao do IF que nao permitia passar o inliquid para 0 dos contratos
+							removidos de prejuizo através da tela LOTE, conforme solicitado no
+							chamado 745969. (Kelvin)
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -1182,8 +1185,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                                par_vlexcldb = par_vlexcldb + crablem.vllanmto
                                aux_contador = 0.
 
-                        /* Renato Darosci - Inclusao do IF - 16/08/2016 */
-                        IF crapepr.inprejuz = 0 THEN
+                        /*Renato Darosci - Inclusao do IF - 16/08/2016 
+                          26/10/2017 - Remocao do IF (Kelvin/Ademir SD 745969)   
+						  IF crapepr.inprejuz = 0 THEN */
                                crapepr.inliquid = IF (aux_vlsdeved -
                                                       crablem.vllanmto) > 0
                                                       THEN 0
@@ -1196,8 +1200,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                                par_vlexclcr = par_vlexclcr + crablem.vllanmto
                                aux_contador = 0.
 
-                        /* Renato Darosci - Inclusao do IF - 16/08/2016 */
-                        IF crapepr.inprejuz = 0 THEN
+                        /*Renato Darosci - Inclusao do IF - 16/08/2016 */
+                        /*26/10/2017 - Remocao do IF (Kelvin/Ademir SD 745969)   
+						  IF crapepr.inprejuz = 0 THEN*/
                                crapepr.inliquid = IF (aux_vlsdeved +
                                                       crablem.vllanmto) > 0
                                                       THEN 0
