@@ -54,6 +54,9 @@ BEGIN
             ,crapepr.qtprepag
             ,crapepr.qtprecal
             ,crapepr.dtrefjur
+            ,crapepr.diarefju
+            ,crapepr.mesrefju
+            ,crapepr.anorefju
             ,crapepr.txmensal
             ,crapepr.txjuremp
             ,crapepr.vlsprojt
@@ -129,12 +132,10 @@ BEGIN
     vr_vlpagpar          NUMBER;
     vr_percmult          NUMBER(25,2);
     vr_diavecto          PLS_INTEGER;
-    vr_diaatual          PLS_INTEGER;
     vr_dstextab          craptab.dstextab%TYPE;
     vr_txdiaria          craplcr.txdiaria%TYPE;
     vr_dsctactrjud       crapprm.dsvlrprm%TYPE := NULL;
     vr_index_controle    VARCHAR2(20);
-    vr_proximo_registro  BOOLEAN;
     vr_dtvencto          DATE;
     vr_qtregcta          INTEGER;
     vr_totregcta         INTEGER;
@@ -273,45 +274,6 @@ BEGIN
       
       -- Se for a Mensal
       vr_flmensal := (TO_CHAR(rw_crapdat.dtmvtolt, 'MM') <> TO_CHAR(rw_crapdat.dtmvtopr, 'MM'));
-      -- Condicao da parcela a vencer
-      IF rw_epr_pep.dtvencto > rw_crapdat.dtmvtolt THEN
-        -- Condicao para verificar se a parcela ja foi lancado Juros
-        vr_index_controle := LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
-        IF vr_tab_controle_empr_pago.EXISTS(vr_index_controle) THEN
-          CONTINUE;
-        END IF;
-        
-        vr_proximo_registro := TRUE;
-        -- Dia do Vencimento
-        vr_diavecto         := TO_NUMBER(TO_CHAR(rw_epr_pep.dtvencto,'DD'));
-        -- Dia da data Atual
-        vr_diaatual         := TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'DD'));
-        -- Condicao para efetuar lancamento de Juros no periodo da carência
-        IF rw_epr_pep.dtdpagto > rw_crapdat.dtmvtolt THEN           
-          -- Condicao para verificar se o dia do vencimento é hoje
-          IF vr_diavecto > TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtoan,'DD')) AND vr_diavecto <= vr_diaatual THEN
-            vr_proximo_registro := FALSE;
-          END IF;          
-        END IF;
-        
-        -- Condicao para verificar se estamos rodando na mensal
-        IF vr_flmensal THEN
-          -- Condicao para verificar se o dia do vencimento é maior que o dia da mensal
-          IF vr_diavecto > vr_diaatual THEN
-            vr_proximo_registro := FALSE;
-          END IF;
-        END IF;  
-        
-        -- Tab de controle para somente lancar juros para uma parcela por contrato
-        vr_tab_controle_empr_pago(vr_index_controle) := TRUE;
-        
-        -- Condicao para verificar se irá pular para o proximo registro
-        IF vr_proximo_registro THEN
-          CONTINUE;
-        END IF;
-        
-      END IF;
-      
       -- Se for Financiamento
       vr_floperac := (vr_tab_craplcr(rw_epr_pep.cdlcremp).dsoperac = 'FINANCIAMENTO');
       -- Calcula a taxa diaria
@@ -372,6 +334,9 @@ BEGIN
                                            ,pr_qtprecal => rw_epr_pep.qtprecal
                                            ,pr_dtlibera => rw_epr_pep.dtmvtolt
                                            ,pr_dtrefjur => rw_epr_pep.dtrefjur
+                                           ,pr_diarefju => rw_epr_pep.diarefju
+                                           ,pr_mesrefju => rw_epr_pep.mesrefju
+                                           ,pr_anorefju => rw_epr_pep.anorefju
                                            ,pr_vlrdtaxa => rw_epr_pep.vltaxatu
                                            ,pr_txdiaria => vr_txdiaria
                                            ,pr_txjuremp => rw_epr_pep.txjuremp
@@ -491,7 +456,21 @@ BEGIN
       ----------------------
       -- Parcela a Vencer --
       ----------------------
-      ELSIF rw_epr_pep.dtvencto > rw_crapdat.dtmvtolt THEN
+      ELSIF rw_epr_pep.dtvencto > rw_crapdat.dtmvtolt AND vr_flmensal THEN
+        -- Condicao para verificar se a parcela ja foi lancado Juros
+        vr_index_controle := LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
+        IF vr_tab_controle_empr_pago.EXISTS(vr_index_controle) THEN
+          CONTINUE;
+        END IF;
+        
+        -- Tab de controle para somente lancar juros para uma parcela por contrato
+        vr_tab_controle_empr_pago(vr_index_controle) := TRUE;
+        
+        -- Condicao para os casos com vencimento do dia 26/27, e a mensal é do dia 23/24
+        IF TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'DD')) > TO_NUMBER(TO_CHAR(rw_epr_pep.dtvencto,'DD')) THEN
+          CONTINUE;
+        END IF;     
+      
         -- Dia do Vencimento
         vr_diavecto := TO_NUMBER(TO_CHAR(rw_epr_pep.dtvencto,'DD'));
         -- Monta data de vencimento
@@ -511,6 +490,9 @@ BEGIN
                                            ,pr_qtprecal => rw_epr_pep.qtprecal
                                            ,pr_dtlibera => rw_epr_pep.dtmvtolt
                                            ,pr_dtrefjur => rw_epr_pep.dtrefjur
+                                           ,pr_diarefju => rw_epr_pep.diarefju
+                                           ,pr_mesrefju => rw_epr_pep.mesrefju
+                                           ,pr_anorefju => rw_epr_pep.anorefju
                                            ,pr_vlrdtaxa => rw_epr_pep.vltaxatu
                                            ,pr_txdiaria => vr_txdiaria
                                            ,pr_txjuremp => rw_epr_pep.txjuremp
@@ -556,7 +538,7 @@ BEGIN
     END LOOP; -- cr_epr_pep
 
     -- Seta a ultima conta restante executada
-    vr_cdrestart:= vr_ultconta;
+    vr_cdrestart := vr_ultconta;
 
     -- Grava os dados restantes conforme PL Table
     pc_grava_dados();
