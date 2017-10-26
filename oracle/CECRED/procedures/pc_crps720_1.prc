@@ -58,7 +58,7 @@ BEGIN
             ,crawepr.cddindex
             ,crappep.nrparepr
             ,crappep.dtvencto
-            ,ROW_NUMBER() OVER (PARTITION BY crapepr.nrdconta ORDER BY crapepr.nrdconta) AS numconta
+            ,ROW_NUMBER() OVER (PARTITION BY crapepr.nrdconta ORDER BY crapepr.cdcooper, crapepr.nrdconta) AS numconta
             ,COUNT(1) OVER (PARTITION BY crapepr.nrdconta) qtdconta
         FROM crapepr
         JOIN crawepr
@@ -76,10 +76,8 @@ BEGIN
          AND crappep.inliquid = 0 -- Pendente
          AND crappep.dtvencto > ADD_MONTHS(pr_dtmvtoan,1) 
          AND crappep.dtvencto <= ADD_MONTHS(pr_dtmvtolt,1)
-    ORDER BY crappep.cdcooper,
-             crappep.nrdconta,
-             crappep.nrctremp,
-             crappep.nrparepr;
+    ORDER BY crapepr.cdcooper
+            ,crapepr.nrdconta;
 
     -- Busca os dados da carencia
     CURSOR cr_carencia IS
@@ -128,7 +126,6 @@ BEGIN
     vr_idx_parc_pep    PLS_INTEGER;
     vr_idx_parcelas    INTEGER;
     vr_qtdconta        INTEGER;
-    vr_ultconta        INTEGER;
     vr_idcontrole      tbgen_batch_controle.idcontrole%TYPE;
     vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
 
@@ -216,9 +213,8 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
-    -- Reseta variaveis
+    -- Inicializa
     vr_qtdconta := 0;
-    vr_ultconta := 0;
 
     -- Limpa PL Table
     vr_tab_parc_epr.DELETE;
@@ -311,20 +307,16 @@ BEGIN
 
       -- Caso seja ultimo registro da conta
       IF rw_epr_pep.numconta = rw_epr_pep.qtdconta THEN
-        -- Se ultima conta for diferente da atual
-        IF vr_ultconta <> rw_epr_pep.nrdconta THEN
-           vr_ultconta := rw_epr_pep.nrdconta;
-           vr_qtdconta := vr_qtdconta + 1;
-           -- Salvar a cada 1.000 contas
-           IF MOD(vr_qtdconta,1000) = 0 THEN
-             -- Grava os dados conforme PL Table
-             pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
-                           ,pr_tab_parc_epr => vr_tab_parc_epr);
-             -- Limpa PL Table
-             vr_tab_parc_epr.DELETE;
-             vr_tab_parc_pep.DELETE;
-           END IF;
-        END IF;
+         vr_qtdconta := vr_qtdconta + 1;
+         -- Salvar a cada 1.000 contas
+         IF MOD(vr_qtdconta,1000) = 0 THEN
+           -- Grava os dados conforme PL Table
+           pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
+                         ,pr_tab_parc_epr => vr_tab_parc_epr);
+           -- Limpa PL Table
+           vr_tab_parc_epr.DELETE;
+           vr_tab_parc_pep.DELETE;
+         END IF;
       END IF;
 
     END LOOP; -- cr_epr_pep
