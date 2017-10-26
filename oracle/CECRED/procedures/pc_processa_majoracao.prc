@@ -84,7 +84,7 @@ create or replace procedure cecred.pc_processa_majoracao(pr_skcarga in number) i
                          where y.cdcooper (+) = m.cdcooper
                            and y.dtmvtolt (+) = d.dtmvtolt
                            and y.nrdconta (+) = m.nrdconta
-                           and y.inliquid (+) = 0) >= to_number(substr(t.dstextab,15,11)) then 1 else 0 end as idrating
+                           and y.inliquid (+) = 0) >= gene0002.fn_char_para_number(substr(t.dstextab,15,11)) then 1 else 0 end as idrating
         from craptab t
            , crapsda c
            , crapdat d
