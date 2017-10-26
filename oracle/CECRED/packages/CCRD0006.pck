@@ -741,8 +741,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                     pr_des_saida   => vr_dscritic);
         -- Testa erro
         IF vr_tipo_saida = 'ERR' THEN
-          -- Gera log de arquivo com erro
-          NULL;
+          ROLLBACK;
+          vr_cdcritic := 0;
+          RAISE vr_exc_saida;
         END IF;
         --dbms_output.put_line('Depois do mv: ' ||to_char(sysdate,'DDMMYYYY HH24:MI:SS'));
 
@@ -7623,7 +7624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END LOOP;  -- loop cr_tabela
 
         -- Efetua a atualizacao da situacao na tabela de lancamentos
-        -- Se encontrar algum registro sem erro no lancto, atualiza situação para 1
+        -- Se encontrar algum registro sem erro no lancto, atualiza situação para 2
         -- Com isso, se tiver apenas 1 PDV sem erro dentro de um lançamento considera todo o lançamento como processado
         IF vr_qtproclancto > 0 THEN
           BEGIN
@@ -7785,7 +7786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ,tbdomic_liqtrans_centraliza ctz
              ,tbdomic_liqtrans_pdv pdv
        WHERE lct.idarquivo = arq.idarquivo
-         AND lct.insituacao = 1 -- Processado (atualizado pelo pc_processo_reg_pendentes)
+         AND lct.insituacao = 2 -- Processado (atualizado pelo pc_processo_reg_pendentes)
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND to_date(pdv.dtpagamento,'YYYY-MM-DD') = pr_dtmvtolt
