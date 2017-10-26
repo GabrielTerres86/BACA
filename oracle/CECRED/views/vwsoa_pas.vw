@@ -49,7 +49,7 @@ LEFT JOIN crapmun mun
        ON mun.idcidade = age.idcidade
 LEFT JOIN crapfer fer
        ON fer.cdcooper = age.cdcooper
-		  AND fer.dtferiad = SYSDATE			 
+		  AND fer.dtferiad = TRUNC(SYSDATE)			 
     WHERE age.cdagenci NOT IN (90, 91, 999)
       AND age.insitage not in (0,2)
 	  AND trim(age.nmpasite) is not null;
