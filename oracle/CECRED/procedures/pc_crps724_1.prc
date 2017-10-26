@@ -72,6 +72,8 @@ BEGIN
             ,crappep.vltaxatu
             ,crapass.vllimcre
             ,crawepr.dtdpagto
+            ,ROW_NUMBER() OVER (PARTITION BY crapepr.nrdconta, crapepr.nrctremp ORDER BY crapepr.cdcooper, crapepr.nrdconta, crappep.nrctremp, crappep.nrparepr) AS numconta
+            ,COUNT(1) OVER (PARTITION BY crapepr.nrdconta, crapepr.nrctremp) qtdconta
         FROM crapepr
         JOIN crawepr
           ON crawepr.cdcooper = crapepr.cdcooper
@@ -137,16 +139,13 @@ BEGIN
     vr_dsctactrjud       crapprm.dsvlrprm%TYPE := NULL;
     vr_index_controle    VARCHAR2(20);
     vr_dtvencto          DATE;
-    vr_qtregcta          INTEGER;
-    vr_totregcta         INTEGER;
     vr_qtdconta          INTEGER;
     vr_ultconta          INTEGER;
-    vr_cdrestart         tbgen_batch_controle.cdrestart%TYPE;
     vr_idcontrole        tbgen_batch_controle.idcontrole%TYPE;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Grava os dados dos pagamentos e controle do batch
-    PROCEDURE pc_grava_dados IS
+    PROCEDURE pc_grava_dados(pr_cdrestart IN tbgen_batch_controle.cdrestart%TYPE) IS -- Controle do registro de restart em caso de erro na execucao
     BEGIN
       -- Grava agencia no controle do batch
       GENE0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper
@@ -154,7 +153,7 @@ BEGIN
                                       ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                       ,pr_tpagrupador => 1 -- PA
                                       ,pr_cdagrupador => pr_cdagenci
-                                      ,pr_cdrestart   => vr_cdrestart
+                                      ,pr_cdrestart   => pr_cdrestart
                                       ,pr_nrexecucao  => 1
                                       ,pr_idcontrole  => vr_idcontrole
                                       ,pr_cdcritic    => vr_cdcritic
@@ -228,7 +227,6 @@ BEGIN
     END LOOP;
 
     -- Reseta variaveis
-    vr_qtregcta := 0;
     vr_qtdconta := 0;
     vr_ultconta := 0;
 
@@ -242,30 +240,6 @@ BEGIN
         vr_cdcritic := 363;
         RAISE vr_exc_saida;
       END IF;
-
-      -- Se ultima conta for diferente da atual
-      IF vr_ultconta <> rw_epr_pep.nrdconta THEN
-         IF vr_ultconta > 0 THEN
-            vr_qtdconta := vr_qtdconta + 1;
-            vr_cdrestart:= vr_ultconta;
-         END IF;
-         vr_ultconta := rw_epr_pep.nrdconta;
-         vr_totregcta:= vr_qtregcta;
-      END IF;
-
-      -- Caso seja ultimo registro da conta
-      IF vr_qtregcta = vr_totregcta THEN
-         vr_qtregcta := 0;
-         vr_totregcta:= 0;
-         -- Salvar a cada 1.000 contas
-         IF MOD(vr_qtdconta,1000) = 0 AND vr_qtdconta > 0 THEN
-           -- Grava agencia no controle do batch
-           pc_grava_dados();
-         END IF;
-      END IF;
-
-      -- Contabiliza os registros por conta
-      vr_qtregcta := vr_qtregcta + 1;
 
       -- Trava para nao cobrar as parcelas desta conta e contrato especifico pelo motivo de uma acao judicial SD#618307
       IF INSTR(REPLACE(vr_dsctactrjud,' '),'('||TRIM(TO_CHAR(rw_epr_pep.nrdconta))||','||TRIM(TO_CHAR(rw_epr_pep.nrctremp))||')') > 0 THEN
@@ -534,14 +508,24 @@ BEGIN
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      
+      -- Seta a ultima conta
+      vr_ultconta := rw_epr_pep.nrdconta;
+
+      -- Caso seja ultimo registro da conta e contrato
+      IF rw_epr_pep.numconta = rw_epr_pep.qtdconta THEN
+         vr_qtdconta := vr_qtdconta + 1;
+         -- Salvar a cada 1.000 contas
+         IF MOD(vr_qtdconta,1000) = 0 THEN
+           -- Grava agencia no controle do batch
+           pc_grava_dados(pr_cdrestart => vr_ultconta);
+         END IF;
+      END IF;
 
     END LOOP; -- cr_epr_pep
 
-    -- Seta a ultima conta restante executada
-    vr_cdrestart := vr_ultconta;
-
     -- Grava os dados restantes conforme PL Table
-    pc_grava_dados();
+    pc_grava_dados(pr_cdrestart => vr_ultconta);
 
     -- Encerrar o job do processamento paralelo dessa agencia
     GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
