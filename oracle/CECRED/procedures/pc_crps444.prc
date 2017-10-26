@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 29/03/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 17/10/2017
 
      Dados referentes ao programa:
 
@@ -323,8 +323,8 @@ BEGIN
                               e processo de devolucao de cheque (Douglas - Melhoria 100)
 
 
-				         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-							                (Adriano - SD 426308).
+				 31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
+							 (Adriano - SD 426308).
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
 				              na hora (Tiago/Elton SD 464916).
@@ -335,7 +335,7 @@ BEGIN
                  12/07/2016 - Ajustes para realizar debito de devolucao de cheque
 				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
 
-				         01/11/2016 - inclusão do historico 0144TRANSF PERIODIC (Tiago sd 505237)
+				01/11/2016 - inclusão do historico 0144TRANSF PERIODIC (Tiago sd 505237)
                               
                  05/12/2016 - Tratamento para lancamentos das contas migradas 
                               (Incorporacao Transposul). (Fabricio)
@@ -343,6 +343,20 @@ BEGIN
                  29/03/2017 - Realizar geração de arquivo AAMMDD_XX_CRITICAITG.txt para envio dos 
                               lançamentos contábeis de críticas de integração de contas do BB
                               P307 - (Jonatas Supero)
+
+                 01/09/2017 - Ajustado critica 110 no AAMMDD_XX_CRITICAITG.txt
+                              (Rafael Faria - Supero)
+
+                 26/09/2017 - Integrar lancamentos referentes a nova conta centralizadora 205048.
+                              (Jaison/Elton)
+                              
+                 03/10/2017 - SD761668 - Alteração da descrição do histórico OB 12 STN de 
+                              DEBITO para CREDITO (Marcos-Supero)             
+                              
+                              
+                 17/10/2017 - Atualizar descricao do historico 0729 enviado no arquivo pelo BB,
+                              de: '0729TRANSFERENCIA' para: '0729TRANSF RECEBIDA'.
+                              (Chamado 775188) - (Fabricio)
      ............................................................................. */
 
   DECLARE
@@ -377,7 +391,7 @@ BEGIN
               ,cdcritic craprej.cdcritic%type
               ,cdpesqbb craprej.cdpesqbb%type
               ,dscritic VARCHAR2(4000));
-              
+
      TYPE typ_reg_historico IS 
        RECORD (nrctaori NUMBER          
               ,nrctades NUMBER          
@@ -392,7 +406,7 @@ BEGIN
      TYPE typ_tab_craphis   IS TABLE OF VARCHAR2(1)       INDEX BY PLS_INTEGER;
      TYPE typ_tab_craplcm   IS TABLE OF NUMBER            INDEX BY VARCHAR2(30);
      TYPE typ_tab_historico IS TABLE OF typ_reg_historico INDEX BY VARCHAR2(50);
-     
+
 
      --Definicao das tabelas de memoria
      vr_tab_crawdpb   typ_tab_crawdpb;
@@ -848,7 +862,7 @@ BEGIN
                ,craprej.nrdocmto;
      --Registro do tipo calendario
      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-     
+
      --Lista todas as agencias ativas
      CURSOR cr_crapage IS
        SELECT cdagenci,
@@ -1009,7 +1023,7 @@ BEGIN
 
      --Variaveis de Arquivo
      vr_input_file  utl_file.file_type;
-     
+
      --Variáveis arquivo contábil
      vr_aux_contador       NUMBER := 0;
      vr_nom_diretorio      VARCHAR2(200); 
@@ -1053,7 +1067,7 @@ BEGIN
          dbms_lob.writeappend(vr_des_rej,length(pr_des_dados),pr_des_dados);
        END IF;
      END;
-     
+
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
@@ -1063,7 +1077,7 @@ BEGIN
         vr_tab_historico('0231TAR MANUT C').nrctades := 1179;
         vr_tab_historico('0231TAR MANUT C').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. TARIFA DE MANUTENCAO DE C/C"';
 
-        vr_tab_historico('0110REBLOQUEIO').nrctaori := 1173;
+        vr_tab_historico('0110REBLOQUEIO').nrctaori := 1773;
         vr_tab_historico('0110REBLOQUEIO').nrctades := 1179;
         vr_tab_historico('0110REBLOQUEIO').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. REBLOQUEIO NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
 
@@ -1117,7 +1131,7 @@ BEGIN
 
         vr_tab_historico('0632OB 12 STN').nrctaori := 1179;
         vr_tab_historico('0632OB 12 STN').nrctades := 4894;
-        vr_tab_historico('0632OB 12 STN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        vr_tab_historico('0632OB 12 STN').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
         vr_tab_historico('0633SEGURO').nrctaori := 1179;
         vr_tab_historico('0633SEGURO').nrctades := 4894;
@@ -1213,7 +1227,7 @@ BEGIN
          --Sair do programa
          RAISE vr_exc_saida;
      END;
-     
+
      -- Retorna linha cabeçalho arquivo Radar ou Matera
      FUNCTION fn_set_cabecalho(pr_inilinha IN VARCHAR2
                               ,pr_dtarqmv  IN DATE
@@ -1458,7 +1472,7 @@ BEGIN
 
          IF vr_nrdctabb = vr_rel_nrdctabb    AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
+            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSF RECEBIDA','0144TRANSF PERIODIC') THEN
            NULL;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN  /* Deposito */
            IF INSTR(vr_dshstblq,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito Bloqueado */
@@ -2813,12 +2827,12 @@ BEGIN
                                    SUBSTR(vr_setlinha,178,4),'MMDDYYYY'),'DD.MM.YYYY');
            END IF;
            vr_flgarqvz:= FALSE;
-           IF vr_nrdocmto <> 5048 THEN
+           IF vr_nrdocmto <> 205048 THEN
              IF INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) > 0 THEN
                IF SUBSTR(vr_setlinha,123,1) <> '*' AND
                   vr_dshistor NOT IN ('0144TRANSF AGENDADA',
                                       '0144TRANSFERENCIA',
-                                      '0729TRANSFERENCIA',
+                                      '0729TRANSF RECEBIDA',
                                       '0144TRANSF PERIODIC') THEN
                    CONTINUE;
                END IF;
@@ -2880,7 +2894,7 @@ BEGIN
              IF vr_dshistor <> '0144TRF SEM CPMF'    AND
                vr_dshistor <> '0144TRANSF AGENDADA' AND
                vr_dshistor <> '0144TRANSFERENCIA'   AND
-               vr_dshistor <> '0729TRANSFERENCIA'   AND
+               vr_dshistor <> '0729TRANSF RECEBIDA'   AND
                vr_dshistor <> '0144TRANSF PERIODIC' THEN
 
                 /* B.Brasil modificou historico TEC SALARIO*/
@@ -2952,7 +2966,7 @@ BEGIN
          /*   Outros Historicos Lancados na conta Centralizadora  */
          IF vr_nrdctabb = vr_rel_nrdctabb AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
+            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSF RECEBIDA','0144TRANSF PERIODIC') THEN
            vr_cdcritic:= 245;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito */
            vr_flgdepos:= TRUE;
