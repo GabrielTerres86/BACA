@@ -3058,7 +3058,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Proximo registro
           CONTINUE;
         END IF;
-        
+        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */
+        -- rmm desconsiderar pagamentos prejuizo (2390,2392,2388,2475)        
+        IF rw_crapepr.tpemprst = 1 AND rw_craplem.cdhistor IN (2390,2392,2388,2475,2391,2395) THEN
+          CONTINUE;          
+        END IF;
+        --
         /* Verifica se o contrato estah em prejuizo */
         IF rw_crapepr.tpemprst = 1 AND
            rw_crapepr.inprejuz = 1 AND 
@@ -3080,7 +3085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476, 2402, 2404, 2406,2407,2384, 2397, 2399) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3095,7 +3100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            rw_craplem.dtmvtolt >= rw_crapepr.dtprejuz THEN
            
            /* Multa e Juros de Mora de Prejuizo */
-           IF rw_craplem.cdhistor IN (1733,1734,1735,1736) THEN
+           /* M324 - inclusao dos novos historicos de multas e juros */
+           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476, 2402, 2404, 2406,2407,2384, 2397, 2399) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
              
@@ -12963,7 +12969,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
