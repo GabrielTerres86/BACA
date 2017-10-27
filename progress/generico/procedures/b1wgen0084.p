@@ -2783,6 +2783,20 @@ PROCEDURE valida_dados_efetivacao_proposta:
     END. /* IF  NOT AVAIL craplcr */
 	FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
     
+    /* melhoria 324 - nao permitir criar contratos da linha 100 - Jean Mout´S*/ 
+    IF  crawepr.cdlcremp = 100 THEN   
+        DO:
+          ASSIGN aux_cdcritic = 363
+                  aux_dscritic = "Nao eh permitido criar contratos na linha 100".
+          RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+          RETURN "NOK".
+        END. 		 
+
     IF  par_dtmvtolt > crawepr.dtlibera THEN
         DO:
             ASSIGN  aux_cdcritic = 0

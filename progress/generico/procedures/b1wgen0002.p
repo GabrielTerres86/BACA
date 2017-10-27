@@ -3489,6 +3489,14 @@ PROCEDURE valida-dados-gerais:
                 LEAVE.
             END.        
                 
+        /* Melhoria 324 - nao permitir utilizar a linha de credito 100 - Jean (Mout´S)*/
+        IF  par_cdlcremp = 100 THEN
+        DO:
+            ASSIGN aux_dscritic =
+                       "Linha de credito 100 nao permitida para criar emprestimos.".
+                LEAVE.
+        END.
+		
 		IF crapass.inpessoa = 1  THEN
 		DO:
 
@@ -9896,7 +9904,8 @@ PROCEDURE obtem-dados-conta-contrato:
                                    NO-LOCK:
 
                 IF  craplem.cdhistor = 391  OR   /** pagto prejuizo **/
-                    craplem.cdhistor = 382  THEN /** pagto prejuizo orig **/
+                    craplem.cdhistor = 382  OR   /** pagto prejuizo orig **/ 
+                    craplem.cdhistor = 2388 THEN /** pagto prejuizo M324**/
                     ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos +
                                                    craplem.vllanmto.
 
