@@ -708,6 +708,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --          11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                       (Douglas - Importacao de Arquivos CNAB)
     --
+    --          27/10/2017 - Não validar Desconto de Titulo no envio de SMS
+	--						 (Andrey Formigari - Mouts) SD: 740630
+    --
     -- ...........................................................................................
 
   BEGIN
@@ -1000,34 +1003,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           vr_dtcalcul := rw_craptdb.dtvencto + vr_qtdiacar + 1;
           vr_dtcalcul := gene0005.fn_valida_dia_util(rw_crapcob.cdcooper,vr_dtcalcul,'P',TRUE,FALSE);
           
-          -- e a situação é em estudo e não esta vencido
-          IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
-            rw_craptdb.insittit = 4)  THEN -- LIBERADO
+		  IF pr_cdinstru <> '95' THEN -- NÃO VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
 
-          --Fechar Cursor
-          CLOSE cr_craptdb;
-          -- Preparar Lote de Retorno Cooperado
-          COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
-                                             ,pr_cdocorre => 26  -- Instrucao Rejeitada   --Codigo Ocorrencia
-                                             ,pr_cdmotivo => '04' -- 'Pedido de Protesto Nao Permitido para o Titulo'  --Codigo Motivo
-                                             ,pr_vltarifa => 0
-                                             ,pr_cdbcoctl => rw_crapcop.cdbcoctl
-                                             ,pr_cdagectl => rw_crapcop.cdagectl
-                                             ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
-                                             ,pr_cdoperad => pr_cdoperad --Codigo Operador
-                                             ,pr_nrremass => pr_nrremass --Numero Remessa
-                                             ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                             ,pr_dscritic => vr_dscritic); --Descricao Critica
-          --Se Ocorreu erro
-          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-          --mensagem erro
-          vr_dscritic:= 'Instrucao Rejeitada - Titulo descontado!';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
+			  -- e a situação é em estudo e não esta vencido
+			  IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
+				rw_craptdb.insittit = 4)  THEN -- LIBERADO
+
+			  --Fechar Cursor
+			  CLOSE cr_craptdb;
+			  -- Preparar Lote de Retorno Cooperado
+			  COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
+												 ,pr_cdocorre => 26  -- Instrucao Rejeitada   --Codigo Ocorrencia
+												 ,pr_cdmotivo => '04' -- 'Pedido de Protesto Nao Permitido para o Titulo'  --Codigo Motivo
+												 ,pr_vltarifa => 0
+												 ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+												 ,pr_cdagectl => rw_crapcop.cdagectl
+												 ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
+												 ,pr_cdoperad => pr_cdoperad --Codigo Operador
+												 ,pr_nrremass => pr_nrremass --Numero Remessa
+												 ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+												 ,pr_dscritic => vr_dscritic); --Descricao Critica
+			  --Se Ocorreu erro
+			  IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				--Levantar Excecao
+				RAISE vr_exc_erro;
+			  END IF;
+			  --mensagem erro
+			  vr_dscritic:= 'Instrucao Rejeitada - Titulo descontado!';
+			  --Levantar Excecao
+			  RAISE vr_exc_erro;
+			END IF;
+		END IF;
 		END IF;
         --Fechar Cursor
         IF cr_craptdb%ISOPEN THEN
