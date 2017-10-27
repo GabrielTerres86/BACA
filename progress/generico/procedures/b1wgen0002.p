@@ -712,7 +712,10 @@
               27/07/2017 - Alterado para nao validar associado demitido e nem menor de idade para emprestimos
                            de cessao da fatura do cartao de credito (Anderson).
 
-			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)	   
+
+              06/10/2017 - Projeto 410 - Incluir campo Indicador de 
+                            financiamento do IOF (Diogo - Mouts)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2321,11 +2324,14 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0097 AS HANDLE                                  NO-UNDO.
 
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdmeses AS INTE                                    NO-UNDO.
     DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_vlrtarif AS DECI                                    NO-UNDO.
+
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-coope.
@@ -2686,6 +2692,21 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                 ELSE
                     ASSIGN aux_dtlibera = crawepr.dtlibera. 
                 
+                RUN sistema/generico/procedures/b1wgen0097.p 
+                  PERSISTENT SET h-b1wgen0097.
+
+                RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  crawepr.cdcooper,
+                               INPUT  crawepr.cdlcremp,
+                               INPUT  crawepr.vlemprst,
+                               INPUT  crawepr.nrdconta,
+                               OUTPUT aux_vlrtarif,
+                               OUTPUT TABLE tt-erro).
+				
+                DELETE PROCEDURE h-b1wgen0097.
+
+                IF  RETURN-VALUE = "NOK" THEN
+                  RETURN "NOK".
+			
                  
                 ASSIGN tt-proposta-epr.dtmvtolt = crawepr.dtmvtolt
                        tt-proposta-epr.vlemprst = crawepr.vlemprst
@@ -2713,7 +2734,17 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.nrseqrrq = crawepr.nrseqrrq
                        tt-proposta-epr.dtlibera = aux_dtlibera
                        tt-proposta-epr.inpessoa = crapass.inpessoa
-                       tt-proposta-epr.insitest = crawepr.insitest.
+                       tt-proposta-epr.insitest = crawepr.insitest
+                       tt-proposta-epr.vlrtarif = aux_vlrtarif
+                       tt-proposta-epr.vliofepr = 0.
+
+				IF  AVAIL crapepr THEN
+                  DO:
+                    ASSIGN tt-proposta-epr.idfiniof = crapepr.idfiniof
+                           tt-proposta-epr.vliofepr = crapepr.vliofepr.
+                  END.
+                    
+                ASSIGN tt-proposta-epr.vlrtotal = (crawepr.vlemprst + tt-proposta-epr.vliofepr + aux_vlrtarif).
 
                 CASE crawepr.idquapro:
                   WHEN 1 THEN ASSIGN tt-proposta-epr.dsquapro = "Operacao Normal".
@@ -3458,15 +3489,7 @@ PROCEDURE valida-dados-gerais:
                 LEAVE.
             END.        
                 
-        /* Melhoria 324 - nao permitir utilizar a linha de credito 100 - Jean (Mout´S)*/
-        IF  par_cdlcremp = 100 THEN
-        DO:
-            ASSIGN aux_dscritic =
-                       "Linha de credito 100 nao permitida para criar emprestimos.".
-                LEAVE.
-        END.
-		
-       IF crapass.inpessoa = 1  THEN
+		IF crapass.inpessoa = 1  THEN
 		DO:
 
 			IF CAN-FIND(craplcr WHERE
@@ -9819,7 +9842,8 @@ PROCEDURE obtem-dados-conta-contrato:
 		   tt-dados-epr.qtimpctr = crapepr.qtimpctr	
            tt-dados-epr.portabil = aux_portabilidade
            tt-dados-epr.liquidia = aux_liquidia
-           tt-dados-epr.dtapgoib = crapepr.dtapgoib.
+           tt-dados-epr.dtapgoib = crapepr.dtapgoib
+           tt-dados-epr.vliofcpl = crapepr.vliofcpl.
            
          
 
@@ -9872,8 +9896,7 @@ PROCEDURE obtem-dados-conta-contrato:
                                    NO-LOCK:
 
                 IF  craplem.cdhistor = 391  OR   /** pagto prejuizo **/
-                    craplem.cdhistor = 382  OR   /** pagto prejuizo orig **/ 
-                    craplem.cdhistor = 2388 THEN /** pagto prejuizo M324**/
+                    craplem.cdhistor = 382  THEN /** pagto prejuizo orig **/
                     ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos +
                                                    craplem.vllanmto.
 
