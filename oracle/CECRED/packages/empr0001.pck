@@ -1304,7 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- 393 PAGTO AVALIST
           -- 507 EST.TRF.COTAS
           IF rw_craplem.cdhistor IN
-             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507) THEN
+             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507, 2381, 2396,2408,2401) THEN
             -- Zerar quantidade paga
             vr_qtprepag := 0;
             -- Garantir que não haja divisão por zero
@@ -1337,7 +1337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- 353 TRANSF. COTAS
           -- 392 ABAT.CONCEDID
           -- 393 PAGTO AVALIST
-          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393) THEN
+          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393,  2381, 2396,2408,2401) THEN
             -- Guardar data do ultimo pagamento
             pr_dtultpag := rw_craplem.dtmvtolt;
             -- Se houver saldo devedor
@@ -3817,7 +3817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            -- 395 SERV./TAXAS
            -- 441 JUROS S/ATRAS
            -- 443 MULTA S/ATRAS
-           AND lem.cdhistor IN(88,91,92,93,94,95,120,277,349,353,392,393,507,395,441,443)
+           AND lem.cdhistor IN(88,91,92,93,94,95,120,277,349,353,392,393,507,395,441,443, 2381, 2396,2408,2401)
       ORDER BY lem.cdcooper
               ,lem.nrdconta
               ,lem.nrctremp
@@ -4326,6 +4326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Arredondar juros no mês
         vr_vljurmes := ROUND(vr_vljurmes, 2);
         -- Acumular juros calculados
+        vr_vljurmes := 0; -- projeto prejuizo - Melhoria 324 - Jean Calao
         pr_vljuracu := pr_vljuracu + vr_vljurmes;
         -- Incluir no saldo devedor os juros do mês
         pr_vlsdeved := pr_vlsdeved + vr_vljurmes;
@@ -5314,31 +5315,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- 383 ABONO PREJUIZO
             -- 390 SERV./TAXAS
             -- 391 PAG. PREJUIZO
+            -- 2388 Pagto Prejuizo - Melhoria 324
+            -- 2473 Pagto Juros + 60 - Melhoria 324
             FOR rw_craplem IN cr_craplem(pr_nrctremp  => rw_crapepr.nrctremp
-                                        ,pr_lsthistor => '391,382,383,390') LOOP
+                                        ,pr_lsthistor => '391,382,383,390,2388,2392,2391,2395,2473') LOOP
               -- Para pagamento de prejuizos 391 e 382
-              IF rw_craplem.cdhistor IN (391, 382) THEN
+              IF rw_craplem.cdhistor IN (391, 382,2388,2473) THEN
                 -- Adicionar no campo valor pagos
                 pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
                                                               .vlrpagos
                                                              ,0) +
                                                           rw_craplem.vllanmto;
               END IF;
+
+              /* Melhoria 324 - se for estorno de pagamento, deduzir do valor pago */
+              IF rw_craplem.cdhistor IN (2392) THEN
+                -- Adicionar no campo valor pagos
+                pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
+                                                              .vlrpagos
+                                                             ,0) -
+                                                          rw_craplem.vllanmto;
+              END IF;
             
               /* Somente sera mostrado o valor do Saldo Prejuizo Original,
               quando o valor da multa e juros de mora for pago total   */
-              IF ((vr_flpgmujm) AND (rw_craplem.cdhistor IN (382, 383))) THEN
+              /*M324 - comentado campo vr_flpgmujm pois a regra de negocio solicita para recalcular o saldo prejuizo original */ 
+              -- RMM
+              --IF (/*(vr_flpgmujm) AND*/ (rw_craplem.cdhistor IN (382, 383, 2388, 2392, 2395))) THEN --RMM - Inclusao do his 2391
                 -- Decrementar no campo saldo prejuizo origem
+                if rw_craplem.cdhistor in (382, 383,391,2388, 2391,2473) then
                 pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
                                                               .slprjori
                                                              ,0) -
                                                           rw_craplem.vllanmto;
-              END IF;
+                end if;
+                if rw_craplem.cdhistor in ( 2392, 2395) then --estorno do pagamento/estorno abono
+                    pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
+                                                              .slprjori
+                                                             ,0) +
+                                                          rw_craplem.vllanmto;
+                  
+                end if;
+              --END IF;
               -- Somente para o Abono Prejuizo 383
-              IF rw_craplem.cdhistor = 383 THEN
+              IF rw_craplem.cdhistor in ( 383, 2391) THEN
                 -- Considerar este como o abono
                 pr_tab_dados_epr(vr_indadepr).vlrabono := rw_craplem.vllanmto;
               END IF;
+              -- M324 - se for estorno do Abono Prejuizo 2395
+              IF rw_craplem.cdhistor = 2395 THEN
+                -- Considerar este como o abono
+                pr_tab_dados_epr(vr_indadepr).vlrabono := pr_tab_dados_epr(vr_indadepr).vlrabono  - rw_craplem.vllanmto;
+              END IF;
+              
               -- Somente para Serv.TAxas 390
               IF rw_craplem.cdhistor = 390 THEN
                 -- Adicionar no campo vlr acrescimo
@@ -5351,12 +5380,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
             /* Como nao tem historico para multa e juros de mora, precisamos
             diminuir do valor total pago da multa e juros de mora      */
-            IF vr_flpgmujm THEN
+            -- RMM
+            /*IF vr_flpgmujm THEN
               pr_tab_dados_epr(vr_indadepr).slprjori := pr_tab_dados_epr(vr_indadepr)
                                                         .slprjori + pr_tab_dados_epr(vr_indadepr)
                                                         .vlpgmupr + pr_tab_dados_epr(vr_indadepr)
                                                         .vlpgjmpr;
-            END IF;
+            END IF;*/
           
             -- Ao final, garantir que o saldo prejuizo original não fique inferior a zero
             IF pr_tab_dados_epr(vr_indadepr).slprjori < 0 THEN
@@ -5723,6 +5753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+    vr_qtdiaatr number(6);
     --Indicador de utilização da tabela
     vr_inusatab BOOLEAN;
     --Nome Primeiro Titular
@@ -5732,6 +5763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_des_xml         CLOB;
     vr_texto_completo  VARCHAR2(32600);
     vr_index           VARCHAR2(100);
+    
     -------------------------------  CURSORES  -------------------------------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
                        pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -5741,6 +5773,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%rowtype;
 
+    cursor cr_crapsld (pr_cdcooper crapsld.cdcooper%type,
+                       pr_nrdconta crapsld.nrdconta%type) is
+      SELECT crapsld.qtddsdev 
+        FROM crapsld
+       WHERE crapsld.cdcooper = pr_cdcooper
+         and crapsld.nrdconta = pr_nrdconta;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -5882,6 +5920,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- ler os registros de emprestimos e incluir no xml
     vr_index := vr_tab_dados_epr.first;
     WHILE vr_index IS NOT NULL LOOP
+      if  vr_tab_dados_epr(vr_index).inprejuz = 1
+      and vr_tab_dados_epr(vr_index).vlsdprej <= 0 then
+          vr_qtdiaatr := 0;
+      else        
+          vr_qtdiaatr := rw_crapdat.dtmvtolt - vr_tab_dados_epr(vr_index).dtultpag;
+      end if;
+      -- se eh transferencia de conta corrente (para prejuizo), considerar dias em que a conta ficou negativa
+      if  vr_tab_dados_epr(vr_index).cdlcremp = 100 -- linha de credito 100 - C
+      and vr_tab_dados_epr(vr_index).inprejuz = 1 then
+          if vr_tab_dados_epr(vr_index).vlsdprej <= 0 then
+             vr_qtdiaatr := 0;
+          else
+            open cr_crapsld(pr_cdcooper => vr_cdcooper
+                          , pr_nrdconta => pr_nrdconta);
+            fetch cr_crapsld into vr_qtdiaatr;
+            close cr_crapsld;
+          end if;
+      end if;    
+          
       pc_escreve_xml ('<inf>' ||
                         '<nrdconta>' || vr_tab_dados_epr(vr_index).nrdconta || '</nrdconta>' ||
                         '<cdagenci>' || vr_tab_dados_epr(vr_index).cdagenci || '</cdagenci>' ||
@@ -5980,6 +6037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<qtdiaatr>' || vr_qtdiaatr || '</qtdiaatr>' ||
                         '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
@@ -7519,6 +7577,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_cdhistor := 1037;
         END IF;
       
+        -- Melhoria 324 - Se estiver em prejuizo assume histórico 2409 - Jean (MOut´S)
+        if rw_crabepr.inprejuz = 1 then
+            vr_cdhistor := 2409;
+        end if;
+        
         --Dia/Mes/Ano Referencia
         IF rw_crabepr.diarefju <> 0
            AND rw_crabepr.mesrefju <> 0
