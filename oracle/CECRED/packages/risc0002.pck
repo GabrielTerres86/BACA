@@ -706,14 +706,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     --  Sistema  : Ayllos
     --  Sigla    : CRED
     --  Autor    : James Prust Junior
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao:
+    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 24/10/2017
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Efetua o arrasto das operacoes
     --
-    -- Alterações
+    -- Alterações: 24/10/2017 - Atualizacao do Grupo Economico fora do loop da crapris com valor de arrasto.
+    --                          (Jaison/James)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       CURSOR cr_crapris_last(pr_cdcooper IN crapris.cdcooper%TYPE
@@ -729,15 +730,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
            AND crapris.inddocto = 1
            AND (crapris.vldivida > pr_vlarrast OR pr_vlarrast = 0);
       rw_crapris_last cr_crapris_last%ROWTYPE;
-    
-      CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                       ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-        SELECT crapgrp.innivrge,
-               crapgrp.nrdgrupo
-          FROM crapgrp
-         WHERE crapgrp.cdcooper = pr_cdcooper
-           AND crapgrp.nrctasoc = pr_nrctasoc;
-      rw_crapgrp cr_crapgrp%ROWTYPE;
     
       CURSOR cr_crapris (pr_cdcooper  IN crapris.cdcooper%TYPE
                         ,pr_dtrefere  IN crapris.dtrefere%TYPE
@@ -763,7 +755,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
               
       vr_dstextab     craptab.dstextab%TYPE;        
       vr_innivris     crapris.innivris%TYPE;
-      vr_nrdgrupo     crapgrp.nrdgrupo%TYPE;
       vr_vlarrasto    NUMBER;      
       vr_fcrapris     BOOLEAN;
          
@@ -795,7 +786,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
                                   
         -- Para o primeiro registro da conta
         IF rw_crapris.sequencia = 1 THEN
-          vr_nrdgrupo := 0;
           -- Risco calculado do cartao de credito
           vr_innivris := rw_crapris.innivris;          
           -- Vamos verificar se possui operacao na mensal acima de 100,00
@@ -824,21 +814,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
             END IF;            
           END IF;
           
-          -- Vamos verificar se possui grupo economico
-          OPEN cr_crapgrp(pr_cdcooper => rw_crapris.cdcooper
-                         ,pr_nrctasoc => rw_crapris.nrdconta);
-          FETCH cr_crapgrp INTO rw_crapgrp;          
-          IF cr_crapgrp%FOUND THEN
-            CLOSE cr_crapgrp;            
-            vr_nrdgrupo := rw_crapgrp.nrdgrupo;
-            -- Caso nao possuir nenhuma operacao na mensal, vamos assumir o risco do grupo economico
-            IF NOT vr_fcrapris THEN
-              vr_innivris := rw_crapgrp.innivrge;
-            END IF;
-          ELSE
-            CLOSE cr_crapgrp;
-          END IF;
-          
         END IF; /* END IF rw_crapris.sequencia = 1 THEN */
         
         -- Prejuizo
@@ -851,7 +826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
           UPDATE crapris
              SET innivris = vr_innivris
                 ,inindris = vr_innivris
-                ,nrdgrupo = vr_nrdgrupo
            WHERE rowid = rw_crapris.rowid;
         EXCEPTION
           WHEN OTHERS THEN
@@ -880,6 +854,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
         END;
 
       END LOOP; -- Fim riscos
+
+      -- Atualizar o Grupo Economico
+      BEGIN
+        UPDATE crapris
+           SET crapris.nrdgrupo = (SELECT NVL(MAX(ris.nrdgrupo),0)
+                                     FROM crapris ris
+                                    WHERE ris.cdcooper = crapris.cdcooper
+                                      AND ris.nrdconta = crapris.nrdconta 
+                                      AND ris.dtrefere = crapris.dtrefere
+                                      AND ris.inddocto IN (1,3))
+         WHERE crapris.cdcooper = pr_cdcooper
+           AND crapris.dtrefere = pr_dtrefere
+           AND crapris.inddocto = 4;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar a tabela crapris. --> '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
         
     EXCEPTION
       WHEN vr_exc_erro THEN
