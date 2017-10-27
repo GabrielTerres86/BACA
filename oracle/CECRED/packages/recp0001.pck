@@ -191,6 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --
   --             22/02/2017 - Alteracao para passar pr_nrparcel na pc_cria_lancamento_cc. (Jaison/James)
   --
+  --             23/06/2017 - M324 - inclusao historico 2388 - Pagamento Prejizo - Jean (Mout´S)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -584,6 +585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_vlpagmto     NUMBER := pr_vlparcel;
     vr_vlajuste     NUMBER;
     vr_vllamlem     NUMBER;
+    vr_vllamlem1     NUMBER; -- M324 - Jean (Mout´S)
     vr_vlapagar     NUMBER;
     vr_des_reto     VARCHAR2(10);
     vr_tab_erro     GENE0001.typ_tab_erro;
@@ -687,6 +689,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -- Garantir que variável não esteja null
     vr_vllamlem := NVL(vr_vllamlem,0);
       
+    -- M324 - inclusao historico 2388 - Jean (Mout´S)
+    OPEN  cr_craplem(2388); 
+    FETCH cr_craplem INTO vr_vllamlem1;
+    CLOSE cr_craplem;
+    
+    vr_vllamlem := vr_vllamlem + NVL(vr_vllamlem1,0);
+    -- fim alteração M324
+    
     -- Guardar o valor a pagar no valor do boleto
     vr_vlapagar := vr_vlpagmto;
       
