@@ -558,6 +558,23 @@ PROCEDURE lista_ocorren:
            tt-ocorren.dsdrisgp = aux_dsdrisgp
            tt-ocorren.innivris = aux_innivris. 
      
+	/* M324 - Demonstrar o qtddsdev zerado se A CC foi transferida para prejuizo */
+	
+	FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper AND
+                           crapepr.nrdconta = par_nrdconta AND 
+                           crapepr.inprejuz = 1            AND 
+						   crapepr.cdlcremp = 100
+                           NO-LOCK:
+
+        ASSIGN aux_flgpreju = TRUE.
+
+    END.  
+	
+	if aux_flgpreju then
+	do:
+	   ASSIGN tt-ocorren.qtddsdev = 0.
+	end.
+	
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
