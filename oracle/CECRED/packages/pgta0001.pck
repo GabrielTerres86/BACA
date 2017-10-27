@@ -248,6 +248,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             12/09/2017 - Ajuste contigencia NPC. PRJ340 (Odirlei-AMcom)   
 --
+--             03/10/2017 - #766774 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
+--                          para proc_message (Carlos)
+--
 --             10/10/2017 - Ajuste na geração da linha do SEGMENTO J99 para gerar com 
 --                          240 posições (Douglas - Chamado 751271)
 ---------------------------------------------------------------------------------------------------------------
@@ -3180,7 +3183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_tab_erro => vr_tab_erro);
                      -- Envio centralizado de log de erro
                      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                                pr_nmarqlog     => NULL,
+                                                pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
                                                 pr_ind_tipo_log => 2, -- Erro tratato
                                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
                                                                    ' - PGTA0001.pc_processar_arq_pgto --> '
