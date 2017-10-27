@@ -9,7 +9,9 @@
                                 (Andrei - RKAM)
 
 			       09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut
-								(Adriano)
+								(Adriano)  
+
+                   27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
  */
 ?>
 
@@ -73,6 +75,8 @@
   $flgsegpr = (isset($_POST["flgsegpr"])) ? $_POST["flgsegpr"] : 0;
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
   $finalidades = (isset($_POST["finalidades"])) ? $_POST["finalidades"] : '';
+  $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
+  $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
     
   validaDados();
   
@@ -152,7 +156,9 @@
   $xml 	   .= "     <flgcobmu>".$flgcobmu."</flgcobmu>";
   $xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
   $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
-  $xml 	   .= "     <cdfinali>".$cdfinali."</cdfinali>";
+  $xml 	   .= "     <cdfinali>".$cdfinali."</cdfinali>";  
+  $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
+  $xml 	   .= "     <cddindex>".$cddindex."</cddindex>"; 
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -218,6 +224,11 @@
     
     IF($GLOBALS["cdsubmod"] == ''){ 
 			exibirErro('error','C&oacute;digo da submodalidade inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'cdsubmod\',\'frmConsulta\');',false);
+		}
+
+    // Se for Pos-Fixado e Taxa Variavel nao for maior que zero
+    IF($GLOBALS["tpprodut"] == 2 && $GLOBALS["txjurvar"] <= 0) {
+        exibirErro('error','Taxa inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'txjurvar\',\'frmConsulta\');',false);
 		}
 
     IF($GLOBALS["nrinipre"] == 0){ 

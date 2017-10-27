@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : consulta_linha_credito.php                    Última alteração: 
+ * FONTE        : consulta_linha_credito.php                    Última alteração: 27/03/2017
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para buscar informações da linha de crédito
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 27/03/2017 - Listagem dos indexadores. (Jaison/James - PRJ298)
  */
 ?>
 
@@ -71,6 +71,16 @@
   $registros = $xmlObj->roottag->tags[0]->tags[1]->tags;
   
   $qtregist  = $xmlObj->roottag->attributes["QTREGIST"];
+
+  $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_INDEX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  $xmlObject = getObjectXML($xmlResult);
+
+  if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+      $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+      exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro()',false);
+  }
+
+  $xmlIndexa = $xmlObject->roottag->tags[0]->tags;
   
   include('form_consulta.php');	
 	

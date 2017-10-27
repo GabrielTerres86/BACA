@@ -1,13 +1,15 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 10/08/2016
+ Data : JULHO/2016                Última Alteração: 10/10/2017
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 
  Alterações:  10/08/2016 - Ajuste referente a homologação da área de negócio
                            (Andrei - RKAM)
                 
+              27/03/2017 - Inclusao dos campos Produto e Indexador.
+                           (Jaison/James - PRJ298)
 						  
 						  
 ************************************************************************/
@@ -147,6 +149,7 @@ function formataFormularioConsulta() {
     highlightObjFocus($('#frmConsulta'));  
 
     //rotulo
+    $('label[for="tpprodut"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dslcremp"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dsoperac"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="tplcremp"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "70px" });
@@ -197,6 +200,7 @@ function formataFormularioConsulta() {
     $('label[for="dsfinemp"]', "#frmConsulta").addClass("rotulo-linha").css({ width: '200px' });
 
     // campo
+    $("#tpprodut", "#frmConsulta").css({ 'width': '445px' }).desabilitaCampo();
     $("#dslcremp", "#frmConsulta").css({ 'width': '445px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '30').desabilitaCampo();
     $('#dsoperac', '#frmConsulta').css({ 'width': '200px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '29').desabilitaCampo();
     $('#tplcremp', '#frmConsulta').css({ 'width': '170px', 'text-align': 'left' }).desabilitaCampo(); 
@@ -220,6 +224,7 @@ function formataFormularioConsulta() {
     $('#cdsubmod', '#frmConsulta').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '5').setMask("INTEGER", "zzzzz", "", "");
     $('#dssubmod', '#frmConsulta').css({ 'width': '370px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '50').desabilitaCampo();
 
+    $('#cddindex', '#frmConsulta').css({ 'width': '100px' }).desabilitaCampo();
     $('#txjurfix', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txjurvar', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txpresta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
@@ -251,6 +256,21 @@ function formataFormularioConsulta() {
     $('#divBotoesConsulta').css('display', 'block');
     $('#btVoltar', '#divBotoesConsulta').css({ 'display': 'inline' });
     
+    //Define ação para o campo tpprodut
+    $("#tpprodut", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+
     //Define ação para o campo dslcremp
     $("#dslcremp", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
@@ -651,6 +671,21 @@ function formataFormularioConsulta() {
 
     });
 
+    //Define ação para o campo cddindex
+    $("#cddindex", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+
     //Define ação para o campo txjurfix
     $('#txjurfix', '#frmConsulta').unbind('change').bind('change', function () {
 
@@ -1045,6 +1080,7 @@ function formataFormularioConsulta() {
 
     
     layoutPadrao();
+    exibeFieldIndexador();
 
     if ($('#cddopcao', '#frmCab').val() == 'C' ||
         $('#cddopcao', '#frmCab').val() == 'F' ||
@@ -1091,12 +1127,20 @@ function formataFormularioConsulta() {
 
         }
 
-        $("#dslcremp", "#frmConsulta").focus();
+        $("#tpprodut", "#frmConsulta").focus();
 
     }
 
     return false;
 
+}
+
+function exibeFieldIndexador() {
+    if ($("#tpprodut","#frmConsulta").val() == 2) { // Se for Pos-Fixado
+        $("#divIndexador","#frmConsulta").show();
+    } else {
+        $("#divIndexador","#frmConsulta").hide();
+    }
 }
 
 
@@ -1344,6 +1388,8 @@ function alterarLinhaCredito() {
     var flgcobmu = $('#flgcobmu', '#frmConsulta').val();
     var flgsegpr = $('#flgsegpr', '#frmConsulta').val();
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
+    var tpprodut = $('#tpprodut', '#frmConsulta').val();
+    var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, alterando linha ...');
@@ -1397,6 +1443,8 @@ function alterarLinhaCredito() {
             flgcobmu: flgcobmu,
             flgsegpr: flgsegpr,
             cdhistor: cdhistor,
+            tpprodut: tpprodut,
+            cddindex: cddindex,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1461,6 +1509,8 @@ function incluirLinhaCredito() {
     var flgcobmu = $('#flgcobmu', '#frmConsulta').val();
     var flgsegpr = $('#flgsegpr', '#frmConsulta').val();
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
+    var tpprodut = $('#tpprodut', '#frmConsulta').val();
+    var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, incluindo linha ...');
@@ -1515,6 +1565,8 @@ function incluirLinhaCredito() {
             flgsegpr: flgsegpr,
             cdhistor: cdhistor,
             finalidades: RegLinha,
+            tpprodut: tpprodut,
+            cddindex: cddindex,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

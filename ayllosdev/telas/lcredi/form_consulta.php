@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 24/08/2016
+  Data : Julho/2016                       Última Alteração: 10/10/2017
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -12,6 +12,9 @@
   
 			  24/08/2016 - Ajuste para alimentar os campos select corretamente
 						  (Adriano)
+
+              27/03/2017 - Inclusao dos campos Produto e Indexador. Ajuste na
+                           label de Taxa variavel. (Jaison/James - PRJ298)
 
  * ********************************************************************* */
 
@@ -31,6 +34,14 @@
 		
 		<legend>Informa&ccedil;&otilde;es</legend>
 			
+		<label for="tpprodut"><? echo utf8ToHtml("Produto:"); ?></label>
+		<select id="tpprodut" name="tpprodut" onchange="exibeFieldIndexador();">
+			<option value="1" <?php echo (getByTagName($linha->tags,'tpprodut') == 1 ? 'selected' : ''); ?>>Price TR/Price Pr&eacute;-Fixado</option>
+			<option value="2" <?php echo (getByTagName($linha->tags,'tpprodut') == 2 ? 'selected' : ''); ?>>P&oacute;s-Fixado</option>
+		</select>
+
+		<br />
+
 		<label for="dslcremp"><? echo utf8ToHtml("Descri&ccedil;&atilde;o:"); ?></label>
 		<input type="text" id="dslcremp" name="dslcremp" value="<?echo getByTagName($linha->tags,'dslcremp');?>" >
 		
@@ -177,12 +188,25 @@
 		
 		<legend>Taxa</legend>
 				
+		<div id="divIndexador">
+            <label for="cddindex"><? echo utf8ToHtml("Indexador:"); ?></label>
+            <select id="cddindex" name="cddindex">
+            <?php
+                foreach ($xmlIndexa as $reg) {
+                    $cddindex = getByTagName($reg->tags,'CDDINDEX');
+                    $nmdindex = getByTagName($reg->tags,'NMDINDEX');
+                    echo '<option value="'.$cddindex.'" '.(getByTagName($linha->tags,'cddindex') == $cddindex ? 'selected' : '').'>'.$nmdindex.'</option>';
+                }
+            ?>
+            </select>
+		</div>
+
 		<label for="txjurfix"><? echo utf8ToHtml("Taxa Fixa %:"); ?></label>
 		<input  type="text" id="txjurfix" name="txjurfix"value="<?echo getByTagName($linha->tags,'txjurfix'); ?>" > 
 		
 		<label for="txjurvar"><? echo utf8ToHtml("Taxa vari&aacute;vel %:"); ?></label>
 		<input  type="text" id="txjurvar" name="txjurvar"value="<?echo getByTagName($linha->tags,'txjurvar'); ?>" > 
-		<label for="txjurvarDesc"><? echo utf8ToHtml("da TR/UFIR"); ?></label>
+		<label for="txjurvarDesc"><? echo utf8ToHtml("CDI/TR/UFIR"); ?></label>
 		
 		<br />
 

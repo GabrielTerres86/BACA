@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : alterar_linha_credito.php                    Última alteração: 09/09/2016
+ * FONTE        : alterar_linha_credito.php                    Última alteração: 27/03/2017
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para alterar uma linha de crédito
@@ -9,8 +9,9 @@
                                 (Andrei - RKAM)
 
                    09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut
-								(Adriano)
+								(Adriano) 
 
+                   27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298) 
  */
 ?>
 
@@ -73,6 +74,8 @@
   $flgcobmu = (isset($_POST["flgcobmu"])) ? $_POST["flgcobmu"] : 0;
   $flgsegpr = (isset($_POST["flgsegpr"])) ? $_POST["flgsegpr"] : 0;
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
+  $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
+  $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
 
   validaDados();
   
@@ -119,7 +122,9 @@
   $xml 	   .= "     <flgdisap>".$flgdisap."</flgdisap>";
   $xml 	   .= "     <flgcobmu>".$flgcobmu."</flgcobmu>";
   $xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
-  $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
+  $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";		
+  $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
+  $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
   $xml 	   .= "  </Dados>";
   $xml 	   .= "</Root>";
 	
