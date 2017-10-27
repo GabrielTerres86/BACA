@@ -1,35 +1,39 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0004
-  --  Sistema  : Rotinas para detalhes de cadastros
-  --  Sigla    : CADA
-  --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para buscar detalhes de cadastros
-  --
-  -- Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
-  --                            responsabilidade na procedure pc_obtem_mensagens_alerta.
-  --                            (Jean Michel).
-  --
-  --               01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
-  --                            Baseado na condicao da atenda.p em funcao
-  --                            fn_situacao_senha. (Jorge/David)
-  --
-  --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine) 
-  --
-  --               29/09/2019 - Inclusao de verificacao de contratos de acordos de
-  --                            empréstimos na procedure pc_obtem_mensagens_alerta,
-  --                            Prj. 302 (Jean Michel).
-  --
-  --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+ /* ---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0004
+    Sistema  : Rotinas para detalhes de cadastros
+    Sigla    : CADA
+    Autor    : Odirlei Busana - AMcom
+    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para buscar detalhes de cadastros
+  
+   Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
+                              responsabilidade na procedure pc_obtem_mensagens_alerta.
+                              (Jean Michel).
+  
+                 01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
+                              Baseado na condicao da atenda.p em funcao
+                              fn_situacao_senha. (Jorge/David)
+  
+                 12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
+                              Caixa OnLine) 
+  
+                 29/09/2019 - Inclusao de verificacao de contratos de acordos de
+                              empréstimos na procedure pc_obtem_mensagens_alerta,
+                              Prj. 302 (Jean Michel).
+  
+                 14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  
+                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                  crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+  ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
@@ -190,7 +194,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                nrctainv  crapass.nrctainv%TYPE,
                dtadmemp  crapass.dtadmemp%TYPE,
                nmprimtl  crapass.nmprimtl%TYPE,
-               nmsegntl  crapass.nmsegntl%TYPE,
+               nmsegntl  crapttl.nmextttl%TYPE,
                dtaltera  crapalt.dtaltera%TYPE,
                dsnatopc  VARCHAR2(30),
                nrramfon  VARCHAR2(100),
@@ -267,6 +271,64 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
                               ) RETURN VARCHAR2; --> returnar descricao da situacao(dssitura)
   
+  /******************************************************************************/
+  /**            Procedure para listar cartoes do cooperado                    **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_cartoes(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
+                            ------ OUT ------
+                            ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
+                            ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
+                            ,pr_flgliber     OUT INTEGER           --> Retorna se esta liberado 1-sim 2-nao
+                            ,pr_vltotccr     OUT NUMBER            --> retorna total de limite do cartao 
+                            ,pr_tab_cartoes  OUT typ_tab_cartoes   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2                    --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+  /******************************************************************************/
+  /**            Procedure para listar ocorrencias do cooperado                **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Data da cooperativa
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ------ OUT ------
+                            ,pr_tab_ocorren  OUT typ_tab_ocorren   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2          --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+   /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna xml com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) ;       --> Codigo da critica
+                                  
   /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/
   /******************************************************************************/
@@ -733,8 +795,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
-  --               08/12/2016 - Alterado a mensagem de bloqueio judicial na rotina pc_obtem_mensagens_alerta
-  --                            (Andrino - Projeto 341 - Bacenjud)
+  --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			                crapass, crapttl, crapjur 
+  --						   (Adriano - P339).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1665,6 +1728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -1806,6 +1870,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_vltotccr := 0;
     
     FOR rw_crawcrd IN cr_crawcrd LOOP
+      
+	  -- Buscar situação
+      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
+                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
+                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
       -- diferente de bancoob
       IF fn_verifica_adm(rw_crawcrd.cdadmcrd) <> 2 THEN
       
@@ -1833,13 +1902,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           
         END IF; --> Fim IF insitcrd IN (4,7)
       ELSE
-        pr_vltotccr := pr_vltotccr + 0; /* ZERAR LIMITE CONFORME SD 181559 */   
+        -- P337 - SOmente zerar se passado via parametro [ZERAR LIMITE CONFORME SD 181559]
+        IF pr_flgzerar = 'N' THEN
+          -- Somente acumular limite conforme situação cartão
+          IF vr_dssitcrd IN ('Solic.','Liber.','Sol.2v','Prc.BB','Em uso','Sol.2v') THEN 
+            pr_vltotccr := pr_vltotccr + rw_crawcrd.vllimcrd; 
       END IF;
+        END IF;  
+      END IF;  
       
-      -- Buscar situação
-      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
-                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
-                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
       
       vr_idx := pr_tab_cartoes.count;
       
@@ -2101,6 +2172,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
      WHERE crapepr.cdcooper = pr_cdcooper
        AND crapepr.nrdconta = pr_nrdconta
        AND crapepr.inprejuz = 1;
+       
+    CURSOR cr_crapepr_cc (pr_cdcooper crapsld.cdcooper%TYPE,
+                       pr_nrdconta crapsld.nrdconta%TYPE) IS 
+    SELECT 1
+      FROM crapepr
+     WHERE crapepr.cdcooper = pr_cdcooper
+       AND crapepr.nrdconta = pr_nrdconta
+       and crapepr.cdlcremp = 100
+       AND crapepr.inprejuz = 1;
     
     --> Buscar Rating efetivo 
     CURSOR cr_crapnrc (pr_cdcooper crapsld.cdcooper%TYPE,
@@ -2137,6 +2217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_flgjucta INTEGER := 0;
     vr_flgeprat INTEGER := 0;
     vr_flgpreju INTEGER := 0;
+    vr_flgpreju_cc INTEGER := 0;
     vr_flgocorr INTEGER := 0;
     vr_flggrupo INTEGER := 0;
     
@@ -2411,6 +2492,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     FETCH cr_crapepr INTO vr_flgpreju; -- true
     CLOSE cr_crapepr;
     
+    -- verificar se existe algum emprestimo conta corrente prejuizo  
+    OPEN cr_crapepr_cc (pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapepr_cc INTO vr_flgpreju_cc; -- true
+    CLOSE cr_crapepr_cc;
+    
     --> Buscar Rating efetivo 
     OPEN cr_crapnrc (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
@@ -2454,7 +2541,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_ocorren(vr_idx).qtdevolu := vr_qtdevolu;
     pr_tab_ocorren(vr_idx).dtcnsspc := rw_crapass.dtcnsspc;
     pr_tab_ocorren(vr_idx).dtdsdsps := rw_crapass.dtdsdspc;
-    pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+    if vr_flgpreju_cc = 0 then
+       pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+    else
+       pr_tab_ocorren(vr_idx).qtddsdev := 0;
+    end if;  
     pr_tab_ocorren(vr_idx).dtdsdclq := rw_crapsld.dtdsdclq;
     pr_tab_ocorren(vr_idx).qtddtdev := rw_crapsld.qtddtdev;
     pr_tab_ocorren(vr_idx).flginadi := vr_flginadi;
@@ -2555,6 +2646,168 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
       pr_des_reto := 'NOK';      
   END pc_lista_ocorren;
+  
+  /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna temptable com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_lista_ocorren_prog        Antiga: b1wgen0027.p/lista_ocorren
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(Amcom)
+    --  Data     : Abril/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para listar ocorrencias do cooperado - Chamada progress 
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+                          
+    --------------> VARIAVEIS <-----------------
+    vr_cdcritic     INTEGER;
+    vr_dscritic     VARCHAR2(1000);
+    vr_des_reto     VARCHAR2(10);
+    vr_exc_erro     EXCEPTION;
+    vr_tab_erro     gene0001.typ_tab_erro;
+    
+    vr_tab_ocorren  typ_tab_ocorren;
+    vr_dstexto      VARCHAR2(32767);
+    vr_string       VARCHAR2(32767);    
+    vr_index        PLS_INTEGER;
+    
+  BEGIN
+    
+    -- DATA DA COOPERATIVA
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+
+      -- FECHAR CR_CRAPDAT CURSOR POIS HAVERÁ RAISE
+      CLOSE btch0001.cr_crapdat;
+
+      -- MONTAR MENSAGEM DE CRITICA
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        
+      RAISE vr_exc_erro;
+    ELSE
+      -- APENAS FECHAR O CURSOR
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+  
+    pc_lista_ocorren(  pr_cdcooper   => pr_cdcooper  --> Codigo da cooperativa
+                      ,pr_cdagenci   => pr_cdagenci  --> Codigo de agencia
+                      ,pr_nrdcaixa   => pr_nrdcaixa  --> Numero do caixa
+                      ,pr_cdoperad   => pr_cdoperad  --> Codigo do operador
+                      ,pr_nrdconta   => pr_nrdconta  --> Numero da conta
+                      ,pr_rw_crapdat => rw_crapdat   --> Data da cooperativa
+                      ,pr_idorigem   => pr_idorigem  --> Identificado de oriem
+                      ,pr_idseqttl   => pr_idseqttl  --> sequencial do titular
+                      ,pr_nmdatela   => pr_nmdatela  --> Nome da tela
+                      ,pr_flgerlog   => pr_flgerlog  --> identificador se deve gerar log S-Sim e N-Nao
+                      ------ OUT ------
+                      ,pr_tab_ocorren  => vr_tab_ocorren  --> retorna temptable com os dados dos convenios
+                      ,pr_des_reto     => vr_des_reto     --> OK ou NOK
+                      ,pr_tab_erro     => vr_tab_erro);
+  
+    IF vr_des_reto = 'NOK' THEN 
+      IF vr_tab_erro.exists(vr_tab_erro.first)  THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Não foi possivel listar ocorrencias';        
+      END IF;
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    --Montar CLOB
+    IF vr_tab_ocorren.COUNT > 0 THEN
+        
+      -- Criar documento XML
+      dbms_lob.createtemporary(pr_xml_ocorren, TRUE); 
+      dbms_lob.open(pr_xml_ocorren, dbms_lob.lob_readwrite);
+        
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '<root>');
+         
+      --Buscar Primeiro beneficiario
+      vr_index := vr_tab_ocorren.FIRST;
+        
+      --Percorrer todos os beneficiarios
+      WHILE vr_index IS NOT NULL LOOP
+        vr_string := '<ocorren>'||
+                         '<qtctrord>'|| vr_tab_ocorren(vr_index).qtctrord  ||'</qtctrord>'||
+                         '<qtdevolu>'|| vr_tab_ocorren(vr_index).qtdevolu  ||'</qtdevolu>'||
+                         '<dtcnsspc>'|| to_char(vr_tab_ocorren(vr_index).dtcnsspc,'DD/MM/RRRR')  ||'</dtcnsspc>'||
+                         '<dtdsdsps>'|| to_char(vr_tab_ocorren(vr_index).dtdsdsps,'DD/MM/RRRR')  ||'</dtdsdsps>'||
+                         '<qtddsdev>'|| vr_tab_ocorren(vr_index).qtddsdev  ||'</qtddsdev>'||
+                         '<dtdsdclq>'|| to_char(vr_tab_ocorren(vr_index).dtdsdclq,'DD/MM/RRRR')  ||'</dtdsdclq>'||
+                         '<qtddtdev>'|| vr_tab_ocorren(vr_index).qtddtdev  ||'</qtddtdev>'||
+                         '<flginadi>'|| vr_tab_ocorren(vr_index).flginadi  ||'</flginadi>'||
+                         '<flglbace>'|| vr_tab_ocorren(vr_index).flglbace  ||'</flglbace>'||
+                         '<flgeprat>'|| vr_tab_ocorren(vr_index).flgeprat  ||'</flgeprat>'||
+                         '<indrisco>'|| vr_tab_ocorren(vr_index).indrisco  ||'</indrisco>'||
+                         '<nivrisco>'|| vr_tab_ocorren(vr_index).nivrisco  ||'</nivrisco>'||
+                         '<flgpreju>'|| vr_tab_ocorren(vr_index).flgpreju  ||'</flgpreju>'||
+                         '<flgjucta>'|| vr_tab_ocorren(vr_index).flgjucta  ||'</flgjucta>'||
+                         '<flgocorr>'|| vr_tab_ocorren(vr_index).flgocorr  ||'</flgocorr>'||
+                         '<dtdrisco>'|| to_char(vr_tab_ocorren(vr_index).dtdrisco,'DD/MM/RRRR')  ||'</dtdrisco>'||
+                         '<qtdiaris>'|| vr_tab_ocorren(vr_index).qtdiaris  ||'</qtdiaris>'||
+                         '<inrisctl>'|| vr_tab_ocorren(vr_index).inrisctl  ||'</inrisctl>'||
+                         '<dtrisctl>'|| to_char(vr_tab_ocorren(vr_index).dtrisctl,'DD/MM/RRRR')  ||'</dtrisctl>'||
+                         '<dsdrisgp>'|| vr_tab_ocorren(vr_index).dsdrisgp  ||'</dsdrisgp>'||
+                         '<innivris>'|| vr_tab_ocorren(vr_index).innivris  ||'</innivris>'||
+                     '</ocorren>';
+        
+        -- Escrever no XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                               ,pr_texto_completo => vr_dstexto 
+                               ,pr_texto_novo     => vr_string
+                               ,pr_fecha_xml      => FALSE);   
+                                      
+        vr_index := vr_tab_ocorren.next(vr_index);
+      END LOOP;
+      
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '</root>' 
+                             ,pr_fecha_xml      => TRUE);
+      
+    END IF;   
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro CADA0004.pc_lista_ocorren:'||SQLERRM;
+          
+  END pc_lista_ocorren_prog;
   
   /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/
@@ -3161,6 +3414,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapsfn.nrcpfcgc = rw_crapass.nrcpfcgc
          AND crapsfn.tpregist = 1
        ORDER BY crapsfn.dtabtcct;
+  CURSOR cr_crapepr_cc (pr_cdcooper crapsld.cdcooper%TYPE,
+                        pr_nrdconta crapsld.nrdconta%TYPE) IS 
+    SELECT 1
+      FROM crapepr
+     WHERE crapepr.cdcooper = pr_cdcooper
+       AND crapepr.nrdconta = pr_nrdconta
+       and crapepr.cdlcremp = 100
+       AND crapepr.inprejuz = 1;       
     
     ---------------------------------------------------
     vr_cdcritic INTEGER;
@@ -3177,7 +3438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_idx      PLS_INTEGER;
     vr_qtfolret INTEGER;
     vr_ftsalari VARCHAR2(100);
-    
+    vr_flgpreju_cc INTEGER := 0;
     
   BEGIN
   
@@ -3204,8 +3465,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     FETCH cr_crapsld INTO rw_crapsld;
     CLOSE cr_crapsld;
     
+    -- verificar se existe algum emprestimo conta corrente prejuizo  
+    OPEN cr_crapepr_cc (pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapepr_cc INTO vr_flgpreju_cc; -- true
+    CLOSE cr_crapepr_cc;    
+    
     vr_qtddtdev := nvl(rw_crapsld.qtddtdev,0);
-    vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+    IF NVL(vr_flgpreju_cc,0) = 0 THEN
+      vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+    ELSE
+      vr_qtddsdev := 0;
+    END IF;
     
     /* Data SFN */
     IF  nvl(rw_crapass.vledvmto,0) <> 0 THEN
@@ -3882,7 +4153,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
     --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
-    --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
+	--
+	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
+    --   
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4338,14 +4611,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                  ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
        WHERE rownum <= 1; 
       
-	--> Buscar alerta para impressão da declaração de optante do simples nacional
-		CURSOR cr_impdecsn(pr_cdcooper crapsnh.cdcooper%TYPE
-											,pr_nrdconta crapsnh.nrdconta%TYPE) IS
-				SELECT idimpdsn, idregtrb
-				FROM crapjur
-				WHERE cdcooper = pr_cdcooper
-							AND nrdconta = pr_nrdconta;
-		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -4392,6 +4657,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlblqjud     NUMBER := 0;
     vr_vlresblq     NUMBER := 0;
 		vr_flgpvida     INTEGER;
+    
+    vr_nrdconta_grp tbcc_grupo_economico.nrdconta%TYPE;
+    vr_dsvinculo    VARCHAR(2000);                                                           
     
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
@@ -5472,23 +5740,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
     END LOOP;
 
-	-- Verifica se foi impressa a declaração de optante do simples nacional
-	OPEN cr_impdecsn(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-
-	FETCH cr_impdecsn
-			INTO rw_cr_impdecsn;
-
-	IF cr_impdecsn%FOUND AND (rw_cr_impdecsn.idimpdsn <> 2) AND
-		 (rw_cr_impdecsn.idregtrb = 1 OR rw_cr_impdecsn.idregtrb = 2) THEN
-	
-			vr_dsmensag := 'Imprimir a Declaração de Optante do Simples Nacional';
-	
-			--> Incluir na temptable
-			pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
-													 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-	END IF;
-	CLOSE cr_impdecsn;
-		
+	-- Verifica se a conta possui algum grupo economico novo
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ(pr_cdcooper => pr_cdcooper, 
+                                                           pr_nrdconta => pr_nrdconta, 
+                                                           pr_flgativo => vr_flgativo, 
+                                                           pr_nrdconta_grp => vr_nrdconta_grp, 
+                                                           pr_dsvinculo => vr_dsvinculo, 
+                                                           pr_cdcritic => vr_cdcritic, 
+                                                           pr_dscritic => vr_dscritic);
+    
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
     pr_des_reto := 'OK';
     
   EXCEPTION    
@@ -5552,6 +5820,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
+	                
+					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                     crapass, crapttl, crapjur 
+							    (Adriano - P339).
+                    20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
+                                 PRJ339 - CRM(Odirlei-AMcom) 
+
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5566,7 +5841,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.nrctainv,
              crapass.dtadmemp,
              crapass.nmprimtl,
-             crapass.nmsegntl,
              crapass.dtdemiss,
              crapass.cdsecext,
              crapass.indnivel,
@@ -5595,7 +5869,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        WHERE crapttl.cdcooper = pr_cdcooper
          AND crapttl.nrdconta = pr_nrdconta; 
     
-    
+	-->Busca informações do segundo titular
+    CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+	                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+	SELECT crapttl.nmextttl
+	  FROM crapttl
+	 WHERE crapttl.cdcooper = pr_cdcooper
+	   AND crapttl.nrdconta = pr_nrdconta
+	   AND crapttl.idseqttl = 2;
+    rw_crapttl cr_crapttl%ROWTYPE;
     
     --------------> VARIAVEIS <----------------
     vr_cdcritic   INTEGER;
@@ -5608,6 +5890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dsnatura   crapttl.dsnatura%TYPE;
     vr_idxcab     PLS_INTEGER;
     vr_qttitula   INTEGER;
+	vr_nmsegntl   crapttl.nmextttl%TYPE;
     
   BEGIN
     -- Buscar dados do cooperado
@@ -5631,9 +5914,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Contar quantidade de titulares da conta
     vr_qttitula := 0;
     IF rw_crapass.inpessoa = 1 THEN      
+
       OPEN cr_crapttl_count;
       FETCH cr_crapttl_count INTO vr_qttitula;
       CLOSE cr_crapttl_count;
+
+	  OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+	                 ,pr_nrdconta => rw_crapass.nrdconta);
+
+	  FETCH cr_crapttl INTO rw_crapttl;
+
+	  IF cr_crapttl%FOUND THEN
+	    
+        vr_nmsegntl:= 'E/OU '||rw_crapttl.nmextttl;
+
+	  END IF;
+
+	  CLOSE cr_crapttl;
+
     ELSE
       vr_qttitula := 1;
     END IF;
@@ -5647,7 +5945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).nrctainv := rw_crapass.nrctainv;
     pr_tab_cabec(vr_idxcab).dtadmemp := rw_crapass.dtadmemp;
     pr_tab_cabec(vr_idxcab).nmprimtl := rw_crapass.nmprimtl;
-    pr_tab_cabec(vr_idxcab).nmsegntl := rw_crapass.nmsegntl;
+    pr_tab_cabec(vr_idxcab).nmsegntl := vr_nmsegntl;
     pr_tab_cabec(vr_idxcab).cdclcnae := rw_crapass.cdclcnae;
     
     pr_tab_cabec(vr_idxcab).dtaltera := fn_ult_dtaltera (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
