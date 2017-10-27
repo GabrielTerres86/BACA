@@ -38,8 +38,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,nrdconta crapass.nrdconta%TYPE
       ,cdagenci crapass.cdagenci%TYPE
       ,nmresage crapage.nmresage%TYPE
-      ,vllimcre crapass.vllimcre%TYPE
-      ,nmctajur crapjur.nmctajur%TYPE);
+      ,vllimcre crapass.vllimcre%TYPE);
     TYPE typ_tab_dados_cooperado IS TABLE OF typ_reg_dados_cooperado INDEX BY PLS_INTEGER;
     
     
@@ -3053,12 +3052,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_tab_flgpripa(idx):= FALSE;
           END LOOP;  
         END IF;                             
-        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */                                   
-        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049) THEN
+
+        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049) THEN 
           --Proximo registro
           CONTINUE;
         END IF;
-        
+        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */
+        -- rmm desconsiderar pagamentos prejuizo (2390,2392,2388,2475)        
+        IF rw_crapepr.tpemprst = 1 AND rw_craplem.cdhistor IN (2390,2392,2388,2475,2391,2395) THEN
+          CONTINUE;          
+        END IF;
+        --
         /* Verifica se o contrato estah em prejuizo */
         IF rw_crapepr.tpemprst = 1 AND
            rw_crapepr.inprejuz = 1 AND 
@@ -3070,7 +3074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            END IF;
 
         END IF;
-        
+            
         --Criar Extrato
         vr_index:= pr_extrato_epr.count + 1;
         --Se existe valor emprestimo 
@@ -3080,7 +3084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476, 2402, 2404, 2406,2407,2384, 2397, 2399) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3095,7 +3099,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            rw_craplem.dtmvtolt >= rw_crapepr.dtprejuz THEN
            
            /* Multa e Juros de Mora de Prejuizo */
-           IF rw_craplem.cdhistor IN (1733,1734,1735,1736) THEN
+           /* M324 - inclusao dos novos historicos de multas e juros */
+           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476, 2402, 2404, 2406,2407,2384, 2397, 2399) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
              
@@ -4062,6 +4067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            WHERE pfp.cdcooper = p_cdcooper
              AND pfp.cdempres = p_cdempres
              AND pfp.idsitapr > 3 --> Aprovados
+             AND pfp.idsitapr <> 6
              AND pfp.flsitdeb = 0 --> Ainda nao debitado
              AND lfp.cdcooper = pfp.cdcooper
              AND lfp.cdempres = pfp.cdempres
@@ -6238,7 +6244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Objetivo   : Procedure para obter impressao do extrato do associado
   --
   -- Alterações : 02/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)
-  --			  17/10/2017 - Adicionando a informacao nmctajur no relatorio de extrato. (Kelvin - PRJ339)	
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                         
        -- Cursor para busca de associados
@@ -6290,7 +6296,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE
                           ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
         SELECT crapjur.cdempres
-              ,crapjur.nmctajur
         FROM crapjur crapjur
         WHERE crapjur.cdcooper = pr_cdcooper 
         AND   crapjur.nrdconta = pr_nrdconta;
@@ -6299,7 +6304,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         rw_crapdat btch0001.cr_crapdat%ROWTYPE;
         --Variaveis Locais
         vr_cdempres INTEGER;
-        vr_nmctajur crapjur.nmctajur%TYPE;
         vr_qtregist INTEGER;
         vr_nrdrowid ROWID;
         vr_flgtrans BOOLEAN;
@@ -6430,10 +6434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               IF cr_crapjur%FOUND THEN
                 -- Pega código da empresa da PJ
                 vr_cdempres:= rw_crapjur.cdempres;
-                vr_nmctajur:= rw_crapjur.nmctajur;
               ELSE
                 vr_cdempres:= 0;  
-                vr_nmctajur:= '';
               END IF;
               -- Fecha cursor
               CLOSE cr_crapjur;
@@ -6532,7 +6534,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_dados_cooperado(rw_crapass.nrdconta).cdagenci:= rw_crapage.cdagenci;
           pr_tab_dados_cooperado(rw_crapass.nrdconta).nmresage:= rw_crapage.nmresage;
           pr_tab_dados_cooperado(rw_crapass.nrdconta).vllimcre:= rw_crapass.vllimcre;
-          pr_tab_dados_cooperado(rw_crapass.nrdconta).nmctajur:= vr_nmctajur;
           
           --Buscar Lista Historicos Cheques
           vr_lshistor:= tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -6943,7 +6944,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         BEGIN
-
           --Limpar tabela erro
           pr_tab_erro.DELETE;
           --Limpar tabela Saldos
@@ -7051,7 +7051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                        ,pr_tab_erro              => pr_tab_erro              --Tabela de Erros
                                        ,pr_des_reto              => vr_des_reto);            --Descricao Erro
           END IF;                           
-                                  
+          
           --Se ocorreu erro
           IF vr_des_reto <> 'OK' THEN
             --Se possui erro na tabela
@@ -7064,13 +7064,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             --Se possui dados na tabela de cooperado
             IF vr_tab_dados_cooperado.COUNT > 0 THEN
-               
               --Montar texto
               vr_dstexto:= '<conta cdagenci="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).cdagenci||
                      '" nmresage="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmresage||
                      '" nrdconta="'||to_char(pr_nrdconta,'fm9g999g999g0')||
                      '" nmprimtl="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmprimtl||
-                     '" nmctajur="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmctajur||
                      '" vllimcre="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).vllimcre,'fm9999g999g990d00')||
                      '" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N" flgmensag="N" flgconfir="S"'||
                      ' flgblqjud="N" dscmensag="" dsconfirm="'||vr_dscritic||'" dscblqjud=""></conta>';
@@ -7081,10 +7079,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               gene0002.pc_escreve_xml(vr_clobxml40, vr_dstexto40,vr_dstexto);
 
             ELSE
-
               --Montar texto
               vr_dstexto:= '<conta cdagenci="" nmresage="" nrdconta="'||to_char(pr_nrdconta,'fm9g999g999g0')||
-                     '" nmprimtl="" nmctajur="" vllimcre="0" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N"'|| 
+                     '" nmprimtl="" vllimcre="0" vlstotal="0" flghistor="N" flgcheque="N" flgdeposi="N"'|| 
                      ' flgmensag="N" flgconfir="S" flgblqjud="N" dscmensag="" dsconfirm="'||vr_dscritic||
                      '" dscblqjud=""></conta>';
               --Escrever no Arquivo
@@ -7188,7 +7185,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                    '" nmresage="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmresage||
                    '" nrdconta="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nrdconta,'fm9g999g999g0')||
                    '" nmprimtl="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmprimtl||
-                   '" nmctajur="'||vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).nmctajur||
                    '" vllimcre="'||to_char(vr_tab_dados_cooperado(vr_tab_dados_cooperado.FIRST).vllimcre,'fm9999g999g990d00')||
                    '" vlstotal="'||to_char(vr_vlstotal,'fm9999g999g999g990d00mi')||
                    '" vldiscpa="'||to_char(vr_vldiscpa,'fm9999g999g990d00')||
@@ -7337,6 +7333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                          ,pr_nrcopias  => 1                             --> Número de cópias
                                          ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                          ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                         ,pr_nrvergrl  => 1  
                                          ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
               --Se ocorreu erro no relatorio
               IF vr_dscritic IS NOT NULL THEN
@@ -7724,7 +7721,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                          ,pr_nrcopias  => 1                             --> Número de cópias
                                          ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                          ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
-                                         ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
+                                        ,pr_nrvergrl  => 1  
+                                           ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
               --Se ocorreu erro no relatorio
               IF vr_dscritic IS NOT NULL THEN
                 --Levantar Excecao
@@ -11026,6 +11024,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                      ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -11636,6 +11635,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                      ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -12963,7 +12963,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
@@ -13456,7 +13456,7 @@ END pc_consulta_ir_pj_trim;
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor <> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412) then --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor
@@ -13616,6 +13616,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        --,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 0 -- rmm quando 1 mostra null nas parcelas 
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -14567,6 +14568,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             
             --Se ocorreu erro no relatorio
@@ -15163,6 +15165,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -15653,6 +15656,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -16095,6 +16099,7 @@ END pc_consulta_ir_pj_trim;
                                          ,pr_nrcopias  => 1                             --> Número de cópias
                                          ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                          ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                         ,pr_nrvergrl  => 1  
                                          ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
               --Se ocorreu erro no relatorio
               IF vr_dscritic IS NOT NULL THEN
@@ -16786,6 +16791,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1  
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -17625,6 +17631,7 @@ END pc_consulta_ir_pj_trim;
                                    ,pr_nmformul  => NULL                          --> Nome do formulário para impressão
                                    ,pr_nrcopias  => 1                             --> Número de cópias
                                    ,pr_sqcabrel  => 2                             --> Qual a seq do cabrel                                       
+                                   ,pr_nrvergrl  => 1  
                                    ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
                                    
         --Se ocorreu erro no relatorio
