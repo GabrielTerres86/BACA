@@ -122,6 +122,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
               19/09/2016 - Gravar na coluna "crapepr.vlsprjat" o saldo do prejuízo anterior 
                            "crapepr.vlsdprej", Prj.302 (Jean Michel)           
+               
+              25/06/2017 - M324 - Incluir historico de pagamento - Jean (Mout´S)
 ................................................................................. */
 
     DECLARE
@@ -213,7 +215,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND craplem.nrctremp  = pr_nrctremp
            AND craplem.dtmvtolt <= pr_dtmvtolt
            AND (craplem.cdhistor = 382 /* Pagamentos */
-             OR craplem.cdhistor = 383); /* Abonos */
+             OR craplem.cdhistor = 383 /* Abonos */
+             OR craplem.cdhistor = 2388); /* Pagamento Prejuizo */
       rw_craplem cr_craplem%ROWTYPE;
 
       -- Buscar nome da agência
@@ -936,5 +939,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps312;
-/
-

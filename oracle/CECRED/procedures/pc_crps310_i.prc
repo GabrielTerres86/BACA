@@ -269,6 +269,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               (Odirlei-AMcom)                
 
                  16/05/2017 - Acionamento da criação do Risco para Cartões Credito BB (Andrei-Mouts)
+                 
+                 15/08/2017 - M324 - Transferencia automatica para prejuizo - criar na CRAPRIS a data provavel de 
+                                     transferencia a prejuizo - inclusão historico 2388 - Jean (MOut´S)
 
   ............................................................................ */
 
@@ -616,8 +619,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           FROM craplem craplem
          WHERE craplem.cdcooper = pr_cdcooper
            AND craplem.dtmvtolt <= pr_dtrefere
-           -- 382-PAG.PREJ.ORIG E 383-ABONO PREJUIZO
-           AND craplem.cdhistor IN(382,383)
+           -- 382-PAG.PREJ.ORIG E 383-ABONO PREJUIZO; Pagto Prejuizo M324
+           AND craplem.cdhistor IN(382,383, 2388)
          GROUP BY craplem.nrdconta,craplem.nrctremp;
       TYPE typ_craplem IS TABLE OF cr_craplem_prejuz%ROWTYPE INDEX BY PLS_INTEGER;
       r_craplem typ_craplem;  
@@ -926,6 +929,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_dsplsql VARCHAR2(4000);
       vr_jobname VARCHAR2(4000);
       
+      -- M324 - Variaveis para calcular data provavel de envio a prejuizo - Jean (Mout´S)
+      vr_qtdiaris         number;
+      vr_dttrfprj         date;
+      
       -- Subrotina para escrever texto na variável CLOB do XML
       PROCEDURE pc_escreve_xml(pr_desdados IN VARCHAR2) IS
       BEGIN
@@ -1120,6 +1127,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crapris(vr_index_crapris).qtparcel   := pr_qtparcel;
         vr_tab_crapris(vr_index_crapris).dtvencop   := pr_dtvencop;
         
+        /*M324 - Calcula data provavel da transferencia a prejuizo - Jean (Mout´S) */
+        if  vr_tab_crapris(vr_index_crapris).innivris in ( 9, 10)
+        and vr_tab_crapris(vr_index_crapris).inddocto = 1 then
+              vr_qtdiaris := vr_tab_crapris(vr_index_crapris).dtrefere -  vr_tab_crapris(vr_index_crapris).dtdrisco;
+              if  vr_qtdiaris > 180 
+              and vr_tab_crapris(vr_index_crapris).qtdiaatr > 180 then
+                  vr_dttrfprj := vr_tab_crapris(vr_index_crapris).dtrefere;
+              else
+                  vr_qtdiaris := 180 - vr_qtdiaris;
+                  vr_dttrfprj := vr_tab_crapris(vr_index_crapris).dtrefere + vr_qtdiaris;
+              end if;
+         end if;
+        
+        vr_tab_crapris(vr_index_crapris).dttrfprj   := vr_dttrfprj;
+         /* fim alteracao M324 */
+         
         pr_index_crapris := vr_index_crapris;
         
       EXCEPTION
@@ -4903,10 +4926,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         END;
       END LOOP; --> Fim loop rw_crapass
       
+     
       --> Criar crapris
       BEGIN
+      
         FORALL idx IN INDICES OF vr_tab_crapris SAVE EXCEPTIONS 
-          INSERT INTO crapris
+    
+         INSERT INTO crapris
                    (  nrdconta, 
                       dtrefere, 
                       innivris, 
@@ -4946,7 +4972,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       dtprxpar, 
                       vlprxpar, 
                       qtparcel, 
-                      dtvencop)  
+                      dtvencop,
+                      dttrfprj)  -- M324 - data provavel de transferencia a prejuizo (Jean -MOut´s)
                               
               VALUES (vr_tab_crapris(idx).nrdconta,
                       vr_tab_crapris(idx).dtrefere,
@@ -4987,7 +5014,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       vr_tab_crapris(idx).dtprxpar,
                       vr_tab_crapris(idx).vlprxpar,
                       vr_tab_crapris(idx).qtparcel,
-                      vr_tab_crapris(idx).dtvencop);                  
+                      vr_tab_crapris(idx).dtvencop,
+                      vr_tab_crapris(idx).dttrfprj); -- M324 - Data provavel de transferencia a prejuizo - Jean (MOut´s)                 
       EXCEPTION
          WHEN others THEN
            -- Gerar erro

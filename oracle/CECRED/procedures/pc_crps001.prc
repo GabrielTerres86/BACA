@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Programa: pc_crps001                      Antigo Fontes/crps001.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Deborah/Edson
+   Autor   : Deborah
    Data    : Novembro/91.                    Ultima atualizacao: 05/06/2017
 
    Dados referentes ao programa:
@@ -622,6 +622,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE tbcc.idlautom = pr_idlancto;
         rw_tbcc_lautom_controle cr_tbcc_lautom_controle%ROWTYPE;
 
+      -- verifica se existe prejuizo lancado para a conta corrente linha 100
+      cursor c_busca_prejuizo(pr_cdcooper in number
+                             ,pr_nrdconta in number
+                             ,pr_nrctremp in number) is 
+         select 1
+           from crapepr
+          where crapepr.cdcooper = pr_cdcooper
+            and crapepr.nrdconta = pr_nrdconta
+            and crapepr.nrctremp = pr_nrctremp
+            and crapepr.inprejuz = 1
+            and crapepr.cdlcremp = 100; -- linha 100 - conta corrente para prejuizo
+           
+         vr_existe_prejuizo integer;
+         
        /* Variaveis Locais da pc_crps001 */
 
        --Variaveis dos Indices
@@ -1001,8 +1015,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Se for primeiro dia util e tiver IOF a cobrar
            IF To_Char(vr_dtmvtolt,'MM') <> To_Char(vr_dtmvtoan,'MM') THEN 
-           
-             IF round(rw_crapsld.vliofmes,2) > 0 THEN
+             -- 10/08/2017 - Melhoria 324 - busca se existe prejuizo lancado para conta corrente (linha 100)
+			       vr_existe_prejuizo := 0;
+             open c_busca_prejuizo(pr_cdcooper
+                                  ,rw_crapsld.nrdconta
+                                  ,rw_crapsld.nrdconta);
+             fetch c_busca_prejuizo into vr_existe_prejuizo;
+             close c_busca_prejuizo;
+             
+             IF round(rw_crapsld.vliofmes,2) > 0 
+             and nvl(vr_existe_prejuizo,0) = 0 THEN -- Melhoria 324 só gera IOF e Juros sobre LC se não tiver prejuizo
 
                -- Verificar a imunidade tributária
                IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
@@ -1285,7 +1307,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
 
              --Se o juros do cheque especial for maior zero
-             IF rw_crapsld.vljuresp > 0 THEN
+             IF  rw_crapsld.vljuresp > 0
+             and nvl(vr_existe_prejuizo,0) = 0 THEN -- Melhoria 324 -- so gera lancamento 38 se não for prejuizo
                
                -- Condicao para verificar se permite incluir as linhas parametrizadas
                IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapsld.nrdconta || ',') > 0 THEN
@@ -2249,9 +2272,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              --Acumular no valor saldo medio no mes o valor disponivel / quantidade dias utilizados
              rw_crapsld.vlsmpmes:= Nvl(rw_crapsld.vlsmpmes,0) + (Nvl(vr_vldispon,0) / Nvl(vr_qtdiaute,0));
              --Zerar quantidade dias devedor
-             rw_crapsld.qtddsdev:= 0;
-             --Zerar quantidade dias usando limite
-             rw_crapsld.qtddusol:= 0;
+			       -- Melhoria 324 -- no caso de transferencia de prejuizo (conta corrente), não atualiza os dias de saldo devedor
+			       if nvl(vr_existe_prejuizo,0) = 0 then
+                rw_crapsld.qtddsdev:= 0;
+			          --Zerar quantidade dias usando limite
+                rw_crapsld.qtddusol:= 0;
+             end if;
              --Inicializar data saldo devedor liquida
              rw_crapsld.dtdsdclq:= NULL;
              --Zerar quantidade dias saldo negativo risco
@@ -2330,7 +2356,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
              -- Atualiza dias de credito em liquidacao
              --Se estourou limite
-             IF vr_flgestou THEN
+             IF vr_flgestou 
+			       --or nvl(vr_existe_prejuizo,0) = 1 
+             THEN
                --Incrementar quantidade dias devedor
                rw_crapsld.qtddsdev:= Nvl(rw_crapsld.qtddsdev,0) + 1;
                --Incrementar quantidade total dias conta devedora
@@ -2342,6 +2370,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                rw_crapsld.qtddsdev:= 0;
                --Zerar quantidade dias saldo negativo risco
                rw_crapsld.qtdriclq:= 0;
+               
              END IF; --vr_flgestou
 
              --Se quantidade dias devedor do saldo for maior ou igual quantidade dias devedor
