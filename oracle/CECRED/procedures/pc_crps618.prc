@@ -100,6 +100,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              e o primeiro titulo identificado como dentro da faixa de ROLLOUT,
                              todos os titulos que serão processados em seguida tambem serão
                              registrados (Douglas - Chamado 756559)
+
+                20/10/2017 - O boleto foi gerado pela Conta Online para integração on-line
+                             com a CIP. No mesmo momento a rotina de carga normal também estava
+                             inicou a execução. O boleto foi enviado tanto pela processo normal
+                             quanto pela carga on-line. Incluída verificação do IDTITLEG para
+                             evitar envio de título já registrado. (SD#777146 - AJFink)
+
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
@@ -197,6 +204,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
        AND cob.dtvencto >= pr_dtmvtolt 
        AND cob.vltitulo >= pr_vlrollou
        AND nvl(cob.nrdident,0) = 0
+       AND nvl(cob.idtitleg,0) = 0 /*SD#777146*/
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac
@@ -283,6 +291,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
        AND ((NVL(pr_nrdconta,0) > 0 AND cob.inregcip = 1) OR
             (NVL(pr_nrdconta,0) = 0 ))
        AND nvl(cob.nrdident,0) = 0
+       AND nvl(cob.idtitleg,0) = 0 /*SD#777146*/
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac

@@ -573,6 +573,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   
   vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- nome do arquivo de log mensal  
 
+  function fn_datamov return number is
+    /******************************************************************************
+      Programa: fn_datamov
+      Sistema : Cobranca - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : AJFink SD#754622
+      Data    : Outubro/2017.                     Ultima atualizacao: --/--/----
+      Objetivo: Buscar data de referencia da cabine JDNPC
+
+      Alteracoes: 
+
+    ******************************************************************************/
+    --
+    cursor c_datamov is
+      SELECT "DataMov" datamov
+        FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
+       WHERE "ISPBCliente" = 5463212
+         AND "DataMov" IS NOT NULL
+      ORDER BY "DataMov" DESC;
+    --
+    w_datamov number(8);
+    --
+  begin
+    --
+    open c_datamov;
+    fetch c_datamov into w_datamov;
+    close c_datamov;
+    --
+    return (w_datamov);
+    --
+  exception
+    when others then
+      raise_application_error(-20001,'ddda0001.fn_datamov',true);
+  end fn_datamov;
+
   /* Procedure para buscar dados legado */
   PROCEDURE pc_obtem_dados_legado(pr_cdcooper IN INTEGER --Codigo Cooperativa
                                  ,pr_nrdconta IN INTEGER --Numero da Conta
@@ -1262,9 +1297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           vr_cdcritic := 0;
           vr_dscritic := NULL;
           RAISE vr_exc_erro;
-        
+            
         END IF;
-        
+            
         --> Se nao estiver em contigencia
         IF rw_cons_titulo.flgcontingencia = 0 THEN  
           --> Rotina para retornar dados do XML para temptable
@@ -1277,7 +1312,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
             RAISE vr_exc_erro;       
           END IF; 
-            
+       
           vr_idtitdda := vr_tituloCIP.NumIdentcTit;
         END IF;
             
@@ -1652,6 +1687,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                          será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
     -- 
     --             21/08/2017 - Fechar cursor cr_abertura após abri-lo. (Rafael)
+    -- 
+    --             20/10/2017 - Retirar cursor cr_abertura e utilizar função fn_datamov (SD#754622 - AJFink)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1721,13 +1759,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
          WHERE crapban.nrispbif = pr_nrispbif;
       rw_crapban_ispb cr_crapban_ispb%ROWTYPE;           
                        
-      -- buscar data de referencia da cabine JDNPC      
-      CURSOR cr_abertura IS
-        SELECT MAX("DataMov") datamov
-          FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
-         WHERE "ISPBCliente" = 5463212;
-      rw_abertura cr_abertura%ROWTYPE;
-      
       --> Verificar motivo da baixa
       CURSOR cr_crapret (pr_dtdpagto crapret.dtocorre%TYPE,
                          pr_cdcooper crapret.cdcooper%TYPE,
@@ -1763,6 +1794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_inauxreg   NUMBER;
       vr_dsmsglog   crapcol.dslogtit%TYPE;
       vr_data  VARCHAR2(20) := To_Char(SYSDATE, 'YYYYMMDDHH24MISS');
+      vr_datamov number(8);
       
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1774,11 +1806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
       
-      -- buscar data de referencia da cabine JDNPC
-      OPEN cr_abertura;
-      FETCH cr_abertura
-       INTO rw_abertura;
-      CLOSE cr_abertura;
+      vr_datamov := fn_datamov;
           
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
@@ -2211,8 +2239,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).cdespeci := vr_cddespec;
       
       -- Ajuste devido ao erro EDDA0395 - Data de emissao > Data de referencia
-      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > to_number(nvl(rw_abertura.datamov,to_char(SYSDATE,'YYYYMMDD'))) THEN
-        pr_tab_remessa_dda(vr_index).dtemissa := rw_abertura.datamov;
+      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > to_number(nvl(vr_datamov,to_char(SYSDATE,'YYYYMMDD'))) THEN
+        pr_tab_remessa_dda(vr_index).dtemissa := vr_datamov;
       ELSE
         pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
                                                                   ,'YYYYMMDD')); 
@@ -3893,21 +3921,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             15/10/2015 - Alterado para realizar o substr das informações a serem inseridas 
     --                          na tabela TBJDDDALEG_LG2JD_OPTITULO, conforme o tamanho da tabela no SQLServer
     --                          para assim o registro não ser rejeitado no momento do insert SD343420  (Odirlei-AMcom)
+    -- 
+    --             20/10/2017 - Retirar cursor cr_abertura e utilizar função fn_datamov (SD#754622 - AJFink)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
-    
-      CURSOR cr_abertura IS
-        SELECT MAX("DataMov") datamov
-          FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
-         WHERE "ISPBCliente" = 5463212;
-      rw_abertura cr_abertura%ROWTYPE;
     
       --Variaveis Locais
       vr_index INTEGER;
       vr_data  VARCHAR2(20) := To_Char(SYSDATE, 'YYYYMMDDHH24MISS');      
       vr_nmfansia_pag VARCHAR2(80);
       vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_datamov number(8);
       
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -3921,22 +3947,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
     
-      OPEN cr_abertura;
-      FETCH cr_abertura
-        INTO rw_abertura;
-    
-      IF cr_abertura%FOUND THEN
-      
-        IF to_number(to_char(SYSDATE, 'YYYYMMDD')) <> rw_abertura.datamov THEN
-          vr_data := to_char(rw_abertura.datamov)||'235900';
+      vr_datamov := fn_datamov;
+
+      IF to_number(to_char(SYSDATE, 'YYYYMMDD')) <> vr_datamov THEN
+        vr_data := to_char(vr_datamov)||'235900';
         END IF;
-      
-        CLOSE cr_abertura;
-      
-      ELSE
-        CLOSE cr_abertura;
-      END IF;
-      
     
       --Percorrer as remessas
       vr_index := pr_tab_remessa_dda.FIRST;
