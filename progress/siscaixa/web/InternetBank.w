@@ -7246,8 +7246,7 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao153:
 
-    ASSIGN aux_dtmvtolt = DATE(  GET-VALUE("dtmvtolt"))
-           aux_nrcpfope = DECI(  GET-VALUE("nrcpfope"))
+    ASSIGN aux_nrcpfope = DECI(  GET-VALUE("nrcpfope"))
            aux_idseqttl = INTE(  GET-VALUE("idseqttl")) 
            aux_lisrowid = STRING(GET-VALUE("dsdrowid"))
            aux_tpoperac = INTE(  GET-VALUE("tpoperac"))

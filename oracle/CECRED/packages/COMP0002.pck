@@ -593,6 +593,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     BEGIN
 							
       pr_dsretorn := 'NOK';
+      
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+							
+				vr_dscritic := 'Associado nao cadastrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;      
 			
 			gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
 																						,pr_nrdconta => pr_nrdconta
@@ -626,14 +642,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
+								 	 						    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
+								 								  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+								 							    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
+								 							    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																                                
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                      || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')      || '</hrautent>' ||
                                   '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')  || '</vldocmto>' ||
-                                  '<nrdocmto>' || vr_protocolo(vr_ind).nrdocmto                                             || '</nrdocmto>' ||
-                                  '<nmfavore>' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'))                  	  || '</nmfavore>' ||
-                                  '<dsdbanco>' || TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsdbanco>' ||
+                                  '<nrctadst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),2,10))      	  || '</nrctadst>' ||
+                                  '<nmtitdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),15))           || '</nmtitdst>' ||
+                                  '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),1,4)) || '</cdagedst>' ||
+                                  '<nmcopdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),8))   || '</nmcopdst>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||
-                                  '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                             || '</cdagenda>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||
                                   '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
                                   '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
@@ -717,6 +740,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     BEGIN
       
       pr_dsretorn := 'NOK';
+      
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+							
+				vr_dscritic := 'Associado nao cadastrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;       
 			
       gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
@@ -748,19 +787,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
+								 	 						    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
+								 								  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+								 							    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
+								 							    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																                                                               
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                      || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')      || '</hrautent>' ||
-                                  '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')  || '</vldocmto>' ||
-                                  '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||
-                                  '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                             || '</cdagenda>' ||
-                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||
-                                  '<dsdbanco>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsdbanco>' ||
-                                  '<dsageban>' || TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsageban>' ||
-                                  '<nrctafav>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#')) || '</nrctafav>' ||
-                                  '<nmfavore>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#')) || '</nmfavore>' ||
-                                  '<nrcpffav>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')) || '</nrcpffav>' ||
+                                  '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+                                  '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||                                  
+                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||                                  
+                                  '<cdbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),1,3)) || '</cdbandst>' ||
+                                  '<dsbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),7))   || '</dsbandst>' ||                                                                   
+                                  '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),1,4)) || '</cdagedst>' ||
+                                  '<dsagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),8))   || '</dsagedst>' ||                                                                    
+                                  '<dsctadst>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsctadst>' ||
+                                  '<dstitdst>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dstitdst>' ||
+                                  '<dscpfdst>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dscpfdst>' ||
                                   '<dsfinali>' || TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dsfinali>' ||
-                                  '<dstransf>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dstransf>' ||
+                                  '<dsidenti>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')) || '</dsidenti>' ||
                                   '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
                                   '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                             || '</nrcpfpre>' ||
                                   '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                             || '</nmoperad>' ||
@@ -843,6 +890,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     BEGIN
     
       pr_dsretorn := 'NOK';
+      
+      -- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+							
+				vr_dscritic := 'Associado nao cadastrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
 			
       gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
@@ -879,11 +942,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
+																  '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
+																  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
+																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
+																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+															 	  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
+															 	  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
                                   '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                         || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
-                                  '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                                                                      || '</cdagenda>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
                                   '<dssolicit>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#'))                                         || '</dssolicit>' ||
                                   '<dtaplic>'  || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtaplic>' ||
@@ -1011,6 +1080,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     BEGIN
     
       pr_dsretorn := 'NOK';
+      
+      -- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+							
+				vr_dscritic := 'Associado nao cadastrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
 			
       gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
@@ -1042,11 +1127,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
+																  '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
+																  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
+																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
+																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
+ 																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
                                   '<vlliquid>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                         || '</vlliquid>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
-                                  '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                                                                      || '</cdagenda>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
                                   '<dssolici>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##2, '#'))                                          || '</dssolici>' ||
                                   '<dtresgat>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtresgat>' ||
@@ -1209,7 +1300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 															   '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
-                                 '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																 
+                                 '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																 '<cdtippag>' || to_char(vr_cdtippag)                                                                                               || '</cdtippag>' ||																 
 																 '<dsinstit>' || to_char(vr_dsinstit)                                                                                               || '</dsinstit>' ||															 															   
 																 '<dscedent>' || vr_dscedent                                                                                                        || '</dscedent>' ||                                  
@@ -1739,6 +1830,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     BEGIN
     
       pr_dsretorn := 'NOK';
+      
+      -- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+							
+				vr_dscritic := 'Associado nao cadastrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
 			
       gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
@@ -1770,11 +1877,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
+																  '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
+																  '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                                          || '</dstippro>' ||
+																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
+																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
+																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
+																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
-                                  '<cdagenda>' || vr_protocolo(vr_ind).flgagend                                                                                      || '</cdagenda>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
                                   '<dscedent>' || vr_protocolo(vr_ind).dscedent                                                                                      || '</dscedent>' ||
                                   '<nridenti>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nridenti>' ||
