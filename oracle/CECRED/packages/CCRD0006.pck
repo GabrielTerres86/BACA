@@ -635,18 +635,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   PROCEDURE pc_leitura_arquivos_xml (pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT VARCHAR2)  IS
 
-    vr_dsdiretorio     VARCHAR2(100);
-    vr_listaarq        VARCHAR2(32000);     --> Lista de arquivos
+    vr_dsdiretorio             VARCHAR2(100);
+    vr_dsdiretorio_recebidos   VARCHAR2(100);
+    vr_listaarq                VARCHAR2(32000);     --> Lista de arquivos
 
     -- Variável de críticas
-    vr_cdcritic      crapcri.cdcritic%TYPE;
-    vr_dscritic      VARCHAR2(10000);
+    vr_cdcritic                crapcri.cdcritic%TYPE;
+    vr_dscritic                VARCHAR2(10000);
 
 -- PL/Table que vai armazenar os nomes de arquivos a serem processados
-    vr_tab_arqtmp       GENE0002.typ_split;
+    vr_tab_arqtmp             GENE0002.typ_split;
 
     -- PL/Table que vai armazenar os linhas do arquivo XML
-    wpr_table_of       GENE0002.typ_tab_tabela;
+    wpr_table_of              GENE0002.typ_tab_tabela;
 
 
     vr_indice          INTEGER;
@@ -668,17 +669,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                 pr_cdacesso => 'ROOT_DOMICILIO_SLC');
     IF substr(vr_dsdiretorio,length(vr_dsdiretorio)) != '/' then
-      vr_dsdiretorio := vr_dsdiretorio ||'/'||'recebe';
+      vr_dsdiretorio_recebidos := vr_dsdiretorio ||'/'||'recebidos';
+      vr_dsdiretorio           := vr_dsdiretorio ||'/'||'recebe';
     ELSE
-      vr_dsdiretorio := vr_dsdiretorio ||'recebe';
+      vr_dsdiretorio_recebidos := vr_dsdiretorio ||'recebidos';
+      vr_dsdiretorio           := vr_dsdiretorio ||'recebe';
     END IF;
 
     IF vr_database_name = 'AYLLOSD' THEN
-      vr_dsdiretorio := '/usr/sistemas/SLC/recebe';
+      vr_dsdiretorio_recebidos := '/usr/sistemas/SLC/recebidos';
+      vr_dsdiretorio           := '/usr/sistemas/SLC/recebe';
     END IF;
 
     -- Mover o arquivo processado para a pasta "processados"
-    gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsdiretorio||'/*_PRO.XML /usr/sistemas/SLC/recebidos',
+    gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsdiretorio||'/*_PRO.XML '||vr_dsdiretorio_recebidos,
                                 pr_typ_saida   => vr_tipo_saida,
                                 pr_des_saida   => vr_dscritic);
     -- Testa erro
@@ -737,8 +741,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                     pr_des_saida   => vr_dscritic);
         -- Testa erro
         IF vr_tipo_saida = 'ERR' THEN
-          -- Gera log de arquivo com erro
-          NULL;
+          ROLLBACK;
+          vr_cdcritic := 0;
+          RAISE vr_exc_saida;
         END IF;
         --dbms_output.put_line('Depois do mv: ' ||to_char(sysdate,'DDMMYYYY HH24:MI:SS'));
 
@@ -917,7 +922,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END  IF;
 
         -- Mover o arquivo processado para a pasta "processados"
-        gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsdiretorio||'/'||vr_tab_arqtmp(vr_indice)||'* '||'/usr/sistemas/SLC/recebidos',
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsdiretorio||'/'||vr_tab_arqtmp(vr_indice)||'* '||vr_dsdiretorio_recebidos,
                                     pr_typ_saida   => vr_tipo_saida,
                                     pr_des_saida   => vr_dscritic);
         -- Testa erro
@@ -7619,7 +7624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         END LOOP;  -- loop cr_tabela
 
         -- Efetua a atualizacao da situacao na tabela de lancamentos
-        -- Se encontrar algum registro sem erro no lancto, atualiza situação para 1
+        -- Se encontrar algum registro sem erro no lancto, atualiza situação para 2
         -- Com isso, se tiver apenas 1 PDV sem erro dentro de um lançamento considera todo o lançamento como processado
         IF vr_qtproclancto > 0 THEN
           BEGIN
@@ -7781,7 +7786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ,tbdomic_liqtrans_centraliza ctz
              ,tbdomic_liqtrans_pdv pdv
        WHERE lct.idarquivo = arq.idarquivo
-         AND lct.insituacao = 1 -- Processado (atualizado pelo pc_processo_reg_pendentes)
+         AND lct.insituacao = 2 -- Processado (atualizado pelo pc_processo_reg_pendentes)
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND to_date(pdv.dtpagamento,'YYYY-MM-DD') = pr_dtmvtolt
@@ -8003,6 +8008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               substr(arq.dharquivo_origem,12,5) hrinclusao,
               to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY') dtliquidacao,
               arq.nmarquivo_gerado,
+              decode(arq2.nmarquivo_origem, null, decode(arq.nmarquivo_retorno, null, null, 'RET'), 'ERR') tpretorno,
               decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT')               tparquivo,
               to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI')             dtgeracao,
               sum(decode(nvl(pdv.cdocorrencia,'XX'),'XX',0,1))               qtprocessados,
@@ -8019,16 +8025,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ,tbdomic_liqtrans_lancto lct
              ,tbdomic_liqtrans_centraliza ctz
              ,tbdomic_liqtrans_pdv pdv
+             ,tbdomic_liqtrans_arquivo arq2
        WHERE lct.idarquivo = arq.idarquivo
          AND lct.insituacao <> 3 -- não pegar arquivos que vieram com problema no XML
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
          AND (to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
          OR   trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
+         AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
        GROUP BY  arq.nmarquivo_origem, lct.nmcredenciador,
                  to_char(to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD'),'DD/MM/YYYY'),
                  substr(arq.dharquivo_origem,12,5),
                  arq.nmarquivo_gerado,
+                 arq.nmarquivo_retorno,
+                 arq2.nmarquivo_origem,
                  decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT'),
                  to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI'),
                  to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY')
@@ -8036,7 +8046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
-      vr_dscritic      VARCHAR2(32000);
+      vr_dscritic   
+         VARCHAR2(32000);
 
       -- Variaveis gerais
       vr_dtinicio DATE;
@@ -8100,22 +8111,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
                                  ,pr_texto_novo     => '<inf>'||
-                                                          '<nmarquivo>'       || rw_tabela.nmarquivo       ||'</nmarquivo>'||
-                                                          '<tparquivo>'       || rw_tabela.tparquivo       ||'</tparquivo>'||
-                                                          '<nmcredenciador>'  || rw_tabela.nmcredenciador  ||'</nmcredenciador>'||
-                                                          '<dtinclusao>'      || rw_tabela.dtinclusao      ||'</dtinclusao>'||
-                                                          '<hrinclusao>'      || rw_tabela.hrinclusao      ||'</hrinclusao>'||
-                                                          '<dtliquidacao>'    || rw_tabela.dtliquidacao    ||'</dtliquidacao>'||
-                                                          '<nmarquivo_gerado>'||rw_tabela.nmarquivo_gerado ||'</nmarquivo_gerado>'||
-                                                          '<dtgeracao>'       ||rw_tabela.dtgeracao        ||'</dtgeracao>'||
-                                                          '<qtprocessados>'   || rw_tabela.qtprocessados   ||'</qtprocessados>'||
-                                                          '<vlprocessados>'   || rw_tabela.vlprocessados   ||'</vlprocessados>'||
-                                                          '<qtintegrados>'    || rw_tabela.qtintegrados    ||'</qtintegrados>'||
-                                                          '<vlintegrados>'    || rw_tabela.vlintegrados    ||'</vlintegrados>'||
-                                                          '<qtagendados>'     || rw_tabela.qtagendados     ||'</qtagendados>'||
-                                                          '<vlagendados>'     || rw_tabela.vlagendados     ||'</vlagendados>'||
-                                                          '<qterros>'         || rw_tabela.qterros         ||'</qterros>'||
-                                                          '<vlerros>'         || rw_tabela.vlerros         ||'</vlerros>'||
+                                                          '<nmarquivo>'       || rw_tabela.nmarquivo        ||'</nmarquivo>'||
+                                                          '<tparquivo>'       || rw_tabela.tparquivo        ||'</tparquivo>'||
+                                                          '<nmcredenciador>'  || rw_tabela.nmcredenciador   ||'</nmcredenciador>'||
+                                                          '<dtinclusao>'      || rw_tabela.dtinclusao       ||'</dtinclusao>'||
+                                                          '<hrinclusao>'      || rw_tabela.hrinclusao       ||'</hrinclusao>'||
+                                                          '<dtliquidacao>'    || rw_tabela.dtliquidacao     ||'</dtliquidacao>'||
+                                                          '<nmarquivo_gerado>'|| rw_tabela.nmarquivo_gerado ||'</nmarquivo_gerado>'||
+                                                          '<tpretorno>'       || rw_tabela.tpretorno        ||'</tpretorno>'||
+                                                          '<dtgeracao>'       || rw_tabela.dtgeracao        ||'</dtgeracao>'||
+                                                          '<qtprocessados>'   || rw_tabela.qtprocessados    ||'</qtprocessados>'||
+                                                          '<vlprocessados>'   || rw_tabela.vlprocessados    ||'</vlprocessados>'||
+                                                          '<qtintegrados>'    || rw_tabela.qtintegrados     ||'</qtintegrados>'||
+                                                          '<vlintegrados>'    || rw_tabela.vlintegrados     ||'</vlintegrados>'||
+                                                          '<qtagendados>'     || rw_tabela.qtagendados      ||'</qtagendados>'||
+                                                          '<vlagendados>'     || rw_tabela.vlagendados      ||'</vlagendados>'||
+                                                          '<qterros>'         || rw_tabela.qterros          ||'</qterros>'||
+                                                          '<vlerros>'         || rw_tabela.vlerros          ||'</vlerros>'||
                                                        '</inf>');
           vr_contador := vr_contador + 1;
         END IF;
@@ -8907,8 +8919,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ELSE
                w_dsvalor := to_date(w_dsvalor,'yyyymmdd');
              END  IF;
-           ELSE
-             w_dsvalor := replace(w_dsvalor,'.',',');
+           --ELSE  /* Conforme verificado, utilizando as variaveis NLS no Job, essa mudança de ponto decimal não será necessária
+           --  w_dsvalor := replace(w_dsvalor,'.',',');
            END  IF;
          END IF;
        END IF;
@@ -9883,6 +9895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         --Atualiza para 30 a ocorrência do registro na tabela TBDOMIC_LIQTRANS_PDV
         UPDATE tbdomic_liqtrans_pdv
            SET cdocorrencia = '30'
+              ,dserro = 'Lançamento recusado por falta de transferência financeira'
          WHERE idpdv = r1.idpdv;
 
       END LOOP;

@@ -1099,7 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 13/12/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 17/10/2017
 
     Dados referentes ao programa:
 
@@ -1119,6 +1119,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                              cooperado quando alterar os dados (Douglas - Chamado 547082)
 
         				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+                
+                17/10/2017 - Utilizar data de abertura da conta (ass.dtabtcct) ao registrar
+                             beneficiario na CIP. (Rafael)
 
     ..............................................................................*/
     DECLARE
@@ -1135,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,decode(crapass.inpessoa,1,to_char(crapass.nrcpfcgc)
                                         ,to_char(crapass.nrcpfcgc)) nrcpfcgc
               ,to_char(crapcop.cdagectl) cdagectl
-              ,crapass.dtadmiss
+              ,nvl(crapass.dtabtcct,crapass.dtmvtolt) dtabtcct -- existem casos que a dtabtcct é nula (?)
           FROM crapass,
                crapcop 
          WHERE crapass.cdcooper = crapcop.cdcooper
@@ -1639,7 +1642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                     
           BEGIN
             -- utilizar a data de admissao do cooperado como data de relacionamento
-            vr_dsdtmvto := to_char(nvl(rw_crapass.dtadmiss,rw_crapdat.dtmvtolt),'RRRRMMDD');      
+            vr_dsdtmvto := to_char(nvl(rw_crapass.dtabtcct,rw_crapdat.dtmvtolt),'RRRRMMDD');      
             
             INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
                   ( "ISPB_IF",
