@@ -5,7 +5,7 @@
    DATA CRIAÇÃO : 28/06/2017
    OBJETIVO     : Tela de exibicao detalhamento de cartoes
    --------------
-   ALTERAÇÕES   :
+   ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
  */		
  
 session_start();
@@ -24,12 +24,21 @@ $cdadmcrd = (isset($_POST['cdadmcrd'])) ? $_POST['cdadmcrd'] : 0;
 $nrcpftit = (isset($_POST['nrcpftit'])) ? $_POST['nrcpftit'] : 0;
 $nmtitcrd = (isset($_POST['nmtitcrd'])) ? $_POST['nmtitcrd'] : "";
 $listadm = (isset($_POST['listadm'])) ? $_POST['listadm'] : "";
+$insitcrd = (isset($_POST['insitcrd'])) ? $_POST['insitcrd'] : 0;
+$dtsol2vi = (isset($_POST['dtsol2vi'])) ? $_POST['dtsol2vi'] : "";
+$flgprcrd = (isset($_POST['flgprcrd'])) ? $_POST['flgprcrd'] : 0;
 $flgdebit = (isset($_POST['flgdebit'])) ? $_POST['flgdebit'] : 0;
+$nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
+$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : 0;
+$nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 
 ?>
 
 <div id="divForm" style="display: inline-block">
 	<form id="frmDetalheCartao" name="frmDetalheCartao" class="formulario" >
+	    <input type="hidden" id="nrctrcrd" name="nrctrcrd" value="<?php echo $nrctrcrd; ?>"/>
+		<input type="hidden" id="inpessoa" name="inpessoa" value="<?php echo $inpessoa; ?>"/>
+		
 		<label for="nrdconta">Conta:</label>
 		<input type="text" id="nrdconta" name="nrdconta" value="<?php echo $nrdconta; ?>"/>
 		<input type="text" id="nmprimtl" name="nmprimtl" value="<?php echo $nmprimtl; ?>"/>
@@ -52,9 +61,23 @@ $flgdebit = (isset($_POST['flgdebit'])) ? $_POST['flgdebit'] : 0;
 		<label for="nrcpftit">CPF:</label>
 		<input type="text" id="nrcpftit" name="nrcpftit" value="<?php echo $nrcpftit; ?>" maxlength="25"/>
 		<label for="nmtitcrd">Nome Plastico:</label>
-		<input type="text" id="nmtitcrd" name="nmtitcrd" value="<?php echo $nmtitcrd; ?> " maxlength="40"/>	
+		<input type="text" id="nmtitcrd" name="nmtitcrd" value="<?php echo $nmtitcrd; ?> " maxlength="40"/>
+		<label for="nmempres">Emp. do Plastico:</label>
+		<input type="text" id="nmempres" name="nmempres" value="<?php echo $nmempres; ?> " maxlength="40"/>
+		<label for="insitcrd">Situacao:</label>	
+		<select name="" id="insitcrd" class="campo">										
+			<option value='1' <? if($insitcrd == 1){echo " selected";} ?>>APROVADO</option>
+			<option value='2' <? if($insitcrd == 2){echo " selected";} ?>>SOLICITADO</option>
+			<option value='3' <? if($insitcrd == 3){echo " selected";} ?>>LIBERADO</option>
+			<option value='4' <? if($insitcrd == 4){echo " selected";} ?>>EM USO</option>
+			<option value='5' <? if($insitcrd == 5){echo " selected";} ?>>BLOQUEADO</option>
+			<option value='6' <? if($insitcrd == 6){echo " selected";} ?>>CANCELADO</option>
+			<option value='7' <? if(($insitcrd == 7) || ($insitcrd == 4 && $dtsol2vi != "")){echo " selected";} ?>>SOL.2V</option>
+		</select>		
 		<label for="flgdebit">Funcao Debito:</label>
 		<input type="checkbox" name="flgdebit" style="margin-top:7px !important" <?php if ($flgdebit == 1) { echo "checked "; } ?> />		
+		<label for="flgprcrd">Titular:</label>
+		<input type="checkbox" name="flgprcrd" style="margin-top:7px !important" <?php if ($flgprcrd == 1) { echo "checked "; } ?> />		
 	</form>
 </div>
 <br/>	

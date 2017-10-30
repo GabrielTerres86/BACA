@@ -5,7 +5,7 @@
   DATA CRIAÇÃO : 29/06/2017
   OBJETIVO     : Rotina para reenviar solicitacao de cartão da tela mancrd
   --------------
-  ALTERAÇÕES   : 
+  ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
   -------------- 
  */
 ?> 
@@ -21,11 +21,13 @@ isPostMethod();
 
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrcrcard = (isset($_POST['nrcrcard'])) ? $_POST['nrcrcard'] : 0;
+$nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
 
 $xml = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
 $xml .= "   <nrcrcard>" . $nrcrcard . "</nrcrcard>";
+$xml .= "   <nrctrcrd>" . $nrctrcrd . "</nrctrcrd>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
