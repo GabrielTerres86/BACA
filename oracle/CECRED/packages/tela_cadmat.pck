@@ -74,14 +74,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 						,ass.nrdconta
 						,ass.inpessoa
 						,to_char(ass.dtdemiss, 'DD/MM/RRRR') dtdemiss
-						,/*(SELECT dom.dscodigo
+						,(SELECT dom.dscodigo
 						    FROM tbcadast_dominio_campo dom 
 							 WHERE dom.nmdominio = 'CRAPASS.INTIPSAI'
-							   AND dom.cddominio = ass.intipsai)*/ 1 dstipsai
-						,/*(SELECT dom.dscodigo
+							   AND dom.cddominio = ass.intipsai) dstipsai
+						,(SELECT dom.dscodigo
 						    FROM tbcadast_dominio_campo dom 
 							 WHERE dom.nmdominio = 'CRAPASS.ININCTVA'
-							   AND dom.cddominio = ass.ininctva)*/ 1 dsinctva
+							   AND dom.cddominio = ass.ininctva) dsinctva
             ,ass.cdmotdem
 						,tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
 						                           ,pr_nmsistem => 'CRED'
@@ -92,17 +92,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 		        ,age.nmresage
 						,ass.nrcpfcgc	
 						,ass.nmprimtl
-						,ttl.cdempres
-						,ttl.nmextemp
+						,emp.cdempres
+						,emp.nmresemp
         FROM crapass ass
 				    ,crapage age
 						,crapttl ttl
+						,crapemp emp
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta
 				 AND age.cdcooper = ass.cdcooper
 				 AND age.cdagenci = ass.cdagenci
 				 AND ttl.cdcooper (+) = ass.cdcooper
-				 AND ttl.nrdconta (+) = ass.nrdconta;
+				 AND ttl.nrdconta (+) = ass.nrdconta
+				 AND emp.cdcooper (+) = ttl.cdcooper
+				 AND emp.cdempres (+) = ttl.cdempres;
     rw_crapass cr_crapass%ROWTYPE;
 		
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -214,7 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 											 pr_tag_pai  => 'Dados',
 											 pr_posicao  => vr_contador,
 											 pr_tag_nova => 'nmresemp',
-											 pr_tag_cont => rw_crapass.nmextemp,
+											 pr_tag_cont => rw_crapass.nmresemp,
 											 pr_des_erro => vr_dscritic);											 
     -- Admissão
 		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
