@@ -1138,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Lucas Afonso Lombardi Moreira
-  --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
+  --  Data     : Julho/2015.                   Ultima atualizacao: 30/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1152,6 +1152,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
   --                          de performance - Marcos(Supero)
+  --
+  --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
+  --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1181,11 +1184,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,emp.dsdemail
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
-
+             
+  -- Busca empresas que possuem pagamentos com débitos pendentes
+  CURSOR cr_crapemp_debito_pendente(pr_cdcooper IN crapemp.cdcooper%TYPE
+                                   ,pr_cdempres IN crapemp.cdempres%TYPE) IS
+    SELECT sum(lfp.vllancto) vllancto
+      FROM crappfp pfp
+          ,crapemp emp
+          ,craplfp lfp
+          ,crapass ass
+     WHERE pfp.cdcooper = pr_cdcooper
+       AND pfp.cdcooper = emp.cdcooper
+       AND pfp.cdempres = emp.cdempres
+       AND lfp.cdcooper = pfp.cdcooper
+       AND lfp.cdempres = pfp.cdempres
+       AND lfp.nrseqpag = pfp.nrseqpag
+       AND ass.cdcooper = pfp.cdcooper
+       AND ass.nrdconta = emp.nrdconta
+       AND pfp.idsitapr = 5 --> Aprovados
+       AND pfp.flsitdeb = 0 --> Ainda nao debitado
+       AND pfp.cdempres = pr_cdempres
+     GROUP BY emp.cdempres
+             ,emp.nrdconta
+             ,emp.dsdemail
+             ,trunc(pfp.dtsolest)
+             ,ass.vllimcre;
+  
+  rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
+  
   -- Variaveis
   vr_tab_saldo  EXTR0001.typ_tab_saldos;
   vr_saldo      NUMBER;
   vr_des_erro   VARCHAR2(3);
+  vr_vllancto    NUMBER;
 
   --Variaveis de E-mail
   vr_email_assunto VARCHAR(300);
@@ -1221,10 +1252,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dscritic := ' – ERRO NAO TRATADO AO VERIFICAR SALDO' || ' - ' || vr_tab_erro(0).dscritic;
           RAISE vr_exc_erro;
         END IF;
+        
         vr_saldo := (vr_tab_saldo(0).vlsddisp + vr_tab_saldo(0).vllimcre);
-
+        
+        --Busca também os pagamentos aprovados para somar
+        OPEN cr_crapemp_debito_pendente(pr_cdcooper => pr_cdcooper
+                                       ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_crapemp_debito_pendente 
+           INTO rw_crapemp_debito_pendente;
+        CLOSE cr_crapemp_debito_pendente;          
+        
+        --Soma vllancto dos estourados + vllancto aprovados
+        vr_vllancto := rw_crapemp.vllancto + rw_crapemp_debito_pendente.vllancto;
+        
         -- Se houver saldo
-        IF vr_saldo >= rw_crapemp.vllancto THEN
+        IF vr_saldo >= vr_vllancto THEN
           -- Atualiza os pagamentos para aprovados
           BEGIN
             UPDATE crappfp

@@ -3328,7 +3328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : AyllosWeb
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Maio/2015.                   Ultima atualizacao: 07/07/2016
+   --  Data     : Maio/2015.                   Ultima atualizacao: 30/10/2017
    --
    -- Dados referentes ao programa:
    --
@@ -3341,6 +3341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
    --                          de performance - Marcos(Supero)
+   -- 
+   --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
+   --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
    --
    ---------------------------------------------------------------------------------------------------------------
 
@@ -3383,7 +3386,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                   ,ass.nrdconta
                   ,ass.vllimcre;
       rw_crappfp cr_crappfp%ROWTYPE;
-
+      
+      -- Busca os dados de convenios
+      CURSOR cr_crappfp_aprovados(p_cdcooper crapcop.cdcooper%TYPE
+                                 ,p_cdempres crapemp.cdempres%TYPE) IS
+        SELECT ass.cdcooper
+              ,ass.cdagenci
+              ,emp.cdempres
+              ,emp.nmresemp
+              ,ass.nrdconta
+              ,MIN(TO_CHAR(pfp.dtsolest,'hh24:mi')) dtsolest
+              ,SUM(pfp.qtlctpag) qtlctpag
+              ,SUM(pfp.vllctpag) vllctpag
+              ,SUM(pfp.qtlctpag*pfp.vltarapr) vltarire
+              ,to_number(ass.vllimcre) vllimcre
+          FROM crapass ass
+              ,crapemp emp
+              ,crappfp pfp
+         WHERE pfp.cdcooper = 1 --> Cooperativa conectada
+           AND pfp.idsitapr = 5 --> pendentes
+           AND pfp.flsitdeb = 0
+           AND pfp.cdcooper = emp.cdcooper
+           AND pfp.cdempres = emp.cdempres
+           AND emp.cdcooper = ass.cdcooper
+           AND emp.nrdconta = ass.nrdconta
+           AND emp.cdempres = p_cdempres
+         GROUP BY ass.cdcooper
+                 ,ass.cdagenci
+                 ,emp.cdempres
+                 ,emp.nmresemp
+                 ,ass.nrdconta
+                 ,ass.vllimcre;                  
+      rw_crappfp_aprovados cr_crappfp_aprovados%ROWTYPE;
+      
       -- Variaveis
       vr_excerror EXCEPTION;
 
@@ -3397,6 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dsretorn    VARCHAR2(32767);
       vr_ind_sald    PLS_INTEGER;
       vr_vlsddisp    crapsda.vlsddisp%TYPE;
+      vr_vllancto    NUMBER;
 
       -- Cursor generico de calendario
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -3495,9 +3531,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
             -- Adquire saldo disponível total da conta
             vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp;
-
+            
+            OPEN cr_crappfp_aprovados(p_cdcooper => vr_cdcooper
+                                     ,p_cdempres => rw_crappfp.cdempres);
+              FETCH cr_crappfp_aprovados
+                INTO rw_crappfp_aprovados;
+            CLOSE cr_crappfp_aprovados;
+            
+            vr_vllancto := NVL(rw_crappfp_aprovados.vllctpag,0) + NVL(rw_crappfp.vllctpag,0);
+            
             -- Se houver saldo suficiente
-            IF (vr_vlsddisp + NVL(rw_crappfp.vllimcre,0) - NVL(rw_crappfp.vllctpag,0))>0 THEN
+            IF (vr_vlsddisp + NVL(rw_crappfp.vllimcre,0)) - vr_vllancto >= 0 THEN
                CONTINUE; -- Proximo registro
             END IF;
 
@@ -3513,7 +3557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             vr_tab_dados(vr_index)('vllctpag') := TO_CHAR(rw_crappfp.vllctpag, 'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.');
             vr_tab_dados(vr_index)('vltarire') := TO_CHAR(rw_crappfp.vltarire, 'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.');
             vr_tab_dados(vr_index)('vltotdeb') := TO_CHAR((NVL(rw_crappfp.vllctpag,0) +  NVL(rw_crappfp.vltarire,0)), 'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.');
-            vr_tab_dados(vr_index)('vlestour') := TO_CHAR(ABS(vr_vlsddisp + NVL(rw_crappfp.vllimcre,0) - NVL(rw_crappfp.vllctpag,0)), 'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.');
+            vr_tab_dados(vr_index)('vlestour') := TO_CHAR(ABS(vr_vlsddisp + NVL(rw_crappfp.vllimcre,0) - vr_vllancto), 'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.');
          END LOOP;
       CLOSE cr_crappfp;
 
