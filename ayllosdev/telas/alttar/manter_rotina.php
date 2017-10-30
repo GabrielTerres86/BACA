@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   : 26/11/2015 - Ajustado para buscar os convenios de folha
  *                             de pagamento. (Andre Santos - SUPERO)
+ *			      30/10/2017 - Adicionado os campos vlpertar, vlmaxtar, vlmintar 
+ *							   e tpcobtar na tela. PRJ M150 (Mateus Z - Mouts)
  * -------------- 
  */
 ?> 
@@ -34,6 +36,10 @@
 	$lstconve		= (isset($_POST['lstconve'])) ? $_POST['lstconve'] : '' ;
     $lstocorr		= (isset($_POST['lstocorr'])) ? $_POST['lstocorr'] : '' ;
     $cdinctar		= (isset($_POST['cdinctar'])) ? $_POST['cdinctar'] : '' ;
+	$vlpertar		= (isset($_POST['vlpertar'])) ? $_POST['vlpertar'] : '' ;
+	$vlmintar		= (isset($_POST['vlmintar'])) ? $_POST['vlmintar'] : '' ;
+    $vlmaxtar		= (isset($_POST['vlmaxtar'])) ? $_POST['vlmaxtar'] : '' ;
+    $tpcobtar		= (isset($_POST['tpcobtar'])) ? $_POST['tpcobtar'] : '' ;
 								
 	// Procedure a ser executada
 	$procedure = 'incluir-lista-cadfco';
@@ -63,9 +69,14 @@
 	$xml .= '		<lstocorr>'.$lstocorr.'</lstocorr>';	
 	$xml .= '		<lstlcrem>'.$lstlcrem.'</lstlcrem>';
 	$xml .= '		<cdinctar>'.$cdinctar.'</cdinctar>';
+	$xml .= '		<lsttptar>'.$tpcobtar.'</lsttptar>';
+	$xml .= '		<lstvlper>'.$vlpertar.'</lstvlper>';
+	$xml .= '		<lstvlmin>'.$vlmintar.'</lstvlmin>';
+	$xml .= '		<lstvlmax>'.$vlmaxtar.'</lstvlmax>';
 	$xml .= '		<flgerlog>YES</flgerlog>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
+	
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 

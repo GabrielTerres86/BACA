@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 25/08/2015
  * OBJETIVO     : Rotina para buscar sequencial da tabela ALTTAR
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/10/2017 - Alterado a largura da tela para 800 para comportar os novos campos 
+ *							   vlpertar, vlmaxtar, vlmintar e tpcobtar. PRJ M150 (Mateus Z - Mouts)
  * -------------- 
  */
 
@@ -91,7 +92,7 @@
 													<table width="100%"  border= "0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 														<tr>
 															<td align="center">
-																<table width="690" border="0" cellpadding="0" cellspacing="0" style="backgroung-color: #F4F3F0;">
+																<table width="800" border="0" cellpadding="0" cellspacing="0" style="backgroung-color: #F4F3F0;">
 																	<tr>
 																		<td>
 																			<!-- INCLUDE DA TELA DE PESQUISA -->
