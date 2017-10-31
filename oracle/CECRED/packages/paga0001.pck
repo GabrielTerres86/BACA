@@ -1181,7 +1181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 02/08/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 25/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1542,7 +1542,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   		              crapass, crapttl, crapjur 
        						 (Adriano - P339).
                    
-       03/10/2017 - Ajustes na  validação de pagamentos (Ricardo Linhares - prj 356.2).                   
+       03/10/2017 - Ajustes na  validação de pagamentos (Ricardo Linhares - prj 356.2).    
+       
+       25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
+                    para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
+                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -10174,7 +10178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 28/07/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 25/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -10204,7 +10208,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
     --												   
     --               02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
-
+    --
+    --               25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
+    --                            para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
+    --                            para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)
     -- ..........................................................................
 
   BEGIN
@@ -10486,12 +10493,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         IF cr_craperr%NOTFOUND THEN
           --Fechar Cursor
           CLOSE cr_craperr;
-          pr_dscritic:= 'Codigo de barras invalido.';
+          vr_dscritic:= 'Codigo de barras invalido.';
           --Levantar Excecao
           RAISE vr_exc_erro;
         ELSE
           --Retornar descricao critica
-          pr_dscritic:= rw_craperr.dscritic;
+          vr_dscritic:= rw_craperr.dscritic;
         END IF;
         --Fechar Cursor
         CLOSE cr_craperr;
@@ -10576,12 +10583,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         IF cr_craperr%NOTFOUND THEN
           --Fechar Cursor
           CLOSE cr_craperr;
-          pr_dscritic:= 'Codigo de barras invalido.';
+          vr_dscritic:= 'Codigo de barras invalido.';
           --Levantar Excecao
           RAISE vr_exc_erro;
         ELSE
           --Retornar descricao critica
-          pr_dscritic:= rw_craperr.dscritic;
+          vr_dscritic:= rw_craperr.dscritic;
         END IF;
         --Fechar Cursor
         CLOSE cr_craperr;
