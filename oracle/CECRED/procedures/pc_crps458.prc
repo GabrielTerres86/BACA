@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps458 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes     
-   Data    : Outubro/2005                    Ultima atualizacao: 16/11/2016
+   Data    : Outubro/2005                    Ultima atualizacao: 31/10/2017
 
    Dados referentes ao programa:
 
@@ -57,6 +57,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps458 (pr_cdcooper IN crapcop.cdcooper%T
 
            16/11/2016 - #549653 Correção de tratamento de erros após a chamada da rotina 
                         pc_verifica_tarifa_operacao (Carlos)
+                        
+           31/10/2017 - #755898 Correção de sintaxe de uso de índice no cursor cr_crablcm (Carlos)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -85,7 +87,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps458 (pr_cdcooper IN crapcop.cdcooper%T
   CURSOR cr_crablcm(pr_cdcooper IN craplcm.cdcooper%TYPE,
                     pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
                     pr_vlchequb IN craplcm.vllanmto%TYPE) IS
-    SELECT /*index (LCM CRAPLCM##CRAPLCM4)*/ 
+    SELECT /*+ index (LCM CRAPLCM##CRAPLCM4)*/ 
            lcm.cdcooper, lcm.nrdconta
            ,( SELECT COUNT(1)  FROM craplcm lcm2
            WHERE lcm2.cdcooper = lcm.cdcooper
