@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Mirtes
-       Data    : Novembro/2004                     Ultima atualizacao: 21/08/2017
+       Data    : Novembro/2004                     Ultima atualizacao: 31/10/2017
 
        Frequencia: Semanal.
        Objetivo  : Gerar relatorio 378 - Restricoes Analise Borderos
@@ -52,6 +52,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
                                 
                    21/08/2017 - #723707 Troca de cláusula "dsrestri like" por "cdocorre in"
                                 no cursor cr_crapabc (Carlos)
+
+                   31/10/2017 - Incluso tratativa para verificar se existe valor antes de
+				                assumir registro. Erro apresentado no processo batch (Daniel)
 
     ............................................................................ */
 
@@ -254,8 +257,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
                   -- Buscar valor
                   vr_vlutlcpf := vr_tab_vlcheque(vr_idxcdb);
                 END IF;
-                -- Sumarizar quantidade de cheques
-                vr_qtdevchq := vr_tab_qtchqdev(rw_restri.nrcpfcgc);
+
+				-- Sumarizar quantidade de cheques
+				IF vr_tab_qtchqdev.exists(rw_restri.nrcpfcgc) THEN
+                  -- Buscar valor
+                  vr_qtdevchq := vr_tab_qtchqdev(rw_restri.nrcpfcgc);
+                ELSE
+				  vr_qtdevchq := 0;  
+                END IF;
+
               END IF;
 
               -- Gravar registro de movimento
