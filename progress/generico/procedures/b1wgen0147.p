@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 01/09/2017
+   Data    : 02/05/2013                         Ultima atualizacao: 30/10/2017
 
    Dados referentes ao programa:
 
@@ -34,7 +34,9 @@
 			   01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
 			   28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							CH, RE, PP E CT. (PRJ339 - Reinert)
+							CH, RE, PP E CT. (PRJ339 - Reinert)																	  
+
+			   30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0147tt.i }
@@ -437,8 +439,7 @@ PROCEDURE cria_dados_totvs:
            OUTPUT STREAM str_2 CLOSE.
                
        END. /*fim do juridica*/
-           
-	 UNIX SILENT VALUE ('"cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/" 2>/dev/null').
+     UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + '/usr/local/cecred/bndes/xml/ 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       
