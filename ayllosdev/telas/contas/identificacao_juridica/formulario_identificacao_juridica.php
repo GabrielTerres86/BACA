@@ -53,7 +53,7 @@
 	<br />
 		
 	<? if ((int)getByTagName($identificacao,'inpessoa') >= 2): ?>
-    <label for="idregtrb" class="rotulo-120">Regime tribut&aacute;rio:</label>
+    <label for="idregtrb" class="rotulo-90">Regime tribut.:</label>
 	<select id="idregtrb" name="idregtrb">
 		<option value=""> - </option>
 		<option value="1" <? if (getByTagName($identificacao,'idregtrb') == "1"){ echo " selected"; } ?>> 1 - Simples Nacional</option>
