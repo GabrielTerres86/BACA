@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps458 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes     
-   Data    : Outubro/2005                    Ultima atualizacao: 08/06/2016
+   Data    : Outubro/2005                    Ultima atualizacao: 16/11/2016
 
    Dados referentes ao programa:
 
@@ -55,6 +55,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps458 (pr_cdcooper IN crapcop.cdcooper%T
 		       09/06/2016 - Chamar a procedure 'pc_verifica_tarifacao' mesmo 
 			                quando vr_vltarsaq = 0 (Diego).
 
+           16/11/2016 - #549653 Correção de tratamento de erros após a chamada da rotina 
+                        pc_verifica_tarifa_operacao (Carlos)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -468,15 +470,7 @@ BEGIN
                                               ,pr_dscritic => vr_dscritic);
           
           -- Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
-            -- Se possui errovr_cdcritic no vetor
-            IF vr_tab_erro.Count > 0 THEN
-              vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-            ELSE
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-            END IF;
+          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             -- Envio centralizado de log de erro
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
