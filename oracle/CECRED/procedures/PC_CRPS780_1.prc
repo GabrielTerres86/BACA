@@ -652,9 +652,6 @@ BEGIN
                  vr_vlttmupr := vr_tab_dados_epr(vr_tab_dados_epr.first).vlttmupr;
                  vr_vlttjmpr := vr_tab_dados_epr(vr_tab_dados_epr.first).vlttjmpr;
                  
-                 /*if nvl(pr_vlpagmto,0 ) = 0 and nvl(pr_vldabono,0) = 0 then
-                    vr_vldescto := vr_vldescto + vr_vlttmupr + vr_vlttjmpr;
-                 end if;*/
             end if;
             
             if vr_vlsldtot < vr_vldescto 
@@ -664,15 +661,6 @@ BEGIN
             
             -- Subtrai o valor pago do saldo disponivel
             vr_vlsldtot := vr_vlsldtot - vr_vldescto;
-            
-            -- Lancamento do valor de juros + 60
-            open c_crapris(pr_cdcooper => pr_cdcooper
-                          ,pr_nrdconta => rw_crapepr.nrdconta
-                          ,pr_nrctremp => rw_crapepr.nrctremp);
-            fetch c_crapris into vr_vljura60;
-            close c_crapris;
-            
-            
             
             -- Efetuar lancamento na conta-corrente
             
@@ -701,78 +689,7 @@ BEGIN
                     end if;
             -- Inicializar número auxiliar de documento com o empréstimo
             vr_nrdocmto := rw_crapepr.nrctremp;
-            
-            if nvl(vr_vljura60,0) > 0 then
-               vr_vldescto := vr_vldescto - vr_vljura60;  
-            end if;
-            
-            -- cria lancamento LEM
-            
-             empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                   ,pr_cdagenci => pr_cdagenci
-                                                   ,pr_cdbccxlt => 100
-                                                   ,pr_cdoperad => pr_cdoperad
-                                                   ,pr_cdpactra => pr_cdagenci
-                                                   ,pr_tplotmov => 5
-                                                   ,pr_nrdolote => 600029
-                                                   ,pr_nrdconta => rw_crapepr.nrdconta
-                                                   ,pr_cdhistor => 2388 -- valor principal
-                                                   ,pr_nrctremp => rw_crapepr.nrctremp
-                                                   ,pr_vllanmto => vr_vldescto
-                                                   ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                                   ,pr_txjurepr => 0
-                                                   ,pr_vlpreemp => 0
-                                                   ,pr_nrsequni => 0
-                                                   ,pr_nrparepr => 0
-                                                   ,pr_flgincre => true
-                                                   ,pr_flgcredi => false
-                                                   ,pr_nrseqava => 0
-                                                   ,pr_cdorigem => 7 -- batch
-                                                   ,pr_cdcritic => vr_cdcritic
-                                                   ,pr_dscritic => vr_dscritic);
-                                                           
-                      if vr_dscritic is not null then
-                          vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                          --pr_des_reto := 'NOK';
-                          raise vr_exc_erro;
-                       end if;
-                       
-           -- Lancamento de juros + 60 -  2473
-          if nvl(vr_vljura60,0) > 0 then
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                   ,pr_cdagenci => pr_cdagenci
-                                                   ,pr_cdbccxlt => 100
-                                                   ,pr_cdoperad => pr_cdoperad
-                                                   ,pr_cdpactra => pr_cdagenci
-                                                   ,pr_tplotmov => 5
-                                                   ,pr_nrdolote => 600029
-                                                   ,pr_nrdconta => rw_crapepr.nrdconta
-                                                   ,pr_cdhistor => 2473 -- juros de mora
-                                                   ,pr_nrctremp => rw_crapepr.nrctremp
-                                                   ,pr_vllanmto => vr_vljura60
-                                                   ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                                   ,pr_txjurepr => 0
-                                                   ,pr_vlpreemp => 0
-                                                   ,pr_nrsequni => 0
-                                                   ,pr_nrparepr => 0
-                                                   ,pr_flgincre => true
-                                                   ,pr_flgcredi => false
-                                                   ,pr_nrseqava => 0
-                                                   ,pr_cdorigem => 7 -- batch
-                                                   ,pr_cdcritic => vr_cdcritic
-                                                   ,pr_dscritic => vr_dscritic);
-                                                           
-                      if vr_dscritic is not null then
-                          vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor juros+60): ' || vr_dscritic;
-                          --pr_des_reto := 'NOK';
-                          raise vr_exc_erro;
-                       end if;
-              
-
-          end if;
-          
+      
           
           IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
             rw_crapepr.txjuremp := rw_crapepr.vltaxa_juros;
@@ -891,44 +808,123 @@ BEGIN
               (nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
               (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0))) - (vr_vldescto + nvl(pr_vldabono,0)) > 0 THEN
           
-          /* se saldo remanescente de multa + saldo remanescente juros for menor que o valor a descontar,
-             assume como pagamento de multa e de juros o mesmo valor de multa e juros */
-          if ((nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
-              (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0))) < vr_vldescto then
-              vr_vlpgmupr := nvl(rw_crapepr.vlttmupr,0);
-              vr_vlpgjmpr := nvl(rw_crapepr.vlttjmpr,0);
-              -- saldo devedor deve ser a diferença entre o valor descontado e os juros e multa
-              rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - (vr_vldescto - vr_vlpgmupr - vr_vlpgjmpr); -- - vr_vlttmupr - vr_vlttjmpr;
-          else
+          
              /* se multa + juros for > que valor do desconto + abono, deve calcular multa e juros proporcional
                 calcula zero para saldo devedor */
-              vr_vldescori := vr_vldescto; -- mantem o desconto original
-                /* 1 prioriza multa */
-              if rw_crapepr.vlttmupr > 0 then
-                  vr_vlpgmupr := rw_crapepr.vlpgmupr + vr_vldescto;
-                
-                  vr_vldescto := vr_vldescto - (rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr);
-                  
-                  if vr_vlpgmupr > rw_crapepr.vlttmupr then
-                     vr_vlpgmupr := rw_crapepr.vlttmupr  ;
-                  end if;
-              end if;
-              /* 2 prioriza juros */
-              
-              if rw_crapepr.vlttjmpr > 0 
-               and vr_vldescto > 0  then
-                 vr_vlpgjmpr :=  rw_crapepr.vlpgjmpr + abs(vr_vldescto);
-                  if vr_vlpgjmpr > rw_crapepr.vlttjmpr then
-                     vr_vlpgjmpr := rw_crapepr.vlttjmpr ;
-                  end if;
-              end if;   
-              rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vldescori; 
-          end if;
+            IF (rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr) >= vr_vldescto THEN
+                vr_vlpgmupr := rw_crapepr.vlpgmupr + vr_vldescto;
+                vr_vldescto := 0;
+            ELSE     
+             --  vr_vldescto := vr_vldescto - (rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr);
+               vr_vlpgmupr := rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr;
+               vr_vldescto := vr_vldescto - vr_vlpgmupr;
+            END IF;                       
+            /* 2o Valor de Mora     */
+            IF vr_vldescto > 0 THEN
+              IF (rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr) >= vr_vldescto THEN
+                vr_vlpgjmpr := rw_crapepr.vlpgjmpr + vr_vldescto;
+                vr_vldescto := 0;
+              ELSE
+              --  vr_vldescto := vr_vldescto - (rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr);
+                vr_vlpgjmpr := rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr; 
+                vr_vldescto := vr_vldescto - vr_vlpgjmpr;
+              END IF;
+            END IF;
+                        
+            /* 3o Valor em Prejuizo */
+            IF vr_vldescto > 0 THEN
+              IF rw_crapepr.vlsdprej < 0 THEN
+                 rw_crapepr.vlsdprej := (rw_crapepr.vlsdprej * -1) - vr_vldescto;
+              ELSE
+                 rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vldescto;
+              END IF;
+            END IF;
         ELSE
           vr_dscritic := 'Valor de pagamento superior ao valor do saldo disponivel do prejuizo: '||vr_vldescto;
           raise vr_exc_erro;        
         END IF;
         
+        if vr_vldescto > 0 then
+          
+           -- Lancamento do valor de juros + 60
+            open c_crapris(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => rw_crapepr.nrdconta
+                          ,pr_nrctremp => rw_crapepr.nrctremp);
+            fetch c_crapris into vr_vljura60;
+            close c_crapris;
+            
+            if nvl(vr_vljura60,0) > 0 then
+               if vr_vljura60 < vr_vldescto then
+                  vr_vldescto := vr_vldescto - vr_vljura60;  
+               end if;
+            end if;
+            
+           -- atualiza valor principal.
+           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                   ,pr_cdagenci => pr_cdagenci
+                                                   ,pr_cdbccxlt => 100
+                                                   ,pr_cdoperad => pr_cdoperad
+                                                   ,pr_cdpactra => pr_cdagenci
+                                                   ,pr_tplotmov => 5
+                                                   ,pr_nrdolote => 600029
+                                                   ,pr_nrdconta => rw_crapepr.nrdconta
+                                                   ,pr_cdhistor => 2388 -- valor principal
+                                                   ,pr_nrctremp => rw_crapepr.nrctremp
+                                                   ,pr_vllanmto => vr_vldescto
+                                                   ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                                   ,pr_txjurepr => 0
+                                                   ,pr_vlpreemp => 0
+                                                   ,pr_nrsequni => 0
+                                                   ,pr_nrparepr => 0
+                                                   ,pr_flgincre => true
+                                                   ,pr_flgcredi => false
+                                                   ,pr_nrseqava => 0
+                                                   ,pr_cdorigem => 7 -- batch
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+                                                           
+                      if vr_dscritic is not null then
+                          vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                          --pr_des_reto := 'NOK';
+                          raise vr_exc_erro;
+                       end if;
+                       
+          -- Lancamento de juros + 60 -  2473
+          if  nvl(vr_vljura60,0) > 0
+          and vr_vljura60 > vr_vldescto then
+              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                   ,pr_cdagenci => pr_cdagenci
+                                                   ,pr_cdbccxlt => 100
+                                                   ,pr_cdoperad => pr_cdoperad
+                                                   ,pr_cdpactra => pr_cdagenci
+                                                   ,pr_tplotmov => 5
+                                                   ,pr_nrdolote => 600029
+                                                   ,pr_nrdconta => rw_crapepr.nrdconta
+                                                   ,pr_cdhistor => 2473 -- juros de mora
+                                                   ,pr_nrctremp => rw_crapepr.nrctremp
+                                                   ,pr_vllanmto => vr_vljura60
+                                                   ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                                   ,pr_txjurepr => 0
+                                                   ,pr_vlpreemp => 0
+                                                   ,pr_nrsequni => 0
+                                                   ,pr_nrparepr => 0
+                                                   ,pr_flgincre => true
+                                                   ,pr_flgcredi => false
+                                                   ,pr_nrseqava => 0
+                                                   ,pr_cdorigem => 7 -- batch
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+                                                           
+                      if vr_dscritic is not null then
+                          vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor juros+60): ' || vr_dscritic;
+                          --pr_des_reto := 'NOK';
+                          raise vr_exc_erro;
+                       end if;
+                end if;                     
+        
+        end if;
         
           -- atualizar juros de mora -- 2475
           if nvl(vr_vlpgjmpr,0) > 0 then
@@ -1007,8 +1003,8 @@ BEGIN
                 ,txjuremp = rw_crapepr.txjuremp
                 ,indpagto = rw_crapepr.indpagto
                 ,vlsdprej = rw_crapepr.vlsdprej  
-                ,vlpgjmpr = nvl( vr_vlpgjmpr, nvl(vlpgjmpr,0) )
-                ,vlpgmupr = nvl( vr_vlpgmupr, nvl(vlpgmupr,0) )
+                ,vlpgjmpr = vlpgjmpr + nvl( vr_vlpgjmpr, nvl(vlpgjmpr,0) )
+                ,vlpgmupr = vlpgmupr + nvl( vr_vlpgmupr, nvl(vlpgmupr,0) )
          WHERE rowid = rw_crapepr.rowid;
         EXCEPTION
           WHEN OTHERS THEN
