@@ -302,7 +302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						
 								-- Erro
 								pr_cdcritic := 0;
-								pr_dscritic := 'Erro na IMPSIM.PC_IMPORTAR_ARQUIVO_SIM --> ' || SQLERRM;
+								pr_dscritic := 'Erro na IMPSIM.PC_IMPORTAR_ARQUIVO_SIM --> Veririque se o arquivo está em formato correto. ' || SQLERRM;
 						
 								-- Existe para satisfazer exigência da interface. 
 								pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||

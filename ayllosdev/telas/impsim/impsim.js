@@ -282,12 +282,13 @@ function formataManterCarga() {
 
 	return false;
 }
+
 function validaImportacao() {
 
-	// if ($('#nome_arquivo','#frmImportaArquivo').val() == '') {
-	// 	showError("error","Campo \"Nome do Arquivo\" &eacute; obrigat&oacute;rio.","Alerta - Ayllos","$('#nome_arquivo','#frmImportaArquivo').focus();");
-	// 	return false;
-	// }
+	if ($('#nome_arquivo','#frmImportaArquivo').val() == '') {
+	 	showError("error","Campo \"Nome do Arquivo\" &eacute; obrigat&oacute;rio.","Alerta - Ayllos","$('#nome_arquivo','#frmImportaArquivo').focus();");
+	 	return false;
+	}
 
 	importaArquivo();
 	return false;

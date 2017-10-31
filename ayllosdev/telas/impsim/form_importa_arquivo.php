@@ -40,6 +40,3 @@
 	</div>
 
 </form>
-<script language="javascrip">
-
-</script>

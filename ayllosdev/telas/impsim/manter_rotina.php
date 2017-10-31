@@ -36,8 +36,12 @@
             $xml .= "	</Dados>";
             $xml .= "</Root>";
 
+            $tempoExecucaoAtual = ini_get('max_execution_time');
+            ini_set('max_execution_time', 0);
+
             $xmlResult = mensageria($xml, "IMPSIM", "IMPSIM_IMPORTA_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             $xmlObj = getObjectXML($xmlResult);
+            ini_set('max_execution_time', $tempoExecucaoAtual);
 
             if (isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO"){
                 $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
