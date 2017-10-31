@@ -308,7 +308,10 @@
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)		    
 
 			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)
+                             Projeto 339 - CRM. (Lombardi)	  
+
+                31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
+                             requisicao-lista-documentos. Projeto 339 - CRM. (Lombardi)
                      
 .............................................................................*/
 
@@ -5466,7 +5469,7 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
                     ELSE
                     IF hXmlNode1Soap:NAME = "NrCpfCnpj" THEN
                     DO:
-                        ASSIGN aux_nrcpfcgc = INTE(REPLACE(REPLACE(hXmlNode2Soap:NODE-VALUE,".",""),"-","")) NO-ERROR.
+                        ASSIGN aux_nrcpfcgc = DEC(REPLACE(REPLACE(REPLACE(hXmlNode2Soap:NODE-VALUE,".",""),"-",""), "/", "")) NO-ERROR.
                     END.
                 END.
 

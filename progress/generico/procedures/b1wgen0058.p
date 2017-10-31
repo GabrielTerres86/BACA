@@ -183,8 +183,11 @@
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
 
-				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
+				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin). 
  
+                31/10/2017 - Ajustado rotina Grava_Dados, gravar crapdoc com tipo 47 e 50
+                             quando for pessoa fisica. PRJ339 - CRM (Lombardi)
+                              
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -3193,108 +3196,6 @@ PROCEDURE Grava_Dados:
                         END.
                     END.
 
-           ContadorDoc47: DO TRANSACTION ON ENDKEY UNDO ContadorDoc47, LEAVE ContadorDoc47
-                           ON ERROR  UNDO ContadorDoc47, LEAVE ContadorDoc47
-                           ON STOP   UNDO ContadorDoc47, LEAVE ContadorDoc47: DO aux_contador = 1 TO 10:
-    
-                            FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                               crapdoc.nrdconta = par_nrdconta AND
-                                               crapdoc.tpdocmto = 47           AND
-                                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl AND 
-                                               crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc)
-                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-                            IF NOT AVAILABLE crapdoc THEN
-                                DO:
-                                    IF LOCKED(crapdoc) THEN
-                                        DO:
-                                            IF aux_contador = 10 THEN
-                                                DO:
-                                                    ASSIGN aux_cdcritic = 341.
-                                                    LEAVE ContadorDoc47.
-                                                END.
-                                            ELSE 
-                                                DO: 
-                                                    PAUSE 1 NO-MESSAGE.
-                                                    NEXT.
-                                                END.
-                                        END.
-                                    ELSE
-                                        DO: 
-                                            CREATE crapdoc.
-                                            ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                   crapdoc.nrdconta = par_nrdconta
-                                                   crapdoc.flgdigit = FALSE
-                                                   crapdoc.dtmvtolt = par_dtmvtolt
-                                                   crapdoc.tpdocmto = 47
-                                                   crapdoc.idseqttl = par_idseqttl
-                                                   crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
-                                            VALIDATE crapdoc.        
-                                            LEAVE ContadorDoc47.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    ASSIGN crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt.
-            
-                                    LEAVE ContadorDoc47.
-                                END.
-                        END.
-                    END.
-
-           ContadorDoc50: DO TRANSACTION ON ENDKEY UNDO ContadorDoc50, LEAVE ContadorDoc50
-                           ON ERROR  UNDO ContadorDoc50, LEAVE ContadorDoc50
-                           ON STOP   UNDO ContadorDoc50, LEAVE ContadorDoc50: DO aux_contador = 1 TO 10:
-    
-                            FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                               crapdoc.nrdconta = par_nrdconta AND
-                                               crapdoc.tpdocmto = 50           AND
-                                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl AND 
-                                               crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc)
-                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-                            IF NOT AVAILABLE crapdoc THEN
-                                DO:
-                                    IF LOCKED(crapdoc) THEN
-                                        DO:
-                                            IF aux_contador = 10 THEN
-                                                DO:
-                                                    ASSIGN aux_cdcritic = 341.
-                                                    LEAVE ContadorDoc50.
-                                                END.
-                                            ELSE 
-                                                DO: 
-                                                    PAUSE 1 NO-MESSAGE.
-                                                    NEXT.
-                                                END.
-                                        END.
-                                    ELSE
-                                        DO: 
-                                            CREATE crapdoc.
-                                            ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                   crapdoc.nrdconta = par_nrdconta
-                                                   crapdoc.flgdigit = FALSE
-                                                   crapdoc.dtmvtolt = par_dtmvtolt
-                                                   crapdoc.tpdocmto = 50
-                                                   crapdoc.idseqttl = par_idseqttl
-                                                   crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
-                                            VALIDATE crapdoc.        
-                                            LEAVE ContadorDoc50.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    ASSIGN crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt.
-            
-                                    LEAVE ContadorDoc50.
-                                END.
-                        END.
-                    END.
-
            IF par_nmrotina = "Representante/Procurador" THEN
                 ASSIGN aux_msgdolog = "Incluiu na conta " + 
                                     STRING(par_nrdconta) +
@@ -3509,6 +3410,112 @@ PROCEDURE Grava_Dados:
                 ASSIGN aux_cdcritic = 9
                        aux_dscritic = "".
                 UNDO Grava, LEAVE Grava.
+            END.
+        
+        
+        IF crapass.inpessoa = 1 THEN
+        DO:
+            ContadorDoc47: DO TRANSACTION ON ENDKEY UNDO ContadorDoc47, LEAVE ContadorDoc47
+                            ON ERROR  UNDO ContadorDoc47, LEAVE ContadorDoc47
+                            ON STOP   UNDO ContadorDoc47, LEAVE ContadorDoc47: DO aux_contador = 1 TO 10:
+      
+                             FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                                                crapdoc.nrdconta = par_nrdconta AND
+                                                crapdoc.tpdocmto = 47           AND
+                                                crapdoc.dtmvtolt = par_dtmvtolt AND
+                                                crapdoc.idseqttl = par_idseqttl AND 
+                                                crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc)
+                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+             
+                             IF NOT AVAILABLE crapdoc THEN
+                                 DO:
+                                     IF LOCKED(crapdoc) THEN
+                                         DO:
+                                             IF aux_contador = 10 THEN
+                                                 DO:
+                                                     ASSIGN aux_cdcritic = 341.
+                                                     LEAVE ContadorDoc47.
+                                                 END.
+                                             ELSE 
+                                                 DO: 
+                                                     PAUSE 1 NO-MESSAGE.
+                                                     NEXT.
+                                                 END.
+                                         END.
+                                     ELSE
+                                         DO: 
+                                             CREATE crapdoc.
+                                             ASSIGN crapdoc.cdcooper = par_cdcooper
+                                                    crapdoc.nrdconta = par_nrdconta
+                                                    crapdoc.flgdigit = FALSE
+                                                    crapdoc.dtmvtolt = par_dtmvtolt
+                                                    crapdoc.tpdocmto = 47
+                                                    crapdoc.idseqttl = par_idseqttl
+                                                    crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
+                                             VALIDATE crapdoc.        
+                                             LEAVE ContadorDoc47.
+                                         END.
+                                 END.
+                             ELSE
+                                 DO:
+                                     ASSIGN crapdoc.flgdigit = FALSE
+                                            crapdoc.dtmvtolt = par_dtmvtolt.
+             
+                                     LEAVE ContadorDoc47.
+                                 END.
+                         END.
+                     END.
+
+            ContadorDoc50: DO TRANSACTION ON ENDKEY UNDO ContadorDoc50, LEAVE ContadorDoc50
+                            ON ERROR  UNDO ContadorDoc50, LEAVE ContadorDoc50
+                            ON STOP   UNDO ContadorDoc50, LEAVE ContadorDoc50: DO aux_contador = 1 TO 10:
+      
+                             FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                                                crapdoc.nrdconta = par_nrdconta AND
+                                                crapdoc.tpdocmto = 50           AND
+                                                crapdoc.dtmvtolt = par_dtmvtolt AND
+                                                crapdoc.idseqttl = par_idseqttl AND 
+                                                crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc)
+                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+             
+                             IF NOT AVAILABLE crapdoc THEN
+                                 DO:
+                                     IF LOCKED(crapdoc) THEN
+                                         DO:
+                                             IF aux_contador = 10 THEN
+                                                 DO:
+                                                     ASSIGN aux_cdcritic = 341.
+                                                     LEAVE ContadorDoc50.
+                                                 END.
+                                             ELSE 
+                                                 DO: 
+                                                     PAUSE 1 NO-MESSAGE.
+                                                     NEXT.
+                                                 END.
+                                         END.
+                                     ELSE
+                                         DO: 
+                                             CREATE crapdoc.
+                                             ASSIGN crapdoc.cdcooper = par_cdcooper
+                                                    crapdoc.nrdconta = par_nrdconta
+                                                    crapdoc.flgdigit = FALSE
+                                                    crapdoc.dtmvtolt = par_dtmvtolt
+                                                    crapdoc.tpdocmto = 50
+                                                    crapdoc.idseqttl = par_idseqttl
+                                                    crapdoc.nrcpfcgc = CarregaCpfCnpj(par_nrcpfcgc).
+                                             VALIDATE crapdoc.        
+                                             LEAVE ContadorDoc50.
+                                         END.
+                                 END.
+                             ELSE
+                                 DO:
+                                     ASSIGN crapdoc.flgdigit = FALSE
+                                            crapdoc.dtmvtolt = par_dtmvtolt.
+             
+                                     LEAVE ContadorDoc50.
+                                 END.
+                         END.
+                     END.
             END.
 
         IF crapass.inpessoa > 1                 AND
