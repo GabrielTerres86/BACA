@@ -197,18 +197,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
 
 ..............................................................................*/
 
-    vr_cdcritic             number(3);
-    vr_dscritic             varchar2(1000);
-    vr_des_reto             varchar2(10);
-    vr_tab_erro             gene0001.typ_tab_erro ;
-    vr_index                varchar2(100);
-    vr_flgativo             integer;
-    vr_flquitado            integer;
-    vr_flcancel             integer;
-    gl_nrdolote    craplot.nrdolote%type;
-    vr_idfraude             boolean := false;
-  
-    rw_crapdat              btch0001.cr_crapdat%rowtype;                                                
+    vr_cdcritic  number(3);
+    vr_dscritic  varchar2(1000);
+    vr_des_reto  varchar2(10);
+    vr_tab_erro  gene0001.typ_tab_erro ;
+    vr_index     varchar2(100);
+    vr_flgativo  integer;
+    vr_flquitado integer;
+    vr_flcancel  integer;
+    gl_nrdolote  craplot.nrdolote%type;
+    vr_idfraude  boolean := false;
+    vr_qtregist  number;
+    vr_tab_dados_epr    empr0001.typ_tab_dados_epr;
+    rw_crapdat   btch0001.cr_crapdat%rowtype;
    
    CURSOR C_CRAPRIS(pr_cdcooper in number
                     ,pr_nrdconta in number
@@ -1315,6 +1316,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
 
                       end loop;
                   end if;
+                  
+               /* Procedure para obter dados de emprestimos do associado */
+                  empr0001.pc_obtem_dados_empresti
+                                         (pr_cdcooper       => pr_cdcooper           --> Cooperativa conectada
+                                         ,pr_cdagenci       => pr_cdagenci           --> Código da agência
+                                         ,pr_nrdcaixa       => pr_nrdcaixa           --> Número do caixa
+                                         ,pr_cdoperad       => pr_cdoperad           --> Código do operador
+                                         ,pr_nmdatela       => 'CRPS780'             --> Nome datela conectada
+                                         ,pr_idorigem       => 7                     --> Indicador da origem da chamada
+                                         ,pr_nrdconta       => pr_nrdconta           --> Conta do associado
+                                         ,pr_idseqttl       => pr_idseqttl           --> Sequencia de titularidade da conta
+                                         ,pr_rw_crapdat     => rw_crapdat            --> Vetor com dados de parâmetro (CRAPDAT)
+                                         ,pr_dtcalcul       => null                  --> Data solicitada do calculo
+                                         ,pr_nrctremp       => nvl(pr_nrctremp,0)    --> Número contrato empréstimo
+                                         ,pr_cdprogra       => 'CRPS780'             --> Programa conectado
+                                         ,pr_inusatab       => FALSE                 --> Indicador de utilização da tabela
+                                         ,pr_flgerlog       => 'S'                    --> Gerar log S/N
+                                         ,pr_flgcondc       => (CASE 1                --> Mostrar emprestimos liquidados sem prejuizo
+                                                                  WHEN 1 THEN TRUE
+                                                                  ELSE FALSE END)
+                                         ,pr_nmprimtl       => ''                    --> Nome Primeiro Titular
+                                         ,pr_tab_parempctl  => ''                    --> Dados tabela parametro
+                                         ,pr_tab_digitaliza => ''                    --> Dados tabela parametro
+                                         ,pr_nriniseq       => 0                     --> Numero inicial da paginacao
+                                         ,pr_nrregist       => 0                     --> Numero de registros por pagina
+                                         ,pr_qtregist       => vr_qtregist           --> Qtde total de registros
+                                         ,pr_tab_dados_epr  => vr_tab_dados_epr      --> Saida com os dados do empréstimo
+                                         ,pr_des_reto       => vr_des_reto           --> Retorno OK / NOK
+                                         ,pr_tab_erro       => vr_tab_erro);         --> Tabela com possíves erros
+
+                  IF vr_des_reto = 'NOK' THEN
+                    IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+
+                      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+                      vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                    ELSE
+                      vr_dscritic := 'Não foi possivel obter dados de emprestimos.';
+                    END IF;
+                    RAISE vr_exc_erro;
+                 
+                  END IF;       
+                  --
+                  vr_index := vr_tab_dados_epr.first;
+                  --vr_vlsdeved := 0;
+                  WHILE vr_index IS NOT NULL LOOP
+                    vr_vlsdeved := vr_tab_dados_epr(vr_index).vlsdeved ;
+                    --vr_txjurepr := vr_tab_dados_epr(vr_index).txjuremp ;
+                    --vr_vlpreemp := vr_tab_dados_epr(vr_index).vlpreemp ;
+                    --vr_vlttmupr := vr_tab_dados_epr(vr_index).vlttmupr ;
+                    --vr_vlttjmpr := vr_tab_dados_epr(vr_index).vlttjmpr ;
+                    --R_crapepr.cdlcremp := vr_tab_dados_epr(vr_index).cdlcremp ;
+                    -- buscar proximo
+                    vr_index := vr_tab_dados_epr.next(vr_index);
+                  END LOOP;                        
 
                   rati0001.pc_desativa_rating(pr_cdcooper => pr_cdcooper
                                             , pr_cdagenci => 0
@@ -1354,7 +1409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                  close c_craplcr;
 
                  if vr_tab_calculado(1).vlsdeved = 0
-                 or vr_tab_calculado.count = 0        then
+                 or vr_tab_calculado.count = 0  then
                     vr_cdcritic := 0;
                     vr_dscritic := 'Erro ao buscar saldos do contrato.';
                     pr_tab_erro(PR_TAB_ERRO.FIRST).dscritic := VR_DSCRITIC;
