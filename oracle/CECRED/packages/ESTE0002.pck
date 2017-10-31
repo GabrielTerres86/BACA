@@ -748,7 +748,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 
+        Data     : Maio/2017.                    Ultima atualizacao: 19/10/2017
       
         Dados referentes ao programa:
       
@@ -756,7 +756,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
                     e das operações da conta parametrizada.
       
-        Alteração : 
+        Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
+                                 Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
           
     ..........................................................................*/
     DECLARE
@@ -841,6 +842,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       vr_dtiniest DATE;
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
+      vr_maior_nratrmai NUMBER(25,10);
       
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
@@ -2984,6 +2986,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       vr_qtpclpag := 0;
       vr_tot_qtpclatr := 0;
       vr_tot_qtpclpag := 0;
+      vr_maior_nratrmai := 0;
     
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
@@ -3011,6 +3014,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         
           -- Se há atraso
           IF vr_dias > 0 THEN
+            
+            IF vr_dias > vr_maior_nratrmai THEN
+              vr_maior_nratrmai := vr_dias;
+            END IF;
             -- Acumular saldo em atraso
             vr_vltotatr := vr_vltotatr + vr_tab_dados_epr(vr_idxempr).vlpreapg
                                        + vr_tab_dados_epr(vr_idxempr).vlmrapar
@@ -3087,10 +3094,12 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       -- Enviar informações do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest'
                          ,este0001.fn_decimal_ibra(vr_vltotatr));
-      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_nratrmai);
+      vr_obj_generic2.put('quantDiasMaiorAtrasoEmprest', vr_nratrmai);
+      
       vr_obj_generic2.put('quantParcelPagas', vr_tot_qtpclpag);
       vr_obj_generic2.put('quantParcelPagasAtraso', vr_tot_qtpclatr);
       vr_obj_generic2.put('quantParcelAtraso', vr_qtpclven);
+      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_maior_nratrmai);
 			 
       -- Data de Vigência Procuração
       IF pr_dtvigpro IS NOT NULL THEN 
@@ -3632,14 +3641,14 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 09/05/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 19/10/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteração : 
+      Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -3916,6 +3925,16 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
 				 AND prp.tpctrato = 90;
 		rw_crapprp cr_crapprp%ROWTYPE;
    
+    CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
+                      ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                      ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+      SELECT nvl(vlpreemp,0)
+        FROM crapepr
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctremp = pr_nrctremp;
+
+  
     --Tipo de registro do tipo data
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
      
@@ -3954,6 +3973,10 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+    vr_tab_split     gene0002.typ_split;
+    vr_dsliquid      VARCHAR2(1000);
+    vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
+    vr_vlpreemp      crapepr.vlpreemp%TYPE;
       
   BEGIN
   
@@ -4153,6 +4176,32 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
     END IF;  
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
+    
+    IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
+      vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');
+      
+      vr_dsliquid := vr_tab_split.FIRST;
+          
+      vr_sum_vlpreemp := 0;
+      
+      WHILE vr_dsliquid IS NOT NULL LOOP
+        
+        IF vr_tab_split(vr_dsliquid) <> '0' THEN
+          
+          OPEN cr_crapepr (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctremp => vr_tab_split(vr_dsliquid));
+          FETCH cr_crapepr INTO vr_vlpreemp;
+          CLOSE cr_crapepr;
+          vr_sum_vlpreemp := vr_sum_vlpreemp + vr_vlpreemp;
+          
+        END IF;
+        vr_dsliquid := vr_tab_split.NEXT(vr_dsliquid);    
+      END LOOP;
+    END IF;
+    
+    vr_obj_generico.put('valorPrestLiquidacao', ESTE0001.fn_decimal_ibra(vr_sum_vlpreemp));
+    
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
     pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
@@ -4243,7 +4292,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
             vr_obj_generico := json();
             vr_obj_generico.put('especie', 'COMERCIAL');
             /*
-			IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
+            IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
               vr_obj_generico.put('tipo', 'FIXO');
             ELSE
               vr_obj_generico.put('tipo', 'MOVEL');

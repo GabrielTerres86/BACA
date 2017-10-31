@@ -321,7 +321,7 @@ function controlaLayout(operacao) {
 	cCNPJ.addClass('cnpj');
 	cEmpresa.addClass('alphanum').attr('maxlength','35').css('width','258px');
 	cFuncao.addClass('alphanum').attr('maxlength','20').css('width','258px');
-	cTelComerc.addClass('telefone').attr('maxlength','20').css('width','175px');
+	cTelComerc.attr('maxlength','20').css('width','175px');
 	cRamal.addClass('inteiro').attr('maxlength','4').css('width','41px');
 	cDtAdmissao.addClass('data').css('width','75px');
 	cRendimento.addClass('moeda_6').css('width','129px');	
@@ -683,4 +683,20 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('CONTATOS','Contatos','contatos_pf');				
+}
+
+function telefone(nrfonemp){
+	fone = nrfonemp.value.replace(/[^0-9]/g,'');	
+	
+	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+	
+	if (fone.length < 14)
+		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígito
+	else
+		fone = fone.replace(/(\d{5})(\d)/,"$1-$2");    //Coloca hífen entre o quinto e o sexto dígito
+	
+	nrfonemp.value = fone.substring(0, 15);
+	
+	return true;
 }

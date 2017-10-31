@@ -123,7 +123,7 @@
 		<input name="dsdemail" id="dsdemail" type="text" value="" />
 		
 		<label for="nrfonres">Fone:</label>
-		<input name="nrfonres" id="nrfonres" type="text" value="" />
+		<input name="nrfonres" id="nrfonres" type="text" onKeyUp="maskTelefone(this)" value="" />
 		<br />
 			
 	</fieldset>

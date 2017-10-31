@@ -25,6 +25,21 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   --> Funcao para formatar data hora conforme padrao da IBRATAN
   FUNCTION fn_Data_ibra (pr_data IN DATE) RETURN VARCHAR2;
 	
+    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
+    FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
+                                       ,pr_nrdconta IN NUMBER
+                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE;
+  
+    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
+    PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
+                                            ,pr_nrctremp IN NUMBER
+                                            ,pr_xmllog   IN VARCHAR2 -- XML com informações de LOG
+                                            ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
+                                            ,pr_dscritic OUT VARCHAR2 -- Descrição da crítica
+                                            ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                            ,pr_nmdcampo OUT VARCHAR2          -- Nome do campo com erro
+                                            ,pr_des_erro OUT VARCHAR2);        -- Erros do processo
+                                  
   --> Rotina responsavel por gerar o objeto Json da proposta
   PROCEDURE pc_gera_json_proposta(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                   pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                            
@@ -242,6 +257,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     RETURN to_char(pr_data,'RRRR-MM-DD');
   END fn_Data_ibra;
   
+    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
+    FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
+                                       ,pr_nrdconta IN NUMBER
+                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE IS
+                                       
+      CURSOR cr_tbepr_acionamento IS
+        SELECT aci.dsprotocolo dsprotocolo
+          FROM tbepr_acionamento aci
+         WHERE aci.cdcooper = pr_cdcooper
+           AND aci.nrdconta = pr_nrdconta
+           AND aci.nrctrprp = pr_nrctremp
+           AND aci.tpacionamento = 2 /* Retorno */
+           AND aci.dsprotocolo IS NOT NULL
+         ORDER BY aci.dhacionamento DESC;
+       rw_tbepr_acionamento cr_tbepr_acionamento%ROWTYPE;
+    BEGIN
+      OPEN cr_tbepr_acionamento;
+      FETCH cr_tbepr_acionamento INTO rw_tbepr_acionamento;
+      RETURN rw_tbepr_acionamento.dsprotocolo;
+    END fn_protocolo_analise_auto;
+    
+    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
+    PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
+                                            ,pr_nrctremp IN NUMBER
+                                            ,pr_xmllog   IN VARCHAR2 -- XML com informações de LOG
+                                            ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
+                                            ,pr_dscritic OUT VARCHAR2 -- Descrição da crítica
+                                            ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                            ,pr_nmdcampo OUT VARCHAR2          -- Nome do campo com erro
+                                            ,pr_des_erro OUT VARCHAR2) IS      -- Erros do processo
+      /* ..........................................................................
+            
+        Programa : busca_protocolo_web        
+        Sistema  : Conta-Corrente - Cooperativa de Credito
+        Sigla    : CRED
+        Autor    : Lombardi
+        Data     : Outubro/2016.                   Ultima atualizacao: 
+            
+        Dados referentes ao programa:
+            
+        Frequencia: Sempre que for chamado
+        Objetivo  : Buscar o ultimo Protocolo de Análise Automática do Motor via Web
+            
+        Alteração : 
+                
+      ..........................................................................*/ 
+           
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic VARCHAR2(10000) := NULL;
+		
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+      
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      vr_dsprotocolo tbepr_acionamento.dsprotocolo%TYPE;
+      
+		BEGIN
+			-- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+      END IF;
+      
+      -- Buscar o ultimo Protocolo de Análise Automática do Motor
+      vr_dsprotocolo := fn_protocolo_analise_auto(pr_cdcooper => vr_cdcooper
+                                                 ,pr_nrdconta => pr_nrdconta
+                                                 ,pr_nrctremp => pr_nrctremp);
+      
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			  RAISE vr_exc_erro;
+		  END IF;
+		  
+      -- Retorna OK para cadastro efetuado com sucesso
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><protocolo>'|| vr_dsprotocolo || '</protocolo></Root>');
+      
+		EXCEPTION
+      WHEN vr_exc_erro THEN
+        --> Buscar critica
+        IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+          -- Busca descricao        
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina pr_protocolo_analise_auto_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+		END pr_protocolo_analise_auto_web;
+    
   --> Procedimento para verificar se deve permitir o envio de email para o comite
   PROCEDURE pc_verifica_email_comite (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa                                        
                                       pr_nrdconta  IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
@@ -723,7 +857,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     WHEN OTHERS THEN
       RETURN NULL;  
   END;
-  
   
   --> Rotina responsavel por gravar registro de log de acionamento
   PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
@@ -1301,6 +1434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_proposta json := json();
     vr_obj_agencia  json := json();
     vr_obj_imagem   json := json();
+    vr_lst_doctos   json_list := json_list();
     vr_json_valor   json_value;
     
     -- Variaveis auxiliares
@@ -1314,6 +1448,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_vllimdis     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
+        vr_dsprotoc  tbepr_acionamento.dsprotocolo%TYPE;
+        vr_dsdirarq  VARCHAR2(1000);
+        vr_dscomando VARCHAR2(1000);
       
   BEGIN
     
@@ -1593,17 +1730,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         END IF;
         -- Gerar objeto json para a imagem 
         vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
-        vr_obj_imagem.put('imagem'      ,vr_json_valor);
+        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
         vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
         vr_obj_imagem.put('validadeData', '');
         -- incluir objeto imagem na proposta
-        vr_obj_proposta.put('imagem'    ,vr_obj_imagem);
+        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
         
         -- Caso o PDF tenha sido gerado nesta rotina
         IF vr_nmarquiv <> NVL(pr_nmarquiv,' ') THEN 
           -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
           GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nmarquiv);
+              END IF;
+                
+        -- Busca PDF gerado pela análise automática do Motor        
+              vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
+                                                               ,pr_nrdconta => pr_nrdconta
+                                                               ,pr_nrctremp => pr_nrctremp);
+        -- Se houve        
+              IF vr_dsprotoc IS NOT NULL THEN
+                
+                -- Diretorio para salvar
+                vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
+                                                     ,pr_cdcooper => 3
+                                                     ,pr_nmsubdir => '/log/webservices'); 
+
+          -- Utilizar o protocolo para nome do arquivo
+          vr_nmarquiv := vr_dsprotoc || '.pdf';
+
+                -- Comando para download
+                vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+
+                -- Substituir o caminho do arquivo a ser baixado
+                vr_dscomando := replace(vr_dscomando
+                                       ,'[local-name]'
+                                       ,vr_dsdirarq || '/' || vr_nmarquiv);
+
+                -- Substiruir a URL para Download
+                vr_dscomando := REPLACE(vr_dscomando
+                                       ,'[remote-name]'
+                                       ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                                       ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                                       || '_result/' || vr_dsprotoc || '/pdf');
+
+                -- Executar comando para Download
+                GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                     ,pr_des_comando => vr_dscomando);
+
+                
+                -- Se NAO encontrou o arquivo
+                IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+                  vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
+                  RAISE vr_exc_erro;
+                  END IF;
+                  
+                -- Converter arquivo PDF para clob em base64 para enviar via json
+                pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
+                                       ,pr_json_value_arq => vr_json_valor
+                                       ,pr_dscritic       => vr_dscritic);
+                IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+                  RAISE vr_exc_erro;
+                END IF;
+                  
+                -- Gerar objeto json para a imagem 
+                vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
+                vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+                vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
+                vr_obj_imagem.put('validadeData','');
+                -- incluir objeto imagem na proposta
+                vr_lst_doctos.append(vr_obj_imagem.to_json_value());
+                  
+                -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+                GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
+                
       END IF;
+        
+        -- Incluiremos os documentos ao json principal
+         vr_obj_proposta.put('documentos',vr_lst_doctos);
+        
       END IF;
                  
     ELSE -- caso for CDC, enviar vazio

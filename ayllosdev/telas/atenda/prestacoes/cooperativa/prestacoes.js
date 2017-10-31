@@ -2489,7 +2489,7 @@ function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
 
-	if ( idimpres >= 1 && idimpres <= 9 ) {
+	if ( idimpres >= 1 && idimpres <= 11 ) {
 	
 		if ( idimpres == 5 ) {
 
@@ -2507,7 +2507,7 @@ function verificaImpressao(par_idimpres){
 			
 		}
 		else
-		if (in_array(idimpres, [7, 8, 9])) { //pre-aprovado
+		if (in_array(idimpres, [7, 8, 9, 11])) { //pre-aprovado
 			carregarImpresso();		
 		}
 		else {
