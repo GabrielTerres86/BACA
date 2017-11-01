@@ -137,8 +137,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,dsorgrec craplcr.dsorgrec%TYPE
     ,dtinictr DATE
     ,dsratpro VARCHAR2(30)
-    ,dsratatu VARCHAR2(30)
-    ,vliofcpl crapepr.vliofcpl%TYPE);
+    ,dsratatu VARCHAR2(30));
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -5327,7 +5326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                              ,0) +
                                                           rw_craplem.vllanmto;
               END IF;
-
+            
               /* Melhoria 324 - se for estorno de pagamento, deduzir do valor pago */
               IF rw_craplem.cdhistor IN (2392) THEN
                 -- Adicionar no campo valor pagos
@@ -7975,7 +7974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          WHERE ass.cdcooper = pr_cdcooper
                AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
-
+    
 	  CURSOR cr_crapdpb IS
         select nvl(sum(c.vllanmto),0)
           from craphis x
