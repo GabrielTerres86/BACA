@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 13/10/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/07/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -153,6 +153,8 @@
                              
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
+                
+                13/10/2017 - Removido a funcao que atualizava o nome do talao para segundo titular. (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
 
 
@@ -2869,10 +2871,10 @@ PROCEDURE Grava_Alteracao:
                                           crafttl.cdufnatu = brapttl.cdufnatu
                                           crafttl.inhabmen = brapttl.inhabmen  
                                           crafttl.dthabmen = brapttl.dthabmen  
-                                          crafttl.cdestcvl = brapttl.cdestcvl  
-                                          crafttl.grescola = brapttl.grescola
-                                          crafttl.cdfrmttl = brapttl.cdfrmttl
-                                          crafttl.nmtalttl = brapttl.nmtalttl.
+                                          crafttl.cdfrmttl = brapttl.cdfrmttl.
+									   /* A pedido da Sarah em 13/10/2017 nao deve-se atualizar
+                                          o nome do talao para segundo titular 
+                                          crafttl.nmtalttl = brapttl.nmtalttl. */										  
 
                                       ContadorCje1: DO aux_contado2 = 1 TO 10:
     
