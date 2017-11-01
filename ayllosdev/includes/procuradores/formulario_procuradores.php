@@ -18,6 +18,7 @@
  * 008: [12/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava (Adriano - P339).
  * 009: [31/07/2017] Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
+ * 010: [28/08/2017] Alterado tipos de documento para utilizarem CI, CN, CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
  
 ?>
@@ -63,9 +64,11 @@
 			<label for="tpdocava" class="rotulo rotulo-80">Documento:</label>
 			<select name="tpdocava" id="tpdocava">
 				<option value="" <? if ($frm_tpdocava == ""){ echo " selected"; } ?>> - </option>
-				<option value="CH" <? if ($frm_tpdocava == "CH"){ echo " selected"; } ?>>CH</option>
 				<option value="CI" <? if ($frm_tpdocava == "CI"){ echo " selected"; } ?>>CI</option>
-				<option value="CP" <? if ($frm_tpdocava == "CP"){ echo " selected"; } ?>>CP</option>
+				<option value="CN" <? if ($frm_tpdocava == "CN"){ echo " selected"; } ?>>CN</option>
+				<option value="CH" <? if ($frm_tpdocava == "CH"){ echo " selected"; } ?>>CH</option>
+				<option value="RE" <? if ($frm_tpdocava == "RE"){ echo " selected"; } ?>>RE</option>
+				<option value="PP" <? if ($frm_tpdocava == "PP"){ echo " selected"; } ?>>PP</option>
 				<option value="CT" <? if ($frm_tpdocava == "CT"){ echo " selected"; } ?>>CT</option>
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nrdocava; ?>" />

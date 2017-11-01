@@ -2,7 +2,7 @@
 
     Programa: b1wgen0072.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/04/2017
+    Data    : Maio/2010                   Ultima atualizacao: 28/08/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - RESPONSAVEL LEGAL
 
@@ -85,6 +85,10 @@
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
+
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
+                
  .............................................................................*/
 
 DEF STREAM str_1.
@@ -1033,7 +1037,7 @@ PROCEDURE Valida_Dados:
                    
                    
       /* tipo de documento */
-      IF  LOOKUP(par_tpdocava,"CI,CH,CP,CT") = 0 THEN
+      IF  LOOKUP(par_tpdocava,"CI,CN,CH,RE,PP,CT") = 0 THEN
           DO:
              ASSIGN par_nmdcampo = "tpdocava"
                     aux_cdcritic = 21.

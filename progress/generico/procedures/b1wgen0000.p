@@ -21,7 +21,7 @@
 
    Programa: b1wgen0000.p                  
    Autor(a): David
-   Data    : 09/07/2007                        Ultima atualizacao: 27/06/2016
+   Data    : 09/07/2007                        Ultima atualizacao: 23/08/2017
 
    Dados referentes ao programa:
 
@@ -111,6 +111,8 @@
 
 			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)
+
+			  24/10/2017 - Adicionado validacao para autenticacao pelo CRM. (PRJ339 - Reinert)
 ..............................................................................*/
 
 
@@ -360,6 +362,58 @@ PROCEDURE efetua_login:
 	ELSE
 	    ASSIGN tt-login.dsdepart = crapdpo.dsdepart.
 
+  /* PRJ339 - Reinert */
+  /* Se login foi feito pelo AyllosWeb*/
+	IF  par_idorigem = 5 THEN
+      DO:
+        /* Verificar se CRM esta liberado na prm */
+        FOR FIRST crapprm FIELDS(dsvlrprm)
+                           WHERE crapprm.cdcooper = 0
+                             AND crapprm.nmsistem = "CRED"
+                             AND crapprm.cdacesso = "LIBCRM"
+                             NO-LOCK:
+          IF CAPS(crapprm.dsvlrprm) = "N" THEN
+             DO:      
+                /* Se operador tiver acesso ao CRM */
+                IF  crapope.flgutcrm THEN
+                    DO:
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM.".
+                        
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,            /** Sequencia **/
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+                         
+                       RETURN "NOK".                    
+                    END. /* IF  crapope.flgutcrm THEN */
+                /*Buscar registro do PA*/
+                FOR FIRST crapage FIELDS(flgutcrm)
+                                   WHERE crapage.cdcooper = par_cdcooper
+                                     AND crapage.cdagenci = par_cdagenci
+                                     NO-LOCK:
+                  /* Se PA utiliza CRM */
+                  IF  crapage.flgutcrm THEN
+                      DO:
+                         ASSIGN aux_cdcritic = 0
+                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM".
+                          
+                         RUN gera_erro (INPUT par_cdcooper,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT 1,            /** Sequencia **/
+                                        INPUT aux_cdcritic,
+                                        INPUT-OUTPUT aux_dscritic).
+                           
+                         RETURN "NOK".
+
+                      END. /* IF  crapage.flgutcrm THEN */
+                END. /* FOR FIRST crapage  */                    
+             END. /* IF CAPS(crapprm.dsvlrprm) = "N" THEN */
+        END. /* FOR FIRST crapprm */
+      END. /* IF  par_idorigem = 5 THEN */
 	
     RETURN "OK".
         

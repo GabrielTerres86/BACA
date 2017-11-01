@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 19/07/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 13/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -151,6 +151,8 @@
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
                              
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
 .............................................................................*/
 
 
@@ -3669,7 +3671,7 @@ PROCEDURE Valida_Dados:
            END.
 
         /* validar o tipo de documento */
-        IF LOOKUP(par_tpdocttl,"CI,CH,CP,CT") = 0 THEN
+        IF LOOKUP(par_tpdocttl,"CI,CN,CH,RE,PP,CT") = 0 THEN
            DO:
               ASSIGN par_nmdcampo = "tpdocttl"
                      aux_cdcritic = 21.

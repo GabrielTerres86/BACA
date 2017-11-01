@@ -7,6 +7,8 @@
  * ALTERAÇÕES   : 24/04/2012 - Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  *                17/07/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */
 ?>
  
@@ -275,7 +277,7 @@
 		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnascto\',\'frmRespLegal\')',false);
 				
 		// Tipo de Documento
-		if (!in_array($GLOBALS['tpdocava'],array('CH','CI','CP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
+		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
 		
 		// Numero de Documento
 		if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);

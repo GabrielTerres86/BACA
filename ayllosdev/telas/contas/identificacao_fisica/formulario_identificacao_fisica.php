@@ -23,6 +23,8 @@
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
  * 013: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  * 014: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
+ * 015: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
+ *										    CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -83,9 +85,11 @@
 		<label for="tpdocttl">Documento:</label>
 		<select name="tpdocttl" id="tpdocttl">
 			<option value="" <? if (getByTagName($IdentFisica,'tpdocttl') == ""){ echo " selected"; } ?>> - </option> 
-			<option value="CH" <? if (getByTagName($IdentFisica,'tpdocttl') == "CH"){ echo " selected"; } ?>>CH</option>
 			<option value="CI" <? if (getByTagName($IdentFisica,'tpdocttl') == "CI"){ echo " selected"; } ?>>CI</option>
-			<option value="CP" <? if (getByTagName($IdentFisica,'tpdocttl') == "CP"){ echo " selected"; } ?>>CP</option>
+			<option value="CN" <? if (getByTagName($IdentFisica,'tpdocttl') == "CN"){ echo " selected"; } ?>>CN</option>
+			<option value="CH" <? if (getByTagName($IdentFisica,'tpdocttl') == "CH"){ echo " selected"; } ?>>CH</option>
+			<option value="RE" <? if (getByTagName($IdentFisica,'tpdocttl') == "RE"){ echo " selected"; } ?>>RE</option>
+			<option value="PP" <? if (getByTagName($IdentFisica,'tpdocttl') == "PP"){ echo " selected"; } ?>>PP</option>
 			<option value="CT" <? if (getByTagName($IdentFisica,'tpdocttl') == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdocttl" id="nrdocttl" type="text" value="<? echo getByTagName($IdentFisica,'nrdocttl') ?>" />

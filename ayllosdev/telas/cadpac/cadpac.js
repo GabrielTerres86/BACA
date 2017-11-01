@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Biblioteca de funções da tela CADPAC
  * --------------
- * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ * ALTERAÇÕES   : 08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */
 $(document).ready(function() {
@@ -152,6 +153,7 @@ function formataCamposTela(cddopcao){
         var rFlgdsede = $('label[for="flgdsede"]', '#frmCadpac');
         var rCdagepac = $('label[for="cdagepac"]', '#frmCadpac');
 		var rFlmajora = $('label[for="flmajora"]', '#frmCadpac');
+        var rFlgutcrm = $('label[for="flgutcrm"]', '#frmCadpac');
 
         var rDsendcop = $('label[for="dsendcop"]', '#frmCadpac');
         var rNrendere = $('label[for="nrendere"]', '#frmCadpac');
@@ -221,6 +223,7 @@ function formataCamposTela(cddopcao){
         var cFlgdsede = $('#flgdsede', '#frmCadpac');
         var cCdagepac = $('#cdagepac', '#frmCadpac');
 		var cFlmajora = $('#flmajora', '#frmCadpac');
+        var cFlgutcrm = $('#flgutcrm', '#frmCadpac');
 
         var cDsendcop = $('#dsendcop', '#frmCadpac');
         var cNrendere = $('#nrendere', '#frmCadpac');
@@ -291,6 +294,7 @@ function formataCamposTela(cddopcao){
         rFlgdsede.addClass('rotulo').css({'width': '130px'});
         rCdagepac.addClass('rotulo-linha').css({'width': '285px'});
 		rFlmajora.addClass('rotulo').css({'width': '130px'});
+        rFlgutcrm.addClass('rotulo-linha').css({'width': '285px'});
 
         rDsendcop.addClass('rotulo').css({'width': '130px'});
         rNrendere.addClass('rotulo').css({'width': '130px'});
@@ -361,6 +365,8 @@ function formataCamposTela(cddopcao){
         cCdagepac.addClass('campo').css({'width':'60px'}).attr('maxlength','6').setMask('INTEGER','zz.zzz','','');
 		cFlmajora.addClass('campo').css({'width':'60px'});
 		
+		cFlgutcrm.addClass('campo').css({'width':'60px'});
+
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
         cNmbairro.addClass('campo').css({'width':'270px'}).attr('maxlength','15');
@@ -563,7 +569,11 @@ function formataCamposTela(cddopcao){
             cFlgdsede.unbind('keypress').bind('keypress', function(e) {
                 if ( divError.css('display') == 'block' ) { return false; }
                 if ( e.keyCode == 9 || e.keyCode == 13 ) {
+					if (cddopcao == 'A'){
+						cFlmajora.focus();
+					}else{
                     cCdagepac.focus();
+					}
                     return false;
                 }
             });
@@ -579,6 +589,14 @@ function formataCamposTela(cddopcao){
 			cFlmajora.unbind('keypress').bind('keypress', function(e) {
                 if ( divError.css('display') == 'block' ) { return false; }
                 if ( e.keyCode == 9 || e.keyCode == 13 ) {
+                    cFlgutcrm.focus();
+                    return false;
+                }
+			});
+
+			cFlgutcrm.unbind('keypress').bind('keypress', function(e) {
+			    if ( divError.css('display') == 'block' ) { return false; }
+			    if ( e.keyCode == 9 || e.keyCode == 13 ) {
                     acessaOpcaoAba(1);
                     cDsendcop.focus();
                     return false;
@@ -1488,6 +1506,7 @@ function gravarPAC() {
     var cdagedoc = $('#cdagedoc','#frmCadpac').val();
     var flgdsede = $('#flgdsede','#frmCadpac').val();
     var cdagepac = $('#cdagepac','#frmCadpac').val();
+    var flgutcrm = $('#flgutcrm','#frmCadpac').val();
     var dsendcop = $('#dsendcop','#frmCadpac').val();
     var nrendere = $('#nrendere','#frmCadpac').val();
     var nmbairro = $('#nmbairro','#frmCadpac').val();
@@ -1563,6 +1582,7 @@ function gravarPAC() {
             cdagedoc: normalizaNumero(cdagedoc),
             flgdsede: normalizaNumero(flgdsede),
             cdagepac: normalizaNumero(cdagepac),
+            flgutcrm: normalizaNumero(flgutcrm),
             dsendcop: dsendcop,
             nrendere: normalizaNumero(nrendere),
             nmbairro: nmbairro,

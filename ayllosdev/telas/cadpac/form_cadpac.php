@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulario do cadastro.
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *				  08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
  * --------------
  */	
 ?>
@@ -144,6 +145,14 @@
                             <option value="0">NAO</option>
                             <option value="1">SIM</option>
                         </select>
+						
+						<label for="flgutcrm">Habilitar Acesso CRM:</label>
+                        <select id="flgutcrm" name="flgutcrm">
+                            <option value="0">N&Atilde;O</option>
+                            <option value="1">SIM</option>
+                        </select>
+                        <br clear="all" />
+                        <br clear="all" />
                     </div>
 
                     <div id="divAba1" class="clsAbas">

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/99.                     Ultima atualizacao: 05/12/2016
+   Data    : Fevereiro/99.                     Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -175,6 +175,8 @@
 						
 			   22/12/2016 - Ajustar bloqueio dos departamentos para VIACREDI e CECRED, conforme
 			                solicitação feita no chamado 549118 (Renato Darosci - Supero)
+                      
+               08/08/2017 - Incluido o campo "Habilitar Acesso CRM". (Reinert - Projeto 339)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -202,6 +204,7 @@ DEF        VAR tel_flgperac AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgdonet AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
+DEF        VAR tel_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgcarta AS LOGICAL                               NO-UNDO.
 
 DEF        VAR tel_vlpagchq LIKE crapope.vlpagchq                    NO-UNDO.
@@ -225,6 +228,7 @@ DEF        VAR log_flgdonet AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgperac AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
+DEF        VAR log_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_vlalccre AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vlalcest AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vlalcesp AS DECIMAL                               NO-UNDO.
@@ -346,6 +350,7 @@ FORM SKIP
      SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
+     tel_flgutcrm AT 46 LABEL "Habilitar Acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
      WITH ROW 5 COLUMN 2 OVERLAY NO-BOX SIDE-LABELS FRAME f_operad.
 
 FORM SKIP(1)
@@ -645,6 +650,7 @@ DO WHILE TRUE:
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap
+                  tel_flgutcrm = crapope.flgutcrm
 
                   log_nmoperad = tel_nmoperad
                   log_nvoperad = tel_nvoperad
@@ -656,6 +662,7 @@ DO WHILE TRUE:
                   log_flgcarta = tel_flgcarta     
                   log_flgacres = tel_flgacres
                   log_vlapvcap = tel_vlapvcap
+                  log_flgutcrm = tel_flgutcrm
                                                
                   aux_inposniv = crapope.nvoperad
                   aux_inpostip = crapope.tpoperad.
@@ -676,7 +683,7 @@ DO WHILE TRUE:
                    tel_flgdonet tel_flgdopgd tel_vlpagchq
                    tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
-                   tel_vlalccre tel_vlapvcap
+                   tel_vlalccre tel_vlapvcap tel_flgutcrm
                    WITH FRAME f_operad.
 
            UPDATE tel_nmoperad                     
@@ -953,9 +960,12 @@ DO WHILE TRUE:
               
                UPDATE tel_vlapvcap WITH FRAME f_operad.
 
+               UPDATE tel_flgutcrm WITH FRAME f_operad.
+
                ASSIGN crapope.flgdopgd = tel_flgdopgd
                       crapope.flgacres = tel_flgacres
-                      crapope.vlapvcap = tel_vlapvcap.       
+                      crapope.vlapvcap = tel_vlapvcap
+                      crapope.flgutcrm = tel_flgutcrm.       
                       
                IF   log_flgdopgd <> tel_flgdopgd   THEN
                     RUN gera_log ("Acessar Sistema de Relacionamento",
@@ -976,6 +986,11 @@ DO WHILE TRUE:
                     RUN gera_log ("Vlr da Alcada de Captacao",
                                    STRING(log_vlapvcap),
                                    STRING(tel_vlapvcap)).
+
+               IF   log_flgutcrm <> tel_flgutcrm THEN
+                    RUN gera_log ("Acesso CRM",
+                                   STRING(log_flgutcrm,"Sim/Nao"),
+                                   STRING(tel_flgutcrm,"Sim/Nao")).
 
                RUN limpa.
               
@@ -1035,7 +1050,8 @@ DO WHILE TRUE:
                   tel_flgdonet = crapope.flgdonet
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
-                  tel_vlapvcap = crapope.vlapvcap.       
+                  tel_vlapvcap = crapope.vlapvcap       
+                  tel_flgutcrm = crapope.flgutcrm.       
 
            RUN atualiza_dscomite.
            
@@ -1044,7 +1060,7 @@ DO WHILE TRUE:
                    tel_flgdopgd tel_flgacres tel_vlpagchq
                    tel_flgdonet tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
-                   tel_vlalccre tel_vlapvcap
+                   tel_vlalccre tel_vlapvcap tel_flgutcrm
                    WITH FRAME f_operad.
  
            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1145,7 +1161,8 @@ DO WHILE TRUE:
                    tel_flgdonet = crapope.flgdonet
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
-                   tel_vlapvcap = crapope.vlapvcap.
+                   tel_vlapvcap = crapope.vlapvcap
+                   tel_flgutcrm = crapope.flgutcrm.
                    
             RUN atualiza_dscomite.
             
@@ -1156,7 +1173,7 @@ DO WHILE TRUE:
                     tel_flgdonet
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
-                    tel_vlalccre tel_vlapvcap
+                    tel_vlalccre tel_vlapvcap tel_flgutcrm
                     WITH FRAME f_operad.
         END.
    ELSE
@@ -1187,6 +1204,7 @@ DO WHILE TRUE:
                    tel_cddepart = 0
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
+                   tel_flgutcrm = FALSE
                    aux_inposniv = 1
                    aux_inpostip = 1.
 
@@ -1371,6 +1389,8 @@ DO WHILE TRUE:
                
                UPDATE tel_vlapvcap WITH FRAME f_operad.
 
+               UPDATE tel_flgutcrm WITH FRAME f_operad.
+
                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
                   ASSIGN aux_confirma = "N"
@@ -1417,7 +1437,8 @@ DO WHILE TRUE:
                          crapope.flgacres = tel_flgacres
                          crapope.flgdonet = tel_flgdonet
                          crapope.cddepart = tel_cddepart
-                         crapope.vlapvcap = tel_vlapvcap.
+                         crapope.vlapvcap = tel_vlapvcap
+                         crapope.flgutcrm = tel_flgutcrm.
 
                   IF   CAN-DO("1,3",STRING(crapope.tpoperad))   THEN 
                        FOR EACH craptel WHERE 
@@ -1764,7 +1785,8 @@ DO WHILE TRUE:
                    tel_flgdonet = crapope.flgdonet
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
-                   tel_vlapvcap = crapope.vlapvcap.
+                   tel_vlapvcap = crapope.vlapvcap
+                   tel_flgutcrm = crapope.flgutcrm.
                    
             RUN atualiza_dscomite.
             
@@ -1776,7 +1798,7 @@ DO WHILE TRUE:
                     tel_vlpagchq tel_flgdonet
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
-                    tel_vlalccre tel_vlapvcap
+                    tel_vlalccre tel_vlapvcap tel_flgutcrm
                     WITH FRAME f_operad.
                    
             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:    
@@ -1875,7 +1897,8 @@ DO WHILE TRUE:
                      tel_flgdonet = crapope.flgdonet
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
-                     tel_vlapvcap = crapope.vlapvcap.
+                     tel_vlapvcap = crapope.vlapvcap
+                     tel_flgutcrm = crapope.flgutcrm.
                
               RUN atualiza_dscomite.
               
@@ -1887,7 +1910,7 @@ DO WHILE TRUE:
                       tel_flgdonet
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
-                      tel_vlalccre tel_vlapvcap
+                      tel_vlalccre tel_vlapvcap tel_flgutcrm
                       WITH FRAME f_operad.
              
               UPDATE tel_vlpagchq tel_vllimted WITH FRAME f_operad.
@@ -2182,7 +2205,8 @@ DO WHILE TRUE:
                     tel_flgdonet = crapope.flgdonet
                     tel_cdcomite = crapope.cdcomite
                     tel_vlalccre = crapope.vlapvcre
-                    tel_vlapvcap = crapope.vlapvcap.
+                    tel_vlapvcap = crapope.vlapvcap
+                    tel_flgutcrm = crapope.flgutcrm.
                      
              RUN atualiza_dscomite.
              
@@ -2193,7 +2217,7 @@ DO WHILE TRUE:
                      tel_vlpagchq tel_flgdonet
                      tel_cdcomite WHEN crapcop.flgcmtlc
                      tel_dscomite WHEN crapcop.flgcmtlc
-                     tel_vlalccre tel_vlapvcap
+                     tel_vlalccre tel_vlapvcap tel_flgutcrm
                      WITH FRAME f_operad.
 
              RUN fontes/confirma.p(INPUT "",
@@ -2258,7 +2282,8 @@ DO WHILE TRUE:
                      tel_flgdonet = crapope.flgdonet
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
-                     tel_vlapvcap = crapope.vlapvcap.
+                     tel_vlapvcap = crapope.vlapvcap
+                     tel_flgutcrm = crapope.flgutcrm.
                
               RUN atualiza_dscomite.
               
@@ -2269,7 +2294,7 @@ DO WHILE TRUE:
                       tel_vlpagchq tel_flgdonet
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
-                      tel_vlalccre tel_vlapvcap
+                      tel_vlalccre tel_vlapvcap tel_flgutcrm
                       WITH FRAME f_operad.
              
               UPDATE tel_flgperac WITH FRAME f_operad.

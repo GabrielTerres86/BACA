@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                     Ultima atualizacao: 19/07/2017
+   Data    : Setembro/2004.                     Ultima atualizacao: 22/09/2014
 
    Dados referentes ao programa:
 
@@ -102,6 +102,10 @@
                            
               19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)               
+
+		      28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+						   CH, RE, PP E CT. (PRJ339 - Reinert)
+
 ............................................................................. */
 
 DEF STREAM str_1.     /*  Para relatorio de Aceitos      */
@@ -409,7 +413,7 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                          NEXT.
                       END.
                 
-                 IF   NOT CAN-DO("CH,CI,CT,CP",crapttl.tpdocttl) THEN
+                 IF   NOT CAN-DO("CI,CN,CH,RE,PP,CT",crapttl.tpdocttl) THEN
                       DO TRANSACTION:
 
                          CREATE crapeca.

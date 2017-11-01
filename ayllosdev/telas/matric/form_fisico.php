@@ -12,8 +12,10 @@
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-					          (Adriano - P339).
+ *			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+ *					          (Adriano - P339).
+ *                28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  * -------------- 
  */  
@@ -63,9 +65,11 @@
 		<label for="tpdocptl">Documento:</label>
 		<select name="tpdocptl" id="tpdocptl">
 			<option value=""   <? if (getByTagName($registro,'tpdocptl') == ""  ){ echo " selected"; } ?>> - </option> 
-			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
 			<option value="CI" <? if (getByTagName($registro,'tpdocptl') == "CI"){ echo " selected"; } ?>>CI - Carteira de Identidade </option>
-			<option value="CP" <? if (getByTagName($registro,'tpdocptl') == "CP"){ echo " selected"; } ?>>CP - Carteira Profissional</option>
+			<option value="CN" <? if (getByTagName($registro,'tpdocptl') == "CN"){ echo " selected"; } ?>>CN - Certid&atilde;o de Nascimento</option>
+			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
+			<option value="RE" <? if (getByTagName($registro,'tpdocptl') == "RE"){ echo " selected"; } ?>>RE - Registro Nacional de Estrangeiro</option>
+			<option value="PP" <? if (getByTagName($registro,'tpdocptl') == "PP"){ echo " selected"; } ?>>PP - Passaporte</option>
 			<option value="CT" <? if (getByTagName($registro,'tpdocptl') == "CT"){ echo " selected"; } ?>>CT - Carteira de Trabalho</option>
 		</select>
 		<input name="nrdocptl" id="nrdocptl" type="text" value="<? echo getByTagName($registro,'nrdocptl') ?>" />
