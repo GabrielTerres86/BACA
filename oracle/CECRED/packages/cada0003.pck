@@ -531,6 +531,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 						 (Adriano - P339).
   --
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  --
+  --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
+  --                          esteja cadastrado na cooperativa. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -1288,7 +1291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,psf.inhabilitacao_menor inhabilitacaoMenor
             ,psf.dthabilitacao_menor dthabilitacaoMenor
             ,psf.cdestado_civil cdestadoCivil 
-            ,psf.cdnatureza_ocupacao cdNaturezaOcupacao 
+            ,pre.cdocupacao cdNaturezaOcupacao
+            ,pre.nrcadastro cdCadastroEmpresa 
             ,pssMae.Nmpessoa nmmae
             ,pssConjugue.Nmpessoa nmconjugue
             ,pssPai.Nmpessoa nmpai
@@ -1410,6 +1414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,crapnac nac
             ,tbgen_orgao_expedidor oxp 
             ,tbcadast_pessoa_juridica pju            
+            ,tbcadast_pessoa_renda pre
        WHERE psf.idpessoa(+)                  = pss.idpessoa
          AND prlConjugue.Idpessoa(+)          = pss.idpessoa
          AND prlConjugue.tprelacao(+)         = 1
@@ -1433,6 +1438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND nac.cdnacion(+)  = psf.cdnacionalidade
          AND oxp.idorgao_expedidor(+) = psf.idorgao_expedidor
          AND pju.idpessoa(+) = pss.idpessoa
+         AND pre.idpessoa(+)           = pss.idpessoa 
+         AND pre.nrseq_renda(+)        = 1            
          AND pss.nrcpfcgc = pr_nrcpfcgc;
        
       rw_tbcadast_pessoa cr_tbcadast_pessoa%ROWTYPE;
@@ -1568,8 +1575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdCnae', pr_tag_cont => rw_tbcadast_pessoa.cdCnae, pr_des_erro => vr_dscritic);            
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtInicioAtividade', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtInicioAtividade,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);            
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNaturezaOcupacao', pr_tag_cont => rw_tbcadast_pessoa.cdNaturezaOcupacao, pr_des_erro => vr_dscritic);            
-             
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNacionalidade', pr_tag_cont => rw_tbcadast_pessoa.cdNacionalidade, pr_des_erro => vr_dscritic);            
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdCadastroEmpresa', pr_tag_cont => rw_tbcadast_pessoa.cdCadastroEmpresa, pr_des_erro => vr_dscritic);            
              
           END IF;
             
