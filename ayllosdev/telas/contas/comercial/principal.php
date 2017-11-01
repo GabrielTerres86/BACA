@@ -13,8 +13,10 @@
  *                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
  *				  13/07/2016 - Correcao de acesso ao indice MSGALERT do array XML. SD 479874. (Carlos R.)	
  *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+ *                20/09/2017 - Ajustes para carregar endereço comercial corretamente. PRJ339 - CRM(Odirlei)
  *				  20/09/2017 - Ajuste onde o turno e nivel cargo nao estavam sendos carregados. (PRJ339 - Kelvin) 
  *                21/09/2017 - Ajuste para pegar o tpdrendi e vldrendi na posição correta do xml (Adriano - SD ).
+ *                10/10/2017 - Ajuste para chamar fonte principal.php apenas uma vez qnd vem da tela matric. PRJ339 - CRM(Odirlei-AMcom)
  */
 
 	session_start();
@@ -32,6 +34,10 @@
 	$glbvars["nmrotina"] = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : $glbvars["nmrotina"];
 	$cddopcao = ( $operacao == 'CA' || $operacao == 'CAE' ) ? 'A' : 'C';
 	$op       = ( $cddopcao == 'C' ) ? '@' : $cddopcao ;
+	
+    // forçar opecao CA, para carregar o endereço correto na bo75
+    $cddopcao = ( $operacao == 'CA' ) ? 'CA' : $cddopcao;
+    
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
@@ -235,7 +241,11 @@
 		var cooperativa  = '<? echo $cooperativa;  ?>';
 				
 		if (flgcadas == 'M' && operacao == '') {
-			controlaOperacao('CA');
+            
+            // retirada chamada qnd tela matric pois chamava fonte duas vezes, fazendo com que algumas inf
+            // nao fosse carregadas como cdturnos e cdnvlcgo
+			//controlaOperacao('CA');
+            operacao = 'CA' ;
 		}
 		
 	}

@@ -20,6 +20,10 @@
 				 28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
                               esteja cadastrado na cooperativa. (Kelvin)
 					 
+                    23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+                                 replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)                    
+                              
+					 
 	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
@@ -112,8 +116,17 @@
 				
 		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
 		
-		echo "verificaResponsavelLegal();";
-
+        //Removido, pois tela será aberta apos salvar os dados, devido a replicação de dados da pessoa.
+		//echo "verificaResponsavelLegal();";
+		//die();	
+		
+	}
+    
+    // Se for opcao AR, para apenas validar o preenchimento do responsavel legal,
+    //  deve chamar rotina pra continuar fluxo da tela
+    if ($operacao == 'AR'){
+        
+      //echo 'impressao_inclusao();';
 		die();	
 		
 	}
@@ -177,7 +190,9 @@
 		$stringArrayMsg = implode( "|", $msg);
 		
 		if ($operacao == 'VI') {
-			$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            //Alterado, pois tela deverá validar responsavel legal apos salvar os dados, devido a replicação de dados da pessoa.		    
+			//$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            $metodo = ($inpessoa == 1) ? "verificaResponsavelLegal();" : "abrirProcuradores();";
 		}
 		else {
 			$metodo = "estadoInicial();";	

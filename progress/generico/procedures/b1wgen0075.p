@@ -101,6 +101,10 @@
 			   16/08/2017 - Ajustes realizado para que não se crie crapenc sem informar 
 							ao menos o CEP na tela comercial. (Kelvin/Andrino)
 
+              13/10/2017 - Removido tratamento para colocar como inpolexp
+                           qnd for da natureza de ocupacao igual a 99, pois
+                           campo nao existe mais e nao era utilizado. 
+                           PRJ339-CRM (Odirlei-AMcom)
 			   27/09/2017 - Removido regra que fazia com que só carregasse endereco comercial
 							caso Tp. Ctr. Trab. seja diferente de 3. (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
@@ -297,11 +301,17 @@ PROCEDURE Busca_Dados:
             ASSIGN tt-comercial.nmresemp = crapemp.nmresemp.
 
             /* Empresas diversas */
+            IF par_cddopcao <> "C" AND 
+               par_cddopcao <> "CA" THEN
+            DO:
+            
             IF  crapemp.cdempres <> 81   AND
                 NOT(crapemp.cdcooper = 2 AND crapemp.cdempres = 88) THEN
                 DO:
                    ASSIGN
                        tt-comercial.nmextemp = crapemp.nmextemp
+                         tt-comercial.nrcpfemp = STRING(crapemp.nrdocnpj,
+                                                        "99999999999999")
                        tt-comercial.cepedct1 = crapemp.nrcepend
                        tt-comercial.endrect1 = CAPS(crapemp.dsendemp)
                        tt-comercial.nrendcom = crapemp.nrendemp
@@ -309,10 +319,9 @@ PROCEDURE Busca_Dados:
                        tt-comercial.bairoct1 = CAPS(crapemp.nmbairro)
                        tt-comercial.cidadct1 = CAPS(crapemp.nmcidade)
                        tt-comercial.ufresct1 = CAPS(crapemp.cdufdemp)
-                       tt-comercial.nrcpfemp = STRING(crapemp.nrdocnpj,
-                                                      "99999999999999")
                        tt-comercial.cxpotct1 = 0.
                 END.
+        END.
         END.
 
         IF  NOT AVAILABLE crapemp THEN
@@ -1224,12 +1233,6 @@ PROCEDURE Grava_Dados:
             UNDO Grava, LEAVE Grava.
         END.
          
-        /* Encontrar a Ocupacao */
-        FIND gncdocp WHERE gncdocp.cdocupa = par_cdocpttl NO-LOCK NO-ERROR.
-
-        /* Pessoa politicamente exposta se Natureza da ocupacao = 99 */
-        ASSIGN crapttl.inpolexp = INT((gncdocp.cdnatocp = 99)) WHEN AVAIL gncdocp.
- 
         IF par_cepedct1 <> 0 THEN
 		   DO:
 		      ASSIGN

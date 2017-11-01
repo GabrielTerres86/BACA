@@ -170,6 +170,10 @@
 
 				05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
 							 (PRJ339 - Kelvin/Andrino).				  
+
+                09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
+                             da pessoa do cadastro unificado, para completar o cadastro com dados
+                             que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
 .............................................................................*/
                                                      
 
@@ -410,6 +414,20 @@ PROCEDURE Grava_Dados :
 
                        IF  RETURN-VALUE <> "OK" THEN
                            UNDO Grava, LEAVE Grava.
+
+                       /* Buscar associado e atualizar variavel, caso esteja nula
+                          pois na criaçao dado nao é informado e pega por 
+                          padrao do cadastro de pessoa */
+                       IF par_dsproftl = "" THEN
+                       DO:
+                         FIND crapass 
+                         WHERE ROWID(crapass) = par_rowidass.
+                         
+                         IF AVAILABLE crapass THEN
+                         DO:
+                            ASSIGN par_dsproftl = crapass.dsproftl.                       
+                         END.
+                       END.
 
                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                         
@@ -4445,9 +4463,11 @@ PROCEDURE Inclui PRIVATE :
                 RUN Inclui_Fis 
                     ( INPUT par_cdcooper, 
                       INPUT par_nrdconta,
+                      INPUT par_nrcpfcgc,
                       INPUT par_inhabmen,
                       INPUT par_dthabmen,
                      OUTPUT par_rowidttl,
+                     OUTPUT crabass.dsproftl,
                      OUTPUT par_cdcritic,
                      OUTPUT par_dscritic ) NO-ERROR.
 
@@ -4469,6 +4489,7 @@ PROCEDURE Inclui PRIVATE :
                 RUN Inclui_Jur 
                     ( INPUT par_cdcooper,
                       INPUT par_nrdconta,
+                      INPUT par_nrcpfcgc,
                      OUTPUT par_rowidjur,
                      OUTPUT par_cdcritic,
                      OUTPUT par_dscritic ) NO-ERROR.
@@ -4993,10 +5014,12 @@ PROCEDURE Inclui_Fis PRIVATE :
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
     DEF  INPUT PARAM par_inhabmen AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
+    DEF OUTPUT PARAM par_dsproftl AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
@@ -5050,6 +5073,109 @@ PROCEDURE Inclui_Fis PRIVATE :
                    ELSE
                        DO:
                           CREATE crabttl.
+                          
+                          
+                          /* Chamar rotina para retornar dados de pessoa para complementar cadastro do titular */
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          RUN STORED-PROCEDURE pc_busca_crapttl_compl 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                                   ,OUTPUT 0   /* pr_cdnatopc   */
+                                                   ,OUTPUT 0   /* pr_cdocpttl   */   
+                                                   ,OUTPUT 0   /* pr_tpcttrab   */   
+                                                   ,OUTPUT ""  /* pr_nmextemp   */   
+                                                   ,OUTPUT 0   /* pr_nrcpfemp   */   
+                                                   ,OUTPUT ?   /* pr_dtadmemp   */
+                                                   ,OUTPUT ""  /* pr_dsproftl   */
+                                                   ,OUTPUT 0   /* pr_cdnvlcgo   */
+                                                   ,OUTPUT 0   /* pr_vlsalari   */
+                                                   ,OUTPUT 0   /* pr_cdturnos   */
+                                                   ,OUTPUT ""  /* pr_dsjusren   */
+                                                   ,OUTPUT ?   /* pr_dtatutel   */
+                                                   ,OUTPUT 0   /* pr_cdgraupr   */
+												                           ,OUTPUT 0   /* pr_cdfrmttl   */
+                                                   ,OUTPUT 0   /* pr_tpdrendi##1*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##1*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##2*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##2*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##3*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##3*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##4*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##4*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##5*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##5*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##6*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##6*/
+                                                   ,OUTPUT ""  /* pr_nmpaittl   */
+                                                   ,OUTPUT ""  /* pr_nmmaettl   */
+                                                   ,OUTPUT ""). /* pr_dscritic   */
+
+                            CLOSE STORED-PROC pc_busca_crapttl_compl 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                            ASSIGN crabttl.cdnatopc = pc_busca_crapttl_compl.pr_cdnatopc 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdnatopc <> ?
+                                   crabttl.cdocpttl = pc_busca_crapttl_compl.pr_cdocpttl 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdocpttl <> ? 
+                                   crabttl.tpcttrab = pc_busca_crapttl_compl.pr_tpcttrab 
+                                                      WHEN pc_busca_crapttl_compl.pr_tpcttrab <> ? 
+                                   crabttl.nmextemp = pc_busca_crapttl_compl.pr_nmextemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmextemp <> ? 
+                                   crabttl.nrcpfemp = pc_busca_crapttl_compl.pr_nrcpfemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_nrcpfemp <> ? 
+                                   crabttl.dtadmemp = pc_busca_crapttl_compl.pr_dtadmemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_dtadmemp <> ? 
+                                   crabttl.dsproftl = pc_busca_crapttl_compl.pr_dsproftl 
+                                                      WHEN pc_busca_crapttl_compl.pr_dsproftl <> ? 
+                                   /* popular também para garantir que sera mantida a inf.
+                                      visto que a mesma é replicadas nas duas tabelas e vem por parametro zerado */                   
+                                   par_dsproftl= crabttl.dsproftl
+                                   crabttl.cdnvlcgo = pc_busca_crapttl_compl.pr_cdnvlcgo 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdnvlcgo <> ? 
+                                   crabttl.vlsalari = pc_busca_crapttl_compl.pr_vlsalari 
+                                                      WHEN pc_busca_crapttl_compl.pr_vlsalari <> ? 
+                                   crabttl.cdturnos = pc_busca_crapttl_compl.pr_cdturnos 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdturnos <> ? 
+                                   crabttl.dsjusren = pc_busca_crapttl_compl.pr_dsjusren 
+                                                      WHEN pc_busca_crapttl_compl.pr_dsjusren <> ? 
+                                   crabttl.dtatutel = pc_busca_crapttl_compl.pr_dtatutel 
+                                                      WHEN pc_busca_crapttl_compl.pr_dtatutel <> ?
+                                   crabttl.grescola = pc_busca_crapttl_compl.pr_cdgraupr 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdgraupr <> ? 
+                                   crabttl.cdfrmttl = pc_busca_crapttl_compl.pr_cdfrmttl 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdfrmttl <> ?
+                                   crapttl.nmpaittl = pc_busca_crapttl_compl.pr_nmpaittl 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmpaittl <> ?
+                                   crapttl.nmmaettl = pc_busca_crapttl_compl.pr_nmmaettl 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmmaettl <> ?.
+                                                      
+                            ASSIGN crabttl.tpdrendi[1] = pc_busca_crapttl_compl.pr_tpdrendi##1 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##1 <> ?
+                                   crabttl.vldrendi[1] = pc_busca_crapttl_compl.pr_vldrendi##1 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##1 <> ?
+                                   crabttl.tpdrendi[2] = pc_busca_crapttl_compl.pr_tpdrendi##2 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##2 <> ?                                                         
+                                   crabttl.vldrendi[2] = pc_busca_crapttl_compl.pr_vldrendi##2
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##2 <> ?                                                        
+                                   crabttl.tpdrendi[3] = pc_busca_crapttl_compl.pr_tpdrendi##3
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##3 <> ?
+                                   crabttl.vldrendi[3] = pc_busca_crapttl_compl.pr_vldrendi##3 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##3 <> ?                                                         
+                                   crabttl.tpdrendi[4] = pc_busca_crapttl_compl.pr_tpdrendi##4
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##4 <> ?
+                                   crabttl.vldrendi[4] = pc_busca_crapttl_compl.pr_vldrendi##4
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##4 <> ?
+                                   crabttl.tpdrendi[5] = pc_busca_crapttl_compl.pr_tpdrendi##5 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##5 <> ?
+                                   crabttl.vldrendi[5] = pc_busca_crapttl_compl.pr_vldrendi##5 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##5 <> ?
+                                   crabttl.tpdrendi[6] = pc_busca_crapttl_compl.pr_tpdrendi##6 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##6 <> ?
+                                   crabttl.vldrendi[6] = pc_busca_crapttl_compl.pr_vldrendi##6 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##6 <> ?.
+                          
                           ASSIGN
                               crabttl.cdcooper = par_cdcooper
                               crabttl.nrdconta = par_nrdconta
@@ -5099,6 +5225,7 @@ PROCEDURE Inclui_Jur PRIVATE :
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidjur AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -5152,6 +5279,73 @@ PROCEDURE Inclui_Jur PRIVATE :
                    ELSE
                        DO:
                           CREATE crabjur.
+                          
+                          /* Chamar rotina para retornar dados de pessoa para complementar cadastro de PJ */
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          RUN STORED-PROCEDURE pc_busca_crapjur 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                                   ,OUTPUT 0    /* pr_qtfuncio */
+                                                   ,OUTPUT 0    /* pr_vlcaprea */   
+                                                   ,OUTPUT ?    /* pr_dtregemp */   
+                                                   ,OUTPUT 0    /* pr_nrregemp */   
+                                                   ,OUTPUT ""   /* pr_orregemp */   
+                                                   ,OUTPUT 0    /* pr_nrcdnire */
+                                                   ,OUTPUT ?    /* pr_dtinsmun */
+                                                   ,OUTPUT 0    /* pr_flgrefis */
+                                                   ,OUTPUT ""   /* pr_dsendweb */
+                                                   ,OUTPUT 0    /* pr_nrinsmun */
+                                                   ,OUTPUT 0    /* pr_vlfatano */
+                                                   ,OUTPUT 0    /* pr_nrlicamb */
+                                                   ,OUTPUT ?    /* pr_dtvallic */
+                                                   ,OUTPUT 0    /* pr_tpregtrb */
+                                                   ,OUTPUT 0    /* pr_qtfilial */
+                                                   ,OUTPUT ""). /* pr_dscritic */
+
+                            CLOSE STORED-PROC pc_busca_crapjur 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }                            
+                            
+                            ASSIGN crabjur.qtfuncio = pc_busca_crapjur.pr_qtfuncio 
+                                                      WHEN pc_busca_crapjur.pr_qtfuncio <> ?
+                                   crabjur.vlcaprea = pc_busca_crapjur.pr_vlcaprea 
+                                                      WHEN pc_busca_crapjur.pr_vlcaprea <> ? 
+                                   crabjur.dtregemp = pc_busca_crapjur.pr_dtregemp 
+                                                      WHEN pc_busca_crapjur.pr_dtregemp <> ? 
+                                   crabjur.nrregemp = pc_busca_crapjur.pr_nrregemp 
+                                                      WHEN pc_busca_crapjur.pr_nrregemp <> ? 
+                                   crabjur.orregemp = pc_busca_crapjur.pr_orregemp 
+                                                      WHEN pc_busca_crapjur.pr_orregemp <> ? 
+                                   crabjur.nrcdnire = pc_busca_crapjur.pr_nrcdnire 
+                                                      WHEN pc_busca_crapjur.pr_nrcdnire <> ? 
+                                   crabjur.dtinsnum = pc_busca_crapjur.pr_dtinsmun 
+                                                      WHEN pc_busca_crapjur.pr_dtinsmun <> ?                                    
+                                   crabjur.dsendweb = pc_busca_crapjur.pr_dsendweb 
+                                                      WHEN pc_busca_crapjur.pr_dsendweb <> ? 
+                                   crabjur.nrinsmun = pc_busca_crapjur.pr_nrinsmun 
+                                                      WHEN pc_busca_crapjur.pr_nrinsmun <> ?                                                       
+                                   crabjur.vlfatano = pc_busca_crapjur.pr_vlfatano 
+                                                      WHEN pc_busca_crapjur.pr_vlfatano <> ? 
+                                   crabjur.nrlicamb = pc_busca_crapjur.pr_nrlicamb 
+                                                      WHEN pc_busca_crapjur.pr_nrlicamb <> ?
+                                   crabjur.dtvallic = pc_busca_crapjur.pr_dtvallic 
+                                                      WHEN pc_busca_crapjur.pr_dtvallic <> ?
+                                   crabjur.tpregtrb = pc_busca_crapjur.pr_tpregtrb 
+                                                      WHEN pc_busca_crapjur.pr_tpregtrb <> ?
+                                   crabjur.qtfilial = pc_busca_crapjur.pr_qtfilial
+                                                      WHEN pc_busca_crapjur.pr_qtfilial <> ?. 
+                                                      
+                                   IF  pc_busca_crapjur.pr_flgrefis = 1 THEN                   
+                                     DO:
+                                       ASSIGN crabjur.flgrefis = TRUE.
+                                     END.
+                                   ELSE   
+                                     DO:
+                                       ASSIGN crabjur.flgrefis = FALSE.
+                                     END.
+                                 
                           ASSIGN
                               crabjur.cdcooper = par_cdcooper
                               crabjur.nrdconta = par_nrdconta 

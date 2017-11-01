@@ -815,6 +815,21 @@ PROCEDURE gerenciar-telefone:
                            aux_dscritic = ""                         
                            aux_dscritic = pc_busca_nrseqtel.pr_dscritic 
                                 WHEN pc_busca_nrseqtel.pr_dscritic <> ?.						
+                  
+                   
+                    /* Verificar se sequencial ja esta em uso, caso esteja buscar o ultimo
+                      tratamento necessario, pois na tela MATRIC permite cadastrar dois telefones
+                      assim a nova estrutura ainda nao estara atualizada retornando o mesmo seq, duas vezes */
+                    FIND FIRST craptfc 
+                         WHERE craptfc.cdcooper = par_cdcooper AND
+                               craptfc.nrdconta = par_nrdconta AND
+                               craptfc.idseqttl = par_idseqttl AND
+                               craptfc.cdseqtfc = aux_cdseqtfc
+                              NO-LOCK NO-ERROR.
+                              
+                    IF AVAILABLE craptfc THEN          
+                      ASSIGN aux_cdseqtfc = 0.
+                  
                   END.
                 
                 IF par_nmdatela <> "MATRIC" OR aux_cdseqtfc = 0 THEN

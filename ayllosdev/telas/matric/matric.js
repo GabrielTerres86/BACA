@@ -54,6 +54,8 @@
  * 029: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  * 030: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
  * 031: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 032: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+ *                                             replicação dos dados da pessoa. (PRJ339).
  */
 
 // Definição de algumas variáveis globais 
@@ -146,6 +148,7 @@ function controlaOperacao(novaOp) {
 		case 'XV': manterRotina(); semaforo--; return false; break;
 		case 'JV': manterRotina(); semaforo--; return false; break;
 		case 'AV': manterRotina(); semaforo--; return false; break;
+        case 'AR': manterRotina(); semaforo--; return false; break;
 		case 'DV': manterRotina(); semaforo--; return false; break;
 		
 		case 'VI': manterRotina(); semaforo--; return false; break;		
@@ -235,6 +238,7 @@ function manterRotina() {
 		case 'XV': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
 		case 'JV': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
 		case 'AV': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
+        case 'AR': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
 		case 'DV': mensagem = 'Aguarde, validando desvincula&ccedil;&atilde;o ...'; break;
 		case 'PI': mensagem = 'Aguarde, validando alteração ...'; break;	
 		case 'PA': mensagem = 'Aguarde, validando alteração ...'; break;	
@@ -309,7 +313,7 @@ function manterRotina() {
 	//-------------------------------------------------------------------------------------------------
 	// [ I | A ] - Caso for operacao for inclusão ou alteração e for PF - Pessoa Física 
 	//-------------------------------------------------------------------------------------------------
-    if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV', 'PI', 'PA'])) && (inpessoa == 1)) {
+    if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV','AR', 'PI', 'PA'])) && (inpessoa == 1)) {
 	
         cdtipcta = $('#cdtipcta', '#frmFisico').val();
         nmprimtl = normalizaTexto($('#nmprimtl', '#frmFisico').val());
@@ -363,6 +367,10 @@ function manterRotina() {
 		// Indicador se esta conectado no banco de producao
         inbcprod = $('#inbcprod', '#frmCabMatric').val();
 		
+        if (operacao == 'AR'){
+            verrespo = true;
+        }
+        
 		//Normalilza os campos de valor
         vlparcel = number_format(parseFloat(vlparcel.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 						
@@ -2190,11 +2198,15 @@ function verificaResponsavelLegal() {
             abrirRotina('RESPONSAVEL LEGAL', 'Responsavel Legal', 'responsavel_legal', 'responsavel_legal', 'CT');
 		}
 		else {
-			controlaOperacao("VI");
+            //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
+            //controlaOperacao("VI");
+            impressao_inclusao();
 		}
 	}
 	else {
-		controlaOperacao("VI");
+        //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
+        //controlaOperacao("VI");
+        impressao_inclusao();
 	}
 }
 

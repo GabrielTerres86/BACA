@@ -183,7 +183,12 @@
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
 
-				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin). 
+				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
+ 
+                19/10/2017 - Ajustado rotina Busca_Dados_Cto, para carregar ass por cpf
+                             mesmo que conta ja esteja demitida.
+                             PRJ339 - CRM (Odirlei-AMcom) 
+
  
                 31/10/2017 - Ajustado rotina Grava_Dados, gravar crapdoc com tipo 47 e 50
                              quando for pessoa fisica. PRJ339 - CRM (Lombardi)
@@ -714,10 +719,10 @@ PROCEDURE Busca_Dados_Cto:
             END.
         ELSE
         IF  par_nrcpfcto <> 0  THEN
-            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss)
+            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss) NO-LOCK
                               WHERE crabass.cdcooper = par_cdcooper AND
-                                    crabass.nrcpfcgc = par_nrcpfcto AND 
-									crabass.dtdemiss = ? NO-LOCK:
+                                    crabass.nrcpfcgc = par_nrcpfcto 
+                                 BY crabass.dtdemiss DESC   :
             END.
             
         IF  NOT AVAILABLE crabass THEN
@@ -3411,7 +3416,7 @@ PROCEDURE Grava_Dados:
                        aux_dscritic = "".
                 UNDO Grava, LEAVE Grava.
             END.
-        
+
         
         IF crapass.inpessoa = 1 THEN
         DO:
