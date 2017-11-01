@@ -1803,10 +1803,7 @@ PROCEDURE Valida_Dados:
         /* alimenta o percentual da conta em questao */
         ASSIGN tot_persocio = par_persocio.
         
-        IF par_nmrotina = "PROCURADORES"             OR
-           par_nmrotina = "PROCURADORES_FISICA"       OR
-           par_nmrotina = "Representante/Procurador" THEN
-           DO:
+        
                /* procuradores da conta */
                FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
                                       crapavt.tpctrato = 6 /*procurad*/ AND

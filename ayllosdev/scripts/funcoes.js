@@ -103,7 +103,9 @@
  * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
  * 090: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
  * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
-*/ 	 
+ * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
+ * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
+ */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
 var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
@@ -426,7 +428,7 @@ $(document).ready(function () {
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
 	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');
@@ -2323,6 +2325,11 @@ function controlaFocoEnter(frmName) {
 				
 				// Desconsiderar os que estao bloqueados
 				if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
+					continue;
+				}
+				
+				//Desconsiderar os que estao com display none
+				if (jQuery(cTodos[indice]).css('display') == 'none') {					
 					continue;
 				}
 

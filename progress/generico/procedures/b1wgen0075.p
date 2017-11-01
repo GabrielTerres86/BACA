@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 16/08/2017
+    Data    : Maio/2010                   Ultima atualizacao: 27/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -98,6 +98,8 @@
 			   16/08/2017 - Ajustes realizado para que não se crie crapenc sem informar 
 							ao menos o CEP na tela comercial. (Kelvin/Andrino)
 
+			   27/09/2017 - Removido regra que fazia com que só carregasse endereco comercial
+							caso Tp. Ctr. Trab. seja diferente de 3. (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -258,9 +260,9 @@ PROCEDURE Busca_Dados:
                 tt-comercial.inpolexp    = par_inpolexp.
 
         
-
-        IF  tt-comercial.tpcttrab <> 3 THEN
-            DO:
+		/*Regra removida solicitacao Andrino (PRJ339)*/
+        /*IF  tt-comercial.tpcttrab <> 3 THEN
+            DO:*/ 
                /* Endereco */
                FOR LAST crapenc FIELDS(nrcepend dsendere nrendere complend 
                                        nmbairro nmcidade cdufende nrcxapst)
@@ -279,7 +281,7 @@ PROCEDURE Busca_Dados:
                        tt-comercial.ufresct1 = crapenc.cdufende
                        tt-comercial.cxpotct1 = crapenc.nrcxapst.
                END.
-            END.
+            /*END.*/
 
         /* empresa */
         FOR FIRST crapemp FIELDS(cdcooper nmextemp nrcepend dsendemp nrendemp

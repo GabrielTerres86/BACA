@@ -39,19 +39,22 @@
  * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
  * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
  * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
- 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
+ * 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
  *                                              bloqueios de acesso.
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
  * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
+ *		                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
- * 027: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
- * 028: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
-					                        
+ * 027: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
+ * 028: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
+ * 029: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                          
+ * 030: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 031: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
+ 
  */
 
 // Definição de algumas variáveis globais 
@@ -343,7 +346,6 @@ function manterRotina() {
         nmbairro = normalizaTexto($('#nmbairro', '#frmFisico').val());
         nrcepend = normalizaNumero($('#nrcepend', '#frmFisico').val());
         nmcidade = normalizaTexto($('#nmcidade', '#frmFisico').val());
-        nrcxapst = normalizaNumero($('#nrcxapst', '#frmFisico').val());
         dtadmiss = $('#dtadmiss', '#frmFisico').val();
         dtdemiss = $('#dtdemiss', '#frmFisico').val();
         cdmotdem = $('#cdmotdem', '#frmFisico').val();
@@ -420,15 +422,15 @@ function manterRotina() {
                 nrtelcel: nrtelcel, cdopetfn: cdopetfn, nmmaettl: nmmaettl,
                 nmpaittl: nmpaittl, dsendere: dsendere, nrendere: nrendere,
                 complend: complend, nmbairro: nmbairro, nrcepend: nrcepend,
-                nmcidade: nmcidade, cdufende: cdufende, nrcxapst: nrcxapst,
-                dtadmiss: dtadmiss, dtdemiss: dtdemiss, cdmotdem: cdmotdem,
-                rowidass: rowidass, operacao: operacao, qtparcel: qtparcel,
-                dtdebito: dtdebito, vlparcel: vlparcel, nmttlrfb: nmttlrfb,
-                dsproftl: dsproftl, nmmaeptl: nmmaeptl, nmpaiptl: nmpaiptl,
-                nmsegntl: nmsegntl, cdtipcta: cdtipcta, inhabmen: inhabmen,
-                dthabmen: dthabmen, verrespo: verrespo, permalte: permalte,
-                cdufnatu: cdufnatu, inconrfb: inconrfb, hrinicad: hrinicad,
-                arrayFilhos: arrayFilhos, idorigee: idorigee,
+				nmcidade: nmcidade, cdufende: cdufende, dtadmiss: dtadmiss, 
+				dtdemiss: dtdemiss, cdmotdem: cdmotdem, rowidass: rowidass, 
+				operacao: operacao, qtparcel: qtparcel, dtdebito: dtdebito, 
+				vlparcel: vlparcel, nmttlrfb: nmttlrfb, dsproftl: dsproftl, 
+				nmmaeptl: nmmaeptl, nmpaiptl: nmpaiptl,	nmsegntl: nmsegntl, 
+				cdtipcta: cdtipcta, inhabmen: inhabmen, dthabmen: dthabmen, 
+				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
+				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
+				idorigee: idorigee,
                 redirect: 'script_ajax'
             },
             error: function (objAjax, responseError, objExcept) {
@@ -477,7 +479,6 @@ function manterRotina() {
         nrcepend = normalizaNumero($('#nrcepend', '#frmJuridico').val());
         nmcidade = normalizaTexto($('#nmcidade', '#frmJuridico').val());
         cdufende = $('#cdufende', '#frmJuridico').val();
-        nrcxapst = normalizaNumero($('#nrcxapst', '#frmJuridico').val());
         dtadmiss = $('#dtadmiss', '#frmJuridico').val();
         dtdemiss = $('#dtdemiss', '#frmJuridico').val();
         cdmotdem = $('#cdmotdem', '#frmJuridico').val();
@@ -538,12 +539,12 @@ function manterRotina() {
                 nrtelefo: nrtelefo, cdrmativ: cdrmativ, rowidcem: rowidcem,
                 dsdemail: dsdemail, dsendere: dsendere, nrendere: nrendere,
                 complend: complend, nmbairro: nmbairro, nrcepend: nrcepend,
-                nmcidade: nmcidade, cdufende: cdufende, nrcxapst: nrcxapst,
-                dtadmiss: dtadmiss, dtdemiss: dtdemiss, cdmotdem: cdmotdem,
-                cdsitcpf: cdsitcpf, rowidass: rowidass, qtparcel: qtparcel,
-                dtdebito: dtdebito, vlparcel: vlparcel, operacao: operacao,
-                cdtipcta: cdtipcta, cdcnae: cdcnae, inconrfb: inconrfb,
-                nmttlrfb: nmttlrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos,
+				nmcidade: nmcidade, cdufende: cdufende, dtadmiss: dtadmiss, 
+				dtdemiss: dtdemiss, cdmotdem: cdmotdem, cdsitcpf: cdsitcpf, 
+				rowidass: rowidass, qtparcel: qtparcel,	dtdebito: dtdebito, 
+				vlparcel: vlparcel, operacao: operacao, cdtipcta: cdtipcta, 
+				cdcnae: cdcnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
+				hrinicad: hrinicad, arrayFilhos: arrayFilhos,  
                 arrayFilhosAvtMatric: arrayFilhosAvtMatric,
                 arrayBensMatric: arrayBensMatric, idorigee: idorigee,
                 nrlicamb: nrlicamb,
@@ -1088,7 +1089,6 @@ function formataEndereco(nomeForm) {
     var rEnd = $('label[for="dsendere"]', '#' + nomeForm);
     var rNum = $('label[for="nrendere"]', '#' + nomeForm);
     var rCom = $('label[for="complend"]', '#' + nomeForm);
-    var rCax = $('label[for="nrcxapst"]', '#' + nomeForm);
     var rBai = $('label[for="nmbairro"]', '#' + nomeForm);
     var rEst = $('label[for="cdufende"]', '#' + nomeForm);
     var rCid = $('label[for="nmcidade"]', '#' + nomeForm);
@@ -1098,20 +1098,18 @@ function formataEndereco(nomeForm) {
     rEnd.addClass('rotulo-linha').css('width', '36px');
     rNum.addClass('rotulo').css('width', '72px');
     rCom.addClass('rotulo-linha').css('width', '54px');
-    rCax.addClass('rotulo').css('width', '72px');
     rBai.addClass('rotulo-linha').css('width', '54px');
     rEst.addClass('rotulo').css('width', '72px');
     rCid.addClass('rotulo-linha').css('width', '54px');
     rOri.addClass('rotulo').css('width', '72px');
 
     // campo endereco
-    var cTodos = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#nrcxapst,#idorigee', '#' + nomeForm);
+    var cTodos = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#' + nomeForm);
     var endDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#' + nomeForm);
     var cCep = $('#nrcepend', '#' + nomeForm);
     var cEnd = $('#dsendere', '#' + nomeForm);
     var cNum = $('#nrendere', '#' + nomeForm);
     var cCom = $('#complend', '#' + nomeForm);
-    var cCax = $('#nrcxapst', '#' + nomeForm);
     var cBai = $('#nmbairro', '#' + nomeForm);
     var cEst = $('#cdufende', '#' + nomeForm);
     var cCid = $('#nmcidade', '#' + nomeForm);
@@ -1122,7 +1120,6 @@ function formataEndereco(nomeForm) {
     cEnd.addClass('alphanum').css('width', '427px').attr('maxlength', '40');
     cNum.addClass('numerocasa').css('width', '100px').attr('maxlength', '6');
     cCom.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
-    cCax.addClass('caixapostal').css('width', '100px').attr('maxlength', '6');
     cBai.addClass('alphanum').css('width', '426px').attr('maxlength', '40');
     cEst.css('width', '100px');
     cCid.addClass('alphanum').css('width', '426px').attr('maxlength', '25');
@@ -1150,13 +1147,6 @@ function formataEndereco(nomeForm) {
 
     });
 
-    cCax.unbind('keypress').bind('keypress', function (e) {
-        if (e.keyCode == 13) {
-            $("#btProsseguirInc").click();
-            return false;
-        }
-
-    });
 
 
     return false;
@@ -1200,7 +1190,7 @@ function formataPessoaFisica() {
     var cOrgEmissor = $('#cdoedptl', '#frmFisico');
     var cEstEmissor = $('#cdufdptl', '#frmFisico');
     var cDtEmissao = $('#dtemdptl', '#frmFisico');
-    var cNrcxapst = $('#nrcxapst', '#frmFisico');
+    
     // Indicador se estã conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
@@ -1239,14 +1229,6 @@ function formataPessoaFisica() {
             manterOutros('frmFisico');
             return false;
         }
-    });
-
-
-    // Forcar usuario a clicar no botao prosseguir
-    cNrcxapst.unbind('keydown').bind('keydown', function (e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
-            return false;
-        };
     });
 
     cCPF.unbind('blur').bind('blur', function (e) {
@@ -1310,7 +1292,7 @@ function formataPessoaFisica() {
     var cTelefones = $('#nrtelres,#nrtelcel', '#frmFisico');
     var cOperadoras = $('#cdopetfn', '#frmFisico');
     var cSexo = $('input[name=\'cdsexotl\']', '#frmFisico');
-    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#nrcxapst,#idorigee', '#frmFisico');
+    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#frmFisico');
     var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmFisico');
 
     cTodosPF2.desabilitaCampo();
@@ -1545,12 +1527,12 @@ function formataPessoaJuridica() {
     var cDesRamoAtiv = $('#dsrmativ', '#frmJuridico');
     var cDDD = $('#nrdddtfc', '#frmJuridico');
     var cTelefone = $('#nrtelefo', '#frmJuridico');
-    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#nrcxapst,#idorigee', '#frmJuridico');
+    var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#frmJuridico');	
     var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmJuridico');
     var cEmail = $('#dsdemail', '#frmJuridico');
     var cCnae = $('#cdcnae', '#frmJuridico');
     var cDscnae = $('#dscnae', '#frmJuridico');
-    var cNrcxapst = $('#nrcxapst', '#frmJuridico');
+    
     // Indicador se estã conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
@@ -1602,23 +1584,18 @@ function formataPessoaJuridica() {
         }
     });
 
-    // Forcar usuario a clicar no botao prosseguir
-    cNrcxapst.unbind('keydown').bind('keydown', function (e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
-            return false;
-        };
-    });
-
     cCNPJ.unbind('blur').bind('blur', function (e) {
-
+		if ($('#opcao', '#frmCabMatric').val() == "CI") {
         if ($(this).val() != normalizaNumero(nrcpfcgc)) {
             $("#nmttlrfb", "#frmJuridico").val("");
             $("#cdsitcpf", "#frmJuridico").val(0);
             $("#dtcnscpf", "#frmJuridico").val("");
             $("#inconrfb", "#frmJuridico").val("");
+		
+		nrcpfcgc = $(this).val();
+		    }
         }
 
-        nrcpfcgc = $(this).val();
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
@@ -2345,7 +2322,7 @@ function formataInclusao() {
             var cNomesPais = $('#nmmaettl,#nmpaittl', '#frmFisico');
             var cDescricaoPF1 = $('#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
             var cCPF = $('#nrcpfcgc', '#frmFisico');
-            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#nrcxapst', '#frmFisico');
+            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende', '#frmFisico');			
             var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmFisico');
 
 
@@ -2371,7 +2348,7 @@ function formataInclusao() {
             var cDescricaoPJ1 = $('#rsnatjur,#nmseteco,#dsrmativ,#dscnae', '#frmJuridico');
             var cCNPJ = $('#nrcpfcgc', '#frmJuridico');
             var cNomeRFB = $('#nmttlrfb', '#frmJuridico');
-            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#nrcxapst', '#frmJuridico');
+            var cTodosEnd = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende', '#frmJuridico');
             var cEndDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#frmJuridico');
 
             cTodosPJ1.habilitaCampo();
@@ -3179,4 +3156,157 @@ function validaAcessoEexecuta(UrlSite, tipo) {
 }
 
 
+}
+
+function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpessoa, nmpessoaReceita, tpsexo, dtnascimento,
+								    tpdocumento, nrdocumento, idorgaoExpedidor, cdufOrgaoExpedidor, dtemissaoDocumento,
+								    tpnacionalidade, inhabilitacaoMenor, dthabilitacaoMenor, cdestadoCivil, nmmae,
+								    nmconjugue, nmpai, naturalidadeDsCidade, naturalidadeCdEstado,comercialNrddd, comercialNrTelefone,
+								    residencialNrddd, residencialNrTelefone, celularCdOperadora, celularNrDdd, celularNrTelefone, residencialNrCep,
+								    residencialNmLogradouro, residencialNrLogradouro, residencialDsComplemento, residencialNmBairro,
+								    residencialCdEstado, residencialDsCidade, residencialTporigem, correspondenciaNrCep,
+								    correspondenciaNmLogradouro, correspondenciaNrLogradouro, correspondenciaDsComplemento,
+								    correspondenciaNmBairro, correspondenciaCdEstado, correspondenciaDsCidade, correspondenciaTporigem,
+								    dsnacion, cdExpedidor, dsdemail, nmfantasia, comercialNrCep, comercialNmLogradouro, comercialNrLogradouro,
+								    comercialDsComplemento, comercialNmBairro, comercialCdEstado, comercialDsCidade, comercialTporigem,
+									nrInscricao, nrLicenca, cdNatureza, cdSetor, cdRamo, cdCnae, dtInicioAtividade, cdNaturezaOcupacao, 
+									cdNacionalidade, cdCadastroEmpresa) {
+	
+	var bo = 'b1wgen0059.p';	
+	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
+	
+	if(residencialNrCep != ""){
+	
+		if (operacao == 'CA' || operacao == "PA") { // Evitar a validacao quando acessada a opcao de ALTERACAO
+			operacao = 'CC';
+			return false;
+		}
+		
+		operacao = "CC";
+		
+		manterOutros(nomeForm);
+						
+	}
+	
+	$('#tpdocptl', '#' + nomeForm).val(tpdocumento);
+	$('#nrdocptl', '#' + nomeForm).val(nrdocumento);
+	$('#nmttlrfb', '#' + nomeForm).val(nmpessoaReceita);
+	$('#cdsitcpf', '#' + nomeForm).val(cdsituacaoRfb);
+	$('#nmprimtl', '#' + nomeForm).val(nmpessoa);  
+	$('#dtcnscpf', '#' + nomeForm).val(dtconsultarfb);		
+	$('#dsdemail', '#' + nomeForm).val(dsdemail);
+	$('#nrcepcor', '#' + nomeForm).val(correspondenciaNrCep);
+	$('#dsendcor', '#' + nomeForm).val(correspondenciaNmLogradouro);
+	$('#nrendcor', '#' + nomeForm).val(correspondenciaNrLogradouro);
+	$('#complcor', '#' + nomeForm).val(correspondenciaDsComplemento);
+	$('#nmbaicor', '#' + nomeForm).val(correspondenciaNmBairro) ;
+	$('#cdufcorr', '#' + nomeForm).val(correspondenciaCdEstado);
+	$('#nmcidcor', '#' + nomeForm).val(correspondenciaDsCidade);
+	$('#idoricor', '#' + nomeForm).val(correspondenciaTporigem); 
+	
+	
+	if (inpessoa == 1) {
+		$('#dsnacion', '#' + nomeForm).val(dsnacion);
+		$('#inhabmen', '#' + nomeForm).val(inhabilitacaoMenor);
+		$('#dthabmen', '#' + nomeForm).val(dthabilitacaoMenor);		
+		$('#cdestcvl', '#' + nomeForm).val(cdestadoCivil);	
+		$('#tpnacion', '#' + nomeForm).val(tpnacionalidade);
+		$('#cdoedptl', '#' + nomeForm).val(cdExpedidor);
+		$('#cdnacion', '#' + nomeForm).val(cdNacionalidade);
+		$('#cdufdptl', '#' + nomeForm).val(cdufOrgaoExpedidor);
+		$('#dtemdptl', '#' + nomeForm).val(dtemissaoDocumento);
+		$('#dtnasctl', '#' + nomeForm).val(dtnascimento); 
+		$('#nmconjug', '#' + nomeForm).val(nmconjugue);
+		$('#nmmaettl', '#' + nomeForm).val(nmmae);	
+		$('#nmpaittl', '#' + nomeForm).val(nmpai);
+		$('#dsnatura', '#' + nomeForm).val(naturalidadeDsCidade);
+		$('#cdufnatu', '#' + nomeForm).val(naturalidadeCdEstado);
+		$('#nrdddres', '#' + nomeForm).val(residencialNrddd);
+		$('#nrtelres', '#' + nomeForm).val(residencialNrTelefone);
+		$('#cdopetfn', '#' + nomeForm).val(celularCdOperadora);
+		$('#nrdddcel', '#' + nomeForm).val(celularNrDdd);
+		$('#nrtelcel', '#' + nomeForm).val(celularNrTelefone);
+		$('#nrcepend', '#' + nomeForm).val(residencialNrCep);
+		$('#dsendere', '#' + nomeForm).val(residencialNmLogradouro);
+		$('#nrendere', '#' + nomeForm).val(residencialNrLogradouro);
+		$('#complend', '#' + nomeForm).val(residencialDsComplemento);
+		$('#nmbairro', '#' + nomeForm).val(residencialNmBairro);
+		$('#cdufende', '#' + nomeForm).val(residencialCdEstado);
+		$('#nmcidade', '#' + nomeForm).val(residencialDsCidade);
+		$('#idorigee', '#' + nomeForm).val(residencialTporigem); 
+		$('#cdocpttl', '#' + nomeForm).val(cdNaturezaOcupacao); 
+		$('#nrcadast', '#' + nomeForm).val(cdCadastroEmpresa); 		 
+				
+		if (tpsexo == 1) {
+			$('#sexoFem', '#' + nomeForm).prop('checked', false);	  	
+			$('#sexoMas', '#' + nomeForm).prop('checked', true);
+		}
+		else {
+			$('#sexoMas', '#' + nomeForm).prop('checked', false);
+			$('#sexoFem', '#' + nomeForm).prop('checked', true);	  		
+		}
+		
+		procedure = 'busca_tipo_nacionalidade';
+		titulo = 'Tipo Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'tpnacion', 'destpnac', tpnacionalidade, 'destpnac', filtrosDesc, nomeForm);
+
+		procedure = 'busca_estado_civil';
+		titulo = 'Estado Civil';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'cdestcvl', 'dsestcvl', cdestadoCivil, 'dsestcvl', filtrosDesc, 'frmFisico');
+		
+		procedure = 'BUSCOCUPACAO';
+		titulo = 'Ocupação';
+		filtrosDesc = '';
+		buscaDescricao("ZOOM0001", procedure, titulo, 'cdocpttl', 'dsocpttl', cdNaturezaOcupacao, 'rsdocupa', filtrosDesc, 'frmFisico');
+		
+		procedure = 'BUSCANACIONALIDADES';
+		titulo = 'Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
+		
+	}
+	else if (inpessoa == 2){		
+		$('#nmfansia', '#' + nomeForm).val(nmfantasia);
+		$('#nrcepend', '#' + nomeForm).val(comercialNrCep);
+		$('#dsendere', '#' + nomeForm).val(comercialNmLogradouro);
+		$('#nrendere', '#' + nomeForm).val(comercialNrLogradouro);
+		$('#complend', '#' + nomeForm).val(comercialDsComplemento);
+		$('#nmbairro', '#' + nomeForm).val(comercialNmBairro);
+		$('#cdufende', '#' + nomeForm).val(comercialCdEstado);
+		$('#nmcidade', '#' + nomeForm).val(comercialDsCidade);
+		$('#idorigee', '#' + nomeForm).val(comercialTporigem); 	
+		$('#nrdddtfc', '#' + nomeForm).val(comercialNrddd);
+		$('#nrtelefo', '#' + nomeForm).val(comercialNrTelefone);
+		$('#nrinsest', '#' + nomeForm).val(nrInscricao); 		
+		$('#nrlicamb', '#' + nomeForm).val(nrLicenca);
+		$('#natjurid', '#' + nomeForm).val(cdNatureza);		
+		$('#cdseteco', '#' + nomeForm).val(cdSetor);
+		$('#cdrmativ', '#' + nomeForm).val(cdRamo);
+		$('#cdcnae', '#' + nomeForm).val(cdCnae);
+		$('#dtiniatv', '#' + nomeForm).val(dtInicioAtividade);
+		
+		procedure = 'busca_natureza_juridica';
+		titulo = 'Nat. Jurídica';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'natjurid', 'rsnatjur', cdNatureza, 'rsnatjur', filtrosDesc, 'frmJuridico');
+		
+		procedure = 'busca_setor_economico';
+		titulo = 'Setor Econômico';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'cdseteco', 'nmseteco', cdSetor, 'nmseteco', filtrosDesc, 'frmJuridico');				
+
+		procedure = 'busca_ramo_atividade';
+		titulo = 'Ramo Atividade';
+		filtrosDesc = 'cdseteco';
+		buscaDescricao(bo, procedure, titulo, 'cdrmativ', 'dsrmativ', cdRamo, 'nmrmativ', filtrosDesc, 'frmJuridico');
+
+		procedure = 'BUSCA_CNAE';
+		titulo = 'CNAE';
+		filtrosDesc = 'flserasa|2';
+		buscaDescricao('ZOOM0001', procedure, titulo, 'cdcnae', 'dscnae', cdCnae, 'dscnae', filtrosDesc, 'frmJuridico');				
+		
+	}
+	
 }
