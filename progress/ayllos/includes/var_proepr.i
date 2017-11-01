@@ -121,6 +121,9 @@
                12/05/2015 - Alteracao na critica na mudanca de numero do 
                             contrato no f_numero. (Jaison/Gielow - SD: 282303)
 
+			   28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							CH, RE, PP E CT. (PRJ339 - Reinert)
+
 ............................................................................. */
            
 { sistema/generico/includes/b1wgen0002tt.i }    
@@ -399,13 +402,14 @@ FORM SKIP
      "Documento:"             AT 2
      tt-dados-avais.tpdoccjg  FORMAT "x(2)" 
          VALIDATE(tt-dados-avais.tpdoccjg = " "  OR              
-                  tt-dados-avais.tpdoccjg = "CH" OR
-                  tt-dados-avais.tpdoccjg = "CP" OR
                   tt-dados-avais.tpdoccjg = "CI" OR              
-                  tt-dados-avais.tpdoccjg = "CT" OR
-                  tt-dados-avais.tpdoccjg = "TE",
+                  tt-dados-avais.tpdoccjg = "CN" OR                  
+                  tt-dados-avais.tpdoccjg = "CH" OR
+                  tt-dados-avais.tpdoccjg = "RE" OR
+                  tt-dados-avais.tpdoccjg = "PP" OR
+                  tt-dados-avais.tpdoccjg = "CT",
                   "021 - Tipo de documento errado")
-         HELP "Entre com CH, CI, CP, CT, TE"
+         HELP "Entre com CI, CN, CH, RE, PP, CT"
      tt-dados-avais.nrdoccjg  FORMAT "x(37)"
          HELP "Entre com o Docto do conjuge do primeiro aval."
      SKIP(1)
@@ -531,9 +535,9 @@ FORM SKIP(1)
      "Documento:"                AT 2
      tt-interv-anuentes.tpdocava FORMAT "x(2)"  
          VALIDATE (tt-interv-anuentes.tpdocava = "" OR 
-                   CAN-DO("CH,CP,CI,CT,TE",tt-interv-anuentes.tpdocava),                 
+                   CAN-DO("CI,CN,CH,RE,PP,CT",tt-interv-anuentes.tpdocava),                 
                    "021 - Tipo de documento errado")
-         HELP "Entre com CH, CI, CP, CT, TE"   
+         HELP "Entre com CI, CN, CH, RE, PP, CT"
 
      tt-interv-anuentes.nrdocava FORMAT "x(37)"
          HELP "Entre com o Docto do interveniente anuente."
@@ -550,9 +554,9 @@ FORM SKIP(1)
      "Documento:"                AT  2
      tt-interv-anuentes.tpdoccjg  
          VALIDATE (tt-interv-anuentes.tpdoccjg = " "  OR              
-                   CAN-DO("CH,CP,CI,CT,TE",tt-interv-anuentes.tpdoccjg),
+                   CAN-DO("CI,CN,CH,RE,PP,CT",tt-interv-anuentes.tpdoccjg),
                    "021 - Tipo de documento errado")
-         HELP "Entre com CH, CI, CP, CT, TE"
+         HELP "Entre com CI, CN, CH, RE, PP, CT"   
      tt-interv-anuentes.nrdoccjg FORMAT "x(37)"
          HELP "Entre com o Docto do conjuge do interveniente anuente."
      SKIP(1)

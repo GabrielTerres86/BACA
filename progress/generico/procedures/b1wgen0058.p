@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 21/09/2017
+    Data    : Marco/2010                   Ultima atualizacao: 16/10/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -171,6 +171,9 @@
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
                 
+				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
+
                 20/09/2017 - Alterado validacao naturalidade CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)  
 
@@ -1356,7 +1359,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  LOOKUP(par_tpdocava,"CI,CH,CP,CT") = 0 THEN
+        IF  LOOKUP(par_tpdocava,"CI,CN,CH,RE,PP,CT") = 0 THEN
             DO:
                ASSIGN aux_cdcritic = 21.
                LEAVE Valida.

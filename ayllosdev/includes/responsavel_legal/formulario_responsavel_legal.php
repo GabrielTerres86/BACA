@@ -9,6 +9,10 @@
  * 				  24/04/2012 : Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  *                
  *				  16/07/2015 : Reformulacao cadastral (Gabriel-RKAM).
+ *                25/04/2017 : Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -36,15 +40,20 @@
 		<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 		<select name="tpdocava" id="tpdocava">
 			<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
 			<option value="CI" <? if ($frm_tpdeiden == "CI"){ echo " selected"; } ?>>CI</option>
-			<option value="CP" <? if ($frm_tpdeiden == "CP"){ echo " selected"; } ?>>CP</option>
+			<option value="CN" <? if ($frm_tpdeiden == "CN"){ echo " selected"; } ?>>CN</option>
+			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
+			<option value="RE" <? if ($frm_tpdeiden == "RE"){ echo " selected"; } ?>>RE</option>
+			<option value="PP" <? if ($frm_tpdeiden == "PP"){ echo " selected"; } ?>>PP</option>
 			<option value="CT" <? if ($frm_tpdocava == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nridenti; ?>" />
 		
 		<label for="cdoeddoc" class="rotulo-60">Org.Emi.:</label>
 		<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo $frm_dsorgemi; ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
+		
 		<br />
 		
 		<label for="cdufddoc" class="rotulo rotulo-70">U.F.:</label>
@@ -67,11 +76,13 @@
 		<label for="sexoFem" class="radio">Fem.</label>
 		<br />
 			
-		<label for="dsnacion" class="rotulo rotulo-70">Nacional.:</label>
+		<label for="cdnacion" class="rotulo rotulo-70">Nacional.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" value="<? echo $frm_cdnacion; ?>" />
+        <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsnacion" id="dsnacion" type="text" value="<? echo $frm_dsnacion; ?>" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<br />
 		
-		<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
+		<label for="dsnatura" class="rotulo rotulo-70">Natural de:</label>
 		<input name="dsnatura" id="dsnatura" type="text" value="<? echo $frm_dsnatura; ?>" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />

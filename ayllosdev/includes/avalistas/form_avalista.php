@@ -7,11 +7,13 @@
  *
  * ALTERACOES   : 22/04/2015 - Consultas automatizadas para o limite de credito (Gabriel-RKAM)
  *				  25/07/2016 - Corrigi o uso de indice inexistente no array $registros. SD 479874 (Carlos R.)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
-
+ 
 $registros[0]->tags = ( isset($registros[0]->tags) ) ? $registros[0]->tags : array();
 $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : array();
-
+	
 ?>	
 <fieldset class="fsAvalista">
 	<legend>Avalista/Fiadores 1</legend>
@@ -31,11 +33,12 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 	<label for="tpdocav1">Doc.:</label>
 	<select name="tpdocav1" class="campo" id="tpdocav1">
 		<option value=""   <? if (getByTagName($registros[0]->tags,'tpdocava') == ""  ){ echo " selected"; } ?>> </option>
-		<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
 		<option value="CI" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CI"){ echo " selected"; } ?>>CI</option>
-		<option value="CP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CP"){ echo " selected"; } ?>>CP</option>
+		<option value="CN" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CN"){ echo " selected"; } ?>>CN</option>
+		<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
+		<option value="RE" <? if (getByTagName($registros[0]->tags,'tpdocava') == "RE"){ echo " selected"; } ?>>RE</option>
+		<option value="PP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "PP"){ echo " selected"; } ?>>PP</option>
 		<option value="CT" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CT"){ echo " selected"; } ?>>CT</option>
-		<option value="TE" <? if (getByTagName($registros[0]->tags,'tpdocava') == "TE"){ echo " selected"; } ?>>TE</option>
 	</select>
 	<input name="dsdocav1" id="dsdocav1" type="text" value="<? echo getByTagName($registros[0]->tags,'nrdocava') ?>" />
 	<br />
@@ -49,11 +52,12 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 	<label for="tdccjav1">Doc.:</label>
 	<select name="tdccjav1" class="campo" id="tdccjav1" style="width: 42px;">
 		<option value=""   <? if (getByTagName($registros[0]->tags,'tpdoccjg') == ""  ){ echo " selected"; } ?>> </option>
-		<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CH"){ echo " selected"; } ?>>CH</option>
 		<option value="CI" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CI"){ echo " selected"; } ?>>CI</option>
-		<option value="CP" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CP"){ echo " selected"; } ?>>CP</option>
+		<option value="CN" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CN"){ echo " selected"; } ?>>CN</option>
+		<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CH"){ echo " selected"; } ?>>CH</option>
+		<option value="RE" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "RE"){ echo " selected"; } ?>>RE</option>
+		<option value="PP" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "PP"){ echo " selected"; } ?>>PP</option>
 		<option value="CT" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "CT"){ echo " selected"; } ?>>CT</option>
-		<option value="TE" <? if (getByTagName($registros[0]->tags,'tpdoccjg') == "TE"){ echo " selected"; } ?>>TE</option>
 	</select>
 	<input name="doccjav1" id="doccjav1" type="text" value="<? echo getByTagName($registros[0]->tags,'nrdoccjg') ?>" />
 	<br />
@@ -106,28 +110,29 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 </fieldset>
 
 <fieldset class="fsAvalista">
-	<legend><?php echo utf8ToHtml('Avalista/Fiadores 2') ?></legend>		
+	<legend>Avalista/Fiadores 2</legend>		
 
-	<label for="nrctaav2"><?php echo utf8ToHtml('Conta/dv:') ?></label>
+	<label for="nrctaav2">Conta/dv:</label>
 	<input name="nrctaav2" id="nrctaav2" type="text" value="<? echo !empty($registros[1]) ? getByTagName($registros[1]->tags,'nrctaava') : '0' ?>" />
 	<a class="lupa"><img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 	<a class="pointer"><img src="<?php echo $UrlImagens; ?>geral/refresh.png"></a>
 	
-	<label for="nmdaval2"><?php echo utf8ToHtml('Nome:') ?></label>
+	<label for="nmdaval2">Nome:</label>
 	<input name="nmdaval2" id="nmdaval2" type="text" value="<?php echo getByTagName($registros[1]->tags,'nmdavali') ?>" />
 	<br />	
 
-	<label for="nrcpfav2"><?php echo utf8ToHtml('CPF/CNPJ:') ?></label>
+	<label for="nrcpfav2">CPF/CNPJ:</label>
 	<input name="nrcpfav2" id="nrcpfav2" type="text" value="<?php echo getByTagName($registros[1]->tags,'nrcpfcgc') ?>" />
 	
-	<label for="tpdocav2"><?php echo utf8ToHtml('Doc.:') ?></label>
+	<label for="tpdocav2">Doc.:</label>
 	<select name="tpdocav2" class="campo" id="tpdocav2">	
 		<option value=""   <?php if (getByTagName($registros[1]->tags,'tpdocava') == ""  ){ echo " selected"; } ?>> </option>
-		<option value="CH" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
 		<option value="CI" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CI"){ echo " selected"; } ?>>CI</option>
-		<option value="CP" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CP"){ echo " selected"; } ?>>CP</option>
+		<option value="CN" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CN"){ echo " selected"; } ?>>CN</option>
+		<option value="CH" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
+		<option value="RE" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "RE"){ echo " selected"; } ?>>RE</option>
+		<option value="PP" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "PP"){ echo " selected"; } ?>>PP</option>
 		<option value="CT" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "CT"){ echo " selected"; } ?>>CT</option>
-		<option value="TE" <?php if (getByTagName($registros[1]->tags,'tpdocava') == "TE"){ echo " selected"; } ?>>TE</option>
 	</select>
 	<input name="dsdocav2" id="dsdocav2" type="text" value="<? echo getByTagName($registros[1]->tags,'nrdocava') ?>" />
 	<br />
@@ -141,11 +146,12 @@ $registros[1]->tags = ( isset($registros[1]->tags) ) ? $registros[1]->tags : arr
 	<label for="tdccjav2"><? echo utf8ToHtml('Doc.:') ?></label>
 	<select name="tdccjav2" class="campo" id="tdccjav2">
 		<option value=""   <? if (getByTagName($registros[1]->tags,'tpdoccjg') == ""  ){ echo " selected"; } ?>> </option>
-		<option value="CH" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CH"){ echo " selected"; } ?>>CH</option>
 		<option value="CI" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CI"){ echo " selected"; } ?>>CI</option>
-		<option value="CP" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CP"){ echo " selected"; } ?>>CP</option>
+		<option value="CN" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CN"){ echo " selected"; } ?>>CN</option>
+		<option value="CH" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CH"){ echo " selected"; } ?>>CH</option>
+		<option value="RE" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "RE"){ echo " selected"; } ?>>RE</option>
+		<option value="PP" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "PP"){ echo " selected"; } ?>>PP</option>
 		<option value="CT" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "CT"){ echo " selected"; } ?>>CT</option>
-		<option value="TE" <? if (getByTagName($registros[1]->tags,'tpdoccjg') == "TE"){ echo " selected"; } ?>>TE</option>
 	</select>
 	<input name="doccjav2" id="doccjav2" type="text" value="<? echo getByTagName($registros[1]->tags,'nrdoccjg') ?>" />
 	<br />

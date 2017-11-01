@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para validar/incluir/alterar/excluir os dados dos bens da tela de CONTAS
  * ALTERAÇÕES   : 24/04/2012 - Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  *                17/07/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */
 ?>
  
@@ -33,7 +36,7 @@
 	$tpdocava = (isset($_POST["tpdocava"])) ? $_POST["tpdocava"] : "";      
 	$nrdocava = (isset($_POST["nrdocava"])) ? $_POST["nrdocava"] : "";      
 	$cdestcvl = (isset($_POST["cdestcvl"])) ? $_POST["cdestcvl"] : "";      
-	$dsnacion = (isset($_POST["dsnacion"])) ? $_POST["dsnacion"] : "";      
+	$cdnacion = (isset($_POST["cdnacion"])) ? $_POST["cdnacion"] : "";      
 	$dsnatura = (isset($_POST["dsnatura"])) ? $_POST["dsnatura"] : "";      
 	$complend = (isset($_POST["complend"])) ? $_POST["complend"] : "";      
 	$nmcidade = (isset($_POST["nmcidade"])) ? $_POST["nmcidade"] : "";      
@@ -124,7 +127,7 @@
 	$xml .= "       <tpdocava>".$tpdocava."</tpdocava>";  
 	$xml .= "       <nrdocava>".$nrdocava."</nrdocava>";  
 	$xml .= "       <cdestcvl>".$cdestcvl."</cdestcvl>";  
-	$xml .= "       <dsnacion>".$dsnacion."</dsnacion>";  
+	$xml .= "       <cdnacion>".$cdnacion."</cdnacion>";  
 	$xml .= "       <dsnatura>".$dsnatura."</dsnatura>";  
 	$xml .= "       <complend>".$complend."</complend>";  
 	$xml .= "       <nmcidade>".$nmcidade."</nmcidade>";  
@@ -274,7 +277,7 @@
 		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnascto\',\'frmRespLegal\')',false);
 				
 		// Tipo de Documento
-		if (!in_array($GLOBALS['tpdocava'],array('CH','CI','CP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
+		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
 		
 		// Numero de Documento
 		if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
@@ -296,7 +299,7 @@
 		if ( $GLOBALS['cdsexcto'] == 0 ) exibirErro('error','Selecione o sexo do responsável.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'sexoMas\',\'frmRespLegal\')',false);
 						
 		// Nacionalidade
-		if ( $GLOBALS['dsnacion'] == '' ) exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnacion\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['cdnacion'] == '' ) exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmRespLegal\')',false);
 					
 		// Naturalidade
 		if ( $GLOBALS['dsnatura' ] == '') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmRespLegal\')',false);

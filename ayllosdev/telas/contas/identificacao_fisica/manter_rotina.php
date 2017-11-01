@@ -13,6 +13,10 @@
  * 004: [23/08/2013] David               : Incluir campo UF Naturalidade - cdufnatu
  * 005: [27/02/2015] Jaison/Gielow       : Substituicao de caracteres especiais. (SD: 257871)
  * 006: [17/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
+ * 007: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 							
+ * 008: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
+ * 009: [28/08/2017] Lucas Reinert		 : Alterado tipos de documento para utilizarem CI, CN, 
+ *										   CH, RE, PP E CT. (PRJ339 - Reinert)
  */
 ?>
  
@@ -39,8 +43,8 @@
 	$cdoedttl = (isset($_POST['cdoedttl'])) ? $_POST['cdoedttl'] : '';     
 	$cdufdttl = (isset($_POST['cdufdttl'])) ? $_POST['cdufdttl'] : '';     
 	$dtemdttl = (isset($_POST['dtemdttl'])) ? $_POST['dtemdttl'] : '';     
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '';     
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '';     
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '';     
 	$dtnasttl = (isset($_POST['dtnasttl'])) ? $_POST['dtnasttl'] : '';     
 	$dsnatura = (isset($_POST['dsnatura'])) ? $_POST['dsnatura'] : '';     
 	$cdufnatu = (isset($_POST['cdufnatu'])) ? $_POST['cdufnatu'] : '';     
@@ -61,7 +65,6 @@
 	$nrcpfemp = (isset($_POST['nrcpfemp'])) ? $_POST['nrcpfemp'] : '';	
 	$dsproftl = (isset($_POST['dsproftl'])) ? $_POST['dsproftl'] : '';	
 	$cdnvlcgo = (isset($_POST['cdnvlcgo'])) ? $_POST['cdnvlcgo'] : '';	
-	$nrfonemp = (isset($_POST['nrfonemp'])) ? $_POST['nrfonemp'] : '';	
 	$cdturnos = (isset($_POST['cdturnos'])) ? $_POST['cdturnos'] : '';	
 	$dtadmemp = (isset($_POST['dtadmemp'])) ? $_POST['dtadmemp'] : '';	
 	$vlsalari = (isset($_POST['vlsalari'])) ? $_POST['vlsalari'] : '';
@@ -70,6 +73,7 @@
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
 	$flgContinuar = (isset($_POST['flgContinuar'])) ? $_POST['flgContinuar'] : '';
 	$arrayFilhos  = (isset($_POST['arrayFilhos'])) ? $_POST['arrayFilhos'] : '';
+
 
     $array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -126,7 +130,7 @@
 	$xml .= '       <cdufdttl>'.$cdufdttl.'</cdufdttl>';
 	$xml .= '       <dtemdttl>'.$dtemdttl.'</dtemdttl>';
 	$xml .= '       <tpnacion>'.$tpnacion.'</tpnacion>';
-	$xml .= '       <dsnacion>'.$dsnacion.'</dsnacion>';
+	$xml .= '       <cdnacion>'.$cdnacion.'</cdnacion>';
 	$xml .= '       <dtnasttl>'.$dtnasttl.'</dtnasttl>';
 	$xml .= '       <dsnatura>'.$dsnatura.'</dsnatura>';
 	$xml .= '       <cdufnatu>'.$cdufnatu.'</cdufnatu>';
@@ -148,7 +152,6 @@
 	$xml .= '		<nrcpfemp>'.$nrcpfemp.'</nrcpfemp>';
 	$xml .= '		<dsproftl>'.$dsproftl.'</dsproftl>';
 	$xml .= '		<cdnvlcgo>'.$cdnvlcgo.'</cdnvlcgo>';
-	$xml .= '		<nrfonemp>'.$nrfonemp.'</nrfonemp>';
 	$xml .= '		<cdturnos>'.$cdturnos.'</cdturnos>';
 	$xml .= '		<dtadmemp>'.$dtadmemp.'</dtadmemp>';
 	$xml .= '		<vlsalari>'.$vlsalari.'</vlsalari>';
@@ -317,7 +320,7 @@
 			if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentFisica\')',false);
 			
 			// Tipo de Documento
-			if (!in_array($GLOBALS['tpdocttl'],array('CH','CI','CP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
+			if (!in_array($GLOBALS['tpdocttl'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Numero de Documento
 			if ($GLOBALS['nrdocttl']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocttl\',\'frmDadosIdentFisica\')',false);
@@ -336,7 +339,8 @@
 			if ($GLOBALS['tpnacion'] == 0) exibirErro('error','Tipo Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Nacionalidade
-			if ($GLOBALS['dsnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnacion\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
+            if ($GLOBALS['cdnacion'] == 0) exibirErro('error','Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Sexo 
 			if (($GLOBALS['cdsexotl'] != 1)&&($GLOBALS['cdsexotl'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsexotl\',\'frmDadosIdentFisica\')',false);			

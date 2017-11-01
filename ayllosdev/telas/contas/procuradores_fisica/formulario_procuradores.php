@@ -9,7 +9,13 @@
  *							   dshabment (Adriano).
  *
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  *
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *
+ * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -52,15 +58,19 @@
 			<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 			<select name="tpdocava" id="tpdocava">
 				<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
 				<option value="CI" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CI"){ echo " selected"; } ?>>CI</option>
-				<option value="CP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CP"){ echo " selected"; } ?>>CP</option>
+				<option value="CN" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CN"){ echo " selected"; } ?>>CN</option>
+				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
+				<option value="RE" <? if (getByTagName($registros[0]->tags,'tpdocava') == "RE"){ echo " selected"; } ?>>RE</option>
+				<option value="PP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "PP"){ echo " selected"; } ?>>PP</option>
 				<option value="CT" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CT"){ echo " selected"; } ?>>CT</option>
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo getByTagName($registros[0]->tags,'nrdocava') ?>" />
 			
 			<label for="cdoeddoc" class="rotulo-linha">Org.Emi.:</label>
 			<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo getByTagName($registros[0]->tags,'cdoeddoc') ?>" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
 			
 			<label for="cdufddoc" class="rotulo-linha">U.F.:</label>
 			<? echo selectEstado('cdufddoc', getByTagName($registros[0]->tags,'cdufddoc'), 1) ?>
@@ -80,12 +90,14 @@
 			<label for="sexoFem" class="radio">Fem.</label>
 			<br />
 				
-			<label for="dsnacion" class="rotulo rotulo-70">Nacional.:</label>
-			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'dsnacion') ?>" />
+			<label for="cdnacion" class="rotulo rotulo-70">Nacional.:</label>
+			<input name="cdnacion" id="cdnacion" type="text" class="pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'cdnacion') ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'dsnacion') ?>" />
+			<br />
 			
-			<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
-			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="25" value="<? echo getByTagName($registros[0]->tags,'dsnatura') ?>" />
+			<label for="dsnatura" class="rotulo rotulo-70">Natural de:</label>
+			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="50" value="<? echo getByTagName($registros[0]->tags,'dsnatura') ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		</fieldset>
 		
