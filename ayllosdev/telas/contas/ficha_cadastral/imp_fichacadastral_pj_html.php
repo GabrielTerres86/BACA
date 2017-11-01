@@ -39,6 +39,7 @@
  *                13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
  *			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
  *							  (Adriano - P339).
+ *  			  09/10/2017 - Removendo os campos nrdoapto cddbloco nrcxapst do relatorio. (PRJ339 - Kelvin)
  */	 
 ?>
 
@@ -269,7 +270,6 @@
 			
 			$linha  = 'Cidade: '.preencheString(getByTagName($representante->tags,'nmcidade'),26);			
 			$linha .= ' UF: '.preencheString(getByTagName($representante->tags,'cdufende'),3);	
-			$linha .= ' Caixa Postal: '.preencheString(getByTagName($representante->tags,'nrcxapst'),6,' ','D');	
 			escreveLinha( $linha );
 			
 			$linha = preencheString( 'Filiacao: Mae: '.getByTagName($representante->tags,'nmmaecto'),76);	
@@ -444,7 +444,6 @@
 							
 							$linha  = 'Cidade: '.preencheString(getByTagName($responsavel->tags,'dscidres'),26);	
 							$linha .= 'UF: '.preencheString(getByTagName($responsavel->tags,'dsdufres'),4);	
-							$linha .= 'Caixa Postal: '.preencheString(getByTagName($responsavel->tags,'nrcxpost'),6,' ','D');	
 							escreveLinha( $linha );
 							
 							$linha = preencheString( 'Filiacao: Mae: '.getByTagName($responsavel->tags,'nmmaersp'),76);	
@@ -514,16 +513,12 @@
 	$linha .= 'Complemento: '.preencheString(getByTagName($registros,'complend'),43);	
 	escreveLinha( $linha );
 	
-	$linha = ' Apto.: '.preencheString(getByTagName($registros,'nrdoapto'),18);	
-	$linha .= 'Bloco: '.preencheString(getByTagName($registros,'cddbloco'),5);	
-	escreveLinha( $linha );
-	
 	$linha = 'Bairro: '.preencheString(getByTagName($registros,'nmbairro'),40);	
 	escreveLinha( $linha );
 	
 	$linha  = 'Cidade: '.preencheString(getByTagName($registros,'nmcidade'),26);	
 	$linha .= 'UF: '.preencheString(getByTagName($registros,'cdufende'),4);	
-	$linha .= 'Caixa Postal: '.preencheString(getByTagName($registros,'nrcxapst'),6,' ','D');	
+	
 	escreveLinha( $linha );
 	
 	//*********************************************************TELEFONES********************************************************
@@ -615,7 +610,6 @@
 			
 			$linha  = 'Cidade: '.preencheString(getByTagName($referencia->tags,'nmcidade'),26);	
 			$linha .= 'UF: '.preencheString(getByTagName($referencia->tags,'cdufende'),4);	
-			$linha .= 'Caixa Postal: '.preencheString(getByTagName($referencia->tags,'nrcxapst'),6,' ','D');	
 			escreveLinha( $linha );
 			
 			escreveLinha( '' );

@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : imp_fichacadastral_pf_html.php							Última alteração: 20/04/2017
+ * FONTE        : imp_fichacadastral_pf_html.php						Última alteração: 15/03/2017
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 06/04/2010 
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF da Ficha Cadastral 
@@ -56,6 +56,7 @@
 							   - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                     crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
+                  09/10/2017 - Removendo os campos nrdoapto cddbloco nrcxapst do relatorio. (PRJ339 - Kelvin)
  */	 
 ?>
 <?
@@ -268,16 +269,12 @@
 	$linha .= 'Complemento: '.preencheString(getByTagName($registros,'complend'),43);	
 	escreveLinha( $linha );
 	
-	$linha = ' Apto.: '.preencheString(getByTagName($registros,'nrdoapto'),18);	
-	$linha .= 'Bloco: '.preencheString(getByTagName($registros,'cddbloco'),5);	
-	escreveLinha( $linha );
-	
 	$linha = 'Bairro: '.preencheString(getByTagName($registros,'nmbairro'),40);	
 	escreveLinha( $linha );
 	
 	$linha  = 'Cidade: '.preencheString(getByTagName($registros,'nmcidade'),26);		
 	$linha .= 'UF: '.preencheString(getByTagName($registros,'cdufende'),4);	
-	$linha .= 'Caixa Postal: '.preencheString(getByTagName($registros,'nrcxapst'),6,' ','D');	
+	
 	escreveLinha( $linha );
 	
 	//***********************************************************COMERCIAL***********************************************************
@@ -317,7 +314,6 @@
 	
 	$linha  = 'Cidade: '.preencheString(getByTagName($comercial,'nmcidade'),26);	
 	$linha .= 'UF: '.preencheString(getByTagName($comercial,'cdufende'),4);	
-	$linha .= 'Caixa Postal: '.preencheString(getByTagName($comercial,'nrcxapst'),6,' ','D');	
 	escreveLinha( $linha );
 	
 	$linha = ' Turno: '.preencheString(getByTagName($comercial,'cdturnos'),14);	
@@ -529,7 +525,6 @@
 	
  	        $linha  = 'Cidade: '.preencheString(getByTagName($contato->tags,'nmcidade'),26);	
 			$linha .= 'UF: '.preencheString(getByTagName($contato->tags,'cdufende'),4);	
-			$linha .= 'Caixa Postal: '.preencheString(getByTagName($contato->tags,'nrcxapst'),6,' ','D');	
 			escreveLinha( $linha );
 			
 			escreveLinha( '' );
@@ -594,7 +589,6 @@
 			
 			$linha  = 'Cidade: '.preencheString(getByTagName($responsavel->tags,'dscidres'),26);	
 			$linha .= 'UF: '.preencheString(getByTagName($responsavel->tags,'dsdufres'),4);	
-			$linha .= 'Caixa Postal: '.preencheString(getByTagName($responsavel->tags,'nrcxpost'),6,' ','D');	
 			escreveLinha( $linha );
 			
 			$linha = preencheString( 'Filiacao: Mae: '.getByTagName($responsavel->tags,'nmmaersp'),76);	
@@ -659,7 +653,6 @@
 			
 			$linha  = 'Cidade: '.preencheString(getByTagName($representante->tags,'nmcidade'),26);			
 			$linha .= ' UF: '.preencheString(getByTagName($representante->tags,'cdufende'),3);	
-			$linha .= ' Caixa Postal: '.preencheString(getByTagName($representante->tags,'nrcxapst'),6,' ','D');	
 			escreveLinha( $linha );
 			
 			$linha = preencheString( 'Filiacao: Mae: '.getByTagName($representante->tags,'nmmaecto'),76);	
