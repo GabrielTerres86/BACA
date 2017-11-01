@@ -315,10 +315,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
   BEGIN
     
-    vr_conteudo.put('CodigoLote', pr_idlotsms);
+    -- Montar o conteúdo do JSON para envio via POST
+    vr_conteudo.put('CodigoLote', pr_idlotsms); -- Código do Lote
+    vr_conteudo.put('CodigoProduto', 21); -- Código do produto
     
     AYMA0001.pc_consumir_ws_rest_aymaru
-                        (pr_rota       => '/Cobranca/Utils/EnviarAlertaBoletos'
+                        (pr_rota       => '/Comunicacao/Sms/EnviarLote'
                         ,pr_verbo      => WRES0001.POST
                         ,pr_servico    => 'SMS.BOLETOS'
                         ,pr_parametros => vr_parametros
@@ -7667,7 +7669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     -- Montar a mensagem a ser enviada
                     vr_dsmsgsms := GENE0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
                                                               ,pr_cdproduto         => 21 -- CARTAO CREDITO CECRED
-                                                              ,pr_cdtipo_mensagem   => 18 -- Tipo de mensagem 
+                                                              ,pr_cdtipo_mensagem   => 22 -- Tipo de mensagem 
                                                               ,pr_sms               => 1  -- Indicador de SMS 
                                                               ,pr_valores_dinamicos => vr_dsvlrmsg);
                     
@@ -8100,12 +8102,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         
         -- Atualizar os registros de majoração
         UPDATE integradados.sasf_majoracaocartao@sasp maj
-	         SET maj.cdmajorado    = vr_cdmajora
-	           , maj.dsexclusao    = vr_dscritic
-	       WHERE maj.cdcooper      = pr_cdcooper
-	         AND maj.nrdconta      = pr_nrdconta
-	         AND maj.nrcontacartao = pr_nrctacrd
-	         AND maj.cdmajorado    = 4; -- Pendente
+	         SET maj.cdmajorado        = vr_cdmajora
+             , maj.dtmajoracaocartao = SYSTIMESTAMP
+	           , maj.dsexclusao        = vr_dscritic
+	       WHERE maj.cdcooper          = pr_cdcooper
+	         AND maj.nrdconta          = pr_nrdconta
+	         AND maj.nrcontacartao     = pr_nrctacrd
+	         AND maj.cdmajorado        = 4; -- Pendente
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -10155,10 +10158,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     
         -- Se houve retorno de algum erro      
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Em caso de erro deve setar o lote como FALHA
+         /* BEGIN
+            UPDATE tbgen_sms_lote lot
+               SET lot.idsituacao = 'F' -- Falha
+             WHERE lot.idlote_sms = vr_idlotsms;
+          EXCEPTION 
+            WHEN OTHERS THEN
+              -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
+              RAISE vr_exc_saida;
+          END;  */
+        
           RAISE vr_exc_saida;
         END IF;
-                          
+        
+        -- Fechar a situação do lote
+       /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
+                                     ,pr_dscritic   => vr_dscritic);
+        
+        -- Se houve retorno de algum erro      
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;*/
+        
       END IF;
+      
       
       -- Adiciona a linha ao XML
       pc_escreve_xml(vr_xml_lim_cartao,'</crrl707>');

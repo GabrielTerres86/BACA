@@ -51,8 +51,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
     SELECT maj.*
          , ROWID    dsdrowid
       FROM INTEGRADADOS.sasf_majoracaocartao@SASP maj
-     WHERE maj.skcarga    = pr_skcarga
-       AND maj.cdmajorado = 0; -- Não processado 
+     WHERE maj.skcarga           = pr_skcarga
+       AND NVL(maj.cdmajorado,0) = 0; -- Não processado 
 
   -- Cursor para validar a cooperativa do registro
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -195,10 +195,11 @@ BEGIN
   
   BEGIN
 	  UPDATE INTEGRADADOS.sasf_majoracaocartao@SASP maj
-	     SET maj.cdmajorado = 3   -- Erro
-	       , maj.dsexclusao = 'Registro expirado'
-	   WHERE maj.dtbase     < TRUNC(SYSDATE - 15)
-	     AND maj.cdmajorado = 4; -- Pendente
+	     SET maj.cdmajorado        = 3   -- Erro
+         , maj.dtmajoracaocartao = SYSTIMESTAMP
+	       , maj.dsexclusao        = 'Registro expirado'
+	   WHERE maj.dtbase            < TRUNC(SYSDATE - 15)
+	     AND maj.cdmajorado        = 4; -- Pendente
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro alterar registro expirados na majoração: '||SQLERRM;
@@ -377,8 +378,9 @@ BEGIN
           -- Se ocorrer erro na majoração deve atualizar o registro
           BEGIN
             UPDATE INTEGRADADOS.sasf_majoracaocartao@SASP maj
-               SET maj.cdmajorado = 3 -- Erro
-                 , maj.dsexclusao = vr_dscritic
+               SET maj.cdmajorado        = 3 -- Erro
+                 , maj.dtmajoracaocartao = SYSTIMESTAMP
+                 , maj.dsexclusao        = vr_dscritic
              WHERE ROWID = rw_majoracao.dsdrowid;
              
             -- INCREMENTAR O CONTADOR DE REGISTROS PROCESSADOS COM ERRO
