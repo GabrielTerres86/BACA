@@ -19,6 +19,7 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava (Adriano - P339).
  * 009: [31/07/2017] Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  * 010: [28/08/2017] Alterado tipos de documento para utilizarem CI, CN, CH, RE, PP E CT. (PRJ339 - Reinert)
+ * 011: [24/10/2017] Remocao da caixa postal. (PRJ339 - Kelvin).
  */	
  
 ?>
@@ -128,15 +129,12 @@
 			<input name="complend" id="complend" type="text" value="<? echo $frm_complend; ?>" />
 			<br />
 
-			<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-			<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo $frm_nrcxapst; ?>" />		
+			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
+			<? echo selectEstado('cdufresd', $frm_cdufresd, 1); ?>	
 
 			<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 			<input name="nmbairro" id="nmbairro" type="text" value="<? echo $frm_nmbairro; ?>" />								
 			<br />	
-
-			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
-			<? echo selectEstado('cdufresd', $frm_cdufresd, 1); ?>	
 
 			<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 			<input name="nmcidade" id="nmcidade" type="text"  value="<? echo $frm_nmcidade; ?>" />

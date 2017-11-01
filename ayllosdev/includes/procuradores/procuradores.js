@@ -24,7 +24,7 @@
  *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
-
+ *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -482,7 +482,6 @@ function manterRotinaProc(operacao_proc) {
 	dsrelbem = $('#dsrelbem','#frmDadosProcuradores').val(); 
 	dtvalida = $('#dtvalida','#frmDadosProcuradores').val(); 
 	vledvmto = $('#vledvmto','#frmDadosProcuradores').val();	
-	nrcxapst = $('#nrcxapst','#frmDadosProcuradores').val();
 	fltemcrd = $('#fltemcrd','#frmDadosProcuradores').val(); // Renato Darosci - 10/02/2015
 	
 	persocio = ($('#persocio','#frmDadosProcuradores').val() != "") ? $('#persocio','#frmDadosProcuradores').val() : 0;
@@ -501,7 +500,6 @@ function manterRotinaProc(operacao_proc) {
 	nrdctato = normalizaNumero( nrdctato );
 	nrendere = normalizaNumero( nrendere );
 	nrcepend = normalizaNumero( nrcepend );
-	nrcxapst = normalizaNumero( nrcxapst );
     persocio = normalizaNumero( persocio );
 	vloutren = normalizaNumero( vloutren );
 	
@@ -556,7 +554,7 @@ function manterRotinaProc(operacao_proc) {
 			dsrelbem: dsrelbem,	dsproftl: dsproftl,	dtvalida: dtvalida, 
 			vledvmto: vledvmto,	cdsexcto: cdsexcto,	cdufresd: cdufresd,
 			nrdconta: nrdconta, idseqttl: idseqttl, dadosXML: dadosXML, 
-			camposXML: camposXML, nrcxapst: nrcxapst, nrdrowid: nrdrowid, 
+			camposXML: camposXML, nrdrowid: nrdrowid, 
 			persocio: persocio, flgdepec: flgdepec, permalte: permalte,
 			vloutren: vloutren, dsoutren: dsoutren, verrespo: verrespo, fltemcrd: fltemcrd,
 			operacao_proc: operacao_proc, dthabmen: dthabmen, arrayFilhos: arrayFilhos,
@@ -583,7 +581,7 @@ function estadoInicialProc() {
 
 	var cNrConta		= $('#nrdctato','#frmDadosProcuradores');
 	var cCPF			= $('#nrcpfcgc','#frmDadosProcuradores');
-	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestcvl,#dthabmen,#inhabmen,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestcvl,#dthabmen,#inhabmen,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto','#frmDadosProcuradores');
 	var camposGrupo3	= $('#dtvalida, #dtadmsoc, #dsproftl','#frmDadosProcuradores');	
 	var sexo			= $('input[name="cdsexcto"]');	
 	var cDescBem		= $('#dsrelbem','#frmDadosProcuradores');
@@ -695,7 +693,6 @@ function controlaLayoutProc( operacao_proc ) {
 		var rEnd		= $('label[for="dsendres"]','#'+nomeFormProc);
 		var rNum		= $('label[for="nrendere"]','#'+nomeFormProc);
 		var rCom		= $('label[for="complend"]','#'+nomeFormProc);
-		var rCax		= $('label[for="nrcxapst"]','#'+nomeFormProc);	
 		var rBai		= $('label[for="nmbairro"]','#'+nomeFormProc);
 		var rEst		= $('label[for="cdufresd"]','#'+nomeFormProc);	
 		var rCid		= $('label[for="nmcidade"]','#'+nomeFormProc);
@@ -704,17 +701,15 @@ function controlaLayoutProc( operacao_proc ) {
 		rEnd.addClass('rotulo-linha').css('width','35px');
 		rNum.addClass('rotulo').css('width','70px');
 		rCom.addClass('rotulo-linha').css('width','52px');
-		rCax.addClass('rotulo').css('width','70px');
 		rBai.addClass('rotulo-linha').css('width','52px');
 		rEst.addClass('rotulo').css('width','70px');
-		rCid.addClass('rotulo-linha').css('width','52px');
+		rCid.addClass('rotulo').css('width','70px');
 		
 		// campo endereco
 		var cCep		= $('#nrcepend','#'+nomeFormProc);
 		var cEnd		= $('#dsendres','#'+nomeFormProc);
 		var cNum		= $('#nrendere','#'+nomeFormProc);
 		var cCom		= $('#complend','#'+nomeFormProc);
-		var cCax		= $('#nrcxapst','#'+nomeFormProc);		
 		var cBai		= $('#nmbairro','#'+nomeFormProc);
 		var cEst		= $('#cdufresd','#'+nomeFormProc);	
 		var cCid		= $('#nmcidade','#'+nomeFormProc);
@@ -723,10 +718,10 @@ function controlaLayoutProc( operacao_proc ) {
 		cEnd.addClass('alphanum').css('width','317px').attr('maxlength','40');
 		cNum.addClass('numerocasa').css('width','72px').attr('maxlength','7');
 		cCom.addClass('alphanum').css('width','317px').attr('maxlength','40');	
-		cCax.addClass('caixapostal').css('width','72px').attr('maxlength','6');	
+		
 		cBai.addClass('alphanum').css('width','317px').attr('maxlength','40');	
 		cEst.css('width','72px');	
-		cCid.addClass('alphanum').css('width','317px').attr('maxlength','25');
+		cCid.addClass('alphanum').css('width','447px').attr('maxlength','25');
 
 		var endDesabilita = $('#dsendres,#cdufresd,#nmbairro,#nmcidade','#'+nomeFormProc);
 
@@ -768,7 +763,7 @@ function controlaLayoutProc( operacao_proc ) {
 		$('#persemon,#qtprebem','#frmProcBens').css({'width':'40px'});			
 		
 		// INICIA CONTROLE DA TELA
-		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto','#frmDadosProcuradores');
 		var camposGrupo3  = $('#dtvalida, #dtadmsoc, #dsproftl','#frmDadosProcuradores');		
 		var sexo 		  = $('input[name="cdsexcto"]');
 		var cCampos       = $('#vloutren,#dsoutren','#frmDadosProcuradores');
@@ -1112,7 +1107,6 @@ function controlaLayoutProc( operacao_proc ) {
 	$('#nrcpfcgc','#frmDadosProcuradores').trigger('blur');
 	$('#nrendere','#frmDadosProcuradores').trigger('blur');
 	$('#nrcepend','#frmDadosProcuradores').trigger('blur');
-	$('#nrcxapst','#frmDadosProcuradores').trigger('blur');
 	$('#dsproftl','#frmDadosProcuradores').trigger('blur');
 
 	hideMsgAguardo();
@@ -2026,7 +2020,6 @@ function carregaDadosProc() {
 	$('#dsendres','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['dsendres.1'] );	
 	$('#nrendere','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['nrendere'] );	
 	$('#complend','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['complend'] );	
-	$('#nrcxapst','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['nrcxapst'] );	
 	$('#nmbairro','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['nmbairro'] );	
 	$('#cdufresd','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['cdufresd'] );	
 	$('#nmcidade','#frmDadosProcuradores').val( arrayFilhosAvtMatric[indarray_proc]['nmcidade'] );	
@@ -2090,7 +2083,6 @@ function controlaArrayProc(op){
 				arrayFilhosAvtMatric[indarray_proc]["dsendres.1"] = $('#dsendres','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["nrendere"] = $('#nrendere','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["complend"] = $('#complend','#frmDadosProcuradores').val();
-				arrayFilhosAvtMatric[indarray_proc]["nrcxapst"] = $('#nrcxapst','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["nmbairro"] = $('#nmbairro','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["cdufresd"] = $('#cdufresd','#frmDadosProcuradores').val();
 				arrayFilhosAvtMatric[indarray_proc]["nmcidade"] = $('#nmcidade','#frmDadosProcuradores').val();
@@ -2167,7 +2159,6 @@ function controlaArrayProc(op){
 				eval('regFilhoavt'+i+'["dsendres.1"] = $(\'#dsendres\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["nrendere"] = $(\'#nrendere\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["complend"] = $(\'#complend\',\'#frmDadosProcuradores\').val();');
-				eval('regFilhoavt'+i+'["nrcxapst"] = $(\'#nrcxapst\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["nmbairro"] = $(\'#nmbairro\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["cdufresd"] = $(\'#cdufresd\',\'#frmDadosProcuradores\').val();');
 				eval('regFilhoavt'+i+'["nmcidade"] = $(\'#nmcidade\',\'#frmDadosProcuradores\').val();');
