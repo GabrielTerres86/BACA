@@ -813,7 +813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 12/09/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -874,7 +874,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
   --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
   --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
-
+  --
+  --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
+  --                          "Valor informado para pagamento maior que valor da parcela" informar
+  --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -8326,7 +8329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            (nvl(apli0001.fn_round(pr_vlatupar, 2), 0) +
             nvl(apli0001.fn_round(pr_vlmtapar, 2), 0) +
             nvl(apli0001.fn_round(pr_vlmrapar, 2), 0)) THEN
-          vr_cdcritic := 0;
+          vr_cdcritic := 1033; -- Retorna 1033 para o job não logar a mensagem.
           vr_dscritic := 'Valor informado para pagamento maior que valor da parcela';
           --Sair
           RAISE vr_exc_saida;
