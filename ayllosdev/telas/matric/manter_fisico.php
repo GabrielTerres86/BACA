@@ -13,6 +13,8 @@
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ 
+ *                17/10/2017 - Ajuste para carregar idade ao validadr dados. PRJ339-CRM (Odirle/AMcom).
  */
 ?> 
 
@@ -70,6 +72,8 @@
 		case 'IV': $procedure = 'valida_dados'; $cddopcao = 'I'; break;
 		case 'VI': $procedure = 'grava_dados' ; $cddopcao = 'I'; break;
 		case 'AV': $procedure = 'valida_dados'; $cddopcao = 'A'; break;
+        /* Validação pela include do responsavel legal*/
+        case 'AR': $procedure = 'valida_dados'; $cddopcao = 'A'; break;
 		case 'VA': $procedure = 'grava_dados' ; $cddopcao = 'A'; break;
 		case 'PI': $procedure = 'valida_dados'; $cddopcao = "PI"; break;
 		case 'PA': $procedure = 'valida_dados'; $cddopcao = "PA"; break;
@@ -148,6 +152,14 @@
 	$xmlResult = getDataXML($xml);	
 	$xmlObjeto = getObjectXML($xmlResult);
 	
+	$nrdeanos = $xmlObjeto->roottag->tags[0]->attributes["NRDEANOS"];
+	
+    if($procedure == 'valida_dados'){
+        ?>  		
+            nrdeanos = <? if($nrdeanos == null){ echo 0;} else { echo $nrdeanos; } ?>;
+        <?
+    }  
+	 
 	// Include do arquivo que analisa o resultado do XML
 	include('./manter_resultado.php');		
 	

@@ -153,6 +153,11 @@
                              
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
+		        
+                             
+                09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
+                             da pessoa do cadastro unificado, para completar o cadastro com dados
+                             que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
 .............................................................................*/
 
 
@@ -165,6 +170,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -1142,7 +1148,7 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_cdorgexp AS CHARACTER                               NO-UNDO. 
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
- 
+
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF  par_cddopcao = "I" THEN
@@ -1301,6 +1307,133 @@ PROCEDURE Grava_Dados:
                                  crapttl.idseqttl = par_idseqttl
                                  crapttl.inpessoa = 1
                                  crapttl.inpolexp = 0. /*0-Nao Politicamente exposto*/
+                                 
+                          /* Chamar rotina para retornar dados de pessoa para complementar cadastro do titular */
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          RUN STORED-PROCEDURE pc_busca_crapttl_compl 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                                   ,OUTPUT 0   /* pr_cdnatopc   */
+                                                   ,OUTPUT 0   /* pr_cdocpttl   */   
+                                                   ,OUTPUT 0   /* pr_tpcttrab   */   
+                                                   ,OUTPUT ""  /* pr_nmextemp   */   
+                                                   ,OUTPUT 0   /* pr_nrcpfemp   */   
+                                                   ,OUTPUT ?   /* pr_dtadmemp   */
+                                                   ,OUTPUT ""  /* pr_dsproftl   */
+                                                   ,OUTPUT 0   /* pr_cdnvlcgo   */
+                                                   ,OUTPUT 0   /* pr_vlsalari   */
+                                                   ,OUTPUT 0   /* pr_cdturnos   */
+                                                   ,OUTPUT ""  /* pr_dsjusren   */
+                                                   ,OUTPUT ?   /* pr_dtatutel   */
+                                                   ,OUTPUT 0   /* pr_cdgraupr   */
+												                           ,OUTPUT 0   /* pr_cdfrmttl   */
+                                                   ,OUTPUT 0   /* pr_tpdrendi##1*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##1*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##2*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##2*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##3*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##3*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##4*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##4*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##5*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##5*/
+                                                   ,OUTPUT 0   /* pr_tpdrendi##6*/
+                                                   ,OUTPUT 0   /* pr_vldrendi##6*/
+                                                   ,OUTPUT ""  /* pr_nmpaittl   */
+                                                   ,OUTPUT ""  /* pr_nmmaettl   */
+                                                   ,OUTPUT ""). /* pr_dscritic   */
+
+                            CLOSE STORED-PROC pc_busca_crapttl_compl 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                            ASSIGN crapttl.cdnatopc = pc_busca_crapttl_compl.pr_cdnatopc 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdnatopc <> ?
+                                   crapttl.cdocpttl = pc_busca_crapttl_compl.pr_cdocpttl 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdocpttl <> ? 
+                                   crapttl.tpcttrab = pc_busca_crapttl_compl.pr_tpcttrab 
+                                                      WHEN pc_busca_crapttl_compl.pr_tpcttrab <> ? 
+                                   crapttl.nmextemp = pc_busca_crapttl_compl.pr_nmextemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmextemp <> ? 
+                                   crapttl.nrcpfemp = pc_busca_crapttl_compl.pr_nrcpfemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_nrcpfemp <> ? 
+                                   crapttl.dtadmemp = pc_busca_crapttl_compl.pr_dtadmemp 
+                                                      WHEN pc_busca_crapttl_compl.pr_dtadmemp <> ? 
+                                   crapttl.dsproftl = pc_busca_crapttl_compl.pr_dsproftl 
+                                                      WHEN pc_busca_crapttl_compl.pr_dsproftl <> ?                                    
+                                   crapttl.cdnvlcgo = pc_busca_crapttl_compl.pr_cdnvlcgo 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdnvlcgo <> ? 
+                                   crapttl.vlsalari = pc_busca_crapttl_compl.pr_vlsalari 
+                                                      WHEN pc_busca_crapttl_compl.pr_vlsalari <> ? 
+                                   crapttl.cdturnos = pc_busca_crapttl_compl.pr_cdturnos 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdturnos <> ? 
+                                   crapttl.dsjusren = pc_busca_crapttl_compl.pr_dsjusren 
+                                                      WHEN pc_busca_crapttl_compl.pr_dsjusren <> ? 
+                                   crapttl.dtatutel = pc_busca_crapttl_compl.pr_dtatutel 
+                                                      WHEN pc_busca_crapttl_compl.pr_dtatutel <> ?
+                                   crapttl.grescola = pc_busca_crapttl_compl.pr_cdgraupr 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdgraupr <> ? 
+                                   crapttl.cdfrmttl = pc_busca_crapttl_compl.pr_cdfrmttl 
+                                                      WHEN pc_busca_crapttl_compl.pr_cdfrmttl <> ?
+                                   crapttl.nmpaittl = pc_busca_crapttl_compl.pr_nmpaittl 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmpaittl <> ?
+                                   crapttl.nmmaettl = pc_busca_crapttl_compl.pr_nmmaettl 
+                                                      WHEN pc_busca_crapttl_compl.pr_nmmaettl <> ?.
+                                                      
+                            ASSIGN crapttl.tpdrendi[1] = pc_busca_crapttl_compl.pr_tpdrendi##1 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##1 <> ?
+                                   crapttl.vldrendi[1] = pc_busca_crapttl_compl.pr_vldrendi##1 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##1 <> ?
+                                   crapttl.tpdrendi[2] = pc_busca_crapttl_compl.pr_tpdrendi##2 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##2 <> ?                                                         
+                                   crapttl.vldrendi[2] = pc_busca_crapttl_compl.pr_vldrendi##2
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##2 <> ?                                                        
+                                   crapttl.tpdrendi[3] = pc_busca_crapttl_compl.pr_tpdrendi##3
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##3 <> ?
+                                   crapttl.vldrendi[3] = pc_busca_crapttl_compl.pr_vldrendi##3 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##3 <> ?                                                         
+                                   crapttl.tpdrendi[4] = pc_busca_crapttl_compl.pr_tpdrendi##4
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##4 <> ?
+                                   crapttl.vldrendi[4] = pc_busca_crapttl_compl.pr_vldrendi##4
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##4 <> ?
+                                   crapttl.tpdrendi[5] = pc_busca_crapttl_compl.pr_tpdrendi##5 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##5 <> ?
+                                   crapttl.vldrendi[5] = pc_busca_crapttl_compl.pr_vldrendi##5 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##5 <> ?
+                                   crapttl.tpdrendi[6] = pc_busca_crapttl_compl.pr_tpdrendi##6 
+                                                         WHEN pc_busca_crapttl_compl.pr_tpdrendi##6 <> ?
+                                   crapttl.vldrendi[6] = pc_busca_crapttl_compl.pr_vldrendi##6 
+                                                         WHEN pc_busca_crapttl_compl.pr_vldrendi##6 <> ?.
+
+                          /* setar na inclusao para garantir dados do cadastro unificado
+                             visto que na inclusao nao possui estas informaçoes*/       
+                          IF par_cdnatopc = 0 THEN 
+                             ASSIGN par_cdnatopc = crapttl.cdnatopc.
+                          IF par_cdocpttl = 0 THEN 
+                             ASSIGN par_cdocpttl = crapttl.cdocpttl.
+                          IF par_tpcttrab = 0 THEN   
+                             ASSIGN par_tpcttrab = crapttl.tpcttrab.                             
+                          IF par_nmextemp = "" THEN   
+                             ASSIGN par_nmextemp = crapttl.nmextemp. 
+                          IF par_nrcpfemp = 0 THEN   
+                             ASSIGN par_nrcpfemp = crapttl.nrcpfemp. 
+                          IF par_dsproftl = "" THEN   
+                             ASSIGN par_dsproftl = crapttl.dsproftl. 
+                          IF par_cdnvlcgo = 0 THEN   
+                             ASSIGN par_cdnvlcgo = crapttl.cdnvlcgo. 
+                          IF par_cdturnos = 0 THEN   
+                             ASSIGN par_cdturnos = crapttl.cdturnos. 
+                          IF par_dtadmemp = ? THEN   
+                             ASSIGN par_dtadmemp = crapttl.dtadmemp. 
+                          IF par_vlsalari = 0 THEN   
+                             ASSIGN par_vlsalari = crapttl.vlsalari. 
+                             
+                             
+                             
+                             
+                             
+                             
                           LEAVE ContadorTtl.
                        END.
                 END.
@@ -1813,6 +1946,21 @@ PROCEDURE Grava_Dados:
 
     RELEASE crapass.
     RELEASE crapttl.
+        
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                        
+    RUN STORED-PROCEDURE pc_marca_replica_ayllos 
+      aux_handproc = PROC-HANDLE NO-ERROR
+               (INPUT par_cdcooper,  
+                INPUT par_nrdconta,
+                INPUT par_idseqttl,
+               OUTPUT "").
+
+    CLOSE STORED-PROC pc_marca_replica_ayllos 
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
+    
         
     IF  VALID-HANDLE(h-b1wgen0060) THEN
         DELETE OBJECT h-b1wgen0060.
@@ -2873,7 +3021,7 @@ PROCEDURE Grava_Alteracao:
                                           crafttl.grescola = brapttl.grescola
                                           crafttl.cdfrmttl = brapttl.cdfrmttl
                                           crafttl.nmtalttl = brapttl.nmtalttl.
-
+                                          
                                       ContadorCje1: DO aux_contado2 = 1 TO 10:
     
                                           FIND crapcje WHERE crapcje.cdcooper = crabttl.cdcooper AND

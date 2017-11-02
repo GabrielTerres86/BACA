@@ -11,11 +11,17 @@
 				  
 				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
-					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
-					
-				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
+				 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
+				
+				 18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
 
-					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+				 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+				 
+				 	 
+                 23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+                              replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)                    
+                              
+					 
 	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
@@ -108,8 +114,17 @@
 				
 		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
 		
-		echo "verificaResponsavelLegal();";
+        //Removido, pois tela será aberta apos salvar os dados, devido a replicação de dados da pessoa.
+		//echo "verificaResponsavelLegal();";
+		//die();	
+		
+	}
+    
+    // Se for opcao AR, para apenas validar o preenchimento do responsavel legal,
+    //  deve chamar rotina pra continuar fluxo da tela
+    if ($operacao == 'AR'){
 
+      //echo 'impressao_inclusao();';
 		die();	
 		
 	}
@@ -173,7 +188,9 @@
 		$stringArrayMsg = implode( "|", $msg);
 		
 		if ($operacao == 'VI') {
-			$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            //Alterado, pois tela deverá validar responsavel legal apos salvar os dados, devido a replicação de dados da pessoa.		    
+			//$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            $metodo = ($inpessoa == 1) ? "verificaResponsavelLegal();" : "abrirProcuradores();";
 		}
 		else {
 			$metodo = "estadoInicial();";	
@@ -202,36 +219,36 @@
 		$nomeForm  = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 		$metodoNao = ( $inpessoa == 1 ) ? "$('#dtnasctl','#frmFisico').focus();" : "$('#dtcnscpf','#frmJuridico').focus();";
 	
-		// Se ja poussui uma conta, perguntar se deseja duplicar 
-		if ( count ($xmlObjeto->inf) == 1) {
-			$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
-			echo "outconta = '".$nrdconta_org."';";
-			$metodoSim = "mostrarRotina('$operacao');";
-			exibirConfirmacao('CPF/CNPJ já possui a conta ' . $nrdconta_org . 
-							  ' na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
-		}
-		else 
-		if ( count ($xmlObjeto->inf) > 1) { // Se possui mais de uma conta, perguntar se deseja duplicar
-
-			
-			$XMLContas = '';
-			
-			// Juntar todas as contas que o cooperado ja possui
-			for ($i=0; $i < count ($xmlObjeto->inf); $i++) {
-				
-				$XMLContas  = ($XMLContas != '') ? $XMLContas . '|' : '';			
-				$XMLContas .=  $xmlObjeto->inf[$i]->nrdconta . ';' . $xmlObjeto->inf[$i]->dtadmiss ;
-				
+			// Se ja poussui uma conta, perguntar se deseja duplicar 
+			if ( count ($xmlObjeto->inf) == 1) {
+				$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
+				echo "outconta = '".$nrdconta_org."';";
+				$metodoSim = "mostrarRotina('$operacao');";
+				exibirConfirmacao('CPF/CNPJ já possui a conta ' . $nrdconta_org . 
+								  ' na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 			}
-			
-			echo "XMLContas = '$XMLContas';";
-			$metodoSim = "mostrarRotina('LCC');"; 
-			exibirConfirmacao('CPF/CNPJ já possui a conta na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);			
-		}
+			else 
+			if ( count ($xmlObjeto->inf) > 1) { // Se possui mais de uma conta, perguntar se deseja duplicar
+
+				
+				$XMLContas = '';
+				
+				// Juntar todas as contas que o cooperado ja possui
+				for ($i=0; $i < count ($xmlObjeto->inf); $i++) {
+					
+					$XMLContas  = ($XMLContas != '') ? $XMLContas . '|' : '';			
+					$XMLContas .=  $xmlObjeto->inf[$i]->nrdconta . ';' . $xmlObjeto->inf[$i]->dtadmiss ;
+					
+				}
+				
+				echo "XMLContas = '$XMLContas';";
+				$metodoSim = "mostrarRotina('LCC');"; 
+				exibirConfirmacao('CPF/CNPJ já possui a conta na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);			
+			}
 		else { // Sem contas para duplicar, vai para o proximo campo
 			if ($inpessoa == 1) {
 				echo "$('#dtnasctl','#frmFisico').focus();";
-			}
+		}
 			else {
 				echo "$('#dtcnscpf','#frmJuridico').focus();";
 			}

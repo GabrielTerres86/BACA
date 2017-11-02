@@ -13,6 +13,11 @@
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
  *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
+ *                19/10/2017 - Ajuste da lov de nacionalidades na tela de responsavel legal. (PRJ339 - Kelvin).
+ * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339 - Kelvin)			                          
+ *                23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+ *                             replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)   
+ *				  25/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).
  */
 
 var nrcpfcto = "";
@@ -472,7 +477,7 @@ function manterRotinaResp(operacao_rsp) {
 	nmmaecto = trim($('#nmmaecto','#frmRespLegal').val()); 
 	nrendere = normalizaNumero( $('#nrendere','#frmRespLegal').val() ); 
 	nrcepend = normalizaNumero( $('#nrcepend','#frmRespLegal').val() ); 
-	cdufende = $('#cdufende','#frmRespLegal').val();
+	cdufende = $('#cdufende','#frmRespLegal').val();	
 	nrcxapst = normalizaNumero( $('#nrcxapst','#frmRespLegal').val() );
 	cdrlcrsp = $('#cdrelacionamento','#frmRespLegal').val();
 	
@@ -522,7 +527,7 @@ function manterRotinaResp(operacao_rsp) {
 			nmmaecto: nmmaecto,	
 			nrendere: nrendere,	
 			nrcepend: nrcepend,			           
-			nrdconta: nrdconta, 
+			nrdconta: nrdconta, 			
 			nrcxapst: nrcxapst, 
 			nrdrowid_rsp: nrdrowid_rsp,
 			idseqttl: idseqttl, 
@@ -652,7 +657,7 @@ function controlaLayoutResp(operacao_rsp) {
 		var rCep	= $('label[for="nrcepend"]','#'+nomeFormResp);
 		var rEnd	= $('label[for="dsendere"]','#'+nomeFormResp);
 		var rNum	= $('label[for="nrendere"]','#'+nomeFormResp);
-		var rCom	= $('label[for="complend"]','#'+nomeFormResp);
+		var rCom	= $('label[for="complend"]','#'+nomeFormResp);		
 		var rCax	= $('label[for="nrcxapst"]','#'+nomeFormResp);	
 		var rBai	= $('label[for="nmbairro"]','#'+nomeFormResp);
 		var rEst	= $('label[for="cdufende"]','#'+nomeFormResp);	
@@ -663,7 +668,7 @@ function controlaLayoutResp(operacao_rsp) {
 		rNum.addClass('rotulo').css('width','70px');
 		rCom.addClass('rotulo-linha').css('width','52px');
 		rCax.addClass('rotulo').css('width','70px');
-		rBai.addClass('rotulo-linha').css('width','52px');
+		rBai.addClass('rotulo-linha').css('width','52px');		
 		rEst.addClass('rotulo').css('width','70px');
 		rCid.addClass('rotulo-linha').css('width','52px');
 
@@ -671,7 +676,7 @@ function controlaLayoutResp(operacao_rsp) {
 		var cCep	= $('#nrcepend,','#'+nomeFormResp);
 		var cEnd	= $('#dsendere,','#'+nomeFormResp);
 		var cNum	= $('#nrendere,','#'+nomeFormResp);
-		var cCom	= $('#complend,','#'+nomeFormResp);
+		var cCom	= $('#complend,','#'+nomeFormResp);	
 		var cCax	= $('#nrcxapst,','#'+nomeFormResp);		
 		var cBai	= $('#nmbairro,','#'+nomeFormResp);
 		var cEst	= $('#cdufende,','#'+nomeFormResp);	
@@ -680,7 +685,7 @@ function controlaLayoutResp(operacao_rsp) {
 		cCep.addClass('cep pesquisa').css('width','70px').attr('maxlength','9');
 		cEnd.addClass('alphanum').css('width','328px').attr('maxlength','40');
 		cNum.addClass('numerocasa').css('width','70px').attr('maxlength','7');
-		cCom.addClass('alphanum').css('width','328px').attr('maxlength','40');	
+		cCom.addClass('alphanum').css('width','328px').attr('maxlength','40');			
 		cCax.addClass('caixapostal').css('width','70px').attr('maxlength','6');	
 		cBai.addClass('alphanum').css('width','328px').attr('maxlength','40');	
 		cEst.css('width','70px');	
@@ -817,7 +822,7 @@ function controlaLayoutResp(operacao_rsp) {
 	$('#nrdctato','#frmRespLegal').trigger('blur');
 	$('#nrcpfcto','#frmRespLegal').trigger('blur');
 	$('#nrendere','#frmRespLegal').trigger('blur');
-	$('#nrcepend','#frmRespLegal').trigger('blur');
+	$('#nrcepend','#frmRespLegal').trigger('blur');	
 	$('#nrcxapst','#frmRespLegal').trigger('blur');
 	
 	hideMsgAguardo();
@@ -1361,7 +1366,9 @@ function controlaBotoesResp(operacao_rsp){
 		if (nmdatela == "MATRIC") {
 			
 			$('#btConcluir','#divBotoesResp').unbind('click').bind('click', function (){
-				controlaOperacao('VI');
+				
+                //Alterado, pois deverá validar responsavel legal apos salvar os dados, devido a replicação de dados da pessoa. 
+                controlaOperacao("AR");
 			});
 			
 			$('#btConcluir','#divBotoesResp').css('display','inline');
