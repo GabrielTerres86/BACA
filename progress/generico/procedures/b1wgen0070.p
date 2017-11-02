@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0070.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 30/07/2014
+    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
     
     Dados referentes ao programa:
 
@@ -38,6 +38,12 @@
                  
                  22/01/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				              Transferencia entre PAs (Heitor - RKAM)
+                      
+                 04/11/2016 - M172 - Atualizacao Telefone (Guilherme/SUPERO)
+
+                      
+                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                              telefone para o CDC. (Reinert Prj 289)                                       
 .............................................................................*/
 
 
@@ -50,6 +56,8 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+
+{ sistema/generico/includes/var_oracle.i }
     
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -510,29 +518,30 @@ PROCEDURE validar-telefone:
                     END.
 
                 IF  par_tptelefo = 2  AND   
+                   (par_idorigem <> 4 AND
                     NOT CAN-FIND(FIRST craptab WHERE 
                                        craptab.cdcooper = 0            AND
                                        craptab.nmsistem = "CRED"       AND
                                        craptab.tptabela = "USUARI"     AND
                                        craptab.cdempres = 11           AND
                                        craptab.cdacesso = "OPETELEFON" AND
-                                       craptab.tpregist = par_cdopetfn NO-LOCK) 
-                    THEN
-                    DO:
+                                       craptab.tpregist = par_cdopetfn NO-LOCK))
+                    THEN DO:
                         ASSIGN aux_dscritic = "Operadora nao cadastrada.". 
                         LEAVE.
                     END.
 
                 IF (par_tptelefo = 3   OR
                     par_tptelefo = 4)  AND
-                    par_idorigem <> 3  AND
-                    par_nmpescto = ""  THEN
-                    DO:
+                   (par_idorigem <> 3  AND
+                    par_idorigem <> 4) AND
+                    par_nmpescto = ""  THEN DO:
                         ASSIGN aux_dscritic = "Informe a pessoa de contato.".
                         LEAVE.
                     END.
 
                 IF  par_cddopcao = "I"  AND
+                    par_idorigem <> 4   AND
                     CAN-FIND(LAST craptfc WHERE 
                              craptfc.cdcooper = par_cdcooper AND
                              craptfc.nrdconta = par_nrdconta AND
@@ -791,6 +800,55 @@ PROCEDURE gerenciar-telefone:
                                       ELSE 
                                           1.
 
+                /* Se veio pelo TAA, validar se fone ja existe */
+                IF  par_idorigem = 4 THEN DO:
+
+                    DO aux_contador = 1 TO 10:
+
+                        /* Verificar se telefone ja existe */
+                        FIND LAST craptfc
+                            WHERE craptfc.cdcooper = par_cdcooper
+                              AND craptfc.nrdconta = par_nrdconta
+                              AND craptfc.idseqttl = par_idseqttl
+                              AND craptfc.nrtelefo = par_nrtelefo
+                          EXCLUSIVE-LOCK NO-ERROR.
+
+                        IF  NOT AVAILABLE craptfc  THEN DO:
+               
+                            IF  LOCKED craptfc  THEN DO:
+                                IF  aux_contador = 10  THEN DO:
+                                    FIND LAST craptfc
+                                        WHERE craptfc.cdcooper = par_cdcooper
+                                          AND craptfc.nrdconta = par_nrdconta
+                                          AND craptfc.idseqttl = par_idseqttl
+                                          AND craptfc.nrtelefo = par_nrtelefo
+                                      NO-LOCK NO-ERROR.
+
+                                    RUN critica-lock
+                                            (INPUT RECID(craptfc),
+                                             INPUT "banco",
+                                             INPUT "craptfc",
+                                             INPUT par_idorigem).
+                                END.
+                                ELSE DO:
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT.
+                                END.
+                            END.
+                        END.
+
+                        LEAVE.
+
+                    END. /** Fim do DO ... TO **/
+
+                    IF  aux_dscritic <> ""  THEN
+                        UNDO TRANS_FONE, LEAVE TRANS_FONE.
+
+                    IF  AVAIL craptfc THEN
+                        DELETE craptfc.
+
+                END. /* FIM par_idorigem = 4 */
+
                
                 CREATE craptfc.
                 ASSIGN craptfc.cdcooper = par_cdcooper
@@ -981,6 +1039,18 @@ PROCEDURE gerenciar-telefone:
 
             END.
 
+        /*** M172 - ATUALIZACAO TELEFEONES - ATUALIZA DATA ***/
+
+        IF  CAN-DO("1,3,4",STRING(par_idorigem)) /* 1-AYLLOS / 3-IB / 4-TAA  */
+        AND CAN-DO("A,I",par_cddopcao) THEN      /* I-INCLUSAO / A-ALTERACAO */
+            RUN pi_atualiza_data_manutencao_telefone
+                    (INPUT par_cdcooper
+                    ,INPUT par_nrdconta
+                    ,INPUT par_idseqttl).
+
+        /*** M172 - ATUALIZACAO TELEFEONES - ATUALIZA DATA ***/
+
+
         /* INICIO - Atualizar os dados da tabela crapcyb (CYBER) */
         IF NOT VALID-HANDLE(h-b1wgen0168) THEN
            RUN sistema/generico/procedures/b1wgen0168.p
@@ -1004,7 +1074,48 @@ PROCEDURE gerenciar-telefone:
         IF RETURN-VALUE <> "OK" THEN
            UNDO TRANS_FONE, LEAVE TRANS_FONE.
         /* FIM - Atualizar os dados da tabela crapcyb */
-    
+
+        /* Quando for primeiro titular e o telefone for comercial, 
+           vamos ver ser o cooperado eh um conveniado CDC. Caso 
+           positivo, vamos replicar os dados alterados de telefone
+           para as tabelas do CDC. */
+        IF par_tptelefo = 3 AND
+           par_idseqttl = 1 THEN
+          DO:
+              FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                                  AND crapcdr.nrdconta = par_nrdconta
+                                  AND crapcdr.flgconve = TRUE NO-LOCK:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_replica_cdc
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                      ,INPUT par_nrdconta
+                                                      ,INPUT par_cdoperad
+                                                      ,INPUT par_idorigem
+                                                      ,INPUT par_nmdatela
+                                                      ,INPUT 0
+                                                      ,INPUT 1
+                                                      ,INPUT 0
+                                                      ,INPUT 0
+                                                      ,0
+                                                      ,"").
+
+                CLOSE STORED-PROC pc_replica_cdc
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                        WHEN pc_replica_cdc.pr_cdcritic <> ?
+                       aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                        WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                        
+              END.
+          END.
+          
         ASSIGN aux_flgtrans = TRUE.
     
     END. /** Fim do DO TRANSACTION - TRANS_FONE **/
@@ -1066,6 +1177,32 @@ PROCEDURE gerenciar-telefone:
 END PROCEDURE.
                   
 
+PROCEDURE pi_atualiza_data_manutencao_telefone:
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_atualiz_data_manut_fone
+    aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,
+                                 INPUT par_nrdconta,
+                                 OUTPUT 0,
+                                 OUTPUT ""). /* pr_dscritic */
+
+    CLOSE STORED-PROC pc_atualiz_data_manut_fone
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_dscritic = pc_atualiz_data_manut_fone.pr_dscritic
+                              WHEN pc_atualiz_data_manut_fone.pr_dscritic <> ?
+                              .
+
+
+END PROCEDURE.
 
 /***************************************************************************
 Procedure para a rotina TELEFONES da tela ATENDA.

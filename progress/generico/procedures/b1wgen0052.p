@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/03/2016
+    Data    : Junho/2010                      Ultima atualizacao: 22/09/201
   
     Dados referentes ao programa:
   
@@ -101,6 +101,16 @@
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                   - Inclusão do parametro CDAGENCI para a funcao GRAVA_DADOS
 
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
+                07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
+                             gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
+                             problema com validacao da data de nascimento.
+                             Heitor (Mouts) - Chamado 702785   	
+
+
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 ............................................................................*/
 
 
@@ -202,7 +212,7 @@ PROCEDURE Busca_Dados:
             END.
 
         IF  RETURN-VALUE <> "OK" THEN
-            LEAVE Busca.
+               LEAVE Busca.
 
         ASSIGN aux_returnvl = "OK".
 
@@ -507,7 +517,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -719,7 +729,7 @@ PROCEDURE Valida_Dados:
               INPUT par_dtnasctl,
               INPUT par_cdsexotl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdufnatu,
               INPUT par_cdestcvl,
@@ -842,7 +852,7 @@ PROCEDURE Valida_Dados:
                                        INPUT tt-crapavt.dtnascto,
                                        INPUT tt-crapavt.cdsexcto,
                                        INPUT tt-crapavt.cdestcvl,
-                                       INPUT tt-crapavt.dsnacion,
+                                       INPUT tt-crapavt.cdnacion,
                                        INPUT tt-crapavt.dsnatura,
                                        INPUT tt-crapavt.nrcepend,
                                        INPUT tt-crapavt.dsendres[1],
@@ -925,8 +935,9 @@ PROCEDURE Valida_Dados:
             END.
 
         IF   par_inpessoa = 1    AND 
-             par_idorigem <> 1    AND 
-             par_verrespo = TRUE  THEN
+             par_idorigem <> 1   AND
+             par_dtnasctl <> ?   AND
+             par_verrespo = TRUE THEN
              DO:
                 IF VALID-HANDLE(h-b1wgen9999) THEN
                    DELETE OBJECT h-b1wgen9999.
@@ -993,7 +1004,7 @@ PROCEDURE Valida_Dados:
                                          INPUT tt-resp.dtnascin,
                                          INPUT tt-resp.cddosexo,
                                          INPUT tt-resp.cdestciv,
-                                         INPUT tt-resp.dsnacion,
+                                         INPUT tt-resp.cdnacion,
                                          INPUT tt-resp.dsnatura,
                                          INPUT tt-resp.cdcepres,
                                          INPUT tt-resp.dsendres,
@@ -1539,7 +1550,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -1618,6 +1629,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_vlparcel AS DECI                                    NO-UNDO.
     DEF VAR aux_msgretor AS CHAR                                    NO-UNDO.                                    
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
+
     DEF VAR hb1wgen0052g AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0072 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
@@ -1644,9 +1657,16 @@ PROCEDURE Grava_Dados:
 
         ASSIGN par_idseqttl = 1.
 
+        /* Se for pessoa fisica vamos gravar o idseqttl como 1 */
+        IF  par_inpessoa = 1 THEN
+            ASSIGN aux_idseqttl = 1.
+        ELSE
+            ASSIGN aux_idseqttl = 0.
+
         IF  par_cddopcao = "A" OR
             par_cddopcao = "I" OR 
             par_cddopcao = "X" OR 
+            par_cddopcao = "D" OR
             par_cddopcao = "J" THEN
             DO:
                 ASSIGN aux_dscritic = "".
@@ -1736,7 +1756,7 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.nrdconta = par_nrdconta AND
                                                            crapdoc.tpdocmto = 10           AND
                                                            crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                           crapdoc.idseqttl = par_idseqttl 
+                                                           crapdoc.idseqttl = aux_idseqttl 
                                                            NO-LOCK NO-ERROR.
                                                 
                                                 IF  NOT AVAILABLE crapdoc THEN
@@ -1747,7 +1767,8 @@ PROCEDURE Grava_Dados:
                                                                crapdoc.flgdigit = FALSE
                                                                crapdoc.dtmvtolt = par_dtmvtolt
                                                                crapdoc.tpdocmto = 10
-                                                               crapdoc.idseqttl = par_idseqttl.
+                                                               crapdoc.idseqttl = aux_idseqttl.
+                                                               
                                                         VALIDATE crapdoc.
                                                     END.
                                             END.
@@ -1813,7 +1834,7 @@ PROCEDURE Grava_Dados:
                                                                    crapdoc.nrdconta = par_nrdconta AND
                                                                    crapdoc.tpdocmto = 7            AND
                                                                    crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                                   crapdoc.idseqttl = par_idseqttl 
+                                                                   crapdoc.idseqttl = aux_idseqttl 
                                                                    EXCLUSIVE NO-ERROR.
             
                                                 IF NOT AVAILABLE crapdoc THEN
@@ -1839,7 +1860,8 @@ PROCEDURE Grava_Dados:
                                                                        crapdoc.flgdigit = FALSE
                                                                        crapdoc.dtmvtolt = par_dtmvtolt
                                                                        crapdoc.tpdocmto = 7
-                                                                       crapdoc.idseqttl = par_idseqttl.
+                                                                       crapdoc.idseqttl = aux_idseqttl.
+                                                                       
                                                                 VALIDATE crapdoc.
                                                             END.
                                                     END.
@@ -2320,14 +2342,14 @@ PROCEDURE Grava_Dados:
                             END. /* fim do pessoa fisica */
                         ELSE /* Juridica */
                             DO:
-                                
+
                                 ContadorDoc10: DO aux_contador = 1 TO 10:       
                                     FIND FIRST crapdoc WHERE 
                                                crapdoc.cdcooper = par_cdcooper AND
                                                crapdoc.nrdconta = par_nrdconta AND
-                                               crapdoc.tpdocmto = 10            AND
+                                               crapdoc.tpdocmto = 10           AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl 
+                                               crapdoc.idseqttl = aux_idseqttl 
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                        
                                        
@@ -2354,7 +2376,8 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.flgdigit = FALSE
                                                            crapdoc.dtmvtolt = par_dtmvtolt
                                                            crapdoc.tpdocmto = 10
-                                                           crapdoc.idseqttl = par_idseqttl.
+                                                           crapdoc.idseqttl = aux_idseqttl.
+                                                           
                                                     VALIDATE crapdoc.
                                                 END.
                                        END.
@@ -2372,7 +2395,7 @@ PROCEDURE Grava_Dados:
                                                crapdoc.nrdconta = par_nrdconta AND
                                                crapdoc.tpdocmto = 3            AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl 
+                                               crapdoc.idseqttl = aux_idseqttl 
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                        
                                        
@@ -2399,7 +2422,8 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.flgdigit = FALSE
                                                            crapdoc.dtmvtolt = par_dtmvtolt
                                                            crapdoc.tpdocmto = 3
-                                                           crapdoc.idseqttl = par_idseqttl.
+                                                           crapdoc.idseqttl = aux_idseqttl.
+                                                           
                                                     VALIDATE crapdoc.
                                                 END.
                                        END.
@@ -2417,7 +2441,7 @@ PROCEDURE Grava_Dados:
                                                crapdoc.nrdconta = par_nrdconta AND
                                                crapdoc.tpdocmto = 7            AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl 
+                                               crapdoc.idseqttl = aux_idseqttl 
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                        
                                        
@@ -2444,7 +2468,8 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.flgdigit = FALSE
                                                            crapdoc.dtmvtolt = par_dtmvtolt
                                                            crapdoc.tpdocmto = 7
-                                                           crapdoc.idseqttl = par_idseqttl.
+                                                           crapdoc.idseqttl = aux_idseqttl.
+                                                           
                                                     VALIDATE crapdoc.
                                                 END.
                                        END.
@@ -2462,7 +2487,7 @@ PROCEDURE Grava_Dados:
                                                crapdoc.nrdconta = par_nrdconta AND
                                                crapdoc.tpdocmto = 8            AND
                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl 
+                                               crapdoc.idseqttl = aux_idseqttl 
                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                        
                                        
@@ -2489,7 +2514,8 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.flgdigit = FALSE
                                                            crapdoc.dtmvtolt = par_dtmvtolt
                                                            crapdoc.tpdocmto = 8
-                                                           crapdoc.idseqttl = par_idseqttl.
+                                                           crapdoc.idseqttl = aux_idseqttl.
+                                                           
                                                     VALIDATE crapdoc.
                                                 END.
                                        END.
@@ -2547,7 +2573,7 @@ PROCEDURE Grava_Dados:
                  INPUT par_dtcnscpf,
                  INPUT par_dtnasctl,
                  INPUT par_tpnacion,
-                 INPUT par_dsnacion,
+                 INPUT par_cdnacion,
                  INPUT par_dsnatura,
                  INPUT par_cdufnatu,
                  INPUT par_cdocpttl,
@@ -2634,7 +2660,7 @@ PROCEDURE Grava_Dados:
               INPUT par_dtcnscpf,
               INPUT par_dtnasctl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdufnatu,
               INPUT par_cdocpttl,
@@ -2750,7 +2776,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,
