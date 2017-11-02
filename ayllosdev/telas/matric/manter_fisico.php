@@ -11,6 +11,8 @@
  *                28/01/2015 - #239097 Ajustes para cadastro de Resp. legal 0 menor/maior (Carlos)
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
+ *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 ?> 
 
@@ -35,7 +37,7 @@
 	$cdufdptl = (isset($_POST['cdufdptl'])) ? $_POST['cdufdptl'] : '' ;
 	$dtemdptl = (isset($_POST['dtemdptl'])) ? $_POST['dtemdptl'] : '' ;
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '' ;
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '' ;
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '' ;
 	$dsnatura = (isset($_POST['dsnatura'])) ? $_POST['dsnatura'] : '' ;
 	$cdufnatu = (isset($_POST['cdufnatu'])) ? $_POST['cdufnatu'] : '' ;
 	$cdsexotl = (isset($_POST['cdsexotl'])) ? $_POST['cdsexotl'] : '' ;
@@ -57,8 +59,7 @@
 
 	$arrayFilhos = (isset($_POST['arrayFilhos'])) ? $_POST['arrayFilhos'] : '';
 	
-	
-	if ( ($operacao == 'AV') || ($operacao == 'IV') ) validaDados();
+	if ( ($operacao == 'AV') || ($operacao == 'IV') ) validaDados($glbvars['cdcooper'], $glbvars['cdpactra'], $glbvars['nrdcaixa'], $glbvars['idorigem'], $glbvars['cdoperad']);
 	
 	// Dependendo da operação, chamo uma procedure diferente
 	$procedure = '';
@@ -173,12 +174,56 @@
 			
 	}
 	
+	// Verificar se nao é um CPF ou CNPJ bloqueado por responsabilidade social
+	function verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $inpessoa, $nrcpfcgc){
+		
+		// Monta o xml de requisição
+		
+		$xml  		= "";
+		$xml 	   .= "<Root>";
+		$xml 	   .= " <Dados>";
+		$xml       .=		"<inpessoa>".$inpessoa."</inpessoa>";
+		$xml       .=		"<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+		$xml 	   .= " </Dados>";
+		$xml 	   .= "</Root>";		
+		
+		$xmlResult = mensageria($xml, "COCNPJ", "VERIFICA_CNPJ", $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, "</Root>");		
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		
+			$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$nmdcampo = $xmlObjeto->roottag->tags[0]->attributes["NMDCAMPO"];
+
+			if(empty ($nmdcampo)){ 
+				$nmdcampo = "nrcpfcgc";
+			}
+			
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmFisico\');',false);		
+						
+		} else {
+			
+			/*aqui manda msg pra tela*/
+			$bloqueado = $xmlObjeto->roottag->tags[0]->cdata;
+			
+			if($bloqueado == 'SIM'){
+				return true;
+			}else{
+				return false;
+			}
+			
+
+		}
+		
+		return false;
+	}
+	
 	// Validações em PHP
-	function validaDados(){
+	function validaDados($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad){
 		
 		echo '$("input,select","#frmFisico").removeClass("campoErro");';
 		
-				
 		//-----------------------------
 		//	   Documentos Tilular	  
 		//-----------------------------
@@ -189,6 +234,11 @@
 		//CPF
 		if ( $GLOBALS['nrcpfcgc'] == '' || $GLOBALS['nrcpfcgc'] == 0 ) exibirErro('error','CPF deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 								
+        //CPF Responsabilidade social		
+		if( verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, 1, $GLOBALS['nrcpfcgc']) == true ){			
+			exibirErro('error','CPF n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema CECRED.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+		} 
+			
 		//Situação
 		if ( $operacao == 'AV' && $GLOBALS['cdsitcpf'] == ''  ) exibirErro('error','Situação deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'cdsitcpf\',\'frmFisico\');',false);
 		
@@ -215,7 +265,7 @@
 		if ( $GLOBALS['tpnacion'] == ''  ) exibirErro('error','Tipo de nacionalidade deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'tpnacion\',\'frmFisico\');',false);
 		
 		//Nacionalidade
-		if ( $GLOBALS['dsnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'dsnacion\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'cdnacion\',\'frmFisico\');',false);
 		
 		//Data de nascimento
 		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);
