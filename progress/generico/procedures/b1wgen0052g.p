@@ -5146,9 +5146,9 @@ PROCEDURE Inclui_Fis PRIVATE :
                                                       WHEN pc_busca_crapttl_compl.pr_cdgraupr <> ? 
                                    crabttl.cdfrmttl = pc_busca_crapttl_compl.pr_cdfrmttl 
                                                       WHEN pc_busca_crapttl_compl.pr_cdfrmttl <> ?
-                                   crapttl.nmpaittl = pc_busca_crapttl_compl.pr_nmpaittl 
+                                   crabttl.nmpaittl = pc_busca_crapttl_compl.pr_nmpaittl 
                                                       WHEN pc_busca_crapttl_compl.pr_nmpaittl <> ?
-                                   crapttl.nmmaettl = pc_busca_crapttl_compl.pr_nmmaettl 
+                                   crabttl.nmmaettl = pc_busca_crapttl_compl.pr_nmmaettl 
                                                       WHEN pc_busca_crapttl_compl.pr_nmmaettl <> ?.
                                                       
                             ASSIGN crabttl.tpdrendi[1] = pc_busca_crapttl_compl.pr_tpdrendi##1 
