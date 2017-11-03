@@ -329,6 +329,7 @@
 			$cdCnae = $xmlObjeto->infcadastro[0]->cdCnae;
 			$dtInicioAtividade = $xmlObjeto->infcadastro[0]->dtInicioAtividade;
 			$cdNaturezaOcupacao = $xmlObjeto->infcadastro[0]->cdNaturezaOcupacao;
+			$cdNacionalidade = $xmlObjeto->infcadastro[0]->cdNacionalidade;
 			
 			$metodoSim = str_replace("\r\n", "", "populaCamposRelacionamento('$dtconsultarfb', '$nrcpfcgc', '$cdsituacaoRfb', '$nmpessoa', '$nmpessoaReceita', '$tpsexo', '$dtnascimento',
 																			 '$tpdocumento', '$nrdocumento', '$idorgaoExpedidor', '$cdufOrgaoExpedidor', '$dtemissaoDocumento', '$tpnacionalidade', 
@@ -340,7 +341,7 @@
 																			 '$correspondenciaCdEstado', '$correspondenciaDsCidade', '$correspondenciaTporigem', '$dsnacion','$cdExpedidor', '$dsdemail',
 																			 '$nmfantasia', '$comercialNrCep', '$comercialNmLogradouro', '$comercialNrLogradouro', '$comercialDsComplemento', '$comercialNmBairro',
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
-																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao');");
+																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade');");
 			
 			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
 			
