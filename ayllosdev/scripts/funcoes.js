@@ -93,7 +93,16 @@
  * 080: [23/03/2016] James            (CECRED) : Criado a classe Taxa no INPUT
  * 081: [27/06/2016] Jaison/James     (CECRED) : Criacao de glb_codigoOperadorLiberacao.
  * 082: [19/07/2016] Andrei           (RKAM)   : Ajuste na rotina layoutPadrao para incluir o tratamento para a classe porcento_6. 
- * 081: [12/07/2016] Evandro          (RKAM)   : Adicionado a função atalhoTeclado condição para fechar telas (divMsgsAlerta e divAnotacoes) com ESC ou F4
+ * 083: [12/07/2016] Evandro          (RKAM)   : Adicionado a função atalhoTeclado condição para fechar telas (divMsgsAlerta e divAnotacoes) com ESC ou F4
+ * 084: [18/08/2016] Evandro          (RKAM)   : Adicionado condição na função showConfirmacao para voltar foco a classe FirstInputModal, ao fechar janela
+ * 085: [21/10/2016] Odirlei Busana  (AMcom)   : Adicionado funçoes para chamada de tela de  solicitação de senha do cooperado. PRJ319 - SMS Cobrança
+ * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
+												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
+ * 081: [08/02/2017] Kelvin		      (CECRED) : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
+ * 086: [24/03/2017] JOnata           (RKAM)   : Ajuste devido a inclusão da include para soliticar senha do cartão magnético (M294).
+ * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
+ * 090: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
+ * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
  */
 
 var UrlSite = parent.window.location.href.substr(0, parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -111,6 +120,9 @@ var control = false; 	// Variável lógica (boolean) glogal que indica se a tecla 
 
 var glb_codigoOperadorLiberacao = 0; // Global com operador de liberacao
 
+var possui_senha_internet = false; //Variavel para armazenar retorno da funcao de verificacao de senha de internet
+var idseqttl_senha_internet = 0; //Variavel para armazenar retorno da funcao de verificacao de senha de internet
+	
 $(document).ready(function () {
 
     // 053
@@ -675,6 +687,8 @@ function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes
         // Método passado por parâmetro
         if (metodoYes != "") {
             eval(metodoYes);
+
+            if ($(".FirstInputModal")) { $(".FirstInputModal").focus(); }
         }
         return false;
     });
@@ -685,7 +699,11 @@ function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes
         // Esconde mensagem
         divConfirm.escondeMensagem();
         // Método passado por parâmetro
-        if (metodoNo != "") { eval(metodoNo); }
+
+        if (metodoNo != "") {
+            eval(metodoNo);
+            if ($(".FirstInputModal")) { $(".FirstInputModal").focus(); }
+        }
         return false;
     });
 
@@ -1260,6 +1278,14 @@ function exibeRotina(x) {
  *	           bloqueiaRotina -> Seletor jQuery ao qual seu fundo será bloqueado
  */
 function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
+
+    //Condição para voltar foco na opção selecionada
+    var CaptaIdRetornoFoco = '';
+    CaptaIdRetornoFoco = $(".SetFoco").attr("id");
+    if (CaptaIdRetornoFoco) {
+        $(CaptaIdRetornoFoco).focus();
+    }
+
     rotina.css('visibility', 'hidden');
     unblockBackground();
     if (typeof bloqueiaRotina == 'object') {
@@ -1397,6 +1423,7 @@ function layoutPadrao() {
     $('.campoTelaSemBorda').attr('tabindex', '-1');
     $('label').addClass("txtNormalBold");
     $('input.codigo').attr('maxlength', '4');
+	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
 
     // Alinhando os campos para direita
     $('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align', 'right');
@@ -2498,9 +2525,21 @@ function removeAcentos(str) {
     return str.replace(/[àáâãäå]/g, "a").replace(/[ÀÁÂÃÄÅ]/g, "A").replace(/[ÒÓÔÕÖØ]/g, "O").replace(/[òóôõöø]/g, "o").replace(/[ÈÉÊË]/g, "E").replace(/[èéêë]/g, "e").replace(/[Ç]/g, "C").replace(/[ç]/g, "c").replace(/[ÌÍÎÏ]/g, "I").replace(/[ìíîï]/g, "i").replace(/[ÙÚÛÜ]/g, "U").replace(/[ùúûü]/g, "u").replace(/[ÿ]/g, "y").replace(/[Ñ]/g, "N").replace(/[ñ]/g, "n");
 }
 
-/*! OBJETIVO: Remover caracteres que invalidam o xml*/
-function removeCaracteresInvalidos(str) {
-    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
+/*! OBJETIVO  : Remover caracteres que invalidam o xml
+	PARAMETROS: str           -> Texto que contera os caracteres invalidos que irao ser removidos
+				flgRemAcentos -> Flag para identificar se é necessário remover acentuacao
+*/
+
+function removeCaracteresInvalidos(str, flgRemAcentos){
+	
+	//Se necessario remover acentuacao
+	if (flgRemAcentos){
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g,""));				 
+	}
+		
+	else
+	    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g, "");
+	
 }
 
 function utf8_decode(str_data) {
@@ -2542,4 +2581,385 @@ function utf8_decode(str_data) {
     }
 
     return tmp_arr.join('');
+}
+
+function formataVerificaSenha(){
+    
+    
+  // label
+  rCddsenha = $('label[for="cddsenha"]','#divSolicitaSenha');
+  rCddsenha.css('width','150px').css('font-weight','bold').addClass('rotulo-linha');
+  
+  //Campo
+  cCddsenha = $('#cddsenha','#divSolicitaSenha');
+  cCddsenha.css('width','100px').attr('maxlength','8');
+  cCddsenha.addClass('campo');
+  cCddsenha.focus();
+  
+
+  var divRegistro = $('div.divRegistros', '#divConteudoSnh');
+  var tabela = $('table', divRegistro);
+
+  tabela.zebraTabela(0);
+  
+  $('#divConteudoSnh').css({'width': '100%'});
+  divRegistro.css({'height':'48px'});
+                    
+  var ordemInicial = new Array();
+            
+  var arrayLargura = new Array();
+  arrayLargura[0] = '65px';
+  arrayLargura[1] = '200px';
+                    
+  var arrayAlinha = new Array();
+  arrayAlinha[0] = 'right';
+  arrayAlinha[1] = 'left';
+  arrayAlinha[2] = 'center';
+                            
+  tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+  $('tbody > tr', tabela).each(function () {
+      if ($(this).hasClass('corSelecao')) {
+          $(this).focus();		
+      }
+  });
+  ajustarCentralizacao();	
+  
+  layoutPadrao();
+  
+  return false;
+}
+// Função para seleção de titular para consulta e alteração de dados
+function selecionaTtlInternetSenha(idseqttl,incadsen,inbloque) {
+    
+    if (inbloque == 1 || incadsen == 1){     
+        $('#btConSnh').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onClick","return false;");
+        $('#cddsenha','#divSolicitaSenha').desabilitaCampo();
+        return false;
+    }else{
+        $('#btConSnh').trocaClass('botaoDesativado','botao').css('cursor','default').attr("onClick","validaSenhaInternet();fechaRotina($('#divUsoGenerico'));return false;");
+        $('#cddsenha', '#divSolicitaSenha').habilitaCampo();
+        $('#cddsenha').focus();
+    }
+    
+    $('#idseqttl','#divSolicitaSenha').val(idseqttl);
+}
+
+
+//Verifica se tem senha da internet e se está ativa
+function verificaSenhaInternet(retorno, nrdconta, idseqttl){  
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, Verificando conta cooperado...");
+    
+    // Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'includes/senha_internet/verifica_senha_internet.php',
+		data: {
+			nrdconta: nrdconta,
+            idseqttl: idseqttl,
+            retorno: retorno,
+			redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();				
+				try {
+					eval( response );
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($("#divUsoGenerico").css("z-index")));');
+				}
+				
+		}				
+	});
+		
+	return false;
+}
+//Solicita senha ao cooperado
+function solicitaSenhaInternet(retorno, nrdconta, idseqttl){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando tela de senha...");   
+    
+    // Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'includes/senha_internet/form_senha_internet.php',
+		data: {
+           nrdconta: nrdconta,
+           idseqttl: idseqttl,
+           retorno: retorno,
+           redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+                            exibeRotina($('#divUsoGenerico'));
+                            $('#divUsoGenerico').html(response);
+                            $('#divUsoGenerico').css({'width':'410px'});//css({'left':'340px','top':'91px'});
+                            
+                            bloqueiaFundo($('#divUsoGenerico'));                            
+                            formataVerificaSenha();
+                          
+                            return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				}
+		}				
+	});
+		
+	return false;
+}
+//Valida se a senha está correta
+function validaSenhaInternet(){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, Validando senha cooperado...");    
+    
+    var cddsenha = $('#cddsenha','#divSolicitaSenha').val();
+    var idseqttl = $('#idseqttl','#divSolicitaSenha').val();
+    var retorno  = $('#retorno' ,'#divSolicitaSenha').val();
+    var nrdconta = $('#nrdconta','#divSolicitaSenha').val();
+    
+    idseqttl_senha_internet = idseqttl;
+    
+    if (idseqttl == ''){
+        showError("error","Selecione um titular.","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));");							
+    }
+  
+  
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'includes/senha_internet/valida_senha_internet.php',
+		data: {
+			nrdconta: nrdconta,
+            idseqttl: idseqttl,
+            cddsenha: cddsenha,
+            retorno: retorno,
+			redirect: 'html_ajax' // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","return false;");							
+		},
+		success: function(response) {			
+				hideMsgAguardo();
+				if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+					try {
+						if(response.indexOf(""))
+                          $('#divUsoGenerico').html(response);
+                        else
+                          eval(response);
+						  return false;
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				} else {
+					try {
+						eval( response );						
+					} catch(error) {						
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					}
+				}
+		}				
+	});
+		
+	return false;
+}
+
+function formataVerificaSenhaMagnetico() {
+
+
+    // label
+    rCddsenha = $('label[for="cddsenha"]', '#divSolicitaSenhaMagnetico');
+    rCddsenha.css('width', '150px').css('font-weight', 'bold').addClass('rotulo-linha');
+
+    //Campo
+    cCddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico');
+    cCddsenha.css('width', '100px').attr('maxlength', '8');
+    cCddsenha.addClass('campo');
+    cCddsenha.focus();
+
+    ajustarCentralizacao();
+
+    layoutPadrao();
+
+    return false;
+}
+
+//Solicita senha do cartao magnetico ao cooperado
+function solicitaSenhaMagnetico(retorno, nrdconta) {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando tela de senha...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_magnetico/form_senha_magnetico.php',
+        data: {
+            nrdconta: nrdconta,
+            retorno: retorno,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    exibeRotina($('#divUsoGenerico'));
+                    $('#divUsoGenerico').html(response);
+                    $('#divUsoGenerico').css({ 'width': '410px' });//css({'left':'340px','top':'91px'});
+
+                    bloqueiaFundo($('#divUsoGenerico'));
+                    formataVerificaSenhaMagnetico();
+
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+//Valida se a senha está correta
+function validaSenhaMagnetico() {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, Validando senha cooperado...");
+
+    var cddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico').val();
+    var retorno = $('#retorno', '#divSolicitaSenhaMagnetico').val();
+    var nrdconta = $('#nrdconta', '#divSolicitaSenhaMagnetico').val();
+
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/senha_magnetico/valida_senha_magnetico.php',
+        data: {
+            nrdconta: nrdconta,
+            cddsenha: cddsenha,
+            retorno: retorno,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "return false;");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    if (response.indexOf(""))
+                        $('#divUsoGenerico').html(response);
+                    else
+                        eval(response);
+                    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+                }
+            }
+        }
+    });
+
+    return false;
+}
+
+/*! OBJETIVO: Calcular a diferenca entre datas em: Dias, Semanas, Meses e Anos */
+function retornaDateDiff(tipo, dtini, dtfim) {
+
+    var DateDiff = {
+
+        inDays: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000));
+        },
+
+        inWeeks: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000 * 7));
+        },
+
+        inMonths: function (d1, d2) {
+            var d1Y = d1.getFullYear();
+            var d2Y = d2.getFullYear();
+            var d1M = d1.getMonth();
+            var d2M = d2.getMonth();
+
+            return (d2M + 12 * d2Y) - (d1M + 12 * d1Y);
+        },
+
+        inYears: function (d1, d2) {
+            return d2.getFullYear() - d1.getFullYear();
+        }
+    }
+
+    var dt_s1 = dtini.split('/');
+    var d1 = new Date(dt_s1.slice(0, 3).reverse().join('/'));
+    var dt_s2 = dtfim.split('/');
+    var d2 = new Date(dt_s2.slice(0, 3).reverse().join('/'));
+
+    switch (tipo.toUpperCase()) {
+        case 'D': // Days
+            return DateDiff.inDays(d1, d2);
+            break;
+        case 'W': // Weeks
+            return DateDiff.inWeeks(d1, d2);
+            break;
+        case 'M': // Months
+            return DateDiff.inMonths(d1, d2);
+            break;
+        case 'Y': // Years
+            return DateDiff.inYears(d1, d2);
+            break;
+    }
+}
+
+/*! OBJETIVO: completar string a esquesrda com carcater passado por parametro */
+function lpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : new Array(tamanho - numero.length + 1).join(caracter) + numero;
+}
+
+/*! OBJETIVO: completar string a direita com carcater passado por parametro */
+function rpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : numero + new Array(tamanho - numero.length + 1).join(caracter);
 }
