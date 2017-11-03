@@ -14,6 +14,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 		    09/11/2016 - inclusao de LOG. (Jean Michel)
 
+						23/10/2017 - Ajuste no array de eventos, SD 771833. (Jean Michel)
+
 ......................................................................... */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -99,7 +101,6 @@ DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
-DEFINE VARIABLE vetorevento           AS CHAR                           NO-UNDO.
 
 DEFINE VARIABLE anoBase               AS INTEGER INITIAL [2005].
 DEFINE VARIABLE conta                 AS INTEGER.
@@ -323,8 +324,6 @@ DEFINE FRAME Web-Frame
 &ANALYZE-RESUME
 
  
-
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
 
 
@@ -359,6 +358,8 @@ PROCEDURE CriaListaEventos :
     DEFINE VARIABLE aux_nrdturma AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
     
+		RUN RodaJavaScript("var mevento = new Array();").
+		
     FOR EACH crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)    AND
                            crapeap.cdcooper = INT(ab_unmap.cdcooper)        AND
                            crapeap.cdagenci = INT(ab_unmap.cdagenci)        AND
@@ -379,26 +380,6 @@ PROCEDURE CriaListaEventos :
                                     BY crapedp.nmevento
                                        BY crapadp.nrseqdig:
 
-        /*
-        {&out} "..........................".
-        {&out} INT(ab_unmap.aux_idevento).
-        {&out} INT(ab_unmap.cdcooper).
-        {&out} INT(ab_unmap.cdagenci).   
-        {&out} gnpapgd.dtanoage .
-        */
-        /*
-        FIND FIRST craptab WHERE
-                craptab.nmsistem = "CRED" AND
-                craptab.tptabela = "CONFIG" AND
-                craptab.cdempres = 0 AND
-                craptab.cdacesso = "PGSTAGENDA" AND
-                craptab.tpregist = crapeap.cdagenci AND
-                craptab.cdcooper = crapeap.cdcooper AND 
-                craptab.dstextab <> "0" NO-LOCK NO-ERROR.
-    
-        IF NOT AVAIL craptab AND ab_unmap.aux_idevento = "1" THEN NEXT. 
-        */
-    
         FIND FIRST craptab WHERE craptab.cdcooper = 0               AND
                                  craptab.nmsistem = "CRED"          AND
                                  craptab.tptabela = "CONFIG"        AND
@@ -456,47 +437,18 @@ PROCEDURE CriaListaEventos :
         IF  crapadp.dshroeve <> "" THEN
             aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
     
-        /* Verifica quantidade de turmas */
-        /* Se só tem um, não precisa de turma */
-        /*IF FIRST-OF(crapedp.nmevento) AND LAST-OF(crapedp.nmevento) THEN
-            ASSIGN 
-                aux_nrdturma = 0
-                aux_nmevento = SUBSTRING(crapedp.nmevento,1,50).
-        ELSE
-            ASSIGN
-                aux_nrdturma = aux_nrdturma + 1
-                aux_nmevento = "(" + STRING(aux_nrdturma) + ") " + SUBSTRING(crapedp.nmevento,1,50).
-        
-        */
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                 "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                 "idstaeve:'" +  STRING(crapadp.idstaeve) + "'," +
-                 "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
-                 "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                 "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                 "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                 "tppartic:'" +  STRING(aux_tppartic) + "'" + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                 "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                 "idstaeve:'" +  STRING(crapadp.idstaeve) + "'," +
-                 "flgcompr:'" +  STRING(aux_flgcompr)     + "'," +
-                 "qtmaxtur:'" +  STRING(aux_qtmaxtur)     + "'," +
-                 "nrinscri:'" +  STRING(aux_nrinscri)     + "'," +
-                 "nrconfir:'" +  STRING(aux_nrconfir)     + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'," +
-                 "tppartic:'" +  STRING(aux_tppartic) + "'" + "~}".
+        RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+																		  + "',cdcooper:'" +  STRING(crapeap.cdcooper)
+																			+ "',cdevento:'" +  STRING(crapeap.cdevento)
+																			+ "',nmevento:'" +  STRING(aux_nmevento)    
+																			+ "',idstaeve:'" +  STRING(crapadp.idstaeve)
+																			+ "',flgcompr:'" +  STRING(aux_flgcompr)    
+																			+ "',qtmaxtur:'" +  STRING(aux_qtmaxtur)    
+																			+ "',nrinscri:'" +  STRING(aux_nrinscri)    
+																			+ "',nrconfir:'" +  STRING(aux_nrconfir)    
+																			+ "',nrseqeve:'" +  STRING(aux_nrseqeve)    
+																			+ "',tppartic:'" +  STRING(aux_tppartic) + "'~})").
     END.
-    
-    RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
     
 END PROCEDURE.
 

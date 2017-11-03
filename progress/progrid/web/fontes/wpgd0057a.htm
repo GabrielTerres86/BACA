@@ -1,0 +1,260 @@
+<html>
+  <head>
+    <meta name="AUTHOR" content="Solusoft/Bt - wpgd0057a - C.18">
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <meta name="wsoptions" content="no-output">
+    <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <meta http-equiv="Cache-Control" content="No-Cache">
+    <meta http-equiv="Pragma"        content="No-Cache">
+    <meta http-equiv="Expires"       content="0">
+    <title>Sele&ccedil;&atilde;o de Eventos - Pr&eacute; Assembl&eacute;ia(wpgd0057a)</title>
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+
+    <script language="JavaScript">
+       NomeDoProgramaPrincipal  = '/wpgd0057a.w';
+       NomeDoProgramaDeListagem = '/wpgd0057als.w';
+       NomeDoProgramaDeAjuda    = '/wpgd0057aaj.w';
+       NomeDoProgramaDeZoom     = '/zoom/zoei04.w';
+    </script>
+    
+    <form action="#." method="POST" name="form"><div align="right">
+      <input type="hidden" name="aux_dsendurl" value="">
+      <input type="hidden" name="aux_idevento" value="">
+      <input type="hidden" name="aux_cddopcao" value="">
+      <input type="hidden" name="aux_nrdrowid" value="">
+      <input type="hidden" name="aux_lspermis" value="">
+      <input type="hidden" name="aux_dsretorn" value="">
+      <input type="hidden" name="aux_stdopcao" value="">  
+      <input type="hidden" name="aux_lsevento" value="">
+      <input type="hidden" name="aux_cdcooper" value="">
+      <span class="NomeCampo">
+        <input name="aux_dtanoage" type="hidden" size="4" readonly>
+      </span>  <!-- Inicio do modelo com abas -->
+
+      <table width="460" border="0" align="left" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>            
+            <table border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td background="/cecred/images/geral/guia_fundo.gif"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                <td background="/cecred/images/geral/guia_fundo.gif" align="center" nowrap class="linkGuia">Adicionar Eventos</td>
+                <td background="/cecred/images/geral/guia_fundo.gif" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+                <td><div align="right"></div></td>
+              </tr>
+              <tr>
+                <td colspan="7" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+              </tr>
+            </table>                
+          </td>
+        </tr>
+        <tr valign="top" bgcolor="#FFFFFF">
+          <td>
+            <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="left" valign="top">
+                  <table width="100%" height="26" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td id="separador1" width="5" height="26" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+                      <td id="tbevento_col1" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;Evento</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td align="left" valign="top">
+                  <div style="overflow: auto; height:'220px';">
+                    <table width="100%" height="26" border="0" cellpadding="0" cellspacing="0" id="tbevento" name="tbevento">
+                      <!-- INCLUI DADOS -->
+                    </table>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" valign="bottom">
+                  <img src="/cecred/images/botoes/btn_salvar.gif"  onClick="Salvar()" style="cursor:hand;">
+                </td>
+              </tr>          
+            </table>              
+          </td>
+        </tr>
+      </table>
+      
+    <script language="Javascript">
+      NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+      document.form.action = NomeDoProgramaPrincipal;
+
+      function Salvar(){
+         
+        var vaux = document.form.aux_lspermis.value; 
+        
+        if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+          if (document.form.aux_cddopcao.value!='sa'){
+            document.form.aux_cddopcao.value='sa'; 
+            document.form.aux_stdopcao.value='i';
+            status = 'Salvando. Por favor, aguarde ...';			
+            armazenaEventos();
+            document.form.submit();
+            return true;
+          }else{ 
+            return false;
+          }  
+        }else{ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+        }   
+      }
+
+      function mudaCor(){
+        var aux_vlcalc  = 0;
+
+        // se houver mais de um registro de evento
+        if (mevento.length > 1){
+          if(document.form.evento[this.id].checked==false){
+            this.bgColor = '#CCCCCC';
+            document.form.evento[this.id].checked=true;
+          }else{
+            this.bgColor = '#FFFFFF';
+            document.form.evento[this.id].checked=false;
+          }
+        }else{ // se for somente um registro de recursos
+          if (document.form.evento.checked==false){
+            this.bgColor = '#CCCCCC';
+            document.form.evento.checked=true;
+          }else{
+            this.bgColor = '#FFFFFF';
+            document.form.evento.checked=false;
+          }
+        }
+      }
+
+      function mostraEventos(){
+
+        var row; var cell;  
+      
+        if (mevento.length == 0) {
+          alert("Não há eventos disponíveis.");
+          self.close();
+        }
+      
+        // limpa a tabela de Eventos, menos a 1ª linha - linha do cabecalho
+        for (var i = document.all.tbevento.rows.length; i > 1; i--){
+            document.all.tbevento.deleteRow(i-1);
+        }
+        
+        for(i=0;i<mevento.length;i++){      // insere linhas na tabela de eventos
+           
+          row=tbevento.insertRow();  // nova linha
+          row.id=i;
+          row.onclick=mudaCor;
+          row.style.cursor='hand';
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.width= cell.width = document.all.separador1.width;;
+          cell.height = 26;
+          cell.align = 'left';
+          cell.innerText='';
+
+          cell=row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.tbevento_col1.width;
+          linky=mevento[i].nmevento + '<in' + 'put type="hidden" name="evento" value="' + mevento[i].cdevento + '">';
+          cell.innerHTML=linky; 
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.width= cell.width = document.all.separador1.width;;
+          cell.height = 26;
+          cell.align = 'left';
+          cell.innerText='';
+
+          // LINHA SEPARACAO
+          row=tbevento.insertRow();  // nova linha
+          row.bgColor="#999999";
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.bgColor="#999999";
+          cell.width= cell.width = document.all.separador1.width;;
+          cell.height = 1;
+          cell.align = 'left';
+          cell.innerText='';
+
+          cell=row.insertCell();   // Separador
+          cell.className = 'txtNormal';
+          cell.width= cell.width = document.all.tbevento_col1.width;;
+          cell.bgColor="#999999";
+          cell.height = 1;
+          cell.align = 'left';
+          cell.innerText='';
+          
+        }
+      }
+
+      function armazenaEventos(){
+        var i;
+
+        // se for mais de um registro de evento
+        if (mevento.length > 1){
+           for(i=0;i<document.form.evento.length;i++)
+             if(document.form.evento[i].checked){
+              if(document.form.aux_lsevento.value=='')
+                   document.form.aux_lsevento.value = document.form.evento[i].value;
+                else
+                 document.form.aux_lsevento.value = document.form.aux_lsevento.value + ',' + document.form.evento[i].value;
+             } 
+           }
+        // se for somente um registro de evento
+        else{
+           if(document.form.evento.checked)
+            document.form.aux_lsevento.value = document.form.evento.value;
+        }
+      }
+
+      function CarregaPrincipal(){}
+
+      function LimparCampos(){}
+
+      // Converte um valor com decimal separado por "," para separado por "."
+      function ConverteDec(str, tipo){
+         if(tipo == "1")
+         {
+            str = str.replace(".","");
+            str = str.replace(",",".");
+            return str;
+         }
+         else
+         {
+            str = str.replace(",","");
+            str = str.replace(".",",");
+            return str;
+         }
+      }
+
+      //formatação dos campos
+
+      function formatCurrency(num){
+         //alert(num);
+         num = num.toString().replace(/\$|\,/g,'');
+         if(isNaN(num))
+            num = "0";
+         sign = (num == (num = Math.abs(num)));
+         num = Math.floor(num*100+0.50000000001);
+         cents = num%100;
+         num = Math.floor(num/100).toString();
+         if(cents<10)
+            cents = "0" + cents;
+         for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)
+            num = num.substring(0,num.length-(4*i+3))+'.'+
+         num.substring(num.length-(4*i+3));
+         return (((sign)?'':'-') + num + ',' + cents);
+      }
+
+      mostraEventos();
+
+    </script>
+  </body>
+</html>

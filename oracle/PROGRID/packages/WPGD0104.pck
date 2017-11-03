@@ -22,6 +22,8 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0104 is
   --                          e na exclusao de parametros por PA e parametros por regional
   --                          para consistir o filtro de ano informado em tela.(Carlos Rafael Tanholi).
   --
+  --             30/01/2017 - Inclusao de novo parametro(pr_qtminint), Prj. 229-5 (Jean Michel)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina geral de insert, update, select e delete da tela WPGD0104
@@ -35,6 +37,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0104 is
                        ,pr_nmresage IN crapage.nmresage%TYPE --> Nome do PA
                        ,pr_dtanoage IN crapppc.dtanoage%TYPE --> Ano da Agenda                       
                        ,pr_qtmineve IN crapppa.qtmineve%TYPE --> Qtd minima de dias de eventos
+                       ,pr_qtminint IN crapppa.qtminint%TYPE --> Qtd minima de integracoes
                        ,pr_qtevedia IN crapppc.qtevedia%TYPE --> Qtd dias de evento
                        ,pr_vlaluloc IN crapppc.vlaluloc%TYPE --> Valor do local
                        ,pr_vlporali IN crapppc.vlporali%TYPE --> Valor de alimentação
@@ -45,8 +48,18 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0104 is
                        ,pr_qtdiasee IN crapppc.qtdiasee%TYPE --> Quantidade de dias para o segundo envio do email de evento sem local de realizacao 
                        ,pr_qtdiatee IN crapppc.qtdiatee%TYPE --> Quantidade de dias para o terceiro envio do email de evento sem local de realizacao 
                        ,pr_dsemlesl IN crapppc.dsemlesl%TYPE --> Descricao do e-mail para comunicao de eventos sem local de realizacao 
+                       ,pr_dsemlfso IN crapppc.dsemlfso%TYPE --> Descricao do e-mail para Cooperacriança
                        ,pr_cdeixtem IN crapppe.cdeixtem%TYPE --> Codigo do Eixo Tematico
                        ,pr_dseixtem IN gnapetp.dseixtem%TYPE --> Descricao do Eixo Tematico 
+                       ,pr_qtdiapea IN crapppc.qtdiapea%TYPE --> Qtde Dias Primeiro Aviso
+                       ,pr_qtdiasea IN crapppc.qtdiasea%TYPE --> Qtde Dias Segundo Aviso
+                       ,pr_dsemlasl IN crapppc.dsemlasl%TYPE --> Email Aviso – Evento Sem 
+                       ,pr_dsemlace IN crapppc.dsemlace%TYPE --> Email Aviso – Alteração C
+                       ,pr_dsemlaqp IN crapppc.dsemlaqp%TYPE --> Email Aviso – Alteração Q
+                       ,pr_dsemlade IN crapppc.dsemlade%TYPE --> Email Aviso – Alteração D
+                       ,pr_dsemlsdf IN crapppc.dsemlsdf%TYPE --> Email Aviso – Sugestão de
+                       ,pr_idreqhoa IN crapppa.idreqhoa%TYPE --> Requer Homologação da Ata
+                       ,pr_dtlimass IN crapppc.dtlimass%TYPE --> Data limite para sugerir AGE/AGO
                        ,pr_listagem IN VARCHAR2              --> Listagem de Eixo Tematico (S/N)
                        ,pr_nriniseq IN PLS_INTEGER           --> Registro inicial para pesquisa
                        ,pr_qtregist IN PLS_INTEGER           --> Quantidade de registros por pesquisa                       
@@ -81,6 +94,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
   --                          e na exclusao de parametros por PA e parametros por regional
   --                          para consistir o filtro de ano informado em tela.(Carlos Rafael Tanholi).
   --
+  --             30/01/2017 - Inclusao de novo parametro(pr_qtminint), Prj. 229-5 (Jean Michel)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina geral de insert, update, select e delete da tela WPGD0104
@@ -94,6 +109,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                        ,pr_nmresage IN crapage.nmresage%TYPE --> Nome do PA
                        ,pr_dtanoage IN crapppc.dtanoage%TYPE --> Ano da Agenda                       
                        ,pr_qtmineve IN crapppa.qtmineve%TYPE --> Qtd minima de dias de eventos
+                       ,pr_qtminint IN crapppa.qtminint%TYPE --> Qtd minima de integracoes
                        ,pr_qtevedia IN crapppc.qtevedia%TYPE --> Qtd dias de evento
                        ,pr_vlaluloc IN crapppc.vlaluloc%TYPE --> Valor do local
                        ,pr_vlporali IN crapppc.vlporali%TYPE --> Valor de alimentação
@@ -104,8 +120,18 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                        ,pr_qtdiasee IN crapppc.qtdiasee%TYPE --> Quantidade de dias para o segundo envio do email de evento sem local de realizacao 
                        ,pr_qtdiatee IN crapppc.qtdiatee%TYPE --> Quantidade de dias para o terceiro envio do email de evento sem local de realizacao 
                        ,pr_dsemlesl IN crapppc.dsemlesl%TYPE --> Descricao do e-mail para comunicao de eventos sem local de realizacao 
+                       ,pr_dsemlfso IN crapppc.dsemlfso%TYPE --> Descricao do e-mail para Cooperacriança
                        ,pr_cdeixtem IN crapppe.cdeixtem%TYPE --> Codigo do Eixo Tematico 
                        ,pr_dseixtem IN gnapetp.dseixtem%TYPE --> Descricao do Eixo Tematico 
+                       ,pr_qtdiapea IN crapppc.qtdiapea%TYPE --> Qtde Dias Primeiro Aviso
+                       ,pr_qtdiasea IN crapppc.qtdiasea%TYPE --> Qtde Dias Segundo Aviso
+                       ,pr_dsemlasl IN crapppc.dsemlasl%TYPE --> Email Aviso – Evento Sem Local
+                       ,pr_dsemlace IN crapppc.dsemlace%TYPE --> Email Aviso – Alteração Cadastral
+                       ,pr_dsemlaqp IN crapppc.dsemlaqp%TYPE --> Email Aviso – Alteração Qtde Participante
+                       ,pr_dsemlade IN crapppc.dsemlade%TYPE --> Email Aviso – Alteração Data Evento
+                       ,pr_dsemlsdf IN crapppc.dsemlsdf%TYPE --> Email Aviso – Sugestão de Datas Finalizada (AG)
+                       ,pr_idreqhoa IN crapppa.idreqhoa%TYPE --> Requer Homologação da Ata
+                       ,pr_dtlimass IN crapppc.dtlimass%TYPE --> Data limite para sugerir AGE/AGO
                        ,pr_listagem IN VARCHAR2              --> Listagem de Eixo Tematico (S/N)
                        ,pr_nriniseq IN PLS_INTEGER           --> Registro inicial para pesquisa
                        ,pr_qtregist IN PLS_INTEGER           --> Quantidade de registros por pesquisa                       
@@ -136,6 +162,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                    ,ppc.qtdiasee
                    ,ppc.qtdiatee
                    ,ppc.dsemlesl
+                   ,ppc.qtdiapea
+                   ,ppc.qtdiasea
+                   ,ppc.dsemlasl
+                   ,ppc.dsemlace
+                   ,ppc.dsemlaqp
+                   ,ppc.dsemlade
+                   ,ppc.dsemlsdf
+                   ,ppc.dsemlfso
+                   ,ppc.dtlimass
                    ,ROW_NUMBER() OVER(ORDER BY ppc.dtanoage DESC, cop.nmrescop ASC) nrdseque           
               FROM crapppc ppc
                   ,crapcop cop
@@ -187,12 +222,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
               ,ppa.cdagenci
               ,age.nmresage
               ,ppa.qtmineve
+              ,ppa.qtminint
               ,ppa.cdoperad
               ,ppa.cdprogra
               ,ppa.dtatuali
               ,ppa.dtanoage 
               ,ppa.vlaluloc
               ,ppa.vlporali 
+              ,ppa.idreqhoa
               ,ROW_NUMBER() OVER(ORDER BY ppa.dtanoage DESC, cop.nmrescop ASC,TRIM(age.nmresage) ASC) nrdseque
          FROM crapppa ppa
              ,crapcop cop
@@ -332,6 +369,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                       ,crapppc.qtdiasee = pr_qtdiasee
                       ,crapppc.qtdiatee = pr_qtdiatee
                       ,crapppc.dsemlesl = pr_dsemlesl
+                      ,crapppc.qtdiapea = pr_qtdiapea
+                      ,crapppc.qtdiasea = pr_qtdiasea
+                      ,crapppc.dsemlasl = pr_dsemlasl
+                      ,crapppc.dsemlace = pr_dsemlace
+                      ,crapppc.dsemlaqp = pr_dsemlaqp
+                      ,crapppc.dsemlade = pr_dsemlade
+                      ,crapppc.dsemlsdf = pr_dsemlsdf
+                      ,crapppc.dsemlfso = pr_dsemlfso
+                      ,crapppc.dtlimass = pr_dtlimass
                  WHERE crapppc.cdcooper = pr_cdcooper
                    AND crapppc.dtanoage = pr_dtanoage;
 
@@ -355,7 +401,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                    ,qtdiasee
                                    ,qtdiatee
                                    ,dsemlesl
-                                     
+                                   ,qtdiapea
+                                   ,qtdiasea
+                                   ,dsemlasl
+                                   ,dsemlace
+                                   ,dsemlaqp
+                                   ,dsemlade
+                                   ,dsemlsdf 
+                                   ,dsemlfso
+                                   ,dtlimass                                    
                             )VALUES(pr_idevento
                                    ,pr_dtanoage
                                    ,pr_qtevedia
@@ -372,7 +426,16 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                    ,pr_qtdiapee
                                    ,pr_qtdiasee
                                    ,pr_qtdiatee
-                                   ,pr_dsemlesl);
+                                   ,pr_dsemlesl
+                                   ,pr_qtdiapea
+                                   ,pr_qtdiasea
+                                   ,pr_dsemlasl
+                                   ,pr_dsemlace
+                                   ,pr_dsemlaqp
+                                   ,pr_dsemlade
+                                   ,pr_dsemlsdf
+                                   ,pr_dsemlfso
+                                   ,pr_dtlimass);
                                  
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -411,10 +474,22 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlporali', pr_tag_cont => replace(replace(replace(TO_CHAR(rw_crapppc.vlporali,'fm999G990D00'),'.','#'),',','.'),'#',','),pr_des_erro => vr_dscritic);
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlporqui', pr_tag_cont => replace(replace(replace(TO_CHAR(rw_crapppc.vlporqui,'fm999G990D00'),'.','#'),',','.'),'#',','),pr_des_erro => vr_dscritic);
                   
-                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiapee', pr_tag_cont => rw_crapppc.qtdiapee                       , pr_des_erro => vr_dscritic);
-                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiasee', pr_tag_cont => rw_crapppc.qtdiasee                       , pr_des_erro => vr_dscritic);
-                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiatee', pr_tag_cont => rw_crapppc.qtdiatee                       , pr_des_erro => vr_dscritic);                  
-                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlesl', pr_tag_cont => rw_crapppc.dsemlesl                       , pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiapee', pr_tag_cont => rw_crapppc.qtdiapee, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiasee', pr_tag_cont => rw_crapppc.qtdiasee, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiatee', pr_tag_cont => rw_crapppc.qtdiatee, pr_des_erro => vr_dscritic);                  
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlesl', pr_tag_cont => rw_crapppc.dsemlesl, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlfso', pr_tag_cont => rw_crapppc.dsemlfso, pr_des_erro => vr_dscritic);
+
+                  --ASSEMBLEAR
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiapea', pr_tag_cont => rw_crapppc.qtdiapea, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtdiasea', pr_tag_cont => rw_crapppc.qtdiasea, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlasl', pr_tag_cont => rw_crapppc.dsemlasl, pr_des_erro => vr_dscritic);                  
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlace', pr_tag_cont => rw_crapppc.dsemlace, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlaqp', pr_tag_cont => rw_crapppc.dsemlaqp, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlade', pr_tag_cont => rw_crapppc.dsemlade, pr_des_erro => vr_dscritic);
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsemlsdf', pr_tag_cont => rw_crapppc.dsemlsdf, pr_des_erro => vr_dscritic);                  
+
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtlimass', pr_tag_cont => rw_crapppc.dtlimass, pr_des_erro => vr_dscritic);                  
                   
                   vr_contador := vr_contador + 1;
                 END IF;
@@ -548,11 +623,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                   BEGIN
                     UPDATE crapppa
                        SET crapppa.qtmineve = pr_qtmineve
+                          ,crapppa.qtminint = pr_qtminint
                           ,crapppa.vlaluloc = pr_vlaluloc
                           ,crapppa.vlporali = pr_vlporali
                           ,crapppa.cdoperad = vr_cdoperad
                           ,crapppa.dtatuali = SYSDATE
                           ,crapppa.cdcopope = vr_cdcooper 
+                          ,crapppa.idreqhoa = pr_idreqhoa
                      WHERE crapppa.idevento = pr_idevento
                        AND crapppa.cdcooper = pr_cdcooper
                        AND crapppa.cdagenci = rw_crapage.cdagenci
@@ -568,6 +645,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                     BEGIN
                       INSERT INTO
                           crapppa(qtmineve
+                                 ,qtminint
                                  ,vlaluloc
                                  ,vlporali
                                  ,dtanoage
@@ -578,7 +656,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                  ,cdprogra
                                  ,dtatuali
                                  ,cdcopope
+                                 ,idreqhoa
                           )VALUES(pr_qtmineve
+                                 ,pr_qtminint
                                  ,pr_vlaluloc
                                  ,pr_vlporali
                                  ,pr_dtanoage
@@ -588,7 +668,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                  ,vr_cdoperad
                                  ,vr_nmdatela
                                  ,SYSDATE
-                                 ,vr_cdcooper);
+                                 ,vr_cdcooper
+                                 ,pr_idreqhoa);
 
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -606,11 +687,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                 BEGIN
                   UPDATE crapppa
                      SET crapppa.qtmineve = pr_qtmineve
+                        ,crapppa.qtminint = pr_qtminint
                         ,crapppa.vlaluloc = pr_vlaluloc
                         ,crapppa.vlporali = pr_vlporali
                         ,crapppa.cdoperad = vr_cdoperad
                         ,crapppa.dtatuali = SYSDATE
                         ,crapppa.cdcopope = vr_cdcooper 
+                        ,crapppa.idreqhoa = pr_idreqhoa
                    WHERE crapppa.idevento = pr_idevento
                      AND crapppa.cdcooper = pr_cdcooper
                      AND crapppa.cdagenci = pr_cdagenci
@@ -621,6 +704,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                     BEGIN
                       INSERT INTO
                           crapppa(qtmineve
+                                 ,qtminint
                                  ,vlaluloc
                                  ,vlporali
                                  ,dtanoage
@@ -631,7 +715,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                  ,cdprogra
                                  ,dtatuali
                                  ,cdcopope
+                                 ,idreqhoa
                           )VALUES(pr_qtmineve
+                                 ,pr_qtminint
                                  ,pr_vlaluloc
                                  ,pr_vlporali
                                  ,pr_dtanoage
@@ -641,7 +727,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                                  ,vr_cdoperad
                                  ,vr_nmdatela
                                  ,SYSDATE
-                                 ,vr_cdcooper);
+                                 ,vr_cdcooper
+                                 ,pr_idreqhoa);
 
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -676,11 +763,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0104 IS
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapppa.cdagenci                       , pr_des_erro => vr_dscritic);  
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmresage', pr_tag_cont => rw_crapppa.nmresage                       , pr_des_erro => vr_dscritic);
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtmineve', pr_tag_cont => rw_crapppa.qtmineve                       , pr_des_erro => vr_dscritic);  
+                  GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtminint', pr_tag_cont => rw_crapppa.qtminint                       , pr_des_erro => vr_dscritic);  
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad', pr_tag_cont => rw_crapppa.cdoperad                       , pr_des_erro => vr_dscritic);  
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdprogra', pr_tag_cont => rw_crapppa.cdprogra                       , pr_des_erro => vr_dscritic);  
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtatuali', pr_tag_cont => to_char(rw_crapppa.dtatuali,'dd/mm/yyyy') , pr_des_erro => vr_dscritic);
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlaluloc', pr_tag_cont => replace(replace(replace(TO_CHAR(rw_crapppa.vlaluloc,'fm999G999D90'),'.','#'),',','.'),'#',','),pr_des_erro => vr_dscritic);  
                   GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlporali', pr_tag_cont => replace(replace(replace(TO_CHAR(rw_crapppa.vlporali,'fm999G999D90'),'.','#'),',','.'),'#',','),pr_des_erro => vr_dscritic);
+                  -- ASSEMBLEAR
+                                    GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idreqhoa', pr_tag_cont => rw_crapppa.idreqhoa, pr_des_erro => vr_dscritic);  
                   vr_contador := vr_contador + 1;
                 END IF;
 

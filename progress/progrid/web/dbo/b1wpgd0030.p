@@ -216,6 +216,7 @@ PROCEDURE valida-alteracao:
     /* Valida PA */
     FIND FIRST crapage WHERE crapage.cdagenci = {&tttabela}.cdagenci    AND
                              crapage.cdcooper = {&tttabela}.cdcooper    NO-LOCK NO-ERROR.
+							 
     IF NOT AVAIL crapage AND {&tttabela}.cdagenci <> 0 THEN
     DO:
         FIND crapcri WHERE crapcri.cdcritic = 962 NO-LOCK NO-ERROR.
@@ -328,18 +329,21 @@ PROCEDURE altera-registro:
     END.
 
     /* Procura na tabela física o registro correspondente à tabela temporaria */
-    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento    AND
-                               {&tabela}.cdcooper = {&tttabela}.cdcooper    AND
-                               {&tabela}.cdagenci = {&tttabela}.cdagenci    AND
-                               {&tabela}.dtanoage = {&tttabela}.dtanoage    AND
-                               {&tabela}.cdevento = {&tttabela}.cdevento    AND
-                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig    EXCLUSIVE-LOCK NO-ERROR.
+    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento
+                           AND {&tabela}.cdcooper = {&tttabela}.cdcooper
+                           AND {&tabela}.cdagenci = {&tttabela}.cdagenci
+                           AND {&tabela}.dtanoage = {&tttabela}.dtanoage
+                           AND {&tabela}.cdevento = {&tttabela}.cdevento
+                           AND {&tabela}.nrseqdig = {&tttabela}.nrseqdig EXCLUSIVE-LOCK NO-ERROR.
+	
     /* Copia o registro da tabela temporária para a tabela física */
-    BUFFER-COPY {&tttabela} /*EXCEPT xxx*/ TO {&tabela} NO-ERROR.
+    BUFFER-COPY {&tttabela} TO {&tabela} NO-ERROR.
     
     ASSIGN {&tabela}.dsdiaeve = CAPS({&tabela}.dsdiaeve)
            {&tabela}.dshroeve = CAPS({&tabela}.dshroeve).
 
+	VALIDATE {&tabela}.
+		
     /* Fim - Copia o registro da tabela temporária para a tabela física */
 
     /* Efetuar sobreposições necessárias */ 

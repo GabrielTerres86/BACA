@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -20,11 +20,14 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --              31/05/2016 - Alteracao da procedure pc_lista_evento_dtsugest para 
   --                           carregar eventos apenas por Cooperativa e Ano.
   --                           (Carlos Rafael Tanholi).  
+  --
+  --              31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA               
+                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -36,6 +39,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_evento_dtsugest(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                     ,pr_cdagenci IN VARCHAR2            	--> Codigo da Agencia (PA)    
                                     ,pr_dtanoage IN crapeap.dtanoage%TYPE --> Ano do filtro
+                                    ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -51,7 +55,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -68,11 +72,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --                           (Carlos Rafael Tanholi).	            
   --
   --              05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+  --
+  --              31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA             	
+                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -100,6 +107,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     Observacao: -----
 
     Alteracoes: 05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+                           
+                31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
     ..............................................................................*/   
                 
     DECLARE
@@ -150,10 +159,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND ce.cdcooper = c.cdcooper
         AND ce.dtanoage = c.dtanoage
         AND ce.cdevento = c.cdevento
-        AND ce.tpevento <> 10
-        AND ce.tpevento <> 11 
+        AND ce.tpevento NOT IN(7,8,10,11,12,13,14,15,16)
         AND c.dtanoage = pr_dtanoage        
         AND c.flgevsel = 1        
+        AND (ce.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)      
         AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0 OR pr_cdcooper = '0')
         AND (INSTR(','||pr_cdevento||',', ','||c.cdevento||',') > 0 OR pr_cdevento = '0')
         AND (INSTR(','||pr_cdagenci||',', ','||TO_CHAR(c.cdcooper||'|'||c.cdagenci)||',') > 0 OR pr_cdagenci = '0')
@@ -260,6 +269,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_evento_dtsugest(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                     ,pr_cdagenci IN VARCHAR2            	--> Codigo da Agencia (PA)    
                                     ,pr_dtanoage IN crapeap.dtanoage%TYPE --> Ano do filtro
+                                    ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -279,7 +289,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Retornar a lista de eventos do sistema.
     --
-    --
+    --  Alterações: 31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
     -- .............................................................................
   BEGIN
     DECLARE
@@ -304,6 +314,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
          AND (edp.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
          AND (eap.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
          AND (eap.dtanoage = pr_dtanoage OR pr_dtanoage = 0)
+         AND (edp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
        ORDER BY edp.nmevento;
         
       rw_crapedp_age cr_crapedp_age%ROWTYPE;      
@@ -328,11 +339,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND ce.cdcooper = c.cdcooper
         AND ce.dtanoage = c.dtanoage
         AND ce.cdevento = c.cdevento         
-        AND ce.tpevento <> 10
-        AND ce.tpevento <> 11 
+        AND ce.tpevento NOT IN(7,8,10,11,12,13,14,15,16)
         AND c.flgevsel = 1  
         AND cs.hrsugini IS NOT NULL                 
         AND (c.dtanoage = pr_dtanoage OR pr_dtanoage = 0)         
+        AND (ce.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         AND (ce.cdcooper|| '|' ||c.cdagenci = pr_cdcoop_agenci OR (pr_cdcoop_agenci = '0' AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0) ) )
       ORDER BY ce.nmevento;
         

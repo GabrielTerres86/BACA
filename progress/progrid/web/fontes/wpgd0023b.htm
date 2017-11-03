@@ -1,0 +1,286 @@
+<!-------------------------------------------------------------------------------------
+
+  Alterações: 25/07/2017 - Criaçao da Tela para Eventos Assembleares, fonte cópia da
+                           tela WPGD0019, Prj. 322 (Jean Michel).
+                         
+-------------------------------------------------------------------------------------->
+
+<html>
+  <head>
+    <title>Fornecedores/Facilitadores (wpgd0023b)</title>
+      <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+      <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <script language="JavaScript">
+      NomeDoProgramaPrincipal  = '/wpgd0023b.w';
+    </script>
+    <form action="#." method="POST" name="form">      
+      <div align="left">
+        <input type="hidden" name="aux_dsendurl" value="">
+        <input type="hidden" name="aux_cddopcao" value="">           
+        <input type="hidden" name="aux_nrdrowid" value="">
+        <input type="hidden" name="aux_lspermis" value="">
+        <input type="hidden" name="aux_dsretorn" value="">
+        <input type="hidden" name="aux_stdopcao" value="">
+        <input type="hidden" name="aux_lsfornec" value="">
+        <input type="hidden" name="aux_idevento" value="">
+        <input type="hidden" name="aux_dtanoage" value="">
+        <input type="hidden" name="aux_cdcooper" value="">
+        <input type="hidden" name="aux_cdagenci" value="">
+        <input type="hidden" name="aux_cdevento" value="">
+        <input type="hidden" name="aux_idfacili" value="">
+        <input type="hidden" name="aux_idvapost" value="">
+        <input type="hidden" name="aux_nrseqdig" value="">
+      </div>
+      <table width="700"  border="0" cellspacing="0" cellpadding="3">
+        <tr>
+          <td>
+            <table width="573" border="0" cellpadding="0" cellspacing="0" >
+              <tr>
+                <td width="11" background="/cecred/images/geral/guia_fundo.gif"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                  <td width="84" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia"><div align="center">Fornecedores</div></td>
+                  <td width="8" background="/cecred/images/geral/guia_fundo.gif" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+                <td>&nbsp;</td>
+              </tr>
+            </table>
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+              <tr>
+                <td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td id="tbfornece_col1" width="250" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Fornecedor</td>
+                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td id="tbfornece_col2" width="250" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Facilitador</td>
+                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td id="tbfornece_col3" width="70" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">Proposta</div></td>
+                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td id="tbfornece_col4" width="70" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" title="Honor&aacute;rios"><div align="center">Validade</div></td>
+                <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td id="tbfornece_col5" width="60" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" title="Local"><div align="center">Investimento</div></td>
+              </tr>
+            </table>
+            <div style="overflow: auto; height:'200';">
+              <table id="tbfornece" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                 <!-- INCLUI DADOS -->
+              </table>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>	  
+        </tr>
+        <tr>
+          <td align="left">			
+            <div align="center">
+              <input name="imageField" type="image"  src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="Salvar();" style="cursor:hand">
+            </div>
+          </td>
+        </tr>	
+      </table>
+    </form>
+    <script language="JavaScript">
+      NomeDoProgramaPrincipal  = '/wpgd0023b.w';
+
+      NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+      document.form.action = NomeDoProgramaPrincipal;
+
+      function Salvar(){
+	
+        //ZeraModoExclusao();
+        var vaux = document.form.aux_lspermis.value;
+		var fornecedor = "";
+        if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+          if (document.form.aux_cddopcao.value!='sa'){           		
+            armazenaFornecedor(); 
+			fornecedor = (document.form.aux_lsfornec.value).split(",");
+			if(fornecedor[0] == "0"){
+				alert("Selecione um fornecedor!");
+				return false;
+			}else{
+			    document.form.aux_cddopcao.value='sa'; 
+				document.form.aux_stdopcao.value='i';
+				status = 'Salvando. Por favor, aguarde ...';		
+               return true;
+			}
+          }else{ 
+            return false;
+          }  
+        }else { 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+        }
+      }
+
+      function mudaCor(){
+
+        var aux;
+
+        // se houver mais de um registro de fornecedor
+        if (mfornece.length > 1){
+          aux = document.form.aux_nrcpfcgc[this.id].checked;
+            
+          // Zera todo mundo. Só pode selecionar 1
+          for(i = 0; i < document.all.tbfornece.rows.length; i++){
+            document.all.tbfornece.rows[i].bgColor = '#FFFFFF';
+            document.form.aux_nrcpfcgc[i].checked=false;
+          }
+
+          if (aux == false){
+            this.bgColor = '#CCCCCC';
+            document.form.aux_nrcpfcgc[this.id].checked=true;
+          }else{
+            this.bgColor = '#FFFFFF';
+            document.form.aux_nrcpfcgc[this.id].checked=false;
+          }
+        }else{ // se for somente um registro de fornecedor
+          if(document.form.aux_nrcpfcgc.checked == false){
+            this.bgColor = '#CCCCCC';
+            document.form.aux_nrcpfcgc.checked = true;
+          }else{
+            this.bgColor = '#FFFFFF';
+            document.form.aux_nrcpfcgc.checked = false;
+          }
+        } 
+      }
+
+      function mostraFornecedor(){
+
+        var row; var cell;  
+        
+        // limpa a tabela de Fornecedores, menos a 1ª linha - linha do cabecalho
+        for (var i=document.all.tbfornece.rows.length; i>2; i--){
+          document.all.tbfornece.deleteRow(i-1);
+        }
+        
+        for(i = 0;i < mfornece.length;i++){// insere linhas na tabela de fornecedores
+          
+          // Nova Linha
+          row = tbfornece.insertRow();  
+          row.id = i;
+          row.onclick = mudaCor;
+          row.style.cursor = 'hand';
+          row.bgColor = mfornece[i].regselec;
+
+          // Separador    
+          cell = row.insertCell();
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.separador1.width;
+          cell.align = 'left';
+          cell.innerText='';
+
+          // Nome do Fornecedor
+          cell = row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.width = document.all.tbfornece_col1.width;
+          linky = mfornece[i].nmfornec + "<input type='hidden' name='aux_nrcpfcgc' value='" + mfornece[i].nrcpfcgc + "'>";
+          cell.innerHTML = linky; 
+
+          // Separador
+          cell = row.insertCell();
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.separador1.width;
+          cell.align = 'left';
+          cell.innerText='';
+          
+          // Nome do Facilitador
+          cell = row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.width = document.all.tbfornece_col2.width;
+          linky = mfornece[i].nmfacili;
+          cell.innerHTML = linky; 
+
+          // Separador
+          cell = row.insertCell();
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.separador1.width;
+          cell.align = 'left';
+          cell.innerText='';
+
+          // Número da proposta
+          cell = row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.width = document.all.tbfornece_col3.width;
+          linky = mfornece[i].nrpropos + "<input type='hidden' name='aux_nrpropos' value='" + mfornece[i].nrpropos + "'>";
+          cell.innerHTML = linky; 
+
+          // Separador
+          cell = row.insertCell();
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.separador1.width;
+          cell.align = 'left';
+          cell.innerText = '';
+
+          //  Validade
+          cell = row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.width = document.all.tbfornece_col4.width;
+          linky = mfornece[i].dtvalpro;
+          cell.innerHTML = linky; 
+
+          // Separador
+          cell = row.insertCell();   
+          cell.className = 'txtNormal';
+          cell.height = 26;
+          cell.width = document.all.separador1.width;
+          cell.align = 'left';
+          cell.innerText = '';
+
+          // Custo
+          cell = row.insertCell();      
+          cell.className = 'txtNormal';
+          cell.width = document.all.tbfornece_col5.width;
+          cell.align = 'right';
+          linky = mfornece[i].vlinvest;
+          cell.innerHTML =linky;
+        }
+        
+        if(mfornece.length == 1){
+          document.form.aux_nrcpfcgc.checked = true;
+        }
+      }
+
+      function armazenaFornecedor(){
+        var i;
+        // se for mais de um registro de fornecedores
+        if (mfornece.length > 1){
+           for(i=0;i<document.form.aux_nrcpfcgc.length;i++)
+             if(document.form.aux_nrcpfcgc[i].checked)
+             {
+                document.form.aux_lsfornec.value = document.form.aux_nrcpfcgc[i].value + "," + document.form.aux_nrpropos[i].value;
+             } 
+           }
+        // se for somente um registro de fornecedor
+        else{
+          if(document.form.aux_nrcpfcgc.checked){
+            document.form.aux_lsfornec.value = document.form.aux_nrcpfcgc.value + "," + document.form.aux_nrpropos.value;
+          }    
+        }
+        
+        if (document.form.aux_lsfornec.value == '') {
+          document.form.aux_lsfornec.value = '0,'; 
+        }
+      }
+
+      /*function limpaDados(){
+        document.form.submit();  
+      }*/
+      
+      if (mfornece.length == 0){
+        alert('Não há fornecedores ou propostas cadastradas');
+        self.close();
+      }   
+      
+      var post = document.form.aux_idvapost.value;
+      
+      if (post == "" || post == null){
+        document.form.aux_idvapost.value = "S";
+        document.form.aux_idfacili.value = "N";
+        mostraFornecedor();
+      }
+
+    </script>
+  </body>
+</html>

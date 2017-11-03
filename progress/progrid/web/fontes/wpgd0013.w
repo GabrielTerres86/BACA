@@ -11,7 +11,9 @@ Alterações: 24/01/2008 - Incluído campo crapldp.dsrefloc (Diego).
 
             24/06/2016 - Inclusão da janela na tela de Agenda Anual RF05 - Vanessa	
 
-			09/11/2016 - inclusao de LOG. (Jean Michel)
+            09/11/2016 - Inclusao de LOG. (Jean Michel)
+
+            10/03/2017 - Inclusao de novos campos, Prj. 322. (Jean Michel)
 
 ......................................................................... */
 
@@ -33,46 +35,29 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U
        FIELD aux_origem   AS CHARACTER FORMAT "X(256)":U
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
-       FIELD cdcooper     AS CHARACTER FORMAT "X(256)":U
        FIELD aux_cdoperad AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_cdageevt AS CHARACTER FORMAT "X(256)":U.
+       FIELD hdn_cdagenci AS CHARACTER FORMAT "X(256)":U
+       FIELD hdn_cdcooper AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idsonori AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idprojet AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idtelpro AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idcadeir AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idclimat AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idacecad AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idestaci AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_idloceva AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_dsdiaind AS LOGICAL
+       FIELD tel_dsdiaind AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_nrceprua AS CHARACTER FORMAT "X(256)":U       
+       FIELD aux_dsendtel AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_nmbaitel AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_nmcidtel AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
-/*------------------------------------------------------------------------
 
-  File: 
-
-  Description: 
-
-  Input Parameters:
-      <none>
-
-  Output Parameters:
-      <none>
-
-  Author: 
-
-  Created: 
-
-------------------------------------------------------------------------*/
-/*           This .W file was created with AppBuilder.                  */
-/*----------------------------------------------------------------------*/
-
-/* Create an unnamed pool to store all the widgets created 
-     by this procedure. This is a good default which assures
-     that this procedure's triggers and internal procedures 
-     will execute in this procedure's storage, and that proper
-     cleanup will occur on deletion of the procedure. */
 CREATE WIDGET-POOL.
 
-/* ***************************  Definitions  ************************** */
-
-/* Preprocessor Definitions ---                                         */
-
-/* Parameters Definitions ---                                           */
-
-/* Local Variable Definitions ---                                       */
 DEFINE VARIABLE ProgramaEmUso AS CHARACTER INITIAL ["wpgd0013"].
 DEFINE VARIABLE NmeDoPrograma AS CHARACTER INITIAL ["wpgd0013.w"].
 
@@ -91,19 +76,13 @@ DEFINE VARIABLE v-qtdeerro            AS INTEGER                        NO-UNDO.
 DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
-/*** Declaração de BOs ***/
 DEFINE VARIABLE h-b1wpgd0013          AS HANDLE                         NO-UNDO.
 
-/*** Temp Tables ***/
 DEFINE TEMP-TABLE cratldp             LIKE crapldp.
 
 DEFINE VARIABLE aux_crapcop AS CHAR NO-UNDO.
 
 DEFINE VARIABLE vetorpac AS CHAR NO-UNDO.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
 
 &ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
 
@@ -122,41 +101,46 @@ DEFINE VARIABLE vetorpac AS CHAR NO-UNDO.
 crapldp.dslocali crapldp.dsobserv crapldp.nmbailoc crapldp.nmcidloc ~
 crapldp.nmconloc crapldp.nrceploc crapldp.nrdddfax crapldp.nrdddtel ~
 crapldp.nrfaxsim crapldp.nrtelefo crapldp.qtmaxpes crapldp.vldialoc ~
-crapldp.cdagenci crapldp.dsrefloc 
+crapldp.dsrefloc crapldp.dsmotind
 &Scoped-define ENABLED-TABLES ab_unmap crapldp
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
 &Scoped-define SECOND-ENABLED-TABLE crapldp
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ~
-ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ab_unmap.aux_origem ab_unmap.aux_cdcopope ab_unmap.cdcooper ab_unmap.aux_cdoperad ab_unmap.aux_cdageevt
+ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ab_unmap.aux_origem ~
+ab_unmap.aux_cdcopope ab_unmap.aux_cdoperad ~
+ab_unmap.hdn_cdagenci ab_unmap.hdn_cdcooper ab_unmap.aux_dsdiaind ab_unmap.aux_idloceva ~
+ab_unmap.aux_idsonori ab_unmap.aux_idprojet ~
+ab_unmap.aux_idtelpro ab_unmap.aux_idcadeir ab_unmap.aux_idclimat ~
+ab_unmap.aux_idacecad ab_unmap.aux_idestaci ab_unmap.tel_dsdiaind ~
+ab_unmap.aux_nrceprua ab_unmap.aux_dsendtel ab_unmap.aux_nmbaitel ~
+ab_unmap.aux_nmcidtel
 &Scoped-Define DISPLAYED-FIELDS crapldp.dsendloc crapldp.dsestloc ~
 crapldp.dslocali crapldp.dsobserv crapldp.nmbailoc crapldp.nmcidloc ~
 crapldp.nmconloc crapldp.nrceploc crapldp.nrdddfax crapldp.nrdddtel ~
 crapldp.nrfaxsim crapldp.nrtelefo crapldp.qtmaxpes crapldp.vldialoc ~
-crapldp.cdagenci crapldp.dsrefloc 
+crapldp.dsrefloc crapldp.dsmotind
 &Scoped-define DISPLAYED-TABLES ab_unmap crapldp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
 &Scoped-define SECOND-DISPLAYED-TABLE crapldp
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ~
 ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ~
 ab_unmap.aux_dsretorn ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
-ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ab_unmap.aux_origem ab_unmap.aux_cdcopope ab_unmap.cdcooper ab_unmap.aux_cdoperad ab_unmap.aux_cdageevt
+ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ~
+ab_unmap.aux_origem ab_unmap.aux_cdcopope ~
+ab_unmap.aux_cdoperad ab_unmap.hdn_cdagenci ab_unmap.aux_dsdiaind ~
+ab_unmap.aux_idloceva ab_unmap.aux_idsonori ab_unmap.hdn_cdcooper ~
+ab_unmap.aux_idprojet ab_unmap.aux_idtelpro ab_unmap.aux_idcadeir ~
+ab_unmap.aux_idclimat ab_unmap.aux_idacecad ab_unmap.aux_idestaci ~
+ab_unmap.tel_dsdiaind ab_unmap.aux_nrceprua ab_unmap.aux_dsendtel ~
+ab_unmap.aux_nmbaitel ab_unmap.aux_nmcidtel
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
 
 /* _UIB-PREPROCESSOR-BLOCK-END */
 &ANALYZE-RESUME
-
-
-
-/* ***********************  Control Definitions  ********************** */
-
-
-/* Definitions of the field level widgets                               */
-
-/* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME Web-Frame
      ab_unmap.aux_cdagenci AT ROW 1 COL 1 HELP
@@ -167,6 +151,41 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
+     ab_unmap.aux_idsonori AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_idprojet AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4     
+     ab_unmap.aux_idtelpro AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_idcadeir AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_idclimat AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4          
+     ab_unmap.aux_idacecad AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4          
+     ab_unmap.aux_idestaci AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4         
+     ab_unmap.aux_idloceva AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4          
+     crapldp.dsmotind AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS EDITOR NO-WORD-WRAP
+          SIZE 20 BY 1
      ab_unmap.aux_cddopcao AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -241,9 +260,6 @@ DEFINE FRAME Web-Frame
      crapldp.vldialoc AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-     crapldp.cdagenci AT ROW 1 COL 1 NO-LABEL
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
 	 crapldp.dsrefloc AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
           SIZE 20 BY 1
@@ -253,49 +269,38 @@ DEFINE FRAME Web-Frame
    ab_unmap.aux_cdcopope AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1 
-   ab_unmap.cdcooper AT ROW 1 COL 1 NO-LABEL
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1 
    ab_unmap.aux_cdoperad AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
+          SIZE 20 BY 1 
+   ab_unmap.hdn_cdcooper AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
           SIZE 20 BY 1         
-   ab_unmap.aux_cdageevt AT ROW 1 COL 1 NO-LABEL
+   ab_unmap.hdn_cdagenci AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1     
+   ab_unmap.aux_dsdiaind AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS TOGGLE-BOX
+          SIZE 20 BY 1
+   ab_unmap.tel_dsdiaind AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1       
+   ab_unmap.aux_nrceprua AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1  
+   ab_unmap.aux_dsendtel AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1    
+   ab_unmap.aux_nmbaitel AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1       
+   ab_unmap.aux_nmcidtel AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1     
 	 WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
          SIZE 57.2 BY 15.91.
-
-
-/* *********************** Procedure Settings ************************ */
-
-&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
-/* Settings for THIS-PROCEDURE
-   Type: Web-Object
-   Allow: Query
-   Frames: 1
-   Add Fields to: Neither
-   Editing: Special-Events-Only
-   Events: web.output,web.input
-   Other Settings: COMPILE
-   Temp-Tables and Buffers:
-      TABLE: ab_unmap W "?" ?  
-      ADDITIONAL-FIELDS:
-          FIELD aux_cdagenci AS CHARACTER 
-          FIELD aux_cdcooper AS CHARACTER 
-          FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nrseqdig AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-      END-FIELDS.
-   END-TABLES.
- */
-&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
 
 /* *************************  Create Window  ************************** */
 
@@ -316,77 +321,7 @@ DEFINE FRAME Web-Frame
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-
-
-
-/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
-
-&ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
-/* SETTINGS FOR WINDOW w-html
-  VISIBLE,,RUN-PERSISTENT                                               */
-/* SETTINGS FOR FRAME Web-Frame
-   UNDERLINE                                                            */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdagenci IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdcooper IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_cddopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsendurl IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsretorn IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_idevento IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_lspermis IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nrdrowid IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nrseqdig IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_stdopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN crapldp.cdagenci IN FRAME Web-Frame
-   ALIGN-L                                                              */
-/* SETTINGS FOR FILL-IN crapldp.dsendloc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR EDITOR crapldp.dsestloc IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR FILL-IN crapldp.dslocali IN FRAME Web-Frame
-   ALIGN-L                                                              */
-/* SETTINGS FOR EDITOR crapldp.dsobserv IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR FILL-IN crapldp.nmbailoc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nmcidloc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nmconloc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nrceploc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nrdddfax IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nrdddtel IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nrfaxsim IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.nrtelefo IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.qtmaxpes IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.vldialoc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN crapldp.dsrefloc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-
-/* _RUN-TIME-ATTRIBUTES-END */
-&ANALYZE-RESUME
-
- 
-
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
-
 
 /* ************************  Main Code Block  ************************* */
 
@@ -400,19 +335,15 @@ DEFINE FRAME Web-Frame
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-
 /* **********************  Internal Procedures  *********************** */
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPac w-html 
-PROCEDURE CriaListaPac :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+PROCEDURE CriaListaPac:
 
     DEF VAR aux_dtanoage AS CHAR          NO-UNDO.
 
+  RUN RodaJavaScript("var mpac=new Array();").
+  
     /* busca a data da agenda atual */
     FIND LAST gnpapgd WHERE gnpapgd.idevento = INT(ab_unmap.aux_idevento) AND 
                             gnpapgd.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
@@ -424,26 +355,35 @@ PROCEDURE CriaListaPac :
 		 
     {includes/wpgd0099.i aux_dtanoage}
 
-    RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]"). 
+  RUN RodaJavaScript("mpac.push("  + vetorpac + ");"). 
 
 END PROCEDURE.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPacAssemb w-html 
 PROCEDURE CriaListaPacAssemb :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
+  RUN RodaJavaScript("var mpac=new Array();"). 
+  
     {includes/wpgd0097.i}
     
-    RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]"). 
+  RUN RodaJavaScript("mpac.push("  + vetorpac + ");").     
 
 END PROCEDURE.
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE carregaCEP w-html 
+PROCEDURE carregaCEP:
 
+  FOR FIRST crapdne FIELDS(dstiplog nmextlog nmrescid nmresbai) WHERE crapdne.nrceplog = DEC(ab_unmap.aux_nrceprua) NO-LOCK. END.
+
+  IF AVAILABLE crapdne THEN
+    DO:
+      ASSIGN ab_unmap.aux_dsendtel = UPPER(crapdne.dstiplog + ": " + crapdne.nmextlog)
+             ab_unmap.aux_nmbaitel = UPPER(crapdne.nmresbai)
+             ab_unmap.aux_nmcidtel = UPPER(crapdne.nmrescid).
+    END.
+    
+END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -477,8 +417,6 @@ PROCEDURE htmOffsets :
     ("aux_nrseqdig":U,"ab_unmap.aux_nrseqdig":U,ab_unmap.aux_nrseqdig:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_stdopcao":U,"ab_unmap.aux_stdopcao":U,ab_unmap.aux_stdopcao:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("cdagenci":U,"crapldp.cdagenci":U,crapldp.cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("dsendloc":U,"crapldp.dsendloc":U,crapldp.dsendloc:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -514,11 +452,41 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
-    ("cdcooper":U,"ab_unmap.cdcooper":U,ab_unmap.cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
     ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
    RUN htmAssociate
-    ("aux_cdageevt":U,"ab_unmap.aux_cdageevt":U,ab_unmap.aux_cdageevt:HANDLE IN FRAME {&FRAME-NAME}).
+    ("hdn_cdagenci":U,"ab_unmap.hdn_cdagenci":U,ab_unmap.hdn_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("hdn_cdcooper":U,"ab_unmap.hdn_cdcooper":U,ab_unmap.hdn_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_dsdiaind":U,"ab_unmap.aux_dsdiaind":U,ab_unmap.aux_dsdiaind:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("dsmotind":U,"crapldp.dsmotind":U,crapldp.dsmotind:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate                                       
+    ("aux_idsonori":U,"ab_unmap.aux_idsonori":U,ab_unmap.aux_idsonori:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idprojet":U,"ab_unmap.aux_idprojet":U,ab_unmap.aux_idprojet:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idtelpro":U,"ab_unmap.aux_idtelpro":U,ab_unmap.aux_idtelpro:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idcadeir":U,"ab_unmap.aux_idcadeir":U,ab_unmap.aux_idcadeir:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idclimat":U,"ab_unmap.aux_idclimat":U,ab_unmap.aux_idclimat:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idacecad":U,"ab_unmap.aux_idacecad":U,ab_unmap.aux_idacecad:HANDLE IN FRAME {&FRAME-NAME}).    
+  RUN htmAssociate                                       
+    ("aux_idestaci":U,"ab_unmap.aux_idestaci":U,ab_unmap.aux_idestaci:HANDLE IN FRAME {&FRAME-NAME}).       
+  RUN htmAssociate                                       
+    ("aux_idloceva":U,"ab_unmap.aux_idloceva":U,ab_unmap.aux_idloceva:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("tel_dsdiaind":U,"ab_unmap.tel_dsdiaind":U,ab_unmap.tel_dsdiaind:HANDLE IN FRAME {&FRAME-NAME}).   
+  RUN htmAssociate
+    ("aux_nrceprua":U,"ab_unmap.aux_nrceprua":U,ab_unmap.aux_nrceprua:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_dsendtel":U,"ab_unmap.aux_dsendtel":U,ab_unmap.aux_dsendtel:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_nmbaitel":U,"ab_unmap.aux_nmbaitel":U,ab_unmap.aux_nmbaitel:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_nmcidtel":U,"ab_unmap.aux_nmcidtel":U,ab_unmap.aux_nmcidtel:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -539,19 +507,15 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
           
           IF opcao = "inclusao" THEN
             DO: 
-                /*RUN RodaJavaScript('alert("Agencia:' + ab_unmap.aux_cdagenci + '")'). 
-                RUN RodaJavaScript('alert("Cooper:' + ab_unmap.aux_cdcooper + '")'). */
-                
                 CREATE cratldp.
-                ASSIGN
-                    cratldp.cdagenci = INT(GET-VALUE("aux_cdagenci"))
+                ASSIGN cratldp.cdagenci = INT(ab_unmap.aux_cdagenci)
                     cratldp.cdcooper = INT(ab_unmap.aux_cdcooper)
                     cratldp.dsendloc = INPUT crapldp.dsendloc
                     cratldp.dsestloc = INPUT crapldp.dsestloc
                     cratldp.dslocali  = INPUT crapldp.dslocali 
                     cratldp.dsobserv = INPUT crapldp.dsobserv
                     /*cratldp.idevento = INT(ab_unmap.aux_idevento)*/
-                    cratldp.idevento = 1 /* IDEVENTO é sempre 1 para locais */
+                       cratldp.idevento = INT(ab_unmap.aux_idevento) /* IDEVENTO é sempre 1 para locais */
                     cratldp.nmbailoc = INPUT crapldp.nmbailoc
                     cratldp.nmcidloc = INPUT crapldp.nmcidloc
                     cratldp.nmconloc = INPUT crapldp.nmconloc
@@ -564,7 +528,16 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
                     cratldp.qtmaxpes = INPUT crapldp.qtmaxpes
                     cratldp.vldialoc = INPUT crapldp.vldialoc
 					cratldp.dsrefloc = INPUT crapldp.dsrefloc
-                    .
+                       cratldp.dsmotind = INPUT crapldp.dsmotind
+                       cratldp.idsonori = INT(ab_unmap.aux_idsonori)
+                       cratldp.idprojet = INT(ab_unmap.aux_idprojet)
+                       cratldp.idtelpro = INT(ab_unmap.aux_idtelpro)
+                       cratldp.idcadeir = INT(ab_unmap.aux_idcadeir)
+                       cratldp.idclimat = INT(ab_unmap.aux_idclimat)
+                       cratldp.idacecad = INT(ab_unmap.aux_idacecad)
+                       cratldp.idestaci = INT(ab_unmap.aux_idestaci)
+                       cratldp.idloceva = INT(ab_unmap.aux_idloceva)
+                       cratldp.dsdiaind = ab_unmap.tel_dsdiaind.
 
                 RUN inclui-registro IN h-b1wpgd0013(INPUT TABLE cratldp, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
             END.
@@ -575,15 +548,11 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
                 CREATE cratldp.
                 BUFFER-COPY crapldp TO cratldp.
 
-                ASSIGN
-                 /* cratldp.cdagenci = INT(ab_unmap.aux_cdagenci)
-                    cratldp.cdcooper = INT(ab_unmap.aux_cdcooper) */
-                    cratldp.dsendloc = INPUT crapldp.dsendloc
+              ASSIGN cratldp.dsendloc = INPUT crapldp.dsendloc
                     cratldp.dsestloc = INPUT crapldp.dsestloc
                     cratldp.dslocali  = INPUT crapldp.dslocali 
                     cratldp.dsobserv = INPUT crapldp.dsobserv
-                    /*cratldp.idevento = INT(ab_unmap.aux_idevento)*/
-                    cratldp.idevento = 1 /* IDEVENTO é sempre 1 para locais */
+                     cratldp.idevento = INT(ab_unmap.aux_idevento) /* IDEVENTO é sempre 1 para locais */
                     cratldp.nmbailoc = INPUT crapldp.nmbailoc
                     cratldp.nmcidloc = INPUT crapldp.nmcidloc
                     cratldp.nmconloc = INPUT crapldp.nmconloc
@@ -591,12 +560,20 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
                     cratldp.nrdddfax = INPUT crapldp.nrdddfax
                     cratldp.nrdddtel = INPUT crapldp.nrdddtel
                     cratldp.nrfaxsim = INPUT crapldp.nrfaxsim
-                    /*cratldp.nrseqdig = */
                     cratldp.nrtelefo = INPUT crapldp.nrtelefo
                     cratldp.qtmaxpes = INPUT crapldp.qtmaxpes
                     cratldp.vldialoc = INPUT crapldp.vldialoc
 					cratldp.dsrefloc = INPUT crapldp.dsrefloc
-                    .
+                     cratldp.dsmotind = INPUT crapldp.dsmotind
+                     cratldp.idsonori = INT(ab_unmap.aux_idsonori)
+                     cratldp.idprojet = INT(ab_unmap.aux_idprojet)
+                     cratldp.idtelpro = INT(ab_unmap.aux_idtelpro)
+                     cratldp.idcadeir = INT(ab_unmap.aux_idcadeir)
+                     cratldp.idclimat = INT(ab_unmap.aux_idclimat)
+                     cratldp.idacecad = INT(ab_unmap.aux_idacecad)
+                     cratldp.idestaci = INT(ab_unmap.aux_idestaci)
+										 cratldp.idloceva = INT(ab_unmap.aux_idloceva)
+                     cratldp.dsdiaind = ab_unmap.tel_dsdiaind.
                  
                 RUN altera-registro IN h-b1wpgd0013(INPUT TABLE cratldp, OUTPUT msg-erro).
             END.    
@@ -635,15 +612,11 @@ END PROCEDURE.
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-display-fields w-html 
-PROCEDURE local-display-fields :
-RUN displayFields.
+PROCEDURE local-display-fields:
 
 IF AVAIL crapldp THEN
 DO:
-    ASSIGN
-     /* ab_unmap.aux_cdagenci:SCREEN-VALUE IN FRAME {&FRAME-NAME} = string(crapldp.cdagenci) */ 
-        ab_unmap.aux_cdcooper:SCREEN-VALUE IN FRAME {&FRAME-NAME} = string(crapldp.cdcooper).
-
+      ASSIGN ab_unmap.aux_cdcooper:SCREEN-VALUE IN FRAME {&FRAME-NAME} = string(crapldp.cdcooper).
 END.
 
 END PROCEDURE.
@@ -652,17 +625,8 @@ END PROCEDURE.
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE outputHeader w-html 
-PROCEDURE outputHeader :
-/*------------------------------------------------------------------------
-  Purpose:     Output the MIME header, and any "cookie" information needed 
-               by this procedure.  
-  Parameters:  <none>
-  Notes:       In the event that this Web object is state-aware, this is 
-               a good place to set the WebState and WebTimeout attributes.
-------------------------------------------------------------------------*/
-
+PROCEDURE outputHeader:
   output-content-type ("text/html":U).
-  
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -671,7 +635,6 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PermissaoDeAcesso w-html 
 PROCEDURE PermissaoDeAcesso :
 {includes/wpgd0009.i}
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -823,36 +786,55 @@ FOR EACH gnapses WHERE gnapses.idsessao MATCHES "*" + v-identificacao + "*" NO-L
     LEAVE.
 END.
   
-ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
-       FlagPermissoes           = GET-VALUE("aux_lspermis")
-       msg-erro-aux             = 0
-       ab_unmap.aux_idevento    = get-value("aux_idevento")
-       ab_unmap.aux_dsendurl    = AppURL                        
-       ab_unmap.aux_lspermis    = FlagPermissoes                
-       ab_unmap.aux_nrdrowid    = GET-VALUE("aux_nrdrowid")         
-       ab_unmap.aux_stdopcao    = GET-VALUE("aux_stdopcao")
-    /* ab_unmap.aux_cdagenci    = GET-VALUE("aux_cdagenci") */
-       ab_unmap.aux_cdcooper    = GET-VALUE("aux_cdcooper")
-       ab_unmap.aux_origem      = GET-VALUE("aux_origem")
-       ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
-       ab_unmap.cdcooper        = GET-VALUE("cdcooper")
-       ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad")
-       ab_unmap.aux_cdageevt    = GET-VALUE("aux_cdageevt").
+ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
+       FlagPermissoes        = GET-VALUE("aux_lspermis")
+       msg-erro-aux          = 0
+       ab_unmap.aux_idevento = "1" /*get-value("aux_idevento") SEMPRE VALOR 1 */
+       ab_unmap.aux_dsendurl = AppURL                        
+       ab_unmap.aux_lspermis = FlagPermissoes                
+       ab_unmap.aux_nrdrowid = GET-VALUE("aux_nrdrowid")         
+       ab_unmap.aux_stdopcao = GET-VALUE("aux_stdopcao")
+       ab_unmap.aux_cdcooper = GET-VALUE("aux_cdcooper")
+       
+       ab_unmap.hdn_cdcooper = GET-VALUE("hdn_cdcooper")
+       ab_unmap.hdn_cdagenci = GET-VALUE("hdn_cdagenci")
+       
+       ab_unmap.aux_origem   = GET-VALUE("aux_origem")
+       ab_unmap.aux_cdcopope = GET-VALUE("aux_cdcopope")
+       ab_unmap.aux_cdoperad = GET-VALUE("aux_cdoperad")
+       ab_unmap.aux_idloceva = GET-VALUE("aux_idloceva")
+       ab_unmap.aux_idsonori = GET-VALUE("aux_idsonori")
+       ab_unmap.aux_idprojet = GET-VALUE("aux_idprojet")
+       ab_unmap.aux_idtelpro = GET-VALUE("aux_idtelpro")
+       ab_unmap.aux_idcadeir = GET-VALUE("aux_idcadeir")
+       ab_unmap.aux_idclimat = GET-VALUE("aux_idclimat")
+       ab_unmap.aux_idacecad = GET-VALUE("aux_idacecad")
+       ab_unmap.aux_idestaci = GET-VALUE("aux_idestaci")
+       ab_unmap.tel_dsdiaind = GET-VALUE("tel_dsdiaind")
+       ab_unmap.aux_cdagenci = GET-VALUE("aux_cdagenci")
+       ab_unmap.aux_nrceprua = REPLACE(REPLACE(STRING(GET-VALUE("aux_nrceprua")),".",""),"-","").
 
 RUN outputHeader.
 
 {includes/wpgd0098.i}
 
+ASSIGN ab_unmap.aux_idsonori:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idprojet:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idtelpro:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idcadeir:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idclimat:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idacecad:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idestaci:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
+       ab_unmap.aux_idloceva:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "NÃO,0,SIM,1"
 ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
 
 /* Se a cooperativa ainda não foi escolhida, pega a da sessão do usuário */
-IF   INT(ab_unmap.aux_cdcooper) = 0   THEN
+IF INT(ab_unmap.hdn_cdcooper) = 0 THEN
      ab_unmap.aux_cdcooper = STRING(gnapses.cdcooper).
+/*ELSE
+  ab_unmap.aux_cdcooper = ab_unmap.hdn_cdcooper.*/
 
-IF INT(ab_unmap.aux_idevento) = 1 THEN
    RUN CriaListaPac.
-ELSE
-   RUN CriaListaPacAssemb.
 
 RUN insere_log_progrid("WPGD0013.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
 					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
@@ -975,17 +957,6 @@ IF REQUEST_METHOD = "POST":U THEN
 
                                 IF msg-erro = " " THEN
                                    DO:
-                                       IF aux_nrdrowid-auxiliar = "?" THEN
-                                          RUN PosicionaNoPrimeiro.
-                                       ELSE
-                                          DO:
-                                              ASSIGN ab_unmap.aux_nrdrowid = aux_nrdrowid-auxiliar.
-                                              FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                                              
-                                              IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                                                 RUN PosicionaNoSeguinte.
-                                          END.   
-                                          
                                        ASSIGN msg-erro-aux = 10. /* Solicitação realizada com sucesso */ 
                                    END.
                                 ELSE
@@ -1015,19 +986,24 @@ IF REQUEST_METHOD = "POST":U THEN
       
            WHEN "ul" THEN /* ultimo */
                 RUN PosicionaNoUltimo.
-      
            WHEN "an" THEN /* anterior */
                 RUN PosicionaNoAnterior.
       
            WHEN "se" THEN /* seguinte */
                 RUN PosicionaNoSeguinte.
+           WHEN "cep" THEN 
+            RUN carregaCEP.
     
       END CASE.
 
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
+         DO:
+            RUN local-display-fields.
+         END.
+      
          RUN displayFields.
- 
       RUN enableFields.
+ 
       RUN outputFields.
 
       RUN RodaJavaScript('PosicionaPAC();').
@@ -1067,6 +1043,11 @@ IF REQUEST_METHOD = "POST":U THEN
                   RUN RodaJavaScript('window.opener.history.go();').
                   RUN RodaJavaScript('self.close();'). 
                END. 
+               
+               IF opcao = "ex" THEN
+               DO:
+                  RUN RodaJavaScript('LimparCampos();').
+               END.
            END.
       END CASE.     
 
@@ -1124,6 +1105,21 @@ ELSE /* Método GET */
                                      END.
 
                                   FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
+                                  
+                                  IF AVAILABLE {&SECOND-ENABLED-TABLE} THEN
+                                    DO:
+                                      ASSIGN ab_unmap.aux_idsonori = STRING({&SECOND-ENABLED-TABLE}.idsonori)
+                                             ab_unmap.aux_idprojet = STRING({&SECOND-ENABLED-TABLE}.idprojet)
+                                             ab_unmap.aux_idtelpro = STRING({&SECOND-ENABLED-TABLE}.idtelpro)
+                                             ab_unmap.aux_idcadeir = STRING({&SECOND-ENABLED-TABLE}.idcadeir)
+                                             ab_unmap.aux_idclimat = STRING({&SECOND-ENABLED-TABLE}.idclimat)
+                                             ab_unmap.aux_idacecad = STRING({&SECOND-ENABLED-TABLE}.idacecad)
+                                             ab_unmap.aux_idestaci = STRING({&SECOND-ENABLED-TABLE}.idestaci)
+                                             ab_unmap.aux_idloceva = STRING({&SECOND-ENABLED-TABLE}.idloceva)
+                                             ab_unmap.hdn_cdcooper = STRING({&SECOND-ENABLED-TABLE}.cdcooper)
+                                             ab_unmap.hdn_cdagenci = STRING({&SECOND-ENABLED-TABLE}.cdagenci)
+                                             ab_unmap.tel_dsdiaind = STRING({&SECOND-ENABLED-TABLE}.dsdiaind).  
+                                    END.
                               END.  
                            ELSE
                               ASSIGN ab_unmap.aux_nrdrowid = "?"
@@ -1132,8 +1128,8 @@ ELSE /* Método GET */
                     ELSE                    
                        RUN PosicionaNoPrimeiro.
 
-                    /*RUN displayFields.*/
                     RUN local-display-fields.
+                    RUN displayFields.
                     RUN enableFields.
                     RUN outputFields.
                     IF aux_origem <> "agenda" THEN
@@ -1144,7 +1140,6 @@ ELSE /* Método GET */
                     IF GET-VALUE("LinkRowid") = "" THEN
                     DO:
                         RUN RodaJavaScript('LimparCampos();').
-                        RUN RodaJavaScript('Incluir();').
                     END.
 
                     RUN RodaJavaScript('PosicionaPAC();').
@@ -1176,4 +1171,3 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-

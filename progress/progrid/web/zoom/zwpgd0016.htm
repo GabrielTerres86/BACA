@@ -53,6 +53,7 @@
         document.form.target="Facili";
         window.document.form.submit();
 		window.close();
+		 
      } 
      else { 
        window.opener.FechaZoom(document.form.NomeDoCampo.value,vcampo,vcomplemento,vcomplemento2,vcomplemento3,vcomplemento4,vcomplemento5,vcomplemento6,vcomplemento7,vcomplemento8,vcomplemento9);
@@ -82,6 +83,8 @@
        return true
      }
    }            
+   // seleciona a opcao contem
+	 document.form.vcriterio.selectedIndex = "1";
                   
    document.form.pesquisa.focus();
    document.form.pesquisa.select();
