@@ -7,6 +7,7 @@
  * ALTERAÇÕES   :
  * 000: [02/07/2012] Jorge Hamaguchi  (CECRED): Alterado funcao Gera_Impressao(), novo esquema de impressao.
  * 001: [06/06/2016] Lucas Ranghetti  (CECRED): Incluir validação para o campo cAgencia e validar agencia ( #462172)
+ * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
  * --------------
  */
 
@@ -375,13 +376,13 @@ function controlaLayout() {
 		cAgencia.val(aux_cdagechq);
 		$('input, select', '#'+ formCab ).desabilitaCampo();
 		
-		if(cBanco.val() == 85) {
+		if(cBanco.val() == 85  || cBanco.val() == 756) {
 			validaContaMigrada();
 		}else{ 
 			aux_altagchq = 0;
 		}
 		
-		if(aux_altagchq == 1){
+		if (aux_altagchq == 1) {
 			cAgencia.habilitaCampo().focus();
 		}else{
 			cContraCheque.habilitaCampo().focus();
