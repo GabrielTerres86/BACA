@@ -294,7 +294,7 @@
 			$celularNrDdd = $xmlObjeto->infcadastro[0]->celularNrDdd;
 			$celularNrTelefone = $xmlObjeto->infcadastro[0]->celularNrTelefone;
 			$residencialNrCep = $xmlObjeto->infcadastro[0]->residencialNrCep;
-			$residencialNmLogradouro = $xmlObjeto->infcadastro[0]->residencialNmLogradouro;
+			$residencialNmLogradouro = utf8_decode($xmlObjeto->infcadastro[0]->residencialNmLogradouro);
 			$residencialNrLogradouro = $xmlObjeto->infcadastro[0]->residencialNrLogradouro;
 			$residencialDsComplemento = $xmlObjeto->infcadastro[0]->residencialDsComplemento;
 			$residencialNmBairro = $xmlObjeto->infcadastro[0]->residencialNmBairro;
@@ -330,6 +330,7 @@
 			$dtInicioAtividade = $xmlObjeto->infcadastro[0]->dtInicioAtividade;
 			$cdNaturezaOcupacao = $xmlObjeto->infcadastro[0]->cdNaturezaOcupacao;
 			$cdNacionalidade = $xmlObjeto->infcadastro[0]->cdNacionalidade;
+			$cdCadastroEmpresa = $xmlObjeto->infcadastro[0]->cdCadastroEmpresa;
 			
 			$metodoSim = str_replace("\r\n", "", "populaCamposRelacionamento('$dtconsultarfb', '$nrcpfcgc', '$cdsituacaoRfb', '$nmpessoa', '$nmpessoaReceita', '$tpsexo', '$dtnascimento',
 																			 '$tpdocumento', '$nrdocumento', '$idorgaoExpedidor', '$cdufOrgaoExpedidor', '$dtemissaoDocumento', '$tpnacionalidade', 
@@ -341,7 +342,7 @@
 																			 '$correspondenciaCdEstado', '$correspondenciaDsCidade', '$correspondenciaTporigem', '$dsnacion','$cdExpedidor', '$dsdemail',
 																			 '$nmfantasia', '$comercialNrCep', '$comercialNmLogradouro', '$comercialNrLogradouro', '$comercialDsComplemento', '$comercialNmBairro',
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
-																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade');");
+																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade', '$cdCadastroEmpresa');");
 			
 			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
 			
