@@ -294,7 +294,7 @@
 			$celularNrDdd = $xmlObjeto->infcadastro[0]->celularNrDdd;
 			$celularNrTelefone = $xmlObjeto->infcadastro[0]->celularNrTelefone;
 			$residencialNrCep = $xmlObjeto->infcadastro[0]->residencialNrCep;
-			$residencialNmLogradouro = utf8_decode($xmlObjeto->infcadastro[0]->residencialNmLogradouro);
+			$residencialNmLogradouro = $xmlObjeto->infcadastro[0]->residencialNmLogradouro;
 			$residencialNrLogradouro = $xmlObjeto->infcadastro[0]->residencialNrLogradouro;
 			$residencialDsComplemento = $xmlObjeto->infcadastro[0]->residencialDsComplemento;
 			$residencialNmBairro = $xmlObjeto->infcadastro[0]->residencialNmBairro;
