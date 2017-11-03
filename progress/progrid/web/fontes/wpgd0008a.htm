@@ -2,6 +2,7 @@
 	Alteracoes: 09/10/2015 - Criação da tela PRJ229 - Melhorias Progrid (Vanessa).
 				09/12/2015 - Inclusão do campo cdcopope (Vanessa)
 				25/05/2016 - Correcao do carregamento de recursos (Carlos Rafael Tanholi)
+        20/10/2016 - Setado Valor de quantidades de recursos default(1) (Jean Michel Deschamps)
 -->
 
 <html>
@@ -12,9 +13,9 @@
 <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
 <script SRC="/cecred/jsbiblio/biblio.js"></script>
 <script SRC="/cecred/jsbiblio/frcod.js"></script>
-<script SRC="/modelo/js/funcoes.js"></script>
+<script SRC="/cecred/js/funcoes.js"></script>
 <script SRC="/cecred/scripts/jquery.js"></script>
-<form action="#." method="POST" name="form">
+<form action="#." method="POST" name="form" id="form">
   <input name="aux_cddopcao" type="hidden" value="">    
   <input name="aux_lspermis" type="hidden" value="">    
   <input name="aux_nrdrowid" type="hidden" value="">
@@ -24,7 +25,7 @@
   <input name="aux_idevento" type="hidden" value="">  
   <input name="aux_cdcopope" type="hidden"  value="">
   <input name="aux_cdevento" type="hidden"  value="">
-  <input name="nrseqdig" type="hidden" value="">
+  <input name="nrseqdig" id="nrseqdig" type="hidden" value="">
 
 
   <!-- Início do modelo geral -->
@@ -63,11 +64,12 @@
                         </td>
 	</tr>
 	<tr>
+					  
 												<td align="right" class="NomeCampo"><div class="divQuantidade">Quantidade:</div></td>
 												<td align="left" height="20" class="NomeCampo">
 													<input name="aux_idrecpor" type="hidden" value="">
 													<input name="aux_cdtiprec" type="hidden" value="">
-													<div class="divQuantidade"><input name="qtreceve" id="qtreceve" type="text" class="Campo" size="10" maxlength="5"></div>
+						  <div class="divQuantidade"><input name="qtreceve" id="qtreceve" type="text" class="Campo" size="10" maxlength="5" ></div>
 													<div class="divParticipante"> a cada <input name="qtgrppar" id="qtgrppar" type="text" class="Campo" size="6" maxlength="5">
 													 Participantes &nbsp;&nbsp;&nbsp;&nbsp;</div>
 	  </td>	  
@@ -77,9 +79,11 @@
                         <td align="right" class="NomeCampo">&nbsp;&nbsp;&nbsp;&nbsp;</td>                           
 	</tr>
                     </table>
+					<br>
                     <table width="100" align="center">
     <tr>
-                        <td colspan="2"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="return Salvar()"></td>
+                        <td><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" width="58" height="20" onClick="return Incluir()"></td>
+                        <td><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="return Salvar()"></td>
 											</tr>
                     </table>					
                     <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
@@ -94,6 +98,7 @@
   </table>
   <!-- Fim do modelo geral -->
 </form>
+</body>
 <script language="JavaScript">
    NomeDoProgramaPrincipal  = '/wpgd0008a.w';
    
@@ -139,7 +144,7 @@ function MostraRecursos(){
 function LimparCampos(){
     document.form.nrseqdig.value = 0;
     document.form.qtgrppar.value = "";
-	document.form.qtreceve.value = "";
+	  document.form.qtreceve.value = 0;
     document.form.nrseqdig.focus();
 }
 
@@ -196,7 +201,7 @@ function ValidaDados(form){
 	  msg = "Selecione um Recurso!";
    }
 
-	if ((form.aux_idrecpor.value == 1 || form.aux_idrecpor.value == 3) && form.aux_cdtiprec.value != 2){
+   if ((form.aux_idrecpor.value == 1 || form.aux_idrecpor.value == 3) && (form.aux_cdtiprec.value != 2 && form.aux_cdtiprec.value != 5)){
 		if (form.qtreceve.value == 0){
 			msg = "Digite uma Quantidade!";
      }
@@ -241,7 +246,7 @@ $(".divParticipante").css("display", "block");
 var idrecpor =  document.form.aux_idrecpor.value;
 var cdtiprec =  document.form.aux_cdtiprec.value;
 
-if ((idrecpor == 1 || idrecpor == 3) && cdtiprec != 2){
+	if ((idrecpor == 1 || idrecpor == 3) && (cdtiprec != 2 && cdtiprec != 5)) {
   $(".divQuantidade").css("display", "block");
   if(idrecpor == 3){
     $(".divParticipante").css("display", "block");
@@ -252,7 +257,7 @@ if ((idrecpor == 1 || idrecpor == 3) && cdtiprec != 2){
   $(".divQuantidade").css("display", "none");
   $(".divParticipante").css("display", "none");
 }
-
+    
 $('#qtreceve').bind('keyup', function() { 
     $(this).val( $(this).val().replace(/[^0-9]/g,'') ); 
 });
@@ -268,9 +273,9 @@ $("#aux_nrseqdig").change(function() {
   document.form.aux_idrecpor.value = idrecpor;
   document.form.aux_cdtiprec.value = cdtiprec;
 
-  if ((idrecpor == 1 || idrecpor == 3) && cdtiprec != 2){
+		if ((idrecpor == 1 || idrecpor == 3) && (cdtiprec != 2 && cdtiprec != 5)) {
     $(".divQuantidade").css("display", "block");
-    if(idrecpor == 3 && cdtiprec != 2){
+			if(idrecpor == 3 && (cdtiprec != 2 && cdtiprec != 5)){
       $(".divParticipante").css("display", "block");
     } else {
       $(".divParticipante").css("display", "none");
@@ -279,13 +284,19 @@ $("#aux_nrseqdig").change(function() {
     $(".divQuantidade").css("display", "none");
     $(".divParticipante").css("display", "none");
   }
- 
+  
+  if(($("#qtreceve").val() == "0" || $("#qtreceve").val() == 0) && ($("#nrseqdig").val() == null || $("#nrseqdig").val() == "undefined" || $("#nrseqdig").val() == 0)){
+    $("#qtreceve").val("1");
+  }
 });
 
+  if(($("#qtreceve").val() == "0" || $("#qtreceve").val() == 0) && ($("#nrseqdig").val() == null || $("#nrseqdig").val() == undefined || $("#nrseqdig").val() == 0)){
+    $("#qtreceve").val("1");
+  }
+  
 if (document.form.nrseqdig.value > 0){
 	$("#aux_nrseqdig").attr('disabled', 'disabled');
 }   
    
 </SCRIPT>
-</body>
 </html>

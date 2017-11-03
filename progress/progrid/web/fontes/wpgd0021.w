@@ -7,8 +7,8 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			 
-			 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						  busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			       05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						              busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
              08/08/2016 - Alterações para Aba de "Fechamento", Prj. 229, alterações
                           dos registro com situação do evento(1 – Agendado,3 – Transferido,
@@ -17,6 +17,8 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
              02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                           (Jaison/Anderson)
 
+						 16/03/2017 - Mostrar div de Manutencao para Assembléias, Prj. 322 (Jean Michel)								
+						 
 .................................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1330,8 +1332,8 @@ IF REQUEST_METHOD = "POST":U THEN
                                 ASSIGN msg-erro-aux = 10.
 
                                 /* Se for Progrid */
-                                IF   INTEGER(ab_unmap.aux_idevento) = 1  THEN
-                                     RUN carrega_PACS (gtpapgd.dtanonov).
+                                /*IF   INTEGER(ab_unmap.aux_idevento) = 1  THEN Prj. 322*/
+                               RUN carrega_PACS (gtpapgd.dtanonov).
                             END.                            
 
                          /* "mata" a instncia da BO */
@@ -1417,8 +1419,22 @@ IF REQUEST_METHOD = "POST":U THEN
 								ASSIGN crapadp.idstaeve = 4
 											 crapadp.cdcopope = INTEGER(ab_unmap.aux_cdcopope)
 											 crapadp.cdoperad = STRING(ab_unmap.aux_cdoperad).
-											 
-		   END.
+							
+                /* ATUALIZAR STATUS IDP */
+                FOR EACH crapidp WHERE crapidp.idevento = INTEGER(ab_unmap.aux_idevento)
+                                   AND crapidp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+                                   AND crapidp.dtanoage = INTEGER(ab_unmap.aux_dtanoage_fec)
+                                   AND crapidp.cdevento = crapadp.cdevento
+                                   AND crapidp.nrseqeve = crapadp.nrseqdig
+                                   and crapidp.idstains = 1 EXCLUSIVE-LOCK:
+                                   
+                    ASSIGN crapidp.idstains = 4
+                           crapidp.dtconins = TODAY.
+                    
+                END.                                   
+                /* FIM ATUALIZAR STATUS IDP */
+              
+              END.
 						END.
 		   END.
 	  ELSE
@@ -1468,7 +1484,7 @@ IF REQUEST_METHOD = "POST":U THEN
            DO:
               RUN RodaJavaScript('document.form.all.divAbaEventos.style.visibility = "hidden";').
               RUN RodaJavaScript('document.form.all.divAbaIntegra.style.visibility = "hidden";').
-              RUN RodaJavaScript('document.form.all.divManutencao.style.visibility = "hidden";').
+              /*RUN RodaJavaScript('document.form.all.divManutencao.style.visibility = "hidden";').*/
               RUN RodaJavaScript('document.form.all.divAbaQuest.style.visibility = "hidden";').
            END.
 
@@ -1597,7 +1613,7 @@ ELSE /* Mtodo GET */
                          DO:
                             RUN RodaJavaScript('document.form.all.divAbaEventos.style.visibility = "hidden";').
                             RUN RodaJavaScript('document.form.all.divAbaIntegra.style.visibility = "hidden";').
-                            RUN RodaJavaScript('document.form.all.divManutencao.style.visibility = "hidden";').
+                            /*RUN RodaJavaScript('document.form.all.divManutencao.style.visibility = "hidden";').*/
                             RUN RodaJavaScript('document.form.all.divAbaQuest.style.visibility = "hidden";').
                          END.
                     
@@ -2200,81 +2216,113 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE carrega_PACS w-html 
 PROCEDURE carrega_PACS :
-    DEFINE INPUT PARAM par_dtanoage AS INTEGER.
 
-    /* Carrega os PACS que ainda não participam da agenda do ano escolhido */
+  DEFINE INPUT PARAM par_dtanoage AS INTEGER.
+
+  /* Carrega os PACS que ainda não participam da agenda do ano escolhido */
     
-    /* Instancia a BO para executar as procedures */
-    RUN dbo/b1wpgd0021a.p PERSISTENT SET h-b1wpgd0021a.
+  /* Instancia a BO para executar as procedures */
+  RUN dbo/b1wpgd0021a.p PERSISTENT SET h-b1wpgd0021a.
     
-    /* Se BO foi instanciada */
-    IF VALID-HANDLE(h-b1wpgd0021a) THEN
-       DO:
-          FOR EACH crapage WHERE crapage.cdcooper = INTEGER(ab_unmap.aux_cdcooper)/*   AND
-                                 crapage.flgdopgd = YES         */                     NO-LOCK:
-    
-              /* Verifica se o PAC já está participando da agenda escolhida */
-              FIND crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)  AND 
-                                 crapagp.cdcooper = crapage.cdcooper                AND
-                                 crapagp.dtanoage = par_dtanoage                    AND
-                                 crapagp.cdagenci = crapage.cdagenci                NO-LOCK NO-ERROR.
-    
-              IF   NOT AVAILABLE crapagp THEN
-                   DO:
-                       IF (crapage.insitage = 1   OR   /* Ativo */
-                           crapage.insitage = 3)  AND  /* Temporariamente Indisponivel */
-                           crapage.flgdopgd = YES   THEN
-                       DO:
-                       /* Limpa a temp-table */
-                           EMPTY TEMP-TABLE cratagp.
-                    
-                           CREATE cratagp.
-                           ASSIGN cratagp.cdageagr = crapage.cdageagr
-                                  cratagp.cdagenci = crapage.cdagenci
-                                  cratagp.cdcooper = crapage.cdcooper
-                                  cratagp.dtanoage = par_dtanoage
-                                  cratagp.dtmvtolt = TODAY
-                                  cratagp.idevento = INTEGER(ab_unmap.aux_idevento)
-                                  cratagp.idstagen = 0.
-                    
-                           RUN inclui-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
-                       END.
-                   END.
-              ELSE
-                   DO:
-                       
-                       /* Atualiza o pac agrupador e a data de movimento */
-    
-                       /* Limpa a temp-table */
-                       EMPTY TEMP-TABLE cratagp.
-                       
-                       CREATE cratagp.
-    
-                       /* Se o pac estiver com  insitage <> 1 ele será excluido (1-pac ativo)*/
-                       IF (crapage.insitage = 1     OR   /* Ativo */
-                           crapage.insitage = 3)    AND  /* Temporariamente Indisponivel */
-                           crapage.flgdopgd = YES   THEN
-                       DO:
-                            BUFFER-COPY crapagp EXCEPT crapagp.cdageagr crapagp.dtmvtolt TO cratagp.
-                            ASSIGN cratagp.cdageagr = crapage.cdageagr
-                                      cratagp.dtmvtolt = TODAY.
-    
-    
-                            RUN altera-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro).
-                       END.
-                       ELSE
-                       DO:
-                            BUFFER-COPY crapagp TO cratagp.
-                            
-                            RUN exclui-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro).
-                       END.
-    
-                   END.
+  /* Se BO foi instanciada */
+  IF VALID-HANDLE(h-b1wpgd0021a) THEN
+    DO:
+      FOR EACH crapage WHERE crapage.cdcooper = INTEGER(ab_unmap.aux_cdcooper) NO-LOCK:
+
+        /* Verifica se o PAC já está participando da agenda escolhida */
+        FIND crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento) 
+                       AND crapagp.cdcooper = crapage.cdcooper              
+                       AND crapagp.dtanoage = par_dtanoage                  
+                       AND crapagp.cdagenci = crapage.cdagenci NO-LOCK NO-ERROR.
+
+        IF NOT AVAILABLE crapagp THEN
+          DO:
+            IF (crapage.insitage = 1   OR   /* Ativo */
+                crapage.insitage = 3)  AND  /* Temporariamente Indisponivel */
+                crapage.flgdopgd = YES   THEN
+              DO:
+                /* Limpa a temp-table */
+                EMPTY TEMP-TABLE cratagp.
+              
+                CREATE cratagp.
+                ASSIGN cratagp.cdageagr = crapage.cdageagr
+                       cratagp.cdagenci = crapage.cdagenci
+                       cratagp.cdcooper = crapage.cdcooper
+                       cratagp.dtanoage = par_dtanoage
+                       cratagp.dtmvtolt = TODAY
+                       cratagp.idevento = INTEGER(ab_unmap.aux_idevento)
+                       cratagp.idstagen = 0.
+              
+                RUN inclui-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
+              END.
           END.
-    
-          /* "mata" a instâcia da BO */
-          DELETE PROCEDURE h-b1wpgd0021a NO-ERROR.
-       END.
+        ELSE
+          DO:
+                 
+            /* Atualiza o pac agrupador e a data de movimento */
+
+            /* Limpa a temp-table */
+            EMPTY TEMP-TABLE cratagp.
+                 
+            CREATE cratagp.
+
+            /* Se o pac estiver com  insitage <> 1 ele será excluido (1-pac ativo)*/
+            IF (crapage.insitage = 1     OR   /* Ativo */
+                crapage.insitage = 3)    AND  /* Temporariamente Indisponivel */
+                crapage.flgdopgd = YES   THEN
+              DO:
+                BUFFER-COPY crapagp EXCEPT crapagp.cdageagr crapagp.dtmvtolt TO cratagp.
+                ASSIGN cratagp.cdageagr = crapage.cdageagr
+                       cratagp.dtmvtolt = TODAY.
+
+
+                RUN altera-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro).
+              END.
+            ELSE
+              DO:
+                BUFFER-COPY crapagp TO cratagp.
+                RUN exclui-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro).
+             END.
+          END.
+      END. /* FIM FOR EACH */ 
+
+      IF INTEGER(ab_unmap.aux_idevento) = 2 THEN
+        DO:
+          FIND crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento) 
+                         AND crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)           
+                         AND crapagp.dtanoage = par_dtanoage                  
+                         AND crapagp.cdagenci = 0 NO-LOCK NO-ERROR.
+
+          IF NOT AVAILABLE crapagp THEN
+            DO:
+              /* Limpa a temp-table */
+              EMPTY TEMP-TABLE cratagp.
+            
+              CREATE cratagp.
+              ASSIGN cratagp.cdageagr = 0
+                     cratagp.cdagenci = 0
+                     cratagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+                     cratagp.dtanoage = par_dtanoage
+                     cratagp.dtmvtolt = TODAY
+                     cratagp.idevento = INTEGER(ab_unmap.aux_idevento)
+                     cratagp.idstagen = 0.
+            
+              RUN inclui-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro, OUTPUT ab_unmap.aux_nrdrowid).
+            END.
+          ELSE
+            DO:
+              BUFFER-COPY crapagp EXCEPT crapagp.cdageagr crapagp.dtmvtolt TO cratagp.
+              ASSIGN cratagp.cdageagr = 0
+                     cratagp.dtmvtolt = TODAY.
+
+              RUN altera-registro IN h-b1wpgd0021a(INPUT TABLE cratagp, OUTPUT msg-erro).
+            END.
+        END.
+      
+      /* "mata" a instâcia da BO */
+      DELETE PROCEDURE h-b1wpgd0021a NO-ERROR.
+  
+    END. /* FIM IF VALID-HANDLE(h-b1wpgd0021a) */
 
 END PROCEDURE.
 &ANALYZE-RESUME

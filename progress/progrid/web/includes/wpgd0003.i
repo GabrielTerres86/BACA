@@ -32,10 +32,10 @@
     
     25/11/2015 - Reordenado a ordem de exibição das telas no menu (Jean Michel).
     
-	27/04/2016 - Correcao na forma de filtro das telas validando a flag
-				 flgtelbl igual a TRUE para apresentar os itens do menu
+	  27/04/2016 - Correcao na forma de filtro das telas validando a flag
+                 flgtelbl igual a TRUE para apresentar os itens do menu
                  Lombardi, Vanessa, Carlos R.)
-
+                 
     20/06/2016 - Inclusao do ano agenda para passar por parametro para as
                  telas PHP (Jean Michel).
 
@@ -43,6 +43,8 @@
 			     do departamento para que a mesma seja feita através
 				 do código e não da descrição (Renato Darosci)
 
+    02/10/2017 - Inclusao do parametro crapope.cdagenci para telas PHP (Jean Michel).				 
+	
  ******************************************************************************/
 
 	{ includes/var_progrid.i }
@@ -64,7 +66,7 @@
 
   {&out} "<script language='JavaScript'>" SKIP.
   {&out} "foldersTree = gFld('<B>&nbsp;&nbsp;&nbsp;&nbsp;</B>', '')" SKIP.   
-   
+
   IF v-identificacao <> "" AND
     AVAIL gnapses THEN 
         DO:
@@ -172,7 +174,7 @@ PROCEDURE Incluicdprogra:
     
 		/* aux_cdcopope = é a cooperativa logada*/
 		IF INT(SUBSTR(p-cdprogra,(R-INDEX(p-cdprogra,"d") + 1))) >= 100 THEN
-			{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + aux_srvprogrid + "/telas/" + p-cdprogra + "/" + p-cdprogra + ".php?cdcooper=" + string(gnapses.cdcooper) + "&cdoperad=" + string(gnapses.cdoperad) + "&nmdatela=" + string(p-cdprogra) + "&idevento=" + STRING(craptel.idevento) + "&idcokses=" + string(v-identificacao) + "&tlrestel=" + craptel.tlrestel + "&tldatela=" + craptel.tldatela + "&dtanoage=" + STRING(aux_dtanoage) + "'))" SKIP. 
+			{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + aux_srvprogrid + "/telas/" + p-cdprogra + "/" + p-cdprogra + ".php?cdcooper=" + string(gnapses.cdcooper) + "&cdoperad=" + string(gnapses.cdoperad) + "&cdagenci=" + string(crapope.cdagenci) + "&nmdatela=" + string(p-cdprogra) + "&idevento=" + STRING(craptel.idevento) + "&idcokses=" + string(v-identificacao) + "&tlrestel=" + craptel.tlrestel + "&tldatela=" + craptel.tldatela + "&dtanoage=" + STRING(aux_dtanoage) + "'))" SKIP. 
 		ELSE /* aux_cdcopope = é a cooperativa logada*/
     	{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + p-cdprogra + ".w?aux_idevento=" + string(craptel.idevento) + "&aux_cdcopope=" + string(gnapses.cdcooper) + "&aux_cdcooper=" + string(gnapses.cdcooper) + "&aux_cdoperad="string(gnapses.cdoperad)"'))" SKIP. 
     /*END.*/

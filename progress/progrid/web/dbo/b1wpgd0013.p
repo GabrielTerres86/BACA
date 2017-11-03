@@ -67,7 +67,7 @@ PROCEDURE valida-inclusao:
         IF  AVAILABLE crapcri  THEN     
             ASSIGN m-erros = m-erros + crapcri.dscritic + " " + STRING({&tttabela}.cdagenci) + STRING({&tttabela}.cdcooper).
         ELSE
-            ASSIGN m-erros = m-erros + "Código do PA não encontrado no cadastro. " + STRING({&tttabela}.cdagenci) + STRING({&tttabela}.cdcooper).
+            ASSIGN m-erros = m-erros + "Código do PA não encontrado no cadastro. Cooperativa: " + STRING({&tttabela}.cdcooper) + ", PA: " + STRING({&tttabela}.cdagenci).
         
         RETURN "NOK".
     END.
@@ -104,7 +104,7 @@ PROCEDURE valida-inclusao:
     /* Valida o Evento, se é progrid ou assembléia */
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
     IF {&tttabela}.idevento <> 1 /* PROGRID */
-       /*AND {&tttabela}.idevento <> 2  ASSEMBLÉIA */
+       AND {&tttabela}.idevento <> 2 /* ASSEMBLÉIA */
        THEN
     DO:
         ASSIGN m-erros = m-erros + "Identificação do Evento inválido.".
@@ -207,10 +207,10 @@ PROCEDURE valida-alteracao:
     /*FIND FIRST {&tabela} OF {&tttabela} NO-ERROR.*/
 
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
-    FIND FIRST {&tabela} WHERE {&tabela}.idevento = 1                       AND
-                               {&tabela}.cdcooper = {&tttabela}.cdcooper    AND
-                               {&tabela}.cdagenci = {&tttabela}.cdagenci    AND
-                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig    NO-LOCK NO-ERROR.
+    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento AND
+                               {&tabela}.cdcooper = {&tttabela}.cdcooper AND
+                               {&tabela}.cdagenci = {&tttabela}.cdagenci AND
+                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig NO-LOCK NO-ERROR.
 
     /* Validações Obrigatórias a todas as tabelas */
     IF NOT AVAIL {&tabela} THEN
@@ -274,7 +274,7 @@ PROCEDURE valida-alteracao:
     /* Valida o Evento, se é progrid ou assembléia */
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
     IF {&tttabela}.idevento <> 1 /* PROGRID */
-       /* AND {&tttabela}.idevento <> 2  ASSEMBLÉIA */
+        AND {&tttabela}.idevento <> 2 /* ASSEMBLÉIA */
        THEN
     DO:
         ASSIGN m-erros = m-erros + "Identificação do Evento inválido.".
@@ -327,10 +327,11 @@ PROCEDURE altera-registro:
     /* Procura na tabela física o registro correspondente à tabela temporaria */
     /*FIND FIRST {&tabela} OF {&tttabela} NO-ERROR.*/
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
-    FIND FIRST {&tabela} WHERE {&tabela}.idevento = 1                       AND
-                               {&tabela}.cdcooper = {&tttabela}.cdcooper    AND
-                               {&tabela}.cdagenci = {&tttabela}.cdagenci    AND
-                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig    EXCLUSIVE-LOCK NO-ERROR.
+    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento AND
+                               {&tabela}.cdcooper = {&tttabela}.cdcooper AND
+                               {&tabela}.cdagenci = {&tttabela}.cdagenci AND
+                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig EXCLUSIVE-LOCK NO-ERROR.
+                               
     /* Copia o registro da tabela temporária para a tabela física */
     BUFFER-COPY {&tttabela} TO {&tabela} NO-ERROR.
 
@@ -367,10 +368,10 @@ PROCEDURE valida-exclusao:
     /* Procura na tabela física o registro correspondente à tabela temporaria */
     /*FIND FIRST {&tabela} OF {&tttabela} NO-ERROR.*/
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
-    FIND FIRST {&tabela} WHERE {&tabela}.idevento = 1                       AND
-                               {&tabela}.cdcooper = {&tttabela}.cdcooper    AND
-                               {&tabela}.cdagenci = {&tttabela}.cdagenci    AND
-                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig    NO-LOCK NO-ERROR.
+    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento AND
+                               {&tabela}.cdcooper = {&tttabela}.cdcooper AND
+                               {&tabela}.cdagenci = {&tttabela}.cdagenci AND
+                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig NO-LOCK NO-ERROR.
 
     /* Validações Obrigatórias a todas as tabelas */
     IF NOT AVAIL {&tabela} THEN
@@ -379,10 +380,10 @@ PROCEDURE valida-exclusao:
         RETURN "NOK".
     END.
 
-    FIND FIRST crapadp WHERE crapadp.idevento = 1                       AND
-                             crapadp.cdcooper = {&tttabela}.cdcooper    AND
-                             crapadp.cdagenci = {&tttabela}.cdagenci    AND
-                             crapadp.cdlocali = {&tttabela}.nrseqdig    NO-LOCK NO-ERROR.
+    FIND FIRST crapadp WHERE crapadp.idevento = {&tttabela}.idevento AND
+                             crapadp.cdcooper = {&tttabela}.cdcooper AND
+                             crapadp.cdagenci = {&tttabela}.cdagenci AND
+                             crapadp.cdlocali = {&tttabela}.nrseqdig NO-LOCK NO-ERROR.
 
     IF   AVAIL crapadp  THEN
          DO: 
@@ -429,10 +430,10 @@ PROCEDURE exclui-registro:
     /* Procura na tabela física o registro correspondente à tabela temporaria */
     /*FIND FIRST {&tabela} OF {&tttabela} NO-ERROR.*/
     /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
-    FIND FIRST {&tabela} WHERE {&tabela}.idevento = 1                       AND
-                               {&tabela}.cdcooper = {&tttabela}.cdcooper    AND
-                               {&tabela}.cdagenci = {&tttabela}.cdagenci    AND
-                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig    NO-LOCK NO-ERROR.
+    FIND FIRST {&tabela} WHERE {&tabela}.idevento = {&tttabela}.idevento AND
+                               {&tabela}.cdcooper = {&tttabela}.cdcooper AND
+                               {&tabela}.cdagenci = {&tttabela}.cdagenci AND
+                               {&tabela}.nrseqdig = {&tttabela}.nrseqdig NO-LOCK NO-ERROR.
 
     /* Elimina o registro da tabela */
     DELETE {&tabela} NO-ERROR.

@@ -1,15 +1,15 @@
-Ôªø/*
+/*
  * FONTE        : funcoes.php
- * CRIA√áƒÇO      : Lucas Lunelli
- * DATA CRIA√áƒÇO : Outubro/2012
- * OBJETIVO     : Biblioteca de Fun√ß≈ëes para o PROGRID
+ * CRIA«√O      : Lucas Lunelli
+ * DATA CRIA«√O : Outubro/2012
+ * OBJETIVO     : Biblioteca de FunÁıes para o PROGRID
  * --------------
- * ALTERA√á≈êES   :
+ * ALTERA«’ES   :
  * --------------
- * 001: [19/10/2012] Lucas Lunelli : Inserida fun√ß≈ëes 'retornaTecla', 'validaString' e
+ * 001: [19/10/2012] Lucas Lunelli : Inserida funÁıes 'retornaTecla', 'validaString' e
 									 'formataNum' para tratamento de campos.
 									 
-		[22/10/2012] Daniel Zimmermann: Inserido fun√ß≈ëes 'FormataCep', 'FormataDDD',
+		[22/10/2012] Daniel Zimmermann: Inserido funÁıes 'FormataCep', 'FormataDDD',
 										'FormataTelefone', 'ValidaTamanho', 'validaInteiro'
  */
 
@@ -26,31 +26,31 @@ function retornaTecla(e) {
 }
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo para validar chars digitados em um campo.
- * PAR√ÇMETRO : obj		   -> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o para validar chars digitados em um campo.
+ * PAR¬METRO : obj		   -> Objeto do campo a ser tratado.
  *             e 		   -> Evento.
- *             valid_value -> [Opcional] Adiciona chars permitidos pela fun√ßƒÉo.
- *             acentos	   -> TRUE  = Fun√ßƒÉo permite acentua√ßƒÉo.
- *							  FALSE = Fun√ßƒÉo nƒÉo permite digita√ßƒÉo de acentos.
+ *             valid_value -> [Opcional] Adiciona chars permitidos pela funÁ„o.
+ *             acentos	   -> TRUE  = FunÁ„o permite acentuaÁ„o.
+ *							  FALSE = FunÁ„o n„o permite digitaÁ„o de acentos.
  */
-function validaString(obj, e, valid_value, acentos, replace) {
+ function validaString(obj,e,valid_value,acentos,replace) {	
 
 	var keyValue = retornaTecla(e);
 	
 	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
 		return true;
 	} else { 
-        var text = new String(obj.value);
+		var text   = new String(obj.value);
 		var textok = '';
-        var temp = '';
-        var valid = '';
-        var cont = 0;
+		var temp   = '';
+		var valid  = '';
+		var cont   = 0;
 		
-        if (acentos) {
+		if (acentos){
 			valid = 'abcdefghijklmnopqrstuvwxyz' +
 					'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \/' +
-					'√°≈ï√§√¢ƒÉ√Å≈î√Ñ√ÇƒÇ√©ƒç√´ƒô√âƒå√ãƒò√≠ƒõƒè√Æ√çƒöƒé√é√≥≈à√∂√¥≈ë√ì≈á√ñ√î≈ê√∫≈Ø√º≈±√ö≈Æ√ú≈∞√ß√á';
+					'¡¿ƒ¬√A·‡‰‚„aCcDdE…»EÀ ÈËÎeÍeÕÃœŒÌÏÔÓNn”“÷O‘’ÛÚoˆÙıRr⁄UŸ‹U€˙u˘¸˚u«Á';
 		} else {
 			valid = 'abcdefghijklmnopqrstuvwxyz' +
 					'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \/';
@@ -62,14 +62,14 @@ function validaString(obj, e, valid_value, acentos, replace) {
 			var qtReplace = valid_value.length;
 			
 			for (var i = 0; i < qtReplace; i++) {
-                eval('valid = valid.replace(/\\' + valid_value.substr(i, 1) + '/g,"")');
+				eval('valid = valid.replace(/\\' + valid_value.substr(i,1) + '/g,"")');				
 			}
 		} else {		
-            var valid = valid + valid_value;
+			var valid  = valid + valid_value;
 		}	
 		
 		for (var i = 0; i < text.length; i++) {
-            temp = text.substr(i, 1);
+			temp = text.substr(i,1);
 			
 			if (valid.indexOf(temp) == '-1') {
 				obj.value = textok;
@@ -86,26 +86,26 @@ function validaString(obj, e, valid_value, acentos, replace) {
 }
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo similar ≈ï validaString, por√©m voltada para campos num√©ricos.
- * PAR√ÇMETRO : obj		   -> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o similar ‡ validaString, porÈm voltada para campos numÈricos.
+ * PAR¬METRO : obj		   -> Objeto do campo a ser tratado.
  *             e 		   -> Evento.
- *             valid_value -> [Opcional] Adiciona chars permitidos pela fun√ßƒÉo.
+ *             valid_value -> [Opcional] Adiciona chars permitidos pela funÁ„o.
  */
-function formataNum(obj, e, valid_value) {
+function formataNum(obj,e,valid_value) {
 	var keyValue = retornaTecla(e);
 	
 	if ((keyValue >= 35 && keyValue <= 40) || (keyValue == 8) || (keyValue == 46)) {
 		return true;
 	} else {
-        var data = new String(obj.value);
+		var data   = new String(obj.value);
 		var dataok = '';
-        var temp = '';
-        var valid = '0123456789' + valid_value;
-        var cont = 0;
+		var temp   = '';
+		var valid  = '0123456789' + valid_value;
+		var cont   = 0;
 		
 		for (var i = 0; i < data.length; i++) {
-            temp = data.substr(i, 1);
+			temp = data.substr(i,1);
 			
 			if (valid.indexOf(temp) == '-1') {
 				continue;				
@@ -121,126 +121,126 @@ function formataNum(obj, e, valid_value) {
 }
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo para limitar tamanho em campos TextArea.
- * PAR√ÇMETRO : obj		-> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o para limitar tamanho em campos TextArea.
+ * PAR¬METRO : obj		-> Objeto do campo a ser tratado.
  *             tamanho 	-> Tamanho maximo do campo.
  */
 
-function ValidaTamanho(obj, tamanho) {
+function ValidaTamanho(obj,tamanho)  {
 
 		if (obj.value.length > tamanho) {
-        obj.value = obj.value.substring(0, tamanho);
+			obj.value = obj.value.substring(0,tamanho);
 		}		
 }   
 
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo campo CEP para 99999-999.
- * PAR√ÇMETRO : obj			-> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o campo CEP para 99999-999.
+ * PAR¬METRO : obj			-> Objeto do campo a ser tratado.
  *             teclapres 	-> Tecla pressionada.
  */
-function FormataCep(obj, teclapres) {
+function FormataCep(obj,teclapres) {
    
    
    var tecla = teclapres.keyCode;
-    if ((tecla < 48 || tecla > 57 && tecla < 96 || tecla > 105) && tecla != 8 && tecla != 9 && tecla != 16) {
+   if ( ( tecla < 48 || tecla > 57 && tecla < 96 || tecla > 105) && tecla != 8 && tecla != 9 && tecla!= 16){
          event.returnValue = false;
          return;
    }
 
         vr = obj.value;
-    vr = vr.replace(".", "");
-    vr = vr.replace("-", "");
-    vr = vr.replace("-", "");
+        vr = vr.replace( ".", "" );
+        vr = vr.replace( "-", "" );
+        vr = vr.replace( "-", "" );
         tam = vr.length + 1;
 
-    if (tecla != 9 && tecla != 8) {
-        if (tam > 3 && tam < 8)
-            obj.value = vr.substr(0, tam - 3) + '-' + vr.substr(tam - 3, tam);
+        if ( tecla != 9 && tecla != 8 ){
+                if ( tam > 3 && tam < 8)
+                        obj.value = vr.substr( 0, tam - 3  ) + '-' + vr.substr( tam - 3, tam );
 						
-        if (tam = 8)
-            obj.value = vr.substr(0, 5) + '-' + vr.substr(5, 3);
+				if ( tam = 8 )
+				obj.value = vr.substr( 0, 5 ) + '-' + vr.substr( 5, 3 );
                  }              
 				 
 }	
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo para formata√ßƒÉo campo telefone.
- * PAR√ÇMETRO : campo		-> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o para formataÁ„o campo telefone.
+ * PAR¬METRO : campo		-> Objeto do campo a ser tratado.
  * 
  */
 
-function FormataTelefone(campo) {
+function FormataTelefone(campo){
 
    // backspace
-    if (event.keyCode == 8)
+   if(event.keyCode==8)
       return true;
    
    // tira o ponto
-    campo.value = campo.value.replace('.', '');
+   campo.value = campo.value.replace('.','');
    
-   // varre o campo em busca de caracteres inv√°lidos e remove-os
-    for (var i = 0; i < campo.value.length; i++) {
+   // varre o campo em busca de caracteres inv·lidos e remove-os
+   for(var i=0;i<campo.value.length;i++){
    
-        if ((campo.value.substring(i, i + 1) != '0') &&
-           (campo.value.substring(i, i + 1) != '1') &&
-           (campo.value.substring(i, i + 1) != '2') &&
-           (campo.value.substring(i, i + 1) != '3') &&
-           (campo.value.substring(i, i + 1) != '4') &&
-           (campo.value.substring(i, i + 1) != '5') &&
-           (campo.value.substring(i, i + 1) != '6') &&
-           (campo.value.substring(i, i + 1) != '7') &&
-           (campo.value.substring(i, i + 1) != '8') &&
-           (campo.value.substring(i, i + 1) != '9'))
-            campo.value = campo.value.substring(0, i);
+	  if((campo.value.substring(i,i+1)!='0')&&
+         (campo.value.substring(i,i+1)!='1')&&
+         (campo.value.substring(i,i+1)!='2')&&
+         (campo.value.substring(i,i+1)!='3')&&
+         (campo.value.substring(i,i+1)!='4')&&
+         (campo.value.substring(i,i+1)!='5')&&
+         (campo.value.substring(i,i+1)!='6')&&
+         (campo.value.substring(i,i+1)!='7')&&
+         (campo.value.substring(i,i+1)!='8')&&
+         (campo.value.substring(i,i+1)!='9'))	  
+    	  campo.value = campo.value.substring(0,i);   
    }
 
    if (campo.value.length >= 5)
-        campo.value = campo.value.substring(0, 5) + '.' + campo.value.substring(5, campo.value.length);
+       campo.value = campo.value.substring(0,5) + '.' + campo.value.substring(5,campo.value.length);
 }	
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo para formata√ßƒÉo campo ddd.
- * PAR√ÇMETRO : campo		-> Objeto do campo a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o para formataÁ„o campo ddd.
+ * PAR¬METRO : campo		-> Objeto do campo a ser tratado.
  * 
  */
 
-function FormataDDD(campo) {
+function FormataDDD(campo){
 
    // backspace
-    if (event.keyCode == 8)
+   if(event.keyCode==8)
       return true;
    
-   // varre o campo em busca de caracteres inv√°lidos e remove-os
-    for (var i = 0; i < campo.value.length; i++) {
-        if ((campo.value.substring(i, i + 1) != '0') &&
-           (campo.value.substring(i, i + 1) != '1') &&
-           (campo.value.substring(i, i + 1) != '2') &&
-           (campo.value.substring(i, i + 1) != '3') &&
-           (campo.value.substring(i, i + 1) != '4') &&
-           (campo.value.substring(i, i + 1) != '5') &&
-           (campo.value.substring(i, i + 1) != '6') &&
-           (campo.value.substring(i, i + 1) != '7') &&
-           (campo.value.substring(i, i + 1) != '8') &&
-           (campo.value.substring(i, i + 1) != '9'))
-            campo.value = campo.value.substring(0, i);
+   // varre o campo em busca de caracteres inv·lidos e remove-os
+   for(var i=0;i<campo.value.length;i++){   
+	  if((campo.value.substring(i,i+1)!='0')&&
+         (campo.value.substring(i,i+1)!='1')&&
+         (campo.value.substring(i,i+1)!='2')&&
+         (campo.value.substring(i,i+1)!='3')&&
+         (campo.value.substring(i,i+1)!='4')&&
+         (campo.value.substring(i,i+1)!='5')&&
+         (campo.value.substring(i,i+1)!='6')&&
+         (campo.value.substring(i,i+1)!='7')&&
+         (campo.value.substring(i,i+1)!='8')&&
+         (campo.value.substring(i,i+1)!='9'))	  
+    	  campo.value = campo.value.substring(0,i);   
    }
 }
 
 /*!
- * ALTERA√áƒÇO : 000
- * OBJETIVO  : Fun√ßƒÉo para validar campos com valores inteiro.
- * PAR√ÇMETRO : teclapres		-> Tecla pressionada a ser tratado.
+ * ALTERA«√O : 000
+ * OBJETIVO  : FunÁ„o para validar campos com valores inteiro.
+ * PAR¬METRO : teclapres		-> Tecla pressionada a ser tratado.
  * 
  */
 
-function validaInteiro(teclapres) {
+function validaInteiro(teclapres){
    var tecla = teclapres.keyCode;   
-    if (((tecla < 37 || tecla > 40) && (tecla < 48 || tecla > 57) && (tecla < 96 || tecla > 105)) && tecla != 8 && tecla != 9 && tecla != 46) {
+   if ( ( (tecla < 37 || tecla > 40) && (tecla < 48 || tecla > 57) && (tecla < 96 || tecla > 105)) && tecla != 8 && tecla != 9 && tecla!= 46){
          event.returnValue = false;
          return;
    }

@@ -34,7 +34,7 @@
 
     Programa: b1wgen0011.p
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 07/01/2016
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/09/2017
     
     Dados referentes ao programa:
 
@@ -135,12 +135,20 @@
                                convertida do oracle pc_solicita_email 
                                SD356863 (odirlei-AMcom)
                   
-				  03/03/2016 - Ajustado rotina devido a agrupar anexo quando possuia mais
-				               de um destinatario(Odirlei-AMcom)
+									03/03/2016 - Ajustado rotina devido a agrupar anexo quando possuia mais
+															 de um destinatario(Odirlei-AMcom)
+                   
+									15/09/2017 - Inclusao de acentuaçao na msg relativa a tela wpgd0020
+                               do Progrid (Jean Michel).
+	    
+                  21/09/2017 - #756235 Criada a funcao f_validar_email para nao ter 
+                               problemas na geracao dos arquivos de spool (Carlos)
 
 ..............................................................................*/
 
-{ sistema/generico/includes/var_oracle.i } 
+{ sistema/generico/includes/var_oracle.i }
+
+
 DEF STREAM str_email.
 DEF STREAM str_spool.
 
@@ -160,6 +168,20 @@ DEF VAR aux_msgremet AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscomand AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nmarqtxt AS CHAR                                           NO-UNDO.
+
+FUNCTION f_validar_email RETURNS LOGICAL (INPUT par_dsdemail AS CHAR):
+
+    IF par_dsdemail = ""              OR /* vazio */
+       NOT par_dsdemail MATCHES "*@*" OR /* nao tem arroba */
+       par_dsdemail MATCHES "* *"     OR /* tem espaco */
+       par_dsdemail MATCHES "*/*"THEN    /* tem barra */
+    DO:
+        RETURN FALSE.
+    END.   
+
+    RETURN TRUE.
+    
+END FUNCTION.
 
 PROCEDURE converte_arquivo.
 
@@ -204,27 +226,31 @@ PROCEDURE solicita_email_oracle.
     DEFINE   OUTPUT  PARAM par_des_erro                  AS CHARACTER           NO-UNDO.
  
     DEFINE   VAR aux_des_corpo                           AS CHARACTER NO-UNDO.
-
+		
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-    
-    aux_des_corpo = replace(par_des_corpo,"\n","<br>").
+    		
+    ASSIGN aux_des_corpo = replace(par_des_corpo,"\n","<br>").
    
-    RUN STORED-PROCEDURE pc_solicita_email_prog aux_handproc = PROC-HANDLE NO-ERROR
-       
-       (INPUT  par_cdcooper       
-       ,INPUT  par_cdprogra       
-       ,INPUT  par_des_destino    
-       ,INPUT  par_des_assunto    
-       ,INPUT  aux_des_corpo      
-       ,INPUT  par_des_anexo      
-       ,INPUT  par_flg_remove_anex
-       ,INPUT  par_flg_remete_coop
-       ,INPUT  par_des_nome_reply 
-       ,INPUT  par_des_email_reply
-       ,INPUT  par_flg_log_batch  
-       ,INPUT  par_flg_enviar            
-       ,OUTPUT "" ).
-
+    RUN STORED-PROCEDURE pc_solicita_email_prog
+			aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,       
+																				  INPUT par_cdprogra,       
+																				  INPUT par_des_destino,    
+																				  INPUT par_des_assunto,    
+																				  INPUT aux_des_corpo ,     
+																				  INPUT par_des_anexo,      
+																				  INPUT par_flg_remove_anex,
+																				  INPUT par_flg_remete_coop,
+																				  INPUT par_des_nome_reply,
+																				  INPUT par_des_email_reply,
+																				  INPUT par_flg_log_batch,  
+																				  INPUT par_flg_enviar,            
+																				 OUTPUT "" ).
+																				 
+		CLOSE STORED-PROCEDURE pc_solicita_email_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+		
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+		
     IF  ERROR-STATUS:ERROR  THEN DO:
         DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
             ASSIGN aux_msgerora = aux_msgerora + 
@@ -233,15 +259,12 @@ PROCEDURE solicita_email_oracle.
 
         ASSIGN par_des_erro = "Erro ao executar Stored Procedure: '" + aux_msgerora.
         RETURN "NOK".
-    END.
+    END.    
     
-    CLOSE STORED-PROCEDURE pc_solicita_email_prog WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
     IF  pc_solicita_email_prog.pr_des_erro <> ? THEN
         DO:
             ASSIGN par_des_erro = pc_solicita_email_prog.pr_des_erro.
-            RETURN "NOK".
+						RETURN "NOK".
         END.
 
     RETURN "OK".
@@ -302,13 +325,13 @@ PROCEDURE enviar_email.
     
         ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,p-lista_emails,",")).
         
-        IF  aux_dsdemail = ""  THEN
+        IF NOT f_validar_email(INPUT aux_dsdemail) THEN
             NEXT.
-        
+
         ASSIGN aux_dsarquiv = ""
                aux_dsanexos = ""
                aux_dsarqlog = ""
-			   aux_dsanexos_ora = "".
+					     aux_dsanexos_ora = "".
         
         DO aux_qtarquiv = 1 TO NUM-ENTRIES(p-nome_arq_envio,";"):
 
@@ -347,9 +370,9 @@ PROCEDURE enviar_email.
                                "pa, atraves da tela de SELECAO DOS EVENTOS.".
         
             WHEN "wpgd0020" THEN
-                aux_msgremet = "A lista de selecao dos eventos ja foi "       +
+                aux_msgremet = "A lista de selecão dos eventos já foi "       +
                                "concluida pelo PA. \nVerifique e confirme "   +
-                               "atraves da tela de Confirmacao dos Eventos.".
+                               "através da tela de Confirmacão dos Eventos.".
         
             WHEN "wpgd0026b" THEN
                  aux_msgremet =  "O local para a realizacao do evento ja "    +
@@ -498,7 +521,7 @@ PROCEDURE enviar_email_spool.
     
         ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,p-lista_emails,",")).
         
-        IF  aux_dsdemail = ""  THEN
+        IF NOT f_validar_email(INPUT aux_dsdemail) THEN
             NEXT.
         
         ASSIGN aux_dsarquiv = ""
@@ -648,7 +671,7 @@ PROCEDURE enviar_email_completo:
     
        ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,par_lsemails,",")).
        
-       IF aux_dsdemail = ""  THEN
+       IF NOT f_validar_email(INPUT aux_dsdemail) THEN
           NEXT.
            
        ASSIGN aux_dsarquiv = ""
@@ -755,12 +778,4 @@ PROCEDURE enviar_email_completo:
 
 END PROCEDURE.
 
-
-
-
 /*............................................................................*/
-
-
-
-
-

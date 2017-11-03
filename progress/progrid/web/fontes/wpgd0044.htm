@@ -1,443 +1,460 @@
 <!-- 
-Alterações:  26/02/2008 - Não permitir inscrições quando o mês da Data Final do
-			              evento já estiver Fechado, E usuário não possuir
-						  permissão de acesso 'U' (Diego).  
+  Alterações:  26/02/2008 - Não permitir inscrições quando o mês da Data Final do
+                            evento já estiver Fechado, E usuário não possuir
+                            permissão de acesso 'U' (Diego).  
 						  
-	         11/12/2009 - Nao permitir encerrar eventos cancelados (Diego).
+               11/12/2009 - Nao permitir encerrar eventos cancelados (Diego).
              
-             04/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                          a escrita será PA (André Euzébio - Supero).	 
+               04/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                            a escrita será PA (André Euzébio - Supero).	 
              
-             08/07/2016 - Alterado nome da tela de Inscrições Automaticas 
-                          para Inscrições por Quantidade.             
+               08/07/2016 - Alterado nome da tela de Inscrições Automaticas 
+                            para Inscrições por Quantidade.
+                          
+               02/08/2017 - Nao permitir inscriçoes duplicadas, nao permitir inscricoes com eventos
+                            encerrados, solicitaçao de ficha de presenca quando evento AGO/AGE,
+                            alterar inscritos nao confirmados para faltantes quando encerrar evento,
+                            Prj. 322 (Jean Michel)
+                            
 -->
 <html>
-<head>
-<title>Inscrição por quantidade</title>
-</head>
-<body onunload="FechaMens()" style="margin-left: 3px; ">
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-<script SRC="/cecred/jsbiblio/sorttable.js"></script>
-<script SRC="/cecred/jsbiblio/biblio.js"></script>
-<script SRC="/cecred/jsbiblio/frcod.js"></script>
+  <head>
+    <title>Inscrição por quantidade</title>
+  </head>
+  <body onunload="FechaMens()" style="margin-left: 3px; ">
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+    <script SRC="/cecred/jsbiblio/sorttable.js"></script>
+    <script SRC="/cecred/jsbiblio/biblio.js"></script>
+    <script SRC="/cecred/jsbiblio/frcod.js"></script>
 
-<link rel="stylesheet" href="/cecred/css/base/jquery.ui.all.css">
+    <link rel="stylesheet" href="/cecred/css/base/jquery.ui.all.css">
 
-<script type="text/javascript" src="/cecred/scripts/scripts.js"></script>	
-<script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
-<script type="text/javascript" src="/cecred/scripts/jquery.ui.core.js"></script>
-<script type="text/javascript" src="/cecred/scripts/funcoes.js"></script>
-<script src="/cecred/js/funcoes.js"></script>
+    <script type="text/javascript" src="/cecred/scripts/scripts.js"></script>	
+    <script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
+    <script type="text/javascript" src="/cecred/scripts/jquery.ui.core.js"></script>
+    <script type="text/javascript" src="/cecred/scripts/funcoes.js"></script>
+    <script src="/cecred/js/funcoes.js"></script>
 
-<script language="JavaScript">
-  function aguarde(aux_mensagem){
-  
-    if (document.form.aux_cdagenci.value == '' ||
-        document.form.aux_dtanoage.value == '' ) {    
-      return false;
-    } 
-    
-    // abre a janela com a mesagem de aguarde    
-    showMsgAguardo( aux_mensagem + "...");
-  }  
+    <script language="JavaScript">
+      function aguarde(aux_mensagem){
+      
+        if (document.form.aux_cdagenci.value == '' ||
+            document.form.aux_dtanoage.value == '' ) {    
+          return false;
+        } 
+        
+        // abre a janela com a mesagem de aguarde    
+        showMsgAguardo( aux_mensagem + "...");
+      }  
 
-   NomeDoProgramaPrincipal  = '/wpgd0044.w';
-   NomeDoProgramaDeListagem = '/wpgd0044ls.w';
-   NomeDoProgramaDeAjuda    = '/wpgd0044aj.w';
-   NomeDoProgramaDeZoom     = '/zoom/zwpgd0044.w';
-</script>
-<form action="#." method="POST" name="form">
-<input type="hidden" name="aux_dsendurl" value="">
-<input type="hidden" name="aux_idevento" value="">
-<input type="hidden" name="aux_cddopcao" value="">
-<input type="hidden" name="aux_lspermis" value="">
-<input type="hidden" name="aux_nrdrowid" value="">
-<input type="hidden" name="cdcooper"     value="">
-<input type="hidden" name="cdageins"     value="">
-<input type="hidden" name="nrseqeve"     value="">
-<input type="hidden" name="cdgraupr"     value="">
-<input type="hidden" name="aux_fechamen" value="">
-<input type="hidden" name="aux_idstaeve" value="">
-<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
-  <table width="575" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
-    <tr>
-      <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
-      <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
-      <td width="280" height="20" align="left" class="linkGuia">Inscrições por quantidade</td>
-      <td width="287" height="20" align="right" class="linkGuia">wpgd0044</td>	  
-	  <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
-    </tr>
-    <tr valign="top" bgcolor="#FFFFFF">
-      <td colspan="5">
-        <table width="574" height="300"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+      NomeDoProgramaPrincipal  = '/wpgd0044.w';
+      NomeDoProgramaDeListagem = '/wpgd0044ls.w';
+      NomeDoProgramaDeAjuda    = '/wpgd0044aj.w';
+      NomeDoProgramaDeZoom     = '/zoom/zwpgd0044.w';
+    </script>
+    <form action="#." method="POST" name="form">
+      <input type="hidden" name="aux_dsendurl" value="">
+      <input type="hidden" name="aux_idevento" value="">
+      <input type="hidden" name="aux_cddopcao" value="">
+      <input type="hidden" name="aux_lspermis" value="">
+      <input type="hidden" name="aux_nrdrowid" value="">
+      <input type="hidden" name="cdcooper"     value="">
+      <input type="hidden" name="cdageins"     value="">
+      <input type="hidden" name="nrseqeve"     value="">
+      <input type="hidden" name="cdgraupr"     value="">
+      <input type="hidden" name="aux_fechamen" value="">
+      <input type="hidden" name="aux_idstaeve" id="aux_idstaeve" value="">
+      <input type="hidden" name="aux_tpevento" id="aux_tpevento" value="">
+      
+      <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+        <table width="575" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
           <tr>
-            <td height="200" valign="top" bgcolor="#FFFFFF">
-              <table width="575" height="337" border="0" cellpadding="0" cellspacing="0">
+            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+            <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+            <td width="280" height="20" align="left" class="linkGuia">Inscrições por quantidade</td>
+            <td width="287" height="20" align="right" class="linkGuia">wpgd0044</td>	  
+          <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+          </tr>
+          <tr valign="top" bgcolor="#FFFFFF">
+            <td colspan="5">
+              <table width="574" height="300"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
                 <tr>
-                  <td>&nbsp;</td>
-                  <td height="50" align="left" valign="top">
-				    <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="right" class="NomeCampo">&nbsp;</td>
-                        <td class="NomeCampo" align="left">&nbsp;</td>
-                        <td class="NomeCampo" align="right">&nbsp;</td>
-                        <td class="NomeCampo" align="left">&nbsp;</td>
-                        <td colspan=2 align="right" class="NomeCampo">&nbsp;</td>
-                        <td colspan=2 align="right" class="NomeCampo">&nbsp;</td>
-                      </tr>
-                      <tr>
-                        <td align="right" class="NomeCampo"> Agenda: </td>
-                        <td class="NomeCampo" align="left"><input name="aux_dtanoage" type="text"  size="5" onchange=" document.form.submit();"></td>
-                        <td colspan=2 class="NomeCampo" align="right">Cooperativa: </td>
-                        <td colspan=2 class="NomeCampo" align="left">
-		      	          <select name="aux_cdcooper" class="Campo"  onChange="document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();"></select>
-                        </td>
-					    <td colspan=4 align="center" class="NomeCampo">
-					      &nbsp;PA:
-						  <select name="aux_cdagenci" class="Campo" onChange="document.form.aux_cddopcao.value=''; document.form.cdageins.value = document.form.aux_cdagenci.value; document.form.nrseqeve.value=''; document.form.submit();">
-						  </select>
-					    </td>					     
-                      </tr>
-					  <tr>
-					    <td align="right" class="NomeCampo">
-					      &nbsp;Evento:
-					    </td>
-                        <td colspan=7 align="left" class="NomeCampo">
-						  <select name="aux_nrseqeve" class="NomeCampo" onChange="document.form.aux_cddopcao.value=''; document.form.nrseqeve.value = document.form.aux_nrseqeve.value; document.form.submit();">
-                          </select>
-                        </td>
-					  </tr>
-					</table>
-			      </td>
-                </tr>
-                <tr>
-                  <td height="15" align="left">&nbsp;</td>
-                  <td height="100%" align="left" valign="top">
-                    <table width="100%" border="0" align="center" cellspacing="1">
-                      <tr>
-						<br>
-						<td colspan="8" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
-					  </tr>
-                      <tr height="75">
-                        <td colspan=3>&nbsp;</td>
-                      </tr>
-                      <tr>
-                        <td width="44" align="right" class="NomeCampo">&nbsp;</td>
-                        <td colspan=2 align="left" class="NomeCampo">
-                            Digite a quantidade de inscrições:
-                            <input name="aux_qtinscri" type="text" class="Campo" size="1" maxlength="4" onkeyup="validaInsc()">
-                        </td>
-                      </tr>                        
-                      <tr>
-                        <td colspan=3 align="right" class="NomeCampo">&nbsp;</td> 
-                      </tr>
+                  <td height="200" valign="top" bgcolor="#FFFFFF">
+                    <table width="575" height="337" border="0" cellpadding="0" cellspacing="0">
                       <tr>
                         <td>&nbsp;</td>
-                        <td colspan=2 align="left" class="NomeCampo">
-                          <span class="NomeCampo">  Atenção: Cuidado para não duplicar participações!<br>
-                          </span> Alguns eventos podem ter participação por lista de presença, por registro de cartão e por quantidade.
-                        </td> 
+                        <td height="50" align="left" valign="top">
+                          <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td align="right" class="NomeCampo">&nbsp;</td>
+                              <td class="NomeCampo" align="left">&nbsp;</td>
+                              <td class="NomeCampo" align="right">&nbsp;</td>
+                              <td class="NomeCampo" align="left">&nbsp;</td>
+                              <td colspan=2 align="right" class="NomeCampo">&nbsp;</td>
+                              <td colspan=2 align="right" class="NomeCampo">&nbsp;</td>
+                            </tr>
+                            <tr>
+                              <td align="right" class="NomeCampo"> Agenda: </td>
+                              <td class="NomeCampo" align="left"><input name="aux_dtanoage" type="text"  size="5" onchange=" document.form.submit();"></td>
+                              <td colspan=2 class="NomeCampo" align="right">Cooperativa: </td>
+                              <td colspan=2 class="NomeCampo" align="left">
+                                <select name="aux_cdcooper" class="Campo"  onChange="document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();"></select>
+                              </td>
+                              <td colspan=4 align="center" class="NomeCampo">
+                                &nbsp;PA:
+                              <select name="aux_cdagenci" class="Campo" onChange="document.form.aux_cddopcao.value=''; document.form.cdageins.value = document.form.aux_cdagenci.value; document.form.nrseqeve.value=''; document.form.submit();">
+                              </select>
+                              </td>					     
+                            </tr>
+                            <tr>
+                              <td align="right" class="NomeCampo">
+                                &nbsp;Evento:
+                              </td>
+                              <td colspan=7 align="left" class="NomeCampo">
+                                <select name="aux_nrseqeve" id="aux_nrseqeve" class="NomeCampo" onChange="mostraInscricoes(); document.form.aux_cddopcao.value=''; document.form.nrseqeve.value = document.form.aux_nrseqeve.value; document.form.submit();">
+                                </select>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
                       </tr>
-                      <tr height="75">
-                        <td colspan=3>&nbsp;</td>
-                      </tr>
-                    </table>                      
-                    <table border="0" align="center" cellpadding="1" cellspacing="1">
-                      <tr height="30" valign="bottom">
-                        <th scope="col"><img id="salvar"   style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"        onClick="return Salvar()"></th>
-                        <th scope="col"><img id="excluir"  style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return Excluir()"></th>
-                        <th scope="col"><img id="encerrar" style="cursor:hand" src="/cecred/images/botoes/btn_encerrar_insc.gif" onClick="return Encerrar()" height="20"></th>
+                      <tr>
+                        <td height="15" align="left">&nbsp;</td>
+                        <td height="100%" align="left" valign="top">
+                          <table width="100%" border="0" align="center" cellspacing="1">
+                            <tr>
+                              <br>
+                              <td colspan="8" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+                            </tr>
+                            <tr height="75">
+                              <td colspan=3>&nbsp;</td>
+                            </tr>
+                            <tr>
+                              <td width="44" align="right" class="NomeCampo">&nbsp;</td>
+                              <td colspan=2 align="left" class="NomeCampo">
+                                  Digite a quantidade de inscrições:
+                                  <input name="aux_qtinscri" id="aux_qtinscri" type="text" class="Campo" size="1" maxlength="4" onkeyup="validaInsc()">
+                              </td>
+                            </tr>                        
+                            <tr>
+                              <td width="44" align="right" class="NomeCampo">&nbsp;</td>
+                              <td colspan=2 align="left" class="NomeCampo">
+                                <div id="nrficpre" name="nrficpre">
+                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                  Ficha de Presença:
+                                  <input name="aux_nrficpre" id="aux_nrficpre" maxlength="4" type="text" onKeyUp="formataNum(this,event,'');" class="Campo" size="1">
+                                <div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td colspan=3 align="right" class="NomeCampo">&nbsp;</td> 
+                            </tr>
+                            <tr>
+                              <td>&nbsp;</td>
+                              <td colspan=2 align="left" class="NomeCampo">
+                                <span class="NomeCampo">  Atenção: Cuidado para não duplicar participações!<br>
+                                </span> Alguns eventos podem ter participação por lista de presença, por registro de cartão e por quantidade.
+                              </td> 
+                            </tr>
+                            <tr height="75">
+                              <td colspan=3>&nbsp;</td>
+                            </tr>
+                          </table>                      
+                          <table border="0" align="center" cellpadding="1" cellspacing="1">
+                            <tr height="30" valign="bottom">
+                              <th scope="col"><img id="salvar"   style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"        onClick="return Salvar()"></th>
+                              <th scope="col"><img id="excluir"  style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return Excluir()"></th>
+                              <th scope="col"><img id="encerrar" style="cursor:hand" src="/cecred/images/botoes/btn_encerrar_insc.gif" onClick="return Encerrar()" height="20"></th>
+                            </tr>
+                          </table>
+                        </td>
                       </tr>
                     </table>
-				  </td>
-				</tr>
-		      </table>
+                  </td>
+                </tr>
+              </table>
             </td>
-          </tr>
+          </tr>				
         </table>
-      </td>
-    </tr>				
-  </table>
-</form>
-<script language="JavaScript">
+      </div>
+    </form>
+    <script language="JavaScript">
 
-NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
-document.form.action = NomeDoProgramaPrincipal;
-
-function CarregaPrincipal () {
-}
-
-function Habilita()
-{
-}
-function HabilitaSalvar()
-{
-}
-
-// valida a digitação da quantidade de inscrições
-function validaInsc(){
-
-   if((event.keyCode==9)||    // TAB
-      (event.keyCode==16)){   // BACK-TAB
-	  return true;
-   } 
-
-   // varre o campo em busca de caracteres inválidos e remove-os
-   for(var i=0;i< document.form.aux_qtinscri.value.length;i++){
+      NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+      document.form.action = NomeDoProgramaPrincipal;
       
-	  if((document.form.aux_qtinscri.value.substring(i,i+1)!='0')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='1')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='2')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='3')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='4')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='5')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='6')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='7')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='8')&&
-         (document.form.aux_qtinscri.value.substring(i,i+1)!='9'))	  
-    	  document.form.aux_qtinscri.value = document.form.aux_qtinscri.value.substring(0,i);   
-   }   
-}
+      // valida a digitação da quantidade de inscrições
+      function validaInsc(){
 
-function MostraPACs()
-{
-   for (var i=document.all.aux_cdagenci.options.length; i>=0; i--)
-      document.all.aux_cdagenci.remove(i); 
+         if((event.keyCode==9)||    // TAB
+            (event.keyCode==16)){   // BACK-TAB
+          return true;
+         } 
 
-   var oOption;
-   
-   for(i=0;i<mpac.length;i++)
-   {
-      if (mpac[i].cdcooper == document.form.aux_cdcooper.value)
-      {
-         oOption = document.createElement("OPTION");
-         document.all.aux_cdagenci.options.add(oOption);
-         oOption.innerText = mpac[i].nmresage.substring(0, 15);
-         oOption.value = mpac[i].cdagenci;
+         // varre o campo em busca de caracteres inválidos e remove-os
+         for(var i=0;i< document.form.aux_qtinscri.value.length;i++){
+            
+          if((document.form.aux_qtinscri.value.substring(i,i+1)!='0')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='1')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='2')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='3')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='4')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='5')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='6')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='7')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='8')&&
+               (document.form.aux_qtinscri.value.substring(i,i+1)!='9'))	  
+              document.form.aux_qtinscri.value = document.form.aux_qtinscri.value.substring(0,i);   
+         }   
       }
-   }
-   document.form.aux_cdagenci.value = '';
-}
 
-function PosicionaPAC()
-{
-   if(document.form.cdageins.value != 0)
-   {
-      MostraPACs();
-      document.form.aux_cdagenci.value = document.form.cdageins.value;
-   }
-   else
-   {
-      // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
-      if(document.all.aux_cdcooper.options.length == 1)
-         document.form.aux_cdcooper.value = document.all.aux_cdcooper.options[0].value;
-		 
-      // posiciona a seleção no primeiro registro de PAs, se só tiver 1
-      if(document.all.aux_cdagenci.options.length == 1){
-         document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;
-		 
-		 if(document.form.cdageins.value==0){
-		      document.form.cdageins.value=document.all.aux_cdagenci.options[0].value;
-			  document.form.submit();		 
-		 }
-	  }
-   }
-}
+      function MostraPACs(){
+        for (var i=document.all.aux_cdagenci.options.length; i>=0; i--){
+          document.all.aux_cdagenci.remove(i); 
+        }
 
-function MostraEventos()
-{
-   /* Mensagem quando não há eventos */
-   if ((mevento.length==0) &&
-      (document.form.aux_cdagenci.value!='')){
-       alert('Não há eventos agendados para fazer inscrições!');
-	   return false;
-   }
-
-   for (var i=document.all.aux_nrseqeve.options.length; i>=0; i--)
-      document.all.aux_nrseqeve.remove(i); 
-
-   var oOption;
-   
-   for(i=0;i<mevento.length;i++)
-   {
-      if ((mevento[i].cdcooper == document.form.aux_cdcooper.value)&&
-          (mevento[i].cdagenci == document.form.aux_cdagenci.value))
-      {
-         oOption = document.createElement("OPTION");
-         document.all.aux_nrseqeve.options.add(oOption);
-         oOption.innerText = mevento[i].nmevento;
-
-         oOption.value = mevento[i].nrseqeve;
-		 
-      }
-      // ASSMEBLEIA
-      if ((mevento[i].cdcooper == document.form.aux_cdcooper.value)&&
-          (mevento[i].cdagenci == 0))
-      {
-         oOption = document.createElement("OPTION");
-         document.all.aux_nrseqeve.options.add(oOption);
-         oOption.innerText = mevento[i].nmevento;
-         oOption.value = mevento[i].nrseqeve;
-
-      }
-   }
-   document.form.aux_nrseqeve.value = '';
-
-   if (document.form.aux_cdagenci.value == '') 
-   {
-      oOption = document.createElement("OPTION");
-      document.all.aux_nrseqeve.options.add(oOption);
-      oOption.innerText = "-Selecione PA-";
-      oOption.value = '0';
-      document.form.aux_nrseqeve.value = '0';
-   }
-
-   document.form.aux_nrseqeve.value = '';
-}
-
-function PosicionaEventos()
-{
-   
-   if(document.form.nrseqeve.value != "")
-   {
-      MostraEventos();
-      document.form.aux_nrseqeve.value = document.form.nrseqeve.value;	 	  
-   }
-   else
-   {   
-      // posiciona a seleção no primeiro registro de Eventos, se só tiver 1
-      if(document.all.aux_nrseqeve.options.length == 1)
-         document.form.aux_nrseqeve.value = document.all.aux_nrseqeve.options[0].value;
-      else
-         document.form.aux_nrseqeve.value = '';
-
-      if (document.form.aux_cdagenci.value == "")
-         document.form.aux_nrseqeve.value = '';
-   }
-   
-   /* Verifica se o evento selecionado encontra-se fechado */ 
-   for(i=0;i<mevento.length;i++)
-   {
-      if (mevento[i].nrseqeve == document.form.aux_nrseqeve.value)
-      {
-         document.form.aux_fechamen.value = mevento[i].fechamen;
-		 document.form.aux_idstaeve.value = mevento[i].idstaeve;
+        var oOption;
          
+         for(i=0;i<mpac.length;i++){
+            if (mpac[i].cdcooper == document.form.aux_cdcooper.value){
+               oOption = document.createElement("OPTION");
+               document.all.aux_cdagenci.options.add(oOption);
+               oOption.innerText = mpac[i].nmresage.substring(0, 15);
+               oOption.value = mpac[i].cdagenci;
+            }
+         }
+         document.form.aux_cdagenci.value = '';
       }
-   }
-   
-}
+
+      function PosicionaPAC(){
+         if(document.form.cdageins.value != 0){
+            MostraPACs();
+            document.form.aux_cdagenci.value = document.form.cdageins.value;
+         }else{
+            // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
+            if(document.all.aux_cdcooper.options.length == 1)
+               document.form.aux_cdcooper.value = document.all.aux_cdcooper.options[0].value;
+           
+            // posiciona a seleção no primeiro registro de PAs, se só tiver 1
+            if(document.all.aux_cdagenci.options.length == 1){
+               document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;
+           
+           if(document.form.cdageins.value==0){
+                document.form.cdageins.value=document.all.aux_cdagenci.options[0].value;
+              document.form.submit();		 
+           }
+          }
+         }
+      }
+
+      function MostraEventos(){
+         /* Mensagem quando não há eventos */
+         if ((mevento.length==0) &&
+            (document.form.aux_cdagenci.value!='')){
+             alert('Não há eventos agendados para fazer inscrições!');
+           return false;
+         }
+
+         for (var i=document.all.aux_nrseqeve.options.length; i>=0; i--)
+            document.all.aux_nrseqeve.remove(i); 
+
+         var oOption;
+         
+         for(i=0;i<mevento.length;i++){
+            if ((mevento[i].cdcooper == document.form.aux_cdcooper.value)&&
+                (mevento[i].cdagenci == document.form.aux_cdagenci.value)){
+               oOption = document.createElement("OPTION");
+               document.all.aux_nrseqeve.options.add(oOption);
+               oOption.innerText = mevento[i].nmevento;
+               oOption.tpevento = mevento[i].tpevento;
+               oOption.value = mevento[i].nrseqeve;
+           
+            }
+            // ASSMEBLEIA
+            if ((mevento[i].cdcooper == document.form.aux_cdcooper.value)&&
+                (mevento[i].cdagenci == 0)){
+               oOption = document.createElement("OPTION");
+               document.all.aux_nrseqeve.options.add(oOption);
+               oOption.innerText = mevento[i].nmevento;
+               oOption.value = mevento[i].nrseqeve;
+               oOption.tpevento = mevento[i].tpevento;
+
+            }
+         }
+         document.form.aux_nrseqeve.value = '';
+
+         if (document.form.aux_cdagenci.value == ''){
+            oOption = document.createElement("OPTION");
+            document.all.aux_nrseqeve.options.add(oOption);
+            oOption.innerText = "-Selecione PA-";
+            oOption.value = '0';
+            document.form.aux_nrseqeve.value = '0';
+         }
+         document.form.aux_nrseqeve.value = '';
+      }
+
+      function PosicionaEventos(){
+         
+         if(document.form.nrseqeve.value != ""){
+            MostraEventos();
+            document.form.aux_nrseqeve.value = document.form.nrseqeve.value;	 	  
+         }else{   
+            // posiciona a seleção no primeiro registro de Eventos, se só tiver 1
+            if(document.all.aux_nrseqeve.options.length == 1)
+               document.form.aux_nrseqeve.value = document.all.aux_nrseqeve.options[0].value;
+            else
+               document.form.aux_nrseqeve.value = '';
+
+            if (document.form.aux_cdagenci.value == "")
+               document.form.aux_nrseqeve.value = '';
+         }
+         
+         /* Verifica se o evento selecionado encontra-se fechado */ 
+         for(i=0;i<mevento.length;i++){
+            if (mevento[i].nrseqeve == document.form.aux_nrseqeve.value){
+              document.form.aux_fechamen.value = mevento[i].fechamen;
+              document.form.aux_idstaeve.value = mevento[i].idstaeve;               
+            }
+         }         
+      }
+
+      function Salvar(){
+        var vaux = document.form.aux_lspermis.value;
+        var tpevento = $("#aux_tpevento").val();
+                  
+        if($("#aux_idstaeve").val() == 4){
+          alert("Evento encerrado. Não é possível fazer novas inscrições."); 
+          return false;
+        }
+                
+        if((tpevento == 7 || tpevento== 12) && ($("#aux_nrficpre").val() == 0 || $("#aux_nrficpre").val() == "")){
+          alert("Informe o número da ficha de presença.");
+          return false;
+        }
+        
+        if((tpevento == 7 || tpevento == 12) && $("#aux_qtinscri").val() > 25){
+          alert("Quantidade de inscritos por ficha excedido. Máximo de 25 inscritos por ficha.");
+          return false;
+        }
+        
+        if(vaux.substring(1,2) == 'A'){
+        
+          if(document.form.aux_nrseqeve.value==''){
+            alert('Um evento deve ser selecionado!');
+            return false;
+          }
+                    
+          aguarde("Incluindo inscrições");
+          document.form.aux_cddopcao.value='sa'; 
+          document.form.submit();	  
+        }else{ 
+          MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false
+        }
+      }
+
+      function Excluir(){
+        ZeraModoExclusao();  
+        var vaux = document.form.aux_lspermis.value;
+         
+        if(vaux.substring(2,3) == 'E') {
+        
+            if(document.form.aux_nrseqeve.value==''){
+             alert('Um evento deve ser selecionado!');
+           return false;
+          }
+         
+            if (!confirm('Confirma Exclusão das Inscrições Automáticas?')){
+               return false;
+            }
+          else{
+           aguarde("Excluindo inscrições");
+           document.form.aux_cddopcao.value = "ex";
+           document.form.submit();
+          }
+        } 
+        else { 
+          MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false
+        }	
+      }
 
 
-function Salvar(){
-  var vaux = document.form.aux_lspermis.value; 
-  if(vaux.substring(1,2) == 'A'){
-  
-      if(document.form.aux_nrseqeve.value==''){
-	     alert('Um evento deve ser selecionado!');
-		 return false;
-	  }
+      function Encerrar(){
+         
+         // Verifica se o usuário tem permissão de salvar
+         if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+            alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+            return false;
+         }
+         
+         if (document.form.aux_idstaeve.value == "2"){
+            alert("Evento está cancelado. Não é permitido encerrar.");
+            return false;
+         }
+
+         if (confirm("As inscrições para esse evento estão sendo encerradas. Deseja continuar?") == false){
+            return false;
+         } 
+         
+         aguarde("Encerrando inscrições");
+         document.form.aux_cddopcao.value='enc';
+         document.form.submit();   
+      }
+
+      function mostraInscricoes(){
+        var tpevento = $("#aux_nrseqeve").children(":selected").attr("tpevento");
+        
+        if(tpevento == 7 || tpevento == 12){
+          $("#nrficpre").show();
+        }else{
+          $("#nrficpre").hide();
+        }
+        
+        $("#aux_tpevento").val(tpevento);
+      }
       
-	  aguarde("Incluindo inscrições");
-	  document.form.aux_cddopcao.value='sa'; 
-      document.form.submit();	  
-  } 
-  else{ 
-    MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
-    return false
-  }
-}
-
-function Excluir(){
-  ZeraModoExclusao();  
-  var vaux = document.form.aux_lspermis.value;
-   
-  if(vaux.substring(2,3) == 'E') {
-  
-      if(document.form.aux_nrseqeve.value==''){
-	     alert('Um evento deve ser selecionado!');
-		 return false;
-	  }
-   
-      if (!confirm('Confirma Exclusão das Inscrições Automáticas?')){
-         return false;
+      // valida os parâmetros da agenda
+      if(document.form.aux_dtanoage.value == ''){
+         alert('Parâmetro da Agenda Não Encontrado!!!');
+         
+         document.form.aux_dtanoage.value = '';
+         document.form.aux_cdagenci.value = '';
+         document.form.aux_cdcooper.value = '';
+         document.form.aux_nrseqeve.value = '';      
+      }else{         
+         MostraPACs();      
+         PosicionaPAC();    
+         MostraEventos();  
+         PosicionaEventos();         
       }
-	  else{
-         aguarde("Excluindo inscrições");
-         document.form.aux_cddopcao.value = "ex";
-         document.form.submit();
-	  }
-  } 
-  else { 
-    MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
-    return false
-  }	
-}
 
+      if (document.form.aux_fechamen.value == 'Sim'){	   
+         // Verifica se o usuário tem permissão 
+         if (document.form.aux_lspermis.value.search('U') == '-1'){ 
+             document.form.excluir.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
+               document.form.excluir.style.cursor='default';
+               document.form.excluir.disabled=true;
+          
+               document.form.salvar.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
+               document.form.salvar.style.cursor='default';
+               document.form.salvar.disabled=true;
 
-function Encerrar(){
-   
-   // Verifica se o usuário tem permissão de salvar
-   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
-   
-   if (document.form.aux_idstaeve.value == "2")
-   {
-      alert("Evento está cancelado. Não é permitido encerrar.");
-      return false;
-   }
-
-   if (confirm("As inscrições para esse evento estão sendo encerradas. Deseja continuar?") == false)
-      return false;
-   
-   aguarde("Encerrando inscrições");
-   document.form.aux_cddopcao.value='enc';
-   document.form.submit();   
-}
-
-
-// valida os parâmetros da agenda
-if(document.form.aux_dtanoage.value == ''){
-   alert('Parâmetro da Agenda Não Encontrado!!!');
-   
-   document.form.aux_dtanoage.value = '';
-   document.form.aux_cdagenci.value = '';
-   document.form.aux_cdcooper.value = '';
-   document.form.aux_nrseqeve.value = '';      
-}
-else{  
-   
-   MostraPACs();      
-   PosicionaPAC();    
-   MostraEventos();  
-   PosicionaEventos();         
-}
-
-if (document.form.aux_fechamen.value == 'Sim') 
-   {	   
-	 // Verifica se o usuário tem permissão 
-     if (document.form.aux_lspermis.value.search('U') == '-1'){ 
-	     document.form.excluir.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
-         document.form.excluir.style.cursor='default';
-         document.form.excluir.disabled=true;
-    
-  	     document.form.salvar.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
-         document.form.salvar.style.cursor='default';
-         document.form.salvar.disabled=true;
-
-  	     document.form.encerrar.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
-         document.form.encerrar.style.cursor='default';
-         document.form.encerrar.disabled=true;
-	 }
-   }
-// Se já esstiver encerrado desabilitar o botão 
-if (document.form.aux_idstaeve.value == "4"){
-    document.form.encerrar.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
-    document.form.encerrar.style.cursor = 'default';
-    document.form.encerrar.disabled = true;
-}
-
-</script>
-</body>
+               document.form.encerrar.style.filter='progid:DXImageTransform.Microsoft.Alpha(opacity=20)';  
+               document.form.encerrar.style.cursor='default';
+               document.form.encerrar.disabled=true;
+         }
+       }
+      // Se já esstiver encerrado desabilitar o botão 
+      if (document.form.aux_idstaeve.value == "4"){
+          document.form.encerrar.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
+          document.form.encerrar.style.cursor = 'default';
+          document.form.encerrar.disabled = true;
+      }
+      
+      mostraInscricoes();
+      
+    </script>
+  </body>
+</html>

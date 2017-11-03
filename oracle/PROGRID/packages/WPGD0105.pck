@@ -26,6 +26,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0105 is
                        ,pr_dsrecpor IN gnaprdp.dsrecurs%TYPE --> Descricao de Recurso POr
                        ,pr_idsitrec IN gnaprdp.idsitrec%TYPE --> Id de situação do Recurso
                        ,pr_dssitrec IN gnaprdp.dsrecurs%TYPE --> Descricao de situação do Recurso
+                       ,pr_reclembr IN gnaprdp.idsitrec%TYPE --> Situacao de Recurso LEMBRETE(0-Nao Validado/1-Validado)
                        ,pr_nriniseq IN PLS_INTEGER           --> Registro inicial para pesquisa
                        ,pr_qtregist IN PLS_INTEGER           --> Quantidade de registros por pesquisa
                        ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -90,6 +91,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0105 IS
                        ,pr_dsrecpor IN gnaprdp.dsrecurs%TYPE --> Descricao de Recurso POr
                        ,pr_idsitrec IN gnaprdp.idsitrec%TYPE --> Id de situação do Recurso
                        ,pr_dssitrec IN gnaprdp.dsrecurs%TYPE --> Descricao de situação do Recurso
+                       ,pr_reclembr IN gnaprdp.idsitrec%TYPE --> Situacao de Recurso LEMBRETE(0-Nao Validado/1-Validado)
                        ,pr_nriniseq IN PLS_INTEGER           --> Registro inicial para pesquisa
                        ,pr_qtregist IN PLS_INTEGER           --> Quantidade de registros por pesquisa
                        ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -108,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0105 IS
               ,rdp.nrseqdig
               ,rdp.dsrecurs
               ,NVL(rdp.cdtiprec,0) AS cdtiprec
-              ,DECODE(rdp.cdtiprec,1,'BRINDES',2,'DIVULGACAO',3,'EQUIPAMENTOS',4,'MATERIAIS','') AS dstiprec
+              ,DECODE(rdp.cdtiprec,1,'BRINDES',2,'DIVULGAÇÃO',3,'EQUIPAMENTOS',4,'MATERIAIS',5,'LEMBRETE',6,'RECREAÇÃO','') AS dstiprec
               ,NVL(rdp.idrecpor,0) AS idrecpor
               ,DECODE(rdp.idrecpor,1,'EVENTO',2,'PARTICIPANTE',3,'QTD GRUPO PARTIC','') AS dsrecpor              
               ,DECODE(rdp.idsitrec,'1','ATIVO','0','INATIVO','') AS dssitrec
@@ -122,7 +124,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0105 IS
           AND ((DECODE(rdp.cdtiprec,1,'BRINDES' 
                                   ,2,'DIVULGACAO'
                                   ,3,'EQUIPAMENTOS'
-                                  ,4,'MATERIAIS')
+                                  ,4,'MATERIAIS'
+                                  ,5,'LEMBRETE'
+                                  ,6,'RECREACAO')
                                   LIKE REPLACE(REPLACE(UPPER('%' || pr_dstiprec || '%'),'Ç','C'),'Ã','A')) OR pr_dstiprec IS NULL)
           AND (DECODE(rdp.idrecpor,1,'EVENTO' 
                                    ,2,'PARTICIPANTE'
@@ -159,6 +163,18 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0105 IS
             AND rpe.nrseqdig = pr_nrseqdig;
             
       rw_craprpe cr_craprpe%ROWTYPE;
+
+      CURSOR cr_crapvra(pr_idevento crapvra.idevento%TYPE
+                       ,pr_nrseqdig crapvra.nrseqdig%TYPE
+                       ,pr_cdcooper crapvra.cdcooper%TYPE) IS
+
+        SELECT *
+          FROM crapvra vra
+         WHERE vra.idevento = pr_idevento
+           AND vra.nrseqdig = pr_nrseqdig
+           AND vra.cdcooper = pr_cdcooper;
+            
+      rw_crapvra cr_crapvra%ROWTYPE;
       
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -202,6 +218,34 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0105 IS
 
         WHEN 'A' THEN -- Alteracao
 
+          -- Verifica se tipo do recurso é LEMBRETE(5)
+          IF pr_cdtiprec = 5 AND pr_reclembr = 0 THEN
+            -- Consulta Valores cadastrados
+            OPEN cr_crapvra(pr_idevento => pr_idevento
+                           ,pr_nrseqdig => pr_nrseqdig
+                           ,pr_cdcooper => 0);
+
+            FETCH cr_crapvra INTO rw_crapvra;
+               
+            IF cr_crapvra%NOTFOUND THEN
+              CLOSE cr_crapvra; 
+            ELSE
+              CLOSE cr_crapvra;
+              vr_dscritic := 99999;  
+              RAISE vr_exc_saida;            
+            END IF;
+
+          ELSIF pr_cdtiprec = 5 AND pr_reclembr = 1 THEN 
+            BEGIN
+              DELETE crapvra WHERE crapvra.idevento = pr_idevento
+                               AND crapvra.nrseqdig = pr_nrseqdig;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao deletar registro de valor(CRAPVRA). Erro: ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          END IF;
+          
           BEGIN
             UPDATE gnaprdp
                SET gnaprdp.dsrecurs = UPPER(pr_dsrecurs)

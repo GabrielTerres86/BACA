@@ -1,6 +1,6 @@
 /*****************************************************************************
  Programa wpgd0038a.p - Listagem de fechamento (chamado a partir dos dados de wpgd0038)
-
+ 
  Alterações: 23/02/2007 - cfe tarefa 10307
  
              17/12/2007 - Modificado For Each da tabela crapidp para melhorar
@@ -288,7 +288,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                 
                totalVagas           = totalVagas + ttCrapadp.MaximoPorTurma
                geralVagas           = geralVagas + ttCrapadp.MaximoPorTurma.
-        
+               
                If ttcrapadp.idstaeve <> 2 Then
                  ASSIGN totalDeEventosDoPac  = totalDeEventosDoPac + 1
                  totalDeEventosDaCoop = totalDeEventosDaCoop + 1.
@@ -339,7 +339,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   TotalEventosRealizados = totalEventosRealizados + 1.
                           
                ASSIGN totalVagasReal         = totalVagasReal + ttCrapadp.MaximoPorTurma
-                        geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
+                      geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
             END.
 
         ASSIGN aux_contador = aux_contador + 1.
@@ -991,7 +991,7 @@ ELSE DO:
        END. /* FOR EACH */
    END. /* idEvento = 2 */ 
    /*****************************************************************************************************/
-                                                                      
+                                                                         
    ASSIGN conta = 0. 
 
    FOR EACH ttCrapadp:
@@ -1277,11 +1277,11 @@ ELSE DO:
    ELSE IF tipoDeRelatorio = 2 THEN
       ASSIGN nomeDoRelatorio = " - Quantidade de Eventos por PA ". 
    ELSE
-      ASSIGN nomeDoRelatorio = " - Incrições nos Eventos por PA". 
+      ASSIGN nomeDoRelatorio = " - Inscrições nos Eventos por PA". 
   
    montaTela(). 
 END.
-          
+  
 PROCEDURE PermissaoDeAcesso :
-    {includes/wpgd0009.i} 
+  {includes/wpgd0009.i} 
 END PROCEDURE.

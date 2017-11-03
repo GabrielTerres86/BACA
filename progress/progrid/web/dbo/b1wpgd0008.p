@@ -3,7 +3,7 @@
    Sistema : Progrid
    Sigla   :   
    Autor   : Rosangela
-   Data    : Setembro/2005                      Ultima atualizacao: 16/10/2012 
+   Data    : Setembro/2005                      Ultima atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -16,6 +16,9 @@
                30/04/2009 - Utilizar cdcooper = 0 nas consultas (David).      
                
                16/12/2012 - Ajustes para o DataServer Oracle (Gabriel).       
+               
+               07/12/2016 - Retirada de tratamento de maximo de participantes e
+                            quantidade minima por turma, Prj. 229 (Jean Michel).
 ............................................................................ */
 &SCOPED-DEFINE tttabela cratedp
 &SCOPED-DEFINE tabela   crapedp
@@ -138,12 +141,12 @@ PROCEDURE valida-inclusao:
     
         /* verifica se a quantidade de participantes por turma é maior ou igual que o 
            mínimo por turma */
-        IF {&tttabela}.qtmaxtur < {&tttabela}.qtmintur THEN
+        /*IF {&tttabela}.qtmaxtur < {&tttabela}.qtmintur THEN
         DO:
             ASSIGN m-erros = m-erros + "Quantidade mínima por turma deve ser menor ou igual a quantidade de participantes.".
             RETURN "NOK".
         END.
-
+        */
     END.
 
     /* Evento de Integração deve ser único */
@@ -333,12 +336,12 @@ PROCEDURE valida-alteracao:
     
         /* verifica se a quantidade de participantes por turma é maior ou igual que o 
            mínimo por turma */
-        IF {&tttabela}.qtmaxtur < {&tttabela}.qtmintur THEN
+        /*IF {&tttabela}.qtmaxtur < {&tttabela}.qtmintur THEN
         DO:
             ASSIGN m-erros = m-erros + "Quantidade mínima por turma deve ser menor ou igual a quantidade de participantes.".
             RETURN "NOK".
         END.
-
+        */
     END.
 
     /* Evento de Integração deve ser único */

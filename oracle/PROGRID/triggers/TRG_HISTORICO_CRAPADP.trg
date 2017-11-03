@@ -2,30 +2,82 @@ CREATE OR REPLACE TRIGGER PROGRID.TRG_HISTORICO_CRAPADP
   AFTER UPDATE OR DELETE ON crapadp
   FOR EACH ROW
 DECLARE
-  ww_cdlocali_ant varchar2(100);
-  ww_cdlocali_atu varchar2(100);
+  CURSOR cr_crapedp(pr_idevento crapedp.idevento%TYPE
+                   ,pr_cdcooper crapedp.cdcooper%TYPE
+                   ,pr_dtanoage crapedp.dtanoage%TYPE
+                   ,pr_cdevento crapedp.cdevento%TYPE) IS
+    SELECT edp.nmevento
+          ,cop.nmrescop
+          ,edp.tpevento
+      FROM crapedp edp
+          ,crapcop cop
+     WHERE edp.idevento = pr_idevento
+       AND edp.cdcooper = pr_cdcooper
+       AND edp.dtanoage = pr_dtanoage
+       AND edp.cdevento = pr_cdevento
+       AND cop.cdcooper = edp.cdcooper;
 
-  ww_cdabrido_ant  varchar2(100);
-  ww_cdabrido_atu  varchar2(100);
+  rw_crapedp cr_crapedp%ROWTYPE;
 
-  ww_idstaeve_ant  varchar2(100);
-  ww_idstaeve_atu  varchar2(100);
+  CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE
+                   ,pr_cdagenci crapage.cdagenci%TYPE) IS
+    SELECT cop.nmrescop AS nmrescop
+          ,NVL(age.nmresage,'TODOS') AS nmresage
+    FROM crapcop cop
+        ,crapage age
+    WHERE cop.cdcooper = pr_cdcooper
+      AND cop.cdcooper = age.cdcooper(+)
+      AND age.cdagenci(+) = pr_cdagenci;
 
-  ww_nrseqtem_ant varchar2(100);
-  ww_nrseqtem_atu varchar2(100);
+  rw_crapage cr_crapage%ROWTYPE;
 
-  ww_nrseqpri_ant varchar2(100);
-  ww_nrseqpri_atu varchar2(100);
+  CURSOR cr_crapppc(pr_idevento crapppc.idevento%TYPE
+                   ,pr_dtanoage crapppc.dtanoage%TYPE
+                   ,pr_cdcooper crapppc.cdcooper%TYPE) IS
 
-  ww_cdcopope_ant varchar2(100);
-  ww_cdcopope_atu varchar2(100);
+    SELECT ppc.dsemlace
+      FROM crapppc ppc
+     WHERE ppc.idevento = pr_idevento
+       AND ppc.dtanoage = pr_dtanoage
+       AND ppc.cdcooper = pr_cdcooper;
 
-  ww_cdoperad_ant varchar2(100);
-  ww_cdoperad_atu varchar2(100);
-  
-  ww_idfimava_ant varchar2(100);
-  ww_idfimava_atu varchar2(100);
-  
+  rw_crapppc cr_crapppc%ROWTYPE;
+
+  ww_cdlocali_ant VARCHAR2(100);
+  ww_cdlocali_atu VARCHAR2(100);
+
+  ww_cdabrido_ant VARCHAR2(100);
+  ww_cdabrido_atu VARCHAR2(100);
+
+  ww_idstaeve_ant VARCHAR2(100);
+  ww_idstaeve_atu VARCHAR2(100);
+
+  ww_nrseqtem_ant VARCHAR2(100);
+  ww_nrseqtem_atu VARCHAR2(100);
+
+  ww_nrseqpri_ant VARCHAR2(100);
+  ww_nrseqpri_atu VARCHAR2(100);
+
+  ww_cdcopope_ant VARCHAR2(100);
+  ww_cdcopope_atu VARCHAR2(100);
+
+  ww_cdoperad_ant VARCHAR2(100);
+  ww_cdoperad_atu VARCHAR2(100);
+
+  ww_idfimava_ant VARCHAR2(100);
+  ww_idfimava_atu VARCHAR2(100);
+
+  ww_nrseqfea_ant VARCHAR2(100);
+  ww_nrseqfea_atu VARCHAR2(100);
+
+  vr_texto_email VARCHAR2(4000) := NULL;
+  vr_conteudo    VARCHAR2(4000) := NULL;
+  vr_cdcritic    crapcri.cdcritic%TYPE := 0;
+  vr_dscritic    crapcri.dscritic%TYPE := '';
+
+  vr_cdprogra  VARCHAR2(40) := 'TRG_HISTORICO_ADP';
+  vr_idprglog  tbgen_prglog.idprglog%TYPE := 0;
+
   -- local variables here
   PROCEDURE grava_historico (id_acao IN VARCHAR2,
                              nm_campo IN VARCHAR2,
@@ -41,17 +93,28 @@ DECLARE
   wr_hratuali craphea.hratuali%TYPE := TO_CHAR(SYSDATE,'SSSSS');
   wr_cdcopope craphea.cdcopope%TYPE;
   wr_cdoperad craphea.cdoperad%TYPE;
-
-  
+  aux_campo VARCHAR2(100)  := nm_campo;
+  aux_dtatuali DATE;
 
   BEGIN
 
-    SELECT DECODE(:OLD.IDFIMAVA, 0, 'NÃO', 1, 'SIM', ' ')
+	 SELECT DECODE(:OLD.IDFIMAVA, 0, 'NÃO', 1, 'SIM', ' ')
         ,DECODE(:NEW.IDFIMAVA, 0, 'NÃO', 1, 'SIM', ' ')
     INTO ww_idfimava_ant
         ,ww_idfimava_atu
     FROM DUAL;
-    
+
+    BEGIN
+      SELECT TRIM(substr(NVL(a.COMMENTS,nm_campo),1,100))
+        INTO aux_campo
+        FROM all_col_comments a
+       WHERE a.TABLE_NAME = 'CRAPADP'
+         AND a.COLUMN_NAME = nm_campo;
+    EXCEPTION
+      WHEN OTHERS THEN
+        aux_campo:=nm_campo;
+    END;
+ 
     IF id_acao = 'A' then -- Alteração
       wr_idevento := :NEW.IDEVENTO;
       wr_cdcooper := :NEW.CDCOOPER;
@@ -61,6 +124,8 @@ DECLARE
       wr_nrseqdig := :NEW.NRSEQDIG;
       wr_cdcopope := :NEW.CDCOPOPE;
       wr_cdoperad := :NEW.CDOPERAD;
+
+      vr_texto_email := vr_texto_email || '<tr><td>' || aux_campo || '</td><td>' || vl_anterior || '</td><td>' || vl_atual || '</td></tr>';
     ELSE
       wr_idevento := :OLD.IDEVENTO;
       wr_cdcooper := :OLD.CDCOOPER;
@@ -72,7 +137,10 @@ DECLARE
       wr_cdoperad := :OLD.CDOPERAD;
 
     END IF;
-      INSERT INTO craphea
+      aux_dtatuali := SYSDATE;
+
+      BEGIN
+        INSERT INTO craphea
                       (IDEVENTO,
                       CDCOOPER,
                       DTANOAGE,
@@ -86,24 +154,53 @@ DECLARE
                       hratuali,
                       CDCOPOPE,
                       CDOPERAD)
-               VALUES(
-                      wr_idevento,
+               VALUES(wr_idevento,
                       wr_cdcooper,
                       wr_dtanoage,
                       wr_cdevento,
                       wr_cdagenci,
                       wr_nrseqdig,
                       nm_campo,
-                      sysdate,
+                      aux_dtatuali,
                       nvl(vl_anterior, ' '),
                       nvl(vl_atual,' '),
                       wr_hratuali,
                       wr_cdcopope,
-                      wr_cdoperad
-                      );
+                      wr_cdoperad);
+       EXCEPTION
+         WHEN dup_val_on_index THEN
+           UPDATE craphea
+              SET DSANTCMP = nvl(vl_anterior, ' ')
+                 ,DSATUCMP = nvl(vl_atual,' ')
+                 ,hratuali = wr_hratuali
+                 ,CDCOPOPE = wr_cdcopope
+                 ,CDOPERAD = wr_cdoperad
+            WHERE IDEVENTO = wr_idevento
+              AND CDCOOPER = wr_cdcooper
+              AND DTANOAGE = wr_dtanoage
+              AND CDEVENTO = wr_cdevento
+              AND CDAGENCI = wr_cdagenci
+              AND NRSEQDIG = wr_nrseqdig
+              AND NMDCAMPO = nm_campo
+              AND DTATUALI = aux_dtatuali;
+       END;               
   END;
 BEGIN
-  NULL;
+
+    pc_log_programa(PR_DSTIPLOG   => 'I'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+    pc_log_programa(PR_DSTIPLOG   => 'O'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_dsmensagem => 'OLD CDLOCALI: ' || to_CHAR(NVL(:OLD.cdlocali,0))
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+
     -- Incluir no histórico a descrição do local
     IF NVL(:OLD.cdlocali,0) <> 0 THEN
       begin
@@ -114,7 +211,7 @@ BEGIN
       FROM
             CRAPLDP CL
       WHERE
-            CL.IDEVENTO = :OLD.IDEVENTO
+            CL.IDEVENTO = 1
         AND CL.CDCOOPER = :OLD.CDCOOPER
         --AND CL.CDAGENCI = :OLD.CDAGENCI
         AND CL.NRSEQDIG = :OLD.CDLOCALI
@@ -122,8 +219,22 @@ BEGIN
         exception
           when no_data_found then
             ww_cdlocali_ant:= :OLD.CDLOCALI||' - '||'NÃO CADASTRADA';
+            pc_log_programa(PR_DSTIPLOG   => 'O'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_dsmensagem => 'ERRO CDLOCALI OLD '
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
         end;
     END IF;
+
+
+    pc_log_programa(PR_DSTIPLOG   => 'O'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_dsmensagem => 'NEW CDLOCALI: ' || to_CHAR(NVL(:NEW.cdlocali,0))
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
 
     IF NVL(:NEW.cdlocali,0) <> 0 THEN
       begin
@@ -134,7 +245,7 @@ BEGIN
       FROM
             CRAPLDP CL
       WHERE
-            CL.IDEVENTO = :NEW.IDEVENTO
+            CL.IDEVENTO = 1
         AND CL.CDCOOPER = :NEW.CDCOOPER
         --AND CL.CDAGENCI = :NEW.CDAGENCI
         AND CL.NRSEQDIG = :NEW.CDLOCALI
@@ -142,8 +253,21 @@ BEGIN
         exception
           when no_data_found then
             ww_cdlocali_atu:= :NEW.CDLOCALI||' - '||'NÃO CADASTRADA';
+            pc_log_programa(PR_DSTIPLOG   => 'O'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_dsmensagem => 'ERRO CDLOCALI NEW '
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
         end;        
     END IF;
+
+    pc_log_programa(PR_DSTIPLOG   => 'O'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                   ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                   ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_dsmensagem => 'SAIU CDLOCALI: ' || to_CHAR(NVL(:NEW.cdlocali,0))
+                    -- Parametros para Ocorrencia
+                   ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
 
     -- Incluir no histórico a descrição da pessoa para abertura
     IF NVL(:OLD.cdabrido,0) <> 0 THEN
@@ -385,12 +509,25 @@ BEGIN
     END IF;
 
   IF UPDATING THEN
+    
+    OPEN cr_crapedp(pr_idevento => :NEW.IDEVENTO
+                   ,pr_cdcooper => :NEW.CDCOOPER
+                   ,pr_dtanoage => :NEW.DTANOAGE
+                   ,pr_cdevento => :NEW.CDEVENTO);
+
+    FETCH cr_crapedp INTO rw_crapedp;
+
+    OPEN cr_crapage(pr_cdcooper => :NEW.CDCOOPER
+                   ,pr_cdagenci => :NEW.CDAGENCI);
+
+    FETCH cr_crapage INTO rw_crapage;
+
     IF :NEW.cdlocali  <> :OLD.cdlocali THEN
       --grava_historico('A','CDLOCALI',:OLD.cdlocali,:NEW.cdlocali );
       grava_historico('A','CDLOCALI',ww_cdlocali_ant,ww_cdlocali_atu );
 
     END IF;
-
+   
     IF :NEW.cdabrido         <> :OLD.cdabrido THEN
       --grava_historico('A','CDABRIDO',:OLD.cdabrido,:NEW.cdabrido );
       grava_historico('A','CDABRIDO',ww_cdabrido_ant,ww_cdabrido_atu );
@@ -400,12 +537,40 @@ BEGIN
       grava_historico('A','NRMESEVE',:OLD.nrmeseve,:NEW.nrmeseve );
     END IF;
 
-    IF :NEW.dtinieve         <> :OLD.dtinieve THEN
-      grava_historico('A','DTINIEVE',to_char(:OLD.dtinieve,'DDMMYYYY'), to_char(:NEW.dtinieve,'DDMMYYYY'));
+    IF NVL(:NEW.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
+      grava_historico('A','DTINIEVE',to_char(:OLD.dtinieve,'dd/mm/RRRR'), to_char(:NEW.dtinieve,'dd/mm/RRRR'));
     END IF;
 
-    IF :NEW.dtfineve         <> :OLD.dtfineve THEN
-      grava_historico('A','DTFIMEVE',to_char(:OLD.dtfineve,'DDMMYYYY'),to_char(:NEW.dtfineve,'DDMMYYYY'));
+    IF NVL(:NEW.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
+      grava_historico('A','DTFINEVE',to_char(:OLD.dtfineve,'dd/mm/RRRR'),to_char(:NEW.dtfineve,'dd/mm/RRRR'));
+    END IF;
+
+    IF (NVL(:NEW.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR'))) OR
+       (NVL(:NEW.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR'))) THEN
+      
+      IF rw_crapedp.tpevento = 8  OR rw_crapedp.tpevento = 13 OR
+         rw_crapedp.tpevento = 14 OR rw_crapedp.tpevento = 15 OR rw_crapedp.tpevento = 16 THEN  
+
+        PROGRID.ASSE0001.pc_envia_email_data_evento(pr_cdcooper => :NEW.cdcooper       --> Código da Cooperativa
+                                                   ,pr_cdagenci => :NEW.cdagenci       --> Código do PA
+                                                   ,pr_nmevento => rw_crapedp.nmevento --> Nome do Evento
+                                                   ,pr_dtinieve => :NEW.Dtinieve       --> Data de Início do Evento
+                                                   ,pr_dtfimeve => :NEW.dtfineve       --> Data de Fim do Evento
+                                                   ,pr_cdcritic => vr_cdcritic         --> Código da Crítica
+                                                   ,pr_dscritic => vr_dscritic);       --> Descrição da Crítica
+
+        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+          pc_log_programa(pr_dstiplog      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                         ,pr_cdprograma    => vr_cdprogra   --> Codigo do programa ou do job
+                         ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          -- Parametros para Ocorrencia
+                         ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                         ,pr_cdcriticidade => 1             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                         ,pr_dsmensagem    => vr_dscritic||' '||Sqlerrm   --> dscritic       
+                         ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                         ,pr_idprglog      => vr_idprglog); --> Identificador unico da tabela (sequence)
+        END IF;
+      END IF;
     END IF;
 
     IF :NEW.dshroeve         <> :OLD.dshroeve THEN
@@ -417,35 +582,33 @@ BEGIN
     END IF;
 
     IF :NEW.idstaeve         <> :OLD.idstaeve THEN
-      --grava_historico('A','IDSTAEVE',:OLD.idstaeve,:NEW.idstaeve );
       grava_historico('A','IDSTAEVE',ww_idstaeve_ant,ww_idstaeve_atu );
     END IF;
 
-    IF :NEW.dtmvtolt         <> :OLD.dtmvtolt THEN
-      grava_historico('A','DTMVTOLT',:OLD.dtmvtolt,:NEW.dtmvtolt );
+
+    IF NVL(:NEW.dtmvtolt,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtmvtolt,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
+      grava_historico('A','DTMVTOLT',to_char(:OLD.dtmvtolt,'dd/mm/RRRR'),to_char(:NEW.dtmvtolt,'dd/mm/RRRR'));
     END IF;
 
     IF :NEW.qtdiaeve         <> :OLD.qtdiaeve THEN
       grava_historico('A','QTDIAEVE',:OLD.qtdiaeve,:NEW.qtdiaeve );
     END IF;
 
-    IF :NEW.dtlibint         <> :OLD.dtlibint THEN
-      grava_historico('A','DTLIBINT',:OLD.dtlibint,:NEW.dtlibint );
+    IF NVL(:NEW.dtlibint,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtlibint,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
+      grava_historico('A','DTLIBINT',to_char(:OLD.dtlibint,'dd/mm/RRRR'),to_char(:NEW.dtlibint,'dd/mm/RRRR'));
     END IF;
 
-    IF :NEW.dtretint         <> :OLD.dtretint THEN
-      grava_historico('A','DTRETINT',:OLD.dtretint,:NEW.dtretint );
+    IF NVL(:NEW.dtretint,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtretint,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
+      grava_historico('A','DTRETINT',to_char(:OLD.dtretint,'dd/mm/RRRR'),to_char(:NEW.dtretint,'dd/mm/RRRR'));
     END IF;
 
     IF :NEW.nrmesage         <> :OLD.nrmesage THEN
       grava_historico('A','NRMESAGE',:OLD.nrmesage,:NEW.nrmesage );
     END IF;
 
-
     --Campos novos para inclusão após criação dos mesmos na tabela:
     --NRSEQTEM
     IF :NEW.NRSEQTEM   <> :OLD.NRSEQTEM THEN
-      --grava_historico('A','NRSEQTEM',:OLD.NRSEQTEM,:NEW.NRSEQTEM );
       grava_historico('A','NRSEQTEM',ww_nrseqtem_ant,ww_nrseqtem_atu );
     END IF;
 
@@ -462,19 +625,203 @@ BEGIN
 
     --CDOPERAD
     IF :NEW.CDOPERAD   <> :OLD.CDOPERAD THEN
-      --grava_historico('A','CDOPERAD',:OLD.CDOPERAD,:NEW.CDOPERAD );
       grava_historico('A','CDOPERAD',ww_cdoperad_ant,ww_cdoperad_atu );
     END IF;
 
     --CDCOPOPE
     IF :NEW.CDCOPOPE <> :OLD.CDCOPOPE THEN
-       --grava_historico('A','CDCOPOPE',:OLD.CDCOPOPE,:NEW.CDCOPOPE );
        grava_historico('A','CDCOPOPE',ww_cdcopope_ant,ww_cdcopope_atu);
     END IF;
-    
+
     --IDFIMAVA
     IF :NEW.IDFIMAVA <> :OLD.IDFIMAVA THEN
-       grava_historico('A','IDFIMAVA',ww_idfimava_ant,ww_idfimava_atu);
+       grava_historico('A','IDFIMAVA',:OLD.IDFIMAVA,:NEW.IDFIMAVA);
+    END IF;
+
+    --NRCPFCGC
+    IF :NEW.NRCPFCGC <> :OLD.NRCPFCGC THEN
+       grava_historico('A','NRCPFCGC',:OLD.NRCPFCGC,:NEW.NRCPFCGC);
+    END IF;
+
+    --NRPROPOS
+    IF :NEW.NRPROPOS <> :OLD.NRPROPOS THEN
+       grava_historico('A','NRPROPOS',:OLD.NRPROPOS,:NEW.NRPROPOS);
+    END IF;
+
+    --NRDOCFMD
+    IF :NEW.NRDOCFMD <> :OLD.NRDOCFMD THEN
+       grava_historico('A','NRDOCFMD',:OLD.NRDOCFMD,:NEW.NRDOCFMD);
+    END IF;
+
+    --VLHONEVE
+    IF :NEW.VLHONEVE <> :OLD.VLHONEVE THEN
+       grava_historico('A','VLHONEVE',:OLD.VLHONEVE,:NEW.VLHONEVE);
+    END IF;
+
+    --VLLOCEVE
+    IF :NEW.VLLOCEVE <> :OLD.VLLOCEVE THEN
+       grava_historico('A','VLLOCEVE',:OLD.VLLOCEVE,:NEW.VLLOCEVE);
+    END IF;
+
+    --VLALIEVE
+    IF :NEW.VLALIEVE <> :OLD.VLALIEVE THEN
+       grava_historico('A','VLALIEVE',:OLD.VLALIEVE,:NEW.VLALIEVE);
+    END IF;    
+
+    --VLMATEVE
+    IF :NEW.VLMATEVE <> :OLD.VLMATEVE THEN
+       grava_historico('A','VLMATEVE',:OLD.VLMATEVE,:NEW.VLMATEVE);
+    END IF;
+
+    --VLTRAEVE
+    IF :NEW.VLTRAEVE <> :OLD.VLTRAEVE THEN
+       grava_historico('A','VLTRAEVE',:OLD.VLTRAEVE,:NEW.VLTRAEVE);
+    END IF;
+
+    --VLBRIEVE
+    IF :NEW.VLBRIEVE <> :OLD.VLBRIEVE THEN
+       grava_historico('A','VLBRIEVE',:OLD.VLBRIEVE,:NEW.VLBRIEVE);
+    END IF;
+
+    --VLDIVEVE
+    IF :NEW.VLDIVEVE <> :OLD.VLDIVEVE THEN
+       grava_historico('A','VLDIVEVE',:OLD.VLDIVEVE,:NEW.VLDIVEVE);
+    END IF;
+
+    --VLOUTEVE
+    IF :NEW.VLOUTEVE <> :OLD.VLOUTEVE THEN
+       grava_historico('A','VLOUTEVE',:OLD.VLOUTEVE,:NEW.VLOUTEVE);
+    END IF;
+
+    --VLTEREVE
+    IF :NEW.VLTEREVE <> :OLD.VLTEREVE THEN
+       grava_historico('A','VLTEREVE',:OLD.VLTEREVE,:NEW.VLTEREVE);
+    END IF;
+
+    --PRDESCON
+    IF :NEW.PRDESCON <> :OLD.PRDESCON THEN
+       grava_historico('A','PRDESCON',:OLD.PRDESCON,:NEW.PRDESCON);
+    END IF;
+
+    --NRSEQINT
+    IF :NEW.NRSEQINT <> :OLD.NRSEQINT THEN
+       grava_historico('A','NRSEQINT',:OLD.NRSEQINT,:NEW.NRSEQINT);
+    END IF;
+
+    --QTPARPRE
+    IF :NEW.QTPARPRE <> :OLD.QTPARPRE THEN
+       grava_historico('A','QTPARPRE',:OLD.QTPARPRE,:NEW.QTPARPRE);
+
+       PROGRID.ASSE0001.pc_envia_email_qtd_part(pr_cdcooper => :NEW.cdcooper       --> Código da Cooperativa
+                                               ,pr_cdagenci => :NEW.cdagenci       --> Código do PA
+                                               ,pr_nmevento => rw_crapedp.nmevento --> Nome do Evento
+                                               ,pr_qtturant => :OLD.QTPARPRE       --> Quantidade de Participantes Anterior
+                                               ,pr_qtturatu => :NEW.QTPARPRE       --> Quantidade de Participantes Atual
+                                               ,pr_dtinieve => :NEW.DTINIEVE       --> Data de Inicio de Evento
+                                               ,pr_cdcritic => vr_cdcritic         --> Código da Crítica
+                                               ,pr_dscritic => vr_dscritic);       --> Descrição da Crítica
+
+      IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+        pc_log_programa(pr_dstiplog      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                       ,pr_cdprograma    => vr_cdprogra   --> Codigo do programa ou do job
+                       ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        -- Parametros para Ocorrencia
+                       ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                       ,pr_cdcriticidade => 1             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                       ,pr_dsmensagem    => vr_dscritic||' '||Sqlerrm   --> dscritic       
+                       ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                       ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+      END IF;
+    END IF;
+
+    --DSOBSLOC
+    IF :NEW.DSOBSLOC <> :OLD.DSOBSLOC THEN
+       grava_historico('A','DSOBSLOC',SUBSTR(:OLD.DSOBSLOC,1,100),SUBSTR(:NEW.DSOBSLOC,1,100));
+    END IF;
+
+    --VLRECEVE
+    IF :NEW.VLRECEVE <> :OLD.VLRECEVE THEN
+       grava_historico('A','VLRECEVE',:OLD.VLRECEVE,:NEW.VLRECEVE);
+    END IF;
+
+    -- Incluir no histórico o nome do facilitador
+    IF NVL(:OLD.NRSEQFEA,0) <> 0 THEN
+      BEGIN
+        SELECT CF.NRSEQFEA||'-'||CF.NMFACILI
+          INTO ww_NRSEQFEA_ant
+          FROM CRAPFEA CF
+         WHERE CF.NRSEQFEA = :OLD.NRSEQFEA;
+      EXCEPTION
+        WHEN no_data_found THEN
+          ww_NRSEQFEA_ant:= 'Facilitador = '||:OLD.NRSEQFEA||' - '||'NÃO CADASTRADO';
+      END;
+    END IF; 
+
+    IF NVL(:NEW.NRSEQFEA,0) <> 0 THEN
+      BEGIN
+        SELECT CF.NRSEQFEA||'-'||CF.NMFACILI
+          INTO ww_NRSEQFEA_atu
+          FROM CRAPFEA CF
+         WHERE CF.NRSEQFEA = :NEW.NRSEQFEA;
+      EXCEPTION
+        WHEN no_data_found THEN
+          ww_NRSEQFEA_atu:= 'Facilitador = '||:NEW.NRSEQFEA||' - '||'NÃO CADASTRADO';
+      END;
+    END IF;
+
+    --NRSEQFEA
+    IF :NEW.NRSEQFEA <> :OLD.NRSEQFEA THEN
+       grava_historico('A','NRSEQFEA',WW_NRSEQFEA_ANT,WW_NRSEQFEA_ATU);
+    END IF;
+
+    --NRSEQFEA
+    IF :NEW.NRSEQFEA <> :OLD.NRSEQFEA THEN
+       grava_historico('A','NRSEQFEA',:OLD.NRSEQFEA,:NEW.NRSEQFEA);
+    END IF;
+
+    -- EMAIL
+    IF vr_texto_email IS NOT NULL AND :NEW.IDEVENTO = 2 THEN
+
+      OPEN cr_crapppc(pr_idevento => 1
+                     ,pr_dtanoage => :NEW.DTANOAGE
+                     ,pr_cdcooper => :NEW.CDCOOPER);
+
+      FETCH cr_crapppc INTO rw_crapppc;
+
+      vr_conteudo := '<b>ATENÇÃO!</b>' ||
+                     '<br>O evento ' || rw_crapedp.nmevento || '  do dia: ' || NVL(TO_CHAR(:NEW.dtinieve),'Data inicial do evento não informada') ||
+                     '<br>da Cooperativa ' || rw_crapage.nmrescop || ' e do PA: ' || rw_crapage.nmresage || ' foi alterado.' || 
+                     '<br><br>' ||
+                     '<table>' || 
+                     '<tr><td><b>Campo Alterado</b></td><td><b>Valor Anterior</b></td><td><b>Valor Atual</b></td></tr>' ||
+                     vr_texto_email ||
+                     '</table>';
+        
+      vr_dscritic := NULL;
+                                      
+      gene0003.pc_solicita_email(pr_cdcooper        => :NEW.CDCOOPER
+                                ,pr_cdprogra        => 'PROGRID'
+                                ,pr_des_destino     => rw_crapppc.dsemlace
+                                ,pr_des_assunto     => 'Alteração de Evento Assemblear'
+                                ,pr_des_corpo       => vr_conteudo
+                                ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                ,pr_des_erro        => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                       ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                       ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        -- Parametros para Ocorrencia
+                       ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                       ,pr_cdcriticidade => 1             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                       ,pr_dsmensagem    => vr_dscritic||' '||Sqlerrm   --> dscritic       
+                       ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                       ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+      END IF;
+
     END IF;
    
   ELSIF DELETING THEN
@@ -483,7 +830,7 @@ BEGIN
       grava_historico('E','CDABRIDO',ww_cdabrido_ant,' ' );--:OLD.cdabrido,'' );
       grava_historico('E','NRMESEVE',:OLD.nrmeseve,' ' );
       grava_historico('E','DTINIEVE',:OLD.dtinieve,' ' );
-      grava_historico('E','DTFIMEVE',:OLD.dtfineve,' ' );
+      grava_historico('E','DTFINEVE',:OLD.dtfineve,' ' );
       grava_historico('E','DSHROEVE',:OLD.dshroeve,' ' );
       grava_historico('E','DSDIAEVE',:OLD.dsdiaeve,' ' );
       grava_historico('E','IDSTAEVE',ww_idstaeve_ant,' ' );--:OLD.idstaeve,'' );
@@ -497,9 +844,32 @@ BEGIN
       grava_historico('E','NRSEQPRI',ww_nrseqpri_ant,' ' );--:OLD.NRSEQPRI,'' );
       grava_historico('E','DSJUSTIF',:OLD.DSJUSTIF,' ' );
       grava_historico('E','CDCOPOPE',ww_cdcopope_ant,' ' );--OLD.CDCOPOPE,'' );
-      grava_historico('E','IDFIMAVA',ww_idfimava_ant,' ' );
-
+  	  grava_historico('E','IDFIMAVA',ww_idfimava_ant,' ' );
+	    grava_historico('E','NRCPFCGC',:OLD.NRCPFCGC,' ');
+      grava_historico('E','NRPROPOS',:OLD.NRPROPOS,' ');
+      grava_historico('E','NRDOCFMD',:OLD.NRDOCFMD,' ');
+      grava_historico('E','VLHONEVE',:OLD.VLHONEVE,' ');
+      grava_historico('E','VLLOCEVE',:OLD.VLLOCEVE,' ');
+      grava_historico('E','VLALIEVE',:OLD.VLALIEVE,' ');
+      grava_historico('E','VLMATEVE',:OLD.VLMATEVE,' ');
+      grava_historico('E','VLTRAEVE',:OLD.VLTRAEVE,' ');
+      grava_historico('E','VLBRIEVE',:OLD.VLBRIEVE,' ');
+      grava_historico('E','VLDIVEVE',:OLD.VLDIVEVE,' ');
+      grava_historico('E','VLOUTEVE',:OLD.VLOUTEVE,' ');
+      grava_historico('E','VLTEREVE',:OLD.VLTEREVE,' ');
+      grava_historico('E','PRDESCON',:OLD.PRDESCON,' ');
+      grava_historico('E','NRSEQINT',:OLD.NRSEQINT,' ');
+      grava_historico('E','QTPARPRE',:OLD.QTPARPRE,' ');
+      grava_historico('E','NRSEQFEA',:OLD.NRSEQFEA,' ');
+      grava_historico('E','DSOBSLOC',:OLD.DSOBSLOC,' ');
+      grava_historico('E','VLRECEVE',:OLD.VLRECEVE,' ');
   END IF;
+
+  pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                 ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                 ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                  -- Parametros para Ocorrencia
+                 ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence) 
 
 END TRG_HISTORICO_CRAPADP;
 /

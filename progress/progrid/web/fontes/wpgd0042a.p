@@ -35,7 +35,10 @@
              27/06/2016 - Alterado o nome do relatorio de Pre-Inscritos para Inscrições e 
                           inclusao da opcao faltantes.
                           PRJ229 - Melhorias OQS(Odirlei-AMcom)
-                             
+             
+             05/06/2017 - Alterado as colunas de exibiçao conforme tipo de evento,
+                          Prj. 322 (Jean Michel).             
+                          
  ****************************************************************************/
  
  create widget-pool.
@@ -146,11 +149,17 @@ FUNCTION Relatorio RETURNS LOGICAL ():
             {&out}  '<table class="tab2" border="1" width="100%">' SKIP
                     '  <tr bgColor="#DBDBDB">' SKIP
                     '    <td>Nome</td>' SKIP
-                    '    <td>Conta</td>' SKIP
-                    '    <td style="width:77px;padding-left:2px">Telefone</td>' SKIP
-                    '    <td style="width:77px;padding-left:2px">Celular</td>' SKIP
-                    IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP
-                    '    <td align="center">Vínc./Inscr.</td>' SKIP
+                    '    <td>Conta</td>' SKIP.
+                    IF crapadp.idevento = 1 THEN
+                      DO:
+                        {&out}  '    <td style="width:77px;padding-left:2px">Telefone</td>' SKIP
+                        '    <td style="width:77px;padding-left:2px">Celular</td>' SKIP
+                        IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
+                      END.
+                    Else
+                      {&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+                      
+            {&out}  '    <td align="center">Vínc./Inscr.</td>' SKIP
                     '    <td>Observação</td>' SKIP
                     IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>Uso manual</td>' ELSE '' SKIP
                     '  </tr>' SKIP.                        
@@ -165,24 +174,39 @@ FUNCTION Relatorio RETURNS LOGICAL ():
 
         {&out} '  <tr bgColor=' aux_cor ' height="42">' SKIP
                '    <td width="260">' crapidp.nminseve '</td>' SKIP
-               '    <td class="tab2" align="right" width="60">' IF crapidp.nrdconta <> 0 THEN STRING(crapidp.nrdconta,"zzzz,zzz,9") ELSE '&nbsp;' '</td>' SKIP
-               '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
-               '    <td class="tab2" align="left" >'.
-        
-        /* Incluir telefone celular se for inscricao de cooperado */
-        IF  crapidp.nrdconta <> 0 THEN 
+               '    <td class="tab2" align="right" width="60">' IF crapidp.nrdconta <> 0 THEN STRING(crapidp.nrdconta,"zzzz,zzz,9") ELSE '&nbsp;' '</td>' SKIP.
+       
+       IF crapadp.idevento = 1 THEN
         DO:
-            FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
-                                     craptfc.nrdconta = crapidp.nrdconta AND
-                                     craptfc.idseqttl = crapidp.idseqttl AND
-                                     craptfc.tptelefo = 2
-                                     NO-LOCK NO-ERROR.
-            IF AVAIL craptfc THEN
-            {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
-        END.
+          {&out} '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
+                 '    <td class="tab2" align="left" >'.
+        
+          /* Incluir telefone celular se for inscricao de cooperado */
+          IF  crapidp.nrdconta <> 0 THEN 
+            DO:
+                FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
+                                         craptfc.nrdconta = crapidp.nrdconta AND
+                                         craptfc.idseqttl = crapidp.idseqttl AND
+                                         craptfc.tptelefo = 2
+                                         NO-LOCK NO-ERROR.
+                
+                IF AVAIL craptfc THEN
+                {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
+            END.
 
-        {&out} '</td>' SKIP
-               IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP
+          {&out} '</td>' SKIP
+          IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP.
+        END.
+        Else
+          DO:
+            FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper
+                                 AND crapage.cdagenci = crapidp.cdageins NO-LOCK NO-ERROR NO-WAIT.
+            IF AVAILABLE crapage THEN                     
+              {&out} '<td class="tab2" width="160">' + crapage.nmresage + '</td>' SKIP.
+            ELSE
+              {&out} '<td class="tab2" width="160">SEM PA</td>' SKIP.
+          END.
+         {&out}       
                '    <td class="tab2" align="center" width="70">' 
                       IF crapidp.tpinseve = 1 THEN 'PRÓPRIA' ELSE ENTRY(LOOKUP(STRING(crapidp.cdgraupr), crabtab.dstextab) - 1, crabtab.dstextab) 
                       IF tipoDeRelatorio = 0 THEN '<br>(' + ENTRY(crapidp.idstains * 2 - 1,craptab.dstextab) + ')' ELSE '' 
@@ -199,9 +223,14 @@ FUNCTION Relatorio RETURNS LOGICAL ():
                    '<table class="tab2" border="1" width="100%">' SKIP
                    '  <tr bgColor="#DBDBDB">' SKIP
                    '    <td>Nome</td>' SKIP
-                   '    <td>Conta</td>' SKIP
-                   '    <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
-                   '    <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP
+                   '    <td>Conta</td>' SKIP.
+				   
+				   IF crapadp.idevento = 1 THEN
+				     DO:
+                       {&out}  ' <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
+                               ' <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP.
+				     END.
+				   {&out} 	 
                    IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP
                    '    <td align="center">Vínc./Inscr.</td>' SKIP
                    '    <td>Observação</td>' SKIP
