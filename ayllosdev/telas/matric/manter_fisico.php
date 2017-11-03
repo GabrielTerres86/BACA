@@ -13,6 +13,7 @@
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  
  *                17/10/2017 - Ajuste para carregar idade ao validadr dados. PRJ339-CRM (Odirle/AMcom).
  */
@@ -117,6 +118,8 @@
 		$xml .= "<$key>$value</$key>";   
 		
 	} 
+	  
+	$xml .= "<nrcxapst>0</nrcxapst>"; 
 	  
 	if($procedure == 'valida_dados' || $procedure == 'grava_dados'){
 
