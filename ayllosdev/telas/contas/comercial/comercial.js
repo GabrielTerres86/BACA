@@ -1,5 +1,5 @@
 /*!
- * FONTE        : comercial.js
+ * FONTE        : comercial.js                              Última alteração: 27/03/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL da tela de CONTAS
@@ -12,6 +12,11 @@
  * 				  19/12/2013 - Alterado nome do id vldrend2 para vldrend22 do form frmDadosComercial. Estava dando conflito. (Jorge)
  *                18/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *                23/12/2015 - #350828 Inclusão da operação PPE (Carlos)
+ *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+ *                20/02/2017 - Alterado codigo para que os caracteres com acento sejam substituidos pelos equivalentes sem acento,
+ *                             ao inves de removidos. (Heitor - Chamado 614746)
+ *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
+ *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
  * --------------
  */
 
@@ -83,10 +88,6 @@ function controlaOperacao(operacao, flgConcluir) {
 
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
-    if (inpolexp == 2 && flgConcluir) {
-        showError("error", "Escolha uma op&ccedil;&atilde;o para o campo Pessoa exposta politicamente.", "Alerta - Ayllos", "$('#inpolexp','#frmDadosComercial').focus()");
-        return false;
-    }
 	
     // Se a operacao de salvar veio do botão concluir, e não do botão continuar; e o campo ppe foi alterado, ou veio da matricula:
     if ((operacao == 'AV' && flgConcluir  && inpolexp !== inpolexpAnt) || (operacao == 'AV' && flgcadas == "M")) {
@@ -410,7 +411,7 @@ function controlaLayout(operacao) {
 
     var cDsjusren = $('#dsjusren', '#frmJustificativa');
 
-    cDsjusren.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').setMask('STRING', '160', charPermitido(), '');
+    cDsjusren.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').attr('maxlength', '160');
 
     cDsjusren.desabilitaCampo();
 
@@ -437,7 +438,7 @@ function controlaLayout(operacao) {
     cCodigos_3.addClass('codigo pesquisa');
     cDesc_3.addClass('descricao').css('width', '150px');
     cValores_3.addClass('moeda_6').css('width', '80px');
-    cJustif.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').setMask('STRING', '160', charPermitido(), '');
+    cJustif.addClass('alphanum').css('width', '470px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '60').css('margin-left', '3').attr('maxlength', '160');
 
     cCodigos_3.habilitaCampo();
     cValores_3.habilitaCampo();
@@ -688,12 +689,9 @@ function controlaPesquisas() {
 
                 // Natureza Ocupação
                 if (campoAnterior == 'cdnatopc') {
-                    procedure = 'busca_nat_ocupacao';
-                    titulo = 'Natureza da Ocupa&ccedil;&atilde;o';
-                    qtReg = '30';
-                    filtrosPesq = 'Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;';
+                    filtrosPesq = "Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;";
                     colunas = 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
-                    mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+                    mostraPesquisa("ZOOM0001", "BUSCANATOCU", "Natureza da Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
                     return false;
 
                     // Código Empresa
@@ -708,13 +706,11 @@ function controlaPesquisas() {
 
                     // Busca Ocupação
                 } else if (campoAnterior == 'cdocpttl') {
-                    procedure = 'busca_ocupacao';
-                    titulo = 'Ocupa&ccedil;&atilde;o';
-                    qtReg = '30';
-                    filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsocupa;200px;S;';
+                    filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsdocupa;200px;S;';
                     colunas = 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
-                    mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+                    mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Natureza de Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
                     return false;
+
                 }
 
             }
@@ -728,19 +724,15 @@ function controlaPesquisas() {
 
     // Natureza Ocupação
     $('#cdnatopc', '#' + nomeForm).unbind('change').bind('change', function () {
-        titulo = 'Natureza Ocupação';
-        procedure = 'busca_nat_ocupacao';
         filtrosDesc = '';
-        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsnatocp', $(this).val(), 'rsnatocp', filtrosDesc, nomeForm);
+        buscaDescricao("ZOOM0001", "BUSCANATOCU", "Natureza Ocupação", $(this).attr('name'), 'rsnatocp', $(this).val(), 'rsnatocp', filtrosDesc, nomeForm);
         return false;
     });
 
     // Ocupação
     $('#cdocpttl', '#' + nomeForm).unbind('change').bind('change', function () {
-        titulo = 'Ocupação';
-        procedure = 'busca_ocupacao';
         filtrosDesc = '';
-        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsocupa', $(this).val(), 'dsdocupa', filtrosDesc, nomeForm);
+        buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'rsocupa', $(this).val(), 'dsdocupa', filtrosDesc, nomeForm);
         return false;
     });
 
@@ -1087,8 +1079,8 @@ function gravaRendimentos() {
     var cddopcao = operacao;
     var tpdrend2 = $('#tpdrend2', '#frmManipulaRendi').val();
     var vldrend2 = $('#vldrend2', '#frmManipulaRendi').val();
-    var dsjusren = $('#dsjusren', '#frmJustificativa').val();
-    var dsjusre2 = $('#dsjusre2', '#frmManipulaRendi').val();
+    var dsjusren = removeCaracteresInvalidos($('#dsjusren', '#frmJustificativa').val(),1);
+    var dsjusre2 = removeCaracteresInvalidos($('#dsjusre2', '#frmManipulaRendi').val(),1);
 
 
     // Carrega conteúdo da opção através de ajax
@@ -1207,11 +1199,6 @@ function controlaContinuar(flgPrimertela) {
 
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
-
-    if (inpolexp == 2) {
-        showError("error", "Escolha uma op&ccedil;&atilde;o para o campo Pessoa exposta politicamente.", "Alerta - Ayllos", "$('#inpolexp','#frmDadosComercial').focus()");
-        return false;
-    }
 	
     if (inpolexp !== inpolexpAnt) {
         controlaOperacao('PPE');

@@ -11,6 +11,10 @@
  *                 18/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *				   21/06/2016 - Ajustado o nome da cidade que não carregava ao selecionar
 								uma empresa, conforme solicitado no chamado 469194. (Kelvin)
+				   07/10/2016 - Correcao no carregamento do campo justificativa devido ao uso de
+								caracteres especiais que geravam erro no retorno do Ajax. 
+								SD 535228. (Carlos Rafael Tanholi).
+ *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -70,7 +74,6 @@
 		<br />
 		<label for="inpolexp">Pessoa exposta politicamente:</label>
 		<select id="inpolexp" name="inpolexp">
-		    <option value="2" <?php if (getByTagName($comercial,'inpolexp') == "2") { echo ' selected'; } ?>> Pendente </option>
    			<option value="0" <?php if (getByTagName($comercial,'inpolexp') == "0") { echo ' selected'; } ?>> N&atilde;o </option>
   			<option value="1" <?php if (getByTagName($comercial,'inpolexp') == "1") { echo ' selected'; } ?>> Sim </option>
 		</select>
@@ -159,7 +162,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo getByTagName($comercial,'dsjusren') ?>' )
+		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
 	</script>	
 	<br style="class:both" />	
 		
