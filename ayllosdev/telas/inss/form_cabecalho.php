@@ -1,20 +1,20 @@
 <?php
 	/***********************************************************************************************
-	Fonte        : form_cabecalho.php
-	Criação      : Adriano
-	Data criação : Maio/2013
-	Objetivo     : Cabeçalho para a tela INSS
-	--------------
+  Fonte        : form_cabecalho.php
+  Criação      : Adriano
+  Data criação : Maio/2013
+  Objetivo     : Cabeçalho para a tela INSS
+  --------------
 	Alterações   : 20/10/2015 - Adicionado opção para consultar log Projeto 255 (Lombardi).
 				   03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
-	--------------
+  --------------
 	**********************************************************************************************/ 
 
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
-	isPostMethod();
+	isPostMethod();	
 ?>
 
 <form id="frmCabInss" name="frmCabInss" class="formulario cabecalho" style="display:none;">	
