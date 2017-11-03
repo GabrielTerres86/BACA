@@ -10,6 +10,10 @@
 			 10/08/2016 - Ajuste para aumentar tamanho dos campos apresentados
                           na tela para que seja possível visualizar toda sua informação
                           (Adriano).
+
+			 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES.
+						  Adicionada validações com a senha do coordenador para 
+						  as opções 'M', 'A' e 'B'. Projeto 369 (Lombardi).
 						  
 ************************************************************************/
 
@@ -34,7 +38,6 @@ function estadoInicial() {
     $('#divTabela').html('').css('display','none');
        	
 }
-
 
 function formataCabecalho() {
 
@@ -271,7 +274,6 @@ function formataFiltro() {
 
 }
 
-
 function formataFiltroImpressao() {
 
     // Desabilitar a opção
@@ -495,7 +497,6 @@ function formataFiltroArquivo() {
 
 }
 
-
 function formataFiltroHistorico() {
 
     // Desabilitar a opção
@@ -612,7 +613,6 @@ function formataFiltroHistorico() {
     layoutPadrao();
 
 }
-	
 
 function formataFormularioBens() {
 
@@ -671,7 +671,7 @@ function formataFormularioBens() {
 
     if ($('#cddopcao', '#frmCab').val() == 'A') {
 
-        $("#dschassi", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+        $("#dschassi", "#divBens").unbind('keypress').bind('keypress', function (e) {
 
             if (divError.css('display') == 'block') { return false; }
 
@@ -685,7 +685,7 @@ function formataFormularioBens() {
         });
 
         // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
-        $("#dschassi", "#frmBens").unbind('keydown').bind('keydown', function (event) {
+        $("#dschassi", "#divBens").unbind('keydown').bind('keydown', function (event) {
 
             var tecla = event.which || event.keyCode;
 
@@ -706,30 +706,30 @@ function formataFormularioBens() {
         });
 
         //Remover caracteres especiais
-        $("#dschassi", "#frmBens").unbind('keyup').bind('keyup', function (e) {
+        $("#dschassi", "#divBens").unbind('keyup').bind('keyup', function (e) {
             var re = /[^\w\s]/gi;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
 
             re = /[\Q\q\I\i\O\o\_]/g;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
 
             re = / /g;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
         });
 
-        $("#dschassi", "#frmBens").unbind('blur').bind('blur', function () {
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/[^\w\s]/gi, ''));
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/ /g, ''));
+        $("#dschassi", "#divBens").unbind('blur').bind('blur', function () {
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[^\w\s]/gi, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/ /g, ''));
         });
 
 
@@ -775,7 +775,7 @@ function formataFormularioBens() {
 
         });
 
-        $("#dschassi", "#frmBens").focus();
+        $("#dschassi", "#divBens").focus();
 
     } else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
@@ -832,7 +832,7 @@ function formataFormularioBens() {
 
     } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
-        $("#dschassi", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+        $("#dschassi", "#divBens").unbind('keypress').bind('keypress', function (e) {
 
             if (divError.css('display') == 'block') { return false; }
 
@@ -846,7 +846,7 @@ function formataFormularioBens() {
         });
 
         // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
-        $("#dschassi", "#frmBens").unbind('keydown').bind('keydown', function (event) {
+        $("#dschassi", "#divBens").unbind('keydown').bind('keydown', function (event) {
 
             var tecla = event.which || event.keyCode;
 
@@ -867,30 +867,30 @@ function formataFormularioBens() {
         });
 
         //Remover caracteres especiais
-        $("#dschassi", "#frmBens").unbind('keyup').bind('keyup', function (e) {
+        $("#dschassi", "#divBens").unbind('keyup').bind('keyup', function (e) {
             var re = /[^\w\s]/gi;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
 
             re = /[\Q\q\I\i\O\o\_]/g;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
 
             re = / /g;
 
-            if (re.test($("#dschassi", "#frmBens").val())) {
-                $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(re, ''));
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
             }
         });
 
-        $("#dschassi", "#frmBens").unbind('blur').bind('blur', function () {
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/[^\w\s]/gi, ''));
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
-            $("#dschassi", "#frmBens").val($("#dschassi", "#frmBens").val().replace(/ /g, ''));
+        $("#dschassi", "#divBens").unbind('blur').bind('blur', function () {
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[^\w\s]/gi, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/ /g, ''));
         });
 
 
@@ -964,7 +964,7 @@ function formataFormularioBens() {
 
         });
 
-        $("#dschassi", "#frmBens").focus();
+        $("#dschassi", "#divBens").focus();
 
     }
 
@@ -972,7 +972,7 @@ function formataFormularioBens() {
 
 }
 
-function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctrpro) {
+function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctrpro, tpinclus, permisit) {
 
     if ($('#cddopcao', '#frmCab').val() == 'A'){
         
@@ -982,28 +982,39 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         if((possuictr == "0" && cdsitgrv != '3')) {
 
             $('input,select','#frmBens').desabilitaCampo();
-            $('#btConcluir', '#divBotoesBens').css('display', 'none').unbind('click');
-            $('#btVoltar', '#divBotoesBens').focus();
-
-                        
+            //$('#btConcluir', '#divBotoesBens').css('display', 'none').unbind('click');
+            //$('#btVoltar', '#divBotoesBens').focus();
+            
         }else{
 
             $('#dschassi', '#frmBens').habilitaCampo().focus();
             $('#ufdplaca', '#frmBens').habilitaCampo();
             $('#nrdplaca', '#frmBens').habilitaCampo();
             $('#nrrenava', '#frmBens').habilitaCampo();
+		
+        }
+			if (permisit.toUpperCase() == 'S' && $('#dssitgrv', '#frmBens').val() != 1) {
+				$('#dssitgrv', '#frmBens').habilitaCampo();
+			}
 
             //Define ação para CLICK no botão de Concluir
             $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarGravame(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+				chassi_anterior = $('#chassi_anterior','#divBens').val();
+				dschassi = $('#dschassi','#divBens').val();
+				
+				var funcao = '';
+				if (chassi_anterior != dschassi && tpinclus.toUpperCase() == 'M')
+					funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');pedeSenhaCoordenador(2,\'verificaSituacaoGravames(' + idseqbem + ',' + tpctrpro + ');\',\'\');';
+				else
+					funcao = 'verificaSituacaoGravames(' + idseqbem + ',' + tpctrpro + ');';
+				
+                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
                 return false;
 
             });
 
-            
-        }
 
     } else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
@@ -1013,7 +1024,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'baixaManual(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'baixaManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1068,7 +1079,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1122,6 +1133,60 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
     
 
 }
+    
+function verificaSituacaoGravames(idseqbem,tpctrpro) {
+	
+	situacao_anterior = $('#situacao_anterior','#divBens').val();
+	dssitgrv = $('#dssitgrv','#divBens').val();
+
+	if (situacao_anterior != dssitgrv) {
+		// Executa script atraves de ajax
+		$.ajax({
+			type: 'POST',
+			dataType: 'html',
+			url: UrlSite + 'telas/gravam/form_motivo.php',
+			data: {
+					idseqbem: idseqbem,
+					tpctrpro: tpctrpro,
+					dssitgrv: dssitgrv,
+					redirect: 'html_ajax'
+				  },
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			},
+			success: function(response) {
+				hideMsgAguardo();
+				bloqueiaFundo($('#divRotina'));
+				exibeRotina($('#divRotina'));
+				$('#divRotina').html(response);
+				formataMotivo(idseqbem,tpctrpro,dssitgrv);
+			}
+		});		
+	} else {
+		alterarGravame(idseqbem,tpctrpro);
+}
+	return false;	
+}
+
+function formataMotivo (idseqbem,tpctrpro,dssitgrv) {
+	
+	$('html, body').animate({scrollTop:0}, 'fast');
+	
+	$('#dsmotivo', '#frmMotivo').css({width:'500px', height:'100px'}).addClass('campo').focus();
+	
+	//Define ação para CLICK no botão de Concluir
+	$('#btContinuarMotivo').unbind('click').bind('click', function () {
+		alterarGravame(idseqbem,tpctrpro,dssitgrv,$('#dsmotivo', '#frmMotivo').val());
+		return false;
+	});
+	
+	//Define ação para CLICK no botão de Concluir
+	$('#btVoltarMotivo').unbind('click').bind('click', function () {
+		fechaRotina($('#divRotina'));
+		return false;
+	});
+}
 
 function formataTabelaContratosGravames(tpconsul) {
 
@@ -1162,8 +1227,6 @@ function formataTabelaContratosGravames(tpconsul) {
 
     return false;
 }
-
-
 
 function formataTabelaBens() {
 
@@ -1215,10 +1278,9 @@ function selecionaContratoGravame(tr,tpconsul) {
 
 }
 
-
 function selecionaBens(tr) {
-       
-    $('#dssitgrv', '#divBens').val($('#dssitgrv', tr).val());
+
+    $('#dssitgrv', '#divBens').val($('#cdsitgrv', tr).val());
     $('#dsseqbem', '#divBens').val($('#dsseqbem', tr).val());
     $('#nrgravam', '#divBens').val($('#nrgravam', tr).val());
     $('#dsbemfin', '#divBens').val($('#dsbemfin', tr).val());
@@ -1238,11 +1300,13 @@ function selecionaBens(tr) {
     $('#nrmodbem', '#divBens').val($('#nrmodbem', tr).val());
     $('#dtoperac', '#divBens').val($('#dtoperac', tr).val());
     $('#dsblqjud', '#divBens').val($('#dsblqjud', tr).val());
+	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
+	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val());
+    
+    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
     
 }
-
 
 function controlaPesquisa(valor) {
 
@@ -1272,7 +1336,6 @@ function controlaPesquisaAssociado() {
     return false;
 
 }
-
 
 function controlaPesquisaAgencia() {
 
@@ -1352,7 +1415,6 @@ function controlaVoltar(ope,tpconsul) {
 
 }
 
-
 function montaFormFiltro() {
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
@@ -1399,7 +1461,6 @@ function montaFormFiltro() {
     return false;
 
 }
-
 
 function Gera_Impressao(nmarqpdf, callback) {
 
@@ -1461,7 +1522,6 @@ function gerarRelatorioHistorico() {
     return false;
 }
 
-
 function gerarRelatorio670() {
 
     //Desabilita todos os campos do form
@@ -1507,7 +1567,6 @@ function gerarRelatorio670() {
 
     return false;
 }
-
 
 function buscaContratosGravames(nriniseq, nrregist) {
 
@@ -1559,7 +1618,6 @@ function buscaContratosGravames(nriniseq, nrregist) {
     return false;
 
 }
-
 
 function buscaGravames(nriniseq, nrregist) {
 
@@ -1659,8 +1717,6 @@ function geraArquivo() {
 
 }
 
-
-
 function solicitaProcessamentoArquivoRetorno() {
 
     //Desabilita todos os campos do form
@@ -1705,7 +1761,6 @@ function solicitaProcessamentoArquivoRetorno() {
     return false;
 
 }
-
 
 function buscaPaAssociado() {
 
@@ -1811,15 +1866,15 @@ function alterarBensSubAditivo(idseqbem,tpctrpro) {
 
 }
 
-function alterarGravame(idseqbem,tpctrpro) {
-
+function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
+	
     //Desabilita todos os campos do form
-    $('input,select', '#frmBens').desabilitaCampo();
+    //$('input,select', '#frmBens').desabilitaCampo();
 
-    var cddopcao = $("#cddopcao", "#frmCab").val();
-    var nrdconta = $("#nrdconta", "#frmFiltro").val();    
-    var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
-    var dschassi = $("#dschassi", "#frmBens").val();
+    var cddopcao = $("#cddopcao","#frmCab").val();
+    var nrdconta = $("#nrdconta","#frmFiltro").val();    
+    var nrctrpro = $("#nrctrpro","#frmFiltro").val();
+    var dschassi = $("#dschassi","#frmBens").val();
     var dscatbem = $("#dscatbem","#frmBens").val();    
     var ufdplaca = $("#ufdplaca","#frmBens").val();
     var nrdplaca = $("#nrdplaca","#frmBens").val();
@@ -1848,6 +1903,8 @@ function alterarGravame(idseqbem,tpctrpro) {
             nranobem: nranobem,
             nrmodbem: nrmodbem,
             idseqbem: idseqbem,
+            dssitgrv: dssitgrv,
+            dsmotivo: dsmotivo,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1855,8 +1912,7 @@ function alterarGravame(idseqbem,tpctrpro) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
-
-            hideMsgAguardo();
+			hideMsgAguardo();
             try {
                 eval(response);
             } catch (error) {
@@ -1871,7 +1927,6 @@ function alterarGravame(idseqbem,tpctrpro) {
     return false;
 
 }
-
 
 function inclusaoManual(idseqbem, tpctrpro) {
 
@@ -1974,7 +2029,6 @@ function cancelarGravame(idseqbem, tpctrpro) {
     return false;
 
 }
-
 
 function blqLibJudicial(idseqbem, tpctrpro) {
 
@@ -2083,7 +2137,6 @@ function baixaManual(idseqbem,tpctrpro) {
     return false;
 
 }
-
 
 function buscaBens(nriniseq, nrregist) {
 
