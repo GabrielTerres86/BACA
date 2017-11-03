@@ -1,22 +1,23 @@
 /*!
  * FONTE        : impres.js
- * CRIAÇÃO      : Rogerius Militão (DB1) 
+ * CRIAÇÃO      : Rogerius Militão (DB1)
  * DATA CRIAÇÃO : 31/08/2011
  * OBJETIVO     : Biblioteca de funções da tela IMPRES
  * --------------
  * ALTERAÇÕES   :
  * 02/07/2012 - Jorge        (CECRED) : Alterado funcao Gera_Impressao(), novo esquema de impressao.
  * 10/09/2012 - Guilherme    (SUPERO) : Novos tipos de relatorio Aplicacao(Analit/Sintet/Demonst)
- * 29/11/2012 - Daniel       (CECRED) : Alterado botões do tipo tag <input> para tag <a> novo layout, 
+ * 29/11/2012 - Daniel       (CECRED) : Alterado botões do tipo tag <input> para tag <a> novo layout,
  *                                      incluso efeito fade e highlightObjFocus. Alterado posicionamento]
  *	                                    campos da tela, tratamento navegação campos.
- * 31/05/2013 - Daniel       (CECRED) : Alterado focus no keypress do campo inrelext. 
+ * 31/05/2013 - Daniel       (CECRED) : Alterado focus no keypress do campo inrelext.
  * 30/12/2014 - Kelvin       (CECRED) : Padronizando a mascara do campo nrctremp.
  *										10 Digitos - Campos usados apenas para visualização
  *										8 Digitos - Campos usados para alterar ou incluir novos contratos
  *										(SD 233714)
   05/01/2016 - Jonathan         (RKAM): Ajsutes para inclusão do relatorio de juros e encargos - M273
-							   
+
+  08/08/2016 - Guilherme      (SUPERO): M325 - Informe de Rendimentos Trimestral PJ
 
  * --------------
  */
@@ -43,7 +44,7 @@ var rCddopcao, rNrdconta, rTpextrat,
 
 var rDtrefere, rDtreffim, rFlgtarif, rInrelext, rInselext, rNrctremp, rNraplica, rNranoref, rFlgemiss,
 	cDtrefere, cDtreffim, cFlgtarif, cInrelext, cInselext, cNrctremp, cNraplica, cNranoref, cFlgemiss,
-    cTodosDados, btnOK3, cTpmodelo, rTpmodelo;
+    cTodosDados, btnOK3, cTpmodelo, rTpmodelo, cTpinform, rTpinform, cNrperiod, rNrperiod;
 
 
 $(document).ready(function () {
@@ -57,6 +58,8 @@ function estadoInicial() {
     $('#divBotoes', '#divTela').css({ 'display': 'block' });
     $('#frmCab').css({ 'display': 'block' });
     $('#tabImpres', '#divTela').css({ 'display': 'block' });
+
+    $('#divTipo6').hide();
 
     $("#btContinuar", "#divBotoes").hide();
     $("#btVoltar", "#divBotoes").hide();
@@ -72,7 +75,7 @@ function estadoInicial() {
     arrayTipo[3] = new Array('inselext', 'nrctremp', 'flgemiss');
     arrayTipo[4] = new Array('dtrefere', 'inselext', 'nraplica', 'flgemiss', 'tpmodelo', 'dtreffim');
     arrayTipo[5] = new Array('dtrefere', 'dtreffim', 'inselext', 'nraplica', 'flgemiss');
-    arrayTipo[6] = new Array('nranoref', 'flgemiss');
+    arrayTipo[6] = new Array('tpinform','nrperiod','nranoref', 'flgemiss');
     arrayTipo[7] = new Array('dtrefere', 'flgemiss');
     arrayTipo[8] = new Array('dtrefere');
     arrayTipo[9] = new Array('nranoref', 'flgemiss');
@@ -97,6 +100,7 @@ function estadoInicial() {
     cTpmodelo.val('1');
     cDtrefere.val('');
     cDtreffim.val('');
+    cTpinform.val(0);
 
     removeOpacidade('divTela');
     ocultaCampos(cTpextrat.val());
@@ -139,6 +143,11 @@ function ocultaCampos(tipo) {
             $('#divTodos1').css({ 'display': 'block' });
             $('#divTodos2').css({ 'display': 'block' });
         }
+    if (tipo != 6) {
+        $('#divTipo6').hide();
+        $('#divPeriodo').hide();
+    }else {$('#divTipo6').show();}
+
 
     var selectedOption = '2';
 
@@ -179,6 +188,7 @@ function estadoCabecalho() {
     cInrelext.val('0');
     cInselext.val('0');
     cFlgemiss.val('');
+    cTpinform.val(0);
 
     controlaPesquisas();
     return false;
@@ -210,6 +220,8 @@ function atualizaSeletor() {
     rNranoref = $('label[for="nranoref"]', '#' + frmDados);
     rFlgemiss = $('label[for="flgemiss"]', '#' + frmDados);
     rTpmodelo = $('label[for="tpmodelo"]', '#' + frmDados);
+    rTpinform = $('label[for="tpinform"]', '#' + frmDados);
+    rNrperiod = $('label[for="nrperiod"]', '#' + frmDados);
     rBtnoK3 = $('label[for="btnOK3"]', '#' + frmDados);
 
 
@@ -222,6 +234,8 @@ function atualizaSeletor() {
     cNrctremp = $('#nrctremp', '#' + frmDados);
     cNraplica = $('#nraplica', '#' + frmDados);
     cNranoref = $('#nranoref', '#' + frmDados);
+    cTpinform = $('#tpinform', '#' + frmDados);
+    cNrperiod = $('#nrperiod', '#' + frmDados);
     cFlgemiss = $('#flgemiss', '#' + frmDados);
 
     cTodosDados = $('input[type="text"],select', '#' + frmDados);
@@ -297,6 +311,8 @@ function manterRotina(operacao) {
     var nrctremp = normalizaNumero(cNrctremp.val());
     var narplica = normalizaNumero(cNraplica.val());
     var tpmodelo = normalizaNumero(cTpmodelo.val());
+    var tpinform = normalizaNumero(cTpinform.val());
+    var nrperiod = normalizaNumero(cNrperiod.val());
     var flgemiss = cFlgemiss.val() != null ? cFlgemiss.val() : '';
     var inrelext = normalizaNumero(cInrelext.val());
 
@@ -325,7 +341,7 @@ function manterRotina(operacao) {
     var dtArrIni = dtrefere.split('/');
     var dtArrFim = dtreffim.split('/');
 
-    // Por causa da formatacao de MES/ANO quando selecionado "4-Aplicação"    
+    // Por causa da formatacao de MES/ANO quando selecionado "4-Aplicação"
     if (tpextrat == 4 && tpmodelo == 1 && operacao == 'VO') {
         dtrefere = "01/" + dtArrIni[0] + "/" + dtArrIni[1];
         dtreffim = "01/" + dtArrFim[0] + "/" + dtArrFim[1];
@@ -372,6 +388,8 @@ function manterRotina(operacao) {
             flgemiss: flgemiss,
             inrelext: inrelext,
             camposDc: camposDc,
+            tpinform: tpinform,
+            nrperiod: nrperiod,
             dadosDc: dadosDc,
             redirect: 'script_ajax'
         },
@@ -460,7 +478,7 @@ function formataCabecalho() {
     cTpextrat.css({ 'width': '275px' });
 
     if ($.browser.msie) {
-        //	cTpextrat.css({'width':'280px'});	
+        //	cTpextrat.css({'width':'280px'});
         rTpextrat.addClass('rotulo-linha').css({ 'width': '42px' });
     }
 
@@ -489,7 +507,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         if (cCddopcao.hasClass('campoTelaSemBorda')) { return false; }
 
-        // Se é a tecla ENTER, 
+        // Se é a tecla ENTER,
         if (e.keyCode == 9 || e.keyCode == 13) {
             controlaOk(1);
             $('#nrdconta', '#frmCab').focus();
@@ -504,7 +522,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         if (!$('#cddopcao', '#frmCab').hasClass('campoTelaSemBorda')) { return false; }
 
-        // Se é a tecla ENTER, 
+        // Se é a tecla ENTER,
         if (e.keyCode == 9 || e.keyCode == 13) {
 
             $('#tpextrat', '#frmCab').focus();
@@ -519,7 +537,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         //if ( $('#cddopcao','#frmCab').hasClass('campoTelaSemBorda') ) { return false; }
 
-        // Se é a tecla ENTER, 
+        // Se é a tecla ENTER,
         if (e.keyCode == 9 || e.keyCode == 13) {
 
             controlaOk(2);
@@ -548,6 +566,8 @@ function formataDados() {
     rNraplica.addClass('rotulo').css({ 'width': '53px' });
     rNranoref.addClass('rotulo-linha').css({ 'width': '69px' });
     rFlgemiss.addClass('rotulo-linha').css({ 'width': '93px' });
+    rTpinform.addClass('rotulo').css({ 'width': '53px' });
+    rNrperiod.addClass('rotulo-linha').css({ 'width': '65px' });
     rBtnoK3.css({ 'width': '1px' });
 
     if ($.browser.msie) {
@@ -581,6 +601,8 @@ function formataDados() {
     cFlgtarif.css({ 'width': '110px' });
     cInrelext.css({ 'width': '140px' });
     cTpmodelo.css({ 'width': '150px' });
+    cTpinform.css({ 'width': '140px' });
+    cNrperiod.css({ 'width': '110px' });
     cNrctremp.addClass('pesquisa').css({ 'width': '120px', 'text-align': 'right' }).setMask('INTEGER', 'z.zzz.zzz.zzz', '.', '');
     cNraplica.addClass('pesquisa').css({ 'width': '120px', 'text-align': 'right' }).setMask('INTEGER', 'zzz.zzz', '.', '');
     cNranoref.addClass('inteiro').css({ 'width': '120px' }).attr('maxlength', '4');
@@ -613,6 +635,9 @@ function formataDados() {
     if (in_array('tpmodelo', arrayTipo[i])) { cTpmodelo.habilitaCampo(); }
     if (in_array('nrctremp', arrayTipo[i])) { cNrctremp.habilitaCampo(); }
     if (in_array('nraplica', arrayTipo[i])) { cNraplica.habilitaCampo(); }
+    if (in_array('tpinform', arrayTipo[i])) { cTpinform.habilitaCampo(); }
+    if (in_array('nrperiod', arrayTipo[i])) { cNrperiod.habilitaCampo(); }
+    if (in_array('nrrelato', arrayTipo[i])) { cNrrelato.habilitaCampo(); }
     if (in_array('nranoref', arrayTipo[i])) { cNranoref.habilitaCampo(); }
     if (in_array('flgemiss', arrayTipo[i])) { cFlgemiss.habilitaCampo(); }
 
@@ -666,6 +691,8 @@ function montarTabela() {
 
         var nrdconta = mascara(arrayImpres[i]['nrdconta'], '####.###-#');
         var tpextrat = arrayImpres[i]['tpextrat'];
+        var tpinform = arrayImpres[i]['tpinform'];
+        var nrperiod = arrayImpres[i]['nrperiod'];
         var dsextrat = arrayImpres[i]['dsextrat'];
         var dtrefere = arrayImpres[i]['dtrefere'] != '' ? arrayImpres[i]['dtrefere'] : '';
         var dtreffim = arrayImpres[i]['dtreffim'] != '' ? arrayImpres[i]['dtreffim'] : '';
@@ -677,7 +704,6 @@ function montarTabela() {
         var nraplica = arrayImpres[i]['nraplica'] > 0 ? mascara(arrayImpres[i]['nraplica'], '####.###') : '';
         var nranoref = arrayImpres[i]['nranoref'] > 0 ? arrayImpres[i]['nranoref'] : '';
         var flgemiss = arrayImpres[i]['flgemiss'] == 'no' ? 'Process' : '<a href="javascript:Gera_Impressao(\'' + i + '\')"><img src="' + UrlImagens + 'icones/ico_impressora.png" border="0"> Agora</a>';
-
         $('#tabImpres > div > table > tbody').append('<tr></tr>');
         $('#tabImpres > div > table > tbody > tr:last-child').append('<td>' + nrdconta + '</td>');
         $('#tabImpres > div > table > tbody > tr:last-child').append('<td>' + dsextrat + '</td>');
@@ -692,7 +718,7 @@ function montarTabela() {
         $('#tabImpres > div > table > tbody > tr:last-child').append('<td>' + flgemiss + '</td>');
     }
 
-    //	
+    //
     formataTabela();
     $('#' + tabDados).css({ 'display': 'block' });
 
@@ -1218,6 +1244,8 @@ function Gera_Impressao(i) {
     $('#nrctremp', '#frmImprimir').val(arrayImpres[i]['nrctremp']);
     $('#nraplica', '#frmImprimir').val(arrayImpres[i]['nraplica']);
     $('#nranoref', '#frmImprimir').val(arrayImpres[i]['nranoref']);
+    $('#tpinform', '#frmImprimir').val(arrayImpres[i]['tpinform']);
+    $('#nrperiod', '#frmImprimir').val(arrayImpres[i]['nrperiod']);
 
     var action = UrlSite + 'telas/impres/imprimir_dados.php';
     cTodosCabecalho.habilitaCampo();
@@ -1244,6 +1272,8 @@ function buscarImpresArray() {
     var nrctremp = normalizaNumero(cNrctremp.val());
     var nraplica = normalizaNumero(cNraplica.val());
     var nranoref = normalizaNumero(cNranoref.val());
+    var tpinform = normalizaNumero(cTpinform.val());
+    var nrperiod = normalizaNumero(cNrperiod.val());
     var flgemiss = (tpextrat == 10 ? 'yes' : (cFlgemiss.val() == 'yes' ? 'yes' : 'no'));
 
     for (i = 0; i < total; i++) {
@@ -1262,6 +1292,8 @@ function buscarImpresArray() {
         if (nraplica == arrayImpres[i]['nraplica']) { qtde = qtde + 1; } //else { alert(nraplica +' - ' + arrayImpres[i]['nraplica']) }
         if (nranoref == arrayImpres[i]['nranoref']) { qtde = qtde + 1; } //else { alert(nranoref +' - ' + arrayImpres[i]['nranoref']) }
         if (flgemiss == arrayImpres[i]['flgemiss']) { qtde = qtde + 1; } //else { alert(flgemiss +' - ' + arrayImpres[i]['flgemiss']) }
+        if (tpinform == arrayImpres[i]['tpinform']) { qtde = qtde + 1; } //else { alert(tpinform +' - ' + arrayImpres[i]['tpinform']) }
+        if (nrperiod == arrayImpres[i]['nrperiod']) { qtde = qtde + 1; } //else { alert(nrperiod +' - ' + arrayImpres[i]['nrperiod']) }
 
         if (qtde == 11) { removerImpresArray(i); return false; }
 
@@ -1308,11 +1340,11 @@ function btnContinuar() {
     /*
 	if ( cCddopcao.hasClass('campo') ) {
 		btnOK1.click();
-	
+
 	} else if ( cNrdconta.hasClass('campo') ) {
 		btnOK2.click();
-		
-	} 
+
+	}
 	*/
     controlaLayout();
     return false;
@@ -1649,7 +1681,33 @@ function controlaFoco(cddopcao) {
 
     }
 
-    if ((cddopcao == 6) || (cddopcao == 9)) {
+    if (cddopcao == 6) {
+
+        $('#tpinform', '#frmImpres').unbind('keypress').bind('keypress', function (e) {
+
+            if (divError.css('display') == 'block') { return false; }
+
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                if ($('#tpinform', '#frmImpres').val() == 0) { // ANUAL
+                    $('#nranoref', '#frmImpres').focus();
+                } else {    // TRIMESTRAL
+                    $('#nrperiod', '#frmImpres').focus();
+                }
+                return false;
+            }
+
+        });
+
+        $('#nrperiod', '#frmImpres').unbind('keypress').bind('keypress', function (e) {
+
+            if (divError.css('display') == 'block') { return false; }
+
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                $('#nranoref', '#frmImpres').focus();
+                return false;
+            }
+
+        });
 
         $('#nranoref', '#frmImpres').unbind('keypress').bind('keypress', function (e) {
 
@@ -1672,8 +1730,6 @@ function controlaFoco(cddopcao) {
             }
 
         });
-
-
     }
 
     if (cddopcao == 7) {
@@ -1716,6 +1772,31 @@ function controlaFoco(cddopcao) {
 
         });
 
+    }
+
+    if (cddopcao == 9) {
+
+        $('#nranoref', '#frmImpres').unbind('keypress').bind('keypress', function (e) {
+
+            if (divError.css('display') == 'block') { return false; }
+
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                $('#flgemiss', '#frmImpres').focus();
+                return false;
+            }
+
+        });
+
+        $('#flgemiss', '#frmImpres').unbind('keypress').bind('keypress', function (e) {
+
+            if (divError.css('display') == 'block') { return false; }
+
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                controlaOk(3);
+                return false;
+            }
+
+        });
     }
 
     if (cddopcao == 12) {
