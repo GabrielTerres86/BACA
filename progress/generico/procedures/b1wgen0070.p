@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0070.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
+    Data      : Abril/2010                  Ultima Atualizacao: 05/10/2017
     
     Dados referentes ao programa:
 
@@ -43,7 +43,10 @@
 
                       
                  17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                              telefone para o CDC. (Reinert Prj 289)     
+                              telefone para o CDC. (Reinert Prj 289)                                       
+
+				 05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
+							 (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
 
 
@@ -831,15 +834,16 @@ PROCEDURE gerenciar-telefone:
                 
                 IF par_nmdatela <> "MATRIC" OR aux_cdseqtfc = 0 THEN
                   DO:
-                    FIND LAST craptfc WHERE craptfc.cdcooper = par_cdcooper AND
-                                            craptfc.nrdconta = par_nrdconta AND
-                                            craptfc.idseqttl = par_idseqttl
-                                            NO-LOCK NO-ERROR.
+                FIND LAST craptfc WHERE craptfc.cdcooper = par_cdcooper AND
+                                        craptfc.nrdconta = par_nrdconta AND
+                                        craptfc.idseqttl = par_idseqttl
+                                        NO-LOCK NO-ERROR.
                             
-                    ASSIGN aux_cdseqtfc = IF  AVAILABLE craptfc  THEN 
-                                              craptfc.cdseqtfc + 1
-                                          ELSE 
-                                              1.
+                ASSIGN aux_cdseqtfc = IF  AVAILABLE craptfc  THEN 
+                                          craptfc.cdseqtfc + 1
+                                      ELSE 
+                                          1.
+                  END.
 
                 /* Se veio pelo TAA, validar se fone ja existe */
                 IF  par_idorigem = 4 THEN DO:

@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 05/10/2017
     
     Dados referentes ao programa:
 
@@ -99,11 +99,13 @@
                              departamento passando a considerar o código (Renato Darosci)      
                
                17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                            endereco para o CDC. (Reinert Prj 289)		
-
+                            endereco para o CDC. (Reinert Prj 289)
+                            
 				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
 							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
                             
+                05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
+							 (PRJ339 - Kelvin/Andrino).			   
                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                             o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
@@ -118,7 +120,7 @@
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
 { sistema/generico/includes/b1wgen0168tt.i }
 { sistema/generico/includes/var_oracle.i }
-    
+
 DEF STREAM str_1.
 DEF STREAM str_2.
 
@@ -1690,7 +1692,28 @@ PROCEDURE alterar-endereco:
                                 NO-LOCK NO-ERROR. 
                                                     
                            IF  NOT AVAILABLE crapenc THEN
-                               ASSIGN aux_cdseqinc = 1.
+							   DO:
+							    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+								RUN STORED-PROCEDURE pc_busca_nrseqend 
+									aux_handproc = PROC-HANDLE NO-ERROR
+													 (INPUT aux_nrcpfcgc,  
+													  INPUT aux_tpendass,						  
+													 OUTPUT 0,
+													 OUTPUT "").
+
+								CLOSE STORED-PROC pc_busca_nrseqend 
+									  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+								{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+								
+								ASSIGN aux_cdseqinc = 0
+									   aux_cdseqinc = pc_busca_nrseqend.pr_nrseqend 
+													  WHEN pc_busca_nrseqend.pr_nrseqend <> ?
+									   aux_dscritic = ""                         
+									   aux_dscritic = pc_busca_nrseqend.pr_dscritic 
+													  WHEN pc_busca_nrseqend.pr_dscritic <> ?.								
+							   END.
                             ELSE 
                                ASSIGN aux_cdseqinc = crapenc.cdseqinc + 
                                                      1.
