@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : imp_fichacadastral_pf_html.php
+ * FONTE        : imp_fichacadastral_pf_html.php							Última alteração: 20/04/2017
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 06/04/2010 
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF da Ficha Cadastral 
@@ -42,6 +42,20 @@
                   05/11/2015 - Inclusão de novo Poder, PRJ. 131 - Ass. Conjunta (Jean Michel)
 				  
 				  23/12/2015 - Inclusão de impressão de PEP (Carlos)
+
+				  01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+				  08/03/2017 - Ajuste para apresentar novas informações para o PEP (Adriano - SD 614408).
+
+				  15/03/2017 - Ajuste para corrigir quebra de página devido aos ajustes realizados
+				               para a inclusão de novas informações na declaração PEP
+							   (Adriano - SD 614408).
+          
+                  20/04/2017 - Ajustes realiados:
+					           - Retirar o uso de campos removidos da tabela crapass, crapttl, crapjur;
+							   - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                     crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
  */	 
 ?>
 <?
@@ -181,11 +195,10 @@
 	escreveLinha( $linha );
 	
 	$linha = '  Documento: '.preencheString(getByTagName($pfisica,'tpdocttl').' - '.getByTagName($pfisica,'nrdocttl'),20);	
-	$linha .= 'Org.Emi.: '.preencheString(getByTagName($pfisica,'cdoedttl'),11);	
-	$linha .= 'U.F.: '.preencheString(getByTagName($pfisica,'cdufdttl'),16);	
 	escreveLinha( $linha );
-	
-	$linha = preencheString('Data Emi.: ',60,' ','D');	
+	$linha = '   Org.Emi.: '.preencheString(getByTagName($pfisica,'cdoedttl'),11);	
+	$linha .= 'U.F.: '.preencheString(getByTagName($pfisica,'cdufdttl'),17);	
+	$linha .= preencheString('Data Emi.: ',13,' ','D');	
 	$linha .= preencheString(getByTagName($pfisica,'dtemdttl'),16);	
 	escreveLinha( $linha );
 	
@@ -215,7 +228,6 @@
 	escreveLinha( $linha );
 	
 	$linha = ' Curso Superior:  '.preencheString(getByTagName($pfisica,'cdfrmttl').'-'.getByTagName($pfisica,'rsfrmttl'),19);	
-	$linha .= ' Certificado:  '.preencheString(getByTagName($pfisica,'nrcertif'),25);	
 	escreveLinha( $linha );
 	
 	$linha = '  Nome Talao: '.preencheString(getByTagName($pfisica,'nmtalttl'),40);	
@@ -430,8 +442,9 @@
 		escreveLinha( $linha );
 		
 		$linha = 'Documento: '.preencheString(getByTagName($conjuge,'tpdoccje').' '.getByTagName($conjuge,'nrdoccje'),15);	
-		$linha .= 'Org.Emi.: '.preencheString(getByTagName($conjuge,'cdoedcje'),7);	
-		$linha .= 'U.F.: '.preencheString(getByTagName($conjuge,'cdufdcje'),4);	
+		escreveLinha( $linha );
+		$linha  = ' Org.Emi.: '.preencheString(getByTagName($conjuge,'cdoedcje'),7);	
+		$linha .= 'U.F.: '.preencheString(getByTagName($conjuge,'cdufdcje'),29);	
 		$linha .= 'Data Emi.: '.preencheString(getByTagName($conjuge,'dtemdcje'),12);	
 		escreveLinha( $linha );
 		
@@ -546,11 +559,10 @@
 			escreveLinha( $linha );
 			
 			$linha = '  Documento: '.preencheString(getByTagName($responsavel->tags,'tpdeiden').' - '.getByTagName($responsavel->tags,'nridenti'),19);	
-			$linha .= 'Org.Emi.: '.preencheString(getByTagName($responsavel->tags,'dsorgemi'),8);	
-			$linha .= 'U.F.: '.preencheString(getByTagName($responsavel->tags,'cdufiden'),22);	
 			escreveLinha( $linha );
-			
-			$linha = preencheString('Data Emi.: ',55,' ','D');	
+			$linha  = ' Org.Emi.: '.preencheString(getByTagName($responsavel->tags,'dsorgemi'),8);	
+			$linha .= 'U.F.: '.preencheString(getByTagName($responsavel->tags,'cdufiden'),22);	
+			$linha .= preencheString('Data Emi.: ',12,' ','D');	
 			$linha .= preencheString(getByTagName($responsavel->tags,'dtemiden'),22);	
 			escreveLinha( $linha );
 			
@@ -611,10 +623,12 @@
 			escreveLinha( $linha );
 			
 			$linha = '  Documento: '.preencheString(getByTagName($representante->tags,'tpdocava').' '.getByTagName($representante->tags,'nrdocava'),18);	
-			$linha .= ' Org.Emi.: '.preencheString(getByTagName($representante->tags,'cdoeddoc'),5);	
+			escreveLinha( $linha );
+			$linha  = ' Org.Emi.: '.preencheString(getByTagName($representante->tags,'cdoeddoc'),5);	
 			$linha .= ' UF: '.preencheString(getByTagName($representante->tags,'cdufddoc'),2);	
 			$linha .= ' Data Emi.: '.preencheString(getByTagName($representante->tags,'dtemddoc'),12);	
 			escreveLinha( $linha );
+			escreveLinha( '');
 						
 			$linha = 'Data Nascimento: '.preencheString(getByTagName($representante->tags,'dtnascto'),13);	
 			$linha .= 'Responsab. Legal: '.preencheString(getByTagName($representante->tags,'inhabmen'),2);	
@@ -805,13 +819,13 @@
 	//********************** Pessoa exposta politicamente **********************************
 	if ($fichaCadastralComDeclaracaoPEP == true) {	
 	
-		if (getByTagName($pfisica,'inpolexp') <> 2) {
+		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			$GLOBALS['numLinha']	= 70;
 			pulaLinha(2);
 			escreve('               DECLARACAO DE PESSOA EXPOSTA POLITICAMENTE – PEP');
 			pulaLinha(3);
-		}
-		if (getByTagName($pfisica,'inpolexp') == 1) {
+			
 			if (getByTagName($comercial,'tpexposto') == 1) {
 				
 				$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador ' . 
@@ -824,7 +838,11 @@
 				escreve('Data Início do Exercício: ' . getByTagName($comercial,'dtinicio'));			
 				escreve('Data Fim do Exercício: '    . getByTagName($comercial,'dttermino'));			
 				escreve('Empresa/Órgão Público: '    . getByTagName($comercial,'nmempresa'));			
+				
+				if(getByTagName($comercial,'nrcnpj_empresa') != "0"){
 				escreve('CNPJ: '                     . formatar(getByTagName($comercial,'nrcnpj_empresa'),'cnpj',true));			
+				}
+				
 				pulaLinha(4);
 				escreveCidadeData(getByTagName($registros,'dscidade')); // Blumenau, 20 de janeiro de 2016.
 				pulaLinha(4);
@@ -855,6 +873,7 @@
 				escreve('Nome do Relacionado: ' . getByTagName($comercial,'nmpolitico'));			
 				escreve('CPF: ' . formatar(getByTagName($comercial,'nrcpf_politico'),'cpf',true));			
 				escreve('Cargo ou Função: ' . getByTagName($comercial,'dsdocupa'));			
+				escreve('Empresa: '    . getByTagName($comercial,'nmempresa'));	
 				escreve('Tipo de Relacionamento/Ligação: ' . getByTagName($comercial,'dsrelacionamento'));			
 
 				pulaLinha(4);
@@ -863,31 +882,10 @@
 				escreve('                      ________________________________                      ');			
 				escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
 				
-				pulaLinha(38 - $qtdLinhas);
+				pulaLinha(37 - $qtdLinhas);
 				escreveRodape();
 			}
 
-		} else if (getByTagName($pfisica,'inpolexp') == 0) {
-			
-			//	Declaro que eu, PDTNX UFSMMZRR IV URTPS, portador 
-			//do CPF 030.320.949-68, não sou uma pessoa exposta politicamente, nos termos 
-			//dos normativos em vigor.
-			//	Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da 
-			//presente condição.
-			
-			$qtdLinhas = escreveJustificado('    Declaro que eu, ' . getByTagName($comercial,'nmextttl') . ', portador do CPF ' . getByTagName($pfisica,'nrcpfcgc') . ', titular da conta ' . getByTagName($registros,'nrdconta') . 
-											', não sou uma pessoa exposta politicamente, nos termos dos normativos em vigor.');
-			pulaLinha(2);
-			$qtdLinhas+= escreveJustificado('    Declaro, ainda, que comunicarei a Cooperativa qualquer alteração da presente condição.');
-			pulaLinha(4);
-			escreveCidadeData(getByTagName($registros,'dscidade'));
-			pulaLinha(4);
-			escreve('                      ________________________________                      ');
-			escreveLinha(preencheString(getByTagName($comercial,'nmextttl'), 76, ' ', 'C'));
-			
-			pulaLinha(44 - $qtdLinhas);
-			
-			escreveRodape();
 		}
 	}
 	//********************** FIM Pessoa exposta politicamente **********************************
