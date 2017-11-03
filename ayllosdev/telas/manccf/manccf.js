@@ -1,4 +1,5 @@
 /*!
+/*!
  * FONTE        : manccf.js
  * CRIAÇÃO      : Gabriel Capoia (DB1) 
  * DATA CRIAÇÃO : 11/01/2013
@@ -7,6 +8,8 @@
  * ALTERAÇÕES   : 23/03/2016 - Alterado a funcao manterrotina pois nao estava passando opcao
  *                             ocasionando problemas de permissionamento do operador
  *                             (Tiago SD)
+ *
+ *                29/08/2016 - #481330 Ajustes de navegação, validações e layout (Carlos)
  *
  * --------------
  */
@@ -62,8 +65,8 @@ function estadoInicial() {
 	
 	cTodosCabecalho.limpaFormulario();
 	
-	removeOpacidade('frmCab');
-
+	removeOpacidade('frmCab');	
+	
 	return false;
 	
 }
@@ -119,6 +122,20 @@ function formataCabecalho() {
 	layoutPadrao();
 	// controlaPesquisas();
 	return false;	
+}
+
+/* Alterna a situação do botão de refazer regularização conforme a situação do cheque */
+function clicouCheque(flgctitg) {	
+
+	if (flgctitg != 1) {
+		$('#btRefazer').trocaClass('botao','botaoDesativado');
+		$('#btRefazer').removeAttr('onclick');
+	} else {
+		$('#btRefazer').trocaClass('botaoDesativado','botao');
+		$('#btRefazer').attr('onclick','RefazRegulariza()');
+	}
+
+    return false;
 }
 
 function selecionaCheque() {
@@ -185,8 +202,13 @@ function btnVoltar() {
 function buscaContrato() {
 
 	showMsgAguardo('Aguarde, consultando Cheques...');
-
+    
 	carregaDados();
+	
+	buscaContrato2();
+}
+
+function buscaContrato2() {	
 	
 	msgconta = "";
 			
@@ -210,7 +232,8 @@ function buscaContrato() {
 						try {
 							$('#divTabela').html(response);		
 							$('#nrdconta','#'+frmCab).desabilitaCampo();	// Daniel	
-							$('input,select', '#frmCab').removeClass('campoErro');	
+							$('input,select', '#frmCab').removeClass('campoErro');							
+							$('#btRefazer').trocaClass('botao',    'botaoDesativado');
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
@@ -262,7 +285,7 @@ function formataTabela() {
 	arrayAlinha[6] = 'right';	
 	arrayAlinha[7] = 'center';	
 	arrayAlinha[8] = 'center';	
-	arrayAlinha[9] = 'left';	
+	arrayAlinha[9] = 'center';	
 	arrayAlinha[10] = 'center';		
 	arrayAlinha[11] = 'center';	
 	
@@ -284,15 +307,17 @@ function validaSelecao(linhaSelec){
     $('input:checkbox:checked', divTabela).each(function() {
         iqtSelecao++;
     });    
-
-    if (iqtSelecao > 0) {
+	
+    if (iqtSelecao > 0) {		
 		$('#btTitular').trocaClass('botao',    'botaoDesativado');
 		$('#btRegulariza').trocaClass('botao', 'botaoDesativado');
 		$('#btRefazer').trocaClass('botao',    'botaoDesativado');		
     } else {
-	    $('#btTitular').trocaClass('botaoDesativado',   'botao');
-		$('#btRegulariza').trocaClass('botaoDesativado','botao');
-		$('#btRefazer').trocaClass('botaoDesativado',   'botao');		
+	    $('#btTitular').trocaClass('botaoDesativado',   'botao');		
+        $('#btRegulariza').trocaClass('botaoDesativado','botao');	
+
+		//Decide se o botao de reenvio de regularizacao fica ativo
+		clicouCheque($(linhaSelec).parent().children('#flgctitg').attr('value'));
     }
 
     if (iqtSelecao === 0)
@@ -426,7 +451,7 @@ function formataTitular() {
 }
 
 function selecionaTitular() {
-	
+
 	if ( $('table > tbody > tr', '#divTitular').hasClass('corSelecao') ) {
 					
 		$('table > tbody > tr', '#divTitular').each( function() {
@@ -445,7 +470,14 @@ function Regulariza(){
     if (iqtSelecao > 0) return false; // Só prossegue se não selecionar nenhum cheque
 
     selecionaCheque();
-    showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'regulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');
+
+	// Se nao selecionou cheque
+	if (aux_mensagem == undefined) {		   	    		
+		showError('error','Selecione um cheque.','Alerta - Ayllos','registro.focus();');
+		return false;
+	}	
+	
+	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'regulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
 
     return false;
 }
@@ -455,12 +487,18 @@ function RefazRegulariza(){
     if (iqtSelecao > 0) return false; // Só prossegue se não selecionar nenhum cheque
 
     selecionaCheque();
-    aux_mensagem = 'Confirma reenvio para regulariza&ccedil;&atilde;o do Cheque: ' + mascara(nrdocmtosrt, '###.###.#') + ' ?';
-    showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'refazRegulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');
+
+	// Se nao selecionou cheque
+	if (aux_mensagem == undefined) {		   	    		
+		showError('error','Selecione um cheque.','Alerta - Ayllos','registro.focus();');
+		return false;
+	}		
+
+	aux_mensagem = 'Confirma reenvio para regulariza&ccedil;&atilde;o do Cheque: ' + mascara(nrdocmtosrt, '###.###.#') + ' ?';
+	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'refazRegulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');
 
     return false;
 }
-
 
 function manterRotina( operacao ) {
 		
@@ -499,6 +537,7 @@ function manterRotina( operacao ) {
             success: function(response) {
                 try {
                     eval(response);
+					buscaContrato2();
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
