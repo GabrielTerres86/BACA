@@ -12,6 +12,10 @@
  * 004: [12/11/2012] Daniel Zimmermann    : Alterado chamadas do procedimento controlaPesquisas() para evitar bloqueio 
  *											tela quando efetuado busca atraves lupa.
  * 005: [01/09/2015] Gabriel (RKAM)       : Reformulacao cadastral. 
+ * 006: [03/03/2017] Adriano              : Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao - SD 614408.
+ * 007: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
  */
 
 // Definindo variáveis globais 
@@ -253,7 +257,7 @@ function controlaLayout(operacao) {
 	$('#divConteudoOpcao').css('height',altura);
 	
 	// FIELDSET IDENDIFICAÇÃO 
-	var rotulos_1     = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"]','#'+nomeForm );	
+	var rotulos_1 = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"],label[for="nrdoccje"]', '#' + nomeForm);
 	var rCPF          = $('label[for="nrcpfcjg"]','#'+nomeForm );
 	var rDatas_1      = $('label[for="dtnasccj"],label[for="dtemdcje"]','#'+nomeForm );
 	var rLinha_1      = $('label[for="cdoedcje"],label[for="cdufdcje"]','#'+nomeForm );
@@ -280,7 +284,7 @@ function controlaLayout(operacao) {
 	cNome.addClass('alphanum').css('width','306px').attr('maxlength','40');
 	cDataNasc.addClass('data');	
 	cTpDocumento.css('width','45px');
-	cDocumento.addClass('alphanum').css('width','85px').attr('maxlength','11');
+	cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 	cOrgEmissor.addClass('alphanum').css('width','45px').attr('maxlength','5');
 	cEstados.css('width','45px');
 	cDataEmissao.addClass('data');
@@ -297,7 +301,7 @@ function controlaLayout(operacao) {
 	cCodigo_2.addClass('codigo pesquisa');
 	
 // FIELDSET INF. PROFISSIONAIS	
-	var rotulos_3	= $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"]','#'+nomeForm );	
+	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
 	var rColuna_2	= $('label[for="nmextemp"],label[for="dsproftl"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
 	var rLinha_3   	= $('label[for="nrramemp"],label[for="vlsalari"]','#'+nomeForm );
 	var cColuna_1  	= $('#tpcttrab,#nrdocnpj,#cdturnos,#cdnvlcgo','#'+nomeForm );
@@ -592,22 +596,18 @@ function controlaPesquisas() {
 
 				// Natureza Ocupação
 				} else if ( campoAnterior == 'cdnatopc' ) {
-					procedure	= 'busca_nat_ocupacao';
-					titulo      = 'Natureza da Ocupa&ccedil;&atilde;o';
-					qtReg		= '30';
-					filtrosPesq	= 'Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;';
+					filtrosPesq = "Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;";
 					colunas 	= 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
+                    mostraPesquisa("ZOOM0001", "BUSCANATOCU", "Natureza da Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
+
 					return false;
 				
 				// Código Ocupação
 				} else if ( campoAnterior == 'cdocpcje' ) {
-					procedure	= 'busca_ocupacao';
-					titulo      = 'Ocupa&ccedil;&atilde;o';
-					qtReg		= '30';
+					
 					filtrosPesq	= 'Cód. Ocupação;cdocpcje;30px;S;0|Ocupação;rsdocupa;200px;S;';
 					colunas 	= 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
+					mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
 					return false;
 				}					
 			}
@@ -639,20 +639,18 @@ function controlaPesquisas() {
 	
 	// Natureza Ocupação
 	$('#cdnatopc','#'+nomeForm).unbind('change').bind('change', function() {
-		titulo      = 'Natureza Ocupação';
-		procedure   = 'busca_nat_ocupacao';
 		filtrosDesc = '';
-		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'rsnatocp',$(this).val(),'rsnatocp',filtrosDesc,nomeForm);
+        buscaDescricao("ZOOM0001", "BUSCANATOCU", "Natureza Ocupação", $(this).attr('name'), 'rsnatocp', $(this).val(), 'rsnatocp', filtrosDesc, nomeForm);
 		return false;
 	});	
 	
 	// Ocupação
 	$('#cdocpcje','#'+nomeForm).unbind('change').bind('change',function() {
-		titulo      = 'Ocupação';
-		procedure   = 'busca_ocupacao';
+		
 		filtrosDesc = '';
-		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'rsdocupa',$(this).val(),'dsdocupa',filtrosDesc,nomeForm);
+        buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'rsdocupa', $(this).val(), 'dsdocupa', filtrosDesc, nomeForm);
 		return false;
+
 	});		
 }
 
