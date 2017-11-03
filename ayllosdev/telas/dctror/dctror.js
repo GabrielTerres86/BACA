@@ -8,6 +8,7 @@
  * 000: [29/06/2012] Jorge Hamaguchi  (CECRED): Ajuste para novo esquema de impressao em funcao Gera_Impressao()
  * 001: [03/06/2016] Lucas Ranghetti  (CECRED): Incluir validação de agencia e de conta migrada (Lucas Ranghetti #449707)
  * 002: [24/06/2016] Lucas Ranghetti  (CECRED): Ajustado para chamar formulario de impressão para Opcao "A" (#448006 )
+ * 003: [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -770,8 +771,12 @@ function formataCabecalho() {
 		
 
 	});		
-	
-	
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+    }
+
 	layoutPadrao();
 	$('.conta').trigger('blur');
 	controlaPesquisas();

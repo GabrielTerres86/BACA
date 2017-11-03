@@ -1,7 +1,7 @@
 /*****************************************************************************************
  Fonte: inss.js                                                   
  Autor: Adriano                                                   
- Data : Maio/2013             					   Última Alteração: 24/11/2015           
+ Data : Maio/2013             					   Última Alteração: 11/04/2017
                                                                   
  Objetivo  : Biblioteca de funções da tela INSS                 
                                                                   
@@ -26,7 +26,9 @@
              01/12/2015 - Adicionado alerta nas telas de consulta para 
                           caso a comprovacao de vida esteja vencida.
                           Projeto 255 (Lombardi).
-						  
+
+             11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+
 ******************************************************************************************/
 
 var arrayTitulares        = new Array();
@@ -126,13 +128,23 @@ function formataOpcoes(opcao){
 		case 'L':
 		
 			formataOpcoesLog();
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCabInss").val() == 1) {
+                $("#nrdconta_log","#frmOpcoes").val($("#crm_nrdconta","#frmCabInss").val());
+            }
 		
 		break;
 		
 		default:
 			
 			formataOpcoesBeneficio();
-			
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCabInss").val() == 1) {
+                $("#nrcpfcgc","#frmOpcoes").val($("#crm_nrcpfcgc","#frmCabInss").val());
+            }
+
 		break;
 					
 	}

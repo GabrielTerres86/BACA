@@ -39,6 +39,9 @@
 //***                                                                  ***//
 //***             05/12/2016 - Incorporação Transulcred                ***//
 //***                          (Guilherme/SUPERO)                      ***//
+//***																   ***//	
+//***             11/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
+//***                          do CRM. (Jaison/Andrino)				   ***//
 //***                                                                  ***//
 //***			  31/11/2017 - Ajustes para exibir TEDs estornadas		 ***//
 //***			               devido a analise de fraude                ***//
@@ -62,6 +65,11 @@ $(document).ready(function () {
 
     if (!carregouOpcoes)
         carregaOpcoes();
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmLogSPB").val() == 1) {
+        $("#nrdconta","#frmLogSPB").val($("#crm_nrdconta","#frmLogSPB").val());
+    }
 
     highlightObjFocus($('#frmLogSPB'));
 

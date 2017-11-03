@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 31/07/2013 - Implementada opcao A da tela EXTRAT (Lucas).
  * -------------- 19/09/2013 - Implementada opcao AC da tela EXTRAT (Tiago).
  *				  14/06/2016 - No form frmOpcao trocar display para block (Lucas Ranghetti #463356)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 ?>
 
@@ -22,7 +23,9 @@
 	<br style="clear:both" />	
 </form>
 
-<form id="frmOpcao" name="frmOpcao" class="formulario" onSubmit="return false;" style="display:block;">	
+<form id="frmOpcao" name="frmOpcao" class="formulario" onSubmit="return false;" style="display:block;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 	<div id="divOpcao" name="divOpcao" style="display:block;">	
 		<fieldset>
 			<legend><? echo utf8ToHtml('Pesquisa de Extrato') ?></legend>

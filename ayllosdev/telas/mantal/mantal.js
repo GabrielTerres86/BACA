@@ -8,6 +8,7 @@
  * 000: [02/07/2012] Jorge Hamaguchi  (CECRED): Alterado funcao Gera_Impressao(), novo esquema de impressao.
  * 001: [06/06/2016] Lucas Ranghetti  (CECRED): Incluir validação para o campo cAgencia e validar agencia ( #462172)
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
+ * 003: [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -66,6 +67,11 @@ function estadoInicial() {
 
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+    }
 	
 	cBanco.attr('aux','');
 	cConta.focus();

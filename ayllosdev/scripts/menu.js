@@ -1,7 +1,7 @@
 /*****************************************************************************
  Fonte: menu.js                                                     
  Autor: David                                                       
- Data : Julho/2007        			Ultima Alteracoes: 30/11/2015             
+ Data : Julho/2007        			Ultima Alteracoes: 07/04/2017
                                                                     
  Objetivo  : Funções para controle do menu                           
              Necessita a chamada de jquery.js e funcoes.js           
@@ -19,6 +19,9 @@
               03/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
 			  
 			  30/11/2015 - Evitar erros na chamada da AUTORI (Gabriel-RKAM)
+
+			  07/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+
 ***************************************************************************/
 
 $(document).ready(function() {
@@ -113,11 +116,11 @@ $(document).ready(function() {
 		if ($('#flgdsenh','#frmAcesso').val() == "yes" && $('#telatual','#frmAcesso').val() == "") {	
 			if (existeTela("mudsen")) {
 				direcionaTela("mudsen",false);		
-			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela("atenda")) {
-				direcionaTela("atenda",false);		
+			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela(glb_nmdatela)) {
+				direcionaTela(glb_nmdatela,false);		
 			}
-		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela("atenda")) {
-			direcionaTela("atenda",false);
+		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela(glb_nmdatela)) {
+			direcionaTela(glb_nmdatela,false);
 		}
 	}
 	

@@ -1,13 +1,14 @@
 <?php
 /*!
  * FONTE        : form_cabecalho.php
- * CRIAÇÃO      : Gabriel Capoia (DB1)					Última alteração: 29/07/2016
+ * CRIAÇÃO      : Gabriel Capoia (DB1)					Última alteração: 10/04/2017
  * DATA CRIAÇÃO : 11/07/2013
  * OBJETIVO     : Cabeçalho para a tela Avalis
  * --------------
- * ALTERAÇÕES   : 21/11/2013 - Removido o F7 devido ao uso do CONTAINS (Guilherme).		
+ * ALTERAÇÕES   : 21/11/2013 - Removido o F7 devido ao uso do CONTAINS (Guilherme).
  *				  23/07/2015 - Ajuste para incluir a chamada das includes de controle - Jéssica (DB1).
  *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 
 	require_once('../../includes/config.php');
@@ -17,7 +18,11 @@
 	isPostMethod();
 
 ?>
-
+<form id="frmCRM" name="frmCRM" onsubmit="return false;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
+	<input type="hidden" name="crm_nrcpfcgc" id="crm_nrcpfcgc" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRCPFCGC']; ?>" />
+</form>
 <form id="frmCab" name="frmCab" class="formulario cabecalho">
 				
 	

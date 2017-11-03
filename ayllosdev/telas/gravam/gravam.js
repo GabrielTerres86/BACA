@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: gravam.js                                                  
  Autor: Andrei - RKAM
- Data : Maio/2016                Última Alteração: 10/08/2016
+ Data : Maio/2016                Última Alteração: 11/04/2017
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela GRAVAM
                                                                    	 
@@ -14,7 +14,8 @@
 			 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES.
 						  Adicionada validações com a senha do coordenador para 
 						  as opções 'M', 'A' e 'B'. Projeto 369 (Lombardi).
-						  
+
+             11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
 ************************************************************************/
 
 var rating = new Object();
@@ -92,7 +93,11 @@ function formataFiltro() {
     // Desabilitar a opção
     $("#cddopcao", "#frmCab").desabilitaCampo();
 
-    
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmFiltro").val($("#crm_nrdconta","#frmCab").val());
+    }
+
     /*##########################################
 
         Formata os campos da divFiltroConta
@@ -501,7 +506,12 @@ function formataFiltroHistorico() {
 
     // Desabilitar a opção
     $("#cddopcao", "#frmCab").desabilitaCampo();
-    
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmFiltro").val($("#crm_nrdconta","#frmCab").val());
+    }
+
     /*##########################################
 
         Formata os campos da divFiltroHistorico

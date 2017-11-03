@@ -6,11 +6,15 @@
  * OBJETIVO     : Cabeçalho para a tela CHEQUE
  * --------------
  * ALTERAÇÕES   : 10/06/2016 - Incluir style nos forms (Lucas Ranghetti #422753)
+ *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */ 
 ?>
 
-<form id="frmCabCheque" name="frmCabCheque" class="formulario cabecalho" style="width: 720px;">	
+<form id="frmCabCheque" name="frmCabCheque" class="formulario cabecalho" style="width: 720px;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 	
 	<label for="nrdconta">Conta:</label>
 	<input type="text" id="nrdconta" name="nrdconta" value="<? echo getByTagName($registro,'nrdconta') ?>" alt="Informe o nro. da conta do cooperado." />
