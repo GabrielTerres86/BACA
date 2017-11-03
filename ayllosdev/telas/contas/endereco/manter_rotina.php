@@ -15,6 +15,7 @@
  * 005: [01/12/2016] Renato Darosci (Supero): P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                                            pois a BO não utiliza o mesmo.
  * 006: [08/05/2017] Rafael Monteiro (Mouts): Remover caracteres especiais do campo complemento do endereco. Chamado 664305.
+ * 007: [27/09/2017] Kelvin  (CECRED)    	: Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
  */
 
     session_start();
@@ -35,13 +36,13 @@
 	$dsendere = (isset($_POST['dsendere'])) ? $_POST['dsendere'] : '';
 	$nrendere = (isset($_POST['nrendere'])) ? $_POST['nrendere'] : '';
 	$complend = (isset($_POST['complend'])) ? $_POST['complend'] : '';
-	$nrdoapto = (isset($_POST['nrdoapto'])) ? $_POST['nrdoapto'] : '';
-	$cddbloco = (isset($_POST['cddbloco'])) ? $_POST['cddbloco'] : '';
+	$nrdoapto = 0;
+	$cddbloco = "";
 	$nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
 	$nrcepend = (isset($_POST['nrcepend'])) ? $_POST['nrcepend'] : '';
 	$nmcidade = (isset($_POST['nmcidade'])) ? $_POST['nmcidade'] : '';
 	$cdufende = (isset($_POST['cdufende'])) ? $_POST['cdufende'] : '';
-	$nrcxapst = (isset($_POST['nrcxapst'])) ? $_POST['nrcxapst'] : '';
+	$nrcxapst = 0;
 	$dtinires = (isset($_POST['dtinires'])) ? $_POST['dtinires'] : '';
 	$nranores = (isset($_POST['nranores'])) ? $_POST['nranores'] : '';
 	$qtprebem = (isset($_POST['qtprebem'])) ? $_POST['qtprebem'] :  0;
@@ -51,7 +52,7 @@
 	$idorigem = (isset($_POST['idorigem'])) ? $_POST['idorigem'] : 0;
 
 	$nrcepend = str_replace('-','',$nrcepend);
-	
+
 	if(in_array($operacao,array('AV'))) validaDados($tpendass);
 
 	// Dependendo da operação, chamo uma procedure diferente
@@ -147,7 +148,7 @@
 		echo 'hideMsgAguardo();bloqueiaFundo(divRotina);';
 		exit();	
 	}
-
+	
 	// Se é Validação
 	if( $operacao == 'AV' ) {
 
@@ -200,7 +201,7 @@
 		
 		//Campo imóvel
 		if ( $GLOBALS['incasprp'] == "" ) exibirErro('error','Tipo de imóvel inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'incasprp\',\'frmEndereco\')',false);
-
+	
 		//Campo CEP
 		if ( (( $GLOBALS['nrcepend'] == "" ) || ( $GLOBALS['nrcepend'] == 0 ))  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','CEP inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcepend\',\'frmEndereco\')',false);
 

@@ -11,6 +11,8 @@
  * 002: [05/07/2011] Henrique Pettenuci       Adicionado os campos nrdoapto e cddbloco.
  * 003: [22/07/2015] Gabriel 		   (RKAM) Reformulacao cadastral.
  * 004: [20/04/2016] Heitor            (RKAM) Limitado o campo NRENDERE em 5 posicoes, chamado 435477 
+ * 005: [15/09/2017] Kelvin			   (CECRED) Alterações referente a melhoria 339.
+ * 006: [27/09/2017] Kelvin 		   (CECRED) Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
  */
 
 var nomeForm = 'frmEndereco'; // Nome do Formulário 
@@ -175,13 +177,10 @@ function manterRotina(operacao , nomeField) {
 		var dsendere = '';
 		var nrendere = '';
 		var complend = '';
-		var nrdoapto = '';
-		var cddbloco = '';
 		var nmbairro = '';
 		var nrcepend = '';
 		var nmcidade = '';
 		var cdufende = '';
-		var nrcxapst = '';
 		var dtinires = '';	
 		var nranores = '';	
 		var qtprebem = 0;
@@ -200,27 +199,21 @@ function manterRotina(operacao , nomeField) {
 		var dsendere = $('#dsendere','#'+nomeField).val();
 		var nrendere = $('#nrendere','#'+nomeField).val();
 		var complend = $('#complend','#'+nomeField).val();
-		var nrdoapto = $('#nrdoapto','#'+nomeField).val();
-		var cddbloco = $('#cddbloco','#'+nomeField).val();
 		var nmbairro = $('#nmbairro','#'+nomeField).val();
 		var nrcepend = $('#nrcepend','#'+nomeField).val();
 		var nmcidade = $('#nmcidade','#'+nomeField).val();
 		var cdufende = $('#cdufende','#'+nomeField).val();
-		var nrcxapst = $('#nrcxapst','#'+nomeField).val();
 		var idorigem = $('#idorigem','#'+nomeField).val();
 		
 	}
 	
 	nrendere = normalizaNumero( nrendere );
 	nrcepend = normalizaNumero( nrcepend );
-	nrcxapst = normalizaNumero( nrcxapst );
-	nrdoapto = normalizaNumero( nrdoapto );
 	
 	dsendere = trim( dsendere );
 	complend = trim( complend );
 	nmbairro = trim( nmbairro );
 	nmcidade = trim( nmcidade );
-	cddbloco = trim( cddbloco );
 	
 	if (nomeField == 'fieldResidencial') {
 		var tpendass = (inpessoa == 1) ? 10 : 9;
@@ -241,12 +234,11 @@ function manterRotina(operacao , nomeField) {
 			dsendere: dsendere, nrendere: nrendere,
 			nmbairro: nmbairro, nrcepend: nrcepend,
 			nmcidade: nmcidade, cdufende: cdufende,
-			nrcxapst: nrcxapst, complend: complend,
-			nrdoapto: nrdoapto, cddbloco: cddbloco,
-			operacao: operacao, dtinires: dtinires,
-			nranores: nranores, qtprebem: qtprebem,
-			vlprebem: vlprebem, tpendass: tpendass,
-			flgcadas: flgcadas, idorigem: idorigem,
+			complend: complend, operacao: operacao, 
+			dtinires: dtinires, nranores: nranores, 
+			qtprebem: qtprebem, vlprebem: vlprebem, 
+			tpendass: tpendass, flgcadas: flgcadas, 
+			idorigem: idorigem,
 			redirect: 'script_ajax'
 		},                                                          
 		error: function(objAjax,responseError,objExcept) {          
@@ -307,9 +299,6 @@ function controlaLayout(operacao) {
 	var rEnd	= $('label[for="dsendere"],label[for="ib_dsendere"]','#'+nomeForm);
 	var rNum	= $('label[for="nrendere"],label[for="ib_nrendere"]','#'+nomeForm);
 	var rCom	= $('label[for="complend"],label[for="ib_complend"]','#'+nomeForm);
-	var rApt	= $('label[for="nrdoapto"],label[for="ib_nrdoapto"]','#'+nomeForm);
-	var rBlo	= $('label[for="cddbloco"],label[for="ib_cddbloco"]','#'+nomeForm);
-	var rCax	= $('label[for="nrcxapst"],label[for="ib_nrcxapst"]','#'+nomeForm);	
 	var rBai	= $('label[for="nmbairro"],label[for="ib_nmbairro"]','#'+nomeForm);
 	var rEst	= $('label[for="cdufende"],label[for="ib_cdufende"]','#'+nomeForm);	
 	var rCid	= $('label[for="nmcidade"],label[for="ib_nmcidade"]','#'+nomeForm);
@@ -319,10 +308,7 @@ function controlaLayout(operacao) {
 	rEnd.addClass('rotulo-linha').css('width','25px');
 	rNum.addClass('rotulo-linha').css('width','15px');
 	rCom.addClass('rotulo').css('width','55px');
-	rApt.addClass('rotulo-linha').css('width','35px');
-	rBlo.addClass('rotulo-linha').css('width','35px');
 	rBai.addClass('rotulo').css('width','55px');
-	rCax.addClass('rotulo-linha').css('width','52px');
 	rCid.addClass('rotulo').css('width','55px');
 	rEst.addClass('rotulo-linha').css('width','52px');
 	rOri.addClass('rotulo').css('width','55px');
@@ -347,19 +333,15 @@ function controlaLayout(operacao) {
 	var cEnd	= $('#dsendere,#ib_dsendere','#'+nomeForm);
 	var cNum	= $('#nrendere,#ib_nrendere','#'+nomeForm);
 	var cCom	= $('#complend,#ib_complend','#'+nomeForm);
-	var cApt	= $('#nrdoapto,#ib_nrdoapto','#'+nomeForm);
-	var cBlo	= $('#cddbloco,#ib_cddbloco','#'+nomeForm);
-	var cCax	= $('#nrcxapst,#ib_nrcxapst','#'+nomeForm);		
 	var cBai	= $('#nmbairro,#ib_nmbairro','#'+nomeForm);
 	var cEst	= $('#cdufende,#ib_cdufende','#'+nomeForm);	
 	var cCid	= $('#nmcidade,#ib_nmcidade','#'+nomeForm);
 	var cOri	= $('#idorigem,#ib_idorigem','#'+nomeForm);
 
+
 	cCep.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
 	cEnd.addClass('alphanum').css('width','240px').attr('maxlength','40');
 	cCom.addClass('alphanum').css('width','274px').attr('maxlength','40');	
-	cApt.addClass('numerocasa').css('width','35px').attr('maxlength','4');
-	cBlo.addClass('alphanum').css('width','30px').attr('maxlength','3');
 	cBai.addClass('alphanum').css('width','300px').attr('maxlength','40');	
 	cEst.css('width','62px');
 	cCid.addClass('alphanum').css('width','300px').attr('maxlength','25');
@@ -367,11 +349,9 @@ function controlaLayout(operacao) {
 	
 	if ( $.browser.msie ) {
 		cNum.addClass('numerocasa').css('width','44px').attr('maxlength','6');
-		cCax.addClass('caixapostal').css('width','58px').attr('maxlength','6');	
 
 	} else {
 		cNum.addClass('numerocasa').css('width','47px').attr('maxlength','6');
-		cCax.addClass('caixapostal').css('width','62px').attr('maxlength','6');	
 	}
 	
 	switch(operacao) {	
@@ -394,7 +374,6 @@ function controlaLayout(operacao) {
 	
 	cCep.trigger('blur');
 	cNum.trigger('blur');
-	cCax.trigger('blur');
    
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
@@ -418,6 +397,7 @@ function controlaPesquisas() {
 	// 2) o sexto campo é o campo q será focado após o retorno ao formulario de origem, que
 	// pelo requisito na maioria dos casos será o NUMERO do endereço	
 	var camposOrigem = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade';	
+	var camposCor = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade;idorigem';	
 	
 	/*-------------------------------------*/
 	/*       CONTROLE DAS PESQUISAS        */
@@ -497,16 +477,8 @@ function controlaPesquisas() {
 			$('#nranores','#'+nomeForm).val('');
 		}
 		return false;
-	});
-	
-	$("#nrcxapst","#fieldComplementar").unbind("keydown").bind("keydown",function(e) {
-		if (e.keyCode == 13) {
-			$("#btSalvar","#divBotoes").trigger("click");
-			return false;
-		}	
 	});	
 	
-
 }
 
 function controlaFoco(operacao) {

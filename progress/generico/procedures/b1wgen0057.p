@@ -40,6 +40,10 @@
 				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
 
+                 22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
+						      onde o telefone comercial do conjugue estava sendo
+							  carregado errado. PRJ339 (Kelvin).
+
 				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
 							  registro da crapttl. (PRJ339 - Reinert)
 .............................................................................*/
@@ -438,7 +442,8 @@ PROCEDURE Busca_Dados_Id:
                /* Telefone Comercial*/
                FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
-                                       craptfc.tptelefo = 3 NO-LOCK:
+                                       craptfc.tptelefo = 3				   AND
+									   craptfc.idseqttl = 1  NO-LOCK:
                    ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
 				          tt-crapcje.nrramemp = craptfc.nrdramal.
                END.

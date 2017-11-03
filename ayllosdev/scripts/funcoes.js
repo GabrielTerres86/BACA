@@ -103,7 +103,9 @@
  * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
  * 090: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
  * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
- */
+ * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
+ * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
+*/ 	 
 
 var UrlSite = parent.window.location.href.substr(0, parent.window.location.href.lastIndexOf("/") + 1); // Url do site
 var UrlImagens = UrlSite + "imagens/"; // Url para imagens     
@@ -119,94 +121,94 @@ var shift = false; 	// Variável lógica (boolean) glogal que indica se a tecla sh
 var control = false; 	// Variável lógica (boolean) glogal que indica se a tecla control está prescionada
 
 var glb_codigoOperadorLiberacao = 0; // Global com operador de liberacao
-
+	
 var possui_senha_internet = false; //Variavel para armazenar retorno da funcao de verificacao de senha de internet
 var idseqttl_senha_internet = 0; //Variavel para armazenar retorno da funcao de verificacao de senha de internet
 	
 $(document).ready(function () {
 
-    // 053
-    document.onhelp = new Function("return false"); // Previne a abertura do help no IE
+	// 053
+	document.onhelp = new Function("return false"); // Previne a abertura do help no IE
     window.onhelp = new Function("return false"); // Previne a abertura do help no IE
 
-    $("body").append('<div id="divAguardo"></div><div id="divError"></div><div id="divConfirm"></div><div id="divBloqueio"></div><div id="divF2"></div><div id="divUsoGenerico"></div><iframe src="' + UrlSite + 'blank.php" id="iframeBloqueio"></iframe>');
-
-    // Inicializo a variável divRotiva e divError com o respectivo seletor jQuery da div
-    // A qualquer momento pode-se alterar o valor da divRotina com a Rotina que está sendo implementada
-    // O valor do divError não tem motivos para ser alterado
+	$("body").append('<div id="divAguardo"></div><div id="divError"></div><div id="divConfirm"></div><div id="divBloqueio"></div><div id="divF2"></div><div id="divUsoGenerico"></div><iframe src="' + UrlSite + 'blank.php" id="iframeBloqueio"></iframe>');
+	
+	// Inicializo a variável divRotiva e divError com o respectivo seletor jQuery da div
+	// A qualquer momento pode-se alterar o valor da divRotina com a Rotina que está sendo implementada
+	// O valor do divError não tem motivos para ser alterado
     divRotina = $('#divRotina');
     divError = $('#divError');
     divConfirm = $('#divConfirm');
-
-    // Iniciliza tirando os eventos para posteriormente bindá-los corretamente
-    $(this).unbind('keyup').unbind('keydown').unbind('keypress');
-
+	
+	// Iniciliza tirando os eventos para posteriormente bindá-los corretamente
+	$(this).unbind('keyup').unbind('keydown').unbind('keypress');	
+	
     $(this).unbind("keydown.backspace").bind("keydown.backspace", function (e) {
-        if (getKeyValue(e) == 8) { // Tecla BACKSPACE
-            var targetType = e.target.tagName.toUpperCase();
-            // Permite a tecla BACKSPACE somente em campos INPUT e TEXTAREA e se estiverem habilitados para digitação			
-            if ((targetType == "INPUT" || targetType == "TEXTAREA") && !e.target.disabled && !e.target.readonly) return true;
-            return false;
-        }
-        return true;
-    });
-
+		if (getKeyValue(e) == 8) { // Tecla BACKSPACE
+			var targetType = e.target.tagName.toUpperCase();			
+			// Permite a tecla BACKSPACE somente em campos INPUT e TEXTAREA e se estiverem habilitados para digitação			
+			if ((targetType == "INPUT" || targetType == "TEXTAREA") && !e.target.disabled && !e.target.readonly) return true;							
+			return false; 
+		}		
+		return true;
+	});
+	
     $.ajaxSetup({ data: { sidlogin: $("#sidlogin", "#frmMenu").val() } });
-
-    /*!
+	
+	/*!
 	 * ALTERAÇÃO     : 022
 	 * OBJETIVO      : Prevenir o comportamento padrão do browser em relação as teclas F1 a F12, para posteriormente utilizar estas teclas para fins específicos 
 	 * FUNCIONAMENTO : Captura o evento da tecla pressionada e associa á função previneTeclasEspeciais funcionando para IE, Chrome e FF
-	 */
+	 */	
     $(this).keydown(previneTeclasEspeciais);
     function previneTeclasEspeciais(event) {
-        // Essecial para funcionar no IE 
-        var e = (window.event) ? window.event : event;
-        // Verifica se a tecla pressionada é F1 a F12 retirando a F5
+		// Essecial para funcionar no IE 
+		var e = (window.event) ? window.event : event;
+		// Verifica se a tecla pressionada é F1 a F12 retirando a F5
         if ((e.keyCode >= 112) && (e.keyCode <= 123) && (e.keyCode != 116)) {
             if ($.browser.msie) {
                 e.returnValue = false; // Previne o comportamento padrão no IE
                 e.cancelBubble = true;  // Previne o comportamento padrão no IE
                 e.keyCode = 0;     // Previne o comportamento padrão no IE
-                document.onhelp = new Function("return false"); // Previne a abertura do help no IE
+				document.onhelp = new Function("return false"); // Previne a abertura do help no IE
                 window.onhelp = new Function("return false"); // Previne a abertura do help no IE
-            } else {
-                e.stopPropagation(); // Previne o comportamento padrão nos browsers bons
-                e.preventDefault();  // Previne o comportamento padrão nos browsers bons
-            }
-        }
-    }
-
-    /*!
+			} else {
+				e.stopPropagation(); // Previne o comportamento padrão nos browsers bons
+				e.preventDefault();  // Previne o comportamento padrão nos browsers bons
+			}
+		}
+	}
+	
+	/*!
 	 * ALTERAÇÃO     : 035
 	 * OBJETIVO      : Controle de identificação se as teclas shift e control estão pressionadas
 	 * FUNCIONAMENTO : Ao pressionar qualquer tecla, o sistema verifica se é a shift/control, caso verdadeiro seta a variável global 
 	 *                 correspondente para TRUE. Ao liberar a tecla, o sistema verifica novamente se é shift/control, caso afirmativo
 	 *                 volta os valores das variáveiss globais correspondentes para FALSE.
-	 */
+	 */		
     $(this).keydown(function (e) {
         if (e.which == 16) { shift = true; } // Tecla Shift		
         if (e.which == 17) { control = true; } // Tecla Control
     }).keyup(function (e) {
         if (e.which == 16) { shift = false; } // Tecla Shift		
         if (e.which == 17) { control = false; } // Tecla Control
-    });
-
-    /*!
+	});
+	
+	/*!
 	 * ALTERAÇÃO  : 018 e 051
 	 * OBJETIVO   : Teclas de atalho para selecinar os registro nas tabelas pelo teclado, utilizando as setas direcionais "para cima" e "para baixo"
 	 * OBSERVAÇÃO : As tabelas devem estar criadas dentro do padrão adotado nas rotinas no módulo de CONTAS
-	 */
+	 */	
     $(this).keyup(function (e) {
-        var tecla = e.which;
+		var tecla = e.which;	
         if ((tecla == 38) || (tecla == 40)) {
-
-            var nrLinhaSelecao;
-            var divRegistro;
-            var divRegistros;
-
+			
+			var nrLinhaSelecao;	
+			var divRegistro;	
+			var divRegistros;	
+			
             if (divError.css('display') == 'block' || divConfirm.css('display') == 'block') {
-                return true;
+				return true;
             } else if ($('#divUsoGenerico').css('visibility') == 'visible') {
                 divRegistros = $('div.divRegistros', '#divUsoGenerico');
             } else if ($('#divRotina').css('visibility') == 'visible' && $('div.divRegistros', '#divRotina').length) {
@@ -215,41 +217,41 @@ $(document).ready(function () {
                 divRegistros = $('div.divRegistros', '#divMatric');
             } else {
                 if ($('#divRotina').css('visibility') == 'visible') return false;
-                divRegistros = $('div.divRegistros');
-            }
-
+				divRegistros = $('div.divRegistros');
+			}		
+				
             divRegistros.each(function () {
                 if ($(this).css('display') == 'block') {
-                    divRegistro = $(this);
-                }
-            });
-
-            var tabela = $('table', divRegistro);
-
-            var qtdeRegistros = $('table > tbody > tr', divRegistro).length;
-            // Se possui um ou nenhum registro, não fazer nada
+					divRegistro = $(this);
+				}				
+			});			
+			
+			var tabela = $('table', divRegistro);
+			
+			var qtdeRegistros = $('table > tbody > tr', divRegistro).length;
+			// Se possui um ou nenhum registro, não fazer nada
             if (qtdeRegistros > 1) {
-                // Descobre qual linha está selecionada
+				// Descobre qual linha está selecionada
                 $('table > tbody > tr', divRegistro).each(function (i) {
                     if ($(this).hasClass('corSelecao')) {
-                        nrLinhaSelecao = i;
-                    }
-                });
-                // Se teclou seta para cima e não é a primeira linha, selecionar registro acima
+						nrLinhaSelecao = i;
+					}					
+				});	
+				// Se teclou seta para cima e não é a primeira linha, selecionar registro acima
                 if ((tecla == 38) && (nrLinhaSelecao > 0)) {
                     $('table', divRegistro).zebraTabela(nrLinhaSelecao - 1);
                     $('tbody > tr:eq(' + (nrLinhaSelecao - 1) + ') > td', tabela).first().focus();
-                }
-                // Se teclou seta para baixo e não é a ultima linha, selecionar registro abaixo
+				}
+				// Se teclou seta para baixo e não é a ultima linha, selecionar registro abaixo
                 if ((tecla == 40) && (nrLinhaSelecao < qtdeRegistros - 1)) {
                     $('table', divRegistro).zebraTabela(nrLinhaSelecao + 1);
                     $('tbody > tr:eq(' + (nrLinhaSelecao + 1) + ') > td', tabela).first().focus();
-                }
-            }
-        }
-    });
-
-    /*!
+				}			
+			}
+		}
+	});				
+	
+	/*!
 	 * ALTERAÇÃO  : 011
 	 * OBJETIVO   : Teclas de atalho (HotKeys) para os botões da tela corrente (em exibição)
 	 * Padrão     : (   F1   ) -> Botão Salvar (Concluir)
@@ -267,86 +269,86 @@ $(document).ready(function () {
 	 *              ( INSERT ) -> Botão Inserir	 
 	 * OBSERVAÇÃO : Para que os atalhos funcionem, os botões em tela devem estar com a propriedade "id" igual a um dos valores abaixo:
 	 *              btIncluir | btExcluir | btVoltar | btAlterar | btSalvar | btConsultar | btLimpar
-	 */
+	 */	 
     $(this).keyup(atalhoTeclado);
-    function atalhoTeclado(e) {
+	function atalhoTeclado(e) {
 
         var arrayTeclas = new Array();
         arrayTeclas[13] = 'btEnter';		// ENTER		
         arrayTeclas[45] = 'btIncluir';		// INSERT
         arrayTeclas[46] = 'btExcluir';		// DELETE
         arrayTeclas[27] = 'btVoltar';		// ESC - VOLTAR
-        arrayTeclas[112] = 'btSalvar';		// F1  - SALVAR
-        arrayTeclas[114] = 'btIncluir';		// F3  - INSERIR
-        arrayTeclas[115] = 'btVoltar';		// F4  - VOLTAR	
-        arrayTeclas[120] = 'btAlterar';		// F9  - ALTERAR
-        arrayTeclas[121] = 'btConsultar';   // F10 - CONSULTAR		
-        arrayTeclas[122] = 'btLimpar';      // F11 - LIMPAR
-
-        // Se o divAguardo estiver sendo exibido, então não aceitar atalhos do teclado
+		arrayTeclas[112] = 'btSalvar';		// F1  - SALVAR
+		arrayTeclas[114] = 'btIncluir';		// F3  - INSERIR
+		arrayTeclas[115] = 'btVoltar';		// F4  - VOLTAR	
+		arrayTeclas[120] = 'btAlterar';		// F9  - ALTERAR
+		arrayTeclas[121] = 'btConsultar';   // F10 - CONSULTAR		
+		arrayTeclas[122] = 'btLimpar';      // F11 - LIMPAR
+		
+		// Se o divAguardo estiver sendo exibido, então não aceitar atalhos do teclado
         if ($('#divAguardo').css('display') == 'block') { return true; }
 
-        /*!
+		/*!
 		 * ALTERAÇÃO : 017
 		 * OBJETIVO  : Quando o divError estiver visível na tela, e a tecla é ESC (27) ou F4 for pressionada, então chamar o clique do botão "Não" do divError,
 		 *             pois caso contrário a função chama o clique o botão com o ID = 'btVoltar'
 		 */
         if (divError.css('display') == 'block') {
-            // Se teclar ENTER (13)	
-            if (e.which == 13) {
-                // $('#btnError','#divError').click();
-            }
-            return true;
+			// Se teclar ENTER (13)	
+			if (e.which == 13) {
+				// $('#btnError','#divError').click();
+			}			
+			return true;				
 
         } else if (divConfirm.css('display') == 'block') {
-            // Se teclar ESC (27) ou F4 (115)
+			// Se teclar ESC (27) ou F4 (115)
             if ((e.which == 27) || (e.which == 115)) {
                 $('#btnNoConfirm', '#divConfirm').click();
-            }
-            return true;
-
-            // Se for tecla F2, abre ajuda padrão		
+			}
+			return true;
+			
+		// Se for tecla F2, abre ajuda padrão		
         } else if (e.keyCode == 113) {
-            mostraAjudaF2();
-            return true;
+			mostraAjudaF2();
+			return true;			
+			
 
-
-            // Se for as teclas ENTER | INSERT | DELET | ESC | F1 | F3 | F4 | F9 | F10 | F11
+		// Se for as teclas ENTER | INSERT | DELET | ESC | F1 | F3 | F4 | F9 | F10 | F11
         } else if (in_array(e.keyCode, [13, 35, 45, 46, 27, 112, 114, 115, 120, 121, 122])) {
-
+			
             if (typeof e.result == 'undefined') {
-
-                // Se a pesquisa estiver aberta, e a tecla é ESC (27) ou F4, então ativar o botão fechar da pesquisa				
-                // ALTERAÇÃO 040
+			
+				// Se a pesquisa estiver aberta, e a tecla é ESC (27) ou F4, então ativar o botão fechar da pesquisa				
+				// ALTERAÇÃO 040
                 if ($('#divFormularioEndereco').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divFormularioEndereco').click();
-                    } else {
+					} else {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divFormularioEndereco').click();
-                    }
-                    return true;
-
-                    // ALTERAÇÃO 040
+					}					
+					return true;
+				
+				// ALTERAÇÃO 040
                 } else if ($('#divPesquisaEndereco').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divPesquisaEndereco').click();
-                    } else {
+					} else {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divPesquisaEndereco').click();
-                    }
-                    return true;
-
+					}					
+					return true;				
+					
                 } else if ($('#divPesquisaAssociado').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         $('.fecharPesquisa', '#divPesquisaAssociado').click();
-                    }
-                    return true;
-
+					} 
+					return true;						
+					
                 } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         encerraMsgsAlerta().click();
-                    }
-                    return true;
-
+					} 
+					return true;														
+				
                 } else if ($('#divAnotacoes').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         encerraAnotacoes().click();
@@ -359,48 +361,48 @@ $(document).ready(function () {
                     }
                     return true;
 
-                    // Verifica HotKeys válidos					
+				// Verifica HotKeys válidos					
                 } else if (in_array(e.which, [13, 35, 45, 46, 27, 112, 114, 115, 120, 121, 122])) {
-
-                    // Se a divUsoGenerico estiver visivel, então chamar os click os botões contidos nela
+					
+					// Se a divUsoGenerico estiver visivel, então chamar os click os botões contidos nela
                     if ($('#divUsoGenerico').css('visibility') == 'visible') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divUsoGenerico').click();
-                        return true;
-
-                        // Se a divRotina estiver visivel, então chamar os click os botões contidos nela
-                        // 050 - adicionado a opcao btsair
+						return true; 
+					
+					// Se a divRotina estiver visivel, então chamar os click os botões contidos nela
+					// 050 - adicionado a opcao btsair
                     } else if ($('#divRotina').css('visibility') == 'visible') {
                         if ($('#divRotina').find('#' + arrayTeclas[e.which]).length) {
                             $('#' + arrayTeclas[e.which] + ':visible', '#divRotina').click();
                         } else if ($('#divRotina').find('#btSair').length && e.which == 27) {
                             $('#btSair:visible', '#divRotina').click();
-                        }
-                        return true;
-
-                        // Se é a tela do Matric, chamar os click dos botões contidos nela
+						}
+						return true; 	
+					
+					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divMsgsAlerta').click();
-                        return true;
-
-                        // Se é a tela do Matric, chamar os click dos botões contidos nela
+						return true; 
+					
+					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divAnota').css('visibility') == 'visible' || $('#divAnota').css('visibility') == 'inherit') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divAnota').click();
-                        return true;
+						return true;
 
-                        // Se a divRotina estiver visivel, então chamar os click os botões contidos nela
+					// Se a divRotina estiver visivel, então chamar os click os botões contidos nela
                     } else if ($('#divTela').css('visibility') == 'visible' || $('#divTela').css('visibility') == 'inherit') {
                         $('#' + arrayTeclas[e.which] + ':visible', '#divTela').click();
-                        return true;
-
-                        // Se é a tela do Matric, chamar os click dos botões contidos nela
+						return true; 						
+					
+					// Se é a tela do Matric, chamar os click dos botões contidos nela
                     } else if ($('#divMatric').css('visibility') == 'visible' || $('#divMatric').css('visibility') == 'inherit') {
-
-                        //Se é pessoa juridica verifico se é um evento do botão de procuradores
+						
+						//Se é pessoa juridica verifico se é um evento do botão de procuradores
                         if ($('#frmJuridico', '#divMatric').css('visibility') == 'visible' || $('#frmJuridico', '#divMatric').css('visibility') == 'inherit') {
-
+							
                             var metodo = $('#' + arrayTeclas[e.which] + 'Proc:visible', '#divMatric').attr('onClick');
                             metodo = (typeof metodo == 'undefined') ? '' : metodo.toString();
-
+							
                             if ($.browser.msie) {
                                 metodo = metodo.replace('return false;', '');
                                 metodo = metodo.replace('function anonymous()', '');
@@ -408,171 +410,171 @@ $(document).ready(function () {
                                 metodo = metodo.replace('}', '');
                             } else {
                                 metodo = metodo.replace('return false;', '');
-                            }
-
+							}	
+												
                             eval(metodo);
-                        }
+						}
                         $('#' + arrayTeclas[e.which] + ':visible', '#divMatric').click();
-                        return true;
-                    }
-                    return true;
-                }
-            }
-        }
-    }
-
-    /*!
+						return true; 
+					}						
+					return true; 				
+				}
+			}
+		}
+	}
+	
+	/*!
 	 * ALTERAÇÃO  : 019 | 040
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
-	 */
-    var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
-    elementosDrag.unbind('dragstart');
+	 */	 
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
-        return $(event.target).is('.ponteiroDrag');
-    }).bind('drag', function (event) {
+		return $(event.target).is('.ponteiroDrag');
+	}).bind('drag', function (event) {
         $(this).css({ top: event.offsetY, left: event.offsetX });
-    });
-
+    });  	
+	
 });
 
 
-function highlightObjFocus(parentElement) {
-    // Verificar se o elemento pai é um objeto válido
-    if ($.type(parentElement) != 'object' || parentElement.size() == 0) return false;
-
-    // Faz pre-seleção dos sub-elementos 
+function highlightObjFocus(parentElement) {			
+	// Verificar se o elemento pai é um objeto válido
+	if ($.type(parentElement) != 'object' || parentElement.size() == 0) return false;
+	
+	// Faz pre-seleção dos sub-elementos 
     var subElements = $('input', parentElement);
-
-    // Verificar se o elemento pai tem sub-elementos	
-    if (subElements.size() == 0) return true;
-
-    var validTypes = new Array();
-    validTypes[1] = 'textarea';
-    validTypes[2] = 'text';
-    validTypes[3] = 'image';
-    validTypes[4] = 'password';
-    validTypes[5] = 'radio';
-    validTypes[6] = 'checkbox';
-    validTypes[7] = 'select';
-
+	
+	// Verificar se o elemento pai tem sub-elementos	
+	if (subElements.size() == 0) return true;
+	
+	var validTypes = new Array();
+	validTypes[1] = 'textarea';
+	validTypes[2] = 'text';
+	validTypes[3] = 'image';
+	validTypes[4] = 'password';
+	validTypes[5] = 'radio';
+	validTypes[6] = 'checkbox';
+	validTypes[7] = 'select';
+	
     $('input,textarea', parentElement).each(function () {
-        var typeElement = $(this).attr('type') != undefined ? $(this).attr('type') : $(this).get(0).tagName.toLowerCase();
-
+		var typeElement = $(this).attr('type') != undefined ? $(this).attr('type') : $(this).get(0).tagName.toLowerCase();
+		
         if (in_array(typeElement, validTypes)) {
-            $(this).unbind('focusout.highlightfocus')
+			$(this).unbind('focusout.highlightfocus')
 			       .unbind('focusin.highlightfocus')
 				   .bind('focusout.highlightfocus', function () {
-				       if (typeElement == 'image') {
-				           if ($(this).attr('src') == UrlImagens + 'botoes/entrar_focus.gif')
+						if (typeElement == 'image') {
+							if ($(this).attr('src') == UrlImagens + 'botoes/entrar_focus.gif')
 				               $(this).attr('src', $(this).attr('src').replace('_focus.gif', '.gif'));
-				       } else {
+						} else {
 				           $(this).removeClass(function () {
-				               if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
-				                   return 'campoFocusIn';
-				               } else {
-				                   return typeElement + 'FocusIn';
-				               }
-				           })
+										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
+											return 'campoFocusIn';											
+										} else {
+											return typeElement + 'FocusIn';
+										}
+								    })
                                   .addClass(function () {
-                                      if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
-                                          return 'campo';
-                                      } else {
-                                          return typeElement;
-                                      }
-                                  })
-				       }
-				   })
+										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
+											return 'campo';
+										} else {											
+											return typeElement;
+										}
+									})
+						}
+				    })
 				   .bind('focusin.highlightfocus', function () {
-				       if (typeElement == 'image') {
-				           if ($(this).attr('src') == UrlImagens + "botoes/entrar.gif")
+						if (typeElement == 'image') {							
+							if ($(this).attr('src') == UrlImagens + "botoes/entrar.gif")
 				               $(this).attr('src', $(this).attr('src').replace('.gif', '_focus.gif'));
-				       } else {
+						} else {																	
 				           $(this).removeClass(function () {
-				               if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
-				                   return 'campo';
-				               } else {
-				                   return typeElement;
-				               }
-				           })
-                                  .addClass(function () {
-                                      if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
-                                          return 'campoFocusIn';
-                                      } else {
-                                          return typeElement + 'FocusIn';
-                                      }
-                                  });
-				       }
-				   });
-
-        }
-    });
-
-    return true;
+										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
+											return 'campo';
+										} else {											
+											return typeElement;
+										}
+									})
+								   .addClass(function () {
+										if (typeElement == 'text' || typeElement == 'password' || typeElement == 'select') {
+											return 'campoFocusIn';
+										} else {											
+											return typeElement + 'FocusIn';
+										}
+								    });
+						}
+				    });
+					
+		}
+	});
+	
+	return true;	
 }
 
 /*!
  * OBJETIVO: Função para chamar a ajuda do sistema
  */
 function mostraAjudaF2() {
-    showMsgAguardo("Aguarde carregando dados de ajuda ...");
-    $.ajax({
-        type: "POST",
-        dataType: "html",
-        url: UrlSite + "f2/busca_help.php",
-        data: {
-            redirect: "html_ajax"
-        },
+	showMsgAguardo("Aguarde carregando dados de ajuda ...");			
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "f2/busca_help.php",
+		data: {
+			redirect: "html_ajax"
+		},		
         error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
-        },
+		},
         success: function (response) {
-            $("#divF2").html(response);
-            // Centraliza o div na Tela
-            $("#divF2").setCenterPosition();
-        }
-    });
+			$("#divF2").html(response);
+			// Centraliza o div na Tela
+			$("#divF2").setCenterPosition();
+		}				
+	}); 	
 }
 
 /*!
  * OBJETIVO: Função para bloquear conteúdo atrás de um div
  */
 function blockBackground(zIndex) {
-    $("#iframeBloqueio").css({
-        width: "100%",
-        height: $(document).height() + "px",
-        zIndex: zIndex - 2,
-        display: "block"
-    });
-    // Propriedados do div utilizado no bloqueio
-    $("#divBloqueio").css({
-        width: "100%",
-        height: $(document).height() + "px",
-        zIndex: zIndex - 1,
-        display: "block"
-    });
+	$("#iframeBloqueio").css({
+		width: "100%",
+		height: $(document).height() + "px",
+		zIndex: zIndex - 2,
+		display: "block"
+	}); 	
+	// Propriedados do div utilizado no bloqueio
+	$("#divBloqueio").css({
+		width: "100%",
+		height: $(document).height() + "px",
+		zIndex: zIndex - 1,
+		display: "block"
+	}); 
 }
 
 /*!
  * OBJETIVO: Função para desbloquear conteúdo atrás de um div
  */
 function unblockBackground() {
-    // Propriedades do div utilizado no bloqueio
-    $("#divBloqueio").css({
-        width: "1px",
-        height: "1px",
-        top: "0",
-        left: "0",
-        display: "none"
-    });
-    $("#iframeBloqueio").css({
-        width: "1px",
-        height: "1px",
-        top: "0",
-        left: "0",
-        display: "none"
-    });
+	// Propriedades do div utilizado no bloqueio
+	$("#divBloqueio").css({
+		width: "1px",
+		height: "1px",
+		top: "0",
+		left: "0",
+		display: "none"
+	});	
+	$("#iframeBloqueio").css({
+		width: "1px",
+		height: "1px",
+		top: "0",
+		left: "0",
+		display: "none"
+	});
 }
 
 /*!
@@ -580,157 +582,157 @@ function unblockBackground() {
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Error, alterou-se a forma de centralização da mensagem
  * ALTERAÇÃO : 039 - Condição do tipoMsg, caso venha com 'none' não mostrará ícone.
  * ALTERAÇÃO : 047 - Parametro numWidth opcional, largura da tabela de mensagem, caso nao seja passado, pega 300 como padrao.
- */
+ */	 
 function showError(tipoMsg, msgError, titMsg, metodoMsg, numWidth) {
-
-    // Construindo conteúdo da mensagem
-    var strHTML = '';
-    var display = '';
-
+	
+	// Construindo conteúdo da mensagem
+	var strHTML = '';
+	var display = '';	
+	
     if (tipoMsg == 'none')
-        display = 'display:none;';
-
-    larg = Number(numWidth);
-
-    if (isNaN(larg)) {
-        larg = 300; // largura padrao
-    }
-
-    strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="' + larg + '" id="tabMsgError">';
-    strHTML += '	<tr>';
-    strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titMsg + '</td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td height="5"></td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td style="padding: 4px 6px 4px 6px;">';
-    strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
-    strHTML += '				<tr>';
-    strHTML += '					<td valign="top" style="padding-right: 5px;' + display + '"><img src="' + UrlImagens + (tipoMsg == "inform" ? "geral/ico_inform.jpg" : "geral/ico_atencao.jpg") + '"></td>';
-    strHTML += '					<td class="' + (tipoMsg == "inform" ? "txtCarregando" : "txtCritica") + '" nowrap><center>' + msgError + '</center></td>';
-    strHTML += '				</tr>';
-    strHTML += '			</table>';
-    strHTML += '		</td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td height="5"></td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td align="center" style="padding-bottom: 8px;"><input type="image" id="btnError" name="btnError" src="' + UrlImagens + (tipoMsg == "inform" ? "botoes/fechar.gif" : "botoes/continuar.gif") + '"></td>';
-    strHTML += '	</tr>';
-    strHTML += '</table>';
-
-    // Atribui o conteúdo ao div da mensagem
-    divError.html(strHTML);
-
-    // Bloqueia o Fundo e Mostra a mensagem
+		display = 'display:none;';
+	
+	larg = Number(numWidth);	
+	
+	if (isNaN(larg)) {		
+		larg = 300; // largura padrao
+	}
+		
+	strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="' + larg + '" id="tabMsgError">';
+	strHTML += '	<tr>';
+	strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titMsg + '</td>';
+	strHTML += '	</tr>';
+	strHTML += '	<tr>';
+	strHTML += '		<td height="5"></td>';
+	strHTML += '	</tr>';	
+	strHTML += '	<tr>';
+	strHTML += '		<td style="padding: 4px 6px 4px 6px;">';	
+	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
+	strHTML += '				<tr>';
+	strHTML += '					<td valign="top" style="padding-right: 5px;' + display + '"><img src="' + UrlImagens + (tipoMsg == "inform" ? "geral/ico_inform.jpg" : "geral/ico_atencao.jpg") + '"></td>';
+	strHTML += '					<td class="' + (tipoMsg == "inform" ? "txtCarregando" : "txtCritica") + '" nowrap><center>' + msgError + '</center></td>';
+	strHTML += '				</tr>';
+	strHTML += '			</table>';
+	strHTML += '		</td>';
+	strHTML += '	</tr>';
+	strHTML += '	<tr>';
+	strHTML += '		<td height="5"></td>';
+	strHTML += '	</tr>';		
+	strHTML += '	<tr>';
+	strHTML += '		<td align="center" style="padding-bottom: 8px;"><input type="image" id="btnError" name="btnError" src="' + UrlImagens + (tipoMsg == "inform" ? "botoes/fechar.gif" : "botoes/continuar.gif") + '"></td>';
+	strHTML += '	</tr>';
+	strHTML += '</table>';		
+	
+	// Atribui o conteúdo ao div da mensagem
+	divError.html(strHTML);
+	
+	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo(divError);
     divError.css('display', 'block').setCenterPosition();
-    $('#btnError').focus();
+	$('#btnError').focus();
 
-    // Aplica métodos ao evento "click" do botão de confirmação
+	// Aplica métodos ao evento "click" do botão de confirmação
     $('#btnError').unbind('click').bind('click', function () {
-        // Esconde mensagem
-        divError.escondeMensagem();
-        // Método passado por parâmetro		
+		// Esconde mensagem
+		divError.escondeMensagem();
+		// Método passado por parâmetro		
         if (metodoMsg != '') { eval(metodoMsg); }
-        return false;
-    });
-
-    return false;
+		return false;
+	});	
+	
+	return false;
 }
 
 /*!
  * OBJETIVO  : Função para mostrar mensagem para confirmação e ações
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Confirmação, alterou-se esta função
- */
+ */	 
 function showConfirmacao(msgConfirm, titConfirm, metodoYes, metodoNo, nomeBtnYes, nomeBtnNo) {
-
-    // Construindo o conteúdo da mensagem
-    var strHTML = "";
-    strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="300">';
-    strHTML += '	<tr>';
-    strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titConfirm + '</td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td style="padding-top: 4px; padding-right: 6px; padding-left: 6px;">';
-    strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
-    strHTML += '				<tr>';
-    strHTML += '					<td style="padding-right: 5px;"><img src="' + UrlImagens + 'geral/ico_interrogacao.jpg' + '"></td>';
-    strHTML += '					<td class="txtCarregando" nowrap>' + msgConfirm + '</td>';
-    strHTML += '				</tr>';
-    strHTML += '			</table>';
-    strHTML += '		</td>';
-    strHTML += '	</tr>';
-    strHTML += '	<tr>';
-    strHTML += '		<td align="center" style="padding-bottom: 8px; padding-top: 6px;">';
-    strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
-    strHTML += '				<tr>';
-    strHTML += '					<td><input type="image" id="btnYesConfirm" name="btnYesConfirm" src="' + UrlImagens + "botoes/" + nomeBtnYes + '"></td>';
-    strHTML += '					<td width="25"></td>';
-    strHTML += '					<td><input type="image" id="btnNoConfirm" name="btnNoConfirm" src="' + UrlImagens + "botoes/" + nomeBtnNo + '"></td>';
-    strHTML += '				</tr>';
-    strHTML += '			</table>';
-    strHTML += '		</td>';
-    strHTML += '	</tr>';
-    strHTML += '</table>';
-
-    // Atribui o conteúdo ao divConfirm
-    divConfirm.html(strHTML);
-
-    // Aplica métodos ao evento "click" do botão de confirmação
-    $("#btnYesConfirm").unbind("click");
+	
+	// Construindo o conteúdo da mensagem
+	var strHTML = "";	
+	strHTML += '<table border="0" cellpadding="0" cellspacing="0" width="300">';
+	strHTML += '	<tr>';
+	strHTML += '		<td id="tdTitError" class="ponteiroDrag">' + titConfirm + '</td>';
+	strHTML += '	</tr>';
+	strHTML += '	<tr>';
+	strHTML += '		<td style="padding-top: 4px; padding-right: 6px; padding-left: 6px;">';	
+	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
+	strHTML += '				<tr>';
+	strHTML += '					<td style="padding-right: 5px;"><img src="' + UrlImagens + 'geral/ico_interrogacao.jpg' + '"></td>';
+	strHTML += '					<td class="txtCarregando" nowrap>' + msgConfirm + '</td>';
+	strHTML += '				</tr>';
+	strHTML += '			</table>';
+	strHTML += '		</td>';
+	strHTML += '	</tr>';
+	strHTML += '	<tr>';
+	strHTML += '		<td align="center" style="padding-bottom: 8px; padding-top: 6px;">';
+	strHTML += '			<table border="0" cellpadding="0" cellspacing="0">';
+	strHTML += '				<tr>';
+	strHTML += '					<td><input type="image" id="btnYesConfirm" name="btnYesConfirm" src="' + UrlImagens + "botoes/" + nomeBtnYes + '"></td>';
+	strHTML += '					<td width="25"></td>';		
+	strHTML += '					<td><input type="image" id="btnNoConfirm" name="btnNoConfirm" src="' + UrlImagens + "botoes/" + nomeBtnNo + '"></td>';	
+	strHTML += '				</tr>';
+	strHTML += '			</table>';
+	strHTML += '		</td>';
+	strHTML += '	</tr>';
+	strHTML += '</table>';	
+	
+	// Atribui o conteúdo ao divConfirm
+	divConfirm.html(strHTML);
+	
+	// Aplica métodos ao evento "click" do botão de confirmação
+	$("#btnYesConfirm").unbind("click");
     $("#btnYesConfirm").bind("click", function () {
-        // Esconde mensagem
-        divConfirm.escondeMensagem();
-        // Método passado por parâmetro
-        if (metodoYes != "") {
-            eval(metodoYes);
+		// Esconde mensagem
+		divConfirm.escondeMensagem();
+		// Método passado por parâmetro
+		if (metodoYes != "") { 
+			eval(metodoYes); 
 
             if ($(".FirstInputModal")) { $(".FirstInputModal").focus(); }
-        }
-        return false;
-    });
-
-    // Aplica método ao evento "click" do botão de cancelamento
-    $("#btnNoConfirm").unbind("click");
+		}		
+		return false;
+	});
+	
+	// Aplica método ao evento "click" do botão de cancelamento
+	$("#btnNoConfirm").unbind("click");
     $("#btnNoConfirm").bind("click", function () {
-        // Esconde mensagem
-        divConfirm.escondeMensagem();
-        // Método passado por parâmetro
+		// Esconde mensagem
+		divConfirm.escondeMensagem();
+		// Método passado por parâmetro
 
         if (metodoNo != "") {
             eval(metodoNo);
             if ($(".FirstInputModal")) { $(".FirstInputModal").focus(); }
         }
-        return false;
-    });
-
-    // Bloqueia o Fundo e Mostra a mensagem
+		return false;
+	});
+        
+	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo(divConfirm);
     divConfirm.css('display', 'block').setCenterPosition();
-    $("#btnYesConfirm").focus();
+	$("#btnYesConfirm").focus(); 
 }
 
 /*!
  * OBJETIVO  : Função para mostrar mensagem de Aguardo
  * ALTERAÇÃO : 019 - Para permitir Movimentar a mensagem de Aguardo, alterou-se esta função
- */
-function showMsgAguardo(msgAguardo) {
-    // Mensagem de espera
-    var strHTML = "";
-    strHTML += '<table border="0" cellpadding="0" cellspacing="0">';
-    strHTML += '  <tr>';
-    strHTML += '    <td><img src="' + UrlImagens + 'geral/indicator.gif" width="15" height="15"></td>';
-    strHTML += '    <td nowrap><strong class="txtCarregando">&nbsp;&nbsp;&nbsp;' + msgAguardo + '</strong></td>';
-    strHTML += '  </tr>';
-    strHTML += '</table>';
+ */	 
+function showMsgAguardo(msgAguardo) {	
+	// Mensagem de espera
+	var strHTML = "";
+	strHTML += '<table border="0" cellpadding="0" cellspacing="0">';
+	strHTML += '  <tr>';
+	strHTML += '    <td><img src="' + UrlImagens + 'geral/indicator.gif" width="15" height="15"></td>';
+	strHTML += '    <td nowrap><strong class="txtCarregando">&nbsp;&nbsp;&nbsp;' + msgAguardo + '</strong></td>';
+	strHTML += '  </tr>';
+	strHTML += '</table>';		
 
-    // Atribui conte&uacute;do ao div da mensagem
-    $('#divAguardo').html(strHTML);
-
-    // Bloqueia o Fundo e Mostra a mensagem
+	// Atribui conte&uacute;do ao div da mensagem
+	$('#divAguardo').html(strHTML);
+	
+	// Bloqueia o Fundo e Mostra a mensagem
     bloqueiaFundo($('#divAguardo'));
     $('#divAguardo').css('display', 'block').setCenterPosition();
 }
@@ -738,507 +740,507 @@ function showMsgAguardo(msgAguardo) {
 /*!
  * OBJETIVO  : Função para esconder (ocultar) a mensagem de aguardo
  * ALTERAÇÃO : 019 - Alterou-se a função utilizando-se do novo método criado "escondeMensagem()", implementado neste arquivo
- */
+ */	
 function hideMsgAguardo() {
     $("#divAguardo").escondeMensagem();
-}
+}	
 
 /*!
  * OBJETIVO  : Retirar caracteres indesejados
  * PARÂMETROS: flgRetirar -> Se TRUE retira caracteres que não estão na variável "valid"
  *                           Se FALSE retira caracteres que estão na variável "valid"    
- */
+ */	
 function retiraCaracteres(str, valid, flgRetirar) {
-
-    var result = "";	// variável que armazena os caracteres v&aacute;lidos
+	
+	var result = "";	// variável que armazena os caracteres v&aacute;lidos
     var temp = "";	// variável para armazenar caracter da string
-
-    for (var i = 0; i < str.length; i++) {
+	
+	for (var i = 0; i < str.length; i++) {
         temp = str.substr(i, 1);
-
-        // Se for um n&uacute;mero concatena na string result
-        if ((valid.indexOf(temp) != "-1" && flgRetirar) || (valid.indexOf(temp) == "-1" && !flgRetirar)) {
-            result += temp;
-        }
-    }
-
-    return result;
+			
+		// Se for um n&uacute;mero concatena na string result
+		if ((valid.indexOf(temp) != "-1" && flgRetirar) || (valid.indexOf(temp) == "-1" && !flgRetirar)) {
+			result += temp;
+		}
+	}
+	
+	return result;		
 }
 
 /*!
  * OBJETIVO  : Função para validar o número da conta/dv
  * PARÂMETRO : conta [Obrigatário] -> Número da conta que deseja-se validar. Aceita somente números
- */
+ */	
 function validaNroConta(conta) {
 
-    // 057
-    conta = normalizaNumero(conta);
-
-    if (parseInt(conta) == 0) {
-        return false;
-    }
-
-    if (conta != "" && conta.length < 9) {
+	// 057
+	conta = normalizaNumero(conta);
+	
+	if (parseInt(conta) == 0) {
+		return false;
+	}
+	
+	if (conta != "" && conta.length < 9) {
         var mult = 2;
         var soma = 0;
         var tam = conta.length;
-        var str_aux = 0;
-
-        for (var i = tam - 2; i >= 0; i--) {
+		var str_aux = 0;
+		
+		for (var i = tam - 2; i >= 0; i--) {
             str_aux = parseInt(conta.substr(i, 1));
-            soma = soma + (str_aux * mult);
-            mult++;
-        }
+			soma = soma + (str_aux * mult);
+			mult++;
+		}
 
-        var div = soma % 11;
+		var div = soma % 11;
 
-        if (div > 1) {
-            div = 11 - div;
+		if (div > 1) {
+			div = 11 - div;
         } else {
-            div = 0;
-        }
+			div = 0;
+		}
 
         if (div == conta.substr((tam - 1), 1)) {
-            return true;
-        }
-    }
-
-    return false;
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 /*!
  * OBJETIVO  : Função para retirar zeros atá encontrar outro número maior
  * PARÂMETRO : numero [Obrigatário] -> Número a ser retirado os zeros a esquerda
- */
+ */	
 function retirarZeros(numero) {
-    var flgMaior = false; // Flag para verificar se foi encontrado o primeiro n&uacute;mero maior que zero
+	var flgMaior = false; // Flag para verificar se foi encontrado o primeiro n&uacute;mero maior que zero
     var result = "";    // Armazena conteudo de retorno
     var temp = "";    // Armazena caracter temporario do numero
-
-    // Efetua leitura de todos os caracteres do numero e atribui a vari&aacute;vel temp
-    for (var i = 0; i < numero.length; i++) {
+	
+	// Efetua leitura de todos os caracteres do numero e atribui a vari&aacute;vel temp
+	for (var i = 0; i < numero.length; i++) {
         temp = numero.substr(i, 1);
-
+		
         if ((temp == '0') && (numero.substr(i + 1, 1) != ',')) {
-            if (flgMaior) { // Se já foi encontrado um número maior que zero
-                result += temp;
-            }
-        } else if (!isNaN(temp)) { // Se for um número maior que zero
-            result += temp;
-
-            if (!flgMaior) {
-                flgMaior = true;
-            }
-        } else if (flgMaior) { // Se não for um número
-            result += temp;
-        }
-    }
-
-    return result;
+			if (flgMaior) { // Se já foi encontrado um número maior que zero
+				result += temp;
+			}
+		} else if (!isNaN(temp)) { // Se for um número maior que zero
+			result += temp;
+			
+			if (!flgMaior) {
+				flgMaior = true; 
+			}
+		} else if (flgMaior) { // Se não for um número
+			result += temp;
+		}
+	}
+	
+	return result;
 }
 
 /*!
  * OBJETIVO  : Função para retornar código da tecla pressionada
- */
+ */	
 function getKeyValue(e) {
-    // charCode para Firefox e keyCode para IE
-    var keyValue = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;
-    return keyValue;
+	// charCode para Firefox e keyCode para IE
+	var keyValue = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;	
+	return keyValue;
 }
 
 /*!
  * OBJETIVO : Função para validar se é uma data válida
- */
+ */	
 function validaData(data) {
-    // Se string n&atilde;o conter 10 caracteres
-    if (data.length != 10) {
-        return false;
-    }
-
+	// Se string n&atilde;o conter 10 caracteres
+	if (data.length != 10) {
+		return false;
+	}
+	
     var dia = parseInt(data.substr(0, 2), 10);
     var mes = parseInt(data.substr(3, 2), 10);
-    var ano = parseInt(data.substr(6));
+	var ano = parseInt(data.substr(6));
 
-    if (isNaN(dia) || isNaN(mes) || isNaN(ano) || String(ano).length != 4) {
-        return false;
-    }
+	if (isNaN(dia) || isNaN(mes) || isNaN(ano) || String(ano).length != 4) {
+		return false;
+	}
 
-    // Valida n&uacute;mero do m&ecirc;s
-    if (mes < 1 || mes > 12) {
-        return false;
-    }
+	// Valida n&uacute;mero do m&ecirc;s
+	if (mes < 1 || mes > 12) {
+		return false;
+	}
 
-    // Valida se m&ecirc;s X possui 31 dias
-    if ((mes == 1 || mes == 3 || mes == 5 || mes == 7 || mes == 8 || mes == 10 || mes == 12) && (dia < 1 || dia > 31)) {
-        return false;
-    }
+	// Valida se m&ecirc;s X possui 31 dias
+	if ((mes == 1 || mes == 3 || mes == 5 || mes == 7 || mes == 8 || mes == 10 || mes == 12) && (dia < 1 || dia > 31)) {
+		return false;
+	}
 
-    // Valida se m&ecirc;s X possui 30 dias
-    if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && (dia < 1 || dia > 30)) {
-        return false;
-    }
+	// Valida se m&ecirc;s X possui 30 dias
+	if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && (dia < 1 || dia > 30)) {
+		return false;
+	}
 
-    // Valida n&uacute;mero de dias para o m&ecirc;s de Fevereiro
-    if (mes == 2) {
-        if (dia < 1) {
-            return false;
-        }
+	// Valida n&uacute;mero de dias para o m&ecirc;s de Fevereiro
+	if (mes == 2) {
+		if (dia < 1) {
+			return false;
+		}
 
-        var bissexto = false;
-
-        // Calcula para verificar se &eacute; ano bissexto
-        if (ano % 100 == 0) {
-            if (ano % 400 == 0) {
-                bissexto = true;
-            }
+		var bissexto = false;
+		
+		// Calcula para verificar se &eacute; ano bissexto
+		if (ano % 100 == 0) {
+			if (ano % 400 == 0) { 
+				bissexto = true;
+			}
         } else {
-            if ((ano % 4) == 0) {
-                bissexto = true;
-            }
-        }
+			if ((ano % 4) == 0) { 
+				bissexto = true;
+			}
+		}		
 
-        if (bissexto) { // Se for ano bissexto
-            if (dia > 29) {
-                return false;
-            }
+		if (bissexto) { // Se for ano bissexto
+			if (dia > 29) {
+				return false;
+			} 
         } else { // Se n&atilde;o for ano bissexto
-            if (dia > 28) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+			if (dia > 28) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
 }
 
 /*!
  * OBJETIVO  : Função para validar números inteiros e decimais
- */
+ */	
 function validaNumero(numero, validaFaixa, minimo, maximo) {
-    // Retirar "." e "," do numero	
+	// Retirar "." e "," do numero	
     numero = numero.replace(/\./g, "").replace(/,/g, ".");
-
-    // Verifica se &eacute; um n&uacute;mero inteiro ou decimal
-    numero = numero.search(".") == "-1" ? parseInt(numero) : parseFloat(numero);
-
-    // Se n&atilde;o for um n&uacute;mero v&aacute;lido
-    if (isNaN(numero)) {
-        return false;
-    }
-
-    // Se par&acirc;metro for true, verifica se n&uacute;mero est&aacute; dentro de uma faixa v&aacute;lida
-    if (validaFaixa) {
-        if (minimo == maximo) {
-            if (numero >= minimo && numero <= maximo) {
-                return false;
-            }
-        } else {
-            if (numero < minimo || numero > maximo) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+	
+	// Verifica se &eacute; um n&uacute;mero inteiro ou decimal
+	numero = numero.search(".") == "-1" ? parseInt(numero) : parseFloat(numero); 
+	
+	// Se n&atilde;o for um n&uacute;mero v&aacute;lido
+	if (isNaN(numero)) {
+		return false;
+	}
+	
+	// Se par&acirc;metro for true, verifica se n&uacute;mero est&aacute; dentro de uma faixa v&aacute;lida
+	if (validaFaixa) {
+		if (minimo == maximo) {
+			if (numero >= minimo && numero <= maximo) {
+				return false;
+			}
+		} else {
+			if (numero < minimo || numero > maximo) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
 }
 
 /*!
  * OBJETIVO   : Função para validar CPF ou CNPJ
  * PARÂMETROS : cpfcnpf [String ] -> [Obrigatório] número do CPF ou CNPJ a ser validado
  *              tipo    [Integer] -> [Obrigatório] Tipos válidos: (1) para CPF e (2) para CNPJ
- */
+ */	
 function validaCpfCnpj(cpfcnpj, tipo) {
 
-    // 058
-    cpfcnpj = normalizaNumero(cpfcnpj);
+	// 058
+	cpfcnpj = normalizaNumero(cpfcnpj);
+	
+	var strCPFCNPJ = new String(parseFloat(cpfcnpj));
 
-    var strCPFCNPJ = new String(parseFloat(cpfcnpj));
-
-    if (tipo == 1) { //CPF
-        var invalid = "";
+	if (tipo == 1) { //CPF
+		var invalid = "";
         var peso = 9;
-        var calculo = 0;
+		var calculo = 0;
         var resto = 0;
 
-        if (strCPFCNPJ.length < 5) {
-            return false;
-        }
+		if (strCPFCNPJ.length < 5) {
+			return false;
+		}
+		
+		for (var i = 1; i < 10; i++) {
+			for (var j = 0; j < 11; j++) {
+				invalid += i;
+			}
 
-        for (var i = 1; i < 10; i++) {
-            for (var j = 0; j < 11; j++) {
-                invalid += i;
-            }
-
-            if (strCPFCNPJ == invalid) {
-                return false;
-            }
-
-            invalid = "";
-        }
-
-        for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
+			if (strCPFCNPJ == invalid) {
+				return false;
+			}
+			
+			invalid = "";
+		}
+		
+		for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
-            peso--;
-        }
-
-        resto = parseInt(calculo) % 11;
-
-        if (resto == 10) {
-            digito = 0;
-        } else {
-            digito = resto;
-        }
+			 peso--;
+		}
+		
+		resto = parseInt(calculo) % 11;
+		
+		if (resto == 10) {
+			digito = 0;
+		} else {
+			digito = resto;
+		}
 
         peso = 8;
-        calculo = digito * 9;
-
-        for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
+		calculo = digito * 9;
+		
+		for (i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
-            peso--;
-        }
-
-        resto = parseInt(calculo) % 11;
-
-        if (resto == 10) {
-            digito = digito * 10;
-        } else {
-            digito = (digito * 10) + resto;
-        }
-
+			 peso--;
+		}		
+		
+		resto = parseInt(calculo) % 11;
+		
+		if (resto == 10) {
+			digito = digito * 10;
+		} else {
+			digito = (digito * 10) + resto;
+		}
+		
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 2, 2) != digito) {
-            return false;
-        } else {
-            return true;
-        }
-    } else if (tipo == 2) { //CNPJ
-        if (strCPFCNPJ.length < 3)
-            return false;
-
+			return false;
+		} else {
+			return true;
+		}
+	} else if (tipo == 2) { //CNPJ
+		if (strCPFCNPJ.length < 3)
+			return false;
+			
         var calculo = 0;
-        var resultado = 0;
+		var resultado = 0;
         var peso = 2;
-
-        //Calculo do digito 8 do CNPJ.
+		
+		//Calculo do digito 8 do CNPJ.
         calculo = new String(parseInt(strCPFCNPJ.substr(0, 1)) * 2);
         resultado = parseInt(strCPFCNPJ.substr(1, 1)) + parseInt(strCPFCNPJ.substr(3, 1)) + parseInt(strCPFCNPJ.substr(5, 1)) +
  							  parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-
+		
         calculo = new String(parseInt(strCPFCNPJ.substr(2, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-
+		
         calculo = new String(parseInt(strCPFCNPJ.substr(4, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-
+									
         calculo = new String(parseInt(strCPFCNPJ.substr(6, 1)) * 2);
         resultado = parseInt(resultado) + parseInt(calculo.substr(0, 1)) + parseInt(calculo.substr(1, 1));
-
-        var resto = parseInt(resultado) % 10;
-
-        if (resto == 0) {
-            digito = resto;
-        } else {
-            digito = 10 - resto;
-        }
-
-        calculo = 0;
-
-        for (var i = strCPFCNPJ.length - 3; i >= 0; i--) {
+		
+		var resto = parseInt(resultado) % 10;
+		
+		if (resto == 0) {
+			digito = resto;
+		} else {
+			digito = 10 - resto;
+		}
+		
+		calculo = 0;
+		
+		for (var i = strCPFCNPJ.length - 3; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
-            peso++;
-
-            if (peso > 9) {
-                peso = 2;
-            }
-        }
-
-        resto = parseInt(calculo) % 11;
-
-        if (resto < 2) {
-            digito = 0;
-        } else {
-            digito = 11 - resto;
-        }
-
+			peso++;
+		
+			if (peso > 9) {
+				peso = 2;
+			}
+		}
+	
+		resto = parseInt(calculo) % 11;
+		
+		if (resto < 2) {
+			digito = 0;
+		} else {
+			digito = 11 - resto;
+		}
+		
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 2, 1) != digito) {
-            return false;
-        }
-
-        //Calculo do digito 14 do CNPJ.		
+			return false;
+		}
+		
+		//Calculo do digito 14 do CNPJ.		
         peso = 2;
-        calculo = 0;
-
-        for (var i = strCPFCNPJ.length - 2; i >= 0; i--) {
+		calculo = 0;
+		
+		for (var i = strCPFCNPJ.length - 2; i >= 0; i--) {
             calculo = parseInt(calculo) + parseInt(strCPFCNPJ.substr(i, 1)) * peso;
-            peso++;
-
-            if (peso > 9) {
-                peso = 2;
-            }
-        }
-
-        resto = parseInt(calculo) % 11;
-
-        if (resto < 2) {
-            digito = 0;
-        } else {
-            digito = 11 - resto;
-        }
-
+			peso++;
+		
+			if (peso > 9) {
+				peso = 2;
+			}
+		}
+		
+		resto = parseInt(calculo) % 11;
+		
+		if (resto < 2) {
+	 		digito = 0;
+		} else {
+			digito = 11 - resto;
+		}
+		
         if (strCPFCNPJ.substr(strCPFCNPJ.length - 1, 1) != digito) {
-            return false;
-        } else {
-            return true;
-        }
-    }
+			return false;
+		} else {
+			return true;
+		}
+	}
 }
 
 /*!
  * OBJETIVO   : Função que retorna uma lista de caracteres permitidos
- */
+ */	
 function charPermitido() {
     var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"!@#$%*() -_=+[]{}/?;:.,\\|" + String.fromCharCode(10, 13);
-    return chars;
+	return chars;
 }
 
 /*!
  * OBJETIVO: 
- */
+ */	
 function cancelaPedeSenhaCoordenador(divBlock) {
     $("#divUsoGenerico").css("visibility", "hidden");
-    $("#divUsoGenerico").html("");
+	$("#divUsoGenerico").html("");	
 
-    if (divBlock == '') {
-        unblockBackground();
-    } else {
-        blockBackground(parseInt($("#" + divBlock).css("z-index")));
-    }
+	if (divBlock == '') {
+		unblockBackground();
+	} else {
+		blockBackground(parseInt($("#" + divBlock).css("z-index")));
+	}
 }
 
 /*!
  * OBJETIVO: Função para pedir senha de Coordenador/Gerente para processo especial
  */
 function pedeSenhaCoordenador(nvopelib, nmfuncao, nmdivfnc) {
-    showMsgAguardo("Informe a senha do coordenador para continuar ...");
+	showMsgAguardo("Informe a senha do coordenador para continuar ...");			
 	
 	// Resetar a Global com operador de liberacao
     glb_codigoOperadorLiberacao = 0;
 
-    $.ajax({
-        type: "POST",
-        dataType: "html",
-        url: UrlSite + "includes/pede_senha.php",
-        data: {
-            nvopelib: nvopelib,
-            nmfuncao: nmfuncao,
-            nmdivfnc: nmdivfnc,
-            redirect: "html_ajax"
-        },
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "includes/pede_senha.php",
+		data: {
+			nvopelib: nvopelib,
+			nmfuncao: nmfuncao,
+			nmdivfnc: nmdivfnc,
+			redirect: "html_ajax"
+		},		
         error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
-        },
+		},
         success: function (response) {
-            $("#divUsoGenerico").html(response);
-            $("#divUsoGenerico").centralizaRotinaH();
-        }
-    });
+			$("#divUsoGenerico").html(response);
+			$("#divUsoGenerico").centralizaRotinaH();
+		}				
+	}); 	
 }
 
 /*!
  * OBJETIVO: Função para solicitar confirmação da senha de Coordenador/Gerente para processo especial
  */
 function confirmaSenhaCoordenador(nmfuncao) {
-    showMsgAguardo("Aguarde, validando a senha ...");
-
+	showMsgAguardo("Aguarde, validando a senha ...");
+	
     var nvopelib = $("#nvopelib", "#frmSenhaCoordenador").val();
     var cdopelib = $("#cdopelib", "#frmSenhaCoordenador").val();
     var cddsenha = $("#cddsenha", "#frmSenhaCoordenador").val();
 
-    // Valida operador
-    if ($.trim(cdopelib) == "") {
-        hideMsgAguardo();
+	// Valida operador
+	if ($.trim(cdopelib) == "") {
+		hideMsgAguardo();
         showError("erro", "Informe o " + (nvopelib == 1 ? "Operador" : nvopelib == 2 ? "Coordenador" : "Gerente") + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cdopelib','#frmSenhaCoordenador').focus()");
-        return false;
+		return false;
     } else {
         glb_codigoOperadorLiberacao = cdopelib; // Global com operador de liberacao
-    }
-
-    // Valida senha
-    if ($.trim(cddsenha) == "") {
-        hideMsgAguardo();
+	} 
+	
+	// Valida senha
+	if ($.trim(cddsenha) == "") {
+		hideMsgAguardo();
         showError("erro", "Informe a Senha.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cddsenha','#frmSenhaCoordenador').focus()");
-        return false;
-    }
-
-    // Executa script de saque atrav&eacute;s de ajax
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "includes/valida_senha.php",
-        data: {
-            nvopelib: nvopelib,
-            cdopelib: cdopelib,
-            cddsenha: cddsenha,
-            nmfuncao: nmfuncao,
-            redirect: "script_ajax"
-        },
+		return false;
+	} 	
+	
+	// Executa script de saque atrav&eacute;s de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "includes/valida_senha.php", 
+		data: {
+			nvopelib: nvopelib,
+			cdopelib: cdopelib,
+			cddsenha: cddsenha,
+			nmfuncao: nmfuncao,
+			redirect: "script_ajax"
+		}, 
         error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
-        },
+		},
         success: function (response) {
-            try {
-                eval(response);
+			try {
+				eval(response);
             } catch (error) {
-                hideMsgAguardo();
+				hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
-            }
-        }
-    });
+			}
+		}				
+	});				
 }
 
 /*!
  * OBJETIVO: Função para forçar TAB quando der enter no campo
  */
-function enterTab(f, e) {
+function enterTab(f, e) { 
 
-    if (getKeyValue(e) == 13) {
-        var i;
-        for (i = 0; i < f.form.elements.length; i++) {
-            if (f == f.form.elements[i]) { break; }
-        }
+	if (getKeyValue(e) == 13) { 
+		var i; 
+		for (i = 0; i < f.form.elements.length; i++) { 
+			if (f == f.form.elements[i]) { break; } 
+		} 
 
-        i = (i + 1) % f.form.elements.length;
-        for (ii = i; ii < f.form.elements.length; ii++) {
+		i = (i + 1) % f.form.elements.length; 
+		for (ii = i; ii < f.form.elements.length; ii++) { 
             if ((f.form.elements[ii].readOnly != true) && (f.form.elements[ii].type != 'button')) {
-                break;
-            }
-        }
-        f.form.elements[ii].focus();
-        return false;
+				break; 
+			} 
+		} 
+		f.form.elements[ii].focus(); 
+		return false; 
 
-    }
-    else {
-        return true;
-    }
-}
-
+	} 
+	else {
+		return true; 
+	}
+} 
+ 
 /*!
  * ALTERAÇÃO : 002
  * OBJETIVO  : Função para resetar as cores zebradas das linhas de uma tabela
  * PARÂMETRO : Recebe um seletor CSS das linhas (TR) de uma tabela
  */
 function zebradoLinhaTabela(x) {
-    var cor = '#F7F3F7';
+	var cor = '#F7F3F7';	
     x.each(function (e) {
-        cor == '#F4F3F0' ? cor = '#FFFFFF' : cor = '#F4F3F0';
+		cor == '#F4F3F0' ? cor = '#FFFFFF' : cor = '#F4F3F0';
         $(this).css({ 'background-color': cor, 'color': '#444' });
-    });
+	});
     x.hover(function () {
         $(this).css({ 'cursor': 'pointer', 'outline': '1px solid #6B7984', 'color': '#000' });
     }, function () {
         $(this).css({ 'cursor': 'auto', 'outline': '0px', 'color': '#444' });
-    });
-    return false;
+	});
+	return false;
 }
 
 /*!
@@ -1247,14 +1249,14 @@ function zebradoLinhaTabela(x) {
  * PARâMETRO : str -> Uma string qualquer
  */
 function trim(str) {
-    str = str.replace(/^\s+/, '');
-    for (var i = str.length - 1; i >= 0; i--) {
-        if (/\S/.test(str.charAt(i))) {
-            str = str.substring(0, i + 1);
-            break;
-        }
-    }
-    return str;
+	str = str.replace(/^\s+/, '');
+	for (var i = str.length - 1; i >= 0; i--) {
+		if (/\S/.test(str.charAt(i))) {
+			str = str.substring(0, i + 1);
+			break;
+		}
+	}
+	return str;
 }
 
 /*!
@@ -1262,11 +1264,11 @@ function trim(str) {
  * OBJETIVO  : Função similar á mostraRotina, com a melhoria de se passar o div a ser exibido e bloquear o fundo
  * PARÂMETRO : x -> div a ser exibido
  */
-function exibeRotina(x) {
+function exibeRotina(x) { 
     x.css('visibility', 'visible');
-    x.centralizaRotinaH();
-    bloqueiaFundo(x);
-    return false;
+	x.centralizaRotinaH();
+	bloqueiaFundo(x);
+	return false;
 }
 
 /*!
@@ -1277,7 +1279,7 @@ function exibeRotina(x) {
  * PARÂMETRO : rotina         -> Seletor jQuery a ser fechado
  *	           bloqueiaRotina -> Seletor jQuery ao qual seu fundo será bloqueado
  */
-function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
+function fechaRotina(rotina, bloqueiaRotina, fncFechar) { 
 
     //Condição para voltar foco na opção selecionada
     var CaptaIdRetornoFoco = '';
@@ -1287,14 +1289,14 @@ function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
     }
 
     rotina.css('visibility', 'hidden');
-    unblockBackground();
+	unblockBackground();	
     if (typeof bloqueiaRotina == 'object') {
-        bloqueiaFundo(bloqueiaRotina);
-    }
+		bloqueiaFundo(bloqueiaRotina);		
+	}
     if (typeof fncFechar != 'undefined') {
-        eval(fncFechar);
-    }
-    return false;
+		eval(fncFechar);		
+	}
+	return false;
 }
 
 /*!
@@ -1305,19 +1307,19 @@ function fechaRotina(rotina, bloqueiaRotina, fncFechar) {
  *             formFoco  -> [Opcional] id do formulario ao qual o campoFoco está inserido
  *			   boErro    -> [Opcional] valores válidos (true|false), indicando se recebe a classe erro ou não
  */
-function bloqueiaFundo(div, campoFoco, formFoco, boErro) {
+function bloqueiaFundo(div, campoFoco, formFoco, boErro) {	
     if ((div.attr('id') != 'divMatric') && (div.attr('id') != 'divTela')) {
-        zIndex = parseInt(div.css('z-index'));
-        blockBackground(zIndex);
-    }
+		zIndex = parseInt(div.css('z-index'));	
+		blockBackground(zIndex);	
+	}
     if ((typeof campoFoco != 'undefined') && (typeof formFoco != 'undefined')) {
         if ((typeof boErro == 'undefined') && (boErro)) {
             $('#' + campoFoco, '#' + formFoco).addClass('campoErro');
-        }
+		}
         $('#' + campoFoco, '#' + formFoco).focus();
-    }
-
-    return true;
+	}
+		
+	return true;
 }
 
 /*!
@@ -1331,22 +1333,22 @@ function bloqueiaFundo(div, campoFoco, formFoco, boErro) {
  *             é ',' e '.' respectivamento do parametro 3 e 4
  */
 function number_format(number, decimals, dec_point, thousands_sep) {
-    var n = !isFinite(+number) ? 0 : +number,
+	var n = !isFinite(+number) ? 0 : +number, 
 		prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
 		sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep, dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
 		s = '',
 		toFixedFix = function (n, prec) {
-		    var k = Math.pow(10, prec);
+			var k = Math.pow(10, prec);
 		    return '' + Math.round(n * k) / k;
 		};
-    // Fix for IE parseFloat(0.55).toFixed(0) = 0;
-    s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-    if (s[0].length > 3) {
+	// Fix for IE parseFloat(0.55).toFixed(0) = 0;
+	s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+	if (s[0].length > 3) {
         s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
     }
-    if ((s[1] || '').length < prec) {
-        s[1] = s[1] || '';
-        s[1] += new Array(prec - s[1].length + 1).join('0');
+	if ((s[1] || '').length < prec) {
+		s[1] = s[1] || '';
+		s[1] += new Array(prec - s[1].length + 1).join('0');
     } return s.join(dec);
 }
 
@@ -1359,8 +1361,8 @@ function number_format(number, decimals, dec_point, thousands_sep) {
 function in_array(item, array) {
     for (var i = 0; i < array.length; i++) {
         if (item == array[i]) return true;
-    }
-    return false;
+	}
+	return false;
 }
 
 /*!
@@ -1368,13 +1370,13 @@ function in_array(item, array) {
  * OBJETIVO  : Função que define máscaras, formatos, valores permitidos e layout de vários elementos dos formulários. 
  */
 function layoutPadrao() {
-
+	
     var caracAcentuacao = 'áàäâãÁÀÄÂÃéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛçÇ';
     var caracEspeciais = '!@#$%&*()-_+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',.´`¨^~';
     var caracSuperEspeciais = '¨¹²³£¢¬§ªº°´<>&\'\"';
-    var caracEspeciaisEmail = '!#$%&*()+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',´`¨^~';
+	var caracEspeciaisEmail = '!#$%&*()+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',´`¨^~';	
 
-    // Aplicando Máscaras
+	// Aplicando Máscaras
     $('input.conta').setMask('INTEGER', 'zzzz.zzz-z', '.-', '');
     $('input.cheque').setMask('INTEGER', 'zzz.zzz.9', '.', '');
     $('input.renavan').setMask('INTEGER', 'zzz.zzz.zzz.zz9', '.', '');
@@ -1393,7 +1395,7 @@ function layoutPadrao() {
     $('input.contrato3').setMask('INTEGER', 'zz.zzz.zz9', '.', '');
     $('input.insc_estadual').setMask('INTEGER', 'zzz.zzz.zzz.zzz', '.', '');
     $('input.dataMesAno').setMask('INTEGER', 'zz/zzzz', '/', '');
-    //$('input.data'			).dateEntry({useMouseWheel:true,spinnerImage:''});   
+	//$('input.data'			).dateEntry({useMouseWheel:true,spinnerImage:''});   
     $('input.data').setMask("DATE", "", "", "");
     $('input.taxa').attr('alt', 'p2p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.monetario').attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
@@ -1401,8 +1403,8 @@ function layoutPadrao() {
     $('input.moeda_6').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.moeda_15').attr('alt', 'p0p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.porcento').attr('alt', 'p3x0c2a').autoNumeric().trigger('blur');
-    $('input.porcento_n').attr('alt', 'n3x0c2a').css('text-align', 'right').autoNumeric().trigger('blur');
-    $('input.porcento_4').attr('alt', 'p3x0c4a').autoNumeric().trigger('blur');
+	$('input.porcento_n').attr('alt', 'n3x0c2a').css('text-align', 'right').autoNumeric().trigger('blur');
+	$('input.porcento_4').attr('alt', 'p3x0c4a').autoNumeric().trigger('blur');
 	$('input.porcento_6').attr('alt', 'p3x0c6a').autoNumeric().trigger('blur');
 	$('input.porcento_7'	).attr('alt','p3x0c7a').autoNumeric().trigger('blur');	
 	$('input.porcento_8'	).attr('alt','p3x0c8a').autoNumeric().trigger('blur');	
@@ -1411,28 +1413,28 @@ function layoutPadrao() {
 	$('input.alpha'			).css({'text-transform':'uppercase'});
 	$('input.alphanum'		).css({'text-transform':'uppercase'});		
 	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
-
+	
     $('input.alpha').alpha({ ichars: caracAcentuacao + caracEspeciais });
     $('input.alphanum').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
     $('input.alphanumlower').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
     $('textarea.alphanum').alphanumeric({ ichars: caracSuperEspeciais + caracAcentuacao });
     $('input.inteiro').numeric({ ichars: caracAcentuacao + caracEspeciais + '.,\"' });
     $('input.codigo').numeric({ ichars: caracAcentuacao + caracEspeciais + '.,\"' });
-
+	
     $('.descricao').desabilitaCampo();
     $('.campoTelaSemBorda').attr('tabindex', '-1');
     $('label').addClass("txtNormalBold");
     $('input.codigo').attr('maxlength', '4');
 	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
 
-    // Alinhando os campos para direita
+	// Alinhando os campos para direita
     $('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align', 'right');
-
-    /*!
+	
+	/*!
 	 * ALTERAÇÃO  : 023
 	 * OBJETIVO   : Tecla de atalho F8 igual ao modo CARACTER para limpar os campos input
-	 */
-    /*
+	 */	
+	/*
 	* remover esse atalho, conforme NOVO LAYOUT padrão
 	*$('input[type=\'text\'],select').keydown( function(e) {
 	*	if ( e.keyCode == 119 ) {
@@ -1443,40 +1445,40 @@ function layoutPadrao() {
 	*	return true;
 	*});
 	*/
-
-    /*!
+	
+	/*!
 	 * ALTERAÇÃO  : 024
 	 * OBJETIVO   : Tecla de atalho F7 igual ao modo CARACTER para abrir a Pesquisa
 	 * OBSERVAÇÃO : Aplicado somente a campos que possuem a classe "pesquisa"
-	 */
+	 */	
     $('input.pesquisa').unbind('keydown.zoom').bind('keydown.zoom', function (e) {
         if (e.keyCode == 118) {
             if (isHabilitado($(this))) {
-                $(this).next().click();
-                return false;
-            }
-        }
-        return true;
-    });
-
-    /*!
+				$(this).next().click();
+				return false;
+			}
+		}
+		return true;
+	});
+	
+	/*!
 	 * ALTERAÇÃO  : 027
 	 * OBJETIVO   : Ao entrar no campo cpf ou cnpj, verifica se não existe valor digitado, caso afirmativo limpa o campo para digitação
-	 */
+	 */		
     $('input.cnpj').unbind('focusin').bind('focusin', function () {
-        $(this).addClass('campoFocusIn');	/*064*/
+		$(this).addClass('campoFocusIn');	/*064*/
         valorAtual = normalizaNumero($(this).val());
         valorAtual = (valorAtual == '0') ? '' : valorAtual;
         $(this).val(valorAtual);
-    });
+	});
     $('input.cpf').unbind('focusin').bind('focusin', function () {
-        $(this).addClass('campoFocusIn');	/*064*/
+		$(this).addClass('campoFocusIn');	/*064*/
         valorAtual = normalizaNumero($(this).val());
         valorAtual = (valorAtual == '0') ? '' : valorAtual;
         $(this).val(valorAtual);
-    });
-
-    return true;
+	});	
+	
+	return true;
 }
 
 /*!
@@ -1485,23 +1487,23 @@ function layoutPadrao() {
  * PARÂMETROS : titulo [String] -> Título que será incluso na mensagem
  */
 function montaHtmlImpressao(titulo) {
-    var htmlImpressao = '';
+	var htmlImpressao = '';
     htmlImpressao = '<html>';
-    htmlImpressao += '	<head>';
+	htmlImpressao += '	<head>';
     htmlImpressao += '		<title>Impressão CECRED - ' + titulo + '</title>';
-    htmlImpressao += '		<style type="text/css">';
-    htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
-    htmlImpressao += '		</style>';
-    htmlImpressao += '  </head>';
-    htmlImpressao += '  <body>';
-    htmlImpressao += '  	<center>';
-    htmlImpressao += '  		<h1 style="font-size:18px;font-family:Arial,Helvetica,sans-serif;border:10px solid #fff;background-color:#F7F3F7;padding:30px 10px;font-weight:normal;width:500px;">';
+	htmlImpressao += '		<style type="text/css">';
+	htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
+	htmlImpressao += '		</style>';
+	htmlImpressao += '  </head>';
+	htmlImpressao += '  <body>';
+	htmlImpressao += '  	<center>';
+	htmlImpressao += '  		<h1 style="font-size:18px;font-family:Arial,Helvetica,sans-serif;border:10px solid #fff;background-color:#F7F3F7;padding:30px 10px;font-weight:normal;width:500px;">';
     htmlImpressao += '       		Aguarde, carregando impress&atilde;o do(a)<br />' + titulo + ' ...';
-    htmlImpressao += '          </h1>';
-    htmlImpressao += '  	</center>';
-    htmlImpressao += '  </body>';
-    htmlImpressao += '</html>';
-    return htmlImpressao;
+	htmlImpressao += '          </h1>';
+	htmlImpressao += '  	</center>';
+	htmlImpressao += '  </body>';
+	htmlImpressao += '</html>';
+	return htmlImpressao;
 }
 
 /*!
@@ -1512,20 +1514,20 @@ function montaHtmlImpressao(titulo) {
  *              businobj [Obrigatório] -> Business Object da rotina que está sendo tratada
  */
 function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) {
-
+	
     if (typeof stringArrayMsg == 'undefined') stringArrayMsg = '';
     if (typeof metodo == 'undefined') metodo = 'controlaOperacao(\"\");';
-
-    blockBackground(1000);
-    showMsgAguardo('Aguarde, registrando revisão cadastral ...');
-
+		
+	blockBackground(1000);
+	showMsgAguardo('Aguarde, registrando revisão cadastral ...');
+	
     nrdconta = normalizaNumero(nrdconta);
-
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/revisao_cadastral.php',
-        data: {
+			
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/revisao_cadastral.php', 
+		data: {
             nrdconta: nrdconta,
             idseqttl: idseqttl,
             chavealt: chavealt,
@@ -1534,20 +1536,20 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
             stringArrayMsg: stringArrayMsg,
             metodo: metodo,
             redirect: 'script_ajax'
-        },
+		}, 
         error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-        },
+		},
         success: function (response) {
-            try {
-                eval(response);
+			try {
+				eval(response);
             } catch (error) {
-                hideMsgAguardo();
+				hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-            }
-        }
-    });
+			}		
+		}				
+	});	 
 }
 
 /*!
@@ -1555,14 +1557,14 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
  * OBJETIVO   : Para trabalhar com o números sem máscaras
  * PARAMETROS : numero [String] -> número que deseja-se normalizar
  * RETORNO    : Retorna zero caso seja vazio o número passado como parâmetro, ou retorna o número sem máscara
- */
+ */	 
 function normalizaNumero(numero) {
-    var retorno;
+	var retorno;
     numero = ((typeof numero == 'undefined') || (numero == null)) ? '' : numero;
     retorno = retiraCaracteres(numero, '0123456789,', true);
     retorno = retirarZeros(retorno);
     retorno = (retorno == '') ? 0 : retorno;
-    return retorno;
+	return retorno;
 }
 
 /*!
@@ -1571,28 +1573,28 @@ function normalizaNumero(numero) {
  * OBSERVAÇÕES: Função utilizada no início da função "controlaOperacao" de cada rotina. 
  *              Comumente utilizada para operações de Alteração ou Exclusão
  * RETORNO    : Retorna vazio caso não existam registros para serem selecionados, ou retorna a chave do registro selecionado
- */
+ */	 	
 function selecionaRegistro() {
-    var retorno = '';
+	var retorno = '';
     $('table > tbody > tr', 'div.divRegistros').each(function () {
         if ($(this).hasClass('corSelecao')) {
             retorno = $('input', $(this)).val();
-        }
-    });
-    return retorno;
+		}
+	});	
+	return retorno;
 }
 
 /*!
  * OBJETIVO   : Inserir comportamento no link da pesquisa associado para abrir o formulário de pesquisa
- */
+ */	 
 function controlaPesquisaAssociado(nomeForm) {
     $('a', '#' + nomeForm).addClass('lupa').css({ 'float': 'right', 'font-size': '11px', 'cursor': 'pointer' });
     $('a', '#' + nomeForm).each(function () {
         $(this).click(function () {
             mostraPesquisaAssociado('nrdconta', nomeForm);
-            return false;
-        });
-    });
+			return false;
+		});
+	});
 }
 
 /*!
@@ -1612,22 +1614,22 @@ function alerta(mensagem) {
  *             divBloqueia  [String]  -> [Opcional] nome da div que o fundo será bloqueado
  */
 function focaCampoErro(campoFoco, formFoco, desbloqueia, divBloqueia) {
-
+	
     if (typeof desbloqueia == 'undefined') {
-        unblockBackground();
-    } else {
+		unblockBackground();
+	} else {
         if (desbloqueia) unblockBackground();
-    }
-
+	}
+	
     if (typeof divBloqueia != 'undefined') {
         zIndex = parseInt($('#' + divBloqueia).css('z-index'));
-        blockBackground(zIndex);
-    }
-
+		blockBackground(zIndex); 
+	}	
+	
     $('#' + campoFoco, '#' + formFoco).addClass('campoErro');
     $('#' + campoFoco, '#' + formFoco).focus();
-
-    return true;
+	
+	return true;
 }
 
 /*!
@@ -1635,22 +1637,22 @@ function focaCampoErro(campoFoco, formFoco, desbloqueia, divBloqueia) {
  * OBJETIVO   : Função recursiva para exibir um array de mensagens, onde cada mensagem será exibida por LIFO
  * PARÂMETROS : strArray [Obrigatorio] -> Array de strings que serãoo exibidas
  *              metodo 	 [Obrigatorio] -> Metodo que será executado após a ultima mensagem do array ser exibida
- */
+ */	
 function exibirMensagens(strArray, metodo) {
     if (strArray != '') {
-        // Definindo as variáveis
+		// Definindo as variáveis
         var arrayMensagens = new Array();
         var novoArray = new Array();
         var elementoAtual = '';
-        // Setando os valores
+		// Setando os valores
         arrayMensagens = strArray.split('|');
         elementoAtual = arrayMensagens.pop();
         arrayMensagens = implode('|', arrayMensagens);
-        // Exibindo mensagem de erro
+		// Exibindo mensagem de erro
         showError('inform', elementoAtual, 'Alerta - Ayllos', "exibirMensagens('" + arrayMensagens + "','" + metodo + "')");
-    } else {
-        eval(metodo);
-    }
+	} else {
+		eval(metodo);
+	}
 }
 
 /*!
@@ -1658,19 +1660,19 @@ function exibirMensagens(strArray, metodo) {
  * OBJETIVO   : Função semelhando ao implode do PHP, que retorna uma string contento todos os elementos de um array separados por um separador
  * PARÂMETROS : separador   [Obrigatorio] -> Separador que será utilizado na montagem da string
  *              arrayPedaco [Obrigatorio] -> Array que será implodido 
- */
+ */	
 function implode(separador, arrayPedaco) {
     return ((arrayPedaco instanceof Array) ? arrayPedaco.join(separador) : arrayPedaco);
-}
+}  
 
 /*!
  * ALTERAÇÃO  : 028
  * OBJETIVO   : Função para verificar se existem funções "montaSelect" sendo executadas
  * OBSERVAÇÃO : Utilizada pelos botoes das diversas rotinas, onde se essa função retornar FALSE, não é para executar a ação do botão
- */
+ */	
 function verificaContadorSelect() {
     if (contadorSelect > 0) return false;
-    return true;
+	return true;
 }
 
 /*!
@@ -1678,52 +1680,52 @@ function verificaContadorSelect() {
  * OBJETIVO   : Função para verificar se o sistema está processando alguma função "controlaOperacao", não permitindo chamá-la 
  *              enquanto ainda está sendo executada
  * OBSERVAÇÃO : Utilizada por todas rotinas
- */
+ */	
 function verificaSemaforo() {
     if (semaforo > 0) return false;
-    semaforo++;
-    return true;
+	semaforo++;
+	return true;
 }
 
 /*!
  * ALTERAÇÃO  : 031
  * OBJETIVO   : Função para desbloquear a tela, mas a melhoria de poder setar o foco em algum campo da tela
  * OBSERVAÇÃO : Utilizada na tela MATRIC nos retornos de erro
- */
+ */	
 function desbloqueia(campoFoco, formFoco) {
-    unblockBackground();
+	unblockBackground();
     if ((typeof campoFoco != 'undefined') && (typeof formFoco != 'undefined')) {
         $('#' + campoFoco, '#' + formFoco).focus();
-    }
-    return true;
+	}
+	return true;
 }
 
 /*!
  * ALTERAÇÃO  : 032
  * OBJETIVO   : Função para trucar textos em javascript
  * OBSERVAÇÃO : Utilizada na tela MATRIC apresentação dos dados da tabela dos procuradores
- */
+ */	
 function truncar(texto, limite) {
-    if (texto.length > limite) {
+	if (texto.length > limite) {
         texto = texto.substr(0, limite - 1) + '…';
-    }
-    return texto;
+	}
+	return texto;
 }
 
 /*!
  * ALTERAÇÃO  : 036
  * OBJETIVO   : Função para remover o filtro de opacidade tanto no IE quanto no FF
  * PARÂMETROS : nome [String] -> Nome da div que deseja-se voltar a visualização em 100%, sem transparencia (opacidade)
- */
+ */	
 function removeOpacidade(nome) {
     $('#' + nome).fadeTo(1000, 1, function () {
         if ($.browser.msie) {
-            $(this).get(0).style.removeAttribute('filter');
-        } else {
+			$(this).get(0).style.removeAttribute('filter');
+		} else {
             $(this).css({ '-moz-opacity': '100', 'filter': 'alpha(opacity=100)', 'opacity': '100' });
-        }
-    });
-
+		}
+	});
+	
 }
 
 /*!
@@ -1731,16 +1733,16 @@ function removeOpacidade(nome) {
  * OBJETIVO   : Função que dado um Array Associativo bidirecional retorna uma string contendo o nome das chaves do array separado pelo separador
  * PARÂMETROS : arrayDados  [Obrigatorio] -> Array Associativo que será implodido
  *              separador   [Obrigatorio] -> Separador que será utilizado na montagem da string
- */
+ */	
 function retornaCampos(arrayDados, separador) {
-    var str = '';
+	var str = '';
     if (arrayDados.length > 0) {
         for (registro in arrayDados[0]) {
             str += registro + separador;
-        }
+		}
         str = str.substring(0, (str.length - 1));
-    }
-    return str;
+	}
+	return str;
 }
 
 /*!
@@ -1752,23 +1754,23 @@ function retornaCampos(arrayDados, separador) {
  *              sepRegs     [Obrigatorio] -> Separador que será utilizado para separar os registros
  */
 function retornaValores(arrayDados, sepValores, sepRegs, strCampos) {
-    var str = '';
+	var str = '';
     var arrayCampos = new Array();
     arrayCampos = strCampos.split('|');
-
+	
     if (arrayDados.length > 0) {
         for (registro in arrayDados) {
             for (i in arrayCampos) {
-
-                //for( dado in arrayDados[registro] ) {
+			
+			//for( dado in arrayDados[registro] ) {
                 str += arrayDados[registro][arrayCampos[i]] + sepValores;
-            }
+			}
             str = str.substring(0, (str.length - 1));
-            str += sepRegs;
-        }
+			str += sepRegs;
+		}
         str = str.substring(0, (str.length - 1));
-    }
-    return str;
+	}
+	return str;
 }
 
 
@@ -1779,11 +1781,11 @@ function retornaValores(arrayDados, sepValores, sepRegs, strCampos) {
  * RETORNO    : Retorna um valor float
  */
 function converteMoedaFloat(valor) {
-    valor = valor != '' ? valor : '0';
+	valor = valor != '' ? valor : '0';
     valor = valor.replace(/\./g, '');
     valor = valor.replace(/,/g, '.');
-    valor = parseFloat(valor);
-    return valor;
+	valor = parseFloat(valor);
+	return valor;
 }
 
 /*!
@@ -1796,127 +1798,127 @@ function converteMoedaFloat(valor) {
 function mascara(v, m) {
     var t1 = v.length - 1; // tamanho da string
     var t2 = m.length - 1; // tamanho da mascara
-    var l1 = ''; // ultima letra string
-    var l2 = ''; // ultima letra mascara
-    var i1 = 0; // indice string
-    var i2 = 0; // indice mascara
-
-    var retorno = '';
+	var l1 = ''; // ultima letra string
+	var l2 = ''; // ultima letra mascara
+	var i1 = 0; // indice string
+	var i2 = 0; // indice mascara
+	
+	var retorno = '';	
     var ultima = '';
-
+	
     for (i1 = t1; i1 >= 0; i1--) {
-        l1 = v.charAt(i1);
+		l1 = v.charAt(i1);
         while (ultima != '#' && t2 >= i2) {
             l2 = m.charAt(t2 - i2);
             if (l2 == '#') {
-                retorno = l1 + retorno;
-            } else {
-                retorno = l2 + retorno;
-            }
-            ultima = l2;
-            i2++;
-        }
-        ultima = '';
-    }
-    return retorno;
+				retorno = l1 + retorno;
+			} else {
+				retorno = l2 + retorno;
+			}
+			ultima = l2;
+			i2++;
+		}
+		ultima = '';
+	}	
+	return retorno;
 }
 
 
 /*!
  * Várias funções criadas como plugins do jQuery
  */
-$.fn.extend({
-
-    /*!
+$.fn.extend({ 
+	
+	/*!
 	 * OBJETIVO: Função para centralizar objetos na tela
 	 */
     setCenterPosition: function () {
-        // Captura posi&ccedil;&atilde;o esquerda e do topo do documento onde a barra de rolagem est&aacute; posicionada
-        var curScrollX = $(window).scrollLeft();
-        var curScrollY = $(window).scrollTop();
+		// Captura posi&ccedil;&atilde;o esquerda e do topo do documento onde a barra de rolagem est&aacute; posicionada
+		var curScrollX = $(window).scrollLeft();
+		var curScrollY = $(window).scrollTop(); 
 
-        // Calcula tamanho que deve sobrar ao redor do div
-        var objOffsetY = ($(window).innerHeight() - $(this).outerHeight()) / 2;
-        var objOffsetX = $.browser.msie ? ($(window).innerWidth() - $(this).outerWidth()) / 2 : ($("body").offset().width - $(this).outerWidth()) / 2;
+		// Calcula tamanho que deve sobrar ao redor do div
+		var objOffsetY = ($(window).innerHeight() - $(this).outerHeight()) / 2;
+		var objOffsetX = $.browser.msie ? ($(window).innerWidth() - $(this).outerWidth()) / 2 : ($("body").offset().width - $(this).outerWidth()) / 2;
+	
+		// Atribui posi&ccedil;&atilde;o ao div
+		$(this).css({
+			left: curScrollX + objOffsetX,
+			top: curScrollY + objOffsetY
+		});		
+	},
 
-        // Atribui posi&ccedil;&atilde;o ao div
-        $(this).css({
-            left: curScrollX + objOffsetX,
-            top: curScrollY + objOffsetY
-        });
-    },
-
-    /*!
+	/*!
 	 * ALTERAÇÃO : 007
 	 * OBJETIVO  : Função similar á setCenterPosition, só que centraliza a Rotina na horizontal dentro de outro elemento "tdTela"
-	 */
+	 */	
     centralizaRotinaH: function () {
-
-        // Calcula o centro da Tela ao qual o objeto será centralizado 
-        var larguraRotina = $("#tdConteudoTela").innerWidth();
-        var larguraObjeto = $(this).innerWidth();
-
+	
+		// Calcula o centro da Tela ao qual o objeto será centralizado 
+		var larguraRotina = $("#tdConteudoTela").innerWidth();
+		var larguraObjeto = $(this).innerWidth();				
+		
         var metadeRotina = Math.floor(larguraRotina / 2);
         var metadeObjeto = Math.floor(larguraObjeto / 2);
-
-        // A nova posição será o metade da largura da Tela menos (-) metade da do objeto mais (+)
-        // 177 = largura do menu (175px) + padding_left do menu (2px) 
-        var left = metadeRotina - metadeObjeto + 178;
+		
+		// A nova posição será o metade da largura da Tela menos (-) metade da do objeto mais (+)
+		// 177 = largura do menu (175px) + padding_left do menu (2px) 
+		var left = metadeRotina - metadeObjeto + 178;
         $(this).css('left', left.toString());
         $(this).css('top', '91px');
-    },
-
-    /*!
+	},
+	
+	/*!
 	 * ALTERAÇÃO : 020 - Criação do método
 	 * OBJETIVO  : Facilitar a chamada e ocultar as mensagens padrão do sistema, onde somente um método agora é responsável por realizar tal tarefa
-	 */
+	 */	
     escondeMensagem: function () {
         $(this).css({ left: '0px', top: '0px', display: 'none' });
-        unblockBackground();
-    },
-
-    /*!
+		unblockBackground();	
+	},
+	
+	/*!
 	 * ALTERAÇÃO 45 - Somente trabalhar com determinados tipos e tags
 	 * ALTERAÇÃO 44 - Se possui a classe pesquisa, então controla ponteiro do mouse do próximo campo
 	 * OBJETIVO: Função para desabilitar o(s) campo(s)
-	 */
+	 */		
     desabilitaCampo: function () {
         return this.each(function () {
-            var type = this.type;
+			var type = this.type;
             var tag = this.tagName.toLowerCase();
             if (in_array(tag, ['input', 'select', 'textarea']) && (type != 'image')) {
                 $(this).addClass('campoTelaSemBorda').removeClass('campo campoFocusIn textareaFocusIn radioFocusIn checkboxFocusIn selectFocusIn').prop('readonly', true).prop('disabled', true);
                 if (type == 'radio') $(this).css('background', 'none');
                 if (type == 'textarea') $(this).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
-            }
-        });
-    },
-
-    /*!
+			}
+		});		
+	},
+	
+	/*!
 	 * ALTERAÇÃO 45 - Somente trabalhar com determinados tipos e tags
 	 * ALTERAÇÃO 44 - Se possui a classe pesquisa, então controla ponteiro do mouse do próximo campo	 
 	 * OBJETIVO: Função para habilitar o(s) campo(s)
-	 */
+	 */		
     habilitaCampo: function () {
         return this.each(function () {
-            var type = this.type;
+			var type = this.type;
             var tag = this.tagName.toLowerCase();
             if ((in_array(tag, ['input', 'select', 'textarea'])) && (type != 'image')) {
                 $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
-            }
-        });
-    },
-
-    /*!
+			}
+		});		
+	},
+	
+	/*!
 	 * ALTERAçãO  : 034
 	 * OBJETIVO   : Função responsável por formatar o rodapé das pesquisas genéricas e pesquisa associado
 	 */
     formataRodapePesquisa: function () {
         $(this).css({ 'border': '1px' });
         $('table', $(this)).css({ 'width': '100%' });
-        var linhaRodape = $('table > tbody > tr', $(this));
+		var linhaRodape = $('table > tbody > tr', $(this));
         linhaRodape.css({ 'height': '18px' });
         $('td', linhaRodape).css({ 'text-align': 'center', 'background-color': '#f7d3ce', 'color': '#333', 'padding': '0px 5px 0px 5px', 'font-size': '10px' });
         $('td:eq(0)', linhaRodape).css({ 'width': '20%' });
@@ -1927,33 +1929,33 @@ $.fn.extend({
             $(this).css({ 'text-decoration': 'underline', 'color': '#000' });
         }, function () {
             $(this).css({ 'text-decoration': 'none', 'color': '#333' });
-        });
-    },
-
-    /*!
+		});			
+	},
+	
+	/*!
 	 * ALTERAÇÃO : 001
 	 * OBJETIVO  : Plugin para limpar os dados de um formulário. 
 	 * UTILIZAÇÃO: Via jQuery, onde a partir de um seletor podemos disparar esta funcionalidade da seguinte forma: $('seletor').limpaFormulario
 	 * PARâMETRO : Podemos passar tanto o formulário ou algum elemento dele para ser limpado
-	 */
+	 */	
     limpaFormulario: function () {
         return this.each(function () {
-            // Obtenho o tipo do elemento
-            var type = this.type;
-            // Normaliza o nome
-            var tag = this.tagName.toLowerCase();
-            // Se for um formulário realiza a chamada para todos os seus elementos
+			// Obtenho o tipo do elemento
+			var type = this.type;
+			// Normaliza o nome
+			var tag = this.tagName.toLowerCase();
+			// Se for um formulário realiza a chamada para todos os seus elementos
             if (tag == 'form') return $(':input', this).limpaFormulario();
-            // Para tipos TEXT | PASSWORD | TEXTAREA mudo o valor para vazio
-            if (type == 'text' || type == 'password' || tag == 'textarea' || type == 'hidden') this.value = '';
-                // Para CHECKBOX | RADIO deixo os elementos desmarcados
+			// Para tipos TEXT | PASSWORD | TEXTAREA mudo o valor para vazio
+			if (type == 'text' || type == 'password' || tag == 'textarea' || type == 'hidden') this.value = '';
+			// Para CHECKBOX | RADIO deixo os elementos desmarcados
             else if (type == 'checkbox' || type == 'radio') this.checked = false;
-            // Para SELECT, coloco o índice de seleção para -1
-            //else if (tag == 'select') this.selectedIndex = -1;
-        });
-    },
+			// Para SELECT, coloco o índice de seleção para -1
+			//else if (tag == 'select') this.selectedIndex = -1;
+		});
+	},
 
-    /*!
+	/*!
 	 * ALTERAÇÃO  : 015 - Criação da função
 	 * OBJETIVO   : Facilitar o processo de formatação e padronização das tabelas que apresentam registros. Este padrão utiliza-se do plugin jQuery TableSorter
 	 *              que adiciona a funcionalidade de ordenação das tabelas.
@@ -1964,235 +1966,235 @@ $.fn.extend({
 	 */
     formataTabela: function (ordemInicial, larguras, alinhamento, metodoDuploClick) {
 
-        var tabela = $(this);
+		var tabela = $(this);
 
-        // Forma personalizada de extração dos dados para ordenação, pois para números e datas os dados devem ser extraídos para serem ordenados
-        // não da forma que são apresentados na tela. Portanto adotou-se o padrão de no início da tag TD, inserir uma tag SPAN com o formato do 
-        // dado aceito para ordenação
+		// Forma personalizada de extração dos dados para ordenação, pois para números e datas os dados devem ser extraídos para serem ordenados
+		// não da forma que são apresentados na tela. Portanto adotou-se o padrão de no início da tag TD, inserir uma tag SPAN com o formato do 
+		// dado aceito para ordenação
         var textExtraction = function (node) {
             if ($('span', node).length == 1) {
-                return $('span', node).html();
-            } else {
-                return node.innerHTML;
-            }
-        }
+				return $('span', node).html();
+			} else {
+				return node.innerHTML;
+			}
+		}
 
-        // Configurações para o Sorter
-        tabela.has("tbody > tr").tablesorter({
+		// Configurações para o Sorter
+		tabela.has("tbody > tr").tablesorter({ 
             sortList: ordemInicial,
             textExtraction: textExtraction,
             widgets: ['zebra'],
             cssAsc: 'headerSortUp',
             cssDesc: 'headerSortDown',
             cssHeader: 'headerSort'
-        });
+		});
 
-        // O thead no IE não funciona corretamento, portanto ele é ocultado no arquivo "estilo.css", mas seu conteúdo
-        // é copiado para uma tabela fora da tabela original
-        var divRegistro = tabela.parent();
+		// O thead no IE não funciona corretamento, portanto ele é ocultado no arquivo "estilo.css", mas seu conteúdo
+		// é copiado para uma tabela fora da tabela original
+		var divRegistro = tabela.parent();
         divRegistro.before('<table class="tituloRegistros"><thead>' + $('thead', tabela).html() + '</thead></table>');
 
         var tabelaTitulo = $('table.tituloRegistros', divRegistro.parent());
 
-        // $('thead', tabelaTitulo ).append( $('thead', tabela ).html() );
+		// $('thead', tabelaTitulo ).append( $('thead', tabela ).html() );
         $('thead > tr', tabelaTitulo).append('<th class="ordemInicial"></th>');
 
-        // Formatando - Largura 
-        if (typeof larguras != 'undefined') {
+		// Formatando - Largura 
+		if (typeof larguras != 'undefined') {
             for (var i in larguras) {
                 $('td:eq(' + i + ')', tabela).css('width', larguras[i]);
                 $('th:eq(' + i + ')', tabelaTitulo).css('width', larguras[i]);
-            }
-        }
+			}		
+		}	
 
-        // Calcula o número de colunas Total da tabela
+		// Calcula o número de colunas Total da tabela
         var nrColTotal = $('thead > tr > th', tabela).length;
 
-        // Formatando - Alinhamento
-        if (typeof alinhamento != 'undefined') {
+		// Formatando - Alinhamento
+		if (typeof alinhamento != 'undefined') {
             for (var i in alinhamento) {
-                var nrColAtual = i;
-                nrColAtual++;
+				var nrColAtual = i;
+				nrColAtual++;
                 $('td:nth-child(' + nrColTotal + 'n+' + nrColAtual + ')', tabela).css('text-align', alinhamento[i]);
-            }
-        }
+			}		
+		}			
 
-        // Controla Click para Ordenação
+		// Controla Click para Ordenação
         $('th', tabelaTitulo).each(function (i) {
             $(this).mousedown(function () {
                 if ($(this).hasClass('ordemInicial')) {
-                    tabela.has("tbody > tr").tablesorter({ sortList: ordemInicial }).tablesorter({ sortList: ordemInicial });
-                } else {
+					tabela.has("tbody > tr").tablesorter({ sortList: ordemInicial }).tablesorter({ sortList: ordemInicial });
+				} else {
                     $('th:eq(' + i + ')', divRegistro).click();
-                }
-            });
+				}
+			});
             $(this).mouseup(function () {
 
-                tabela.zebraTabela();
+				tabela.zebraTabela();		
 
                 $('table > tbody > tr', divRegistro).each(function (i) {
                     $(this).unbind('click').bind('click', function () {
                         $('table', divRegistro).zebraTabela(i);
-                    });
-                });
+					});
+				});				
 
                 $('th', tabela).each(function (i) {
-                    var classes = $(this).attr('class');
+					var classes = $(this).attr('class');
                     if (classes != 'ordemInicial') {
                         $('th:eq(' + i + ')', tabelaTitulo).removeClass('headerSort headerSortUp headerSortDown');
                         $('th:eq(' + i + ')', tabelaTitulo).addClass(classes);
-                    }
-                });
-            });
-        });
+					}
+				});				
+			});			
+		});	
 
         $('table > tbody > tr', divRegistro).each(function (i) {
             $(this).bind('click', function () {
                 $('table', divRegistro).zebraTabela(i);
-            });
-        });
+			});
+		});
 
         if (typeof metodoDuploClick != 'undefined') {
             $('table > tbody > tr', divRegistro).dblclick(function () {
                 eval(metodoDuploClick);
-            });
+			});	
 
             $('table > tbody > tr', divRegistro).keypress(function (e) {
                 if (e.keyCode == 13) {
                     eval(metodoDuploClick);
-                }
-            });
+				}
+			});
 
-        }
+		}
 
         $('td:nth-child(' + nrColTotal + 'n)', tabela).css('border', '0px');
 
-        // Iniciar com a primeira linha selecionado e retornar o valor da chave deste primerio registro, que se encontra no input do tipo hidden
-        tabela.zebraTabela(0);
-        return true;
-    },
+		// Iniciar com a primeira linha selecionado e retornar o valor da chave deste primerio registro, que se encontra no input do tipo hidden
+		tabela.zebraTabela(0);	
+		return true;
+	},
 
-    /*!
+	/*!
 	 * ALTERAÇÃO  : 016 - Criação da função
 	 * OBJETIVO   : Utilizada  na função acima "formataTabela" é chamada através de um seletor jQuery de tabela, e ele zebra as linhas da tabela.
 	 *              Caso nehum parâmetro é informado, a linha que estava selecionada continua selecionada.
 	 * PARÂMETROS : indice [Inteiro] -> Indica a linha que deve estar selecionada, ficando com uma cor diferenciada.
 	 */
     zebraTabela: function (indice) {
-
-        var tabela = $(this);
-
+		
+		var tabela = $(this);
+		
         $('tbody > tr', tabela).removeClass('corPar corImpar corSelecao');
         $('tbody > tr:odd', tabela).addClass('corPar');
         $('tbody > tr:even', tabela).addClass('corImpar');
-
+		
         if (typeof indice != 'undefined') {
             $('tbody > tr', tabela).removeClass('corSelecao');
             $('tbody > tr:eq(' + indice + ')', tabela).addClass('corSelecao');
-        }
-
+		}
+		
         $('tr', tabela).hover(function () {
             $(this).css({ 'cursor': 'pointer', 'outline': '1px solid #6B7984', 'color': '#000' });
         }, function () {
             $(this).css({ 'cursor': 'auto', 'outline': '0px', 'color': '#444' });
-        });
+		});
+		
+		return false;
+	},
 
-        return false;
-    },
-
-    /*!
+	/*!
 	 * ALTERAÇÃO  : 013
 	 * OBJETIVO   : Plugin para limitar a quantidade de linhas e colunas de um textarea. 
 	 *              O número de colunas e linhas aceitos pelo "textarea" será os valores de suas propriedades "cols" e "rows" respctivamente.
 	 * UTILIZAÇÃO : Via jQuery, onde a partir de um seletor podemos disparar esta funcionalidade da seguinte forma: $('seletor').limitaTexto;
 	 */
     limitaTexto: function () {
-        function limita(x) {
-            var testoAux = '';
-            var nrLinhasAtual, nrColunasAtual, nrLinhas, nrColunas = 0;
-            var arrayLinhas = x.val().split("\n");
+		function limita(x) {
+			var testoAux = '';
+			var nrLinhasAtual, nrColunasAtual, nrLinhas, nrColunas = 0;
+			var arrayLinhas = x.val().split("\n");
 
             nrLinhas = x.attr('rows');
-            nrColunas = x.attr('cols');
-            nrLinhasAtual = arrayLinhas.length;
+			nrColunas = x.attr('cols');			
+			nrLinhasAtual = arrayLinhas.length;			
 
             for (var i in arrayLinhas) {
-                nrColunasAtual = arrayLinhas[i].length;
+				nrColunasAtual = arrayLinhas[i].length;			
                 if (eval(nrColunasAtual >= nrColunas)) { arrayLinhas[i] = arrayLinhas[i].substring(0, nrColunas); }
                 testoAux += (testoAux == '') ? arrayLinhas[i] : '\n' + arrayLinhas[i];
-            }
+			}
             x.val(testoAux);
 
             if (nrLinhasAtual > nrLinhas) {
-                testoAux = x.val().split("\n").slice(0, nrLinhas);
+				testoAux = x.val().split("\n").slice(0, nrLinhas); 
                 x.val(testoAux.join("\n"));
-            }
-        }
+			}
+		}
 
         this.each(function () {
-            var textArea = $(this);
+			var textArea = $(this);
             textArea.keyup(function () { limita(textArea); });
             textArea.bind('paste', function (e) { setTimeout(function () { limita(textArea) }, 75); });
-        });
-
-        return this;
-    },
-
-    /*!
+		});
+		
+		return this;
+	},
+	
+	/*!
 	 * ALTERAÇÃO  : 042 
 	 * OBJETIVO   : Adicionar a classe "cpf" ou "cnpj" nos campos que possuem valores válidos de cpf ou cnpj respectivamente
 	 */
     addClassCpfCnpj: function () {
         return this.each(function () {
-            var type = this.type;
-            var tag = this.tagName.toLowerCase();
-            if (tag == 'input' && type == 'text') {
+			var type = this.type;
+			var tag = this.tagName.toLowerCase();
+			if (tag == 'input' && type == 'text') {
                 if (verificaTipoPessoa(this.value) == 1) {
-                    $(this).removeClass('cnpj').addClass('cpf');
+					$(this).removeClass('cnpj').addClass('cpf'); 
                 } else if (verificaTipoPessoa(this.value) == 2) {
-                    $(this).removeClass('cpf').addClass('cnpj');
-                } else {
-                    $(this).removeClass('cpf').removeClass('cnpj');
-                }
-            }
-        });
-    },
-
-    /*!
+					$(this).removeClass('cpf').addClass('cnpj'); 
+				} else {
+					$(this).removeClass('cpf').removeClass('cnpj');
+				}
+			}	
+		});
+	},
+	
+	/*!
 	 * ALTERAÇÃO  : 043
 	 * OBJETIVO   : Somente aplicar comportamento para links <a> que possuem a classe "lupa", onde será
 	 *              verificado se o campo anterior possui a classe "campo", e caso afirmativo coloca
 	 *              a classe "pointer", caso negativo retira esta classe.
-	 */
+	 */		
     ponteiroMouse: function () {
         return this.each(function () {
-            // Se não form TAG de link <a>, então não faz nada
-            if (this.tagName.toLowerCase() != 'a') return false;
-            // Se não possuir a classe "lupa", não faz nada
-            if (!$(this).hasClass('lupa')) return false;
-            // Se o campo anterior possuir a classe "campo", então adiciona a classe "pointer"
+			// Se não form TAG de link <a>, então não faz nada
+			if (this.tagName.toLowerCase() != 'a') return false;						
+			// Se não possuir a classe "lupa", não faz nada
+			if (!$(this).hasClass('lupa')) return false;			
+			// Se o campo anterior possuir a classe "campo", então adiciona a classe "pointer"
             if (isHabilitado($(this).prev())) {
-                $(this).addClass('pointer');
-            } else {
-                $(this).removeClass('pointer');
-            }
-            return false;
-        });
-    },
+				$(this).addClass('pointer');
+			} else {
+				$(this).removeClass('pointer');
+			}
+			return false;			
+		});
+	},
     removeOpacidade: function () {
         $(this).fadeTo(1000, 1, function () {
             if ($.browser.msie) {
-                $(this).get(0).style.removeAttribute('filter');
-            } else {
+				$(this).get(0).style.removeAttribute('filter');
+			} else {
                 $(this).css({ '-moz-opacity': '100', 'filter': 'alpha(opacity=100)', 'opacity': '100' });
-            }
-        });
-    },
+			}
+		});
+	},
     trocaClass: function (classAnterior, classAtual) {
         return this.each(function () {
-            $(this).removeClass(classAnterior).addClass(classAtual);
-        });
-    }
+			$(this).removeClass(classAnterior).addClass(classAtual);
+		});		
+	}
 });
 
 /*!
@@ -2214,40 +2216,40 @@ $.fn.extend({
 				*     example 6: mktime(0, 0, 0, 1, 1, 98)  
 				*     returns 6: 883609200  
  */
-function mktime() {
-    // Get UNIX timestamp for a date    
-    //   
-    // version: 901.2514  
-    // discuss at: http://phpjs.org/functions/mktime  
-    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net) 
-
-    var no, ma = 0, mb = 0, i = 0, d = new Date(), argv = arguments, argc = argv.length;
-
+ function mktime() {  
+     // Get UNIX timestamp for a date    
+     //   
+     // version: 901.2514  
+     // discuss at: http://phpjs.org/functions/mktime  
+     // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net) 
+       
+     var no, ma = 0, mb = 0, i = 0, d = new Date(), argv = arguments, argc = argv.length;  
+   
     if (argc > 0) {
         d.setHours(0, 0, 0); d.setDate(1); d.setMonth(1); d.setYear(1972);
-    }
-
-    var dateManip = {
+     }  
+    
+     var dateManip = {  
         0: function (tt) { return d.setHours(tt); },
         1: function (tt) { return d.setMinutes(tt); },
         2: function (tt) { var set = d.setSeconds(tt); mb = d.getDate() - 1; return set; },
         3: function (tt) { var set = d.setMonth(parseInt(tt) - 1); ma = d.getFullYear() - 1972; return set; },
         4: function (tt) { return d.setDate(tt + mb); },
         5: function (tt) { return d.setYear(tt + ma); }
-    };
-
+     };  
+       
     for (i = 0; i < argc; i++) {
         no = parseInt(argv[i] * 1);
-        if (isNaN(no)) {
-            return false;
-        } else {
-            // arg is number, let's manipulate date object  
+         if (isNaN(no)) {  
+             return false;  
+         } else {  
+             // arg is number, let's manipulate date object  
             if (!dateManip[i](no)) {
-                // failed  
-                return false;
-            }
-        }
-    }
+                 // failed  
+                 return false;  
+             }  
+         }  
+     }     
     return Math.floor(d.getTime() / 1000);
 }
 
@@ -2261,7 +2263,7 @@ function dataParaTimestamp(data) {
     dia = data.substr(0, 2);
     mes = data.substr(3, 2);
     ano = data.substr(6, 4);
-    return mktime(0, 0, 0, mes, dia, ano);
+	return mktime(0, 0, 0, mes, dia, ano);
 }
 
 /*!
@@ -2269,19 +2271,19 @@ function dataParaTimestamp(data) {
  * OBJETIVO   : Função para verificar se número passado como parâmetro é um CPF ou CNPJ
  * PARÂMETROS : numero [String ] -> [Obrigatório] número do CPF ou CNPJ a ser verificado
  * RETORNO    : Retorna o valor [1] para pessoa Física e [2] para Jurídica e [0] quando não é nenhum dos dois
- */
+ */	
 function verificaTipoPessoa(numero) {
     if (validaCpfCnpj(numero, 1)) {
-        return 1;
+		return 1;
     } else if (validaCpfCnpj(numero, 2)) {
-        return 2;
-    } else {
-        return 0;
-    }
+		return 2;
+	} else {
+		return 0;
+	}
 }
 
 function milisegundos() {
-    return Number(new Date());
+	return Number(new Date());	
 }
 
 /*!
@@ -2291,20 +2293,20 @@ function milisegundos() {
 */
 function isHabilitado(objeto) {
 
-    var classes = new Array();
-
-    classes[0] = 'campo';
-    classes[1] = 'campoFocusIn';
-    classes[2] = 'textareaFocusIn';
-    classes[3] = 'radioFocusIn';
-    classes[4] = 'checkboxFocusIn';
-    classes[5] = 'selectFocusIn';
+	var classes = new Array();
+	
+	classes[0] = 'campo';
+	classes[1] = 'campoFocusIn';
+	classes[2] = 'textareaFocusIn';
+	classes[3] = 'radioFocusIn';
+	classes[4] = 'checkboxFocusIn';
+	classes[5] = 'selectFocusIn';
 
     if (typeof objeto == 'object') {
         for (var i in classes) if (objeto.hasClass(classes[i])) return true;
-    }
-
-    return false;
+	}
+	
+	return false;
 }
 
 function controlaFocoEnter(frmName) {
@@ -2312,114 +2314,119 @@ function controlaFocoEnter(frmName) {
     var cTodos = $("input[type='text'],input[type='radio'],select,textarea", '#' + frmName);
 
     cTodos.unbind('keypress').bind('keypress', function (e) {
-
+		
         if (e.keyCode == 9 || e.keyCode == 13) {
+				
+			var indice = cTodos.index(this);	
+				
+			while (true) {
+			
+				indice++;
+				
+				// Desconsiderar os que estao bloqueados
+				if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
+					continue;
+				}
 
-            var indice = cTodos.index(this);
+				//Desconsiderar os que estao com display none
+				if (jQuery(cTodos[indice]).css('display') == 'none') {					
+					continue;
+				}
 
-            while (true) {
-
-                indice++;
-
-                // Desconsiderar os que estao bloqueados
-                if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
-                    continue;
-                }
-
-                // Se campo nao e' nullo, focar no proximo
+				// Se campo nao e' nullo, focar no proximo
                 if (cTodos[indice] != null) {
-                    cTodos[indice].focus();
-                }
+					cTodos[indice].focus();
+				}
+			
+				break;
 
-                break;
-
-            }
-            return false;
-        }
-    });
+			}										
+			return false;
+		}
+	});
 
 }
 
 function CheckNavigator() {
-    var navegador = 'undefined';
+	var navegador = 'undefined';
     var versao = '0';
-
+	
     if (navigator.userAgent.search(/chrome/i) != ' -1') {
-        navegador = 'chrome';
+		navegador = 'chrome';
         versao = navigator.userAgent.substr(navigator.userAgent.search(/chrome/i) + 7);
         versao = versao.substr(0, versao.search(' '));
-    } else if (navigator.userAgent.search(/firefox/i) != '-1') {
-        navegador = 'firefox';
+	} else if (navigator.userAgent.search(/firefox/i) != '-1') {		
+		navegador = 'firefox';
         versao = navigator.userAgent.substr(navigator.userAgent.search(/firefox/i) + 8);
         versao = versao.substr(0, versao.search(' '));
-    } else if (navigator.userAgent.search(/msie/i) != '-1') {
-        navegador = 'msie';
-        if (navigator.userAgent.search(/trident/i) != '-1') {
-            versao = navigator.userAgent.substr(navigator.userAgent.search(/trident/i) + 8);
+	} else if (navigator.userAgent.search(/msie/i) != '-1') {
+		navegador = 'msie';
+		if (navigator.userAgent.search(/trident/i) != '-1') {
+			versao = navigator.userAgent.substr(navigator.userAgent.search(/trident/i) + 8);
             versao = versao.substr(0, versao.search(';'));
-
-            switch (versao) {
-                case '4.0': versao = '8.0'; break;
-                default: versao = '9.0'; break;
-            }
-        } else {
-            versao = navigator.userAgent.substr(navigator.userAgent.search(/msie/i) + 5);
+			
+			switch (versao) {
+				case '4.0': versao = '8.0'; break;
+				default: versao = '9.0'; break;
+			}
+		} else {
+			versao = navigator.userAgent.substr(navigator.userAgent.search(/msie/i) + 5);
             versao = versao.substr(0, versao.search(';'));
-        }
-    }
-
-    return { navegador: navegador, versao: versao };
+		}		
+	}
+	
+	return { navegador: navegador, versao: versao };
 }
 
 //funcao pode ou nao ter parametro de retorno
-function verificaAguardoImpressao(callback) {
-    try {
-        var httpState = parent.document.getElementById("frameBlank").contentWindow.document.readyState.toUpperCase();
-
-        if (httpState == undefined || httpState.toUpperCase() == "COMPLETE" || httpState.toUpperCase() == "INTERACTIVE") {
-            hideMsgAguardo();
-
-            if (callback != undefined) {
-                eval(callback);
-            }
-        } else {
+function verificaAguardoImpressao(callback) {		
+	try {
+		var httpState = parent.document.getElementById("frameBlank").contentWindow.document.readyState.toUpperCase();		
+		
+		if (httpState == undefined || httpState.toUpperCase() == "COMPLETE" || httpState.toUpperCase() == "INTERACTIVE") {
+			hideMsgAguardo();
+			
+			if (callback != undefined) {
+				eval(callback);			
+			}		
+		} else {
             setTimeout(function () { verificaAguardoImpressao(callback) }, 500);
-        }
-    } catch (err) {
-        hideMsgAguardo();
+		}
+	} catch (err) {
+		hideMsgAguardo();
         showError("error", "Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.", "Alerta - Ayllos", "");
-    }
+	}			
 
-    return true;
+	return true;
 }
 
 function carregaImpressaoAyllos(form, action, callback) {
-
-    try {
-        showMsgAguardo('Aguarde, carregando impress&atilde;o ...');
-
-        var NavVersion = CheckNavigator();
-
-        if (action.search(/\?/) == '-1') {
-            action = action + '?';
-        } else {
-            action = action + '&';
-        }
-
-        action = action + 'keylink=' + milisegundos();
-
-        // Configuro o formulário para posteriormente submete-lo
+	
+	try {
+		showMsgAguardo('Aguarde, carregando impress&atilde;o ...');
+		
+		var NavVersion = CheckNavigator();	
+		
+		if (action.search(/\?/) == '-1') {	
+			action = action + '?';
+		} else {
+			action = action + '&';
+		}
+		
+		action = action + 'keylink=' + milisegundos();
+		
+		// Configuro o formulário para posteriormente submete-lo
         $('#' + form).attr('method', 'post');
         $('#' + form).attr('action', action);
         $('#' + form).attr("target", (NavVersion.navegador == 'chrome' ? '_blank' : 'frameBlank'));
         $('#' + form).submit();
-        verificaAguardoImpressao(callback);
-    } catch (err) {
-        hideMsgAguardo();
+		verificaAguardoImpressao(callback);	
+	} catch (err) {	
+		hideMsgAguardo();
         showError("error", "Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.", "Alerta - Ayllos", "");
-    }
-
-    return true;
+	}
+	
+	return true;
 }
 
 function normalizaTexto(strNormaliza) {
@@ -2427,7 +2434,7 @@ function normalizaTexto(strNormaliza) {
     strNormaliza = trim(strNormaliza);
     strNormaliza = strNormaliza.replace(/['"]*/g, '');
 
-    return strNormaliza;
+	return strNormaliza;	
 }
 
 /* http://stackoverflow.com/questions/46155/validate-email-address-in-javascript */
@@ -2439,7 +2446,7 @@ function validaEmail(emailAddress) {
 function replaceAll(str, de, para) {
     var pos = str.indexOf(de);
     while (pos > -1) {
-        str = str.replace(de, para);
+		str = str.replace(de, para);
         pos = str.indexOf(de);
     }
     return (str);
@@ -2447,77 +2454,77 @@ function replaceAll(str, de, para) {
 
 function base64_decode(data) {
 
-    var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-    var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-      ac = 0,
-      dec = '',
-      tmp_arr = [];
+  var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
+    ac = 0,
+    dec = '',
+    tmp_arr = [];
 
-    if (!data) {
-        return data;
+  if (!data) {
+    return data;
+  }
+
+  data += '';
+
+  do { // unpack four hexets into three octets using index points in b64
+    h1 = b64.indexOf(data.charAt(i++));
+    h2 = b64.indexOf(data.charAt(i++));
+    h3 = b64.indexOf(data.charAt(i++));
+    h4 = b64.indexOf(data.charAt(i++));
+
+    bits = h1 << 18 | h2 << 12 | h3 << 6 | h4;
+
+    o1 = bits >> 16 & 0xff;
+    o2 = bits >> 8 & 0xff;
+    o3 = bits & 0xff;
+
+    if (h3 == 64) {
+      tmp_arr[ac++] = String.fromCharCode(o1);
+    } else if (h4 == 64) {
+      tmp_arr[ac++] = String.fromCharCode(o1, o2);
+    } else {
+      tmp_arr[ac++] = String.fromCharCode(o1, o2, o3);
     }
+  } while (i < data.length);
 
-    data += '';
+  dec = tmp_arr.join('');
 
-    do { // unpack four hexets into three octets using index points in b64
-        h1 = b64.indexOf(data.charAt(i++));
-        h2 = b64.indexOf(data.charAt(i++));
-        h3 = b64.indexOf(data.charAt(i++));
-        h4 = b64.indexOf(data.charAt(i++));
-
-        bits = h1 << 18 | h2 << 12 | h3 << 6 | h4;
-
-        o1 = bits >> 16 & 0xff;
-        o2 = bits >> 8 & 0xff;
-        o3 = bits & 0xff;
-
-        if (h3 == 64) {
-            tmp_arr[ac++] = String.fromCharCode(o1);
-        } else if (h4 == 64) {
-            tmp_arr[ac++] = String.fromCharCode(o1, o2);
-        } else {
-            tmp_arr[ac++] = String.fromCharCode(o1, o2, o3);
-        }
-    } while (i < data.length);
-
-    dec = tmp_arr.join('');
-
-    return dec.replace(/\0+$/, '');
+  return dec.replace(/\0+$/, '');
 }
 
 function base64_encode(data) {
+  
+  var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
+    ac = 0,
+    enc = '',
+    tmp_arr = [];
 
-    var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-    var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-      ac = 0,
-      enc = '',
-      tmp_arr = [];
+  if (!data) {
+    return data;
+  }
 
-    if (!data) {
-        return data;
-    }
+  do { // pack three octets into four hexets
+    o1 = data.charCodeAt(i++);
+    o2 = data.charCodeAt(i++);
+    o3 = data.charCodeAt(i++);
 
-    do { // pack three octets into four hexets
-        o1 = data.charCodeAt(i++);
-        o2 = data.charCodeAt(i++);
-        o3 = data.charCodeAt(i++);
+    bits = o1 << 16 | o2 << 8 | o3;
 
-        bits = o1 << 16 | o2 << 8 | o3;
+    h1 = bits >> 18 & 0x3f;
+    h2 = bits >> 12 & 0x3f;
+    h3 = bits >> 6 & 0x3f;
+    h4 = bits & 0x3f;
 
-        h1 = bits >> 18 & 0x3f;
-        h2 = bits >> 12 & 0x3f;
-        h3 = bits >> 6 & 0x3f;
-        h4 = bits & 0x3f;
+    // use hexets to index into b64, and append result to encoded string
+    tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
+  } while (i < data.length);
 
-        // use hexets to index into b64, and append result to encoded string
-        tmp_arr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
-    } while (i < data.length);
+  enc = tmp_arr.join('');
 
-    enc = tmp_arr.join('');
+  var r = data.length % 3;
 
-    var r = data.length % 3;
-
-    return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
+  return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 }
 
 /*! OBJETIVO: Remover acentos*/
@@ -2543,44 +2550,44 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 }
 
 function utf8_decode(str_data) {
-    var tmp_arr = [],
-      i = 0,
-      ac = 0,
-      c1 = 0,
-      c2 = 0,
-      c3 = 0,
-      c4 = 0;
+  var tmp_arr = [],
+    i = 0,
+    ac = 0,
+    c1 = 0,
+    c2 = 0,
+    c3 = 0,
+    c4 = 0;
 
-    str_data += '';
+  str_data += '';
 
-    while (i < str_data.length) {
-        c1 = str_data.charCodeAt(i);
-        if (c1 <= 191) {
-            tmp_arr[ac++] = String.fromCharCode(c1);
-            i++;
-        } else if (c1 <= 223) {
-            c2 = str_data.charCodeAt(i + 1);
-            tmp_arr[ac++] = String.fromCharCode(((c1 & 31) << 6) | (c2 & 63));
-            i += 2;
-        } else if (c1 <= 239) {
-            // http://en.wikipedia.org/wiki/UTF-8#Codepage_layout
-            c2 = str_data.charCodeAt(i + 1);
-            c3 = str_data.charCodeAt(i + 2);
-            tmp_arr[ac++] = String.fromCharCode(((c1 & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-            i += 3;
-        } else {
-            c2 = str_data.charCodeAt(i + 1);
-            c3 = str_data.charCodeAt(i + 2);
-            c4 = str_data.charCodeAt(i + 3);
-            c1 = ((c1 & 7) << 18) | ((c2 & 63) << 12) | ((c3 & 63) << 6) | (c4 & 63);
-            c1 -= 0x10000;
-            tmp_arr[ac++] = String.fromCharCode(0xD800 | ((c1 >> 10) & 0x3FF));
-            tmp_arr[ac++] = String.fromCharCode(0xDC00 | (c1 & 0x3FF));
-            i += 4;
-        }
+  while (i < str_data.length) {
+    c1 = str_data.charCodeAt(i);
+    if (c1 <= 191) {
+      tmp_arr[ac++] = String.fromCharCode(c1);
+      i++;
+    } else if (c1 <= 223) {
+      c2 = str_data.charCodeAt(i + 1);
+      tmp_arr[ac++] = String.fromCharCode(((c1 & 31) << 6) | (c2 & 63));
+      i += 2;
+    } else if (c1 <= 239) {
+      // http://en.wikipedia.org/wiki/UTF-8#Codepage_layout
+      c2 = str_data.charCodeAt(i + 1);
+      c3 = str_data.charCodeAt(i + 2);
+      tmp_arr[ac++] = String.fromCharCode(((c1 & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+      i += 3;
+    } else {
+      c2 = str_data.charCodeAt(i + 1);
+      c3 = str_data.charCodeAt(i + 2);
+      c4 = str_data.charCodeAt(i + 3);
+      c1 = ((c1 & 7) << 18) | ((c2 & 63) << 12) | ((c3 & 63) << 6) | (c4 & 63);
+      c1 -= 0x10000;
+      tmp_arr[ac++] = String.fromCharCode(0xD800 | ((c1 >> 10) & 0x3FF));
+      tmp_arr[ac++] = String.fromCharCode(0xDC00 | (c1 & 0x3FF));
+      i += 4;
     }
+  }
 
-    return tmp_arr.join('');
+  return tmp_arr.join('');
 }
 
 function formataVerificaSenha(){

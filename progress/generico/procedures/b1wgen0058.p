@@ -189,9 +189,7 @@
  
                 31/10/2017 - Ajustado rotina Grava_Dados, gravar crapdoc com tipo 47 e 50
                              quando for pessoa fisica. PRJ339 - CRM (Lombardi)
-
-				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
-                              
+              
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1813,10 +1811,7 @@ PROCEDURE Valida_Dados:
         /* alimenta o percentual da conta em questao */
         ASSIGN tot_persocio = par_persocio.
         
-        IF par_nmrotina = "PROCURADORES"             OR
-           par_nmrotina = "PROCURADORES_FISICA"       OR
-           par_nmrotina = "Representante/Procurador" THEN
-           DO:
+        
                /* procuradores da conta */
                FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
                                       crapavt.tpctrato = 6 /*procurad*/ AND

@@ -252,10 +252,9 @@
 			
 	nrdrowid = '<? echo $nrdrowid ?>';
 	
-	if (operacao == '') {
 		cdturnos = '<? echo $cdturnos ?>';
 		cdnvlcgo = '<? echo $cdnvlcgo ?>';
-	}
+	
 		
 	controlaLayout(operacao);
 	
