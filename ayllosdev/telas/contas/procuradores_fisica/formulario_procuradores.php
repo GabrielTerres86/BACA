@@ -16,6 +16,8 @@
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  *
  * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
+
+ *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)	
  */	
 ?>
 	
@@ -120,15 +122,12 @@
 			<input name="complend" id="complend" type="text" value="<? echo getByTagName($registros[0]->tags,'complend') ?>" />
 			<br />
 
-			<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-			<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($registros[0]->tags,'nrcxapst') ?>" />		
+			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
+			<? echo selectEstado('cdufresd', getByTagName($registros[0]->tags,'cdufresd'), 1); ?>		
 
 			<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 			<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($registros[0]->tags,'nmbairro') ?>" />								
 			<br />	
-
-			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
-			<? echo selectEstado('cdufresd', getByTagName($registros[0]->tags,'cdufresd'), 1); ?>	
 
 			<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 			<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registros[0]->tags,'nmcidade') ?>" />
