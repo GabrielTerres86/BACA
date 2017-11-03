@@ -8045,6 +8045,9 @@ create or replace package body cecred.PAGA0002 is
        Alterações:  28/08/2016 - M360 - Ajustes no continue para verificação do dia util
                                (Marcos-Supero)
 
+                    27/09/2017 - Ajuste no SQL para contagem dos registros de debito automatico
+                                 para nao repetir registros. Inclusao dos historicos de
+                                 pagamento de fatura de cartao de credito (Anderson SD 644304 e 764559).
   ............................................................................. */
     DECLARE
       -- Códigos de operação
@@ -8102,17 +8105,42 @@ create or replace package body cecred.PAGA0002 is
       -- Pagamentos via DEBAUT
       CURSOR cr_debaut(pr_cdcooper crapcop.cdcooper%TYPE
                       ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+    SELECT nrdconta
+          ,sum(qtdregis) qtdregis
+     FROM (
         SELECT lcm.nrdconta
               ,COUNT(1) qtdregis
           FROM craplcm lcm
-              ,crapatr atr
          WHERE lcm.cdcooper = pr_cdcooper /* Cooperativa do Laço */
            AND lcm.cdagenci = 1           /* Debitos Automáticos geram cdagenci = 1 */
            AND lcm.dtmvtolt = pr_dtmvtolt /* Dia anterior*/
-           AND lcm.cdcooper = atr.cdcooper
-           AND lcm.nrdconta = atr.nrdconta
-           AND lcm.cdhistor = atr.cdhistor
-         GROUP BY lcm.nrdconta;
+           /* Caso for necessario recalcular os registros dessa tabela para periodos passados,
+              utilizar os historicos do craphis (inautori = 1), pois a tabela crapatr eh apagada
+              depois de um tempo que a autorizacao for cancelada. */
+           AND lcm.cdhistor IN (SELECT atr.cdhistor
+                                  FROM crapatr atr
+                                 WHERE atr.cdcooper = lcm.cdcooper
+                                   AND atr.nrdconta = lcm.nrdconta)
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 1545          -- PG.FAT.CARTAO
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 658          -- PGT.CARTAO BB
+      GROUP BY lcm.nrdconta
+    ) ORIGEM
+    GROUP BY nrdconta;
+    
     BEGIN
       -- A rotina só pode ser executada em dias uteis
       IF gene0005.fn_valida_dia_util(3,trunc(SYSDATE)) <> trunc(SYSDATE) OR to_char(SYSDATE,'d') IN(1,7) THEN
