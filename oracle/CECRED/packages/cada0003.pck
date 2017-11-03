@@ -464,7 +464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 04/08/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 18/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -531,6 +531,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 						 (Adriano - P339).
   --
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  --
+  --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
   --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
   --                          esteja cadastrado na cooperativa. (Kelvin)
@@ -2431,14 +2434,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              flgdigit,
              dtmvtolt,
              tpdocmto,
-             idseqttl)
+             idseqttl,
+             nrcpfcgc)
            VALUES
             (pr_cdcooper,
              pr_nrdconta_dst,
              0,
              rw_crapdat.dtmvtolt,
              x,
-             1);
+             1,
+             rw_crapass.nrcpfcgc);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;

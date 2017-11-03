@@ -24,6 +24,7 @@
 			                               crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
  * 015: [25/04/2017] Odirlei(AMcom)	     : Alterado campo dsnacion para cdnacion. (Projeto 339)
  * 016: [31/07/2017](Odirlei-AMcom)      : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM .
+ * 017: [12/08/2015] Lombardi            : Criada a função dossieDigidoc.
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
@@ -1041,5 +1042,38 @@ function mostraNacionalidade() {
 			bloqueiaFundo( $('#divUsoGenerico') );
 			return false;
 		}
+	});
+}
+
+function dossieDigidoc() {
+	showMsgAguardo('Aguarde...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/contas/dossie_digidoc.php',
+		data: {
+      nrcpfcgc: $('#nrcpfcgc','#'+nomeForm).val(),
+      nrdconta: $('#nrctattl','#'+nomeForm).val(),
+      redirect: 'html_ajax'
+    },
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			exibeRotina($('#divUsoGenerico'));
+      $('#divUsoGenerico').css({'margin-top': '170px'});
+      $('#divUsoGenerico').css({'width': '400px'});
+      $('#divUsoGenerico').centralizaRotinaH();
+			bloqueiaFundo( $('#divUsoGenerico') );			
+      layoutPadrao();
+
+			return false;
+		}				
 	});
 }

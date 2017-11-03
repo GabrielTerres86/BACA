@@ -14,7 +14,8 @@
                 
                 05/05/2014 - Alterar tpdocmto de 16 para 11 (Lucas R.)
                 
-                
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)
                 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
@@ -375,7 +376,8 @@ PROCEDURE Grava_Dados:
                                crapdoc.nrdconta = par_nrdconta AND
                                crapdoc.tpdocmto = 11           AND
                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                               crapdoc.idseqttl = aux_idseqttl 
+                               crapdoc.idseqttl = aux_idseqttl AND
+                               crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
                     IF NOT AVAILABLE crapdoc THEN
@@ -401,8 +403,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 11
-                                           crapdoc.idseqttl = aux_idseqttl.
-                                           
+                                           crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc11.
                                 END.

@@ -86,6 +86,9 @@
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
 
+                11/08/2017 - Incluído criacao do registro na tabela crapdoc com tipo do documento 51.
+                             Projeto 339 - CRM. (Lombardi)	 
+							           
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
                 
@@ -356,6 +359,7 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.nmrespon = crapcrl.nmrespon
                           tt-crapcrl.nridenti = crapcrl.nridenti
                           tt-crapcrl.tpdeiden = crapcrl.tpdeiden
+                                                                
                                                                 
                           tt-crapcrl.cdufiden = crapcrl.cdufiden
                           tt-crapcrl.dtemiden = crapcrl.dtemiden
@@ -893,6 +897,7 @@ PROCEDURE Valida_Dados:
 
   DEF VAR aux_menorida AS LOG                                     NO-UNDO.
   DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
+
 
   DEF BUFFER b-tt-cratcrl FOR tt-cratcrl.
   
@@ -1580,7 +1585,6 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
     
-
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "E" THEN 
                               "Exclui" 
@@ -1702,6 +1706,72 @@ PROCEDURE Grava_Dados:
             ELSE 
                LEAVE ContadorCrl.
 
+        END.
+        
+        IF aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+           UNDO Grava, LEAVE Grava.
+        
+        IF par_nmrotina = "RESPONSAVEL LEGAL" AND 
+           CAN-DO("A,I", par_cddopcao)        THEN DO:
+            
+            FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                               crapttl.nrdconta = par_nrdconta AND
+                               crapttl.idseqttl = par_idseqttl
+                               NO-LOCK NO-ERROR.
+            IF NOT AVAILABLE crapttl THEN 
+               DO:
+                 aux_dscritic = "Erro ao consultar titular.".
+               END.
+            ELSE 
+              DO:
+                ContadorDoc: DO aux_contador = 1 TO 10:
+        
+                          FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                                                   crapdoc.nrdconta = par_nrdconta AND
+                                                   crapdoc.tpdocmto = 51           AND
+                                                   crapdoc.dtmvtolt = par_dtmvtolt AND
+                                                   crapdoc.idseqttl = par_idseqttl AND 
+                                                   crapdoc.nrcpfcgc = crapttl.nrcpfcgc
+                                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+          
+                          IF NOT AVAILABLE crapdoc THEN
+                              DO:
+                                  IF LOCKED(crapdoc) THEN
+                                      DO:
+                                          IF aux_contador = 10 THEN
+                                              DO:
+                                                  ASSIGN aux_cdcritic = 341.
+                                                  LEAVE ContadorDoc.
+                                              END.
+                                          ELSE 
+                                              DO: 
+                                                  PAUSE 1 NO-MESSAGE.
+                                                  NEXT.
+                                              END.
+                                      END.
+                                  ELSE
+                                      DO: 
+                                          CREATE crapdoc.
+                                          ASSIGN crapdoc.cdcooper = par_cdcooper
+                                                 crapdoc.nrdconta = par_nrdconta
+                                                 crapdoc.flgdigit = FALSE
+                                                 crapdoc.dtmvtolt = par_dtmvtolt
+                                                 crapdoc.tpdocmto = 51
+                                                 crapdoc.idseqttl = par_idseqttl
+                                                 crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
+                                          VALIDATE crapdoc.        
+                                          LEAVE ContadorDoc.
+                                      END.
+                              END.
+                          ELSE
+                              DO:
+                                  ASSIGN crapdoc.flgdigit = FALSE
+                                         crapdoc.dtmvtolt = par_dtmvtolt.
+          
+                                  LEAVE ContadorDoc.
+                              END.
+                      END.
+                  END.
         END.
         
         IF aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
