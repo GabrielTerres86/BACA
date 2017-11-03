@@ -123,7 +123,7 @@
 		//die();	
 		
 	}
-    
+
     // Se for opcao AR, para apenas validar o preenchimento do responsavel legal,
     //  deve chamar rotina pra continuar fluxo da tela
     if ($operacao == 'AR'){
@@ -341,6 +341,8 @@
 																			 '$nmfantasia', '$comercialNrCep', '$comercialNmLogradouro', '$comercialNrLogradouro', '$comercialDsComplemento', '$comercialNmBairro',
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
 																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao');");
+			
+			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
 			
 			exibirConfirmacao('Cadastro já existe na base, deseja iniciar relacionamento?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 			
