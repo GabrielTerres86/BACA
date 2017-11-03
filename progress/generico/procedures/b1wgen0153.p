@@ -8561,9 +8561,32 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
             RETURN "OK".
         END.
 
+      /*Retornar valores*/
+      /* TARIFA POR PERCENTUAL*/
+      IF crapfco.tpcobtar = 2 THEN
+        DO:
+		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
+ 
+          /*VERIFICA LIMITE MÍNIMO*/
+          IF par_vltarifa < crapfco.vlmintar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmintar.
+			END.
+          /*VERIFICA LIMITE MÁXIMO*/
+          IF par_vltarifa > crapfco.vlmaxtar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
+			END.
+		END.
+        /* TARIFA FIXA*/
+      ELSE
+	    DO:
+          ASSIGN par_vltarifa = crapfco.vltarifa.
+		END.	
+
+
     ASSIGN par_cdhistor = crapfvl.cdhistor
            par_cdhisest = crapfvl.cdhisest
-           par_vltarifa = crapfco.vltarifa
            par_dtdivulg = crapfco.dtdivulg
            par_dtvigenc = crapfco.dtvigenc
            par_cdfvlcop = crapfco.cdfvlcop.
