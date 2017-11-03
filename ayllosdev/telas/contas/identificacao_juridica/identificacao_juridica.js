@@ -15,6 +15,8 @@
  * 006: [23/07/2015] Gabriel (RKAM)            : Reformulacao Cadastral.
  * 007: [03/12/2015] Jaison/Andrino  (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
+ * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
+ * 010: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.      
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -152,6 +154,7 @@ function manterRotina(operacao) {
 	dtcadass = trim($('#dtcadass','#frmDadosIdentJuridica').val());
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
 	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
+	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -162,7 +165,7 @@ function manterRotina(operacao) {
 			cdsitcpf: cdsitcpf, cdnatjur: cdnatjur, qtfilial: qtfilial, qtfuncio: qtfuncio,
 			dtiniatv: dtiniatv, cdseteco: cdseteco, cdrmativ: cdrmativ, dsendweb: dsendweb,
 			nmtalttl: nmtalttl, qtfoltal: qtfoltal,	dtcadass: dtcadass, cdcnae  : cdcnae,
-			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb,
+			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb, dtvallic : dtvallic,
 			redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -197,7 +200,7 @@ function controlaLayout(operacao) {
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
 	
 	// Nome Fantasia / Consulta / Situação / Natureza Jurídica / Qt. Filiais / Qt. Funcionários / Início Atividade / Setor Econômico / Ramo Atividade / Site / Nome Talão / Qt. Folhas Talão
-	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb','#frmDadosIdentJuridica');
+	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic','#frmDadosIdentJuridica');
 	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"]','#frmDadosIdentJuridica');	
 	var codigo			= $('#cdnatjur, #cdseteco, #cdrmativ','#frmDadosIdentJuridica');
 
@@ -219,7 +222,8 @@ function controlaLayout(operacao) {
 	$('#cdcnae','#frmDadosIdentJuridica').css({'width':'60px'}).attr('maxlength','7');
 	$('#dscnae','#frmDadosIdentJuridica').css({'width':'344px'});
 	$('label[for="qtfuncio"]','#frmDadosIdentJuridica').css({'width':'104px'});
-	$('#nrlicamb','#frmDadosIdentJuridica').css({'width':'424px'});
+	$('#nrlicamb', '#frmDadosIdentJuridica').css({ 'width': '180px' });
+	$('#dtvallic', '#frmDadosIdentJuridica').css({ 'width': '90px' });
 
 	// Pular para o proximo campo quando pressionado ENTER
 	controlaFocoEnter('frmDadosIdentJuridica');
@@ -325,7 +329,7 @@ function controlaPesquisas() {
 					qtReg		= '30';
 					filtros     = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
 					colunas     = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';			
-					mostraPesquisa('MATRIC',procedure,titulo,qtReg,filtros,colunas,divRotina);
+					mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
 				}
 			}
@@ -378,7 +382,7 @@ function controlaPesquisas() {
 		procedure	= 'BUSCA_CNAE';
 		titulo      = 'CNAE';		
 		filtrosDesc = 'flserasa|2';
-		buscaDescricao('MATRIC',procedure,titulo,$(this).attr('name'),'dscnae',$(this).val(),'dscnae',filtrosDesc,'frmDadosIdentJuridica');
+		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dscnae',$(this).val(),'dscnae',filtrosDesc,'frmDadosIdentJuridica');
 		return false;
 	});	
 	

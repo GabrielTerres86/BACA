@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 24/11/2015
+    Data    : Janeiro/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -26,6 +26,16 @@
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)
 
+                25/10/2016 - Melhoria 310 - Verificacao da data de validade da
+				             licença (Tiago/Thiago).
+                     
+                17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                             nome fantasia para o CDC. (Reinert Prj 289)     	
+
+                                    
+                 
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 ..................................................................................*/
 
 
@@ -38,6 +48,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -123,7 +134,8 @@ PROCEDURE busca_dados:
             tt-dados-jur.cdseteco = bcrapjur.cdseteco
             tt-dados-jur.dtcadass = bcrapass.dtmvtolt
             tt-dados-jur.cdclcnae = bcrapass.cdclcnae
-            tt-dados-jur.nrlicamb = bcrapjur.nrlicamb.     
+            tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
+			      tt-dados-jur.dtvallic = bcrapjur.dtvallic.     
 
         /* Situacao do CPF/CNPJ */
         CASE tt-dados-jur.cdsitcpf:
@@ -200,6 +212,8 @@ PROCEDURE valida_dados:
     DEF  INPUT PARAM tel_cdrmativ AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmtalttl AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_qtfoltal AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
@@ -289,12 +303,23 @@ PROCEDURE valida_dados:
                LEAVE Valida.
             END.
 
+        /* Data Validade da Licenca se houver numero*/
+        IF  par_nrlicamb <> ? and par_nrlicamb > 0 THEN
+            DO:
+              IF  par_dtvallic = ? THEN				
+                  DO:
+                    ASSIGN aux_dscritic = "Data de Validade da Licenca deve ser informada." .
         LEAVE Valida.
+    END.
+
+            END.
     END.
 
     IF  VALID-HANDLE(h-b1wgen0060) THEN
         DELETE OBJECT h-b1wgen0060.
 
+    
+    
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN 
         RUN gera_erro (INPUT par_cdcooper,
                        INPUT par_cdagenci,
@@ -347,6 +372,7 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -354,6 +380,7 @@ PROCEDURE grava_dados:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
@@ -448,6 +475,8 @@ PROCEDURE grava_dados:
 
        END.
         
+       ASSIGN aux_idseqttl = 0.
+        
        IF  CAPS(par_nmfatasi) <> crapjur.nmfansia OR
            par_cdnatjur <> crapjur.natjurid OR 
            par_cdrmativ <> crapjur.cdrmativ THEN
@@ -458,7 +487,7 @@ PROCEDURE grava_dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 10            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl
+                                       crapdoc.idseqttl = aux_idseqttl 
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                     IF NOT AVAILABLE crapdoc THEN
@@ -484,7 +513,8 @@ PROCEDURE grava_dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 10
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = aux_idseqttl.
+                                           
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc10.
@@ -525,7 +555,8 @@ PROCEDURE grava_dados:
               crapjur.dsendweb = par_dsendweb
               crapjur.nmtalttl = CAPS(par_nmtalttl)
               crapjur.cdseteco = par_cdseteco
-              crapjur.nrlicamb = par_nrlicamb NO-ERROR.
+              crapjur.nrlicamb = par_nrlicamb 
+			        crapjur.dtvallic = par_dtvallic NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
           DO:
@@ -536,6 +567,22 @@ PROCEDURE grava_dados:
        CREATE tt-dados-jur-atl.
        BUFFER-COPY crapass TO tt-dados-jur-atl.
        BUFFER-COPY crapjur TO tt-dados-jur-atl.
+
+       /* Criar pendencia no digidoc caso uma licenca tenho sido informada */
+       IF  par_nrlicamb > 0 AND
+	       (tt-dados-jur-ant.nrlicamb <> tt-dados-jur-atl.nrlicamb OR
+		      tt-dados-jur-ant.dtvallic <> tt-dados-jur-atl.dtvallic) THEN
+           DO:
+               RUN cria_pendencia_digidoc(INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_idseqttl,
+                                          INPUT par_cdoperad,
+                                          OUTPUT aux_cdcritic).
+
+               IF  aux_cdcritic > 0 THEN
+                   LEAVE Grava.
+           END.
 
        { sistema/generico/includes/b1wgenllog.i }
        
@@ -571,6 +618,43 @@ PROCEDURE grava_dados:
 
     RELEASE crapjur.
     RELEASE crapass.
+
+    IF CAPS(par_nmfatasi) <> tt-dados-jur-ant.nmfansia THEN
+      DO:
+          FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                              AND crapcdr.nrdconta = par_nrdconta
+                              AND crapcdr.flgconve = TRUE NO-LOCK:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_replica_cdc
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                  ,INPUT par_nrdconta
+                                                  ,INPUT par_cdoperad
+                                                  ,INPUT par_idorigem
+                                                  ,INPUT par_nmdatela
+                                                  ,INPUT 0
+                                                  ,INPUT 0
+                                                  ,INPUT 0
+                                                  ,INPUT 1
+                                                  ,0
+                                                  ,"").
+
+            CLOSE STORED-PROC pc_replica_cdc
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                    WHEN pc_replica_cdc.pr_cdcritic <> ?
+                   aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                    WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                    
+          END.
+
+      END.
 
     IF aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
        DO:
@@ -685,6 +769,72 @@ PROCEDURE grava_dados:
     RETURN aux_retorno.
 
 END PROCEDURE.
+
+PROCEDURE cria_pendencia_digidoc:
+
+    DEF INPUT PARAM par_cdcooper    LIKE    crapass.cdcooper    NO-UNDO.
+    DEF INPUT PARAM par_nrdconta    LIKE    crapass.nrdconta    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt    LIKE    crapdat.dtmvtolt    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl    LIKE    crapttl.idseqttl    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad    LIKE    crapope.cdoperad    NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic   LIKE    crapcri.cdcritic    NO-UNDO.
+
+    DEF VAR aux_contador    AS  INTEGER                     NO-UNDO.
+
+    ASSIGN par_cdcritic = 0.
+
+    /* cria registros na crapdoc de 131 - Licenças Sócio Ambientais */
+    ContadorDoc131: DO aux_contador = 1 TO 10:
+        
+        FIND FIRST crapdoc WHERE 
+                   crapdoc.cdcooper = par_cdcooper AND
+                   crapdoc.nrdconta = par_nrdconta AND
+                   crapdoc.tpdocmto = 40           AND
+                   crapdoc.dtmvtolt = par_dtmvtolt AND
+                   crapdoc.idseqttl = par_idseqttl 
+                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    
+        IF  NOT AVAILABLE crapdoc THEN
+            DO:
+                IF  LOCKED(crapdoc) THEN
+                    DO:
+                        IF  aux_contador = 10 THEN
+                            DO:
+                                ASSIGN par_cdcritic = 341.
+                                LEAVE ContadorDoc131.
+                            END.
+                        ELSE 
+                            DO: 
+                                PAUSE 1 NO-MESSAGE.
+                                NEXT ContadorDoc131.
+                            END.
+                    END.
+                ELSE
+                    DO:
+                        CREATE crapdoc.
+                        ASSIGN crapdoc.cdcooper = par_cdcooper
+                               crapdoc.nrdconta = par_nrdconta
+                               crapdoc.flgdigit = FALSE
+                               crapdoc.dtmvtolt = par_dtmvtolt
+                               crapdoc.tpdocmto = 40
+                               crapdoc.idseqttl = par_idseqttl
+                               crapdoc.cdoperad = par_cdoperad.
+                        VALIDATE crapdoc.    
+                        
+                        LEAVE ContadorDoc131.
+                    END.
+            END.
+        ELSE
+            DO:
+                ASSIGN crapdoc.flgdigit = FALSE
+                       crapdoc.dtmvtolt = par_dtmvtolt.
+
+                LEAVE ContadorDoc131.
+            END.
+    END. /* Fim do DO ContadorDoc131 */
+
+END PROCEDURE.
+
 
 /*................................ FUNCTIONS ................................*/
 

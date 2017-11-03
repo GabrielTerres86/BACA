@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 23/06/2016
+    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
     
     Dados referentes ao programa:
 
@@ -94,6 +94,18 @@
 				23/06/2016 - Ajustes na procedure grava-importacao para qdo
 				             houver algum erro na importacao devolver uma
 							 mensagem amigavel (Tiago SD427693).             
+               
+			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)      
+               
+               17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                            endereco para o CDC. (Reinert Prj 289)		
+
+				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
+							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
+                            
+               22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                            o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
 
 
@@ -105,6 +117,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
 { sistema/generico/includes/b1wgen0168tt.i }
+{ sistema/generico/includes/var_oracle.i }
     
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -1561,6 +1574,8 @@ PROCEDURE alterar-endereco:
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.
     DEF VAR aux_msgrvcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_persemon AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.    
 
     DEF VAR h-b1wgen0056 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
@@ -1593,6 +1608,25 @@ PROCEDURE alterar-endereco:
                 UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
 
+        IF   crapass.inpessoa = 1 THEN DO:
+            FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                               crapttl.nrdconta = par_nrdconta AND 
+                               crapttl.idseqttl = par_idseqttl NO-LOCK NO-ERROR.
+            IF  NOT AVAILABLE crapttl  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Titular nao cadastrado.".
+
+                    UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+                END.
+            
+            ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc
+                   aux_idseqttl = par_idseqttl.
+          END.
+        ELSE 
+            ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
+                   aux_idseqttl = 0.
+        
         ASSIGN aux_tpendass = IF   par_tpendass <> 0    THEN 
                                    par_tpendass
                               ELSE 
@@ -1670,6 +1704,21 @@ PROCEDURE alterar-endereco:
                                   crapenc.idorigem = par_idorigee.
                            VALIDATE crapenc.
                         END.
+                END.
+			ELSE
+			   DO:
+			   
+			      IF (aux_tpendass = 13   OR 
+					 aux_tpendass = 14)  AND
+					 par_nrcepend = 0    THEN
+				     DO:
+					    
+						DELETE crapenc.
+						
+					    aux_flgtrans = TRUE.
+						LEAVE TRANS_ENDERECO.
+				     END.	
+			   
                 END.
 
             LEAVE.
@@ -1796,7 +1845,7 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = par_idseqttl
+                                             crapdoc.idseqttl = aux_idseqttl 
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1822,7 +1871,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = aux_idseqttl.
+                                           
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.
@@ -1955,6 +2005,57 @@ PROCEDURE alterar-endereco:
             END.
 
         FIND CURRENT crapenc NO-LOCK NO-ERROR.
+
+        /* Quando for primeiro titular, vamos ver ser o cooperado eh 
+           um conveniado CDC. Caso positivo, vamos replicar os dados
+           alterados de endereco para as tabelas do CDC. */
+        IF par_idseqttl = 1 THEN 
+          DO:
+        FOR FIRST crapcdr WHERE crapcdr.cdcooper = crapenc.cdcooper
+                            AND crapcdr.nrdconta = crapenc.nrdconta
+                            AND crapcdr.flgconve = TRUE NO-LOCK:
+
+          IF aux_tpendass = 9 THEN
+            DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              
+              RUN STORED-PROCEDURE pc_replica_cdc
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT par_cdoperad
+                                                    ,INPUT par_idorigem
+                                                    ,INPUT par_nmdatela
+                                                    ,INPUT 1
+                                                    ,INPUT 0
+                                                    ,INPUT 0
+                                                    ,INPUT 0
+                                                    ,0
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_replica_cdc
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = ""
+                     aux_cdcritic = pc_replica_cdc.pr_cdcritic 
+                                      WHEN pc_replica_cdc.pr_cdcritic <> ?
+                     aux_dscritic = pc_replica_cdc.pr_dscritic 
+                                      WHEN pc_replica_cdc.pr_dscritic <> ?.
+                                                                            
+              IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                  ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
+                                      + " Entre em contato com a equipe do CDC da Cecred."
+                         aux_flgtrans = TRUE.
+                  LEAVE TRANS_ENDERECO.
+                END.
+
+            END.
+                            
+        END.
+          END.
 
         ASSIGN par_msgalert = "Verifique se o item BENS deve ser atualizado."
                aux_flgtrans = TRUE.
@@ -2197,7 +2298,7 @@ PROCEDURE gravar-endereco-cep:
            par_nmextcid = CAPS(TRIM(par_nmextcid))
            par_nmextlog = CAPS(TRIM(par_nmextlog))
            par_nmresbai = CAPS(TRIM(par_nmresbai))
-           par_nmrescid = CAPS(TRIM(par_nmrescid))
+           par_nmrescid = SUBSTRING(CAPS(TRIM(par_nmrescid)),1,25)
            par_nmreslog = CAPS(TRIM(par_nmreslog)).
 
     IF  par_flgalter THEN
@@ -2386,7 +2487,7 @@ PROCEDURE valida-endereco-cep:
                                    crapope.cdoperad = par_cdoperad 
                                    NO-LOCK NO-ERROR.
         
-                IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+                IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
                     DO:
                         ASSIGN aux_cdcritic = 036 
                                par_nmdcampo = "nrceplog".
@@ -2968,10 +3069,10 @@ PROCEDURE trata-busca-endereco:
             ELSE
                 ASSIGN tt-endereco.nmbairro = par_nmresbai.
                 
-            IF  LENGTH(par_nmextcid) <= 25  THEN
+            /*IF  LENGTH(par_nmextcid) <= 25  THEN*/
                 ASSIGN tt-endereco.nmcidade = par_nmextcid.
-            ELSE
-                ASSIGN tt-endereco.nmcidade = par_nmrescid. 
+            /*ELSE
+                ASSIGN tt-endereco.nmcidade = par_nmrescid. */
 
             IF  par_idoricad = 1  THEN
                 ASSIGN tt-endereco.dsoricad = "ENDERECO OBTIDO NOS CORREIOS".
@@ -3114,7 +3215,7 @@ PROCEDURE exclui-endereco-ayllos:
         FIND crapope WHERE crapope.cdcooper = par_cdcooper AND
                            crapope.cdoperad = par_cdoperad NO-LOCK NO-ERROR.
 
-        IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+        IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
             DO:
                 ASSIGN aux_cdcritic = 036 
                        aux_dscritic = "".
@@ -3236,7 +3337,7 @@ PROCEDURE copia_arquivos_correios:
     FIND crapope WHERE crapope.cdcooper = par_cdcooper AND
                        crapope.cdoperad = par_cdoperad NO-LOCK NO-ERROR.
 
-    IF  NOT CAN-DO("TI,SUPORTE",crapope.dsdepart)  THEN
+    IF  NOT CAN-DO("20,18",STRING(crapope.cddepart))  THEN
         DO:
             ASSIGN aux_cdcritic = 036
                    aux_dscritic = "".

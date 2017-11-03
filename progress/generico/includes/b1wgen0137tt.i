@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0137tt.i                  
     Autor   : Guilherme
-    Data    : Abril/2012                      Ultima atualizacao: 12/04/2016
+    Data    : Abril/2012                      Ultima atualizacao: 25/10/2016
 
    Dados referentes ao programa:
 
@@ -40,6 +40,11 @@
                             
                12/04/2016 - Adicionar campos dtincalt e cdoperad na tt-documentos-termo
                             (Lucas Ranghetti #410302)
+                            
+               07/06/2016 - Adicionado TEMP-TABLE tt-tarif-contas-pacote. PRJ218/2
+                            (Reinert).
+
+			   25/10/2016 - Ajustes da melhoria 310 (Tiago/Thiago).
 ............................................................................ */
 
 DEF TEMP-TABLE tt-documento-digitalizado NO-UNDO
@@ -98,6 +103,7 @@ DEF TEMP-TABLE tt-contr_ndigi_cadastro                                  NO-UNDO
     FIELD tpdocctc AS CHAR
     FIELD tpdocidp AS CHAR
     FIELD tpdocdfi AS CHAR
+	FIELD tpdoclic AS CHAR
     FIELD idseqttl AS INT
     FIELD dtmvtolt AS DATE
     FIELD idseqite AS INT
@@ -150,5 +156,12 @@ DEF TEMP-TABLE tt-documentos-termo NO-UNDO
     FIELD idseqite AS INTE
     FIELD dtincalt AS DATE
     FIELD cdoperad AS CHAR.
+
+DEF TEMP-TABLE tt-tarif-contas-pacote NO-UNDO
+    FIELD nrdconta AS INTE
+    FIELD dtadesao AS DATE
+    FIELD cdopeade AS CHAR
+    FIELD dtcancel AS DATE
+    FIELD cdopecan AS CHAR.
 
 /*............................................................................*/
