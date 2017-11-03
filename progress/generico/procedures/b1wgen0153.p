@@ -144,7 +144,8 @@
                             (Lucas Ranghetti #633002)
 
 				11/07/2017 - Melhoria 150 - Tarifação de operações de crédito por percentual
-                           
+
+
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -6615,7 +6616,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     DEF VAR aux_cdlcremp        LIKE craplcr.cdlcremp       NO-UNDO.
     DEF VAR aux_dslcremp        LIKE craplcr.dslcremp       NO-UNDO.
     DEF VAR aux_nmoperad        LIKE crapope.nmoperad       NO-UNDO.
-    
+
     DEF VAR aux_nrseqatu AS INTE                            NO-UNDO.
     DEF VAR aux_nrseqini AS INTE                            NO-UNDO.
     DEF VAR aux_nrseqfim AS INTE                            NO-UNDO.
@@ -6623,7 +6624,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     EMPTY TEMP-TABLE tt-atribdet.
 
     ASSIGN aux_nrregist = 0.
-    
+
     ASSIGN aux_nrseqatu = 0
            aux_nrseqini = par_nriniseq
            aux_nrseqfim = par_nriniseq + par_nrregist.
@@ -6690,7 +6691,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
                 FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK.
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad.
                 END.  
-                
+
                 ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
                 
                 IF aux_nrseqatu < aux_nrseqini  OR
@@ -6764,7 +6765,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
                 FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK:
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad. 
                 END.
-                
+
                 ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
                 
                 IF aux_nrseqatu < aux_nrseqini  OR
@@ -6794,7 +6795,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
             END.
         END.
     END.
-    
+
 	ASSIGN par_qtregist = aux_nrseqatu.
 
     RETURN "OK".
@@ -8560,9 +8561,32 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
             RETURN "OK".
         END.
 
+      /*Retornar valores*/
+      /* TARIFA POR PERCENTUAL*/
+      IF crapfco.tpcobtar = 2 THEN
+        DO:
+		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
+ 
+          /*VERIFICA LIMITE MÍNIMO*/
+          IF par_vltarifa < crapfco.vlmintar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmintar.
+			END.
+          /*VERIFICA LIMITE MÁXIMO*/
+          IF par_vltarifa > crapfco.vlmaxtar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
+			END.
+		END.
+        /* TARIFA FIXA*/
+      ELSE
+	    DO:
+          ASSIGN par_vltarifa = crapfco.vltarifa.
+		END.	
+
+
     ASSIGN par_cdhistor = crapfvl.cdhistor
            par_cdhisest = crapfvl.cdhisest
-           par_vltarifa = crapfco.vltarifa
            par_dtdivulg = crapfco.dtdivulg
            par_dtvigenc = crapfco.dtvigenc
            par_cdfvlcop = crapfco.cdfvlcop.
