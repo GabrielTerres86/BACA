@@ -2,7 +2,7 @@
 
     Programa: b1wgen0073.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 17/04/2017   
+    Data    : Maio/2010                   Ultima atualizacao: 19/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTATOS
 
@@ -30,6 +30,9 @@
 				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
+                             
+               19/09/2017 - Ajuste rotina Busca_Dados para carregar o telefone 
+                            residencial. PRJ339-CRM (Odirlei-AMcom)
                              
 .............................................................................*/
 
@@ -143,8 +146,7 @@ PROCEDURE Busca_Dados:
                         FOR FIRST craptfc FIELDS(nrtelefo)
                             WHERE craptfc.cdcooper = crapass.cdcooper AND
                                   craptfc.nrdconta = crapass.nrdconta AND
-                                  craptfc.idseqttl = 1                AND
-                                  craptfc.cdseqtfc = 1 NO-LOCK:
+                                  craptfc.tptelefo = 1 NO-LOCK:
                         END.
                                                   
                         /* Emails */
@@ -385,8 +387,7 @@ PROCEDURE Busca_Dados_Cto:
         FOR FIRST craptfc FIELDS(nrtelefo)
             WHERE craptfc.cdcooper = crapass.cdcooper AND
                   craptfc.nrdconta = crapass.nrdconta AND
-                  craptfc.idseqttl = 1                AND
-                  craptfc.cdseqtfc = 1 NO-LOCK:
+                  craptfc.tptelefo = 1 NO-LOCK: /* residencial */
         END.
 
         /* Emails */
