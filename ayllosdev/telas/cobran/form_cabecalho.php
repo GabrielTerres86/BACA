@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 10/02/2012
  * OBJETIVO     : Cabeçalho para a tela COBRAN
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 28/04/2016 - Inclusao opcao S. PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)
+ *
+ *
  * --------------
  */
 
@@ -19,6 +21,7 @@
 	<option value="C" <?php echo $cddopcao == 'C' ? 'selected' : '' ?>><? echo utf8ToHtml('C - Consultar informações de boletos cadastrados no sistema.') ?></option>
 	<option value="I" <?php echo $cddopcao == 'I' ? 'selected' : '' ?>><? echo utf8ToHtml('I - Integrar arquivos de cobrança.') ?></option>
 	<option value="R" <?php echo $cddopcao == 'R' ? 'selected' : '' ?>><? echo utf8ToHtml('R - Imprimir relatórios e consultar na tela.') ?></option>
+    <option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?>><? echo utf8ToHtml('S - Consultar Status dos convênios de cobrança.') ?></option>
 	</select>
 
 	<a href="#" class="botao" id="btnOk1">Ok</a>
