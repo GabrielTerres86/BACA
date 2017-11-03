@@ -33,6 +33,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          recursos que possuem tipo definido(gnaprdp.cdtiprec <> 0).
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)
 						
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+                         
             27/06/2018 - Ajustes para RF05/RF06, inclusao de novas abas, 
                          PRJ229 - Melhorias OQS (Jean Michel).		
                          
@@ -874,7 +877,8 @@ PROCEDURE CriaListaPac :
                DO:
                   aux_cdagenci = ",-2".
                   FOR EACH crapage WHERE crapage.cdcooper = aux_cdcooper   AND
-                                         crapage.insitage = 1 /* Ativo */  AND
+                                         (crapage.insitage = 1  OR   /* Ativo */
+                                         crapage.insitage = 3) AND  /* Temporariamente Indisponivel */
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ NO-LOCK
                                          BY crapage.nmresage:
 
@@ -895,7 +899,8 @@ PROCEDURE CriaListaPac :
                       FIND crapage WHERE crapage.cdcooper = aux_cdcooper     AND
                                          crapage.cdagenci = gnapses.cdagenci AND
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ AND
-                                         crapage.insitage = 1 /* Ativo */                    
+                                         (crapage.insitage = 1  OR   /* Ativo */
+                                         crapage.insitage = 3) /* Temporariamente Indisponivel */                  
                                          NO-LOCK NO-ERROR.
                       IF   AVAILABLE crapage   THEN                                   
                            ASSIGN aux_cdagenci = crapage.nmresage + "," + TRIM(STRING(crapage.cdagenci)).
