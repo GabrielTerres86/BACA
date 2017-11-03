@@ -10066,10 +10066,10 @@ PROCEDURE valida-inclusao-conta-transferencia:
     DEF  INPUT PARAM par_cdageban AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctatrf LIKE crapcti.nrctatrf             NO-UNDO.
     DEF  INPUT PARAM par_intipdif AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_intipcta AS INTE                           NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_intipcta AS INTE                    NO-UNDO.
     DEF  INPUT PARAM par_insitcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_inpessoa AS INTE                    NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_nrcpfcgc AS DECI                    NO-UNDO.
     DEF  INPUT PARAM par_flvldinc AS LOGI                           NO-UNDO.
 
     DEF  INPUT PARAM par_rowidcti AS CHAR                           NO-UNDO.
@@ -10101,10 +10101,10 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                             INPUT par_intipcta,
                                             INPUT par_insitcta,
                                             INPUT par_inpessoa,
-                                            INPUT dec(par_nrcpfcgc),
+                                            INPUT DEC(par_nrcpfcgc),
                                             INPUT INT(pr_flvldinc),
-                                            INPUT int(par_rowidcti),
-                                                  INPUT par_nmtitula,
+                                            INPUT INT(par_rowidcti),
+                                            INPUT par_nmtitula,
                                            OUTPUT "",
                                            OUTPUT "",
                                            OUTPUT 0,
@@ -10118,6 +10118,9 @@ PROCEDURE valida-inclusao-conta-transferencia:
     ASSIGN par_dscpfcgc = ""
            par_nmdcampo = ""
            par_nmtitula = "" 
+           par_nrcpfcgc = 0
+           par_inpessoa = 0
+           par_intipcta = 0
            aux_dscritic = ""
            aux_cdcritic = 0
            par_dscpfcgc = pc_val_inclui_conta_transf.pr_dscpfcgc 
@@ -10125,7 +10128,13 @@ PROCEDURE valida-inclusao-conta-transferencia:
            par_nmdcampo = pc_val_inclui_conta_transf.pr_nmdcampo 
                           WHEN pc_val_inclui_conta_transf.pr_nmdcampo <> ?
            par_nmtitula = pc_val_inclui_conta_transf.pr_nmtitula 
-                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?
+                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?                          
+           par_nrcpfcgc = pc_val_inclui_conta_transf.pr_nrcpfcgc 
+                          WHEN pc_val_inclui_conta_transf.pr_nrcpfcgc <> ?                          
+           par_inpessoa = pc_val_inclui_conta_transf.pr_inpessoa 
+                          WHEN pc_val_inclui_conta_transf.pr_inpessoa <> ?
+           par_intipcta = pc_val_inclui_conta_transf.pr_intipcta 
+                          WHEN pc_val_inclui_conta_transf.pr_intipcta <> ?                          
            aux_cdcritic = pc_val_inclui_conta_transf.pr_cdcritic 
                           WHEN pc_val_inclui_conta_transf.pr_cdcritic <> ?
            aux_dscritic = pc_val_inclui_conta_transf.pr_dscritic

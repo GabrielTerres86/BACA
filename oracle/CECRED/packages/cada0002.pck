@@ -186,10 +186,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
                                       ,pr_cdageban IN INTEGER
                                       ,pr_nrctatrf IN crapcti.nrctatrf%TYPE
                                       ,pr_intipdif IN INTEGER
-                                      ,pr_intipcta IN INTEGER
+                                      ,pr_intipcta IN OUT INTEGER
                                       ,pr_insitcta IN INTEGER
-                                      ,pr_inpessoa IN INTEGER
-                                      ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE             
+                                      ,pr_inpessoa IN OUT INTEGER
+                                      ,pr_nrcpfcgc IN OUT crapass.nrcpfcgc%TYPE             
                                       ,pr_flvldinc IN INTEGER                
                                       ,pr_rowidcti IN crapcti.progress_recid%TYPE
                                       ,pr_nmtitula IN OUT VARCHAR2
@@ -3420,10 +3420,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                       ,pr_cdageban IN INTEGER
                                       ,pr_nrctatrf IN crapcti.nrctatrf%TYPE
                                       ,pr_intipdif IN INTEGER
-                                      ,pr_intipcta IN INTEGER
+                                      ,pr_intipcta IN OUT INTEGER
                                       ,pr_insitcta IN INTEGER
-                                      ,pr_inpessoa IN INTEGER
-                                      ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE             
+                                      ,pr_inpessoa IN OUT INTEGER
+                                      ,pr_nrcpfcgc IN OUT crapass.nrcpfcgc%TYPE             
                                       ,pr_flvldinc IN INTEGER                
                                       ,pr_rowidcti IN crapcti.progress_recid%TYPE
                                       ,pr_nmtitula IN OUT VARCHAR2
@@ -3931,6 +3931,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   
       -- Verifica tipo de pessoa
       IF rw_crapass.inpessoa = 1 THEN
+        
+        pr_inpessoa := 1;
+        pr_intipcta := 1;
                   
         OPEN cr_crapttl(pr_cdcooper => rw_crapcop_2.cdcooper
                        ,pr_nrdconta => pr_nrctatrf
@@ -3938,14 +3941,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                 
         IF cr_crapttl%FOUND THEN
           pr_nmtitula := rw_crapttl.nmextttl;
+          pr_nrcpfcgc := rw_crapttl.nrcpfcgc;
           pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfcgc,1);
         ELSE
           pr_nmtitula := rw_crapass.nmprimtl;
+          pr_nrcpfcgc := rw_crapass.nrcpfcgc;
           pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,1);
         END IF;
 
       ELSE
-        pr_nmtitula := rw_crapass.nmprimtl;  
+        pr_inpessoa := 2;
+        pr_intipcta := 1;
+        pr_nmtitula := rw_crapass.nmprimtl;
+        pr_nrcpfcgc := rw_crapass.nrcpfcgc;  
         pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,2);  
       END IF;                                 
 

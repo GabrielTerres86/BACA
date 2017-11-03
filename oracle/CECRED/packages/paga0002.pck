@@ -1034,6 +1034,10 @@ create or replace package body cecred.PAGA0002 is
     vr_flgctafa   BOOLEAN;
     vr_nmtitula   VARCHAR2(500);
     vr_nmtitul2   VARCHAR2(500);
+    vr_intipcta   crapcti.intipcta%TYPE;
+    vr_insitcta   crapcti.insitcta%TYPE;
+    vr_inpessoa   crapcti.inpessoa%TYPE;
+    vr_nrcpffav   crapcti.nrcpfcgc%TYPE;
     vr_cddbanco   INTEGER;
     vr_idastcjt   INTEGER(1);
     vr_nrcpfcgc   INTEGER;
@@ -1293,6 +1297,9 @@ create or replace package body cecred.PAGA0002 is
       IF pr_tpoperac = 4  THEN /** TED **/
 
         vr_nmtitula := pr_nmtitula;
+        vr_intipcta := pr_intipcta;
+        vr_inpessoa := pr_inpessoa;
+        vr_nrcpffav := pr_nrcpfcgc;
 
         -- Chamar a rotina valida-inclusao-conta-transferencia convertida da Bo15
         CADA0002.pc_val_inclui_conta_transf(pr_cdcooper => pr_cdcooper
@@ -1310,10 +1317,10 @@ create or replace package body cecred.PAGA0002 is
                                            ,pr_cdageban => pr_cdageban
                                            ,pr_nrctatrf => pr_nrctatrf
                                            ,pr_intipdif => 2
-                                           ,pr_intipcta => pr_intipcta
+                                           ,pr_intipcta => vr_intipcta
                                            ,pr_insitcta => 2
-                                           ,pr_inpessoa => pr_inpessoa
-                                           ,pr_nrcpfcgc => pr_nrcpfcgc
+                                           ,pr_inpessoa => vr_inpessoa
+                                           ,pr_nrcpfcgc => vr_nrcpffav
                                            ,pr_flvldinc => 1
                                            ,pr_rowidcti => NULL
                                            ,pr_nmtitula => vr_nmtitula
@@ -2414,9 +2421,17 @@ create or replace package body cecred.PAGA0002 is
 
     vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
+    vr_inpessoa  crapass.inpessoa%TYPE;
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
+    
+    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT a.inpessoa
+      FROM crapass a
+     WHERE a.cdcooper = pr_cdcooper     
+       AND a.nrdconta = pr_nrdconta;
 
   BEGIN
     -- Definir descrição da transação
@@ -2424,6 +2439,15 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
+    
+    -- Buscar tipo de pessoa da conta
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO vr_inpessoa;
+    IF cr_crapass%NOTFOUND THEN
+      vr_inpessoa := 0;
+    END IF;    
+    CLOSE cr_crapass;
 
     -- inicializar variaveis
     vr_vllanmto := pr_vllanmto;
@@ -2657,6 +2681,7 @@ create or replace package body cecred.PAGA0002 is
                                                       <intitcop>'|| vr_intitcop            ||'</intitcop>
                                                       <nrdctabb>'|| vr_nrdctabb            ||'</nrdctabb>
                                                       <dttransa>'|| to_char(SYSDATE,'DD/MM/RRRR') ||'</dttransa>
+                                                      <inpessoa>'|| to_char(vr_inpessoa)   ||'</inpessoa>
                                                     </DADOS_PAGAMENTO>');
     -- Encerrar a tag raiz
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao26

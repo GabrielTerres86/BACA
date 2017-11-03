@@ -2331,6 +2331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     vr_flghbtrf NUMBER;
     vr_dsmsgtar VARCHAR2(250);
     vr_dsmsgtrf VARCHAR2(250);
+    vr_dssitcta VARCHAR2(10);
     
     --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
@@ -2509,6 +2510,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     WHILE vr_index_contas_cad IS NOT NULL LOOP      
       
+      IF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 2 THEN
+        vr_dssitcta := 'Ativo';
+      ELSIF vr_tab_contas_cadastradas(vr_index_contas_cad).insitcta = 3 THEN
+        vr_dssitcta := 'Suspenso';
+      ELSE
+        vr_dssitcta := '';
+      END IF;        
+      
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<DADOS>' 
@@ -2529,6 +2538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ||   '<dsageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).dsageban)    ||'</dsageban>'
                                                 ||   '<nmageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmageban)    ||'</nmageban>'
                                                 ||   '<nmsegntl>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmtitul2)    ||'</nmsegntl>'
+                                                ||   '<dssitcta>'||vr_dssitcta                                                         ||'</dssitcta>'
                                                 || '</DADOS>');   
                            
       vr_index_contas_cad := vr_tab_contas_cadastradas.NEXT(vr_index_contas_cad);
