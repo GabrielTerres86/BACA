@@ -156,6 +156,7 @@
 
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
+                
 		        13/10/2017 - Removido a funcao que atualizava o nome do talao para segundo titular. (PRJ339 - Kelvin/Andrino).
                              
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
@@ -1538,7 +1539,7 @@ PROCEDURE Grava_Dados:
                                        crapdoc.tpdocmto = 2            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
                                        crapdoc.idseqttl = par_idseqttl AND
-                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
+                                       crapdoc.nrcpfcgc = par_nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1566,7 +1567,7 @@ PROCEDURE Grava_Dados:
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 2
                                            crapdoc.idseqttl = par_idseqttl
-                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
+                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc2.
                                 END.
@@ -1595,7 +1596,7 @@ PROCEDURE Grava_Dados:
                                        crapdoc.tpdocmto = 4            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
                                        crapdoc.idseqttl = par_idseqttl AND 
-                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
+                                       crapdoc.nrcpfcgc = par_nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1623,7 +1624,7 @@ PROCEDURE Grava_Dados:
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.idseqttl = par_idseqttl
                                            crapdoc.tpdocmto = 4
-                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
+                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
                                     VALIDATE crapdoc.
                                     LEAVE ContadorDoc4.
                                 END.

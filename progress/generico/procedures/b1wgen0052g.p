@@ -4355,6 +4355,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.nrdconta = par_nrdconta
                        crabass.dtmvtolt = par_dtmvtolt
                        crabass.inpessoa = par_inpessoa
+                       crabass.nrcpfcgc = par_nrcpfcgc
                        crabass.inmatric = 1
                        crabass.tpavsdeb = 0
                        crabass.qtfoltal = 10 
@@ -5184,6 +5185,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.dthabmen = par_dthabmen
                               crabttl.flgimpri = TRUE 
                               crabttl.inpolexp = 0
+                              crabttl.nrcpfcgc = par_nrcpfcgc 
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN

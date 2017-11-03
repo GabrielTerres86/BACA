@@ -2011,6 +2011,8 @@ PROCEDURE Grava_Dados:
                     END. /* Fim do cddopcao = A or X */
                 ELSE IF par_cddopcao = "I" THEN
                     DO:
+                        aux_nrcpfcgc = par_nrcpfcgc.
+                        
                         ASSIGN aux_dscritic = "".
                         IF  par_inpessoa = 1 THEN
                             DO:
