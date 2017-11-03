@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 07/08/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -83,7 +83,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --              assim o carregamento correto das taxa de moedas por data.(Carlos Rafael Tanholi - SD 631979)
   --
   -- 07/08/2017 - #715540 Tratamento em pc_saldo_rdc_pos, verificando o vetor de dias úteis para não repetir
-  --              a consulta; Correção do alias da tabela no hint index do cursor cr_craplap (Carlos)
+  --              a consulta; Correção do alias da tabela no hint index do cursor cr_craplap (Carlos)  
+  --
+  -- 03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
+  --              Influenciava o valor de resgate superior ao saldo.(Carlos Rafael Tanholi - SD 745032)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -4626,10 +4629,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         CLOSE cr_craplap;
       END IF;
 
+
       OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
-      
       IF rw_crapdat.inproces > 1 THEN
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
@@ -6875,7 +6878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     --
     -- Programa: pc_saldo_rgt_rdc_pos - Antiga b1wgen0004.saldo_rgt_rdc_pos
     -- Autor   : ---
-    -- Data    : ---                        Ultima atualizacao: 05/08/2015
+    -- Data    : ---                        Ultima atualizacao: 03/10/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6899,6 +6902,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     --
     --             05/08/2015 - Ajuste no cursor ca craplap para melhoria de performace
     --                          SD 281898(Odirlei-AMcom)
+    --
+    --             03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
+    --                          Influenciava o valor de resgate superior ao saldo. (Carlos Rafael Tanholi - SD 745032)
     -- .......................................................................................
     BEGIN
       DECLARE
@@ -6907,7 +6913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_txaplrgt   NUMBER(20,8);
         vr_perirrgt   NUMBER(15,2);
         vr_vlrenmlt   NUMBER(20,8) := 0;
-        vr_vlrgtsol   craprda.vlsdrdca%type;
+        vr_vlrgtsol   NUMBER(18,4);
         vr_vlrnttmm   craplap.vlrendmm%type;
         vr_nrdias     NUMBER := 0;
         vr_exc_saida  EXCEPTION;
@@ -7294,7 +7300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
            -- Atribui valores as variaveis truncando ou arredondando os valores
            vr_vlrenrgt := trunc(vr_vlrgtsol * vr_txaplrgt, 8);
-           vr_vlrgtsol := fn_round(vr_vlrgtsol + vr_vlrenrgt, 2);
+           vr_vlrgtsol := vr_vlrgtsol + vr_vlrenrgt;
            vr_vlrenmlt := vr_vlrenmlt + vr_vlrenrgt;
 
            vr_dtiniper := vr_dtiniper + 1;
