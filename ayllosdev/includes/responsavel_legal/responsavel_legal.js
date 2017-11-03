@@ -478,7 +478,6 @@ function manterRotinaResp(operacao_rsp) {
 	nrendere = normalizaNumero( $('#nrendere','#frmRespLegal').val() ); 
 	nrcepend = normalizaNumero( $('#nrcepend','#frmRespLegal').val() ); 
 	cdufende = $('#cdufende','#frmRespLegal').val();
-	nrcxapst = normalizaNumero( $('#nrcxapst','#frmRespLegal').val() );
 	cdrlcrsp = $('#cdrelacionamento','#frmRespLegal').val();
 	
 		
@@ -528,7 +527,6 @@ function manterRotinaResp(operacao_rsp) {
 			nrendere: nrendere,	
 			nrcepend: nrcepend,			           
 			nrdconta: nrdconta, 
-			nrcxapst: nrcxapst, 
 			nrdrowid_rsp: nrdrowid_rsp,
 			idseqttl: idseqttl, 
 			cdufende: cdufende, 
@@ -622,7 +620,7 @@ function controlaLayoutResp(operacao_rsp) {
 		var cCPF    		= $('#nrcpfcto','#frmRespLegal');
 		
 		// Nome / Dt. Nasc. / Tp. Doc. / Nr. Doc./ Org. Emis. / UF / Dt. Emis. / Est. Civil / Sexo / Nacionalidade / Naturalidade / End.Residen. / Nro. / Comp. / Bairro / Cep / Cidade / UF / Mãe / Pai
-		var camposGrupo2  	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestciv,#nrdocava,#cdoeddoc,#cdufende,#dtemddoc,#cdnacion,#dsnatura,#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmRespLegal');
+		var camposGrupo2  	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestciv,#nrdocava,#cdoeddoc,#cdufende,#dtemddoc,#cdnacion,#dsnatura,#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto','#frmRespLegal');
         var cDsnacion       = $('#dsnacion','#frmRespLegal');
 		var selectsGrupo2 	= $('select','#frmRespLegal');
 		var sexo 		  	= $('input[name="cdsexcto"]','#frmRespLegal');
@@ -658,7 +656,6 @@ function controlaLayoutResp(operacao_rsp) {
 		var rEnd	= $('label[for="dsendere"]','#'+nomeFormResp);
 		var rNum	= $('label[for="nrendere"]','#'+nomeFormResp);
 		var rCom	= $('label[for="complend"]','#'+nomeFormResp);
-		var rCax	= $('label[for="nrcxapst"]','#'+nomeFormResp);	
 		var rBai	= $('label[for="nmbairro"]','#'+nomeFormResp);
 		var rEst	= $('label[for="cdufende"]','#'+nomeFormResp);	
 		var rCid	= $('label[for="nmcidade"]','#'+nomeFormResp);
@@ -667,17 +664,15 @@ function controlaLayoutResp(operacao_rsp) {
 		rEnd.addClass('rotulo-linha').css('width','35px');
 		rNum.addClass('rotulo').css('width','70px');
 		rCom.addClass('rotulo-linha').css('width','52px');
-		rCax.addClass('rotulo').css('width','70px');
-		rBai.addClass('rotulo-linha').css('width','52px');
 		rEst.addClass('rotulo').css('width','70px');
-		rCid.addClass('rotulo-linha').css('width','52px');
+		rBai.addClass('rotulo-linha').css('width','52px');
+		rCid.addClass('rotulo').css('width','70px');
 
 		// CAMPOS - ENDEREÇO
 		var cCep	= $('#nrcepend,','#'+nomeFormResp);
 		var cEnd	= $('#dsendere,','#'+nomeFormResp);
 		var cNum	= $('#nrendere,','#'+nomeFormResp);
 		var cCom	= $('#complend,','#'+nomeFormResp);
-		var cCax	= $('#nrcxapst,','#'+nomeFormResp);		
 		var cBai	= $('#nmbairro,','#'+nomeFormResp);
 		var cEst	= $('#cdufende,','#'+nomeFormResp);	
 		var cCid	= $('#nmcidade,','#'+nomeFormResp);
@@ -686,10 +681,9 @@ function controlaLayoutResp(operacao_rsp) {
 		cEnd.addClass('alphanum').css('width','328px').attr('maxlength','40');
 		cNum.addClass('numerocasa').css('width','70px').attr('maxlength','7');
 		cCom.addClass('alphanum').css('width','328px').attr('maxlength','40');	
-		cCax.addClass('caixapostal').css('width','70px').attr('maxlength','6');	
 		cBai.addClass('alphanum').css('width','328px').attr('maxlength','40');	
 		cEst.css('width','70px');	
-		cCid.addClass('alphanum').css('width','328px').attr('maxlength','25');
+		cCid.addClass('alphanum').css('width','456px').attr('maxlength','25');
 
 		$('#nmmaecto,#nmpaicto','#'+nomeFormResp).css('width','454px');	
 		
@@ -823,7 +817,6 @@ function controlaLayoutResp(operacao_rsp) {
 	$('#nrcpfcto','#frmRespLegal').trigger('blur');
 	$('#nrendere','#frmRespLegal').trigger('blur');
 	$('#nrcepend','#frmRespLegal').trigger('blur');
-	$('#nrcxapst','#frmRespLegal').trigger('blur');
 	
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);	
@@ -1086,7 +1079,7 @@ function carregaDadosResp() {
 	$('#dsendere','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsendres'] );	
 	$('#nrendere','#frmRespLegal').val( arrayFilhos[indarray_rsp]['nrendres'] );	
 	$('#complend','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dscomres'] );	
-	$('#nrcxapst','#frmRespLegal').val( arrayFilhos[indarray_rsp]['nrcxpost'] );	
+	
 	$('#nmbairro','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsbaires'] );	
 	$('#cdufende','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsdufres'] );	
 	$('#nmcidade','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dscidres'] );	
@@ -1177,7 +1170,6 @@ function controlaArrayResp(op){
 				arrayFilhos[indarray_rsp]['dsendres'] = $('#dsendere','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['nrendres'] = $('#nrendere','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['dscomres'] = $('#complend','#frmRespLegal').val();	
-				arrayFilhos[indarray_rsp]['nrcxpost'] = $('#nrcxapst','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['dsbaires'] = $('#nmbairro','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['dsdufres'] = $('#cdufende','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['dscidres'] = $('#nmcidade','#frmRespLegal').val();	
@@ -1300,7 +1292,6 @@ function controlaArrayResp(op){
 				eval('regFilho'+i+'["nrendres"] = $(\'#nrendere\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dscomres"] = $(\'#complend\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dsbaires"] = $(\'#nmbairro\',\'#frmRespLegal\').val();');
-				eval('regFilho'+i+'["nrcxpost"] = $(\'#nrcxapst\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dscidres"] = $(\'#nmcidade\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dsdufres"] = $(\'#cdufende\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["nmpairsp"] = $(\'#nmpaicto\',\'#frmRespLegal\').val();');
