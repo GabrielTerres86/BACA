@@ -50,7 +50,8 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0009 IS
           ,progress crapidp.progress_recid%TYPE
           ,dtpreins crapidp.dtpreins%TYPE
           ,qtfaleve crapidp.qtfaleve%TYPE
-          ,flginsin VARCHAR2(5));
+          ,flginsin VARCHAR2(5)
+          ,nrficpre crapidp.nrficpre%TYPE);
 
   TYPE typ_tab_inscritos IS
     TABLE OF typ_reg_inscritos
@@ -67,6 +68,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0009 IS
                                   ,pr_dtanoage  IN crapppc.dtanoage%TYPE   --> Ano Agenda
                                   ,pr_idevento  IN crapedp.idevento%TYPE   --> ID do Evento
                                   ,pr_nriniseq  IN INTEGER                 --> Registro inicial para pesquisa
+                                  ,pr_nrficpre  IN crapidp.nrficpre%TYPE      --> Número de Ficha de Inscrição
                                   ,pr_qtdregis OUT INTEGER                 --> Quantidade de Registros Existentes
                                   ,pr_clobxmlc OUT CLOB                    --> XML com informações de LOG
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código da crítica
@@ -102,6 +104,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0009 IS
                               ,pr_dtanoage       IN crapppc.dtanoage%TYPE      --> Ano Agenda
                               ,pr_idevento       IN crapedp.idevento%TYPE      --> ID do Evento
                               ,pr_nriniseq       IN INTEGER                    --> Registro inicial para pesquisa
+                              ,pr_nrficpre       IN crapidp.nrficpre%TYPE      --> Número de Ficha de Inscrição
                               ,pr_qtdregis      OUT INTEGER                    --> Quantidade de Registros Existentes
                               ,pr_tab_status    OUT wpgd0009.typ_tab_status    --> Tabela de Status
                               ,pr_tab_inscritos OUT wpgd0009.typ_tab_inscritos --> Tabela de Inscritos
@@ -128,7 +131,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0009 IS
                      ,pr_nrseqeve crapidp.nrseqeve%TYPE
                      ,pr_nminscri crapidp.nminseve%TYPE
                      ,pr_tpfiltro crapidp.idevento%TYPE
-                     ,pr_tpordena crapidp.idevento%TYPE) IS
+                     ,pr_tpordena crapidp.idevento%TYPE
+                     ,pr_nrficpre crapidp.nrficpre%TYPE) IS
                      SELECT insc.*, 
 ROW_NUMBER() OVER(ORDER BY DECODE(pr_tpordena,1,insc.nminseve,2,LPAD(insc.nrdconta,10,'0'),3,insc.dsstains,insc.nminseve)) nrdseque
 FROM (
@@ -151,6 +155,7 @@ FROM (
             ,idp.nrseqeve
             ,idp.dtpreins
             ,idp.qtfaleve
+            ,idp.nrficpre
             ,idp.progress_recid
             ,ROWID AS cdrowid
         FROM crapidp idp
@@ -163,14 +168,17 @@ FROM (
          AND ((
              ((pr_tpfiltro = 1
          AND UPPER(idp.nminseve) LIKE '%' || UPPER(pr_nminscri) || '%')
-          OR (pr_tpfiltro = 2
-         AND TO_CHAR(idp.nrdconta) = pr_nminscri))
+          OR (pr_tpfiltro = 2 AND (TO_CHAR(idp.nrdconta) = pr_nminscri OR pr_nminscri IS NULL)
+          AND (idp.nrficpre = pr_nrficpre OR pr_nrficpre = 0))
+             )
          AND pr_cdageins <> 0) 
           OR (
              UPPER(idp.nminseve) LIKE '%' || UPPER(pr_nminscri) || '%'
+         AND (idp.nrficpre = pr_nrficpre OR pr_nrficpre = 0)
          AND pr_idevento = 2
          AND pr_cdageins = 0
-         AND pr_nrseqeve <> 0 ))
+         AND pr_nrseqeve <> 0 )
+         )
     ORDER BY DECODE(pr_tpordena,1,idp.nminseve,2,LPAD(idp.nrdconta,10,'0'),3,dsstains,idp.nminseve)
             ,DECODE(pr_tpordena,3,idp.nminseve,0)) insc;
 
@@ -268,7 +276,8 @@ FROM (
                                 ,pr_nrseqeve => pr_nrseqeve
                                 ,pr_nminscri => pr_nminscri
                                 ,pr_tpfiltro => pr_tpfiltro
-                                ,pr_tpordena => pr_tpordena) LOOP
+                                ,pr_tpordena => pr_tpordena
+                                ,pr_nrficpre => pr_nrficpre) LOOP
 
       IF NOT vr_flgcridp THEN
         vr_flgcridp := TRUE;
@@ -387,6 +396,7 @@ FROM (
         vr_tab_inscritos(vr_ind_care).dtpreins := TRUNC(rw_crapidp.dtpreins);
         vr_tab_inscritos(vr_ind_care).qtfaleve := rw_crapidp.qtfaleve;
         vr_tab_inscritos(vr_ind_care).flginsin := vr_internet;
+        vr_tab_inscritos(vr_ind_care).nrficpre := rw_crapidp.nrficpre;
 
       END IF;
 
@@ -457,6 +467,7 @@ FROM (
                                   ,pr_dtanoage  IN crapppc.dtanoage%TYPE     --> Ano Agenda
                                   ,pr_idevento  IN crapedp.idevento%TYPE     --> ID do Evento
                                   ,pr_nriniseq  IN INTEGER                   --> Registro inicial para pesquisa
+                                  ,pr_nrficpre  IN crapidp.nrficpre%TYPE     --> Número de Ficha de Inscrição
                                   ,pr_qtdregis OUT INTEGER                   --> Quantidade de Registros Existentes
                                   ,pr_clobxmlc OUT CLOB                      --> XML com informações de LOG
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
@@ -513,6 +524,7 @@ FROM (
                                  ,pr_dtanoage      => pr_dtanoage       --> Ano Agenda
                                  ,pr_idevento      => pr_idevento       --> ID do Evento
                                  ,pr_nriniseq      => pr_nriniseq       --> Registro inicial para pesquisa
+                                 ,pr_nrficpre      => pr_nrficpre       --> Número de Ficha de Inscrição
                                  ,pr_qtdregis      => pr_qtdregis       --> Quantidade de Registros Existentes
                                  ,pr_tab_status    => vr_tab_status     --> Tabela de Status
                                  ,pr_tab_inscritos => vr_tab_inscritos  --> Tabela de Inscritos
@@ -599,6 +611,7 @@ FROM (
                                                     || '<dtpreins>' || TO_CHAR(TO_DATE(vr_tab_inscritos(vr_contador).dtpreins)) || '</dtpreins>'
                                                     || '<qtfaleve>' || vr_tab_inscritos(vr_contador).qtfaleve || '</qtfaleve>'
                                                     || '<flginsin>' || vr_tab_inscritos(vr_contador).flginsin || '</flginsin>' 
+                                                    || '<nrficpre>' || vr_tab_inscritos(vr_contador).nrficpre || '</nrficpre>'
                                                     || '</inscrito>');
         END LOOP;
         
