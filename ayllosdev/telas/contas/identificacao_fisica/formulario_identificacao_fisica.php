@@ -17,7 +17,7 @@
  * 008: [23/08/2013] David                : Incluir campo UF Naturalidade - cdufnatu
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
- * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
+ * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357) 
  * 012: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
     							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
@@ -25,6 +25,7 @@
  * 014: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
  * 015: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
  *										    CH, RE, PP E CT. (PRJ339 - Reinert)
+ * 016: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339).
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -100,7 +101,7 @@
 		<input name="cdoedttl" id="cdoedttl" type="text" value="<? echo getByTagName($IdentFisica,'cdoedttl') ?>" />	
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
         <input name="nmoedttl" id="nmoedttl" type="text" style="display:none;" />
-		
+								
 		<label for="cdufdttl" class="rotulo-linha">U.F.:</label>
 		<? echo selectEstado('cdufdttl', getByTagName($IdentFisica,'cdufdttl'),1) ?>
 		

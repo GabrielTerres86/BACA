@@ -884,7 +884,16 @@ function controlaLupasResp() {
 					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina,'',nomeFormResp);
 					return false;				
-					
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoeddoc'){			
+					bo 		    = "ZOOM0001"
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoeddoc;100px;S;|Descrição;nmoeddoc;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina,'',nomeFormResp);									
+					return false;	
 				// Naturalidade
 				} else if ( campoAnterior == 'dsnatura' ) {
 					bo			= 'b1wgen0059.p';

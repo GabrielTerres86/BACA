@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                             
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
-               
+                                           
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
                                            
@@ -89,9 +89,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-   /* Tabela para guardar as finalidades de empréstimos */
+  /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
-              
+  
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_natureza_ocupacao IS RECORD 
     (cdnatocp gncdnto.cdnatocp%TYPE
@@ -306,8 +306,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
-                                                                                                        
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
+                                                                                  
   PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
                                  ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
                                  ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
@@ -364,7 +364,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                    ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
                                    ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
                             	     ,pr_des_erro  OUT VARCHAR2);                   --> Saida OK/NOK
-    
+                                                                                                        
   PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
                              ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
                              ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
@@ -454,7 +454,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
                          ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                          ,pr_des_erro  OUT VARCHAR2);                                                                                    
-                                                                                                                   
+                                                                                                                                         
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -480,12 +480,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                                                 
+                    
                07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
-         	     08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
-			                     (Adriano - SD 614408). 
+			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                (Adriano - SD 614408).                               
                
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).        
@@ -3955,7 +3955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_finalidades_empr_car --> '|| SQLERRM;
       
   END pc_busca_finalidades_empr_car; 
-
+  
   PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
                                    ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
                                    ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
@@ -5416,7 +5416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
     
   END pc_busca_cnae;
-  
+
   PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
                              ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
                              ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
@@ -6262,6 +6262,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       
   END pc_busca_conta_cosif;
 
-  
+
 END ZOOM0001;
 /
