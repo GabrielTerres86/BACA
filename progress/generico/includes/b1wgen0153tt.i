@@ -65,7 +65,11 @@ DEF TEMP-TABLE tt-faixavalores NO-UNDO
     FIELD vltarifa AS DECI
     FIELD cdocorre AS INTE
     FIELD nrconven AS INTE
-    FIELD cdlcremp AS INTE.
+    FIELD cdlcremp AS INTE
+	FIELD tpcobtar AS INTE
+	FIELD vlpertar AS DECI
+	FIELD vlmintar AS DECI
+	FIELD vlmaxtar AS DECI.
 
 DEF TEMP-TABLE tt-historicos NO-UNDO
     FIELD cdhistor AS INTE
