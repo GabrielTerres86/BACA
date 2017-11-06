@@ -3,7 +3,7 @@
 
    Programa: xb1wgen0153.p
    Autor   : Tiago Machado / Daniel Zimmermann
-   Data    : Fevereiro/2013                   Ultima atualizacao: 25/01/2017
+   Data    : Fevereiro/2013                   Ultima atualizacao: 11/07/2017
 
    Dados referentes ao programa:
 
@@ -102,10 +102,17 @@ DEF VAR aux_flgtodos AS LOGICAL                                    NO-UNDO.
 DEF VAR aux_flgvigen AS LOGICAL                                    NO-UNDO.
 DEF VAR aux_vltarifa AS DECI                                       NO-UNDO.
 DEF VAR aux_vlrepass AS DECI                                       NO-UNDO.
+DEF VAR aux_tpcobtar AS INTE                                       NO-UNDO.
+DEF VAR aux_vlpertar AS DECI                                       NO-UNDO.
+DEF VAR aux_vlmintar AS DECI                                       NO-UNDO.
+DEF VAR aux_vlmaxtar AS DECI                                       NO-UNDO.
+DEF VAR aux_lsttptar AS CHAR                                       NO-UNDO.
+DEF VAR aux_lstvlper AS CHAR                                       NO-UNDO.
+DEF VAR aux_lstvlmin AS CHAR                                       NO-UNDO.
+DEF VAR aux_lstvlmax AS CHAR                                       NO-UNDO.
 DEF VAR aux_dtdivulg AS DATE                                       NO-UNDO.
 DEF VAR aux_dtvigenc AS DATE                                       NO-UNDO.
 DEF VAR aux_flgnegat AS LOGICAL                                    NO-UNDO.
-
 
 DEF VAR aux_cdoperad AS CHAR                                       NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
@@ -248,6 +255,10 @@ PROCEDURE valores_entrada:
             WHEN "lstconve" THEN aux_lstconve = tt-param.valorCampo.
             WHEN "vltarifa" THEN aux_vltarifa = DECI(tt-param.valorCampo).
             WHEN "vlrepass" THEN aux_vlrepass = DECI(tt-param.valorCampo).
+			WHEN "tpcobtar" THEN aux_tpcobtar = INTE(tt-param.valorCampo).
+			WHEN "vlpertar" THEN aux_vlpertar = DECI(tt-param.valorCampo).
+			WHEN "vlmintar" THEN aux_vlmintar = DECI(tt-param.valorCampo).
+			WHEN "vlmaxtar" THEN aux_vlmaxtar = DECI(tt-param.valorCampo).
             WHEN "dtdivulg" THEN aux_dtdivulg = DATE(tt-param.valorCampo).
             WHEN "dtvigenc" THEN aux_dtvigenc = DATE(tt-param.valorCampo).
             WHEN "flgvigen" THEN aux_flgvigen = LOGICAL(tt-param.valorCampo).
@@ -308,6 +319,11 @@ PROCEDURE valores_entrada:
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "cdpacote" THEN aux_cdpacote = INTE(tt-param.valorCampo).
             WHEN "dspacote" THEN aux_dspacote = tt-param.valorCampo.
+			WHEN "lsttptar" THEN aux_lsttptar = tt-param.valorCampo.
+			WHEN "lstvlper" THEN aux_lstvlper = tt-param.valorCampo.
+			WHEN "lstvlmin" THEN aux_lstvlmin = tt-param.valorCampo.
+			WHEN "lstvlmax" THEN aux_lstvlmax = tt-param.valorCampo.
+			
         END CASE.
                                                                     
     END. /** Fim do FOR EACH tt-param **/
@@ -3642,6 +3658,10 @@ PROCEDURE incluir-cadfco:
                               INPUT aux_cdocorre,
                               INPUT aux_cdlcremp,
                               INPUT aux_cdinctar,
+							  INPUT aux_tpcobtar,
+                              INPUT aux_vlpertar,
+                              INPUT aux_vlmintar,
+                              INPUT aux_vlmaxtar,
                               OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -3690,6 +3710,10 @@ PROCEDURE alterar-cadfco:
                               INPUT aux_cdocorre,
                               INPUT aux_cdlcremp,
                               INPUT aux_cdinctar,
+							  INPUT aux_tpcobtar,
+                              INPUT aux_vlpertar,
+                              INPUT aux_vlmintar,
+                              INPUT aux_vlmaxtar,
                               OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -3854,6 +3878,10 @@ PROCEDURE buscar-cadfco:
                              OUTPUT aux_dtvigenc, 
                              OUTPUT aux_flgnegat,
                              OUTPUT aux_nrconven,
+							 OUTPUT aux_tpcobtar,
+                             OUTPUT aux_vlpertar,
+                             OUTPUT aux_vlmintar,
+                             OUTPUT aux_vlmaxtar,
                              OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -3879,6 +3907,10 @@ PROCEDURE buscar-cadfco:
             RUN piXmlAtributo (INPUT "dtdivulg",INPUT STRING(aux_dtdivulg)).
             RUN piXmlAtributo (INPUT "dtvigenc",INPUT STRING(aux_dtvigenc)).
             RUN piXmlAtributo (INPUT "flgnegat",INPUT STRING(aux_flgnegat)).
+			RUN piXmlAtributo (INPUT "tpcobtar",INPUT STRING(aux_flgnegat)).
+			RUN piXmlAtributo (INPUT "vlpertar",INPUT STRING(aux_flgnegat)).
+			RUN piXmlAtributo (INPUT "vlmintar",INPUT STRING(aux_flgnegat)).
+			RUN piXmlAtributo (INPUT "vlmaxtar",INPUT STRING(aux_flgnegat)).
             RUN piXmlSave.
         END.
 
@@ -3899,6 +3931,8 @@ PROCEDURE carrega-atribuicao-detalhamento:
                                                INPUT aux_cdfaixav,
                                                INPUT aux_flgtodos,
                                                INPUT aux_cdtipcat,
+                                               INPUT aux_nrregist,
+                                               INPUT aux_nriniseq,                                               
                                                OUTPUT aux_qtregist,
                                                OUTPUT TABLE tt-atribdet).
 
@@ -4038,6 +4072,11 @@ PROCEDURE replicar-cadfco:
                                INPUT aux_cdlcremp,
                                INPUT aux_lstlcrem,
                                INPUT aux_cdinctar,
+							   INPUT aux_lsttptar,
+                               INPUT aux_lstvlper,
+                               INPUT aux_lstvlmin,
+                               INPUT aux_lstvlmax,
+
                                OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
