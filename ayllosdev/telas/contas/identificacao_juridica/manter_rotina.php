@@ -11,11 +11,12 @@
  * 001: [23/07/2015] Reformulacao Cadastral (Gabriel/RKAM)
  * 002: [22/06/2016] Removido a validação que não permitia inserir  vazio no campo 
 				     de licença ambiental conforme solicitado no chamado 449294. (Kelvin)
+ * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
+ * 004: [30/09/2016] Incluido validacao para Data validade da licenca 'dtvallic' (Tiago/Thiago M310)
  */
 ?>
  
-<?	
-    session_start();
+<?	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
 	require_once('../../../includes/controla_secao.php');
@@ -44,6 +45,7 @@
 	$cdcnae   = (isset($_POST['cdcnae']))   ? $_POST['cdcnae'] : '';	
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
 	$nrlicamb = (isset($_POST['nrlicamb'])) ? $_POST['nrlicamb'] : '';
+	$dtvallic = (isset($_POST['dtvallic'])) ? $_POST['dtvallic'] : '';
 
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -105,6 +107,7 @@
 	
 	if ($procedure == 'grava_dados') {
 		$xml .= '       <nrlicamb>'.$nrlicamb.'</nrlicamb>';
+		$xml .= '       <dtvallic>'.$dtvallic.'</dtvallic>';
 	}
 	
 	$xml .= '	</Dados>';
@@ -184,6 +187,10 @@
 		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
 		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
 
+		// CNAE
+        if (!validaInteiro($GLOBALS['cdcnae'])) exibirErro('error','CNAE inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdcnae'] == 0) exibirErro('error','CNAE deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
+
 		// Nome no Talão
 		if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentJuridica\')',false);
 
@@ -191,5 +198,10 @@
 		if (!validaInteiro($GLOBALS['qtfoltal'])) exibirErro('error','Quantidade de Folhas no Tal&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);
 		if ($GLOBALS['qtfoltal'] <> 10 && $GLOBALS['qtfoltal'] <> 20) exibirErro('error','Quantidade de Folhas no Tal&atilde;o deve ser 10 ou 20.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);	
 
+		if ( $GLOBALS['nrlicamb'] != '' && $GLOBALS['nrlicamb'] > 0 ){
+		  if ( $GLOBALS['dtvallic'] == '' ) {
+		    exibirErro('error','Data de validade da licen&ccedil;a deve ser preechida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtvallic\',\'frmDadosIdentJuridica\')',false);
+		  }
+		}
 	}
 ?>

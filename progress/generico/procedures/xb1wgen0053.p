@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0053.p
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 23/07/2015
+    Data    : Janeiro/2010                   Ultima atualizacao: 25/10/2016
 
    Dados referentes ao programa:
 
@@ -13,6 +13,7 @@
 			   01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 			                Transferencia entre PAs (Heitor - RKAM)
    
+			   25/10/2016 - Validacao da data de licenca Melhoria 310 (Tiago/Thiago)
 .............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -47,6 +48,7 @@ DEF VAR aux_nrcpfcgc AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdclcnae AS INTE                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
+DEF VAR aux_dtvallic AS DATE										   NO-UNDO.
 
 { sistema/generico/includes/b1wgen0053tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -93,6 +95,7 @@ PROCEDURE valores_entrada:
           WHEN "cdcnae"   THEN aux_cdclcnae = INTE(tt-param.valorCampo).
           WHEN "chavealt" THEN aux_chavealt = tt-param.valorCampo.
           WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
+		  WHEN "dtvallic" THEN aux_dtvallic = DATE(tt-param.valorCampo).
 
       END CASE.
 
@@ -161,6 +164,8 @@ PROCEDURE Valida_Dados:
                              INPUT aux_cdrmativ,
                              INPUT aux_nmtalttl,
                              INPUT aux_qtfoltal,
+                             INPUT aux_nrlicamb,
+                             INPUT aux_dtvallic,
                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK" THEN
@@ -213,6 +218,7 @@ PROCEDURE Grava_Dados:
                              INPUT "A",
                              INPUT aux_dtmvtolt,
                              INPUT aux_nrlicamb,
+							 INPUT aux_dtvallic,
                             OUTPUT aux_tpatlcad,
                             OUTPUT aux_msgatcad,
                             OUTPUT aux_chavealt,

@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 03/04/2017
+    Data    : Maio/2011               Ultima Atualizacao: 25/06/2015
     
     Dados referentes ao programa:
     

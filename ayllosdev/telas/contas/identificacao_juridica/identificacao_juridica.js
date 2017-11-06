@@ -45,7 +45,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		$('#imgAbaDir' + i).attr('src',UrlImagens + 'background/mnu_nld.gif');
 		$('#imgAbaCen' + i).css('background-color','#C6C8CA');
 	}
-	
+
 	/*inpessoa 3 não tem idseqttl, então para não passar null
 	  na requisição, passamos 0 para não gerar problemas.*/
 	if (inpessoa == 3)
@@ -155,7 +155,7 @@ function manterRotina(operacao) {
 	qtfoltal = trim($('#qtfoltal','#frmDadosIdentJuridica').val());
 	dtcadass = trim($('#dtcadass','#frmDadosIdentJuridica').val());
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
-	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
+	nrlicamb = $('#nrlicamb', '#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax

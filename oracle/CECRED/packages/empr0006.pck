@@ -2975,6 +2975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       vr_dsdirbin       VARCHAR2(1000);
       vr_vlsdeved       crapepr.vlsdeved%TYPE;
       vr_qtpreapg       NUMBER;
+      vr_flgativo       INTEGER;
 
       vr_tab_portabilidade typ_reg_retorno_xml;      
 
@@ -3087,6 +3088,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       ELSE
         -- Fechar o cursor
         CLOSE cr_crapass;
+      END IF;
+
+      -- Verifica se existem contratos em acordo
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_cdorigem => 3
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Aprovacao nao permitida, emprestimo em acordo.';
+        RAISE vr_exc_saida;
       END IF;
 
       -- Consulta situacao da portabilidade (JDCTC)

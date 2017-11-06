@@ -7,10 +7,13 @@
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
  * ALTERACOES   : 23/07/2013 - Inclusão da opção de Cartão Assinatura (Jean Michel).
- *							 02/09/2015 - Projeto Reformulacao cadastral. (Tiago Castro - RKAM)
- *						     14/07/2016 - Correcao na forma de recuperacao de informacoes do XML. SD 479874. Carlos R.
+ *                02/09/2015 - Projeto Reformulacao cadastral. (Tiago Castro - RKAM)
+ *                14/07/2016 - Correcao na forma de recuperacao de informacoes do XML. SD 479874. Carlos R.
+ *
+ *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
-	
+ 
 	session_start();
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
@@ -47,7 +50,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	</Dados>";

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 23/07/2015   
+    Data    : Janeiro/2010                   Ultima atualizacao: 25/10/2015   
 
     Objetivo  : Definicao das Temp-Tables para tela contas_dados_juridica.p
 
@@ -11,6 +11,8 @@
 				01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)
    
+                25/10/2016 - Melhoria 310 novos campos na temptable tt-dados-jur
+				             (Tiago/Thiago).
 ..............................................................................*/
 
                                                                              
@@ -37,7 +39,8 @@ DEFINE TEMP-TABLE tt-dados-jur NO-UNDO
     FIELD dsrmativ LIKE gnrativ.nmrmativ
     FIELD dtcadass LIKE crapass.dtmvtolt
     FIELD cdclcnae LIKE crapass.cdclcnae
-    FIELD nrlicamb AS DECI.
+    FIELD nrlicamb AS DECI
+	FIELD dtvallic LIKE crapjur.dtvallic.
 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 
@@ -53,7 +56,9 @@ DEFINE TEMP-TABLE tt-dados-jur NO-UNDO
         FIELD qtfuncio LIKE crapjur.qtfuncio
         FIELD dsendweb LIKE crapjur.dsendweb
         FIELD nmtalttl LIKE crapjur.nmtalttl
-        FIELD cdseteco LIKE crapjur.cdseteco.
+        FIELD cdseteco LIKE crapjur.cdseteco
+		FIELD nrlicamb LIKE crapjur.nrlicamb
+		FIELD dtvallic LIKE crapjur.dtvallic.
 
     DEFINE TEMP-TABLE tt-dados-jur-atl NO-UNDO LIKE tt-dados-jur-ant.
 

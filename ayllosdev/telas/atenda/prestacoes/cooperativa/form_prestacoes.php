@@ -18,6 +18,7 @@
 					 divergencia ao pesquisar no SmartShare.
                      (Chamado 181988) - (Fabricio)
  * 008: [23/04/2015] Alteracao do label "Saldo" para "Saldo Liquida". (Jaison/Gielow - SD: 262029)
+ * 009: [10/10/2016] Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
  */	
 ?>	
 <form id="formEmpres" ></form>
@@ -122,7 +123,6 @@
 	<a href="#"onClick="controlaOperacao('C_NOVA_PROP');return false;" ><img id="btSalvar"   src="<? echo $UrlImagens;  ?>botoes/continuar.gif" /></a>
 	<a href="#"onClick="mostraExtrato('C_EXTRATO');return false;" >		<img id="btExtrato"  src="<? echo $UrlImagens;  ?>botoes/extrato.gif"   /></a>
 	
-	<? if ($flgdigit == "yes") { ?>
 			<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?pkey=xCPtb&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos('zz.zzz.zz9',$nrctremp,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>
-	<? } ?>	
+	
 </div>			

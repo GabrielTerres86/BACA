@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 22/03/2016
+   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -169,6 +169,16 @@
 
 			  22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
 			               (Projeto Esteira de Credito - Daniel/Oscar) 	
+                           
+              23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
+                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+                           
+              07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
+                           (Jaison/Marcos Martini - PRJ337)
+                           
+              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)
+              
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -273,7 +283,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
     
-DEF TEMP-TABLE tt-dados-epr-out LIKE tt-dados-epr.
+DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
 DEF TEMP-TABLE tt-dados-coope NO-UNDO
     FIELD vlmaxleg LIKE crapcop.vlmaxleg
@@ -349,7 +359,9 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD insitapr LIKE crawepr.insitapr
     FIELD err_efet AS INTE
 	FIELD dssitest AS CHAR
-	FIELD dssitapr AS CHAR.
+    FIELD dssitapr AS CHAR
+    FIELD insitest LIKE crawepr.insitest
+    FIELD inobriga AS CHAR.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR
@@ -377,7 +389,7 @@ DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrcpfcgc LIKE crapavt.nrcpfcgc
     FIELD tpdocava LIKE crapavt.tpdocava
     FIELD nrdocava LIKE crapavt.nrdocava
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmconjug LIKE crapavt.nmconjug
     FIELD nrcpfcjg LIKE crapavt.nrcpfcjg
     FIELD tpdoccjg LIKE crapavt.tpdoccjg
@@ -393,7 +405,8 @@ DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD complend LIKE crapavt.complend
     FIELD nrcxapst LIKE crapavt.nrcxapst
     FIELD dsendlog AS   CHAR
-    FIELD dsbarlog AS   CHAR.
+    FIELD dsbarlog AS   CHAR
+    FIELD cdnacion LIKE crapnac.cdnacion.
        
 DEF TEMP-TABLE tt-hipoteca NO-UNDO
     FIELD lsbemfin AS CHAR
@@ -581,7 +594,7 @@ DEF TEMP-TABLE tt-fiadores NO-UNDO
     FIELD inavalis AS INTE
     FIELD dsestcvl AS CHAR.
 
-DEF TEMP-TABLE tt-intervenientes LIKE tt-fiadores.
+DEF TEMP-TABLE tt-intervenientes  NO-UNDO LIKE tt-fiadores.
 
 DEF TEMP-TABLE tt-bens-contratos NO-UNDO
     FIELD cdcooper LIKE crapbpr.cdcooper

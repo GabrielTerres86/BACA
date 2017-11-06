@@ -34,6 +34,9 @@
  * 024: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
+ * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
+ * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
+ * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 
 	session_start();
@@ -250,6 +253,7 @@
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>';
 			arrayProposta['flgcescr'] = '<? echo ((getByTagName($proposta,'flgcescr') == 'yes') ? true : false); ?>';
+			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
 
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
@@ -325,6 +329,7 @@
 				var arrayAvalista<? echo $i; ?> = new Object();
 
 				arrayAvalista<? echo $i; ?>['nrctaava'] = '<? echo getByTagName($avalistas[$i]->tags,'nrctaava'); ?>';
+				arrayAvalista<? echo $i; ?>['cdnacion'] = '<? echo getByTagName($avalistas[$i]->tags,'cdnacion'); ?>';
 				arrayAvalista<? echo $i; ?>['dsnacion'] = '<? echo retiraCharEsp(getByTagName($avalistas[$i]->tags,'dsnacion')); ?>';
 				arrayAvalista<? echo $i; ?>['tpdocava'] = '<? echo getByTagName($avalistas[$i]->tags,'tpdocava'); ?>';
 				arrayAvalista<? echo $i; ?>['nmconjug'] = '<? echo retiraCharEsp(getByTagName($avalistas[$i]->tags,'nmconjug')); ?>';
@@ -413,6 +418,7 @@
 				arrayAlienacao<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlmerbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
                 arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['cdcoplib'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdcoplib'); ?>';
 
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
@@ -426,6 +432,7 @@
 
 				var arrayInterv<? echo $i; ?> = new Object();
 				arrayInterv<? echo $i; ?>['nrctaava'] = '<? echo getByTagName($intervs[$i]->tags,'nrctaava'); ?>';
+				arrayInterv<? echo $i; ?>['cdnacion'] = '<? echo getByTagName($intervs[$i]->tags,'cdnacion'); ?>';
 				arrayInterv<? echo $i; ?>['dsnacion'] = '<? echo retiraCharEsp(getByTagName($intervs[$i]->tags,'dsnacion')); ?>';
 				arrayInterv<? echo $i; ?>['tpdocava'] = '<? echo getByTagName($intervs[$i]->tags,'tpdocava'); ?>';
 				arrayInterv<? echo $i; ?>['nmconjug'] = '<? echo retiraCharEsp(getByTagName($intervs[$i]->tags,'nmconjug')); ?>';

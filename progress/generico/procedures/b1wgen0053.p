@@ -35,6 +35,7 @@
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		                  		  
                  
+                 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 ..................................................................................*/
@@ -315,7 +316,7 @@ PROCEDURE valida_dados:
 
             END.
     END.
-
+    
     IF  VALID-HANDLE(h-b1wgen0060) THEN
         DELETE OBJECT h-b1wgen0060.
 
