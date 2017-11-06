@@ -752,11 +752,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
            AND vldivida > pr_vlarrasto --> Valor dos parâmetros        
       ORDER BY nrdconta
               ,innivris DESC;
-              
+
+      CURSOR cr_upd_ris(pr_cdcooper IN crapris.cdcooper%TYPE
+                       ,pr_dtrefere IN crapris.dtrefere%TYPE) IS
+        SELECT crapris.ROWID
+              ,crapris.nrcpfcgc
+          FROM crapris
+         WHERE crapris.cdcooper = pr_cdcooper
+           AND crapris.dtrefere = pr_dtrefere
+           AND crapris.inddocto = 4;
+
+      CURSOR cr_max_ris(pr_cdcooper IN crapris.cdcooper%TYPE
+                       ,pr_dtrefere IN crapris.dtrefere%TYPE) IS
+        SELECT NVL(MAX(crapris.nrdgrupo),0) nrdgrupo
+              ,crapris.nrcpfcgc
+          FROM crapris
+         WHERE crapris.cdcooper = pr_cdcooper
+           AND crapris.dtrefere = pr_dtrefere           
+           AND crapris.inddocto IN (1,3)
+      GROUP BY crapris.nrcpfcgc;
+
+      TYPE typ_tab_max_ris IS TABLE OF crapris.nrdgrupo%TYPE INDEX BY VARCHAR2(25);
+
+      TYPE typ_upd_ris IS RECORD (regrowid ROWID
+                                 ,nrdgrupo crapris.nrdgrupo%TYPE);
+      TYPE typ_tab_upd_ris IS TABLE OF typ_upd_ris INDEX BY PLS_INTEGER;
+
+      vr_tab_grupo    typ_tab_max_ris;
+      vr_tab_upris    typ_tab_upd_ris;
+
       vr_dstextab     craptab.dstextab%TYPE;        
       vr_innivris     crapris.innivris%TYPE;
       vr_vlarrasto    NUMBER;      
       vr_fcrapris     BOOLEAN;
+      vr_ind_upris    PLS_INTEGER;
          
       -- Variaveis tratamento de erro
       vr_exc_erro     EXCEPTION;
@@ -855,24 +884,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
 
       END LOOP; -- Fim riscos
 
-      -- Atualizar o Grupo Economico
+      -- Carrega maior grupo economico do CPF/CNPJ
+      FOR rw_max_ris IN cr_max_ris(pr_cdcooper => pr_cdcooper
+                                  ,pr_dtrefere => pr_dtrefere) LOOP
+        vr_tab_grupo(rw_max_ris.nrcpfcgc) := rw_max_ris.nrdgrupo;
+      END LOOP;
+
+      -- Listagem dos registros
+      FOR rw_upd_ris IN cr_upd_ris(pr_cdcooper => pr_cdcooper
+                                  ,pr_dtrefere => pr_dtrefere) LOOP
+        -- Se existir o CPF/CNPJ nos grupos carregados
+        IF vr_tab_grupo.EXISTS(rw_upd_ris.nrcpfcgc) THEN
+          -- Se grupo maior que zero, carrega na tabela para update
+          IF vr_tab_grupo(rw_upd_ris.nrcpfcgc) > 0 THEN
+            vr_ind_upris := vr_tab_upris.COUNT + 1;
+            vr_tab_upris(vr_ind_upris).regrowid := rw_upd_ris.ROWID;
+            vr_tab_upris(vr_ind_upris).nrdgrupo := vr_tab_grupo(rw_upd_ris.nrcpfcgc);
+          END IF;
+        END IF;
+      END LOOP;
+
+      -- Atualizar registros
       BEGIN
+        FORALL idx IN 1..vr_tab_upris.COUNT SAVE EXCEPTIONS
         UPDATE crapris
-           SET crapris.nrdgrupo = (SELECT NVL(MAX(ris.nrdgrupo),0)
-                                     FROM crapris ris
-                                    WHERE ris.cdcooper = crapris.cdcooper
-                                      AND ris.nrcpfcgc = crapris.nrcpfcgc
-                                      AND ris.dtrefere = crapris.dtrefere
-                                      AND ris.inddocto IN (1,3))
-         WHERE crapris.cdcooper = pr_cdcooper
-           AND crapris.dtrefere = pr_dtrefere
-           AND crapris.inddocto = 4;
+           SET nrdgrupo = vr_tab_upris(idx).nrdgrupo
+         WHERE ROWID    = vr_tab_upris(idx).regrowid;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar a tabela crapris. --> '||SQLERRM;
+          vr_dscritic := 'Erro ao atualizar crapris: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
           RAISE vr_exc_erro;
       END;
-        
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Variavel de erro recebe erro ocorrido
