@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
+   Data    : Marco/2007                        Ultima atualizacao: 30/10/2017
 
    Dados referentes ao programa:
 
@@ -45,16 +45,27 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
-			   
-			   15/08/2016 - Removido validacao de convenio na consulta da tela
-							manutencao, conforme solicitado no chamado 497079.
-							(Kelvin)
+                           
+                           15/08/2016 - Removido validacao de convenio na consulta da tela
+                                                        manutencao, conforme solicitado no chamado 497079.
+                                                        (Kelvin)
 
-			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+                           03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                02/01/2017 - Melhorias referentes a performance no IB na parte 
-			                de cobrança, incluido flprotes no xml de retorno
-							(Tiago/Ademir SD573538).  			   
+                                        de cobrança, incluido flprotes no xml de retorno
+                                                        (Tiago/Ademir SD573538).                  
+
+               20/04/2017 - Adicionado vencimento original (dtvctori) e 
+                            flag de boleto dda (flgcbdda) no xml de retorno
+                            (P340 - Rafael)
+														
+			   05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
+							e tratamento para descontos, Prj. 340 (Jean Michel)
+
+			   30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
+                            verifica-titulo-npc-cip (SD784234 - AJFink)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -87,6 +98,7 @@ DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 DEF VAR h-b1wnet0001 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0010 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 
 DEF VAR par_dtmvtolt AS DATE                                           NO-UNDO.
@@ -100,6 +112,13 @@ DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
 DEF VAR aux_nrcpfcgc_ben LIKE crapass.nrcpfcgc                         NO-UNDO.
 DEF VAR aux_inpessoa_ben LIKE crapass.inpessoa                         NO-UNDO.
 DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
+
+/* Variaveis de ROLLOUT */
+DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
+DEF VAR aux_dtmvtolt LIKE crapdat.dtmvtolt                             NO-UNDO.
+DEF VAR aux_vltitulo LIKE crapcob.vltitulo                             NO-UNDO.
+DEF VAR aux_npc_cip       AS INTE                                      NO-UNDO.
+DEF VAR aux_vldescto      AS DEC                       			   	   NO-UNDO.
 
 /* determinando tipo de consulta */
 IF par_flgregis = 1 THEN
@@ -259,12 +278,65 @@ ASSIGN xml_operacao.dslinxml = "<DADOS><intipcob>" +
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS_BOLETOS>".
 
+FIND craptab WHERE craptab.cdcooper = par_cdcooper  
+               AND craptab.nmsistem = "CRED"         
+               AND craptab.tptabela = "GENERI"       
+               AND craptab.cdempres = 0              
+               AND craptab.cdacesso = "ROLLOUT_CIP_PAG"  
+               AND craptab.tpregist = 0 NO-LOCK NO-ERROR.
+
+
+IF  NOT AVAILABLE craptab   THEN
+    DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                
+        IF  AVAILABLE tt-erro  THEN
+            aux_dscritic = tt-erro.dscritic.
+        ELSE
+            aux_dscritic = "Nao foi possivel consultar ROLLOUT.".
+                    
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+                
+        RETURN "NOK".     
+
+    END.
+ELSE 
+    DO:
+       ASSIGN aux_dstextab = craptab.dstextab
+              aux_dtmvtolt = DATE(ENTRY(1,aux_dstextab,";"))
+              aux_vltitulo = DEC(ENTRY(2,aux_dstextab,";")).
+    END.
+
+RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
+
+IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
+DO:
+    ASSIGN aux_dscritic = "Handle invalido para BO b1wgen0010.".
+           xml_dsmsgerr = "<dsmsgerr>" + 
+                          aux_dscritic + 
+                          "</dsmsgerr>".  
+    RETURN "NOK".
+END.
+	
 FOR EACH tt-consulta-blt NO-LOCK:
 
     ASSIGN aux_nmprimtl_ben = tt-consulta-blt.nmprimtl
            aux_nrcpfcgc_ben = tt-consulta-blt.nrcpfcgc
-           aux_inpessoa_ben = tt-consulta-blt.inpessoa.
+           aux_inpessoa_ben = tt-consulta-blt.inpessoa
+           aux_npc_cip      = 0.
 
+    RUN verifica-titulo-npc-cip IN h-b1wgen0010(INPUT par_cdcooper,
+                                                INPUT crapdat.dtmvtolt,
+                                                INPUT tt-consulta-blt.vltitulo,
+                                                INPUT (IF tt-consulta-blt.flgcbdda = "S" THEN TRUE else FALSE),
+                                                OUTPUT aux_npc_cip). 
+
+    IF tt-consulta-blt.cdmensag = 0 /*OR 
+	   tt-consulta-blt.cdmensag = 1*/ THEN
+		ASSIGN aux_vldescto = 0.
+	ELSE
+		ASSIGN aux_vldescto = tt-consulta-blt.vldescto.										   
+		
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<BOLETO><nossonro>" +
                                    tt-consulta-blt.nossonro +
@@ -324,7 +396,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "</inpessoa><nmprimtl>" +
                                    tt-consulta-blt.nmprimtl +
                                    "</nmprimtl><vldescto>" +
-                                   TRIM(STRING(tt-consulta-blt.vldescto,
+                                   TRIM(STRING(aux_vldescto,
                                                "zzzzzzzzz9.99")) +
                                    "</vldescto><cdmensag>" +
                                    STRING(tt-consulta-blt.cdmensag) +
@@ -408,17 +480,24 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
-									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
+                                                                        "<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     /* Aviso SMS */
                                     "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
                                     "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
                                     "<insmsvct>" + STRING(tt-consulta-blt.insmsvct) + "</insmsvct>" +
                                     "<insmspos>" + STRING(tt-consulta-blt.insmspos) + "</insmspos>" +
-                                    
-                                   "</BOLETO>".
-
-
+                                    "<dtvctori>" + STRING(
+                                      IF tt-consulta-blt.dtvctori = ? THEN 
+                                        tt-consulta-blt.dtvencto 
+                                      ELSE 
+                                        tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
+                                   "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
+								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "</BOLETO>".       
+  
 END.
+
+DELETE PROCEDURE h-b1wgen0010.
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "</DADOS_BOLETOS>".
