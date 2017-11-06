@@ -2032,7 +2032,7 @@ PROCEDURE NomeCooperado :
     IF INT(aux_nrdconta) = 0 THEN
       RETURN "NOK".
     		
-    FOR FIRST crapass FIELDS(inpessoa dsdemail nmprimtl cdagenci) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
+    FOR FIRST crapass FIELDS(inpessoa nmprimtl cdagenci) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
                                                                     AND crapass.nrdconta = INT(aux_nrdconta) NO-LOCK. END.
     
     IF NOT AVAILABLE crapass THEN                    
