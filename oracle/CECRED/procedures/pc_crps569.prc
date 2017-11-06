@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Irlan
-     Data    : Maio/2010                    Ultima atualizacao: 21/03/2014
+     Data    : Maio/2010                    Ultima atualizacao: 06/10/2017
 
      Dados referentes ao programa:
 
@@ -50,6 +50,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
                   
                   24/04/2017 - Modificado a qtd max de registros poor arquivo
                                de 50000 para 1000000 (Tiago/Rodrigo)
+
+                  06/10/2017 - Alterado para gerar com data Base da consulta 
+                               sempre 1 mes antes. (Jaison/James - M446)
+
   ............................................................................*/
   BEGIN
     DECLARE
@@ -344,9 +348,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
                                                pr_cdcooper => 0,
                                                pr_cdacesso => 'QTD_COOPERADOS_ARQ_3045');
 
-      -- A Data Base da consulta eh sempre 2 meses antes
+      -- A Data Base da consulta eh sempre 1 mes antes
       vr_dtmvtolt := vr_dtrefere - to_number(to_char(vr_dtrefere,'dd'));
-      vr_dtmvtolt := vr_dtmvtolt - to_number(to_char(vr_dtmvtolt,'dd'));
       vr_dsdtbase := to_char(vr_dtmvtolt,'yyyy') || '-' || to_char(vr_dtmvtolt,'mm');
 
       --limpando a tabela temporaria
