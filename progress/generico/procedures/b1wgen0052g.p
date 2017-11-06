@@ -723,7 +723,8 @@ PROCEDURE Grava_Dados :
 	RUN STORED-PROCEDURE pc_marca_replica_ayllos 
 		aux_handproc = PROC-HANDLE NO-ERROR
 						 (INPUT par_cdcooper,  
-						  INPUT par_nrdconta,						  
+						  INPUT par_nrdconta,	
+						  INPUT par_idseqttl,
 						 OUTPUT "").
 
 	CLOSE STORED-PROC pc_marca_replica_ayllos 
