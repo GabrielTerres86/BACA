@@ -1128,7 +1128,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crapris(vr_index_crapris).dtvencop   := pr_dtvencop;
         
         /*M324 - Calcula data provavel da transferencia a prejuizo - Jean (Mout´S) */
-        if  vr_tab_crapris(vr_index_crapris).innivris in ( 9, 10)
+    /*    if  vr_tab_crapris(vr_index_crapris).innivris in ( 9, 10)
         and vr_tab_crapris(vr_index_crapris).inddocto = 1 then
               vr_qtdiaris := vr_tab_crapris(vr_index_crapris).dtrefere -  vr_tab_crapris(vr_index_crapris).dtdrisco;
               if  vr_qtdiaris > 180 
@@ -1140,7 +1140,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               end if;
          end if;
         
-        vr_tab_crapris(vr_index_crapris).dttrfprj   := vr_dttrfprj;
+        vr_tab_crapris(vr_index_crapris).dttrfprj   := vr_dttrfprj;*/
          /* fim alteracao M324 */
          
         pr_index_crapris := vr_index_crapris;
@@ -1991,6 +1991,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_vldiv360 := 0;
           vr_vldiv999 := 0;
           vr_vlprjano := 0;
+
           vr_vlprjaan := 0;
           vr_vlprjant := 0;
         END IF;
@@ -2864,7 +2865,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 		                          ,pr_dtrefere in crapris.dtrefere%TYPE) IS
           SELECT dtrefere
                 ,innivris
-                ,dtdrisco                
+                ,dtdrisco 
+                ,dttrfprj
             FROM crapris
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
@@ -2980,12 +2982,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_innivris := vr_tab_contas_risco_soberano(rw_crapris.nrdconta).innivris;
               END IF;
             END IF;
+            
+            /* M324 - iniciar variavel da data de transferencia para prejuizo - Jean (Mout´S) */
+            vr_dttrfprj := null;
+            
             -- Busca dos dados do ultimo risco de origem 1
             OPEN cr_crapris_last(pr_nrdconta => rw_crapris.nrdconta
 			                          ,pr_dtrefere => vr_datautil);
             FETCH cr_crapris_last
              INTO rw_crapris_last;
-            -- Se encontrou
+            -- Se encontrou            
             IF cr_crapris_last%FOUND THEN
               -- Se a data de refência é diferente do ultimo dia do mês anterior
               -- OU o nível deste registro é diferente do nível do risco no cursor principal
@@ -2999,10 +3005,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 -- Utilizar a data do ultimo risco
                 vr_dtdrisco := rw_crapris_last.dtdrisco;
               END IF;
+              --
+              
+              /*M324 - Data prevista de transferencia para prejuizo (para contratos com risco H)*/
+              IF vr_innivris = 9 AND rw_crapris_last.dttrfprj IS NULL THEN
+                vr_dttrfprj := vr_dtdrisco + 180;
+                -- JMC 
+                if vr_dttrfprj <= vr_dtrefere then
+                   vr_dttrfprj := vr_dtrefere;
+                end if;
+                --
+              ELSIF vr_innivris < 9 AND rw_crapris_last.dttrfprj IS NOT NULL THEN
+                vr_dttrfprj := NULL;
+              END IF;      
             ELSE
               -- Utilizar a data de referência do processo
               vr_dtdrisco := vr_dtrefere;
             END IF;
+          
             -- Fechar o cursor
             CLOSE cr_crapris_last;
           END IF;
@@ -3012,6 +3032,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             UPDATE crapris
                SET innivori = vr_innivori
                   ,dtdrisco = vr_dtdrisco
+                  ,dttrfprj = vr_dttrfprj -- M324 - atualiza data prevista de transferencia a prejuizo
              WHERE rowid = rw_crapris.rowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -4972,8 +4993,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       dtprxpar, 
                       vlprxpar, 
                       qtparcel, 
-                      dtvencop,
-                      dttrfprj)  -- M324 - data provavel de transferencia a prejuizo (Jean -MOut´s)
+                      dtvencop--,
+                      --dttrfprj
+                      )  
+                      -- M324 - data provavel de transferencia a prejuizo (Jean -MOut´s)
                               
               VALUES (vr_tab_crapris(idx).nrdconta,
                       vr_tab_crapris(idx).dtrefere,
@@ -5014,8 +5037,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       vr_tab_crapris(idx).dtprxpar,
                       vr_tab_crapris(idx).vlprxpar,
                       vr_tab_crapris(idx).qtparcel,
-                      vr_tab_crapris(idx).dtvencop,
-                      vr_tab_crapris(idx).dttrfprj); -- M324 - Data provavel de transferencia a prejuizo - Jean (MOut´s)                 
+                      vr_tab_crapris(idx).dtvencop --,
+                      --vr_tab_crapris(idx).dttrfprj
+                      ); -- M324 - Data provavel de transferencia a prejuizo - Jean (MOut´s)                 
       EXCEPTION
          WHEN others THEN
            -- Gerar erro
