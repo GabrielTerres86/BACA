@@ -14009,6 +14009,10 @@ PROCEDURE lista-fvl-tarifa:
                tt-faixavalores.cdlcremp = crapfco.cdlcremp
                tt-faixavalores.nrconven = crapfco.nrconven
                tt-faixavalores.cdocorre = aux_cdocorre
+               tt-faixavalores.tpcobtar = crapfco.tpcobtar
+               tt-faixavalores.vlpertar = crapfco.vlpertar
+               tt-faixavalores.vlmintar = crapfco.vlmintar
+               tt-faixavalores.vlmaxtar = crapfco.vlmaxtar
                aux_nrregist = aux_nrregist + 1.
     END.
       
@@ -14036,6 +14040,10 @@ PROCEDURE incluir-lista-cadfco:
     DEF INPUT PARAM par_lstocorr AS CHAR                    NO-UNDO.
     DEF INPUT PARAM par_lstlcrem AS CHAR                    NO-UNDO.
     DEF INPUT PARAM par_cdinctar AS INTE                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlper AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmin AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmax AS CHAR                    NO-UNDO.	
+	DEF INPUT PARAM par_lsttptar AS CHAR                    NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -14071,6 +14079,10 @@ PROCEDURE incluir-lista-cadfco:
                            INPUT INTE(ENTRY(aux_cont,par_lstocorr,';')),
                            INPUT INTE(ENTRY(aux_cont,par_lstlcrem,';')),
                            INPUT par_cdinctar,
+						   INPUT INTE(ENTRY(aux_cont,par_lsttptar,';')),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlper,';'), ".", ",")),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlmin,';'), ".", ",")),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlmax,';'), ".", ",")),					   
                            OUTPUT TABLE tt-erro).
 
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
