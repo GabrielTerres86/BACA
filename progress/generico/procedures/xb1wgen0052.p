@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0052.p
     Autor   : Jose Luis Marchezoni
-    Data    : Junho/2010                   Ultima atualizacao: 13/07/2015
+    Data    : Junho/2010                   Ultima atualizacao: 26/06/2017
 
     Objetivo  : BO de Comunicacao XML x BO - Tela MATRIC
 
@@ -24,6 +24,10 @@
 
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)				
+							 
+		        26/06/2017 - Incluido rotina para buscar contas demitidas a serem listadas
+				             na opcao "G" da tela MATRIC
+							 (Jonata - RKAM P364).				
 .............................................................................*/
 
                                                                              
@@ -120,7 +124,11 @@ DEF VAR aux_inconrfb AS INTE                                           NO-UNDO.
 DEF VAR aux_hrinicad AS INTE                                           NO-UNDO.
 DEF VAR aux_idorigee AS INTE                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
-
+DEF VAR aux_qtregist AS INT                                            NO-UNDO.
+DEF VAR aux_nrregist AS INT                                            NO-UNDO.
+DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
+DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
+DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -222,6 +230,8 @@ PROCEDURE valores_entrada:
             WHEN "hrinicad" THEN aux_hrinicad = INTE(tt-param.valorCampo).
             WHEN "idorigee" THEN aux_idorigee = INTE(tt-param.valorCampo).
             WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
+			WHEN "nrregist"  THEN aux_nrregist  = INTE(tt-param.valorCampo).
+            WHEN "nriniseq"  THEN aux_nriniseq  = INTE(tt-param.valorCampo).
 
         END CASE.
 
@@ -1336,6 +1346,117 @@ PROCEDURE Retorna_Conta:
         END.
 
 END PROCEDURE.
+/* ************************************************************************ */
+/*                      BUSCA AS CONTAS DEMITIDAS                           */
+/* ************************************************************************ */
+PROCEDURE busca_contas_demitidas:
+
+    RUN busca_contas_demitidas IN hBO (INPUT aux_cdcooper,
+									   INPUT aux_cdagenci,
+									   INPUT aux_nrdcaixa,
+									   INPUT aux_cdoperad,
+									   INPUT aux_nmdatela,
+									   INPUT aux_idorigem,
+									   INPUT aux_cddopcao,
+									   INPUT aux_nriniseq,
+									   INPUT aux_nrregist,
+									   OUTPUT aux_qtregist,
+                                       OUTPUT TABLE tt-contas_demitidas,
+									   OUTPUT TABLE tt-erro) NO-ERROR .
+
+    IF  ERROR-STATUS:ERROR  THEN
+        DO:
+           CREATE tt-erro.
+           ASSIGN tt-erro.dscritic = ERROR-STATUS:GET-MESSAGE(1).
+
+           RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                           INPUT "Erro").
+           RETURN.
+        END.
+
+    IF  RETURN-VALUE = "NOK" THEN
+        DO:
+           FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+           IF  NOT AVAILABLE tt-erro  THEN
+               DO:
+                   CREATE tt-erro.
+                   ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                             "busca de contas demitidas.".
+               END.
+
+           RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                           INPUT "Erro").
+        END.
+    ELSE
+        DO:
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-contas_demitidas:HANDLE,
+                            INPUT "ContasDemitidas").
+		   RUN piXmlAtributo (INPUT "qtregist", INPUT STRING(aux_qtregist)).
+           RUN piXmlSave.
+        END.
+
+END PROCEDURE.
+
+/* ************************************************************************ */
+/*                      Busca servicos ativos                               */
+/* ************************************************************************ */
+PROCEDURE Produtos_Servicos_Ativos:
+
+	
+    RUN Produtos_Servicos_Ativos IN hBO (INPUT aux_cdcooper,
+										 INPUT aux_dtdemiss,
+										 INPUT aux_cdagenci,
+										 INPUT aux_nrdcaixa,
+										 INPUT aux_cdoperad,
+										 INPUT aux_nmdatela,
+										 INPUT aux_idorigem,
+										 INPUT aux_nrdconta,
+										 INPUT aux_idseqttl,
+										 INPUT YES,
+										 INPUT aux_dtmvtolt,
+										OUTPUT TABLE tt-erro,
+										OUTPUT TABLE tt-prod_serv_ativos) NO-ERROR .
+
+    IF  ERROR-STATUS:ERROR  THEN
+        DO:
+           CREATE tt-erro.
+           ASSIGN tt-erro.dscritic = ERROR-STATUS:GET-MESSAGE(1).
+
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+           RUN piXmlAtributo (INPUT "nmdcampo", INPUT aux_nmdcampo).
+           RUN piXmlSave.
+
+           RETURN.
+        END.
+
+    IF  RETURN-VALUE = "NOK" THEN
+        DO:
+		   FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+           IF  NOT AVAILABLE tt-erro  THEN
+               DO:
+                   CREATE tt-erro.
+                   ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                             "busca de servicos ativos.".
+               END.
+
+           RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                           INPUT "Erro").
+			
+        END.
+    ELSE
+        DO:
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-prod_serv_ativos:HANDLE,
+                            INPUT "ProdServ").
+           RUN piXmlSave.
+        END.
+
+END PROCEDURE. /* procedure Valida_Dados */
 
 /* ......................................................................... */
 

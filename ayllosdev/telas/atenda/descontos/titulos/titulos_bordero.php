@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 02/01/2015
+	 Data : Novembro/2008                Última Alteração:26/06/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de Títulos        
 	                                                                  	 
@@ -15,6 +15,8 @@
 				 
 				 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
 				 
+				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+
 	************************************************************************/
 	
 	session_start();
@@ -43,6 +45,7 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
+	$executandoProdutos = $_POST['executandoProdutos'];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -140,7 +143,17 @@
 ?>
 
 <div id="divBotoes" >
+	
+	<?if($executandoProdutos == 'true'){?>
+		
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+		
+	<?}else{?>
+		
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+	
+	<?}?>
+		
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre-analise.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscTit(\'N\');return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />

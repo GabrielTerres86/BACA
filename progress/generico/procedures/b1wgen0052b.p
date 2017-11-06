@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 09/09/2016
+    Data    : Junho/2010                      Ultima atualizacao: 11/06/2017
   
     Dados referentes ao programa:
   
@@ -58,6 +58,9 @@
 						     aux_qtminast referente a quantidade minima de assinatura
 						     conjunta, SD 514239 (Jean Michel).
 			 
+				11/06/2017 - Ajuste para verificar se o termo de cancelamento foi
+				             digitalizado ou nao
+							 Jonata - RKAM (P364).
 .............................................................................*/
 
 
@@ -1188,6 +1191,17 @@ PROCEDURE Pesquisa_Associado PRIVATE :
                 ASSIGN SUBSTR(tt-crapass.cddconta,1,1) = "".
             ELSE
                 LEAVE.
+
+        END.
+
+		FOR FIRST crapdoc FIELDS(flgdigit)
+		                  WHERE crapdoc.cdcooper = par_cdcooper AND
+                                crapdoc.nrdconta = par_nrdconta AND
+                                crapdoc.tpdocmto = 44
+								NO-LOCK:
+
+		  ASSIGN tt-crapass.flgtermo = 1
+		         tt-crapass.flgdigit = int(crapdoc.flgdigit).
 
         END.
 

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 21/06/2011
  * OBJETIVO     : Cabeçalho para a tela MANTAL
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
  * --------------
  */ 
 ?>
@@ -21,7 +21,7 @@
 	<label for="nrdconta">Conta:</label>
 	<input type="text" id="nrdconta" name="nrdconta" value="<? echo $nrdconta == 0 ? '' : $nrdconta ?>" alt="Informe o numero da conta do cooperado." />
 	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
-	<input type="image" src="<?php echo $UrlImagens; ?>/botoes/ok.gif">
+	<a href="#" class="botao" id="btnOK">Ok</a>
 	
 	<input name="nmprimtl" id="nmprimtl" type="text" value="<? echo getByTagName($registros[0]->tags,'nmprimtl') ?>" />
 			

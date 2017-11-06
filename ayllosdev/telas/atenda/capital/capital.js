@@ -1,7 +1,7 @@
 /**********************************************************************
   Fonte: capital.js                                                
   Autor: David													   
-  Data : Outubro/2007                 Ultima Alteracao: 23/03/2017
+  Data : Outubro/2007                 Ultima Alteracao: 04/11/2017
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Capital da tela      
               ATENDA                                               
@@ -26,6 +26,9 @@
               23/03/2017 - Auste para solicitar a senha do cartão magnético do cooperado
                            e não gerar termo 
                            (Jonata - RKAM / M294).
+
+              04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
+                           (Jonata - RKAM P364).
  					
 *************************************************************************/
 
@@ -41,6 +44,19 @@ var vintegra = 0;
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		
+	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
+	if(sitaucaoDaContaCrm == '2' || 
+	   sitaucaoDaContaCrm == '3' || 
+	   sitaucaoDaContaCrm == '4' || 
+	   sitaucaoDaContaCrm == '5' || 
+	   sitaucaoDaContaCrm == '7' || 
+	   sitaucaoDaContaCrm == '8' || 
+	   sitaucaoDaContaCrm == '9'){ 
+	   opcao ="E";
+	   id="3";
+	}
+	
+	
 	glb_opcao = opcao;
 	
 	if (opcao == "@") {	// Op&ccedil;&atilde;o Principal

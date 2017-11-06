@@ -111,7 +111,8 @@
  * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
- * 091: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 091: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 092: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -358,6 +359,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             idseqttl: idseqttl,
             operacao: operacao,
             inconfir: 1,
+			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1249,6 +1251,7 @@ function controlaOperacao(operacao) {
             nrcpfcgc_busca: nrcpfcgc_busca,
             inconfir: 1,
             nomeAcaoCall: nomeAcaoCall,
+			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1605,6 +1608,7 @@ function manterRotina(operacao) {
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
             vlrtarif: vlrtarif, vlrtotal: vlrtotal,
+            executandoProdutos: executandoProdutos,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

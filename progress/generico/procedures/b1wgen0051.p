@@ -2,7 +2,7 @@
 
     Programa: b1wgen0051.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 17/10/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 26/06/2017
 
     Objetivo  : Tranformacao BO tela CONTAS
 
@@ -22,6 +22,9 @@
 								
 				17/10/2017 - Adicionando a informacao nmctajur no cabecalho 
 				             da tela contas (Kelvin - PRJ339).
+
+				26/06/2017 - Inclusao de novo tipo de demissao
+							 (Jonata - RKAM P364).
 
 .............................................................................*/
 
@@ -651,6 +654,12 @@ FUNCTION BuscaSitConta RETURNS CHARACTER
             ELSE
             IF par_cdsitdct = 6
                THEN "NORMAL - SEM TALAO"
+			ELSE
+            IF par_cdsitdct = 7
+               THEN "EM PROC. DEMISSAO"
+			ELSE
+            IF par_cdsitdct = 8
+               THEN "EM PROC. DEMISSAO BACEN"
             ELSE
             IF par_cdsitdct = 9
                THEN "ENCERRADA P/ OUTRO MOTIVO"

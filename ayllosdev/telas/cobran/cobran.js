@@ -23,6 +23,7 @@
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
  * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
+ * 14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
  */
 
 //Formulários e Tabela
@@ -44,6 +45,7 @@ var vrsarqvs = '';
 var arquivos = '';
 var cTodosFiltroOpS = '';
 var ni = 0;
+var flgimped = false;
 
 var registro;
 
@@ -80,6 +82,10 @@ function estadoInicial() {
     cCddopcao.habilitaCampo().focus();
 
     removeOpacidade('divTela');
+	if (nrdconta != ''){
+		sequenciaImpedimentos();
+	}
+
 }
 
 
@@ -407,6 +413,12 @@ function buscaOpcao() {
             } else if (cddopcao == 'S'){
                 formataOpcaoS();
             }
+
+			if (flgimped){
+				$('#frmOpcao', '#flgregis').val('yes').change();
+				$('#frmOpcao', '#tprelato').val('5').change();
+				btnContinuar();
+			}
 
             hideMsgAguardo();
             return false;
@@ -2074,6 +2086,16 @@ function controlaLayoutR() {
         cNrdconta.habilitaCampo();
         cInserasa.habilitaCampo();
 
+		if (flgimped){
+			cInidtmvt.val(dtmvtolt.toString());
+			cFimdtmvt.val(dtmvtolt.substr(0,2) + "/" + 
+						  dtmvtolt.substr(3,2) + "/" + 
+						  (Number(dtmvtolt.substr(6,4)) + 2)); // Adicionar 2 anos a partir da data atual
+			cCdstatus.val(1);
+			cNrdconta.val(nrdconta);
+			btnContinuar();
+		}
+		
     } else if (tprelato == '6') {
         cNrdconta.habilitaCampo();
         //cCdagenci.habilitaCampo();	
@@ -2209,7 +2231,9 @@ function Gera_Impressao(nmarqpdf) {
     var callafter = "";
 
     if (cddopcao == 'R') {
+		if (!flgimped){
         callafter = "estadoInicial();";
+    }
     }
 
     carregaImpressaoAyllos(frmOpcao, action, callafter);
@@ -2308,6 +2332,13 @@ function msgConfirmacao() {
 // botoes
 function btnVoltar() {
 
+	if (flgimped){
+		showMsgAguardo('Aguarde, carregando tela ATENDA ...');
+		setaParametrosImped('ATENDA','',nrdconta,flgcadas, 'COBRAN');
+		setaImped();
+		direcionaTela('ATENDA','no');
+	}
+
     if (cddopcao === 'C' && $('#frmTabela').length) {
         $('#' + frmTabela).remove();
         $('#divPesquisaRodape', '#divTela').remove();
@@ -2317,6 +2348,7 @@ function btnVoltar() {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
+
 		controlaLayoutC();
 
     } else if (cddopcao === 'C' && ni > 0 && $('fieldset:eq(' + ni + ')', '#' + frmOpcao).css('display') == 'block') {
@@ -2614,3 +2646,8 @@ function ConfirmaAtualizacao(insitceb){
     
 }
  
+ function sequenciaImpedimentos(){
+	flgimped = true;
+	
+	$('#cddopcao', '#frmCab').val("R").change();	 	 
+ }

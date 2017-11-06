@@ -54,6 +54,9 @@
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
+               09/08/2017 - Ajustes para inclusao das rotinas de Desligamento, Prj 364 
+                            (Mateus Zimmermann - MoutS).
+                            
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -737,7 +740,158 @@ PROCEDURE atualiza-cheque-avulso:
             RETURN "NOK".
         END.
 
-    CREATE craplcm.
+    FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper    AND
+                       crapass.nrdconta = p-nro-conta 
+                       NO-LOCK NO-ERROR.
+                       
+    /* Validar para criar o lancamento ao fim da procedure */
+    FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                            crapbcx.cdagenci = p-cod-agencia     AND
+                            crapbcx.nrdcaixa = p-nro-caixa       AND
+                            crapbcx.cdopecxa = p-cod-operador    AND
+                            crapbcx.cdsitbcx = 1
+                            EXCLUSIVE-LOCK NO-ERROR.
+
+    IF   NOT AVAILABLE crapbcx   THEN
+         DO:
+             ASSIGN i-cod-erro  = 698
+                    c-desc-erro = "".
+             
+             RUN cria-erro (INPUT p-cooper,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT i-cod-erro,
+                            INPUT c-desc-erro,
+                            INPUT YES).
+             RETURN "NOK".
+         END.
+       
+	   IF AVAIL crapass THEN
+        DO:
+            IF crapass.cdsitdct = 7 AND crapass.cdmotdem > 0 THEN
+                DO:
+                    
+                    IF crapass.inpessoa = 1 THEN
+                        DO:
+                          
+                           CREATE craplcm.
+                          ASSIGN craplcm.cdcooper = crapcop.cdcooper
+                                         craplcm.dtmvtolt = crapdat.dtmvtolt
+                                         craplcm.cdagenci = p-cod-agencia
+                                         craplcm.cdbccxlt  = 100
+                                         craplcm.nrdolote = 600040
+                                         craplcm.nrdconta = p-nro-conta
+                                         craplcm.nrdocmto = p-nrdocto
+                                         craplcm.vllanmto = p-valor 
+                                         craplcm.cdhistor = 2081
+                                         craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                         craplcm.nrdctabb = p-nro-conta
+                                         craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
+                                         craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+                          
+                        END.
+                          
+                    ELSE
+                        DO:
+                          
+                          CREATE craplcm.
+                          ASSIGN craplcm.cdcooper = crapcop.cdcooper
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt
+                                 craplcm.cdagenci = p-cod-agencia
+                                 craplcm.cdbccxlt  = 100
+                                 craplcm.nrdolote = 600040
+                                 craplcm.nrdconta = p-nro-conta
+                                 craplcm.nrdocmto = p-nrdocto
+                                 craplcm.vllanmto = p-valor 
+                                 craplcm.cdhistor = 2082
+                                 craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                 craplcm.nrdctabb = p-nro-conta
+                                 craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
+                                 craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+                          
+                        END.
+                    
+                 DO:			
+                   CREATE craplcx.
+                    ASSIGN craplcx.cdcooper = crapcop.cdcooper
+                           craplcx.cdagenci = p-cod-agencia
+                           craplcx.cdopecxa = p-cod-operador
+                           craplcx.dtmvtolt = crapdat.dtmvtolt
+                           craplcx.cdhistor = 2083					         
+                           craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-nro-conta,"99999999")
+                           craplcx.nrdocmto = p-nrdocto
+                           craplcx.nrseqdig = craplot.nrseqdig + 1 
+                           craplcx.vldocmto = p-valor
+                           craplcx.nrdmaqui = crapbcx.nrdmaqui.
+                   
+              END.
+                          
+                END.
+            ELSE
+                DO:            
+                    IF (crapass.cdsitdct = 3 OR crapass.cdsitdct = 4 OR crapass.cdsitdct = 7 OR crapass.cdsitdct = 8) AND crapass.cdmotdem > 0 THEN
+                      DO:                 
+                           IF crapass.inpessoa = 1 THEN
+                              DO:
+                                  CREATE craplcm.
+                                  ASSIGN craplcm.cdcooper = crapcop.cdcooper
+                                         craplcm.dtmvtolt = crapdat.dtmvtolt
+                                         craplcm.cdagenci = p-cod-agencia
+                                         craplcm.cdbccxlt  = 100
+                                         craplcm.nrdolote = 600042
+                                         craplcm.nrdconta = p-nro-conta
+                                         craplcm.nrdocmto = p-nrdocto
+                                         craplcm.vllanmto = p-valor 
+                                         craplcm.cdhistor = 2063
+                                         craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                         craplcm.nrdctabb = p-nro-conta
+                                         craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
+                                         craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+                     
+                               END.
+                                
+                            ELSE
+                                DO:
+                        
+                                    CREATE craplcm.
+                                    ASSIGN craplcm.cdcooper = crapcop.cdcooper
+                                           craplcm.dtmvtolt = crapdat.dtmvtolt
+                                           craplcm.cdagenci = p-cod-agencia
+                                           craplcm.cdbccxlt = 100
+                                           craplcm.nrdolote = 600042
+                                           craplcm.nrdconta = p-nro-conta
+                                           craplcm.nrdocmto = p-nrdocto
+                                           craplcm.vllanmto = p-valor 
+                                           craplcm.cdhistor = 2064
+                                           craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                           craplcm.nrdctabb = p-nro-conta
+                                           craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
+                                           craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+                                
+                      
+                                
+                                END.
+                    
+                        DO:    
+                        CREATE craplcx.
+                                ASSIGN craplcx.cdcooper = crapcop.cdcooper                             
+                                       craplcx.cdagenci = p-cod-agencia
+                                       craplcx.cdopecxa = p-cod-operador
+                                       craplcx.dtmvtolt = crapdat.dtmvtolt
+                                       craplcx.cdhistor = 2065
+                                       craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-nro-conta,"99999999")
+                                       craplcx.nrdocmto = p-nrdocto
+                                       craplcx.nrseqdig = craplot.nrseqdig + 1
+                                       craplcx.vldocmto = p-valor
+                                       craplcx.nrdmaqui = crapbcx.nrdmaqui.
+                        END.
+                         
+                     END.
+                    ELSE
+                       DO:
+                           
+                            CREATE craplcm.
     ASSIGN craplcm.cdcooper = crapcop.cdcooper
            craplcm.dtmvtolt = crapdat.dtmvtolt
            craplcm.cdagenci = p-cod-agencia
@@ -754,6 +908,11 @@ PROCEDURE atualiza-cheque-avulso:
            craplcm.nrdctabb = p-nro-conta
            craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
            craplcm.cdpesqbb = "CRAP54," + p-cod-liberador.
+                           
+                        END.
+                    
+                  END.
+              END.
    
     ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
            craplot.qtcompln  = craplot.qtcompln + 1

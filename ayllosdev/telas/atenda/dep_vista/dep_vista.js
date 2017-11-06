@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 14/10/2015
+   Data : Fevereiro/2007                  Última Alteração: 04/11/2017
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -18,6 +18,8 @@
 							 14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos. SD 320300 (Kelvin).
 							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
 							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
+                             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
+                                          (Jonata - RKAM P364).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -26,6 +28,19 @@ var dtfimper = "";
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
+	
+	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
+	if(sitaucaoDaContaCrm == '2' || 
+	   sitaucaoDaContaCrm == '3' || 
+	   sitaucaoDaContaCrm == '4' || 
+	   sitaucaoDaContaCrm == '5' || 
+	   sitaucaoDaContaCrm == '7' || 
+	   sitaucaoDaContaCrm == '8' || 
+	   sitaucaoDaContaCrm == '9'){ 
+	   opcao ="1";
+	   id="1";
+	}
+	
 	if (opcao == "0") {	// Opção Principal
 		var msg = "dep&oacute;sitos &agrave; vista";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/principal.php";

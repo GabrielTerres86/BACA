@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 05/08/2016
  * OBJETIVO     : Mostrar tela IMPPRE
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 13/08/2017 - Ajustes refente ao projeto P364 (Jonata - RKAM).
  *				  
  * --------------
  */
@@ -81,7 +81,10 @@
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
 
+																			<div id="divFiltro"></div>
 																			<div id="divDetalhes"></div>
+																			<div id="divRotina"></div>
+																				
 																		</div>
 																	</td>
 																</tr>
