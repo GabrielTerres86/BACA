@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 14/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 18/08/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -206,6 +206,12 @@
                14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
                             valido para que seja excluido (Douglas - Chamado 524133)
 
+			   18/08/2017 - Ajuste para efetuar o controle de lock ao realizar a atualizacao
+			                da tabela craplfp
+							(Adriano - SD 733103).
+
+			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
+
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -300,7 +306,8 @@ DEF VAR aux_DtHRBC        AS CHAR                                   NO-UNDO.
 DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
 DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
 DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
-DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
+DEF VAR aux_TpCtDebtd     AS CHAR                                   NO-UNDO.
+DEF VAR aux_CNPJNLiqdant  AS CHAR                                   NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -647,7 +654,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_nrctremp      = 0
            aux_tpemprst      = 2
            aux_qtregist      = 0
-           aux_vlsldliq      = 0.
+           aux_vlsldliq      = 0
+           aux_CNPJNLiqdant  = "".
                               
     EMPTY TEMP-TABLE tt-situacao-if.   
 
@@ -745,6 +753,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
         
          "STR0005R2,STR0007R2,STR0008R2,PAG0107R2," +
          "STR0025R2,PAG0121R2," + /* Transferencia Judicial - Andrino */
+         "LTR0005R2," + /* Antecipaçao de Recebíveis - LTR - Mauricio */
          "PAG0108R2,PAG0143R2," +     /* TED */
 
          "STR0037R2,PAG0137R2," +     /* TEC */
@@ -802,6 +811,30 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
             RUN deleta_objetos.
          END.
 		 
+    /* Antecipaçao de Recebíveis - LTR - Mauricio */
+    IF  CAN-DO("LTR0005R2",aux_CodMsg) THEN
+         DO:
+         
+		 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + glb_cdprogra + "' --> '"  +
+                           glb_dscritic + " >> log/proc_batch.log"). 
+
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+            /* Efetuar a chamada a rotina Oracle */
+            RUN STORED-PROCEDURE pc_insere_msg_domicilio
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)  /* Valor Lancamento */
+                                                      ,INPUT aux_CNPJNLiqdant  /* CPNJ Liquidante */
+                                                      ,OUTPUT ?).             /* Retorno do Erro */
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_insere_msg_domicilio
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+            RUN salva_arquivo.
+            RUN deleta_objetos.
+            NEXT.
+         END.
     /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
@@ -1551,19 +1584,41 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                               ELSE
                                   DO:
                                      ASSIGN craplcs.flgopfin = TRUE. /* Finaliz.*/
+
                                      /*Alteração FOLHAIB*/
                                      IF craplcs.nrridlfp <> 0 THEN
                                      DO: 
+									     DO aux_contlock = 1 TO 10:
+
                                          FIND FIRST craplfp WHERE 
                                             craplfp.cdcooper = craplcs.cdcooper  AND
                                             RECID(craplfp)   = craplcs.nrridlfp 
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                          
-                                         IF AVAIL craplfp THEN
+											 IF NOT AVAIL craplfp    THEN
+												IF LOCKED craplfp   THEN
                                          DO:
+													   ASSIGN aux_dscritic = "Registro craplfp sendo alterado.".
+													   PAUSE 1 NO-MESSAGE.
+													   NEXT.
+												   END.
+												ELSE
+                                         DO:
+													   ASSIGN aux_dscritic = "Lancamento de folha nao encontrado.".
+													   LEAVE.
+												   END.
+
+											 ASSIGN aux_dscritic = "".
+											 LEAVE.
+
+										 END.
+										 
+										 IF LOCKED craplfp THEN
+											NEXT.
+
                                              ASSIGN craplfp.idsitlct = 'T'
                                                     craplfp.dsobslct = ? .  
-                                         END.
+                                         
                                   END.
                                         
                               END.
@@ -1829,7 +1884,7 @@ PROCEDURE deleta_objetos.
     
     IF  VALID-HANDLE (hRoot)  THEN
         DELETE OBJECT hRoot.
-    
+
     IF  VALID-HANDLE (hDoc)  THEN
         DELETE OBJECT hDoc.
 
@@ -1998,7 +2053,7 @@ PROCEDURE importa_xml.
             END.
             ELSE
                 DO:
-                    
+
                     ASSIGN aux_manter_fisico = TRUE
                            aux_msgspb_xml = STRING(TODAY,"99/99/9999") + " - " +
                                             STRING(TIME,"HH:MM:SS") +
@@ -2008,7 +2063,7 @@ PROCEDURE importa_xml.
                                             " Seq.: " + STRING(aux_idprogra) + 
                                             " - Mensagem de TED nao possui data. " + 
                                             "Verifique arquivo fisico: " + aux_nmarqxml.
-                    
+   
                     /* Gravar a mensagem que deu erro */
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -2490,7 +2545,7 @@ PROCEDURE trata_cecred.
                              INPUT TIME).
         END.
         END.
-   
+
 END.
 
 PROCEDURE gera_logspb_transferida.
@@ -3541,6 +3596,10 @@ PROCEDURE trata_dados_transferencia.
        ELSE
        IF  hNameTag:NAME = "DtMovto"  THEN
            ASSIGN aux_DtMovto = aux_descrica.
+       ELSE
+       /* CNPJ Liquidante - antecipaçao de recebíveis - Mauricio*/
+       IF  hNameTag:NAME = "CNPJNLiqdant"  THEN
+           ASSIGN aux_CNPJNLiqdant = aux_descrica.
                    
    END.
 
