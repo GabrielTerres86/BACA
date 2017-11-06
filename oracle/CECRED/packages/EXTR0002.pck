@@ -9386,7 +9386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
     vr_vlmoefix     NUMBER(35,8);
     vr_vlmoefi1     NUMBER(35,8);
     vr_nmcidade     VARCHAR2(100);
-	vr_nmsegntl     crapttl.nmextttl%TYPE;
+	  vr_nmsegntl     crapttl.nmextttl%TYPE;
 
     vr_ant_vlirfcot NUMBER;
     vr_ant_vlprepag NUMBER;
@@ -11207,6 +11207,12 @@ END pc_consulta_ir_pj_trim;
               ,crapcop.nmcidade
               ,crapcop.cdufdcop
               ,crapcop.nrtelvoz
+              ,crapcop.nrtelsac
+              ,crapcop.nrtelouv
+              ,crapcop.hrinisac
+              ,crapcop.hrfimsac
+              ,crapcop.hriniouv
+              ,crapcop.hrfimouv              
         FROM crapcop crapcop
         WHERE crapcop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -11273,9 +11279,10 @@ END pc_consulta_ir_pj_trim;
       vr_rel_nrcpfcgc VARCHAR2(100);
       vr_rel_aarefere VARCHAR2(100);
       vr_rel_nrdocnpj VARCHAR2(100);
+      vr_rel_nrtelcop VARCHAR2(100);
       vr_ant_dtrefere DATE;
       vr_sol_dtrefere DATE;
-	  vr_nmsegntl     crapttl.nmextttl%TYPE;
+	    vr_nmsegntl     crapttl.nmextttl%TYPE;
 
 
       vr_dsdomes1     VARCHAR(10);
@@ -11521,8 +11528,14 @@ END pc_consulta_ir_pj_trim;
           vr_rel_nrdocnpj:= 'CNPJ: '||gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2);
           vr_rel_dsendcop##1:= rw_crapcop.dsendcop ||', '||to_char(rw_crapcop.nrendcop,'fm99g990')||
                                ' - '|| rw_crapcop.nmbairro;
-          vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
-                               ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
+          IF pr_idorigem = 3 THEN                     
+             vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
+                                  ' - '||rw_crapcop.cdufdcop;
+          ELSE
+             vr_rel_dsendcop##2:= gene0002.fn_mask_cep(rw_crapcop.nrcepend)||' - '|| rw_crapcop.nmcidade||
+                                  ' - '||rw_crapcop.cdufdcop ||'  - TELEFONE: '||rw_crapcop.nrtelvoz;
+          END IF;
+          vr_rel_nrtelcop:= rw_crapcop.nrtelvoz;
           vr_rel_dscpmfpg:= vr_tab_extrato_ir(vr_index).dscpmfpg;
           vr_rel_vlcpmfpg:= vr_tab_extrato_ir(vr_index).vlcpmfpg;
           vr_rel_vldoirrf:= vr_tab_extrato_ir(vr_index).vldoirrf;
@@ -11578,7 +11591,13 @@ END pc_consulta_ir_pj_trim;
                     '" rf3_vlsdapli="'  || to_char(vr_rf3_vlsdapli,'fm9g999g999g990d00mi') ||
 
                     '" dtemissa="'      || to_char(SYSDATE,'DD/MM/YYYY')                   ||
-                    '" rel_vldoirrf="" flgano2009="N" flgant94="N" cdagectl=""><retencoes>';
+                    '" rel_vldoirrf="" flgano2009="N" flgant94="N" cdagectl=""';
+                    
+          IF pr_idorigem = 3 THEN   
+             vr_dstexto:= vr_dstexto || ' nrtelcop="' || vr_rel_nrtelcop || '"';
+          END IF;
+             
+          vr_dstexto:= vr_dstexto || '><retencoes>';
 
           --Limpar String retencoes
           vr_texto_retenc:= NULL;
@@ -11597,7 +11616,19 @@ END pc_consulta_ir_pj_trim;
              vr_index_retenc:= vr_tab_retencao_ir.NEXT(vr_index_retenc);
           END LOOP;
           --Junta todos os textos para colocar no XML
-           vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
+          vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
+          
+          IF pr_idorigem = 3 THEN            
+             vr_dstexto:= vr_dstexto   || '<infosac>' ||
+                          '<nrtelsac>' || rw_crapcop.nrtelsac || '</nrtelsac>' ||
+                          '<hrinisac>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrinisac,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrinisac>' ||
+                          '<hrfimsac>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrfimsac,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrfimsac>' ||
+                          '<nrtelouv>' || rw_crapcop.nrtelouv || '</nrtelouv>' ||
+                          '<hriniouv>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hriniouv,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hriniouv>' ||
+                          '<hrfimouv>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrfimouv,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrfimouv>' ||
+                          '</infosac>';            
+          END IF;
+          
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 13/04/2017
+   Data    : Marco/2007                        Ultima atualizacao: 06/11/2017
 
    Dados referentes ao programa:
 
@@ -56,11 +56,13 @@
                             (Marcos-Supero)      
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-			                sem desconto IR (Marcos-Supero) 
+			                      sem desconto IR (Marcos-Supero) 
 
-			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+			         13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
+              
+               06/11/2017 - Separar telefone do endereco da cooperativa (David)
 
 ............................................................................*/
     
@@ -463,8 +465,7 @@ PROCEDURE proc_ir_fisica:
                                    STRING(STRING(crapcop.nrcepend,
                                           "99999999"),"xxxxx-xxx") +
                                    " - " + crapcop.nmcidade + " - " +
-                                   crapcop.cdufdcop + " - TELEFONE: " +
-                                   crapcop.nrtelvoz + 
+                                   crapcop.cdufdcop + 
                                    "</dsendcop><nmextcop>" + 
                                    TRIM(crapcop.nmextcop) + 
                                    "</nmextcop><cdagenci>" + 
@@ -532,7 +533,22 @@ PROCEDURE proc_ir_fisica:
                                    TRIM(STRING(aux_vlprepag,"zzz,zzz,zz9.99-")) +
                                    "</vlprepag><atprepag>" +
                                    TRIM(STRING(ant_vlprepag,"zzz,zzz,zz9.99-")) +
-                                   "</atprepag></IRFISICA>".          
+                                   "</atprepag><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop><infosac><nrtelsac>" + 
+                                   STRING(crapcop.nrtelsac) + 
+                                   "</nrtelsac><hrinisac>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrinisac><hrfimsac>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrfimsac><nrtelouv>" + 
+                                   STRING(crapcop.nrtelouv) + 
+                                   "</nrtelouv><hriniouv>" +
+                                   REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hriniouv><hrfimouv>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrfimouv></infosac></IRFISICA>".
+                                   
 END PROCEDURE. 
 
 PROCEDURE proc_ir_juridica:
@@ -553,8 +569,7 @@ PROCEDURE proc_ir_juridica:
                                    STRING(STRING(crapcop.nrcepend,
                                           "99999999"),"xxxxx-xxx") + " - " + 
                                    crapcop.nmcidade + " - " + 
-                                   crapcop.cdufdcop + " - TELEFONE: " +
-                                   crapcop.nrtelvoz + 
+                                   crapcop.cdufdcop + 
                                    "</dsendcop><nmextcop>" + 
                                    TRIM(crapcop.nmextcop) + 
                                    "</nmextcop><cdagenci>" + 
@@ -567,7 +582,21 @@ PROCEDURE proc_ir_juridica:
                                    STRING(STRING(crapass.nrcpfcgc,
                                          "99999999999999"),
                                          "xx.xxx.xxx/xxxx-xx") + 
-                                   "</nrcpfcgc><DADOSIR>".
+                                   "</nrcpfcgc><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop><infosac><nrtelsac>" + 
+                                   STRING(crapcop.nrtelsac) + 
+                                   "</nrtelsac><hrinisac>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrinisac><hrfimsac>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrfimsac><nrtelouv>" + 
+                                   STRING(crapcop.nrtelouv) + 
+                                   "</nrtelouv><hriniouv>" +
+                                   REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hriniouv><hrfimouv>" + 
+                                   REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),":","h"),"h00","h") + 
+                                   "</hrfimouv></infosac><DADOSIR>".
                      
     /* pegar descricao do codigo retencao 3426 */
     FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3426 NO-ERROR.
