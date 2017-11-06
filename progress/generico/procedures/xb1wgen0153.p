@@ -5381,6 +5381,10 @@ PROCEDURE incluir-lista-cadfco:
                                     INPUT aux_lstocorr,
                                     INPUT aux_lstlcrem,
                                     INPUT aux_cdinctar,
+                                    INPUT aux_lstvlper,
+                                    INPUT aux_lstvlmin,
+                                    INPUT aux_lstvlmax,
+							        INPUT aux_lsttptar,
                                     OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
