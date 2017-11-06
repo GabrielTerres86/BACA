@@ -2439,7 +2439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            SET crapris.nrdgrupo = (SELECT NVL(MAX(ris.nrdgrupo),0)
                                      FROM crapris ris
                                     WHERE ris.cdcooper = crapris.cdcooper
-                                      AND ris.nrdconta = crapris.nrdconta 
+                                      AND ris.nrcpfcgc = crapris.nrcpfcgc
                                       AND ris.dtrefere = crapris.dtrefere
                                       AND ris.inddocto IN (1,3))
          WHERE crapris.cdcooper = pr_cdcooper
