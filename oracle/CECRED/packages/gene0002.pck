@@ -352,7 +352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/08/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 17/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -390,9 +390,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --             04/08/2017 - Retirado pc_set_modulo da procedure fn_quebra_string
   --                        - Chamado 678813 - Belli - Envolti
   --    
-  --
   --             27/07/2017 - #724054 retirada a exclusão da coop 3 do cursor cr_crapcop, rotina 
   --                          pc_publicar_arq_intranet (Carlos)
+  --
+  --             17/10/2017 - Retirado pc_set_modulo
+  --                          (Ana - Envolti - Chamado 776896)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -426,7 +428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Novembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -449,7 +451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes: 26/07/2013 - Alteração da função para não utilizar mais 'select from dual'
     --                            devido a problemas de performance. (Daniel - Supero)
-    -- .............................................................................
+    --
+    --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
     vr_dsauxil   varchar2(200);
     vr_dsconve   varchar2(200);
     vr_dsforma   varchar2(200);
@@ -516,6 +521,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Função para mascarar o Nro da Conta */
   FUNCTION fn_mask_conta(pr_nrdconta IN crapass.nrdconta%TYPE) RETURN VARCHAR2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_conta');   
@@ -529,6 +538,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Função para mascarar a Conta Integração */
   FUNCTION fn_mask_ctitg(pr_nrdctitg IN crapass.nrdctitg%TYPE) RETURN VARCHAR2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_ctitg');   
@@ -543,6 +556,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Função para mascarar o CPF ou CNPJ */
   FUNCTION fn_mask_cpf_cnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%type,
                             pr_inpessoa in crapass.inpessoa%type) RETURN varchar2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_cpf_cnpj');   
@@ -566,6 +583,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Função para mascarar o CEP */
   FUNCTION fn_mask_cep(pr_nrcepend IN crapenc.nrcepend%TYPE) RETURN VARCHAR2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_cep');   
@@ -579,6 +600,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Função para mascarar a matrícula */
   FUNCTION fn_mask_matric(pr_nrmatric IN crapass.nrmatric%TYPE) RETURN VARCHAR2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_matric'); 
@@ -592,6 +617,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Função para mascarar o contrato */
   FUNCTION fn_mask_contrato(pr_nrcontrato IN crapepr.nrctremp%TYPE) RETURN VARCHAR2 IS
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_contrato'); 
@@ -611,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- Sistema : Conta-Corrente - Cooperativa de Credito
     -- Sigla   : CRED
     -- Autor   : Deborah/Edson
-    -- Data    : Junho/2013                     Ultima atualizacao:
+    -- Data    : Junho/2013                     Ultima atualizacao: 17/10/2017
 
     -- Dados referentes ao programa:
 
@@ -625,7 +654,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     END;
   END fn_calc_hora;
 
-
   /* Rotina para testar carateres numéricos */
   FUNCTION fn_numerico(pr_vlrteste IN VARCHAR2) RETURN boolean IS
   BEGIN
@@ -635,13 +663,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Retornar validação se a variável contem numeros.
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     DECLARE
       vr_ctrteste       BOOLEAN := TRUE;
@@ -680,13 +709,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Retornar determinada informacao da string conforme parametros.
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     DECLARE
       /* Variaveis Locais */
@@ -740,14 +770,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Janeiro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Retornar array com os campos referentes a quebra da string
     --               com base no delimitador informado.
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 04/08/2017 - Retirado pc_set_modulo
+    --                            (Belli - Envolti - Chamado 678813)
     -- ............................................................................
 
     vr_vlret    typ_split := typ_split();
@@ -756,7 +787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
-    -- Retirado pc_set_modulo da procedure fn_quebra_string - Chamado 678813 04/08/2017
+    -- Retirado pc_set_modulo da procedure fn_quebra_string - Chamado 678813 - 04/08/2017
     --Se a string estiver nula retorna count = 0 no vetor
     IF nvl(pr_string,'#') = '#' THEN
       RETURN vr_vlret;
@@ -791,7 +822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Janeiro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -800,7 +831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               e pesquisa se uma string objeto de busca existe dentre os
     --               resultados da quebra da string retornando 'S' em caso de sucesso
     --               ou 'N' em caso de insucesso.
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
 
     vr_buscar  typ_split;
@@ -829,6 +861,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   /* Pesquisa recursiva do contains */
   FUNCTION fn_verifica_contem(pr_dstexto in varchar2                     --> Texto que irá sofrer a busca
                              ,pr_dsprocu in varchar2) RETURN VARCHAR2 IS --> String objeto de busca
+  -- ..........................................................................
+  --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+  --                            (Ana - Envolti - Chamado 776896)
+  -- ..........................................................................
   BEGIN
     -- ............................................................................
     DECLARE
@@ -878,7 +914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos Martini - Supero
-    --  Data     : Março/2014.                   Ultima atualizacao: --/--/----
+    --  Data     : Março/2014.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -913,14 +949,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 05/12/2012
+       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Criar um Blob a apartir do arquivo passado
 
-       Alteracoes:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- BLOB para saida
@@ -968,14 +1004,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Dionathan
-       Data    : Maio/2015                      Ultima atualizacao: 12/05/2015
+       Data    : Maio/2015                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Criar um CLOB a apartir do arquivo passado
 
-       Alteracoes:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
     -- CLOB para saida
@@ -997,14 +1033,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_blob_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 05/12/2012
+       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um Blob e grava em arquivo
 
-       Alteracoes:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Variáveis para tratamento do arquivo
@@ -1069,7 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_clob_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Março/2014                      Ultima atualizacao: 08/12/2016
+       Data    : Março/2014                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -1081,6 +1117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                 append, para garantir processo.
                                 SD572620 (Odirlei-AMcom)
 
+                   17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
     	vr_nom_arquiv VARCHAR2(2000);
@@ -1161,14 +1199,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_efetua_copia_pdf            Antiga(b1wgen0024.p/efetua-copia-pdf)
        Autor   : Odirlei Busana (AMcom)
-       Data    : Junho/2014                      Ultima atualizacao: 25/06/2014
+       Data    : Junho/2014                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para copiar arquivo PDF para o sistema ayllos web
 
-       Alteração:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -1277,14 +1315,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_efetua_copia_arq_ib
        Autor   : Marcos Martini (Supero)
-       Data    : Agosto/2015                      Ultima atualizacao: 20/08/2015
+       Data    : Agosto/2015                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para copiar arquivo PDF para o sistema InternetBanking
 
-       Alteração:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -1366,7 +1404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
      Programa: PC_PUBLICAR_ARQ_INTRANET
      Sistema : Conta-Corrente - Cooperativa de Credito
      Autor   : Odirlei Busana - AMcom
-     Data    : Dezembro/2015.                     Ultima atualizacao: 05/02/2015
+     Data    : Dezembro/2015.                     Ultima atualizacao: 17/10/2017
 
      Dados referentes ao programa:
 
@@ -1374,8 +1412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
      Objetivo  : Buscar arquivos pendentes na TMPPDF da coop e enviar arquivo de controle
                  para o servidor da intranet. 
 
-     Alteracoes:
-
+     Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                              (Ana - Envolti - Chamado 776896)
     ..........................................................................*/
 
     --> Buscar dados da cooperativa
@@ -1603,19 +1641,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_gera_pdf_impressao          Antiga(b1wgen0024.p/gera-pdf-impressao)
        Autor   : Odirlei Busana (AMcom)
-       Data    : Maio/2014                      Ultima atualizacao: 30/05/2014
+       Data    : Maio/2014                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para converter proposta para o formato PDF
 
-       Alteração:
-
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     vr_script  VARCHAR2(2000);
     -- Saída do Shell
     vr_typ_saida VARCHAR2(3);
-
 
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -1697,10 +1734,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                        ,pr_des_erro OUT VARCHAR2) IS             --> Saída com erro
   BEGIN
     /*..............................................................................
-
        Programa: pc_cria_PDF
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 23/01/2014
+       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -1731,6 +1767,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  diretório 'rl' da cooperativa PR_CDCOOPER, deve remover
                                  o arquivo ao final do processamento. (Daniel - Supero)
 
+                    17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Diretório script da cooperativa
@@ -1901,13 +1939,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_Juntar_Pdf
        Autor   : Odirlei Busana (AMcom)
-       Data    : Setembro/2016                      Ultima atualizacao: 19/09/2016
+       Data    : Setembro/2016                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedimento para juntar/contatenar 2 ou mais arquivos PDFs separados por ;
 
-       Alteracoes: 
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     
     vr_exc_erro   EXCEPTION;
@@ -1981,7 +2020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa : pc_zipcecred
        Autor    : Marcos (Supero)
-       Data     : Dezembro/2012                      Ultima atualizacao: 27/11/2013
+       Data     : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -2003,6 +2042,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Alteracoes:
                27/11/2013 - Permitir executar o extract de arquivos. (Renato - Supero)
 
+               17/10/2017 - Retirado pc_set_modulo
+                            (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Script completo para a executação
@@ -2143,7 +2184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah
-       Data    : Novembro/91.                        Ultima atualizacao: 25/02/2014
+       Data    : Novembro/91.                        Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -2220,6 +2261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
                    25/02/2014 - Replicar manutenção progress 02/2014 (Odirlei-AMcom)
 
+                   17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
     -- ...........................................................................
 
     ............................................................................. */
@@ -2411,7 +2454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_XML_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 05/12/2012
+       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
@@ -2419,6 +2462,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Alteracoes:
        21/03/13 - Petter (Supero): Alterar parser para SAX (classe Java) para melhorar performance.
+
+       17/10/2017 - Retirado pc_set_modulo 
+                    (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Variáveis para tratamento do arquivo
@@ -2448,12 +2494,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_XML_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 05/12/2012
+       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um XMLType e grava as mesmas em arquivo
 
+       Alteracoes: 17/10/2017 - Retirado pc_set_modulo 
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Variáveis para tratamento do arquivo
@@ -2488,7 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2497,6 +2545,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes:  31/10/2013 - Troca do arquivo de log para salvar a partir
     --                             de agora no diretório log das Cooperativas (Marcos-Supero)
+    --
+    --                17/10/2017 - Retirado pc_set_modulo 
+    --                             (Ana - Envolti - Chamado 776896)
     -- .............................................................................
 
     DECLARE
@@ -2574,7 +2625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/06/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2608,6 +2659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --              22/06/2017 - Tratamento de erros 
     --                         - setado modulo
     --                         - Chamado 660322 - Belli - Envolti         
+    --
+    --              17/10/2017 - Retirado pc_set_modulo
+    --                           (Ana - Envolti - Chamado 776896)
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2962,7 +3016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         Sistema  : Rotinas genéricas
         Sigla    : GENE
         Autor    : Marcos E. Martini - Supero
-        Data     : Dezembro/2012.                   Ultima atualizacao: 29/12/2015
+        Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
 
         Dados referentes ao programa:
 
@@ -3015,6 +3069,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                      29/12/2015 - Controlar lock na tabela crapslr, para que o lock ocorra a nivel de registro 
                                   e não toda a consulta SD379026 (Odirlei-AMcom)             
 
+                     17/10/2017 - Retirado pc_set_modulo
+                                  (Ana - Envolti - Chamado 776896)
        ............................................................................. */
     DECLARE
       -- Busca de informações da fila
@@ -3545,7 +3601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/06/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3590,6 +3646,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                          - setado modulo
     --                          - Chamado 660322 - Belli - Envolti
     --
+    --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................. */
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -3642,15 +3700,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Tratamento de erros - 22/06/2017 - Chamado 660322
       vr_exc_saida        EXCEPTION;
      
-      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
-      vr_acao             VARCHAR2   (100); 
-
     BEGIN
       -- Criação de bloco para tratar todos os possíveis problemas na solicitação
       
 	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017      
       vr_acao := 'GENE0002.pc_solicita_relato';      
-		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_acao);
       
       BEGIN
         -- Busca do indicador do processo no calendário
@@ -3943,7 +3998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Abril/2013.                   Ultima atualizacao: 31/08/2015
+    --  Data     : Abril/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3971,6 +4026,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               12/03/2014 - Preparar a execução para converter o arquivo de unix para dos (Marcos-Supero)
     --
     --               31/08/2015 - Inclusao do parametro flappend. (Jaison/Marcos-Supero)
+    --
+    --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -4214,7 +4272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini
-    --  Data     : Março/2014.                   Ultima atualizacao: --/--/----
+    --  Data     : Março/2014.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4223,6 +4281,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --   Objetivo  : 1 - Listar todos os relatórios com erro no processo atual
     --               2 - Gerar por e-mail listagem alertando os reponsáveis
     --               3 - Atualizar os relatórios indicando que já houve o alerta
+    --
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
     DECLARE
       -- Lista dos relatórios a montar a tabela
       cursor cr_crapslr is
@@ -4383,7 +4445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini
-    --  Data     : Outubro/2013.                   Ultima atualizacao: 21/03/2014
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4393,7 +4455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               1.1 - Se estivermos com o processo diario ou noturno executando
     --               1.2 - Se o processo de relatórios não estiver em execução
     --               1.3 - Então criar o arquivo de controle de início da cadeia de relatórios
-
+    --
     --               2   - A rotina irá também varrer todas as filas de geração de relatório (CRAPFIL),
     --                     e para cada fila, efetuar os seguintes controles:
     --
@@ -4424,6 +4486,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --   21/03/2014 - Chamar rotina que alerta os responsáveis caso encontremos erros de
     --                relatórios da cadeia (Marcos-Supero)
     --
+    --   17/10/2017 - Retirado pc_set_modulo
+    --               (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
       -- Busca de todas as cooperativas
@@ -4662,6 +4726,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   FUNCTION fn_converte_time_data(pr_nrsegs   in integer,
                                  pr_tipsaida in varchar2 default 'M') RETURN varchar2 IS
     vr_nrsegs    integer := pr_nrsegs;
+    -- ..........................................................................
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    -- ..........................................................................
   BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
   	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_converte_time_data');
@@ -4688,7 +4756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: --/--/----
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4704,7 +4772,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                  apenas o sinal será considerado para a conversão de number
     --               4) Em caso de erro, a função retornará NUL
     --
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
       -- Buscar os caracteres separadores
@@ -4785,9 +4854,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Dados referentes ao programa:
 
        Objetivo  : Calcular a diferença entre duas datas e retornar diferença em hh:mi:ss
-
-       Alteracoes:
-
     ..............................................................................*/
     DECLARE
       -- Variaveis para o cálculo
@@ -4822,7 +4888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Setembro/2013.                   Ultima atualizacao: 20/05/2014
+    --  Data     : Setembro/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4832,6 +4898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes: Ajustes para não gravar linha no clob, caso o parametro esteja vazio(Odirlei/AMcom)
     --
+    --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -4882,8 +4950,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                   incluir também o parâmetro PR_FECHA_XML com o valor TRUE. Ao final, no
                   programa chamador, deve-se fechar o CLOB e liberar a memória utilizada.
 
-      Alterações:
-
+      Alterações: 17/10/2017 - Retirado pc_set_modulo
+                              (Ana - Envolti - Chamado 776896)
     ----------------------------------------------------------*/
     procedure pc_concatena(pr_xml in out nocopy clob,
                            pr_texto_completo in out nocopy varchar2,
@@ -4929,15 +4997,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Outubro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 17/10/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Efetuar o envio de arquivos para a intranet.
     --
-    --   Alteracoes:
-    --
+    --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -5175,7 +5243,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   END fn_data;
 
 
-
   -- Subrotina para enviar arquivo de extrato da conta para servidor web
   PROCEDURE pc_envia_arquivo_web (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
                                  ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
@@ -5191,7 +5258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 05/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 17/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -5207,6 +5274,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --              05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
   --                           (Adriano).        
+  --
+  --              17/10/2017 - Retirado pc_set_modulo
+  --                            (Ana - Envolti - Chamado 776896)
   ---------------------------------------------------------------------------------------------------------------
         --Cursores Locais
         -- Busca dos dados da cooperativa
@@ -5330,8 +5400,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
         WHEN OTHERS THEN
-          -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -5357,13 +5427,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 19/05/2015
+   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que chamado por outros programas.
    Objetivo  : Importar arquivo XML do modo texto para dentro do XMLtype
-
 
    Alteracoes: 11/02/2015 - Desenvolvimento
 
@@ -5373,8 +5442,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                             2 - Alternativo(usando blob) , usado para arquivos com linhas cujo ultrapassem 32627 caracteres
                             (Odirlei-AMcom)
 
+               17/10/2017 - Retirado pc_set_modulo
+                           (Ana - Envolti - Chamado 776896)
   .............................................................................*/
-
   BEGIN
     DECLARE
 
@@ -5559,16 +5629,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 23/02/2015
+   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que chamado por outros programas.
    Objetivo  : Abreviar a string conforme quantidade de letras
 
-
    Alteracoes: 23/02/2015 - Conversão Progress --> Oracle (Alisson - AMcom)
 
+               17/10/2017 - Retirado pc_set_modulo
+                           (Ana - Envolti - Chamado 776896)
   .............................................................................*/
 
   BEGIN
@@ -5757,18 +5828,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 23/02/2015
+   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que chamado por outros programas.
    Objetivo  : Centralizar o texto e preencher com caracteres
 
-
    Alteracoes: 24/02/2015 - Conversão Progress --> Oracle (Alisson - AMcom)
 
+               17/10/2017 - Retirado pc_set_modulo
+                           (Ana - Envolti - Chamado 776896)
   .............................................................................*/
-
   BEGIN
     DECLARE
 
@@ -5828,16 +5899,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Fevereiro/2015                          Ultima atualizacao: 29/07/2016
+   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que chamado por outros programas.
    Objetivo  : Retornar o valor em extenso
 
-
-   Alteracoes: 
-
+   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                           (Ana - Envolti - Chamado 776896)
   .............................................................................*/
     valor_string VARCHAR2(256);
     valor_conv   VARCHAR2(25);    
