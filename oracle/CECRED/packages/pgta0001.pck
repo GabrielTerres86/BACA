@@ -50,6 +50,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
               ,dtvencto VARCHAR2(15)  -- Data de Vencimento do Titulo
               ,dtdpagto VARCHAR2(15)  -- Data de Pagamento do Titulo
               ,vltitulo NUMBER(25,2)  -- Valor do Titulo
+              ,vldpagto NUMBER(25,2)  -- Valor do Pago
               ,cdocorre VARCHAR2(2)   -- Codigo da Ocorrencia
               ,dsocorre VARCHAR2(100) -- Descrição da ocorrencia da Remessa
               ,dscodbar VARCHAR2(44)  -- Codigo de Barras
@@ -8879,6 +8880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              dpt_rem.dtvencto,
              dpt_rem.dtdpagto,
              dpt_rem.vltitulo,
+             dpt_rem.vldpagto,
              dpt_rem.cdocorre || '-' || g059_rem.dsdominio dsocorre_rem,
              -- Ultimo Registro Processado
              remessa.nrnivel_urp,
@@ -9133,6 +9135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         pr_tab_agd_pgt_arq(vr_idx).dtvencto := to_char(rw.dtvencto,'DD/MM/YYYY');
         pr_tab_agd_pgt_arq(vr_idx).dtdpagto := to_char(rw.dtdpagto,'DD/MM/YYYY');
         pr_tab_agd_pgt_arq(vr_idx).vltitulo := rw.vltitulo;
+        pr_tab_agd_pgt_arq(vr_idx).vldpagto := rw.vldpagto;
         pr_tab_agd_pgt_arq(vr_idx).nrconven := rw.nrconven;
         pr_tab_agd_pgt_arq(vr_idx).cdocorre := rw.cdocorre_urp;
         pr_tab_agd_pgt_arq(vr_idx).dsocorre := rw.dsocorre_urp;
@@ -9300,6 +9303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                      ' <dtvencto>' || vr_tab_agd_pgt_arq(vr_idx).dtvencto || '</dtvencto>' ||
                                                      ' <dtdpagto>' || vr_tab_agd_pgt_arq(vr_idx).dtdpagto || '</dtdpagto>' ||
                                                      ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00')||'</vltitulo>'||
+                                                     ' <vldpagto>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vldpagto,'fm999G999G999G990D00')||'</vldpagto>'||
                                                      ' <nrconven>' || vr_tab_agd_pgt_arq(vr_idx).nrconven || '</nrconven>' ||
                                                      ' <cdocorre>' || vr_tab_agd_pgt_arq(vr_idx).cdocorre || '</cdocorre>' ||
                                                      ' <dsocorre>' || vr_tab_agd_pgt_arq(vr_idx).dsocorre || '</dsocorre>' ||
