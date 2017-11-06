@@ -174,6 +174,8 @@
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
                              da pessoa do cadastro unificado, para completar o cadastro com dados
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
+               
+               01/11/2017 - Alteracoes referentes a melhoria 271.3 (Tiago)
 .............................................................................*/
                                                      
 

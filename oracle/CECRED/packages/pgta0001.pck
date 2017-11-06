@@ -547,6 +547,25 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2);           --> Descricao da critica
 
+  PROCEDURE pc_importa_pagarq(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                             ,pr_dsarquiv  IN VARCHAR2
+                             ,pr_dsdireto  IN VARCHAR2
+                             ,pr_dscritic  OUT VARCHAR2
+                             ,pr_retxml    OUT CLOB);
+                             
+  PROCEDURE pc_importa_pagarq_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                 ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                 ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                 ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2);
+                                 
+  FUNCTION fn_converte_fator_vencimento(pr_dtmvtolt IN DATE    --Data Movimento
+                                       ,pr_nrdfator IN INTEGER --Fator de vencimento
+                                       ) RETURN DATE;
+                                   
 END PGTA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
@@ -2924,11 +2943,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   pr_dtmvtolt,
                   pr_nmarquiv,
                   pr_idorigem,
-                  vr_dtmvtolt,
+                  TRUNC(SYSDATE),
                   to_char(SYSDATE,'HH24MISS'),
                   1, -- Pendente
                   pr_cdoperad);
                EXCEPTION
+               WHEN DUP_VAL_ON_INDEX THEN
+                 vr_des_erro := 'Registro de cabecalho ja existente.';
+                 vr_tab_err_arq(vr_tab_err_arq.COUNT() + 1) := vr_des_erro;
                WHEN OTHERS THEN
                  vr_des_erro := 'Erro ao inserir CRAPHPT(PGTA0001.pc_validar_arq_pgto): '||SQLERRM;
                  vr_tab_err_arq(vr_tab_err_arq.COUNT() + 1) := vr_des_erro;
@@ -3211,6 +3233,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 vr_dtmvtopg,
                 0);
              EXCEPTION
+             WHEN DUP_VAL_ON_INDEX THEN
+               vr_des_erro := 'Registro de titulo ja existente. SEQ: '
+                              || vr_nrseqarq || ' COD.BAR.:' || vr_dscodbar;
+               vr_tab_err_arq(vr_tab_err_arq.COUNT() + 1) := vr_des_erro;               
              WHEN OTHERS THEN
                vr_des_erro := 'Erro ao inserir CRAPDPT(PGTA0001.pc_validar_arq_pgto): '||SQLERRM || ' SEQ: '
                               || vr_nrseqarq || ' COD.BAR.:' || vr_dscodbar;
@@ -3589,6 +3615,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 1, -- Pendente
                 pr_cdoperad);
          EXCEPTION
+            WHEN DUP_VAL_ON_INDEX THEN
+               vr_cdcritic := 0;
+               vr_dscritic := 'Registro de cabecalho ja existente.';
+               RAISE vr_exc_critico;
             WHEN OTHERS THEN
                vr_cdcritic := 0;
                vr_dscritic := 'Erro ao inserir craphpt: '||SQLERRM;
@@ -3937,6 +3967,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  vr_idlancto);
 
             EXCEPTION
+               WHEN DUP_VAL_ON_INDEX THEN
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Registro de titulo ja existente.';
+                 RAISE vr_exc_critico;                
                WHEN OTHERS THEN
                   vr_cdcritic := 0;
                   vr_dscritic := 'Erro ao inserir crapdpt: '||SQLERRM;
@@ -10656,6 +10690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                     ,pr_dscodbar     VARCHAR2
                     ,pr_nmbenefi     VARCHAR2
                     ,pr_idstatus     INTEGER
+                    ,pr_dtmvtolt     DATE
                     ,pr_dtremess_ini DATE
                     ,pr_dtremess_fim DATE 
                     ,pr_dtvencto_ini DATE 
@@ -10669,8 +10704,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             ,hpt_rem.nrremret
             ,to_number(substr(dpt_rem.dscodbar,1,3)) cdbanco
             ,to_date(to_char(hpt_rem.dtdgerac,'ddmmyyyy')||' '||lpad(hpt_rem.hrdgerac,6,'0'),'ddmmyyyy hh24miss') dhdgerac_rem
-            ,dpt_rem.dtmvtopg dtparadebito
-            ,dpt_rem.dtvencto
+            ,pgta0001.fn_converte_fator_vencimento(pr_dtmvtolt => TRUNC(pr_dtmvtolt), pr_nrdfator => SUBSTR(dpt_rem.dscodbar,6,4)) dtparadebito
+            ,pgta0001.fn_converte_fator_vencimento(pr_dtmvtolt => TRUNC(pr_dtmvtolt), pr_nrdfator => SUBSTR(dpt_rem.dscodbar,6,4)) dtvencto
             ,dpt_rem.vldpagto
             ,dpt_rem.nmcedent
             ,dpt_rem.dsnosnum
@@ -10889,6 +10924,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     vr_dtdpagto_ini := NULL;
     vr_dtdpagto_fim := NULL;
 
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE BTCH0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+
+
     -- Verificar qual é o parametro de DATA que foi selecionado para filtrar
     IF pr_tpdata = 1 THEN
       -- Foi selecionado em tela a DATA DA REMESSA
@@ -10924,6 +10974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                             ,pr_dscodbar => pr_dscodbar
                             ,pr_nmbenefi => pr_nmbenefi
                             ,pr_idstatus => pr_idstatus
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                             ,pr_dtremess_ini => vr_dtremess_ini
                             ,pr_dtremess_fim => vr_dtremess_fim
                             ,pr_dtvencto_ini => vr_dtvencto_ini
@@ -11320,6 +11371,228 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       ROLLBACK;
 
   END pc_relato_arq_pgto_ib;
+
+  --importa arquivo 
+  PROCEDURE pc_importa_pagarq(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                             ,pr_dsarquiv  IN VARCHAR2
+                             ,pr_dsdireto  IN VARCHAR2
+                             ,pr_dscritic  OUT VARCHAR2
+                             ,pr_retxml    OUT CLOB) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_pagarq                  Antigo: Não há
+  --  Sistema  : IB
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado flor - CECRED
+  --  Data     : SET/2015.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina para a importacao do arquivo
+  --
+  -- Alterações:
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- CURSORES
+    -- Registros
+    TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
+                                ,dscritic VARCHAR2(1000));
+    TYPE typ_tbcritic IS TABLE OF typ_reccritc INDEX BY BINARY_INTEGER;
+    vr_tbcritic    typ_tbcritic; -- Tabela de criticas encontradas na validação do arquivo
+
+    -- Variaveis
+    vr_excerror    EXCEPTION;
+
+    vr_dsdireto    VARCHAR2(100);
+    vr_dsdlinha    VARCHAR2(500);
+    vr_dscrilot    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_dscriarq    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_cdcritic    INTEGER;
+    vr_dscritic    VARCHAR2(500); -- Critica
+    vr_typ_said    VARCHAR2(50); -- Critica
+    vr_des_erro    VARCHAR2(500); -- Critica
+    vr_dsalert     VARCHAR2(500); -- Critica
+    vr_tpregist    NUMBER;
+    vr_qtlinhas    NUMBER;
+    vr_indice      INTEGER;
+
+    vr_nrdconta    NUMBER;
+    vr_nmarquiv    VARCHAR2(100); -- Nome do arquivo gerado para gravação dos dados
+
+    vr_clitmxml    CLOB;
+    vr_dsitmxml    VARCHAR2(32767);
+
+    vr_retxml      XMLType;
+    vr_dsauxml     varchar2(32767);
+    
+    vr_tab_linhas  gene0009.typ_tab_linhas;
+    vr_cdprogra    VARCHAR2(50) := 'PGTA0001.pc_importa_pagarq';
+
+  BEGIN
+    -- Busca o diretório do upload do arquivo
+    vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'upload');
+
+    -- Realizar a cópia do arquivo
+    GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
+                               ,pr_typ_saida   => vr_typ_said
+                               ,pr_des_saida   => vr_des_erro);
+
+      -- Testar erro
+    IF vr_typ_said = 'ERR' THEN
+      -- O comando shell executou com erro, gerar log e sair do processo
+      vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+      RAISE vr_excerror;
+    END IF;
+
+    -- Verifica se o arquivo existe
+    IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||pr_dsarquiv) THEN
+      -- Retorno de erro
+      vr_dscritic := 'Erro no upload do arquivo: '||REPLACE(vr_dsdireto,'/','-')||'-'||pr_dsarquiv;
+      RAISE vr_excerror;
+    END IF;    
+    
+    vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root></Root>');
+    -- Converter o XML
+    pr_retxml := vr_retxml.getClobVal();
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_dscritic := vr_dscritic;
+
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+    WHEN OTHERS THEN
+      GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
+      pr_dscritic := 'Erro geral na rotina pc_importa_pagarq: '||SQLERRM;
+      
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+                                     
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+      
+  END pc_importa_pagarq;
+  
+  /* Rotina para importacao do arquivo tela UPPGTO Através do AyllosWeb */
+  PROCEDURE pc_importa_pagarq_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                 ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                 ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                 ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_pagarq_web                  Antigo: Não há
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado Flor
+  --  Data     : Set/2016.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina importacao arquivo
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- Variáveis
+    vr_cdcooper    NUMBER;
+    vr_nmdatela    VARCHAR2(25);
+    vr_nmeacao     VARCHAR2(25);
+    vr_cdagenci    VARCHAR2(25);
+    vr_nrdcaixa    VARCHAR2(25);
+    vr_idorigem    VARCHAR2(25);
+    vr_cdoperad    VARCHAR2(25);
+    vr_retxml      CLOB;
+
+    vr_excerror    EXCEPTION;
+    
+  BEGIN
+
+    -- Extrair informacoes padrao do xml - parametros
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => pr_dscritic);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_excerror;
+    END IF;
+
+    -- Realiza a chamada da rotina
+    pc_importa_pagarq(pr_cdcooper => vr_cdcooper
+                     ,pr_dsarquiv => pr_dsarquiv
+                     ,pr_dsdireto => pr_dsdireto
+                     ,pr_dscritic => pr_dscritic
+                     ,pr_retxml   => vr_retxml);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_excerror;
+    END IF;
+
+    -- Cria o XML de retorno
+    pr_retxml := XMLType.createXML(vr_retxml);
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina pc_importa_pagarq_web: '||SQLERRM;
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+  END pc_importa_pagarq_web;
+
+  FUNCTION fn_converte_fator_vencimento(pr_dtmvtolt IN DATE    --Data Movimento
+                                       ,pr_nrdfator IN INTEGER --Fator de vencimento
+                                       ) RETURN DATE IS 
+    --
+    vr_dtvencto DATE := NULL; --Data de vencimento convertida
+    --
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    --
+  BEGIN 
+    --
+    BEGIN 
+      --
+      cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_de_campo => pr_nrdfator
+                                         ,pr_dtvencto => vr_dtvencto
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      --
+    EXCEPTION 
+      WHEN OTHERS THEN 
+        vr_dtvencto := NULL;
+    END;
+    --
+    RETURN TRUNC(vr_dtvencto);
+    --
+  END fn_converte_fator_vencimento;
+
 
 END PGTA0001;
 /

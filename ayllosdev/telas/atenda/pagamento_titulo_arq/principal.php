@@ -2,11 +2,11 @@
 /*************************************************************************
 	Fonte: principal.php
 	Autor: Andre Santos - SUPERO
-	Data : Setembro/2014            Ultima atualizacao:  /  /
+	Data : Setembro/2014            Ultima atualizacao:01/11/2017
 
 	Objetivo: Listar os Pagtos de Titulos por Arquivos.
 
-	Alteracoes:
+	Alteracoes: 01/11/2017 - Varios ajustes devido melhoria 271.3
 
 *************************************************************************/
 
@@ -86,10 +86,11 @@ function exibeErro($msgErro) {
 			<thead>
 				<tr>
 					<th>Conv&ecirc;nio</th>
-					<th>Data Adesao</th>
-					<th>Operador</th>
-					<th>Situacao</th>
-					<th>Origem</th>
+					<th>Ades&atilde;o</th>
+					<th>Situa&ccedil;&atilde;o</th>
+					<th>Homologado</th>
+					<th>Homologa&ccedil;&atilde;o</th>
+					<th>Forma Envio</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -97,11 +98,16 @@ function exibeErro($msgErro) {
 
 					   $nrconven =  getByTagName($arquivos[$i]->tags,'nrconven');
 					   $dtcadast =  getByTagName($arquivos[$i]->tags,'dtdadesa');
+					   $dtaltera =  getByTagName($arquivos[$i]->tags,'dtaltera');
 					   $cdoperad =  getByTagName($arquivos[$i]->tags,'cdoperad');
-					   $flgativo =  getByTagName($arquivos[$i]->tags,'flgativo');
+					   $flgativo =  getByTagName($arquivos[$i]->tags,'dsflgativo');
 					   $dsorigem =  getByTagName($arquivos[$i]->tags,'dsorigem');
+					   
+					   $flghomol =  getByTagName($arquivos[$i]->tags,'dsflghomol');
+					   $dtdhomol =  getByTagName($arquivos[$i]->tags,'dtdhomol');
+					   $idretorn =  getByTagName($arquivos[$i]->tags,'dsidretorn');
 
-					   $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dtcadast."','".$cdoperad."','".$flgativo."','".$dsorigem."');";
+					   $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dtaltera."','".$cdoperad."','".$flgativo."','".$dsorigem."','".$flghomol."','".$dtdhomol."','".$idretorn."');";
 				?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
@@ -110,11 +116,13 @@ function exibeErro($msgErro) {
 
 						<td> <?php echo $dtcadast; ?> </td>
 
-						<td> <?php echo $cdoperad; ?> </td>
+						<td> <?php echo $flgativo; ?> </td>
 
-						<td> <?php echo $flgativo ?> </td>
-
-						<td> <?php echo $dsorigem ?> </td>
+						<td> <?php echo $flghomol; ?> </td>
+						
+						<td> <?php echo $dtdhomol; ?> </td>
+						
+						<td> <?php echo $idretorn; ?> </td>
 
 				    </tr>
 				<?} // Fim do for ?>
@@ -123,16 +131,40 @@ function exibeErro($msgErro) {
 	</div>
 </div>
 
+<ul class="complemento">
+<li><? echo utf8ToHtml('Última Alt.:') ?></li>
+<li id="dtcadast"></li>
+<li><? echo utf8ToHtml('Operador:') ?></li>
+<li id="cdoperad"></li>
+</ul>
+
 <div id="divBotoes">
 	<input type="hidden" id= "nrconven"    name="nrconven">
-	<input type="hidden" id= "dtcadast"    name="dtcadast">
-	<input type="hidden" id= "cdoperad"    name="cdoperad">
+	<!--<input type="hidden" id= "dtcadast"    name="dtcadast">-->
+	<!--<input type="hidden" id= "cdoperad"    name="cdoperad">-->
 	<input type="hidden" id= "flgativo"    name="flgativo">
 	<input type="hidden" id= "dsorigem"    name="dsorigem">
+
+	<input type="hidden" id= "flghomol"    name="flghomol">
+	<input type="hidden" id= "dtdhomol"    name="dtdhomol">
+	<input type="hidden" id= "idretorn"    name="idretorn">
+
+<?php if($nrconven > 0){ ?>	
+	<a href="#" class="botao" onClick="consulta('C');return false;">Consultar</a>
+	<a href="#" class="botao" onClick="consulta('A');return false;">Alterar</a>
+<?php } else { ?>
+	<a href="#" class="botao" onClick="consulta('I');return false;">Incluir</a>
+<?php } ?>
 	
+<?php if($nrconven > 0){ ?>	
+	<a href="#" class="botao" onClick="confirmaExclusao();return false;">Cancelar conv&ecirc;nio</a>
+<?php } ?>	
+	<a href="#" class="botao" onClick="acessaImpressaoTermo();return false;">Termo de ades&atilde;o</a>
+	<a href="#" class="botao" onClick="carregaLog();return false;">Log</a>
+	<!--
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif" <? if (in_array("X",$glbvars["opcoesTela"]) && $flconven == 1) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" <? if (in_array("I",$glbvars["opcoesTela"])) { ?> onClick="acessaImpressaoTermo();return false;" <? } else { ?> style="cursor: default;" <? } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/habilitar.gif" <? if (in_array("H",$glbvars["opcoesTela"]) && $flconven == 0) { ?> onClick="confirmaInclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?> />
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/habilitar.gif" <? if (in_array("H",$glbvars["opcoesTela"]) && $flconven == 0) { ?> onClick="confirmaInclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?> /> -->
 </div>
 
 <script type="text/javascript">

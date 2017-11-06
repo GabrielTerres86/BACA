@@ -4,13 +4,15 @@
 
   Fonte: pagamento_titulo_arq.php
   Autor: Andre Santos - SUPERO
-  Data : Setembro/2014            Ultima atualizacao:  /  /
+  Data : Setembro/2014            Ultima atualizacao:01/11/2017
 
   Objetivo: Mostrar a rotina de Pagamento de Titulos por
   Arquivo na ATENDA.
 
   Alteracoes:
   25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM)
+  
+  01/11/2017 - Aumentado tamanho tela devido melhoria 271.3 (Tiago)
 ****************************************************************/
 
 session_start();
@@ -43,7 +45,7 @@ setVarSession("opcoesTela",$opcoesTela);
 <table id="telaInicial" id="telaInicial" cellpadding="0" cellspacing="0" border="0" width="100%">
   <tr>
     <td align="center">
-      <table cellpadding="0" cellspacing="0" border="0" width="420">
+      <table cellpadding="0" cellspacing="0" border="0" width="780px">
         <tr>
           <td>
             <table width="100%" border="0" cellspacing="0" cellpadding="0" >
@@ -66,7 +68,7 @@ setVarSession("opcoesTela",$opcoesTela);
         </tr>
         <tr >
           <td class="tdConteudoTela" align="center">
-            <table width="480" border="0" cellspacing="0" cellpadding="0">
+            <table width="800px" border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
                   <table border="0" cellspacing="0" cellpadding="0">
@@ -92,6 +94,7 @@ setVarSession("opcoesTela",$opcoesTela);
                   <div id="divOpcaoIncluiAltera"></div>
                   <div id="divTitular"></div>
                   <div id="divTestemunhas"> </div>
+				  <div id="divLog"> </div>
                 </td>
               </tr>
             </table>
