@@ -535,19 +535,7 @@ PROCEDURE proc_ir_fisica:
                                    TRIM(STRING(ant_vlprepag,"zzz,zzz,zz9.99-")) +
                                    "</atprepag><nrtelcop>" +
                                    crapcop.nrtelvoz +
-                                   "</nrtelcop><infosac><nrtelsac>" + 
-                                   STRING(crapcop.nrtelsac) + 
-                                   "</nrtelsac><hrinisac>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrinisac><hrfimsac>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrfimsac><nrtelouv>" + 
-                                   STRING(crapcop.nrtelouv) + 
-                                   "</nrtelouv><hriniouv>" +
-                                   REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hriniouv><hrfimouv>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrfimouv></infosac></IRFISICA>".
+                                   "</nrtelcop></IRFISICA>".
                                    
 END PROCEDURE. 
 
@@ -584,19 +572,7 @@ PROCEDURE proc_ir_juridica:
                                          "xx.xxx.xxx/xxxx-xx") + 
                                    "</nrcpfcgc><nrtelcop>" +
                                    crapcop.nrtelvoz +
-                                   "</nrtelcop><infosac><nrtelsac>" + 
-                                   STRING(crapcop.nrtelsac) + 
-                                   "</nrtelsac><hrinisac>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrinisac><hrfimsac>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrfimsac><nrtelouv>" + 
-                                   STRING(crapcop.nrtelouv) + 
-                                   "</nrtelouv><hriniouv>" +
-                                   REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hriniouv><hrfimouv>" + 
-                                   REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),":","h"),"h00","h") + 
-                                   "</hrfimouv></infosac><DADOSIR>".
+                                   "</nrtelcop><DADOSIR>".
                      
     /* pegar descricao do codigo retencao 3426 */
     FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3426 NO-ERROR.

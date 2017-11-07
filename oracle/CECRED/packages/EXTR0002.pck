@@ -11616,18 +11616,7 @@ END pc_consulta_ir_pj_trim;
              vr_index_retenc:= vr_tab_retencao_ir.NEXT(vr_index_retenc);
           END LOOP;
           --Junta todos os textos para colocar no XML
-          vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';
-          
-          IF pr_idorigem = 3 THEN            
-             vr_dstexto:= vr_dstexto   || '<infosac>' ||
-                          '<nrtelsac>' || rw_crapcop.nrtelsac || '</nrtelsac>' ||
-                          '<hrinisac>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrinisac,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrinisac>' ||
-                          '<hrfimsac>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrfimsac,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrfimsac>' ||
-                          '<nrtelouv>' || rw_crapcop.nrtelouv || '</nrtelouv>' ||
-                          '<hriniouv>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hriniouv,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hriniouv>' ||
-                          '<hrfimouv>' || REPLACE(REPLACE(TO_CHAR(TO_DATE(rw_crapcop.hrfimouv,'sssss'),'hh24:mi'),':','h'),'h00','h') || '</hrfimouv>' ||
-                          '</infosac>';            
-          END IF;
+          vr_dstexto:= vr_dstexto||vr_texto_retenc||'</retencoes></conta>';          
           
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);

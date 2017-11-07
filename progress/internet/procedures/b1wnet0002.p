@@ -1861,31 +1861,37 @@ PROCEDURE verifica-acesso.
                     END.
     
                 IF  NOT par_flmobile THEN /* Conta Online */
-				    DO:
-                ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
-                       tt-acesso.flgsenha = FALSE
-                       tt-acesso.dtultace = crapsnh.dtultace
-                       tt-acesso.hrultace = crapsnh.hrultace.
-                       
-                    ASSIGN crapsnh.dtultace = aux_datdodia
-                           crapsnh.hrultace = TIME.
-            END.
+                    DO:
+                        ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
+                               tt-acesso.flgsenha = FALSE
+                               tt-acesso.dtultace = crapsnh.dtultace
+                               tt-acesso.hrultace = crapsnh.hrultace.
+                               
+                        ASSIGN crapsnh.dtaibant = crapsnh.dtultace
+                               crapsnh.hraibant = crapsnh.hrultace
+                               crapsnh.dtultace = aux_datdodia
+                               crapsnh.hrultace = TIME.
+                    END.
                 ELSE /* Cecred Mobile */
-				    DO:
-					    ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
+                    DO:
+                        ASSIGN tt-acesso.dtaltsnh = crapsnh.dtaltsnh
                                tt-acesso.flgsenha = FALSE
                                tt-acesso.dtultace = crapsnh.dtacemob
                                tt-acesso.hrultace = crapsnh.hracemob.
-							   
-					    ASSIGN crapsnh.dtacemob = aux_datdodia
+                         
+                        ASSIGN crapsnh.dtambant = crapsnh.dtacemob
+                               crapsnh.hrambant = crapsnh.hracemob
+                               crapsnh.dtacemob = aux_datdodia
                                crapsnh.hracemob = TIME.
-				    END.
+                    END.
             END.
         ELSE
             ASSIGN tt-acesso.dtaltsnh = crapopi.dtaltsnh
                    tt-acesso.flgsenha = FALSE
                    tt-acesso.dtultace = crapopi.dtultace
                    tt-acesso.hrultace = crapopi.hrultace
+                   crapopi.dtaibant   = crapopi.dtultace
+                   crapopi.hraibant   = crapopi.hrultace
                    crapopi.dtultace   = aux_datdodia
                    crapopi.hrultace   = TIME.
         
@@ -2242,18 +2248,18 @@ PROCEDURE obtem-acesso-anterior.
           DO:                
               IF  NOT par_flmobile THEN /* Conta Online */
                   DO:
-                      ASSIGN tt-acesso.dtultace = crapsnh.dtultace /* TODO - Trocar por campos novos */
-                             tt-acesso.hrultace = crapsnh.hrultace.          
+                      ASSIGN tt-acesso.dtultace = crapsnh.dtaibant
+                             tt-acesso.hrultace = crapsnh.hraibant.
                   END.
               ELSE /* Cecred Mobile */
                   DO:
-                      ASSIGN tt-acesso.dtultace = crapsnh.dtacemob /* TODO - Trocar por campos novos */
-                             tt-acesso.hrultace = crapsnh.hracemob.                   
+                      ASSIGN tt-acesso.dtultace = crapsnh.dtambant
+                             tt-acesso.hrultace = crapsnh.hrambant.
                   END.
           END.
       ELSE
-          ASSIGN tt-acesso.dtultace = crapopi.dtultace /* TODO - Trocar por campos novos */
-                 tt-acesso.hrultace = crapopi.hrultace.      
+          ASSIGN tt-acesso.dtultace = crapopi.dtaibant
+                 tt-acesso.hrultace = crapopi.hraibant.
 
       ASSIGN aux_flgtrans = TRUE.
       
