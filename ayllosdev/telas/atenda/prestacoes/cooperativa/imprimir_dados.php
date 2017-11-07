@@ -81,6 +81,18 @@ if ($idimpres == '2' || $idimpres == '8') {
     $xml .= '		<inimpctr>' . $inimpctr . '</inimpctr>';
     $xml .= '	</Dados>';
     $xml .= '</Root>';
+	
+} else if ($idimpres == '11') {
+	
+    // Monta o xml de requisição
+    $xml = '';
+    $xml .= '<Root>';
+    $xml .= '	<Dados>';
+    $xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
+    $xml .= '		<nrctremp>' . $nrctremp . '</nrctremp>';
+    $xml .= '	</Dados>';
+    $xml .= '</Root>';
+	
 } else {
     // Monta o xml de requisição
     $xml = '';
@@ -131,6 +143,7 @@ if ($idimpres == '2' || $idimpres == '8') {
 }
 
 if ($idimpres == '2' || $idimpres == '8') {
+	
     // Executa script para envio do XML
     $xmlResult = mensageria($xml, "EMPR0003", "IMPCONTR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
@@ -146,6 +159,50 @@ if ($idimpres == '2' || $idimpres == '8') {
 
     // Obtém nome do arquivo PDF 
     $nmarqpdf = $xmlObj;
+	
+} else if ($idimpres == '11') {
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_PROTOCOL_ANALISE_AUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	
+    // Cria objeto para classe de tratamento de XML
+    $xmlObj = getObjectXML($xmlResult);
+
+    // Se ocorrer um erro, mostra crítica
+    if ($xmlObj->roottag->tags[0]->name == "ERRO") {
+        $msgErro = utf8ToHtml($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+        ?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+        exit();
+    }
+	
+    // Obtém protocolo
+    $dsprotocolo = $xmlObj->roottag->tags[0]->cdata;
+	
+	if ($dsprotocolo != '') {
+		// Montar o xml de Requisicao
+		$xml  = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <dsprotocolo>".$dsprotocolo."</dsprotocolo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		// craprdr / crapaca 
+		$xmlResult = mensageria($xml, "CONPRO", "CONPRO_GERA_ARQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if ($xmlObj->roottag->tags[0]->name == "ERRO") {
+			$msgErro = utf8ToHtml($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+			?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+			exit();
+		}
+		
+		// Obtem nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+		$nmarqpdf = $xmlObj->roottag->tags[0]->cdata;
+		
+	} else {
+		?><script language="javascript">alert('<?php echo utf8ToHtml('Nao foi possivel retornar Protocolo da Analise Automatica de Credito!') ?>');</script><?php
+        exit();
+	}
 } else {
 
     // Executa script para envio do XML

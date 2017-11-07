@@ -4089,7 +4089,7 @@ function atualizaTela() {
         $('#nmconjug', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nmconjug']);
         $('#tpdoccjg', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['tpdoccjg']);
         $('#dsendre1', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['dsendre1']);
-        $('#nrfonres', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nrfonres']);
+        $('#nrfonres', '#frmDadosAval').val(telefone(arrayAvalistas[contAvalistas]['nrfonres']));
         $('#nmcidade', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nmcidade']);
         $('#nrcepend', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nrcepend']);
         $('#nmdavali', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nmdavali']);
@@ -4685,7 +4685,7 @@ function carregaBusca() {
         $('#nmconjug', '#' + formBusca).val(arrayAvalBusca['nmconjug']);
         $('#tpdoccjg', '#' + formBusca).val(arrayAvalBusca['tpdoccjg']);
         $('#dsendre1', '#' + formBusca).val(arrayAvalBusca['dsendre1']);
-        $('#nrfonres', '#' + formBusca).val(arrayAvalBusca['nrfonres']);
+        $('#nrfonres', '#' + formBusca).val(telefone(arrayAvalBusca['nrfonres']));
         $('#nmcidade', '#' + formBusca).val(arrayAvalBusca['nmcidade']);
         $('#nrcepend', '#' + formBusca).val(arrayAvalBusca['nrcepend']);
         $('#nmdavali', '#' + formBusca).val(arrayAvalBusca['nmdavali']);
@@ -9263,4 +9263,29 @@ function abreProtocoloAcionamento(dsprotocolo) {
             return false;
         }
     });
+}
+
+function maskTelefone(nrfonemp){
+	fone = nrfonemp.value.replace(/[^0-9]/g,'');	
+	
+	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+	
+	if (fone.length < 14)
+		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígito
+	else
+		fone = fone.replace(/(\d{5})(\d)/,"$1-$2");    //Coloca hífen entre o quinto e o sexto dígito
+	
+	nrfonemp.value = fone.substring(0, 15);
+	
+	return true;
+}
+
+function telefone(fone){
+	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+	if (fone.length < 10 || fone.length > 11)
+		return '';
+	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+	fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígitos
+	return fone;
 }

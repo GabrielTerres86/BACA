@@ -753,7 +753,7 @@ function controlaLayout(operacao) {
 		var cProposta    = $('#flgimppr','#'+nomeForm);
 		var cNtPromis    = $('#flgimpnp','#'+nomeForm);
 		var cLiquidacoes = $('#dsctrliq','#'+nomeForm);
-		
+
 		var rDsratpro = $('label[for="dsratpro"]','#'+nomeForm);
 		var rDsratatu = $('label[for="dsratatu"]','#'+nomeForm);
 
@@ -2500,7 +2500,7 @@ function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
 
-	if ( idimpres >= 1 && idimpres <= 10 ) {
+	if ( idimpres >= 1 && idimpres <= 11 ) {
 	
 		if ( idimpres == 5 ) {
 
@@ -2530,7 +2530,7 @@ function verificaImpressao(par_idimpres){
 			fechaRotina($('#divUsoGenerico'),metodo);
 		}
 		else
-		if (in_array(idimpres, [7, 8, 9])) { //pre-aprovado
+		if (in_array(idimpres, [7, 8, 9, 11])) { //pre-aprovado
 			carregarImpresso();		
 		}
 		else {
