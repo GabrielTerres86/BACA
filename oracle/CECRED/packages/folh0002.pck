@@ -3403,7 +3403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           FROM crapass ass
               ,crapemp emp
               ,crappfp pfp
-         WHERE pfp.cdcooper = 1 --> Cooperativa conectada
+         WHERE pfp.cdcooper = p_cdcooper --> Cooperativa conectada
            AND pfp.idsitapr = 5 --> pendentes
            AND pfp.flsitdeb = 0
            AND pfp.cdcooper = emp.cdcooper
