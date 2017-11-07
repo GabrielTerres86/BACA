@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
                22/06/2017 - Tratamento de erros 
                           - setado modulo
                           - Chamado 660322 - Belli - Envolti
-
+      
 			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
       
   ------------------------------------------------------------------------------------------------------------------*/
@@ -352,7 +352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 17/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 18/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -395,6 +395,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             17/10/2017 - Retirado pc_set_modulo
   --                          (Ana - Envolti - Chamado 776896)
+  --
+  --             18/10/2017 - Incluído pc_set_modulo com novo padrão
+  --                          (Ana - Envolti - Chamado 776896)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -428,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Novembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Novembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -451,8 +454,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes: 26/07/2013 - Alteração da função para não utilizar mais 'select from dual'
     --                            devido a problemas de performance. (Daniel - Supero)
-    --
     --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
     vr_dsauxil   varchar2(200);
@@ -507,12 +511,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         end if;
       end if;
     end loop;
+
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Retornar o valor processado
     return vr_dsconve;
+
   EXCEPTION
     when others then
       -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-      CECRED.pc_internal_exception (pr_cdcooper => NULL);     
+      CECRED.pc_internal_exception;
       -- Incluir log de que houve problema na mascara
       gene0001.pc_print(pr_des_mensag => to_char(SYSDATE,'hh24:mi:ss')||' - GENE0002.fn_mask --> Problema ao montar a mascara "'||pr_dsforma||'" ao campo "'||pr_dsorigi||'".');
       -- Retonar como resultado o valor original
@@ -524,6 +532,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -532,6 +542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_conta IS NULL THEN
       vr_des_mask_conta := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTA'), 'zzzz.zzz.z');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Utilizar mascara padrão de conta
     RETURN fn_mask(pr_nrdconta,vr_des_mask_conta);
   END;
@@ -541,6 +553,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -549,6 +563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_ctitg IS NULL THEN
       vr_des_mask_ctitg := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTA_ITG'), 'z.zzz.zzz.z');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Utilizar mascara padrão de conta de integração
     RETURN fn_mask(pr_nrdctitg,vr_des_mask_ctitg);
   END;
@@ -558,6 +574,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                             pr_inpessoa in crapass.inpessoa%type) RETURN varchar2 IS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
@@ -571,6 +589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_cnpj IS NULL THEN
       vr_des_mask_cnpj := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CNPJ'), 'zz.zzz.zzz/zzzz-zz');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Verifica se é pessoa física (inpessoa = 1) ou pessoa jurídica (inpessoa = 2)
     IF pr_inpessoa = 1 THEN
       -- Utilizar mascara padrão de conta de CPF
@@ -586,6 +606,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -594,6 +616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_cep IS NULL THEN
       vr_des_mask_cep := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CEP'), 'zzzzz-zz9');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Utilizar mascara padrão de conta de CEP
     RETURN fn_mask(pr_nrcepend,vr_des_mask_cep);
   END;
@@ -603,6 +627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -611,6 +637,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_matric IS NULL THEN
       vr_des_mask_matric := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_MATRICULA'), 'zzzzz-zz9');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Utilizar mascara padrão de conta de Matrícula
     RETURN fn_mask(pr_nrmatric,vr_des_mask_matric);
   END;
@@ -620,6 +648,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -628,6 +658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF vr_des_mask_contrato IS NULL THEN
       vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'zz.zzz.zz9');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Utilizar mascara padrão de conta de Nro Contrato
     RETURN fn_mask(pr_nrcontrato,vr_des_mask_contrato);
   END;
@@ -640,7 +672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- Sistema : Conta-Corrente - Cooperativa de Credito
     -- Sigla   : CRED
     -- Autor   : Deborah/Edson
-    -- Data    : Junho/2013                     Ultima atualizacao: 17/10/2017
+    -- Data    : Junho/2013                     Ultima atualizacao: 18/10/2017
 
     -- Dados referentes ao programa:
 
@@ -663,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -671,13 +703,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --   Objetivo  : Retornar validação se a variável contem numeros.
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     DECLARE
       vr_ctrteste       BOOLEAN := TRUE;
       vr_qvalor         VARCHAR2(1);
 
     BEGIN
-	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+      -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_numerico'); 
       -- Se o parametro for enviado sozinho retorna false.
       IF pr_vlrteste IS NULL THEN
@@ -693,6 +727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         END loop;
       END IF;
 
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       RETURN vr_ctrteste;
     END;
   END fn_numerico;
@@ -709,13 +745,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Retornar determinada informacao da string conforme parametros.
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     DECLARE
@@ -756,6 +794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           vr_string:= SubStr(vr_string,1,vr_pos-1);
         END IF;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       RETURN(vr_string);
     END;
   END fn_busca_entrada;
@@ -770,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Janeiro/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Janeiro/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -779,6 +819,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               com base no delimitador informado.
     --   Alteracoes: 04/08/2017 - Retirado pc_set_modulo
     --                            (Belli - Envolti - Chamado 678813)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
 
     vr_vlret    typ_split := typ_split();
@@ -787,7 +829,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
-    -- Retirado pc_set_modulo da procedure fn_quebra_string - Chamado 678813 - 04/08/2017
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_quebra_string');
     --Se a string estiver nula retorna count = 0 no vetor
     IF nvl(pr_string,'#') = '#' THEN
       RETURN vr_vlret;
@@ -807,6 +850,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Atualiza a variável com a string integral eliminando o bloco quebrado
       vr_quebra := substr(vr_quebra, vr_idx + LENGTH(pr_delimit));
     END LOOP;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
     -- Retorno do array com as substrings separadas em cada registro
     RETURN vr_vlret;
@@ -822,7 +867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Janeiro/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Janeiro/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -832,6 +877,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               resultados da quebra da string retornando 'S' em caso de sucesso
     --               ou 'N' em caso de insucesso.
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
 
@@ -854,6 +901,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         END IF;
       END LOOP;
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Retorno se localizou ou não o objeto de busca
     RETURN vr_result;
   END fn_existe_valor;
@@ -864,6 +913,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   -- ..........................................................................
   --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
   --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
   -- ..........................................................................
   BEGIN
     -- ............................................................................
@@ -885,6 +936,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_dspalav := pr_dsprocu;
       END IF;
 
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       -- Invalidar se não encontrar a chave de procura
       -- Na palavra inteira
       -- OU no início
@@ -914,7 +967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos Martini - Supero
-    --  Data     : Março/2014.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Março/2014.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -929,12 +982,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                  RIO NOVO DO SUL
     --   Obs:        A lógica de procura está na função fn_verifica_contem
     --               a fn_contem apenas prepara as strings de busca e objeto
-    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --   Alteracoes: 18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     BEGIN
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_contem');
       -- Usar a função recursiva para validação, esta apenas serve para preparar as strings
       RETURN fn_verifica_contem(pr_dstexto => UPPER(pr_dstexto)
                                ,pr_dsprocu => UPPER(REPLACE(pr_dsprocu,'*','%'))); --> Trocar os caracteres curinga Progress (*) pelos do Oracle (%)
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         RETURN 'N';
@@ -949,13 +1007,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data    : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Criar um Blob a apartir do arquivo passado
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -989,6 +1049,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           -- Terminou de ler o arquivo
           utl_file.fclose(vr_input_file);
       END;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       -- Retornar o BLOB montado
       RETURN vr_blob;
     EXCEPTION
@@ -1004,13 +1066,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Dionathan
-       Data    : Maio/2015                      Ultima atualizacao: 17/10/2017
+       Data    : Maio/2015                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Criar um CLOB a apartir do arquivo passado
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
@@ -1020,6 +1084,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_arq_para_clob'); 
     vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     RETURN vr_clob;
   END fn_arq_para_clob;
 
@@ -1033,13 +1099,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_blob_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data    : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um Blob e grava em arquivo
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -1086,10 +1154,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       utl_file.fclose(vr_output_file);
       -- Setar privilégio para evitar falta de permissão a outros usuários
       gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_caminho||'/'||pr_arquivo);
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL);     
+        CECRED.pc_internal_exception;
         pr_des_erro := 'GENE0002.pc_blob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_blob_para_arquivo;
@@ -1105,19 +1175,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_clob_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Março/2014                      Ultima atualizacao: 17/10/2017
+       Data    : Março/2014                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um Clob e gravar em arquivo
 
        Alteracoes: 31/08/2015 - Inclusao do parametro flappend. (Jaison/Marcos-Supero)
-
                    08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
                                 append, para garantir processo.
                                 SD572620 (Odirlei-AMcom)
-
                    17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -1175,13 +1245,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           RAISE vr_exc_erro;
         END IF;
       END IF; -- pr_flappend = 'S'
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_clob_para_arquivo;
@@ -1199,13 +1271,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_efetua_copia_pdf            Antiga(b1wgen0024.p/efetua-copia-pdf)
        Autor   : Odirlei Busana (AMcom)
-       Data    : Junho/2014                      Ultima atualizacao: 17/10/2017
+       Data    : Junho/2014                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para copiar arquivo PDF para o sistema ayllos web
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
@@ -1228,7 +1302,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_srvintra  VARCHAR2(200);
     -- Saída do Shell
     vr_typ_saida VARCHAR2(3);
-
 
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -1274,6 +1347,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     END IF;
 
     pr_des_reto := 'OK';
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -1315,13 +1390,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_efetua_copia_arq_ib
        Autor   : Marcos Martini (Supero)
-       Data    : Agosto/2015                      Ultima atualizacao: 17/10/2017
+       Data    : Agosto/2015                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para copiar arquivo PDF para o sistema InternetBanking
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
 
@@ -1383,6 +1460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dsc_erro := 'Erro na chamada ao Shell: '||vr_des_erro;
       RAISE vr_exc_saida;
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -1404,7 +1483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
      Programa: PC_PUBLICAR_ARQ_INTRANET
      Sistema : Conta-Corrente - Cooperativa de Credito
      Autor   : Odirlei Busana - AMcom
-     Data    : Dezembro/2015.                     Ultima atualizacao: 17/10/2017
+     Data    : Dezembro/2015.                     Ultima atualizacao: 18/10/2017
 
      Dados referentes ao programa:
 
@@ -1413,6 +1492,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                  para o servidor da intranet. 
 
      Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                              (Ana - Envolti - Chamado 776896)
+                 18/10/2017 - Incluído pc_set_modulo com novo padrão
                               (Ana - Envolti - Chamado 776896)
     ..........................................................................*/
 
@@ -1604,6 +1685,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     END LOOP; --> Fim loop coop
     
     COMMIT;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1641,13 +1724,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_gera_pdf_impressao          Antiga(b1wgen0024.p/gera-pdf-impressao)
        Autor   : Odirlei Busana (AMcom)
-       Data    : Maio/2014                      Ultima atualizacao: 17/10/2017
+       Data    : Maio/2014                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedure para converter proposta para o formato PDF
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     vr_script  VARCHAR2(2000);
@@ -1711,6 +1796,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     IF GENE0001.fn_exis_arquivo(pr_nmarqimp) THEN
       gene0001.pc_OScommand_Shell('rm '||pr_nmarqimp||'_PCL 2>/dev/null');
     END IF;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1736,7 +1823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     /*..............................................................................
        Programa: pc_cria_PDF
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data    : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
@@ -1756,18 +1843,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  do diretório rl, e também não usar a pc_gera_log_batch
                                  mas sim as rotinas específicas de manutenção de arquivo
                                  (Marcos-Supero)
-
                     21/01/2014 - Ajustar a validação da geração do arquivo, para que ao
                                  montar o nome do arquivo a ser verificado, a extensão
                                  não seja obrigatória.
                                - Incluir o parametro pr_dtrefere, para indicar uma data
                                  de referencia, caso for necessário. (Renato - Supero)
-
                     23/01/2014 - Caso o arquivo de origem precise ser copiado para o
                                  diretório 'rl' da cooperativa PR_CDCOOPER, deve remover
                                  o arquivo ao final do processamento. (Daniel - Supero)
-
                     17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                    18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -1900,6 +1986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       if vr_flg_copiou then
         gene0001.pc_OScommand_Shell('rm '||vr_dircop||'/rl/'||vr_arquivo);
       end if;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Concatenar ao erro a descrição temporária
@@ -1939,13 +2027,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: pc_Juntar_Pdf
        Autor   : Odirlei Busana (AMcom)
-       Data    : Setembro/2016                      Ultima atualizacao: 17/10/2017
+       Data    : Setembro/2016                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Procedimento para juntar/contatenar 2 ou mais arquivos PDFs separados por ;
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     
@@ -1996,14 +2086,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||substr(vr_dscritic,1,60);
       RAISE vr_exc_erro;
     END IF;                                          
-  
-  
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-      CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+      CECRED.pc_internal_exception;
       pr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||SQLERRM;
   END pc_Juntar_Pdf;
   
@@ -2020,7 +2110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa : pc_zipcecred
        Autor    : Marcos (Supero)
-       Data     : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data     : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
@@ -2041,8 +2131,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Alteracoes:
                27/11/2013 - Permitir executar o extract de arquivos. (Renato - Supero)
-
                17/10/2017 - Retirado pc_set_modulo
+                            (Ana - Envolti - Chamado 776896)
+               18/10/2017 - Incluído pc_set_modulo com novo padrão
                             (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -2149,6 +2240,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           pr_des_erro := 'GENE0002.pc_cria_ZIP --> Não gerou arquivo "'||vr_dsdestin||'" do(s) arquivos: "'||pr_dsorigem||'"';
         END IF;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
@@ -2184,7 +2277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah
-       Data    : Novembro/91.                        Ultima atualizacao: 17/10/2017
+       Data    : Novembro/91.                        Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
@@ -2194,74 +2287,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Opções de formulário(nmformul): "80col,80dcol,132m,132dm,132col,endless,padrao,timbre,etqcorreio,timb132,234dh"
 
        Alteracoes: 28/12/1999 - Tratar tabela de configuracao (Deborah).
-
                    29/12/1999 - Alterado para testar se o arquivo a ser impresso
                                 nao esta vazio (Edson).
-
                    06/06/2002 - Colocar os relatorios em folha branca diretamente
                                 para a impressora (Deborah).
-
                    14/08/2002 - Mostrar o comando de impressao no crps187 (Deborah)
-
                    21/08/2002 - Acerto na escolha do nome da impressora (Deborah).
-
                    07/03/2003 - Passar a creditextil para fila cctextil (Deborah)
-
                    20/03/2003 - Tratar fila da Concredi (Deborah).
-
                    08/09/2003 - Foi adicionado a Data na geracao do log (Fernando).
-
                    04/11/2003 - Tratar cecrisacred e credcred (Deborah).
-
                    10/11/2003 - Aumentar o tamnaho da glb_nmimpres (Ze Eduardo).
-
                    18/03/2004 - Acrescentar a Credifiesc (Ze Eduardo).
-
                    25/03/2004 - Padronizar a programa (Ze Eduardo).
-
                    26/05/2004 - Incluir formulario timbre e etiquetas para a fila
                                 credito. (Ze Eduardo)
-
                    21/07/2005 - Tratamento para geracao de PDF (Julio)
-
                    02/08/2005 - Tratamento para relatorios gerenciais (PDF) (Julio)
-
                    28/09/2005 - Modificado FIND FIRST para FIND na tabela
                                 crapcop.cdcooper = glb_cdcooper (Diego).
-
                    27/01/2006 - Unificacao dos Bancos - SQLWorks - Fernando
-
                    14/03/2006 - Envio dos relatorios em formato PDF para o
-                                servidor Web, para visualizacao em Documentos
-                                (Junior).
-
+                                servidor Web, para visualizacao em Documentos (Junior).
                    16/05/2006 - Efetuar tratamento do campo craprel.inimprel
                                 Efetuar impressao(Sim/Nao) (Mirtes)
-
-                   26/05/2006 - Inicializar a variavel aux_dsgerenc com "NAO"
-                                (Edson).
-
+                   26/05/2006 - Inicializar a variavel aux_dsgerenc com "NAO" (Edson).
                    30/08/2012 - Tratamento crapcop.nmrescop "x(20)" (Diego).
-
                    23/01/2013 - Conversão Progress >> PL/SQL (Marcos-Supero)
-
                    23/08/2013 - Prever novo método de impressão (Marcos-Supero)
-
                    12/09/2013 - Alteração na rotina para retornar se a solicitação
                                 gerou PDF ou não. (Marcos-Supero)
-
                    07/01/2014 - Ajuste para evitar que seja repassado nmformul com
                                 espaços apenas, pois isto gera erro durante a chamada
                                 do script (Marcos-Supero)
-
                    03/01/2014 - Retirado leitura da craptab "FILAIMPRES" (Tiago).
-
                    08/01/2014 - Inicializar variavel glb_nmformul se nao estiver
                                 parametrizada (David).
-
                    25/02/2014 - Replicar manutenção progress 02/2014 (Odirlei-AMcom)
-
                    17/10/2017 - Retirado pc_set_modulo
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     -- ...........................................................................
 
@@ -2432,6 +2497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         END IF;
       END IF;
 
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic := Nvl(pr_cdcritic,0);
@@ -2451,19 +2518,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                ,pr_des_erro  OUT VARCHAR2) IS       --> Retorno de erro, caso ocorra
   BEGIN
     /*..............................................................................
-
        Programa: pc_XML_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data    : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um Clob e grava as mesmas em arquivo
 
        Alteracoes:
-       21/03/13 - Petter (Supero): Alterar parser para SAX (classe Java) para melhorar performance.
-
+       21/03/2013 - Petter (Supero): Alterar parser para SAX (classe Java) para melhorar performance.
        17/10/2017 - Retirado pc_set_modulo 
+                    (Ana - Envolti - Chamado 776896)
+       18/10/2017 - Incluído pc_set_modulo com novo padrão
                     (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -2476,10 +2543,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_xML := XMLType.createXML(pr_XML);
 
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do Clob para arquivo: '||sqlerrm;
     END;
   END pc_XML_para_arquivo;
@@ -2491,16 +2560,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                ,pr_des_erro  OUT VARCHAR2) IS       --> Retorno de erro, caso ocorra
   BEGIN
     /*..............................................................................
-
        Programa: pc_XML_para_arquivo
        Autor   : Marcos (Supero)
-       Data    : Dezembro/2012                      Ultima atualizacao: 17/10/2017
+       Data    : Dezembro/2012                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
        Objetivo  : Efetua leitura das informações de um XMLType e grava as mesmas em arquivo
 
        Alteracoes: 17/10/2017 - Retirado pc_set_modulo 
+                                (Ana - Envolti - Chamado 776896)
+                   18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
@@ -2518,10 +2588,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- Liberar a memória
         DBMS_XMLDOM.freeDocument(vr_dom_doc);
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do XMLType para arquivo: '||sqlerrm;
     END;
   END pc_XML_para_arquivo;
@@ -2536,7 +2608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2545,8 +2617,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes:  31/10/2013 - Troca do arquivo de log para salvar a partir
     --                             de agora no diretório log das Cooperativas (Marcos-Supero)
-    --
     --                17/10/2017 - Retirado pc_set_modulo 
+    --                             (Ana - Envolti - Chamado 776896)
+    --                18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                             (Ana - Envolti - Chamado 776896)
     -- .............................................................................
 
@@ -2601,6 +2674,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           vr_des_erro := 'Problema ao fechar o arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
           RAISE vr_exc_saida;
       END;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         -- Enviar a mensagem de erro ao DMBS_OUTPUT e ignorar o log
@@ -2625,7 +2700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2636,31 +2711,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Alteracoes: 07/11/2013 - Ajustes na passagem dos parâmetros conforme solicitação
     --                           do Guilherme. Tambem remoção de validações que eram executadas
     --                           aqui e foram repassadas para o momento da solicitação (Marcos-Supero)
-    --
     --              26/12/2013 - Incluir nova funcionalidade onde o relatório é gerado no mesmo
     --                           arquivo das solicitações antigas (append), ao contrário da função
     --                           padrão onde cada relatório gera um arquivo novo.
-    --
 	  --				      17/09/2014 - Aumentar o tamanho do parametro PR_NMRELATO de 40 para 80 caracteres onde a quantidade
 	  --							             de colunas for diferentes de 80 ou 132. (Felipe Oliveira)
-    --
     --              10/04/2015 - Alterado a chamada do comando "cat" para concatenação dos relatórios
     --                           para passar a usar o script concatena_relatorios.sh
     --                           (Adriano).
-    --
     --              02/08/2016 - Ajuste na rotina de geração para utilizar a versão da rotina java de geração do 
     --                           relatorio conforme a informada pelo programa gerador.
     --                           PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
-    --
     --              08/12/2016 - Ajuste para incrementar nomenclatura qnd realizar
     --                           append, para garantir processo.
     --                           SD572620 (Odirlei-AMcom)         
-    --    
     --              22/06/2017 - Tratamento de erros 
     --                         - setado modulo
     --                         - Chamado 660322 - Belli - Envolti         
-    --
     --              17/10/2017 - Retirado pc_set_modulo
+    --                           (Ana - Envolti - Chamado 776896)
+    --              18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                           (Ana - Envolti - Chamado 776896)
     -- ...........................................................................
     DECLARE
@@ -2734,13 +2804,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       vr_scriptrl  VARCHAR2(100);
 
-      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
-      vr_acao             VARCHAR2   (100); 
-
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017      
-      vr_acao := 'GENE0002.pc_gera_relato';      
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_acao);    
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.pc_gera_relato');
         
       -- Busca das informaçoes do relatório solicitado
       OPEN cr_crapslr;
@@ -2995,12 +3062,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         -- fechar o cursor
         CLOSE cr_crapslr;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_erro := 'GENE0002.pc_gera_relato--> '||vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pr_des_erro := 'GENE0002.pc_gera_relato --> Erro não tratado ao processar a solicitação. Erro: '||sqlerrm;
     END;
   END pc_gera_relato;
@@ -3016,7 +3085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         Sistema  : Rotinas genéricas
         Sigla    : GENE
         Autor    : Marcos E. Martini - Supero
-        Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+        Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
 
         Dados referentes ao programa:
 
@@ -3037,11 +3106,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
          Alteracoes: 11/09/2013 - Prevista opção para converter o arquivo para envio de
                                   email ou cópia em PDF (Marcos-Supero)
-
                      17/10/2013 - Somente copiar para intranet/imprimir, enviar por email ou
                                   copiar para diretório se o relatório possuir pelo menos 1 Byte
                                   (Marcos-Supero)
-
                      28/10/2013 - Remover a eliminação de solicitações antigas daqui e passá-la
                                   para o processo controlador (pc_controle_filas_relato)
                                 - Também ajustar a busca das solicitações pendentes para que a
@@ -3051,25 +3118,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                   jobs podem pegar a mesma  solicitação.
                                 - Também evitar que o processo chame um relatório que tenha a
                                   mesma saída que outro em processo  (Marcos-Supero)
-
                      18/11/2013 - Ajustar log de remoção do arquivo, pois a remoção pode ser
                                   solicitada inclusive se for solicitado somente a imprim.p,
                                   antes só era feita na copia/email do relatório (Marcos-Supero)
-
-
                      08/01/2014 - Alteração da rotina para deixar dinâmico qual a extensão desejada
                                   para cópia ou envio de e-mail do relatórios pós-processo (Marcos-Supero)
-
                      12/03/2014 - Alteração para permitir que o arquivos seja convertido para DOS
                                   antes do envio por e-mail ou cópia para diretório (Marcos-Supero)
-
                      31/08/2015 - Inclusao do parametro flappend na pc_clob_para_arquivo.
                                   (Jaison/Marcos-Supero)
-                     
                      29/12/2015 - Controlar lock na tabela crapslr, para que o lock ocorra a nivel de registro 
                                   e não toda a consulta SD379026 (Odirlei-AMcom)             
-
                      17/10/2017 - Retirado pc_set_modulo
+                                  (Ana - Envolti - Chamado 776896)
+                     18/10/2017 - Incluído pc_set_modulo com novo padrão
                                   (Ana - Envolti - Chamado 776896)
        ............................................................................. */
     DECLARE
@@ -3537,10 +3599,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           EXIT;
         END IF;
       END LOOP;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         -- Gerar Log
         pc_gera_log_relato(0,to_char(sysdate,'hh24:mi:ss')||' --> Erro não tratado ao processar relatórios pendentes --> '|| sqlerrm);
     END;
@@ -3548,14 +3612,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   -- Subrotina simples para corrigir extensões informadas erroneamente
   FUNCTION fn_replace_extensao(pr_dsext IN VARCHAR2) RETURN VARCHAR2 IS
+    /*..............................................................................
+       Programa: fn_replace_extensao
+       Autor   : 
+       Data    :                       Ultima atualizacao: 18/10/2017
+
+       Dados referentes ao programa:
+
+       Objetivo  : Corrige extensões informadas erroneamente
+
+       Alteracoes: 18/10/2017 - Incluído pc_set_modulo com novo padrão
+                                (Ana - Envolti - Chamado 776896)
+    ..............................................................................*/
     vr_dsext crapslr.dsextcop%TYPE;
   BEGIN
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_replace_extensao');
     -- converter para minúsculo
     vr_dsext := lower(pr_dsext);
     -- remover espaços
     vr_dsext := trim(vr_dsext);
     -- remover . se houver no início ou no fim
     vr_dsext := ltrim(rtrim(vr_dsext,'.'),'.');
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- retornar valor ajustado
     RETURN vr_dsext;
   END;
@@ -3601,7 +3681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3612,41 +3692,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes: 14/06/2013 - Incluso flag para remover o arquivo original após
     --                            copiar ou enviar e-mail (Marcos-Supero)
-    --
     --               11/09/2013 - Incluído parâmetro para converter o arquivo para envio de
     --                            email em PDF (Marcos-Supero)
-    --
     --               01/10/2013 - Não parar o processo durante a solicitação, mas sim gravar
     --                            a crapslr com erro, e gerar no log o erro (Marcos-Supero)
-    --
     --               28/10/2013 - Gravar a nova flag para saber se a solicitação está no batch
     --                            ou não atraves da busca na crapdat.inproces (Marcos-Supero)
-    --
     --               07/11/2013 - Inclusão da validação do Jasper na solicitação, antes estava
     --                            na geração (Marcos-Supero)
-    --
     --               18/11/2013 - Ajustar consistencia de remoção do arquivo, pois a mesma pode
     --                            ser solicitada inclusive se for solicitado somente a imprim.p,
     --                            antes só era feita na copia/email do relatório (Marcos-Supero)
-    --
     --               08/01/2014 - Alteração da rotina para deixar dinâmico qual a extensão desejada
     --                            para cópia ou envio de e-mail do relatórios pós-processo (Marcos-Supero)
-    --
     --               12/03/2014 - Preparar a execução para converter o arquivo de unix para dos (Marcos-Supero)
-    --
     --               22/09/2015 - Adicionar validação para quando o relatorio for solicitado durante o processo
     --                            batch, o erro seja escrito no proc_batch, caso contrario no proc_message
     --                            (Douglas - Chamado 306525)
-    --
     --               02/08/2016 - Inclusao do paramtro pr_nrvergrl, para permitir informar em qual versao da rotina
     --                            java de geração de relatorio deve ser gerado.
     --                            PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
-    --    
     --               22/06/2017 - Tratamento de erros 
     --                          - setado modulo
     --                          - Chamado 660322 - Belli - Envolti
-    --
     --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................. */
     DECLARE
@@ -3704,8 +3775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Criação de bloco para tratar todos os possíveis problemas na solicitação
       
 	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017      
-      vr_acao := 'GENE0002.pc_solicita_relato';      
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_acao);
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.pc_solicita_relato');
       
       BEGIN
         -- Busca do indicador do processo no calendário
@@ -3953,6 +4024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           End if;
         END IF;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       -- Rotina de geracao de erro - Chamado 660322 - Envolti
       WHEN vr_exc_saida THEN
@@ -3961,7 +4034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         
       WHEN OTHERS THEN -- Gerar log de erro
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         -- Retornar o erro contido na sqlerrm
         pr_des_erro := 'GENE0002.pc_solicita_relato --> ' || sqlerrm;
     END;
@@ -3998,7 +4071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Abril/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Abril/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4009,25 +4082,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Alteracoes: 14/06/2013 - Incluso flag para remover o arquivo original após
     --                            copiar ou enviar e-mail
-    --
     --               01/10/2013 - Não parar o processo durante a solicitação, mas sim gravar
     --                            a crapslr com erro, e gerar no log o erro (Marcos-Supero)
-    --
     --               28/10/2013 - Gravar a nova flag para saber se a solicitação está no batch
     --                            ou não atraves da busca na crapdat.inproces (Marcos-Supero)
-    --
     --               18/11/2013 - Ajustar consistencia de remoção do arquivo, pois a mesma pode
     --                            ser solicitada inclusive se for solicitado somente a imprim.p,
     --                            antes só era feita na copia/email do relatório (Marcos-Supero)
-    --
     --               09/01/2013 - Alteração da rotina para deixar dinâmico qual a extensão desejada
     --                            para cópia ou envio de e-mail do relatórios pós-processo (Marcos-Supero)
-    --
     --               12/03/2014 - Preparar a execução para converter o arquivo de unix para dos (Marcos-Supero)
-    --
     --               31/08/2015 - Inclusao do parametro flappend. (Jaison/Marcos-Supero)
-    --
     --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
@@ -4254,6 +4322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                   ,pr_nmarqlog     => NULL
                                   ,pr_cdprograma   => pr_cdprogra);
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN -- Gerar log de erro
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
@@ -4272,7 +4342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini
-    --  Data     : Março/2014.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Março/2014.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4283,6 +4353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               3 - Atualizar os relatórios indicando que já houve o alerta
     --
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
     DECLARE
@@ -4425,10 +4497,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           COMMIT;
         END LOOP;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         -- Gerar log
         pc_gera_log_relato(pr_cdcooper => 1
                           ,pr_des_log  => to_char(SYSDATE,'hh24:mi:ss')||' Erro ao processar avisos de relatórios com problema no processo--> '||sqlerrm);
@@ -4445,7 +4519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini
-    --  Data     : Outubro/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4485,9 +4559,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   21/03/2014 - Chamar rotina que alerta os responsáveis caso encontremos erros de
     --                relatórios da cadeia (Marcos-Supero)
-    --
     --   17/10/2017 - Retirado pc_set_modulo
     --               (Ana - Envolti - Chamado 776896)
+    --   18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
       -- Busca de todas as cooperativas
@@ -4592,7 +4667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-            CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+            CECRED.pc_internal_exception;
             pc_gera_log_relato(pr_cdcooper => 0
                               ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema ao eliminar os relatórios antigos da fila: '
                                            || rw_crapfil.cdfilrel ||'. Detalhes: '||sqlerrm||'.');
@@ -4703,13 +4778,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
         END LOOP;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
       -- Gravar as alterações
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pc_gera_log_relato(pr_cdcooper => 0
                           ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
     END;
@@ -4729,14 +4806,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     -- ..........................................................................
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
     --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ..........................................................................
   BEGIN
-	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
   	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_converte_time_data');
     -- Reduz a quantidade de segundos para apenas 1 dia
     while vr_nrsegs >= 86400 loop
       vr_nrsegs := vr_nrsegs - 86400;
     end loop;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Se for para retornar segundos
     if upper(pr_tipsaida) = 'S' then
       -- Retonar a data a partir do numero de segundos
@@ -4756,7 +4837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4773,6 +4854,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               4) Em caso de erro, a função retornará NUL
     --
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
     DECLARE
@@ -4831,12 +4914,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- que ficou restando na string processada, que de acordo
       -- com as vaidações acima deve ter ficado apenas com o sinal,
       -- os valores e o caracter decimal apenas
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       --RETURN vr_dsnumtex; -- Renato Darosci => tratar corretamente o retorno do numérico
       RETURN to_number(vr_dsnumtex, 'FM999999999999999999999999999d9999999999', 'NLS_NUMERIC_CHARACTERS='''||vr_nlspar(1).dssepdec||vr_nlspar(1).dssepmil||'');
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         RETURN NULL;
     END;
   END fn_char_para_number;
@@ -4854,6 +4939,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
        Dados referentes ao programa:
 
        Objetivo  : Calcular a diferença entre duas datas e retornar diferença em hh:mi:ss
+
+       Alteracoes: 18/10/2017 - Incluído pc_set_modulo com novo padrão
+                                (Ana - Envolti - Chamado 776896)
     ..............................................................................*/
     DECLARE
       -- Variaveis para o cálculo
@@ -4862,12 +4950,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     vr_qtmindif NUMBER;
     vr_qtsecdif NUMBER;
     BEGIN
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_calc_difere_datas');
       -- Armazenar a fraçao de dias entre as datas
       vr_qtddfrac := (pr_dttermin-pr_dtinicio)-trunc(pr_dttermin-pr_dtinicio);
       -- Acumular horas, minutos e segundos separadamente
       vr_qthrsdif := ABS(trunc(vr_qtddfrac*24));
       vr_qtmindif := ABS(trunc((((vr_qtddfrac)*24)-(vr_qthrsdif))*60));
       vr_qtsecdif := ABS(trunc(mod((pr_dttermin-pr_dtinicio)*86400,60)));
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       -- Retornar os valores calculados no formado hh24:mi:ss
       RETURN(LPAD (vr_qthrsdif, 2, '0') ||':'|| LPAD (vr_qtmindif, 2, '0') ||':'|| LPAD (vr_qtsecdif, 2, '0'));
     EXCEPTION
@@ -4888,7 +4980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Setembro/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Setembro/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4899,6 +4991,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --   Alteracoes: Ajustes para não gravar linha no clob, caso o parametro esteja vazio(Odirlei/AMcom)
     --
     --               17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
   BEGIN
@@ -4928,6 +5022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         pr_dados := '';
       END IF;
     END;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
   END pc_clob_buffer;
 
   -- Subrotina para escrever texto na variável CLOB do XML
@@ -4952,6 +5048,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       Alterações: 17/10/2017 - Retirado pc_set_modulo
                               (Ana - Envolti - Chamado 776896)
+                  18/10/2017 - Incluído pc_set_modulo com novo padrão
+                               (Ana - Envolti - Chamado 776896)
     ----------------------------------------------------------*/
     procedure pc_concatena(pr_xml in out nocopy clob,
                            pr_texto_completo in out nocopy varchar2,
@@ -4980,6 +5078,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       dbms_lob.writeappend(pr_xml, length(pr_texto_completo), pr_texto_completo);
       pr_texto_completo := null;
     end if;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
   end;
 
   /* Procedure para copiar arquivos para a intranet */
@@ -4997,7 +5097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Outubro/2013.                   Ultima atualizacao: 17/10/2017
+    --  Data     : Outubro/2013.                   Ultima atualizacao: 18/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -5005,6 +5105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --   Objetivo  : Efetuar o envio de arquivos para a intranet.
     --
     --   Alteracoes: 17/10/2017 - Retirado pc_set_modulo
+    --                            (Ana - Envolti - Chamado 776896)
+    --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
     -- .............................................................................
   BEGIN
@@ -5185,6 +5287,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           RAISE vr_exc_erro;
         END IF;
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
       pr_des_erro := 'OK';
     EXCEPTION
@@ -5214,7 +5318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Retornar validação se a variável é uma data.
-    --   Alteracoes:
+    --   Alteracoes: 18/10/2017 - Incluído pc_set_modulo com novo padrão
+    --                            (Ana - Envolti - Chamado 776896)
     -- ............................................................................
     DECLARE
       vr_ctrteste       BOOLEAN := TRUE;
@@ -5222,6 +5327,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_auxdata        DATE;
 
     BEGIN
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_data');
       -- Se o parametro for enviado sozinho retorna false.
       IF pr_vlrteste IS NULL OR
          pr_formato IS NULL THEN
@@ -5237,11 +5344,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         END;
 
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
       RETURN vr_ctrteste;
     END;
   END fn_data;
-
 
   -- Subrotina para enviar arquivo de extrato da conta para servidor web
   PROCEDURE pc_envia_arquivo_web (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -5258,7 +5366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 17/10/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 18/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -5268,152 +5376,153 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   -- Alterações : 02/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)
   --              21/11/2014 - Remocao do comando de copia do arquivo .PDF de um servidor
   --                           para outro e utilizacao da procedure pronta de geracao do PDF.
-  --
   --              27/02/2015 - Incluido o nome do arquivo .pdf no retorno da variavel pr_nmarqpdf,
   --                           feito tratamento para arquivos .lst (Jean Michel).
-  --
   --              05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
   --                           (Adriano).        
-  --
   --              17/10/2017 - Retirado pc_set_modulo
   --                            (Ana - Envolti - Chamado 776896)
+  --               18/10/2017 - Incluído pc_set_modulo com novo padrão
+  --                            (Ana - Envolti - Chamado 776896)
   ---------------------------------------------------------------------------------------------------------------
-        --Cursores Locais
-        -- Busca dos dados da cooperativa
-        CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-          SELECT crapcop.nmrescop
-                ,crapcop.nmextcop
-                ,crapcop.dsdircop
-          FROM crapcop crapcop
-          WHERE crapcop.cdcooper = pr_cdcooper;
-        rw_crapcop cr_crapcop%ROWTYPE;
+    --Cursores Locais
+    -- Busca dos dados da cooperativa
+    CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      SELECT crapcop.nmrescop
+            ,crapcop.nmextcop
+            ,crapcop.dsdircop
+      FROM crapcop crapcop
+      WHERE crapcop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
 
-        --Variaveis Locais
-        vr_typ_saida VARCHAR2(3);
-        vr_comando   VARCHAR2(2000);
-        vr_setlinha  VARCHAR2(100);
-        --Variaveis Erro
-        vr_cdcritic  INTEGER;
-        vr_dscritic  VARCHAR2(4000);
-        --Variaveis de Excecoes
-        vr_exc_erro EXCEPTION;
-        -- nome do servidor
-        vr_srvintra  VARCHAR2(200);
+    --Variaveis Locais
+    vr_typ_saida VARCHAR2(3);
+    vr_comando   VARCHAR2(2000);
+    vr_setlinha  VARCHAR2(100);
+    --Variaveis Erro
+    vr_cdcritic  INTEGER;
+    vr_dscritic  VARCHAR2(4000);
+    --Variaveis de Excecoes
+    vr_exc_erro EXCEPTION;
+    -- nome do servidor
+    vr_srvintra  VARCHAR2(200);
 
-        vr_tab_erro VARCHAR2(200);
-        vr_nmarqpdf VARCHAR2(200);
-        vr_nmarqimp VARCHAR2(200);
-        vr_dircoope VARCHAR2(400);
+    vr_tab_erro VARCHAR2(200);
+    vr_nmarqpdf VARCHAR2(200);
+    vr_nmarqimp VARCHAR2(200);
+    vr_dircoope VARCHAR2(400);
         vr_tipsplit GENE0002.typ_split;
 
-      BEGIN
-	      -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+  BEGIN
+    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_envia_arquivo_web');
-        --Limpar parametros erro
-        pr_des_reto:= 'OK';
+    --Limpar parametros erro
+    pr_des_reto:= 'OK';
 
-        -- Verifica se a cooperativa esta cadastrada
-        OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
-        FETCH cr_crapcop INTO rw_crapcop;
-        -- Se não encontrar
-        IF cr_crapcop%NOTFOUND THEN
-          -- Fechar o cursor pois haverá raise
-          CLOSE cr_crapcop;
-          -- Montar mensagem de critica
-          vr_cdcritic := 651;
-          RAISE vr_exc_erro;
-        ELSE
-          -- Apenas fechar o cursor
-          CLOSE cr_crapcop;
-        END IF;
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;
 
-        -- recupera o diretorio rl da cooperativa
-        vr_dircoope := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => pr_cdcooper, pr_nmsubdir => '/rl');
-        -- monta nome do arquivo .PDF
-        vr_nmarqpdf := vr_dircoope||'/'|| regexp_replace(pr_nmarqimp, '\.ex|\.lst', '.pdf');
-        -- concatena pasta ao nome do arquivo
-        vr_nmarqimp := vr_dircoope||'/'||pr_nmarqimp;
+    -- recupera o diretorio rl da cooperativa
+    vr_dircoope := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => pr_cdcooper, pr_nmsubdir => '/rl');
+    -- monta nome do arquivo .PDF
+    vr_nmarqpdf := vr_dircoope||'/'|| regexp_replace(pr_nmarqimp, '\.ex|\.lst', '.pdf');
+    -- concatena pasta ao nome do arquivo
+    vr_nmarqimp := vr_dircoope||'/'||pr_nmarqimp;
 
-        pc_gera_pdf_impressao(pr_cdcooper => pr_cdcooper,
-                              pr_nmarqimp => vr_nmarqimp,
-                              pr_nmarqpdf => vr_nmarqpdf,
-                              pr_des_erro => vr_tab_erro);
+    pc_gera_pdf_impressao(pr_cdcooper => pr_cdcooper,
+                          pr_nmarqimp => vr_nmarqimp,
+                          pr_nmarqpdf => vr_nmarqpdf,
+                          pr_des_erro => vr_tab_erro);
 
-        pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper,
-                            pr_cdagenci => pr_cdagenci,
-                            pr_nrdcaixa => pr_nrdcaixa,
-                            pr_nmarqpdf => vr_nmarqpdf,
-                            pr_des_reto => pr_des_reto,
-                            pr_tab_erro => pr_tab_erro);
+    pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper,
+                        pr_cdagenci => pr_cdagenci,
+                        pr_nrdcaixa => pr_nrdcaixa,
+                        pr_nmarqpdf => vr_nmarqpdf,
+                        pr_des_reto => pr_des_reto,
+                        pr_tab_erro => pr_tab_erro);
 
 
-        --Excluir arquivo impressao caso o mesmo exista no diretorio
-        IF gene0001.fn_exis_arquivo (vr_nmarqimp) THEN
-          -- Comando para remover arquivo
-          vr_comando:= 'rm '||vr_nmarqimp||' 2>/dev/null';
-          --Remover Arquivo pre-existente
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_setlinha);
-          --Se ocorreu erro dar RAISE
-          IF vr_typ_saida = 'ERR' THEN
-            vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
+    --Excluir arquivo impressao caso o mesmo exista no diretorio
+    IF gene0001.fn_exis_arquivo (vr_nmarqimp) THEN
+      -- Comando para remover arquivo
+      vr_comando:= 'rm '||vr_nmarqimp||' 2>/dev/null';
+      --Remover Arquivo pre-existente
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_setlinha);
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
 
-        --Excluir arquivo impressao caso o mesmo exista no diretorio
-        IF gene0001.fn_exis_arquivo (vr_nmarqpdf) THEN
-          -- Comando para remover arquivo
-          vr_comando:= 'rm '||vr_nmarqpdf||' 2>/dev/null';
-          --Remover Arquivo pre-existente
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_setlinha);
-          --Se ocorreu erro dar RAISE
-          IF vr_typ_saida = 'ERR' THEN
-            vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
+    --Excluir arquivo impressao caso o mesmo exista no diretorio
+    IF gene0001.fn_exis_arquivo (vr_nmarqpdf) THEN
+      -- Comando para remover arquivo
+      vr_comando:= 'rm '||vr_nmarqpdf||' 2>/dev/null';
+      --Remover Arquivo pre-existente
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_setlinha);
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
 
-        -- Retornar arquivo .pdf
-        IF vr_nmarqpdf IS NOT NULL THEN
+    -- Retornar arquivo .pdf
+    IF vr_nmarqpdf IS NOT NULL THEN
           vr_tipsplit := GENE0002.fn_quebra_string(pr_string => vr_nmarqpdf, pr_delimit => '/');
-          pr_nmarqpdf := vr_tipsplit(vr_tipsplit.LAST);
-        END IF;
+      pr_nmarqpdf := vr_tipsplit(vr_tipsplit.LAST);
+    END IF;
 
-        --Retornar OK
-        pr_des_reto := 'OK';
-      EXCEPTION
-        WHEN vr_exc_erro THEN
-          -- Retorno não OK
-          pr_des_reto := 'NOK';
-          -- Chamar rotina de gravação de erro
-          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => 1 --> Fixo
-                               ,pr_cdcritic => vr_cdcritic --> Critica 0
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
-        WHEN OTHERS THEN
+    --Retornar OK
+    pr_des_reto := 'OK';
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK
+      pr_des_reto := 'NOK';
+      -- Chamar rotina de gravação de erro
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic --> Critica 0
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+    WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-          -- Retorno não OK
-          pr_des_reto := 'NOK';
-          -- Chamar rotina de gravação de erro
-          vr_dscritic := 'Erro na pr_envia_arquivo_web --> '|| sqlerrm;
-          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => 1 --> Fixo
-                               ,pr_cdcritic => vr_cdcritic --> Critica 0
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
-      END pc_envia_arquivo_web;
+      -- Retorno não OK
+      pr_des_reto := 'NOK';
+      -- Chamar rotina de gravação de erro
+      vr_dscritic := 'Erro na pr_envia_arquivo_web --> '|| sqlerrm;
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic --> Critica 0
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+  END pc_envia_arquivo_web;
 
   -- Procedure para importar arquivo XML para XMLtype
   PROCEDURE pc_arquivo_para_xml (pr_nmarquiv IN VARCHAR2         --> Nome do caminho completo)
@@ -5427,7 +5536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
+   Data    : Fevereiro/2015                          Ultima atualizacao: 18/10/2017
 
    Dados referentes ao programa:
 
@@ -5536,7 +5645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               EXIT;
             WHEN OTHERS THEN
               -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-              CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+              CECRED.pc_internal_exception;
               --Erro no processamento
               vr_dscritic:= 'Erro ao processar arquivo '||pr_nmarquiv||' - '||SQLERRM;
 
@@ -5596,7 +5705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       EXCEPTION
         WHEN OTHERS THEN
           -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-          CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+          CECRED.pc_internal_exception;
           vr_dscritic:= 'Resposta invalida (XML).'||' - '||SQLERRM;
 
           --Fechar Clob e Liberar Memoria
@@ -5608,13 +5717,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END;
       --Retorno OK
       pr_des_reto:= 'OK';
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_reto:= 'NOK';
         pr_dscritic:= 'Erro na GENE0002.pc_arquivo_para_xml. '||vr_dscritic;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         pr_des_reto:= 'NOK';
         pr_dscritic:= 'Erro na GENE0002.pc_arquivo_para_xml. '||sqlerrm;
     END;
@@ -5629,7 +5740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
+   Data    : Fevereiro/2015                          Ultima atualizacao: 18/10/2017
 
    Dados referentes ao programa:
 
@@ -5637,9 +5748,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Objetivo  : Abreviar a string conforme quantidade de letras
 
    Alteracoes: 23/02/2015 - Conversão Progress --> Oracle (Alisson - AMcom)
-
                17/10/2017 - Retirado pc_set_modulo
                            (Ana - Envolti - Chamado 776896)
+               18/10/2017 - Incluído pc_set_modulo com novo padrão
+                            (Ana - Envolti - Chamado 776896)
   .............................................................................*/
 
   BEGIN
@@ -5804,6 +5916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
         END IF;
       END LOOP;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
       --Retonar nome abreviado
       RETURN(vr_nmabrevi);
@@ -5813,7 +5927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         return(vr_nmabrevi);
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+        CECRED.pc_internal_exception;
         return(vr_nmabrevi);
     END;
   END fn_abreviar_string;
@@ -5828,7 +5942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Alisson
-   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
+   Data    : Fevereiro/2015                          Ultima atualizacao: 18/10/2017
 
    Dados referentes ao programa:
 
@@ -5836,9 +5950,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Objetivo  : Centralizar o texto e preencher com caracteres
 
    Alteracoes: 24/02/2015 - Conversão Progress --> Oracle (Alisson - AMcom)
-
                17/10/2017 - Retirado pc_set_modulo
                            (Ana - Envolti - Chamado 776896)
+               18/10/2017 - Incluído pc_set_modulo com novo padrão
+                            (Ana - Envolti - Chamado 776896)
   .............................................................................*/
   BEGIN
     DECLARE
@@ -5879,6 +5994,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_texto:= lpad(pr_dscarac,trunc(vr_qtdcarac/2),pr_dscarac)||vr_texto||
                    rpad(pr_dscarac,trunc(vr_qtdcarac/2)+1,pr_dscarac);
       END IF;
+      -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+      GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
       --Retonar texto centralizado
       RETURN(vr_texto);
@@ -5899,7 +6016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Fevereiro/2015                          Ultima atualizacao: 17/10/2017
+   Data    : Fevereiro/2015                          Ultima atualizacao: 18/10/2017
 
    Dados referentes ao programa:
 
@@ -5908,6 +6025,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
    Alteracoes: 17/10/2017 - Retirado pc_set_modulo
                            (Ana - Envolti - Chamado 776896)
+               18/10/2017 - Incluído pc_set_modulo com novo padrão
+                            (Ana - Envolti - Chamado 776896)
   .............................................................................*/
     valor_string VARCHAR2(256);
     valor_conv   VARCHAR2(25);    
@@ -6136,11 +6255,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         END IF;
       END IF;
     END LOOP;
+
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     RETURN(rtrim(valor_string));
   EXCEPTION
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-      CECRED.pc_internal_exception (pr_cdcooper => NULL); 
+      CECRED.pc_internal_exception; 
       RETURN('*** VALOR INVALIDO ***');
   END;
 
