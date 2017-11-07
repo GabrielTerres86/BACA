@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 16/10/2017
+  Data    : Abril/2004                          Ultima atualizacao: 07/11/2017
 
   Dados referentes ao programa:
 
@@ -264,6 +264,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
                            a referencia do convenio de acordo com o cadastrado na tabela crapprm 
                            (Lucas Ranghetti #712492)
+                           
+              07/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo 
+                           (Lucas Ranghetti #789879)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -917,7 +920,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                 ||RPAD(substr(rw_gnconve.nmrescop,1,20),20,' ')
                                 ||vr_dtmvtolt
                                 ||to_char(vr_nrseqarq,'fm000000')
-                                ||'04DEBITO AUTOMATICO'
+                                ||LPAD(rw_gnconve.nrlayout,2,'0')
+                                ||'DEBITO AUTOMATICO'
                                 ||RPAD(' ',52,' ')
                                 ||CHR(10));          
           
