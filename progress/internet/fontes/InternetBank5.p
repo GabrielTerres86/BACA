@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 11/07/2017
+   Data    : Marco/2007                        Ultima atualizacao: 30/10/2017
 
    Dados referentes ao programa:
 
@@ -63,6 +63,9 @@
 			   05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
 							e tratamento para descontos, Prj. 340 (Jean Michel)
 
+			   30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
+                            verifica-titulo-npc-cip (SD784234 - AJFink)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -114,7 +117,7 @@ DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
 DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
 DEF VAR aux_dtmvtolt LIKE crapdat.dtmvtolt                             NO-UNDO.
 DEF VAR aux_vltitulo LIKE crapcob.vltitulo                             NO-UNDO.
-DEF VAR aux_rollout       AS INTE                       			   NO-UNDO.
+DEF VAR aux_npc_cip       AS INTE                                      NO-UNDO.
 DEF VAR aux_vldescto      AS DEC                       			   	   NO-UNDO.
 
 /* determinando tipo de consulta */
@@ -320,12 +323,13 @@ FOR EACH tt-consulta-blt NO-LOCK:
     ASSIGN aux_nmprimtl_ben = tt-consulta-blt.nmprimtl
            aux_nrcpfcgc_ben = tt-consulta-blt.nrcpfcgc
            aux_inpessoa_ben = tt-consulta-blt.inpessoa
-		   aux_rollout		= 0.
+           aux_npc_cip      = 0.
 
-	RUN verifica-rollout IN h-b1wgen0010(INPUT par_cdcooper,
-									 	 INPUT crapdat.dtmvtolt,
-									 	 INPUT tt-consulta-blt.vltitulo,
-									    OUTPUT aux_rollout). 
+    RUN verifica-titulo-npc-cip IN h-b1wgen0010(INPUT par_cdcooper,
+                                                INPUT crapdat.dtmvtolt,
+                                                INPUT tt-consulta-blt.vltitulo,
+                                                INPUT (IF tt-consulta-blt.flgcbdda = "S" THEN TRUE else FALSE),
+                                                OUTPUT aux_npc_cip). 
 
     IF tt-consulta-blt.cdmensag = 0 /*OR 
 	   tt-consulta-blt.cdmensag = 1*/ THEN
@@ -487,7 +491,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvencto 
                                       ELSE 
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
-                                   "<flgcbdda>" + STRING(IF aux_rollout = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
+                                   "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
 								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
                                    "</BOLETO>".       
   

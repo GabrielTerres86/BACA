@@ -437,6 +437,17 @@
                             para carregar os dados de Protesto e Serasa do boleto
                             e caso estejam zeradas atualizar com os dados do 
                             convenio (Douglas - Chamado 754911)
+
+               26/10/2017 - Na impressao da segunda via a data de vencimento de um
+			                titulo registrado na CIP deve ser atualizado no campo
+							data de vencimento, mas o fator de vencimento deve ser mantido
+							original no codigo de barras. (SD762954 - AJFink)
+
+               31/10/2017 - Quando o titulo nao estiver registrado na cip, mesmo que
+			                esteja dentro da faixa de rollout a segunda via deve ser emitida
+							com data de vencimento e valor atualizados tanto nos campos
+							quanto no codigo de barras. (SD784234 - AJFink)
+							
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -540,9 +551,6 @@ DEF VAR aux_na_nmcidsac AS CHAR                                     NO-UNDO.
 DEF VAR aux_na_cdufsaca AS CHAR                                     NO-UNDO.
 DEF VAR aux_na_nrcepsac AS INTE                                     NO-UNDO.
 
-/* Prj. 340 */
-DEF VAR aux_rollout AS INTE                                     NO-UNDO.
-
 /* Variaveis necessarias na gera_retorno_arq_cobranca */
 DEF STREAM str_1.   /*  Para arquivo de trabalho */
 DEF STREAM str_2.
@@ -601,8 +609,7 @@ PROCEDURE consulta-boleto-2via.
     DEF QUERY q_crapcob FOR crapcob, crapcco.
     DEF VAR   aux_query                AS CHAR             NO-UNDO.
 
-    
-    DEF VAR aux_rollout       AS INTE                       NO-UNDO.        
+    DEF VAR aux_npc_cip                AS INTE             NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
@@ -899,13 +906,14 @@ PROCEDURE consulta-boleto-2via.
                tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
                tt-consulta-blt.nmprimtl 	         = aux_nmdobnfc.
                
-	/* Consulta Rollout */
-    RUN verifica-rollout(INPUT crapcob.cdcooper,
-                         INPUT crapdat.dtmvtolt,
-                         INPUT crapcob.vltitulo,
-                         OUTPUT aux_rollout).  
+    /* Consulta se titulo esta na faixa de rollout e integrado na cip */
+    RUN verifica-titulo-npc-cip(INPUT crapcob.cdcooper,
+                                INPUT crapdat.dtmvtolt,
+                                INPUT crapcob.vltitulo,
+                                INPUT crapcob.flgcbdda,
+                                OUTPUT aux_npc_cip).
 					
-    IF aux_rollout = 1 THEN 
+    IF aux_npc_cip = 1 THEN
 	 DO:
 	    /* Se estiver na faixa do rollout, data de vencimento e valor do título devem ser mantidos os originais */
          ASSIGN aux_vltituut_atualizado = crapcob.vltitulo
@@ -922,7 +930,7 @@ PROCEDURE consulta-boleto-2via.
                    tt-consulta-blt.vldescto = aux_vldescut 
 				   tt-consulta-blt.dtvctori = aux_dtvencut
 				   tt-consulta-blt.flgaceit = "N"
-				   tt-consulta-blt.flgcbdda = (IF aux_rollout = 1 THEN "S" ELSE "N").
+               tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
 
 			VALIDATE tt-consulta-blt.
 	   END.
@@ -980,7 +988,6 @@ PROCEDURE consulta-bloqueto.
     DEF VAR aux_des_erro               AS CHAR             NO-UNDO.
     DEF VAR aux_contaant             LIKE crapass.nrdconta NO-UNDO.
     DEF VAR aux_sqttlant             LIKE crapttl.idseqttl NO-UNDO.
-	DEF VAR aux_rollout               AS INTE             NO-UNDO.
 	
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
@@ -3719,6 +3726,7 @@ PROCEDURE cria_tt-consulta-blt.
    DEF VAR aux_msgerora AS CHAR                NO-UNDO.
    DEF VAR aux_qterrora AS INTE                NO-UNDO.
    
+   DEF VAR aux_npc_cip  AS INTE                NO-UNDO.
    
    IF  NOT AVAILABLE crapcco  THEN
        DO:
@@ -3930,6 +3938,19 @@ PROCEDURE cria_tt-consulta-blt.
             RETURN "NOK".
          END.                      
 
+     /* Verificar se a crapdat está carregada */ 
+     IF NOT AVAILABLE crapdat THEN
+     DO:
+       FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+     END.
+
+     /* Consulta se titulo esta na faixa de rollout e integrado na cip */
+     RUN verifica-titulo-npc-cip(INPUT crapcob.cdcooper,
+                                 INPUT crapdat.dtmvtolt,
+                                 INPUT crapcob.vltitulo,
+                                 INPUT crapcob.flgcbdda,
+                                 OUTPUT aux_npc_cip).
+
      ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
             tt-consulta-blt.nrdconta = crapcob.nrdconta
             tt-consulta-blt.nmprimtl = p-nmprimtl
@@ -3988,8 +4009,7 @@ PROCEDURE cria_tt-consulta-blt.
                                         ELSE
                                             0)
             tt-consulta-blt.vlabatim = crapcob.vlabatim
-            tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
-                                       "S" ELSE "N").
+            tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
 
      /* Tratamento para Negativaçao Serasa e Protesto */ 
      ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
@@ -4637,6 +4657,8 @@ PROCEDURE cria_tt-consulta-blt_tdb.
    DEF VAR aux_des_erro AS CHAR                NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                NO-UNDO.
    
+   DEF VAR aux_npc_cip  AS INTE                NO-UNDO.
+
    FOR FIRST crapass FIELDS(nmprimtl cdagenci)
        WHERE crapass.cdcooper = crapcob.cdcooper AND
              crapass.nrdconta = crapcob.nrdconta
@@ -4719,6 +4741,19 @@ PROCEDURE cria_tt-consulta-blt_tdb.
             WHEN "B" THEN tt-consulta-blt.dssituac = "BAIXADO S/ PAGTO".
        END CASE. 
        
+       /* Verificar se a crapdat está carregada */ 
+       IF NOT AVAILABLE crapdat THEN
+       DO:
+         FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+       END.
+
+       /* Consulta se titulo esta na faixa de rollout e integrado na cip */
+       RUN verifica-titulo-npc-cip(INPUT crapcob.cdcooper,
+                                   INPUT crapdat.dtmvtolt,
+                                   INPUT crapcob.vltitulo,
+                                   INPUT crapcob.flgcbdda,
+                                   OUTPUT aux_npc_cip).
+
        ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
               tt-consulta-blt.nrdconta = crapcob.nrdconta
               tt-consulta-blt.nmprimtl = par_nmprimtl
@@ -4740,8 +4775,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
                                           ELSE
                                              craptdb.dtvencto)
               tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */                                             
-              tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
-                                          "S" ELSE "N")              
+              tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N")
               tt-consulta-blt.vltitulo = crapcob.vltitulo.
    END.
 END PROCEDURE. /* cria_tt-consulta-blt_tdb */ 
@@ -4826,6 +4860,8 @@ PROCEDURE proc_nosso_numero.
     DEF VAR aux_var03    AS INTE                NO-UNDO.
     DEF VAR aux_var04    AS INTE                NO-UNDO.
     DEF VAR aux_var05    AS CHAR                NO-UNDO.
+
+    DEF VAR aux_npc_cip  AS INTE                NO-UNDO.
 
     /************************************************************************/
     /** p-ind-situacao > 1-ABERTO/2-BAIXADO/3-EXCLUIDO/4-LIQUIDADO         **/
@@ -5117,6 +5153,19 @@ PROCEDURE proc_nosso_numero.
                    ASSIGN tt-consulta-blt.dsendsac = REPLACE(aux_na_dsendsac,"&","%26")
                           tt-consulta-blt.flgemail = FALSE.
 
+               /* Verificar se a crapdat está carregada */ 
+               IF NOT AVAILABLE crapdat THEN
+               DO:
+                 FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
+               END.
+
+               /* Consulta se titulo esta na faixa de rollout e integrado na cip */
+               RUN verifica-titulo-npc-cip(INPUT crapcob.cdcooper,
+                                           INPUT crapdat.dtmvtolt,
+                                           INPUT crapcob.vltitulo,
+                                           INPUT crapcob.flgcbdda,
+                                           OUTPUT aux_npc_cip).
+
                ASSIGN tt-consulta-blt.complend = REPLACE(aux_na_complend,"&","%26")
                tt-consulta-blt.nmbaisac = REPLACE(aux_na_nmbaisac,"&","%26")
                tt-consulta-blt.nmcidsac = REPLACE(aux_na_nmcidsac,"&","%26")
@@ -5184,8 +5233,7 @@ PROCEDURE proc_nosso_numero.
                
                tt-consulta-blt.indiaprt = crapcob.indiaprt
                tt-consulta-blt.insitpro = crapcob.insitpro
-               tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
-                                          "S" ELSE "N").
+               tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
 
            /* Tratamento para Negativaçao Serasa e Protesto */ 
            ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
@@ -8728,6 +8776,38 @@ PROCEDURE verifica-rollout:
            WHERE PROC-HANDLE = aux_ponteiro.
         
        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }    
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE verifica-titulo-npc-cip:
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+    DEF INPUT PARAM par_vltitulo AS DECI NO-UNDO.
+    DEF INPUT PARAM par_flgcbdda AS LOGI NO-UNDO.
+    DEF OUTPUT PARAM par_npc_cip AS INTE NO-UNDO.
+
+    DEF VAR aux_rollout AS INTE NO-UNDO.
+    DEF VAR aux_npc_cip AS INTE NO-UNDO.
+
+    /* Consulta Rollout */
+    RUN verifica-rollout(INPUT par_cdcooper,
+                         INPUT par_dtmvtolt,
+                         INPUT par_vltitulo,
+                         OUTPUT aux_rollout).
+
+    ASSIGN aux_npc_cip = 0.
+
+    IF aux_rollout = 1 THEN /*esta dentro do rollout*/
+    DO:
+      IF par_flgcbdda = TRUE THEN /*esta na CIP*/
+      DO:
+        ASSIGN aux_npc_cip = 1.
+      END.
+    END.
+
+    ASSIGN par_npc_cip = aux_npc_cip.
 
     RETURN "OK".
 
