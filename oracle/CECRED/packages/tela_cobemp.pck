@@ -3601,7 +3601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lombardi
-      Data    : Marco/2017                    Ultima atualizacao: 
+      Data    : Marco/2017                    Ultima atualizacao: 06/11/2017
 
       Dados referentes ao programa:
 
@@ -3612,7 +3612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: Ajuste leitura crapcob (Daniel)
     ..............................................................................*/
 		DECLARE
 
@@ -3735,13 +3735,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,crapcop cop
             ,crapass ass
             ,crapsab sab
+			,crapcco cco
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+
+		 -- Leitura CCO
+         AND cco.cdcooper = epr.cdcooper
+         AND cco.nrconven = epr.nrcnvcob
+
          AND cob.cdcooper = epr.cdcooper
          AND cob.nrdconta = epr.nrdconta_cob
          AND cob.nrcnvcob = epr.nrcnvcob
          AND cob.nrdocmto = epr.nrboleto
+
+		 AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
+
          AND cop.cdcooper = imp.cdcooper
          AND ass.cdcooper = imp.cdcooper
          AND ass.nrdconta = imp.nrdconta
@@ -3758,13 +3768,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,crapcop cop
             ,crapass ass
             ,crapsab sab
+			,crapcco cco
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+
+		 -- Leitura CCO
+         AND cco.cdcooper = epr.cdcooper
+         AND cco.nrconven = epr.nrcnvcob
+
          AND cob.cdcooper = epr.cdcooper
          AND cob.nrdconta = epr.nrdconta_cob
          AND cob.nrcnvcob = epr.nrcnvcob
          AND cob.nrdocmto = epr.nrboleto
+
+		 AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
+
          AND cop.cdcooper = imp.cdcooper
          AND ass.cdcooper = imp.cdcooper
          AND ass.nrdconta = imp.nrdconta
@@ -3999,7 +4019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                                             ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
       -- Nome do arquivo
       vr_nom_arquivo := 'crrl733' || to_char( gene0002.fn_busca_time) || '.pdf';
-      
+      /*
       -- Escreve o clob no arquivo físico
       gene0002.pc_clob_para_arquivo(pr_clob => vr_des_xml
                                    ,pr_caminho => vr_nom_direto
@@ -4008,7 +4028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+      */
       -- Efetuar solicitacao de geracao de relatorio --
       gene0002.pc_solicita_relato (pr_cdcooper  => vr_cdcooper         --> Cooperativa conectada
                                   ,pr_cdprogra  => 'COBEMP'        --> Programa chamador
