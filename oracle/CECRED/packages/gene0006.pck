@@ -315,7 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 13/03/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 24/10/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -379,6 +379,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
                             da exception vr_exc_erro pois é um erro tratado 
                             (Lucas Ranghetti #624628)
+                            
+               24/10/2017 - #781206 Nas rotinas pc_gera_protocolo e pc_gera_protocolo_md5, nos inserts da tabela
+                            crappro, restringido o campo dscedent em 50 caracteres. Na rotina pc_busca_protocolo_wt,
+                            no insert da tabela wt_protocolo, restringido o campo dscedent em 40 caracteres (Carlos)
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -908,7 +912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
       -- Devolver o protocolo que geramos
       pr_dsprotoc := vr_dsprotoc;
 
@@ -948,7 +952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                              ,nmprepos)
             VALUES(pr_cdcooper
                   ,nvl(pr_cdtippro,0)
-                  ,nvl(upper(pr_dscedent),' ')
+                  ,nvl(upper(substr(pr_dscedent,1,50)),' ')
                   ,nvl(pr_dsinfor1,' ')
                   ,nvl(pr_dsinfor2,' ')
                   ,nvl(pr_dsinfor3,' ')
@@ -1224,7 +1228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                              ,nmprepos)
             VALUES(pr_cdcooper
                   ,nvl(pr_cdtippro,0)
-                  ,nvl(upper(pr_dscedent),' ')
+                  ,nvl(upper(substr(pr_dscedent,1,50)),' ')
                   ,nvl(pr_dsinfor1,' ')
                   ,nvl(pr_dsinfor2,' ')
                   ,nvl(pr_dsinfor3,' ')
@@ -1974,7 +1978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             ,vr_tab_protocolo(vr_ind).dsinform##2
             ,vr_tab_protocolo(vr_ind).dsinform##3
             ,vr_tab_protocolo(vr_ind).dsprotoc 
-            ,vr_tab_protocolo(vr_ind).dscedent 
+            ,substr(vr_tab_protocolo(vr_ind).dscedent,1,40)
             ,vr_tab_protocolo(vr_ind).flgagend 
             ,vr_tab_protocolo(vr_ind).nmprepos 
             ,vr_tab_protocolo(vr_ind).nrcpfpre 

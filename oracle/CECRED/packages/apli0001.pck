@@ -82,6 +82,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   -- 09/05/2017 - Executei a limpeza da PLTABLE vr_tab_moedatx na pc_rendi_apl_pos_com_resgate, garantindo 
   --              assim o carregamento correto das taxa de moedas por data.(Carlos Rafael Tanholi - SD 631979)
   --
+  -- 07/08/2017 - #715540 Tratamento em pc_saldo_rdc_pos, verificando o vetor de dias úteis para não repetir
+  --              a consulta; Correção do alias da tabela no hint index do cursor cr_craplap (Carlos)  
+  --
   -- 03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
   --              Influenciava o valor de resgate superior ao saldo.(Carlos Rafael Tanholi - SD 745032)
   ---------------------------------------------------------------------------------------------------------------
@@ -4462,11 +4465,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
       
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
-        SELECT /*+ Index (cp CRAPLAP##CRAPLAP5) */
+        SELECT /*+ Index (lap CRAPLAP##CRAPLAP5) */
                lap.txaplica
               ,lap.txaplmes
           FROM craplap lap
@@ -4631,23 +4634,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
       IF rw_crapdat.inproces > 1 THEN
-      -- Se o vetor de dias uteis ainda não possuir informacoes
-      IF vr_tab_qtdiaute.COUNT = 0 THEN
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT *
-                             FROM (SELECT craptrd.dtiniper
-                                         ,craptrd.qtdiaute
-                                         ,count(*) over (partition by craptrd.dtiniper
-                                                         order by craptrd.progress_recid) registro
-                                     FROM craptrd
-                                     WHERE craptrd.cdcooper = pr_cdcooper)
-                            WHERE registro = 1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
-      END IF;
+        -- Se o vetor de dias uteis ainda não possuir informacoes
+        IF vr_tab_qtdiaute.COUNT = 0 THEN
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT *
+                               FROM (SELECT craptrd.dtiniper
+                                           ,craptrd.qtdiaute
+                                           ,count(*) over (partition by craptrd.dtiniper
+                                                           order by craptrd.progress_recid) registro
+                                       FROM craptrd
+                                       WHERE craptrd.cdcooper = pr_cdcooper)
+                              WHERE registro = 1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+            END IF;
+          END LOOP;
+        END IF;
 
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
@@ -4664,23 +4667,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           END IF;
         END LOOP;
       END IF;
-      ELSE
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                 ,craptrd.qtdiaute
-                                 ,count(*) over (partition by craptrd.dtiniper
-                                                     order by craptrd.progress_recid) registro
-                             FROM craptrd
-                            WHERE craptrd.cdcooper = pr_cdcooper
-                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
+      ELSE -- inproces <= 1
+        
+        -- Se o vetor de dias uteis ainda não possuir informacoes
+        IF vr_tab_qtdiaute.COUNT = 0 THEN
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT /*+ PARALLEL(craptrd) */ craptrd.dtiniper
+                                   ,craptrd.qtdiaute
+                                   ,count(*) over (partition by craptrd.dtiniper
+                                                       order by craptrd.progress_recid) registro
+                               FROM craptrd
+                              WHERE craptrd.cdcooper = pr_cdcooper
+                                AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+              EXIT;
+            END IF;
+          END LOOP;
+        END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
-        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
+        FOR rw_crapmfx IN (SELECT /*+ PARALLEL(CRAPMFX) */
+                                  CRAPMFX.DTMVTOLT
                                  ,CRAPMFX.TPMOEFIX
                                  ,CRAPMFX.VLMOEFIX 
                              FROM CRAPMFX
