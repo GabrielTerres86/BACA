@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: menu.php                                                  ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração:03/08/2015 ***//
+	//*** Data : Julho/2007                   Última Alteração:14/07/2017  ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Montar menu de serviços                              ***//
 	//***                                                                  ***//	 
@@ -26,6 +26,8 @@
 					  03/08/2015 - Reformulacao cadastral (Gabriel-RKAM)	
 
 					  13/08/2015 - Remover o caminho fixo. (James)
+
+					  14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
 	 ************************************************************************/
 	 
 	if (isset($glbvars["menu"])) { // Se os itens do menu estão armazenados na sessão, atribui a variável menu
@@ -172,6 +174,11 @@
 				<!-- Variaveis para o cadastro de nova conta (MATRIC , CONTAS , ATENDA) -->
 				<input type="hidden" name="flgcadas"                        id="flgcadas" value="C" > 		
 				<input type="hidden" name="executandoProdutos"              id="executandoProdutos" value="" > 
+				<input type="hidden" name="executandoImpedimentos"          id="executandoImpedimentos" value="" > 
+				<input type="hidden" name="produtosCancM"           		id="produtosCancM" value="" > 
+				<input type="hidden" name="produtosCancMAtenda"           	id="produtosCancMAtenda" value="" > 
+				<input type="hidden" name="produtosCancMContas"           	id="produtosCancMContas" value="" > 
+				<input type="hidden" name="produtosCancMCheque"           	id="produtosCancMCheque" value="" > 
 				<input type="hidden" name="produtosTelasServicos"           id="produtosTelasServicos" value="" > 
 				<input type="hidden" name="produtosTelasServicosAdicionais" id="produtosTelasServicosAdicionais" value="" > 
 				<input type="hidden" name="atualizarServicos" 				id="atualizarServicos" value="" > 

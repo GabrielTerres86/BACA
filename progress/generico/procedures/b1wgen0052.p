@@ -103,12 +103,16 @@
 
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
+                26/06/2017 - Incluido rotina para buscar contas demitidas a serem listadas
+				             na opcao "G" da tela MATRIC
+							 (Jonata - RKAM P364).
+
                 07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
                              gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
                              problema com validacao da data de nascimento.
-                             Heitor (Mouts) - Chamado 702785   	
+                             Heitor (Mouts) - Chamado 702785	    	
 
-
+				 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 ............................................................................*/
@@ -212,7 +216,7 @@ PROCEDURE Busca_Dados:
             END.
 
         IF  RETURN-VALUE <> "OK" THEN
-               LEAVE Busca.
+            LEAVE Busca.
 
         ASSIGN aux_returnvl = "OK".
 
@@ -556,7 +560,7 @@ PROCEDURE Valida_Dados:
     
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
-    
+	
     DEF OUTPUT PARAM par_nrctanov AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtparcel AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_vlparcel AS DECI                           NO-UNDO.
@@ -934,111 +938,111 @@ PROCEDURE Valida_Dados:
 
             END.
 
-        IF   par_inpessoa = 1    AND 
-             par_idorigem <> 1   AND
-             par_dtnasctl <> ?   AND
-             par_verrespo = TRUE THEN
-             DO:
-                IF VALID-HANDLE(h-b1wgen9999) THEN
-                   DELETE OBJECT h-b1wgen9999.
+          IF   par_inpessoa = 1    AND 
+               par_idorigem <> 1   AND
+               par_dtnasctl <> ?   AND
+               par_verrespo = TRUE THEN
+               DO:
+                  IF VALID-HANDLE(h-b1wgen9999) THEN
+                     DELETE OBJECT h-b1wgen9999.
                 
-                RUN sistema/generico/procedures/b1wgen9999.p
-                    PERSISTENT SET h-b1wgen9999.
+                  RUN sistema/generico/procedures/b1wgen9999.p
+                      PERSISTENT SET h-b1wgen9999.
                 
-                /* validar pela procedure generica do b1wgen9999.p */
-                RUN idade IN h-b1wgen9999 (INPUT par_dtnasctl,
-                                           INPUT par_dtmvtolt,
-                                           OUTPUT par_nrdeanos,
-                                           OUTPUT par_nrdmeses,
-                                           OUTPUT par_dsdidade ).
+                  /* validar pela procedure generica do b1wgen9999.p */
+                  RUN idade IN h-b1wgen9999 (INPUT par_dtnasctl,
+                                             INPUT par_dtmvtolt,
+                                             OUTPUT par_nrdeanos,
+                                             OUTPUT par_nrdmeses,
+                                             OUTPUT par_dsdidade ).
                 
-                IF  VALID-HANDLE(h-b1wgen9999) THEN
-                    DELETE OBJECT h-b1wgen9999.
+                  IF  VALID-HANDLE(h-b1wgen9999) THEN
+                      DELETE OBJECT h-b1wgen9999.
 
-                IF  NOT CAN-FIND(FIRST crapcrl WHERE 
-                                       crapcrl.cdcooper = par_cdcooper AND
-                                       crapcrl.nrctamen = par_nrdconta AND
-                                       crapcrl.idseqmen = 1) AND
-                  ((par_inhabmen = 0    AND
-                    par_nrdeanos < 18)  OR
-                    par_inhabmen = 2  ) AND 
-                    par_nrdconta > 0    THEN
-                    DO:
-                       ASSIGN aux_dscritic = "Cooperado menor de idade. " + 
-                                             "Obrigatorio Responsavel Legal.".
-                       LEAVE Dados.
-                    END.
+                  IF  NOT CAN-FIND(FIRST crapcrl WHERE 
+                                         crapcrl.cdcooper = par_cdcooper AND
+                                         crapcrl.nrctamen = par_nrdconta AND
+                                         crapcrl.idseqmen = 1) AND
+                    ((par_inhabmen = 0    AND
+                      par_nrdeanos < 18)  OR
+                      par_inhabmen = 2  ) AND 
+                      par_nrdconta > 0    THEN
+                      DO:
+                         ASSIGN aux_dscritic = "Cooperado menor de idade. " + 
+                                               "Obrigatorio Responsavel Legal.".
+                         LEAVE Dados.
+                      END.
 
-                IF NOT VALID-HANDLE(h-b1wgen0072) THEN
-                   RUN sistema/generico/procedures/b1wgen0072.p 
-                            PERSISTENT SET h-b1wgen0072.
+                  IF NOT VALID-HANDLE(h-b1wgen0072) THEN
+                     RUN sistema/generico/procedures/b1wgen0072.p 
+                              PERSISTENT SET h-b1wgen0072.
                      
-                FOR EACH tt-crapcrl:
-                    CREATE tt-cratcrl.
-                    BUFFER-COPY tt-crapcrl TO tt-cratcrl.
-                END.
+                  FOR EACH tt-crapcrl:
+                      CREATE tt-cratcrl.
+                      BUFFER-COPY tt-crapcrl TO tt-cratcrl.
+                  END.
 
-                FOR EACH tt-resp NO-LOCK:
+                  FOR EACH tt-resp NO-LOCK:
                
-                    RUN Valida_Dados IN h-b1wgen0072 
-                                        (INPUT par_cdcooper,    
-                                         INPUT par_cdagenci,
-                                         INPUT par_nrdcaixa,
-                                         INPUT par_cdoperad,
-                                         INPUT par_nmdatela,
-                                         INPUT par_idorigem,
-                                         INPUT tt-resp.nrctamen,
-                                         INPUT tt-resp.idseqmen,
-                                         INPUT YES,
-                                         INPUT tt-resp.nrdrowid,
-                                         INPUT par_dtmvtolt,
-                                         INPUT tt-resp.cddopcao,
-                                         INPUT tt-resp.nrdconta,
-                                         INPUT tt-resp.nrcpfcgc,
-                                         INPUT tt-resp.nmrespon,
-                                         INPUT tt-resp.tpdeiden,
-                                         INPUT tt-resp.nridenti,
-                                         INPUT tt-resp.dsorgemi,
-                                         INPUT tt-resp.cdufiden,
-                                         INPUT tt-resp.dtemiden,
-                                         INPUT tt-resp.dtnascin,
-                                         INPUT tt-resp.cddosexo,
-                                         INPUT tt-resp.cdestciv,
-                                         INPUT tt-resp.cdnacion,
-                                         INPUT tt-resp.dsnatura,
-                                         INPUT tt-resp.cdcepres,
-                                         INPUT tt-resp.dsendres,
-                                         INPUT tt-resp.dsbaires,
-                                         INPUT tt-resp.dscidres,
-                                         INPUT tt-resp.dsdufres,
-                                         INPUT tt-resp.nmmaersp,
-                                         INPUT NO,         
-                                         INPUT tt-resp.nrcpfmen,
-                                         INPUT "Identificacao",
-                                         INPUT par_dtnasctl,
-                                         INPUT par_inhabmen,
-                                         INPUT par_permalte,
-                                         INPUT TABLE tt-cratcrl,
-                                         OUTPUT par_nmdcampo,
-                                         OUTPUT TABLE tt-erro).
+                      RUN Valida_Dados IN h-b1wgen0072 
+                                          (INPUT par_cdcooper,    
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT par_cdoperad,
+                                           INPUT par_nmdatela,
+                                           INPUT par_idorigem,
+                                           INPUT tt-resp.nrctamen,
+                                           INPUT tt-resp.idseqmen,
+                                           INPUT YES,
+                                           INPUT tt-resp.nrdrowid,
+                                           INPUT par_dtmvtolt,
+                                           INPUT tt-resp.cddopcao,
+                                           INPUT tt-resp.nrdconta,
+                                           INPUT tt-resp.nrcpfcgc,
+                                           INPUT tt-resp.nmrespon,
+                                           INPUT tt-resp.tpdeiden,
+                                           INPUT tt-resp.nridenti,
+                                           INPUT tt-resp.dsorgemi,
+                                           INPUT tt-resp.cdufiden,
+                                           INPUT tt-resp.dtemiden,
+                                           INPUT tt-resp.dtnascin,
+                                           INPUT tt-resp.cddosexo,
+                                           INPUT tt-resp.cdestciv,
+                                           INPUT tt-resp.cdnacion,
+                                           INPUT tt-resp.dsnatura,
+                                           INPUT tt-resp.cdcepres,
+                                           INPUT tt-resp.dsendres,
+                                           INPUT tt-resp.dsbaires,
+                                           INPUT tt-resp.dscidres,
+                                           INPUT tt-resp.dsdufres,
+                                           INPUT tt-resp.nmmaersp,
+                                           INPUT NO,         
+                                           INPUT tt-resp.nrcpfmen,
+                                           INPUT "Identificacao",
+                                           INPUT par_dtnasctl,
+                                           INPUT par_inhabmen,
+                                           INPUT par_permalte,
+                                           INPUT TABLE tt-cratcrl,
+                                           OUTPUT par_nmdcampo,
+                                           OUTPUT TABLE tt-erro).
                      
-                    IF   RETURN-VALUE <> "OK" THEN
-                         DO:
-                            IF VALID-HANDLE(h-b1wgen0072) THEN
-                               DELETE PROCEDURE(h-b1wgen0072).
+                      IF   RETURN-VALUE <> "OK" THEN
+                           DO:
+                              IF VALID-HANDLE(h-b1wgen0072) THEN
+                                 DELETE PROCEDURE(h-b1wgen0072).
                            
-                            ASSIGN aux_geraerro = TRUE.
+                              ASSIGN aux_geraerro = TRUE.
                            
-                            LEAVE Dados.
+                              LEAVE Dados.
                            
-                         END.
+                           END.
                      
-                END.  
+                  END.  
              
-                IF VALID-HANDLE(h-b1wgen0072) THEN
-                   DELETE PROCEDURE(h-b1wgen0072).              
+                  IF VALID-HANDLE(h-b1wgen0072) THEN
+                     DELETE PROCEDURE(h-b1wgen0072).              
 
-           END.
+             END.
 
         /* Se esta na inclusao, gerar a nova conta no final da validacao */
         /* Somente Ayllos Web */
@@ -1186,7 +1190,7 @@ PROCEDURE Valida_Cidades:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.	
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -1597,15 +1601,15 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nmttlrfb AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inconrfb AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
-
+	
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
     DEF  INPUT PARAM TABLE FOR tt-bens.
 
-    DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 
-
+	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -1627,7 +1631,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_nrctanov AS INTE                                    NO-UNDO.
     DEF VAR aux_qtparcel AS INTE                                    NO-UNDO.
     DEF VAR aux_vlparcel AS DECI                                    NO-UNDO.
-    DEF VAR aux_msgretor AS CHAR                                    NO-UNDO.                                    
+    DEF VAR aux_msgretor AS CHAR                                    NO-UNDO.   
 
     DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
 
@@ -1638,9 +1642,9 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
 
 
-    DEF BUFFER crabavt FOR crapavt.
-    
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+    DEF BUFFER crabavt FOR crapavt.    
+	
+	ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dscritic = "Erro na gravacao dos dados. "
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -2997,5 +3001,209 @@ PROCEDURE Grava_Dados:
 
 END PROCEDURE.
 
+
+PROCEDURE busca_contas_demitidas:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF INPUT  PARAM par_nriniseq AS INTE                           NO-UNDO.
+    DEF INPUT  PARAM par_nrregist AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_qtdregis AS INTE                           NO-UNDO.
+
+	DEF OUTPUT PARAM TABLE FOR tt-contas_demitidas.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+	
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+	DEF VAR aux_nrregist AS INT                                     NO-UNDO.
+    DEF VAR aux_vldcotas LIKE crapcot.vldcotas					    NO-UNDO.
+	
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_returnvl = "NOK"
+		   aux_nrregist = par_nrregist.
+
+    FIND craptab WHERE craptab.cdcooper = par_cdcooper        AND
+                       craptab.nmsistem = "CRED"              AND
+                       craptab.tptabela = "GENERI"            AND
+                       craptab.cdempres = 0                   AND
+                       craptab.cdacesso = "PRAZODESLIGAMENTO" AND
+                       craptab.tpregist = 1
+                       NO-LOCK NO-ERROR.  
+
+	IF NOT AVAIL craptab THEN
+	   DO:
+	      ASSIGN aux_dscritic = "Prazo para desligamento nao cadastrado.".
+                      
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1, /*sequencia*/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+
+          RETURN "NOK".
+
+	   END.
+	       							 
+	FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
+					 WHERE  crapass.cdcooper = par_cdcooper AND				           
+						   (crapass.cdsitdct = 7            OR
+						    crapass.cdsitdct = 8            )
+						    NO-LOCK:
+		
+		ASSIGN aux_vldcotas = 0.
+		
+		IF crapass.cdsitdct = 8 THEN
+		   DO:
+		      FIND LAST craplct WHERE craplct.cdcooper = crapass.cdcooper AND
+			                          craplct.nrdconta = crapass.nrdconta AND
+									  craplct.cdhistor = (IF crapass.inpessoa = 1 THEN 
+									                         2079
+														  ELSE
+														     2080)
+									  NO-LOCK NO-ERROR.
+									  
+			  IF NOT AVAIL craplct THEN
+			     NEXT.
+				 
+			  ASSIGN aux_vldcotas = craplct.vllanmto.
+		   
+		   END.
+		ELSE
+		    DO:
+			
+				FIND FIRST crapcot WHERE crapcot.cdcooper = crapass.cdcooper AND
+										 crapcot.nrdconta = crapass.nrdconta AND
+										 crapcot.vldcotas > 0
+										 NO-LOCK NO-ERROR.
+										   
+				IF NOT AVAIL crapcot THEN
+				   NEXT.			
+			
+				ASSIGN aux_vldcotas = crapcot.vldcotas.
+				
+			END.
+			
+		ASSIGN par_qtdregis = par_qtdregis + 1.
+
+		/* controles da paginação */
+		IF  (par_qtdregis < par_nriniseq                    OR
+			par_qtdregis > (par_nriniseq + par_nrregist))  THEN
+			NEXT.
+			
+		IF aux_nrregist > 0 THEN
+		   DO:					  			
+				CREATE tt-contas_demitidas.
+		
+				ASSIGN tt-contas_demitidas.cdcooper = crapass.cdcooper
+					   tt-contas_demitidas.nrdconta = crapass.nrdconta
+					   tt-contas_demitidas.inpessoa = crapass.inpessoa
+					   tt-contas_demitidas.nmprimtl = crapass.nmprimtl
+					   tt-contas_demitidas.vldcotas = aux_vldcotas
+					   tt-contas_demitidas.dtdemiss = crapass.dtdemiss
+					   tt-contas_demitidas.mtdemiss = crapass.cdmotdem
+					   tt-contas_demitidas.qtdparce = 1
+					   tt-contas_demitidas.formadev = (IF INT(ENTRY(1, craptab.dstextab, ";")) = 1 THEN
+														  1 /*No ato*/
+													   ELSE
+														  2 /*Agendamento*/
+													   )
+					   tt-contas_demitidas.datadevo = (IF INT(ENTRY(1, craptab.dstextab, ";")) = 1 THEN
+														  TODAY
+													   ELSE
+														  TODAY + INT(ENTRY(2, craptab.dstextab, ";"))
+													   ).
+
+				
+		   END. 
+
+		ASSIGN aux_nrregist = aux_nrregist - 1.     
+
+	END.
+	
+    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+        DO:
+           ASSIGN aux_returnvl = "NOK".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+        END.
+    ELSE
+        ASSIGN aux_returnvl = "OK".
+    
+    RETURN aux_returnvl.
+
+END PROCEDURE.
+
+PROCEDURE Produtos_Servicos_Ativos:
+	
+	/* entrada e saida */
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOG                            NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+	DEF OUTPUT PARAM TABLE FOR tt-prod_serv_ativos.
+	
+    DEF VAR h-b1wgen0052v AS HANDLE                                NO-UNDO.
+    DEF VAR aux_cdcritic  AS INT 								   NO-UNDO.
+	DEF VAR aux_dscritic  AS CHAR                                  NO-UNDO.
+    
+    RUN sistema/generico/procedures/b1wgen0052v.p PERSISTENT SET h-b1wgen0052v.
+				
+    RUN Produtos_Servicos_Ativos IN h-b1wgen0052v(   INPUT par_cdcooper,
+												     INPUT par_dtdemiss,
+													 INPUT par_cdagenci,
+													 INPUT par_nrdcaixa,
+													 INPUT par_cdoperad,
+													 INPUT par_nmdatela,
+													 INPUT par_idorigem,
+													 INPUT par_nrdconta,
+													 INPUT par_idseqttl,
+													 INPUT par_flgerlog,
+													 INPUT par_dtmvtolt,
+													OUTPUT aux_cdcritic,
+													OUTPUT aux_dscritic,
+													OUTPUT TABLE tt-prod_serv_ativos).
+													
+    IF  VALID-HANDLE( h-b1wgen0052v)  THEN
+        DELETE OBJECT  h-b1wgen0052v.
+
+    IF  RETURN-VALUE <> "OK"  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Erro ao verificar servicos ativos.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,           
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).           
+
+            RETURN "NOK".
+        END.
+										
+	 RETURN "OK".
+	 
+END PROCEDURE.										
 /*............................................................................*/
 

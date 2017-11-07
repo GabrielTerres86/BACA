@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 23/06/2017
   
    Dados referentes ao programa:
   
@@ -32,6 +32,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
+
+				 23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  				              "Desligamento por determinação do BACEN" 
+  							  ( Jonata - RKAM P364).
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -213,7 +217,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                inpessoa  crapass.inpessoa%TYPE,
                dssititg  VARCHAR2(100),
                qttitula  integer,
-               cdclcnae  crapass.cdclcnae%TYPE);
+               cdclcnae  crapass.cdclcnae%TYPE,
+               cdsitdct  crapass.cdsitdct%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
@@ -221,7 +226,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   TYPE typ_dssitdct IS VARRAY(9) OF VARCHAR2(50);
   vr_tab_dssitdct typ_dssitdct := typ_dssitdct( 'NORMAL','ENCERRADA P/ASSOCIADO','ENCERRADA P/COOP',
                                                 'ENCERRADA ~P/DEMISSAO','NAO APROVADA',
-                                                'NORMAL - SEM TALAO','','','ENCERRADA P/OUTRO MOTIVO');
+                                                'NORMAL - SEM TALAO','EM PROC. DEMISSAO','EM PROC. DEMISSAO - BACEN','ENCERRADA P/OUTRO MOTIVO');
     
 	TYPE typ_reg_cadrest IS
 				RECORD(nrdconta crapass.nrdconta%TYPE
@@ -448,7 +453,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                          ,pr_retxml   IN OUT NOCOPY XMLType       --> Arquivo de retorno do XML
                                          ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
                                          ,pr_des_erro OUT VARCHAR2);              --> Erros do processo                                    
-	
+
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa
@@ -561,7 +566,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);                --> Descricao da critica                                     
-                                     
+
   PROCEDURE pc_buscar_cnae_bloqueado(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
                                     ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
                                     ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
@@ -572,7 +577,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-                                    
+
   PROCEDURE pc_cria_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
                                      ,pr_dsmotivo   IN  tbcc_cnae_bloqueado.dsmotivo%TYPE
                                      ,pr_tpbloqueio IN  tbcc_cnae_bloqueado.tpbloqueio%TYPE
@@ -722,8 +727,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo      
-								
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                               
+                                     
   PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
                                       ,pr_cdcritic OUT INTEGER
@@ -756,7 +761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 23/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -791,14 +796,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                           Prj. 302 (Jean Michel).
   --
   --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
-  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).      
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
   --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  --
+  --               19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  --  				            "Desligamento por determinação do BACEN" 
+  --							( Jonata - RKAM P364).
   --
   --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --			                crapass, crapttl, crapjur 
   --						   (Adriano - P339).
-  ---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
 
   
@@ -2172,7 +2181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
      WHERE crapepr.cdcooper = pr_cdcooper
        AND crapepr.nrdconta = pr_nrdconta
        AND crapepr.inprejuz = 1;
-    
+       
     --> Buscar Rating efetivo 
     CURSOR cr_crapnrc (pr_cdcooper crapsld.cdcooper%TYPE,
                        pr_nrdconta crapsld.nrdconta%TYPE) IS 
@@ -2525,7 +2534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_ocorren(vr_idx).qtdevolu := vr_qtdevolu;
     pr_tab_ocorren(vr_idx).dtcnsspc := rw_crapass.dtcnsspc;
     pr_tab_ocorren(vr_idx).dtdsdsps := rw_crapass.dtdsdspc;
-    pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+       pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
     pr_tab_ocorren(vr_idx).dtdsdclq := rw_crapsld.dtdsdclq;
     pr_tab_ocorren(vr_idx).qtddtdev := rw_crapsld.qtddtdev;
     pr_tab_ocorren(vr_idx).flginadi := vr_flginadi;
@@ -3438,7 +3447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_crapsld;
     
     vr_qtddtdev := nvl(rw_crapsld.qtddtdev,0);
-    vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+      vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
     
     /* Data SFN */
     IF  nvl(rw_crapass.vledvmto,0) <> 0 THEN
@@ -4072,7 +4081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 12/04/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4108,13 +4117,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           PRJ-300 - Desconto de Cheque (Odirlei-AMcom) 
     --                          
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
-    --                           empréstimos, Prj. 302 (Jean Michel).
+    --                           empréstimos, Prj. 302 (Jean Michel).	
     --
     --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
     --                           PRJ-300 Desconto de Cheque (Daniel)
     --
     --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
     --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
+	--
+    --              23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+    --  				         "Desligamento por determinação do BACEN" 
+	--						    ( Jonata - RKAM P364).	
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
     --   
@@ -4139,7 +4152,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.nrdctitg,
              crapass.flgctitg,
              crapass.idimprtr,
-             crapass.idastcjt
+             crapass.idastcjt,
+             crapass.cdsitdct
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -4550,7 +4564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND snh.nrcpfcgc = pr_nrcpfcgc;
 
     rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;     
-      
+
     -- Cursor para buscar os bloqueios judiciais
     CURSOR cr_crapblj IS
       SELECT DISTINCT a.nrproces,
@@ -4652,6 +4666,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
 
+    --Em processo de Demissão 
+    IF rw_crapass.cdsitdct = 7 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Em processo de demissao.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+
+    END IF;
+
+	--Demissão BACEN
+    IF rw_crapass.cdsitdct = 8 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Em processo de demissao BACEN.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+
+    END IF;
+    
     --> Transferencia e Duplicacao de Matricula
     OPEN cr_craptrf;
     FETCH cr_craptrf INTO rw_craptrf;
@@ -4848,7 +4876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;                           
     END IF;
     CLOSE cr_craplim;
-        
+
     --> Tabela de limite de desconto de cheques
     vr_dstextab := tabe0001.fn_busca_dstextab ( pr_cdcooper => pr_cdcooper 
                                                ,pr_nmsistem => 'CRED'
@@ -4884,7 +4912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-      END IF;        
+    END IF;
     
     END IF;
     CLOSE cr_craprli;
@@ -5518,7 +5546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
     END LOOP;
-    
+	
     --> Procedimento para buscar dados do credito pré-aprovado (crapcpa)
     EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
                                 ,pr_cdagenci  => pr_cdagenci   --> Código da agencia
@@ -5539,17 +5567,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
       IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
-      --> Incluir na temptable
+        --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
                             ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-       
+    
       ELSE
-        --> Incluir na temptable
-      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    END IF;   
-    END IF;
+          --> Incluir na temptable
+          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+        END IF;
+      END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
@@ -5719,7 +5747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_tab_mensagens.COUNT > 0 THEN
       FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END LOOP; 
     END IF;
     
@@ -5776,7 +5804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 01/12/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -5790,6 +5818,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                     crapass, crapttl, crapjur 
 							    (Adriano - P339).
+
+					23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  				                 "Desligamento por determinação do BACEN" 
+							     ( Jonata - RKAM P364).	
+
                     20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
                                  PRJ339 - CRM(Odirlei-AMcom) 
 
@@ -5938,6 +5971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                                      pr_cdbcochq => rw_crapass.cdbcochq ); --> Banco para emissao de cheques do cooperado.
     
     pr_tab_cabec(vr_idxcab).dssitdct := fn_dssitdct(pr_cdsitdct => rw_crapass.cdsitdct);  --> Codigo da situacao da conta;
+    pr_tab_cabec(vr_idxcab).cdsitdct := rw_crapass.cdsitdct; 
     pr_tab_cabec(vr_idxcab).cdempres := vr_cdempres;
     pr_tab_cabec(vr_idxcab).cdturnos := nvl(vr_cdturnos,0);
     pr_tab_cabec(vr_idxcab).cdtipsfx := rw_crapass.cdtipsfx;
@@ -6022,7 +6056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --   Objetivo  : Procedure para carregar dos dados para a tela ATENDA
     --
     --  Alteração : 23/10/2015 - Conversão Progress -> Oracle (Odirlei)
-    --
+    --              
     --              23/03/2015 - Adicionar novos parametros na chamada da
     --                           EXTR0002.pc_consulta_lancamento - Melhoria 157 (Lucas Ranghetti)
 
@@ -6038,6 +6072,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              23/06/2016 - P333.1 - Alteração no retorno de valor do seguro por quantidade 
     --                           (Marcos-Supero)
+    -- 
+    --              09/08/2017 - P364 - Alteração na regra de busca do valor de saldo deposito a vista,
+    --                                  irá buscar da LCM pelo LOTE, caso seja maior que 0 irá exibir 
+    --                                  o valor retornado (Mateus Zimmermann-MoutS)                         
     -- 
     -- ..........................................................................*/
     
@@ -6072,6 +6110,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND flgsituacao = 1
          AND dtcancelamento IS NULL;
     rw_pacotes_tarifas cr_pacotes_tarifas%ROWTYPE;
+    
+    CURSOR cr_craplcm (pr_cdcooper craplcm.cdcooper%TYPE,
+                       pr_nrdconta craplcm.nrdconta%TYPE) IS
+      SELECT decode(l.nrdolote,600041,l.vllanmto,0) - decode(l.nrdolote,600042,l.vllanmto,0) vl_deposito_vista
+        FROM craplcm l
+       WHERE l.cdcooper = pr_cdcooper
+        AND  l.nrdconta = pr_nrdconta
+        AND l.nrdolote in (600041,600042);
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
@@ -6142,6 +6188,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_flgbloqt     INTEGER  := 0;	
     vr_tab_cpt      CLOB;
     vr_idxval       PLS_INTEGER;
+    vr_valor_deposito_vista NUMBER := 0;
+    
     
     BEGIN
     -- Atribuir numero de conta 
@@ -6790,7 +6838,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     OPEN cr_limite_saque;
     FETCH cr_limite_saque INTO vr_vllimite_saque;
     CLOSE cr_limite_saque;
-
+    
+    /*Busca o valor de saldo de deposito a vista da LCM pelo LOTE e verifica se é maior que 0*/
+    OPEN cr_craplcm (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => vr_nrdconta);
+    FETCH cr_craplcm INTO vr_valor_deposito_vista;
+    
+    IF cr_craplcm%FOUND THEN
+			IF vr_valor_deposito_vista > 0 THEN
+         vr_vlstotal := vr_valor_deposito_vista;
+      END IF;
+		END IF;
+    
+    CLOSE cr_craplcm;
+    
     --> Cria TEMP-TABLE com valores referente a conta
     vr_idxval := pr_tab_valores_conta.count + 1;
     
@@ -6949,7 +7010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 29/08/2016
+       Data    : Outubro/2015.                         Ultima atualizacao: 23/06/2017
 
        Dados referentes ao programa:
 
@@ -6970,6 +7031,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                    29/08/2016 - Ajustado para adicionar os atributos flconven e dscritic
                                 na tag Anotacoes quando a conta nao possui observações
                                 (Douglas - Chamado 513666)
+                  
+	               23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  				                "Desligamento por determinação do BACEN" 
+							   ( Jonata - RKAM P364).	
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -7114,6 +7179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<dssititg>'|| vr_tab_cabec(i).dssititg      ||'</dssititg>'||
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
+                        '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
                         '</Registro>');
       
       END LOOP;
@@ -7257,7 +7323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Erro não tratado na pc_carrega_dados_atenda_web ' ||
                      SQLERRM;
   END pc_carrega_dados_atenda_web;  
-	
+
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa
@@ -8608,9 +8674,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_nmdcampo => 'Valor do lancamento'
                                  ,pr_dsdadant => ' '
                                  ,pr_dsdadatu => to_char(pr_vllanmto,'fm999g999g990d00'));
+        END IF;
       END IF;
-      END IF;
-      
+
       -- Se possuir banco de destino
       IF nvl(pr_cdbccrcb,0) > 0 THEN
         -- Busca o banco de destino

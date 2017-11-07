@@ -6,6 +6,8 @@
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
  * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+
+				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
  * --------------
  */
 ?>
@@ -33,7 +35,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="matric.js"></script>
+		<script type="text/javascript" src="matric.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -94,6 +96,12 @@
 																		
 																		<div id="divMatric">
 																			<? include('form_cabecalho.php'); ?>
+																			<? include('form_filtro.php'); ?>
+																			
+																			<div id="divConteudoMatric"></div>												
+																			
+																			<div id="divContasDemitidas"></div>
+																			
 																		</div>
 																		
 																	</td>

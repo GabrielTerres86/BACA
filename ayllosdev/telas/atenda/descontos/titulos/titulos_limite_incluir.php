@@ -12,6 +12,7 @@
  * 002: [21/05/2015] Reinert   		 (CECRED) : Alterado para apresentar mensagem ao realizar inclusao
  *								          		de proposta de novo limite de desconto de titulo para
  *									      		menores nao emancipados.
+ * 003: [26/06/2017] Jonata             (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  */
 ?>
 
