@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 27/09/2017
+    Data    : Maio/2011               Ultima Atualizacao: 25/06/2015
     
     Dados referentes ao programa:
     
@@ -102,10 +102,6 @@
 				07/04/2017 - Passar o tipo de emprestimo fixo como 1-PP na chamada da 
 				             rotina pc_calcula_iof_epr, pois todas as simulações são 
 							 empréstimos PP  ( Renato Darosci )
-
-				27/09/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts)
-
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -239,8 +235,7 @@ PROCEDURE busca_dados_simulacao:
                     tt-crapsim.nrdialib = 
                                    fnRetornaDiasUteis(par_cdcooper,
                                                       tt-crapsim.dtmvtolt,
-                                                      tt-crapsim.dtlibera)
-                    tt-crapsim.idfiniof = crapsim.idfiniof.
+                                                      tt-crapsim.dtlibera).
              FIND crapass OF crapsim NO-LOCK NO-ERROR.
              IF   AVAIL crapass   THEN
                   ASSIGN tt-crapsim.cdagenci = crapass.cdagenci.
@@ -536,7 +531,6 @@ PROCEDURE grava_simulacao:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.  
     DEF  INPUT PARAM par_percetop AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nrgravad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_txcetano AS DECI                           NO-UNDO.
@@ -809,8 +803,7 @@ PROCEDURE grava_simulacao:
            crapsim.percetop = aux_txcetano
            crapsim.cdoperad = par_cdoperad
            crapsim.vlajuepr = var_vlajuepr
-           crapsim.cdfinemp = par_cdfinemp
-           crapsim.idfiniof = par_idfiniof.
+           crapsim.cdfinemp = par_cdfinemp.
 
     VALIDATE crapsim.
 
@@ -1686,7 +1679,7 @@ PROCEDURE consulta_iof:
     DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
     DEF INPUT        PARAM par_nrdconta AS INTE                     NO-UNDO.
     DEF INPUT        PARAM par_dtdpagto AS DATE                     NO-UNDO.
-    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.
+    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.        
     DEF INPUT        PARAM par_cdlcremp AS INTEGER                  NO-UNDO.
     DEF INPUT        PARAM par_vlpreemp AS DECI                     NO-UNDO.
     DEF INPUT        PARAM par_dtlibera AS DATE                     NO-UNDO.
@@ -1717,7 +1710,7 @@ PROCEDURE consulta_iof:
                                           INPUT par_vlemprst,
                                           INPUT par_dtdpagto,
                                           INPUT par_dtlibera,
-                                          INPUT 1, /* tpemprst -> 1-PP */
+										  INPUT 1, /* tpemprst -> 1-PP */
                                          OUTPUT 0,
                                          OUTPUT "").
     

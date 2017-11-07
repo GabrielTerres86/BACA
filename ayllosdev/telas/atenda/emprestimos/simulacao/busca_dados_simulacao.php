@@ -73,10 +73,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#percetop","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
 				    $("#flgpagto","#frmNovaProp").val("no");';
     } else {
-        $idfiniof = getByTagName($dados_simulacao[0]->tags, 'idfiniof');
-        if ($idfiniof == ""){
-            $idfiniof = "1";
-        }
         $retorno = '$("#vlemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#qtparepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'qtparepr') . '");
 					$("#cdlcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdlcremp') . '");
@@ -86,7 +82,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#percetop","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
 					$("#cdfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
                     $("#dsfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
-                    $("#idfiniof","#frmSimulacao").val("' . $idfiniof . '");
                     $("#frmSimulacao #cdmodali option").each(function() {
                         if ("' . getByTagName($dados_simulacao[0]->tags, 'cdmodali') . '" == $(this).val()) {
                             $(this).attr("selected", "selected");

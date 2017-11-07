@@ -6,9 +6,8 @@
  * DATA CRIAÇÃO : 27/06/2011
  * OBJETIVO     : Executa os processos da rotina filha de Simulações da rotina de Empréstimos 
 
-  ALTERACOES   :  04/08/2014 -  Ajustes referentes ao projeto CET (Lucas R./Gielow)
+  ALTERACOES   : 04/08/2014 -  Ajustes referentes ao projeto CET (Lucas R./Gielow)
  *                30/06/2015 - Ajustes referentes Projeto 215 - DV 3 (Daniel)
- *                20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * */
 
 session_start();
@@ -30,7 +29,6 @@ $dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
 $dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
 $percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : '';
 $cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
-$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 $cddopcao = (($operacao == "A_SIMULACAO") ? "A" : "I");
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
@@ -64,7 +62,6 @@ $xml.= "		<dtlibera>" . $dtlibera . "</dtlibera>";
 $xml.= "		<dtdpagto>" . $dtdpagto . "</dtdpagto>";
 $xml.= "        <percetop>" . $percetop . "</percetop>";
 $xml.= "        <cdfinemp>" . $cdfinemp . "</cdfinemp>";
-$xml.= "        <idfiniof>" . $idfiniof . "</idfiniof>";
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 

@@ -9,8 +9,9 @@ ALTERACOES     : 30/03/2012 - Incluir campo %CET (Gabriel).
                  05/09/2012 - Mudar para layout padrao (Gabriel)	 
                  04/08/2014 - Ajustes referentes ao projeto CET (Lucas R./Gielow)
                  30/06/2015 - Ajustes referentes Projeto 215 DV 3 (Daniel)
-                 20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
-*/
+
+
+*/	
 
 $retorno = array();
 
@@ -30,7 +31,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
     }
     echo "<script>";
     exibirErro('error', $msgErro, 'Alerta - Ayllos', '', false);
-    echo "</script>";
+    echo "</script>";    
 } else {
     $registros = $xmlObj->roottag->tags;
 }
@@ -50,7 +51,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="dsfinemp" id="dsfinemp" type="text" value="" />
             <input name="tpfinali" id="tpfinali" type="hidden" value="" />
             <br />
-
+            
             <label for="cdmodali">Modalidade:</label>
             <select name="cdmodali" id="cdmodali" class="campo" >
                 <option value="0">Selecione uma modalidade</option>
@@ -58,7 +59,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                 foreach ($registros as $registro) {
                     echo '<option value="' . $registro->tags[0]->cdata . '" >' . str_replace('?', "-", $registro->tags[1]->cdata) . '</option>';
                 }
-                ?>
+                ?>                
             </select>
             <br />
 
@@ -81,26 +82,19 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="dtdpagto" id="dtdpagto" type="text" value="" />
             <br />
 
-            <label for="idfiniof">Financiar IOF e Tarifa:</label>
-            <select name="idfiniof" id="idfiniof" class="campo" >
-                <option value="1" selected="selected">Sim</option>
-                <option value="0">N&atilde;o</option>
-            </select>
-            <br />
-
             <label for="percetop"> <? echo utf8ToHtml('CET(%a.a.):') ?> </label>
             <input name="percetop" id="percetop" type="text" value="" />
-            			
+
         </fieldset>
     </form>
     <div id="divProcParcelasTabela" style="display:none">
-        <div class="divRegistros">
+        <div class="divRegistros">	
             <table>
                 <thead>
                     <tr><th>Sequencial</th>
                         <th>Data Vencimento</th>
                         <th>Valor</th>
-                </thead>
+                </thead>		
                 <tbody id="tBodyParcelas">
 
                 </tbody>

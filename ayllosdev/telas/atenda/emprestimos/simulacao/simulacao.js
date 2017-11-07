@@ -14,7 +14,6 @@
  * 005: [21/11/2012] Arrumar listagem das prestacoes ao incluir/alterar no firefox e deixar de esconder a msg de aguarde quando sao chamadas duas procedures (Gabriel)
  * 006: [04/08/2014] Ajustes referentes ao projeto CET (Lucas R./Gielow)
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
- * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  */
 
 //******************************
@@ -30,7 +29,7 @@ var aux_cdmodali_simulacao = '';
 //Controla as operações da descrição de simulações
 function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
     var aux_tpfinali = 0;
-
+		
     if (operacao == 'A_SIMULACAO' || operacao == 'E_SIMULACAO' || operacao == 'C_SIMULACAO' || operacao == 'IMP_SIMULACAO' || operacao == 'GPR') {
 
         indarray = '';
@@ -221,11 +220,11 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
 		//consiste simulacao de portabilidade para PJ
 		cCdmodali.unbind('change').bind('change', function() {
 			if ( $.trim(inpessoa) == 2 ) {
-				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');
+				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');	
 				cCdmodali.val('0');
 			}
-		});
-
+		});	
+	
         // Se inclusão, limpar dados do formulário
         if (operacao == 'I_SIMULACAO') {
             $('#frmSimulacao').limpaFormulario();
@@ -254,7 +253,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
         });
 
         // Formata o tamanho do Formulário
-        $('#divProcSimulacoesFormulario').css({'height': '385px', 'width': '560px'});
+        $('#divProcSimulacoesFormulario').css({'height': '260px', 'width': '560px'});
 
         // Adicionando as classes
         cTodos.removeClass('campoErro').habilitaCampo();
@@ -293,7 +292,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     } else {
         $('#btContinuar', '#divProcSimulacoesTabela').focus();
     }
-
+    
     bloqueiaFundo($('#divUsoGenerico'));
     return false;
 }
@@ -320,18 +319,18 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
         },
         success: function(response) {
             try {
-
+				
 				if ( tela != '') {
 					$('#divConteudoOpcao').html(tela);
-				}
-
+				}		
+				
                 eval(response);
                 hideMsgAguardo();
                 if (operacao == 'GPR' || operacao == 'TI')
                     bloqueiaFundo($('#divRotina'));
                 else
                     bloqueiaFundo($('#divUsoGenerico'));
-
+					
             } catch (error) {
                 hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -353,19 +352,18 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     // Campos de uso da PORTABILIDADE
     var tpfinali = $("#tpfinali", "#divProcSimulacoesFormulario").val();
     var cdmodali = $("#cdmodali option:selected", "#divProcSimulacoesFormulario").val();
-    var idfiniof = $("#idfiniof option:selected", "#divProcSimulacoesFormulario").val();
-
+	
     if ( tpfinali == 2 && cdmodali == 0 ) {
-        showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");        
         return false;
     }
 
-
+	
 	if ( dtlibera == "" ) {
 		 showError('error', 'Data de Liberação deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
 		return false;
 	}
-
+	
 	if ( dtdpagto == "" ) {
 		 showError('error', 'Data do Pagamento da Primeira Parcela deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtdpagto\',\'frmSimulacao\')');
 		return false;
@@ -391,7 +389,6 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
             nrsimula: nrsimula,
             percetop: percetop,
             cdfinemp: cdfinemp,
-            idfiniof: idfiniof,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {

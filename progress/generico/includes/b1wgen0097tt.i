@@ -25,8 +25,7 @@ DEF TEMP-TABLE tt-crapsim LIKE crapsim
     FIELD dsfinemp AS CHAR
     FIELD cdmodali AS CHAR
     FIELD dsmodali AS CHAR
-    FIELD tpfinali AS INTE
-    FIELD idfiniof AS INTE.
+    FIELD tpfinali AS INTE.
 
 DEF TEMP-TABLE tt-crapfer LIKE crapfer.
 

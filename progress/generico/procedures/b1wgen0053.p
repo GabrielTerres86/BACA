@@ -30,8 +30,8 @@
 				             licença (Tiago/Thiago).
                      
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                             nome fantasia para o CDC. (Reinert Prj 289) 
-
+                             nome fantasia para o CDC. (Reinert Prj 289)                                       
+                   
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		                  		  
                  
@@ -141,7 +141,7 @@ PROCEDURE busca_dados:
             tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
 			tt-dados-jur.dtvallic = bcrapjur.dtvallic
 			tt-dados-jur.nmctajur = UPPER(bcrapjur.nmctajur).
-			
+
 
         /* Situacao do CPF/CNPJ */
         CASE tt-dados-jur.cdsitcpf:
@@ -316,8 +316,8 @@ PROCEDURE valida_dados:
               IF  par_dtvallic = ? THEN				
                   DO:
                     ASSIGN aux_dscritic = "Data de Validade da Licenca deve ser informada." .
-					LEAVE Valida.
-				  END.
+        LEAVE Valida.
+    END.
 
             END.
 		/* Nome Fantasia */
@@ -325,7 +325,7 @@ PROCEDURE valida_dados:
             DO:
                 ASSIGN aux_dscritic = "Nome da Conta deve ser informado." .
                 LEAVE Valida.
-            END.
+    END.
     END.
     
     IF  VALID-HANDLE(h-b1wgen0060) THEN
@@ -386,7 +386,6 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_idregtrb AS INTE                           NO-UNDO.
 	DEF  INPUT PARAM par_nmctajur AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
@@ -573,7 +572,6 @@ PROCEDURE grava_dados:
               crapjur.cdseteco = par_cdseteco
               crapjur.nrlicamb = par_nrlicamb 
 			  crapjur.dtvallic = par_dtvallic
-              crapjur.idregtrb = par_idregtrb	
 			  crapjur.nmctajur = par_nmctajur NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
