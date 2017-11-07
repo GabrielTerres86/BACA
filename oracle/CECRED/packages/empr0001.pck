@@ -40,7 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
   --                          Heitor (Mouts) - Chamado 718395
   --															
-  --             19/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
+  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
   --            
   ---------------------------------------------------------------------------------------------------------------
 
@@ -7978,7 +7978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          WHERE ass.cdcooper = pr_cdcooper
                AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
-    
+
 	  CURSOR cr_crapdpb IS
         select nvl(sum(c.vllanmto),0)
           from craphis x
