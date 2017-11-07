@@ -40,8 +40,6 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
   --                          Heitor (Mouts) - Chamado 718395
   --															
-  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
-  --            
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -881,9 +879,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
   --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
 
-  --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
-  --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
-  --
   --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
   --                          "Valor informado para pagamento maior que valor da parcela" informar
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
@@ -4438,7 +4433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 19/10/2017
+       Data    : Abril/2013.                         Ultima atualizacao: 06/10/2017
     
        Dados referentes ao programa:
     
@@ -4497,8 +4492,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)		 
 
-                    19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
-
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4549,7 +4542,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vlpgjmpr
               ,cdorigem
               ,qtimpctr
-			  ,vliofcpl
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5256,7 +5248,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
         
-          pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
@@ -6043,7 +6034,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qtdiaatr>' || vr_qtdiaatr || '</qtdiaatr>' ||
                         '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
-                        '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
                       '</inf>' );
 
       -- buscar proximo
