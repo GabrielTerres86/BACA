@@ -25,9 +25,6 @@
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)
 
-                02/10/2017 - Incluido campo idregtrb na tt-cabec 
-				            (Projeto 410 - RF 2 e 3 - Diogo - Mouts)							 
-
 				17/10/2017 - Adicionando a informacao nmctajur no cabecalho 
 				             da tela contas (Kelvin - PRJ339).
 ..............................................................................*/
@@ -54,7 +51,6 @@ DEFINE TEMP-TABLE tt-cabec NO-UNDO
     FIELD nmfansia AS CHAR
     FIELD dtnasttl AS DATE
     FIELD inhabmen AS INT
-	FIELD idregtrb AS INT
 	FIELD nmctajur AS crapjur.nmctajur.
 
 DEFINE TEMP-TABLE tt-dados-ass NO-UNDO

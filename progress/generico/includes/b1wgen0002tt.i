@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 06/10/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -171,10 +171,7 @@
 			               (Projeto Esteira de Credito - Daniel/Oscar) 	
                            
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
-                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).    
-
-              20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
-                           tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
+                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
                            
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -278,8 +275,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD liquidia AS INTE
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
-    FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
-	FIELD vliofcpl LIKE crapepr.vliofcpl.
+    FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -357,11 +353,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD insitapr LIKE crawepr.insitapr
     FIELD err_efet AS INTE
 	FIELD dssitest AS CHAR
-	FIELD dssitapr AS CHAR
-    FIELD idfiniof AS INTE
-    FIELD vliofepr LIKE crapepr.vliofepr
-    FIELD vlrtarif AS DECI
-    FIELD vlrtotal AS DECI.
+	FIELD dssitapr AS CHAR.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

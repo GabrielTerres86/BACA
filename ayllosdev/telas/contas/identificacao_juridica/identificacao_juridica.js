@@ -162,7 +162,7 @@ function manterRotina(operacao) {
 	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
 	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
 	nmctajur = removeCaracteresInvalidos($('#nmctajur', '#frmDadosIdentJuridica').val());
-	
+
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -201,7 +201,7 @@ function controlaLayout(operacao) {
 
 	// Controla a altura da tela
 	divRotina.css('width','552px');	
-	/*$('#divConteudoOpcao').css('height','322px');*/
+	$('#divConteudoOpcao').css('height','322px');
 
 	// Razão Social / Tipo Natureza / CNPJ
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	

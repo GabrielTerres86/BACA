@@ -104,7 +104,7 @@
 							 empréstimos PP  ( Renato Darosci )
 
 				27/09/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts) e valor total da simulação
+                            financiamento do IOF (Diogo - Mouts)
 
 ............................................................................*/
 
@@ -257,8 +257,7 @@ PROCEDURE busca_dados_simulacao:
              IF   AVAIL crapfin   THEN
                   ASSIGN tt-crapsim.dsfinemp = crapfin.dsfinemp.
 
-             ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlemprst + tt-crapsim.vliofepr + tt-crapsim.vlrtarif.
-
+             
              IF (AVAIL crapfin) AND (AVAIL craplcr) THEN
              DO:
                 /* guarda o tipo da finalidade */

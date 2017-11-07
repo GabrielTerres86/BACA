@@ -145,11 +145,6 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     var cPercetop = $('#percetop', '#frmSimulacao');
     var cCdmodali = $('#cdmodali', '#frmSimulacao');
 
-    //Diogo
-    var cValorIof = $('#vliofepr', '#frmSimulacao');
-    var cValorTarifa = $('#vlrtarif', '#frmSimulacao');
-    var cValorTotal = $('#vlrtotal', '#frmSimulacao');
-
     var cFinalidade = $('#cdfinemp', '#frmSimulacao');
     var cDescFinali = $('#dsfinemp', '#frmSimulacao');
 
@@ -168,10 +163,6 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     cDescFinali.css('width', '230px').desabilitaCampo();
     cCdmodali.css('width', '288px').desabilitaCampo();
 
-    //Diogo
-    cValorIof.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
-    cValorTarifa.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
-    cValorTotal.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
 
     if (operacao == 'C_SIMULACAO' || operacao == "E_SIMULACAO") {
         $('#divProcSimulacoesTabela').css('display', 'none');
@@ -363,7 +354,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     var tpfinali = $("#tpfinali", "#divProcSimulacoesFormulario").val();
     var cdmodali = $("#cdmodali option:selected", "#divProcSimulacoesFormulario").val();
     var idfiniof = $("#idfiniof option:selected", "#divProcSimulacoesFormulario").val();
-    
+
     if ( tpfinali == 2 && cdmodali == 0 ) {
         showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
@@ -482,7 +473,8 @@ function carregarImpressaoSimulacao(nrsimula) {
 }
 
 function ajustaTela() {
-    $('#divProcSimulacoesFormulario').css({'height': '545px'});
+
+    $('#divProcSimulacoesFormulario').css({'height': '435px'});
     return false;
 }
 

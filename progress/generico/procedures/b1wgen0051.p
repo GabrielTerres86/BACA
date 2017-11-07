@@ -17,9 +17,6 @@
                 22/02/2013 - Incluido a chamada da procedure bloqueio_prova_vida
                              dentro da procedure obtem-cabecalho (Adriano).
    
-                02/10/2017 - Incluido campo idregtrb na tt-cabec 
-                             (Projeto 410 - Diogo - Mouts)
-								
 				17/10/2017 - Adicionando a informacao nmctajur no cabecalho 
 				             da tela contas (Kelvin - PRJ339).
 
@@ -313,7 +310,7 @@ PROCEDURE obtem-cabecalho:
 
             END.
             OTHERWISE DO:
-                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia idregtrb nmctajur)
+                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia nmctajur)
                                   WHERE crapjur.cdcooper = crapass.cdcooper AND
                                         crapjur.nrdconta = crapass.nrdconta 
                                         NO-LOCK:
@@ -402,10 +399,6 @@ PROCEDURE obtem-cabecalho:
                                    ?
             tt-cabec.inhabmen = IF AVAIL crapttl THEN 
                                    crapttl.inhabmen 
-                                ELSE 
-                                   0 
-            tt-cabec.idregtrb = IF AVAIL crapjur THEN 
-                                   crapjur.idregtrb
                                 ELSE 
                                    0 
 			tt-cabec.nmctajur = IF AVAIL crapjur THEN 
@@ -654,7 +647,7 @@ FUNCTION BuscaSitConta RETURNS CHARACTER
             ELSE
             IF par_cdsitdct = 6
                THEN "NORMAL - SEM TALAO"
-			ELSE
+            ELSE
             IF par_cdsitdct = 7
                THEN "EM PROC. DEMISSAO"
 			ELSE

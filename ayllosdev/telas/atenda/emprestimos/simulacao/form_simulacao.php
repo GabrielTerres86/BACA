@@ -90,19 +90,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
 
             <label for="percetop"> <? echo utf8ToHtml('CET(%a.a.):') ?> </label>
             <input name="percetop" id="percetop" type="text" value="" />
-            <br />
-
-            <label for="vliofepr">IOF:</label>
-            <input name="vliofepr" id="vliofepr" type="text" value=""/>
-            <br/>
-
-            <label for="vlrtarif">Tarifa:</label>
-            <input name="vlrtarif" id="vlrtarif" type="text" value=""/>
-            <br/>
-
-            <label for="vlrtotal">Valor Total:</label>
-            <input name="vlrtotal" id="vlrtotal" type="text" value=""/>
-
+            			
         </fieldset>
     </form>
     <div id="divProcParcelasTabela" style="display:none">
