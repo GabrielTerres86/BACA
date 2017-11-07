@@ -50,8 +50,8 @@
               </tr>
               <tr>
                 <td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-                  <a href="#" class="botao" style="margin: 7px;" id="btDocCadastrais" onclick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Cliente/ViewerExterno.aspx?pkey=1DoiO&CPF/CNPJ=<? echo $_POST['nrcpfcgc']?>','_blank');">Documentos Cadastrais</a>
-                  <a href="#" class="botao" style="margin: 7px;" id="btDocContas" onclick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Cliente/ViewerExterno.aspx?pkey=ExnAE&CONTA=<? echo str_replace("-",".",formataContaDV($_POST['nrdconta']));?>&COOPERATIVA=<? echo $glbvars['cdcooper']; ?>','_blank');">Documentos de Contas</a>
+                  <a href="#" class="botao" style="margin: 7px;" id="btDocCadastrais" onclick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Cliente/ViewerExterno.aspx?pkey=G7o9A&CPF/CNPJ=<? echo $_POST['nrcpfcgc']?>','_blank');">Documentos Cadastrais</a>
+                  <a href="#" class="botao" style="margin: 7px;" id="btDocContas" onclick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Cliente/ViewerExterno.aspx?pkey=9lODJ&CONTA=<? echo str_replace("-",".",formataContaDV($_POST['nrdconta']));?>&COOPERATIVA=<? echo $glbvars['cdcooper']; ?>','_blank');">Documentos de Contas</a>
                 </td>
               </tr>
             </table>
