@@ -674,7 +674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 04/08/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 18/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -751,7 +751,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
   --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
-  --                          esteja cadastrado na cooperativa. (Kelvin)
+  --                          esteja cadastrado na cooperativa. (Kelvin)  
+  --
+  --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
+  --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -5152,14 +5155,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          Sistema : Rotinas para cadastros
          Sigla   : CRED
          Autor   : Tiago Castro (RKAM)
-         Data    : Julho/2015.                         Ultima atualizacao:
+         Data    : Julho/2015.                         Ultima atualizacao: 18/10/2017
 
          Dados referentes ao programa:
 
          Frequencia: Sempre que for chamado.
          Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
 
-         Alteracoes:
+         Alteracoes:	18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
+                                     rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
 
       ............................................................................. */
 
@@ -5292,7 +5296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND craplcm.cdcooper = pr_cdcooper
          AND craplcm.nrdconta = pr_nrdconta
          AND INSTR(pr_cdhistor,';'||craplcm.cdhistor||';') > 0;
-    rw_craplcm cr_craplcm%ROWTYPE;
+    rw_craplcm_cred cr_craplcm%ROWTYPE;
+    rw_craplcm_debi cr_craplcm%ROWTYPE;    
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -5306,7 +5311,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-    vr_cdhistor crapprm.dsvlrprm%TYPE;
+    vr_cdhistor_cred crapprm.dsvlrprm%TYPE;
+    vr_cdhistor_debi crapprm.dsvlrprm%TYPE;
     
     -- Variaveis gerais
     vr_dtinicio DATE;
@@ -5335,10 +5341,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       RAISE vr_exc_saida;
     END IF;
 
-    vr_cdhistor := gene0001.fn_param_sistema(pr_cdcooper => vr_cdcooper,
+    -- historicos de creditos
+    vr_cdhistor_cred := gene0001.fn_param_sistema(pr_cdcooper => vr_cdcooper,
                                              pr_nmsistem => 'CRED',
                                              pr_cdacesso => 'HIS_CRED_RECEBIDOS');
 
+	  -- historicos de debito (estorno)
+    vr_cdhistor_debi := gene0001.fn_param_sistema(pr_cdcooper => vr_cdcooper,
+                                             pr_nmsistem => 'CRED',
+                                             pr_cdacesso => 'HIS_DEB_DESCONTADOS');
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(vr_cdcooper);
 
@@ -5361,25 +5372,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     -- Efetua loop sobre os meses de busca
     FOR x IN 1..6 LOOP
 
-      -- Busca o valor do do mes solicitado
+      -- Busca o valor de credito do mes solicitado
       OPEN cr_craplcm(pr_dtinicio => vr_dtinicio
                      ,pr_dtfim    => LAST_DAY(vr_dtinicio)
                      ,pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
-                     ,pr_cdhistor => vr_cdhistor);
+                     ,pr_cdhistor => vr_cdhistor_cred);
 
-      FETCH cr_craplcm INTO rw_craplcm;
+      FETCH cr_craplcm INTO rw_craplcm_cred;
 
       CLOSE cr_craplcm;
 
+      -- Busca o valor de debito do mes solicitado
+      OPEN cr_craplcm(pr_dtinicio => vr_dtinicio
+                     ,pr_dtfim    => LAST_DAY(vr_dtinicio)
+                     ,pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_cdhistor => vr_cdhistor_debi);
+
+      FETCH cr_craplcm INTO rw_craplcm_debi;
+
+      CLOSE cr_craplcm;
+
+
       -- Efetua a somatoria do trimestre
       IF x BETWEEN 4 AND 6 THEN
-        vr_vltrimestre := NVL(vr_vltrimestre,0) + NVL(rw_craplcm.valor,0);
+        vr_vltrimestre := NVL(vr_vltrimestre,0) + (NVL(rw_craplcm_cred.valor,0) - NVL(rw_craplcm_debi.valor,0));
       END IF;
 
       -- Efetua a somatoria do semestre
       IF x <= 6 THEN
-        vr_vlsemestre := NVL(vr_vlsemestre,0) + NVL(rw_craplcm.valor,0);
+        vr_vlsemestre := NVL(vr_vlsemestre,0) + (NVL(rw_craplcm_cred.valor,0) - NVL(rw_craplcm_debi.valor,0));
       END IF;
 
       -- Carrega os dados
@@ -5387,7 +5410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<inf>'||
                                                       '<mes_' || x || '>' || TO_CHAR(vr_dtinicio,'Mon/yyyy','nls_date_language=portuguese') ||'</mes_' || x || '>'||
-                                                      '<valor_' || x || '>' || TO_CHAR(rw_craplcm.valor) ||'</valor_' || x || '>'||
+                                                      '<valor_' || x || '>' || TO_CHAR((NVL(rw_craplcm_cred.valor,0) - NVL(rw_craplcm_debi.valor,0))) ||'</valor_' || x || '>'||
                                                    '</inf>');
 
       -- Incrementa o mês
