@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="786"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[*/dados/rejeitados/rejeitado]]>
+	</queryString>
+	<field name="nrremret" class="java.lang.String">
+		<fieldDescription><![CDATA[nrremret]]></fieldDescription>
+	</field>
+	<field name="cdbanco" class="java.lang.String">
+		<fieldDescription><![CDATA[cdbanco]]></fieldDescription>
+	</field>
+	<field name="dhdgerac_rem" class="java.lang.String">
+		<fieldDescription><![CDATA[dhdgerac_rem]]></fieldDescription>
+	</field>
+	<field name="dtparadebito" class="java.lang.String">
+		<fieldDescription><![CDATA[dtparadebito]]></fieldDescription>
+	</field>
+	<field name="nmcedent" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcedent]]></fieldDescription>
+	</field>
+	<field name="dsnosnum" class="java.lang.String">
+		<fieldDescription><![CDATA[dsnosnum]]></fieldDescription>
+	</field>
+	<field name="dscodbar" class="java.lang.String">
+		<fieldDescription><![CDATA[dscodbar]]></fieldDescription>
+	</field>
+	<field name="vltitulo" class="java.lang.String">
+		<fieldDescription><![CDATA[vltitulo]]></fieldDescription>
+	</field>
+	<field name="dsocorre_urp" class="java.lang.String">
+		<fieldDescription><![CDATA[dsocorre_urp]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="24">
+			<staticText>
+				<reportElement uuid="f2081a52-b1e5-4bbd-9806-85bbefa63a72" x="11" y="0" width="51" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Rejeitados]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="089e12cd-ad9c-4d70-8435-86075413b877" x="2" y="16" width="50" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nº Remessa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="33bfdac3-cc82-4fcf-9620-7230e3b6e834" x="55" y="16" width="43" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Banco]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="d1bf338a-5fd7-49c0-a882-260233cf341d" x="101" y="16" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Data de envio]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="fef0f04f-9df9-429c-bfcb-ae6a458c9e7f" x="150" y="16" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vencimento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="a1c67211-df81-4a50-96fa-eca70534d4e8" x="199" y="16" width="55" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Valor do boleto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="bc14793b-cb1b-43c9-8e15-7f5e03fb0723" x="256" y="16" width="186" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Beneficiário]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="a86f2dd0-9a19-436a-a04d-45e934079527" x="444" y="16" width="209" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Código de barras]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="a4baf963-33d6-4ec0-8a28-4743acbf9e1c" x="655" y="16" width="187" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Motivo da rejeição]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="a36ac4c7-1a5f-42fd-b003-1e14590b9c51" x="2" y="0" width="50" height="8"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrremret}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="4045deeb-9567-46b4-add8-fc6ec03eab8a" x="55" y="0" width="43" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdbanco}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="3712abd8-067d-4929-8b32-da7edf5fab8c" x="101" y="0" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dhdgerac_rem}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="4145b484-f17f-4e54-8446-88fb7f06271a" x="150" y="0" width="47" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtparadebito}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="09c5dd40-31a3-43f0-9d32-d67b12b2b485" x="199" y="0" width="55" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltitulo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="42055077-d679-4467-af76-ef44a75d4d90" x="256" y="0" width="186" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmcedent}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="fb30e330-1ff0-4788-b17f-844411f78f8b" x="444" y="0" width="209" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dscodbar}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="7d037dad-8d01-441c-8f29-4b6e35cd77e7" x="655" y="0" width="187" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsocorre_urp}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="16"/>
+	</pageFooter>
+</jasperReport>
