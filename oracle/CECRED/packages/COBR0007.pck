@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --
   --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
   --                           pois estava ocasionando erro (Tiago/Rodrigo #698180)
-  
+
   04/10/2017 - #751605 Alteradas as rotinas "pc_inst_canc_sms" e "pc_inst_envio_sms". Na de cancelamento, 
                removida a chamada da rotina de validação "pc_efetua_val_recusa_padrao" pois não faz sentido 
                validar a situação do boleto para este caso. Na rotina que habilita o envio, removida a rotina de 
@@ -707,6 +707,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --          11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                       (Douglas - Importacao de Arquivos CNAB)
     --
+    --          27/10/2017 - Não validar Desconto de Titulo no envio de SMS
+	--						 (Andrey Formigari - Mouts) SD: 740630
+    --
     -- ...........................................................................................
 
   BEGIN
@@ -999,6 +1002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           vr_dtcalcul := rw_craptdb.dtvencto + vr_qtdiacar + 1;
           vr_dtcalcul := gene0005.fn_valida_dia_util(rw_crapcob.cdcooper,vr_dtcalcul,'P',TRUE,FALSE);
           
+		  IF pr_cdinstru <> '95' THEN -- NÃO VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
+
           -- e a situação é em estudo e não esta vencido
           IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
             rw_craptdb.insittit = 4)  THEN -- LIBERADO
@@ -1027,6 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+		END IF;
 		END IF;
         --Fechar Cursor
         IF cr_craptdb%ISOPEN THEN
