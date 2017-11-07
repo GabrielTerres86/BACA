@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 22/09/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 03/11/2017
 
    Dados referentes ao programa:
 
@@ -448,6 +448,10 @@
 							com data de vencimento e valor atualizados tanto nos campos
 							quanto no codigo de barras. (SD784234 - AJFink)
 							
+
+               03/11/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
+                            do periodo de emissao ("1 - Em Aberto") (Carlos)
+
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -2482,8 +2486,20 @@ PROCEDURE consulta-bloqueto.
                     END.
          END.
          END.
-         WHEN  9 THEN      /* Por Vencimento "1 - Em Aberto */
+         WHEN 9 THEN      /* Por Vencimento 1 - Em Aberto */
                 DO:
+
+                    /* Validar Data Emissao */
+                    IF p-ini-emissao = ? OR p-fim-emissao = ? THEN
+                    DO:
+                        ASSIGN i-cod-erro = 13 
+                               c-dsc-erro = " ".
+
+                        {sistema/generico/includes/b1wgen0001.i}
+
+                        RETURN "NOK".
+                    END.
+
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
