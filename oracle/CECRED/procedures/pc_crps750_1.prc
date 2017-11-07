@@ -27,9 +27,12 @@ BEGIN
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
   
               19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
-              
+
               07/08/2017 - Correção da execução do relatório 135, que não estava sendo
                            gerado na execução em paralelo.
+
+              07/11/2017 - Ajuste realizado para gravacao do arquivo referente ao relatorio 135 por agencia.
+                           Everton (Mouts) - Chamado 773664
 
     ............................................................................. */
 
@@ -205,7 +208,7 @@ BEGIN
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
-	   --
+       --
        --
        IF pr_cdcooper = 3 then
         -- gera log para futuros rastreios
@@ -677,7 +680,7 @@ BEGIN
               vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
               vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
            END IF;
-		 --
+         --
          --
 		 END IF;
 
@@ -2230,7 +2233,7 @@ BEGIN
                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
                                            ,pr_dsxml     => vr_clobarq                           --> Arquivo XML de dados
                                            ,pr_cdrelato  => '135'                                --> Código do relatório
-                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135.txt' --> Arquivo final com o path
+                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135_'||to_char(pr_cdagenci,'fm000')||'.txt' --> Arquivo final com o path
                                            ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                            ,pr_dspathcop => vr_dspathcopia                       --> Copiar para o diretório
                                            ,pr_fldoscop  => 'S'                                  --> Copia convertendo para DOS
