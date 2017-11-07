@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Mirtes
-       Data    : Novembro/2004                     Ultima atualizacao: 31/10/2017
+       Data    : Novembro/2004                     Ultima atualizacao: 01/11/2017
 
        Frequencia: Semanal.
        Objetivo  : Gerar relatorio 378 - Restricoes Analise Borderos
@@ -54,7 +54,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
                                 no cursor cr_crapabc (Carlos)
 
                    31/10/2017 - Incluso tratativa para verificar se existe valor antes de
-				                assumir registro. Erro apresentado no processo batch (Daniel)
+                                assumir registro. Erro apresentado no processo batch (Daniel)
+                                
+                   01/11/2017 - #786226 Inclusão de logs de exceção para identificar o erro ORA-06502: 
+                                PL/SQL: numeric or value error: character to number conversion error,
+                                complementando a liberação anterior, feita pelo Daniel (Carlos)
 
     ............................................................................ */
 
@@ -259,11 +263,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
                 END IF;
 
                 -- Sumarizar quantidade de cheques
-				IF vr_tab_qtchqdev.exists(rw_restri.nrcpfcgc) THEN
+                IF vr_tab_qtchqdev.exists(rw_restri.nrcpfcgc) THEN
                   -- Buscar valor
-                vr_qtdevchq := vr_tab_qtchqdev(rw_restri.nrcpfcgc);
+                  vr_qtdevchq := vr_tab_qtchqdev(rw_restri.nrcpfcgc);
                 ELSE
-				  vr_qtdevchq := 0;  
+                  vr_qtdevchq := 0;
                 END IF;
 
               END IF;
@@ -306,6 +310,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
 
         EXCEPTION
           WHEN OTHERS THEN
+            -- Logar backtrace
+            cecred.pc_internal_exception(pr_cdcooper);
             pr_des_erro := 'Erro em PC_GERA_MOVTOS_PESQUISA: ' || SQLERRM;
         END;
       END pc_gera_movtos_pesquisa;
@@ -592,7 +598,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
 
         -- Efetuar rollback
         ROLLBACK;
-      WHEN OTHERS THEN
+      WHEN OTHERS THEN        
+        -- Logar backtrace
+        cecred.pc_internal_exception(pr_cdcooper);
+        
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := SQLERRM;
