@@ -742,7 +742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 12/05/2017
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 03/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -776,6 +776,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --                          16 e 17. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
   --
   --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+	--
+	--             03/11/2017 - Ajuste para tratar agendamentos de recarga de celular duplicados. (Reinert)	
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -9374,6 +9376,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas
       vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
 			
+			-- Operação agendada duplicada
+			CURSOR cr_operacao_duplicada(pr_cdcooper IN tbrecarga_operacao.cdcooper%TYPE
+			                            ,pr_nrdconta IN tbrecarga_operacao.nrdconta%TYPE
+																	,pr_dtrecarg IN tbrecarga_operacao.dtrecarga%TYPE
+																	,pr_nrdddtel IN tbrecarga_operacao.nrddd%TYPE
+																	,pr_nrtelefo IN tbrecarga_operacao.nrcelular%TYPE
+																	,pr_vlrecarg IN tbrecarga_operacao.vlrecarga%TYPE) IS
+				SELECT 1
+				  FROM tbrecarga_operacao ope
+				 WHERE ope.cdcooper  = pr_cdcooper
+				   AND ope.nrdconta  = pr_nrdconta
+					 AND ope.dtrecarga = pr_dtrecarg
+					 AND ope.nrddd     = pr_nrdddtel
+					 AND ope.nrcelular = pr_nrtelefo
+					 AND ope.vlrecarga = pr_vlrecarg
+					 AND ope.insit_operacao IN (1,3); -- Agendada / Transação Pendente
+			rw_operacao_duplicada cr_operacao_duplicada%ROWTYPE;				 						
+			
 			-- Subrotinas
 			PROCEDURE pc_cria_operacao_pendente(pr_cdtranpe IN tbrecarga_trans_pend.cdtransacao_pendente%TYPE
 				                                 ,pr_tprecarga IN tbrecarga_trans_pend.tprecarga%TYPE
@@ -9475,6 +9495,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           
 				END LOOP;
 			ELSE
+				 -- Verificar agendamento duplicado
+         OPEN cr_operacao_duplicada(pr_cdcooper => pr_cdcooper
+			                             ,pr_nrdconta => pr_nrdconta
+																	 ,pr_dtrecarg => pr_dtrecarga
+																	 ,pr_nrdddtel => pr_nrdddtel
+																	 ,pr_nrtelefo => pr_nrtelefo
+																	 ,pr_vlrecarg => pr_vlrecarga);
+				 FETCH cr_operacao_duplicada INTO rw_operacao_duplicada;
+				 
+				 -- Se encontrou agendamento já existe
+				 IF cr_operacao_duplicada%FOUND THEN
+					 -- Fechar cursor
+					 CLOSE cr_operacao_duplicada;
+					 -- Gerar crítica
+           vr_cdcritic := 0;
+					 					 vr_dscritic := '<![CDATA[você já possui um agendamento cadastrado com os mesmos dados informados. </br>'
+																 || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes. </br>'
+																 || '<center>Consulte suas recargas agendadas e/ou transações pendentes.</center>]]>';
+					-- Levantar exceção
+					RAISE vr_exc_erro;					 
+				 END IF;
+				 -- Fechar cursor
+				 CLOSE cr_operacao_duplicada;
+			
 				 -- Cria transação operador
 				 pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
 																	 ,pr_nrdcaixa => pr_nrdcaixa
