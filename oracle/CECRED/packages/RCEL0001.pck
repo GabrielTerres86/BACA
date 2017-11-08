@@ -1186,9 +1186,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					 CLOSE cr_operacao_duplicada;
 					 -- Gerar crítica
            vr_cdcritic := 0;
-					 vr_dscritic := 'Atenção: você já possui um agendamento cadastrado com os mesmos dados informados.'
-					             +  ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes.'
-											 +  ' Consulte suas recargas agendadas.';
+					 vr_dscritic := '<![CDATA[você já possui um agendamento cadastrado com os mesmos dados informados. </br>'
+					             || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes. </br>'
+											 || '<center>Consulte suas recargas agendadas.</center>]]>';
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
 				 END IF;
@@ -3935,23 +3935,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         vr_dtrecarga := nvl(pr_dtrecarga,trunc(SYSDATE));
         vr_qtmesagd  := pr_qtmesagd;
         
-        -- Valida requisição duplicada (Mobile)
-        OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
-                                 ,pr_nrdconta  => pr_nrdconta
-                                 ,pr_dtrecarga => vr_dtrecarga
-                                 ,pr_nrddd     => vr_nrddd
-                                 ,pr_nrcelular => vr_nrcelular
-                                 ,pr_vlrecarga => vr_vlrecarga);
-        FETCH cr_operacao_repetida
-        INTO vr_operacao_repetida;
-        CLOSE cr_operacao_repetida;
-        
-        IF vr_operacao_repetida > 0 THEN
-           vr_cdcritic := 0;
-           vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
-           RAISE vr_exc_erro;    
-        END IF;
-      
+				-- Apenas para recargas efetuadas no mesmo dia
+				IF pr_cddopcao = 1 THEN
+					-- Valida requisição duplicada (Mobile)
+					OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+																	 ,pr_nrdconta  => pr_nrdconta
+																	 ,pr_dtrecarga => vr_dtrecarga
+																	 ,pr_nrddd     => vr_nrddd
+																	 ,pr_nrcelular => vr_nrcelular
+																	 ,pr_vlrecarga => vr_vlrecarga);
+					FETCH cr_operacao_repetida
+					INTO vr_operacao_repetida;
+					CLOSE cr_operacao_repetida;
+	        
+					IF vr_operacao_repetida > 0 THEN
+						 vr_cdcritic := 0;
+						 vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
+						 RAISE vr_exc_erro;    
+					END IF;
+        END IF;      
       END IF;
       
       -- Validar recarga
