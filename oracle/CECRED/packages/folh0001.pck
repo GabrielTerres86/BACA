@@ -1196,7 +1196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Busca empresas que possuem pagamentos com débitos pendentes
   CURSOR cr_crapemp_debito_pendente(pr_cdcooper IN crapemp.cdcooper%TYPE
                                    ,pr_cdempres IN crapemp.cdempres%TYPE) IS
-    SELECT sum(lfp.vllancto) vllancto
+    SELECT SUM(lfp.vllancto) vllancto
       FROM crappfp pfp
           ,crapemp emp
           ,craplfp lfp
@@ -1217,7 +1217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,emp.dsdemail
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
-
+  
   rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
   
   -- Variaveis
@@ -1262,7 +1262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END IF;
         
         vr_saldo := (vr_tab_saldo(0).vlsddisp + vr_tab_saldo(0).vllimcre);
-
+        
         --Busca também os pagamentos aprovados para somar
         OPEN cr_crapemp_debito_pendente(pr_cdcooper => pr_cdcooper
                                        ,pr_cdempres => rw_crapemp.cdempres);
@@ -1271,7 +1271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         CLOSE cr_crapemp_debito_pendente;          
         
         --Soma vllancto dos estourados + vllancto aprovados
-        vr_vllancto := rw_crapemp.vllancto + rw_crapemp_debito_pendente.vllancto;
+        vr_vllancto := rw_crapemp.vllancto + nvl(rw_crapemp_debito_pendente.vllancto,0);
         
         -- Se houver saldo
         IF vr_saldo >= vr_vllancto THEN
