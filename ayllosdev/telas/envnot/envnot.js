@@ -203,7 +203,7 @@ function tabela(){
 	
 	if($("#qtdConsultas").val() > 0){
 		var ordemInicial = new Array();
-		ordemInicial = [[0,0]];
+		//ordemInicial = [[0,0]];
 		
 		var arrayLargura = new Array();
 		arrayLargura[1] = '15%';

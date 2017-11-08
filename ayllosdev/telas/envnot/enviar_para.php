@@ -53,27 +53,27 @@
 				<label for="dsfiltro_tipos_conta"><? echo utf8ToHtml('Tipos de Conta:'); ?></label>
 				<br/><br/>
 				<input type="checkbox" name="dsfiltro_tipos_conta_fis" id="dsfiltro_tipos_conta_fis" <?php echo($dsfiltro_tipos_conta_fis); ?> value="1" style="clear:both;" />
-				<label for="inexibir_banner" style="padding-left: 5px;">Pessoa F&iacute;sica</label>
+				<label for="dsfiltro_tipos_conta_fis" style="padding-left: 5px;">Pessoa F&iacute;sica</label>
 				<br/><br/>
 				<input type="checkbox" name="dsfiltro_tipos_conta_jur" id="dsfiltro_tipos_conta_jur" <?php echo($dsfiltro_tipos_conta_jur); ?> value="2" style="clear:both;" />
-				<label for="inexibir_banner" style="padding-left: 5px; vertical-align:middle;">Pessoa Jur&iacute;dica</label>			
+				<label for="dsfiltro_tipos_conta_jur" style="padding-left: 5px; vertical-align:middle;">Pessoa Jur&iacute;dica</label>			
 				<br/><br/>
 				<label for="tpfiltro_mobile" style="clear:both;" ><? echo utf8ToHtml('Plataforma:'); ?></label>
 				<br/><br/>
 				<input type="radio" value="0" name="tpfiltro_mobile" id="tpfiltro_mobile_0" style="clear:both;" />
-				<label for="tpfiltro_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Todas as Plataformas') ?></label>
+				<label for="tpfiltro_mobile_0">&nbsp;&nbsp;<? echo utf8ToHtml('Todas as Plataformas') ?></label>
 				<br/>
 				<input type="radio" value="1" name="tpfiltro_mobile" id="tpfiltro_mobile_1" style="clear:both;" />
-				<label for="tpfiltro_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Cooperados sem Cecred Mobile') ?></label>
+				<label for="tpfiltro_mobile_1">&nbsp;&nbsp;<? echo utf8ToHtml('Cooperados sem Cecred Mobile') ?></label>
 				<br/>
 				<input type="radio" value="2" name="tpfiltro_mobile" id="tpfiltro_mobile_2" style="clear:both;" />
-				<label for="tpfiltro_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Todos os Cooperados com Cecred Mobile') ?></label>
+				<label for="tpfiltro_mobile_2">&nbsp;&nbsp;<? echo utf8ToHtml('Todos os Cooperados com Cecred Mobile') ?></label>
 				<br/>
 				<input type="radio" value="3" name="tpfiltro_mobile" id="tpfiltro_mobile_3" style="clear:both;" />
-				<label for="tpfiltro_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Somente Cooperados com Android') ?></label>
+				<label for="tpfiltro_mobile_3">&nbsp;&nbsp;<? echo utf8ToHtml('Somente Cooperados com Android') ?></label>
 				<br/>
 				<input type="radio" value="4" name="tpfiltro_mobile" id="tpfiltro_mobile_4" style="clear:both;" />
-				<label for="tpfiltro_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Somente Cooperados com IOS') ?></label>
+				<label for="tpfiltro_mobile_4">&nbsp;&nbsp;<? echo utf8ToHtml('Somente Cooperados com IOS') ?></label>
 			</div>
 		</div>
 		<script>

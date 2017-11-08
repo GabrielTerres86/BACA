@@ -207,12 +207,12 @@
 				}
 				$arrLinha = explode(";",$arrStrFile[$x]);
 				
-				$cdcooper = (is_numeric(trim($arrLinha[0])) == "") ? "0" : $arrLinha[0];
-				$nrdconta = (is_numeric(trim($arrLinha[1])) == "") ? "0" : $arrLinha[1];
-				$idseqttl = (is_numeric(trim($arrLinha[2])) == "") ? "0" : $arrLinha[2];
+				$cdcooper = (is_numeric(trim($arrLinha[0])) == "") ? 0 : trim($arrLinha[0]);
+				$nrdconta = (is_numeric(trim($arrLinha[1])) == "") ? 0 : trim($arrLinha[1]);
+				$idseqttl = (array_key_exists($arrLinha[2])) ? trim($arrLinha[2]) : 0;
 			
 				if(!is_numeric($cdcooper) || (!is_numeric($nrdconta))){
-					$arrCrit[] = "ATENCAO: Parâmetro incorreto em linha ".($x+1).".";
+					$arrCrit[] = "ATENCAO: Parâmetro incorreto em linha ".($x+1) . ".Conta: " . $nrdconta;
 				}else if((strlen($cdcooper) > 2) || (strlen($nrdconta) > 8) || $nrdconta == 0 || $cdcooper == 0){
 					$arrCrit[] = "ATENCAO: Conta inválida em linha ".($x+1).".";
 				}else{
@@ -263,7 +263,8 @@
 		gerarErro($xmlObjetoMantemMsgManu->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		exit;
 	}else{
-		gerarErro(utf8_decode("Cadastro efetuado com sucesso!"));
+		//gerarErro(utf8_decode("Cadastro efetuado com sucesso!"));
+		echo "<script>parent.framePrincipal.eval(\"showError('inform','Cadastro efetuado com sucesso!','Alerta - Ayllos','hideMsgAguardo(); estadoInicial();');\");</script>";
 		exit;
 	}		
 	
