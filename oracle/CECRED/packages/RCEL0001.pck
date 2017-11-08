@@ -272,6 +272,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --                24/10/2017 - Ajustado data de débito da procedure pc_efetua_recarga. (Reinert)
 	-- 
 	--                03/11/2017 - Ajuste para tratar agendamentos duplicados. (Reinert)
+	--
+	--                08/11/2017 - Ajustado tempo para nova solicitação de recarga para 5 minutos na procedure
+  --                             pc_confirma_recarga_ib. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
@@ -3889,7 +3892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
          AND req.nrddd = pr_nrddd
          AND req.nrcelular = pr_nrcelular
          AND req.vlrecarga = pr_vlrecarga
-         AND ((SYSDATE - dttransa) * 24 * 60) < 10; -- Menos de 10 minutos atrás
+         AND ((SYSDATE - dttransa) * 24 * 60) < 5; -- Menos de 10 minutos atrás
       vr_operacao_repetida NUMBER := 0;
       
 		BEGIN
@@ -3945,7 +3948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
         IF vr_operacao_repetida > 0 THEN
            vr_cdcritic := 0;
-           vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
+           vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
            RAISE vr_exc_erro;    
         END IF;
       
