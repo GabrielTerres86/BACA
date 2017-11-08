@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 04/10/2017
+  Data    : Abril/2004                          Ultima atualizacao: 07/11/2017
 
   Dados referentes ao programa:
 
@@ -260,6 +260,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            referencia no arquivo para a MAPFRE pois estava calculando a 
                            quantidade a completar com espaços baseado no nrdocmto e deveria
                            se basear no cdrefere  (Lucas Ranghetti #769738)
+                           
+                           
+              07/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo 
+                           (Lucas Ranghetti #789879)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -912,7 +916,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                 ||RPAD(substr(rw_gnconve.nmrescop,1,20),20,' ')
                                 ||vr_dtmvtolt
                                 ||to_char(vr_nrseqarq,'fm000000')
-                                ||'04DEBITO AUTOMATICO'
+                                ||LPAD(rw_gnconve.nrlayout,2,'0')
+                                ||'DEBITO AUTOMATICO'
                                 ||RPAD(' ',52,' ')
                                 ||CHR(10));          
           
@@ -1179,7 +1184,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* SEMASA ITAJAI */           
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
-		  /* 108 - AGUAS DE GUARAMIRIM */
+          /* 108 - AGUAS DE GUARAMIRIM */
           /* 101 - SANEPAR */
           ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
 
@@ -1341,7 +1346,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
                     || RPAD(' ',4,' ') || '0';
           ELSE
-            vr_dslinreg := 'F'
+              vr_dslinreg := 'F'
                     || to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
                     || RPAD(' ',3,' ') 
                     || to_char(vr_nragenci,'fm0000') 
@@ -1352,14 +1357,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || rpad(rw_craplau.cdseqtel,60,' ') 
                     || to_char(rw_craplau.tppessoa_dest,'fm0') 
                     || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
-                    || RPAD(' ',4,' ') || '0';                    
+                    || RPAD(' ',4,' ') || '0';
           END IF;
        
        ELSE
 		
         -- Enviar informações para o arquivo conforme especificidades do convênio
-        /* 30 - Celesc Distribuicao */
-        /* 45 - Aguas Pres.Getulio  */
+          /* 30 - Celesc Distribuicao */
+          /* 45 - Aguas Pres.Getulio  */                 
 		  /* 51 - CERSAD */
           IF rw_gnconve.cdconven IN(30,45,51) THEN    
           -- Enviar linha ao arquivo 
@@ -1380,7 +1385,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         /* 34 - SEMASA ITAJAI */
         /* 53 - Foz do Brasil */
         /* 54 - AGUAS DE MASSARANDUBA */  
-		  /* 108 - AGUAS DE GUARAMIRIM */
+        /* 108 - AGUAS DE GUARAMIRIM */
           /* 101 - SANEPAR */
           ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
           -- Enviar linha ao arquivo 
@@ -1521,10 +1526,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||rpad(rw_craplau.cdseqtel,60,' ')
                       ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
                       ||RPAD(' ',12,' ')||'0';                
-          ELSE
-            -- Todos outros casos 
-            -- Enviar linha ao arquivo 
-            vr_dslinreg := 'F'
+        ELSE
+          -- Todos outros casos 
+          -- Enviar linha ao arquivo 
+          vr_dslinreg := 'F'
                       ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
                       ||LPAD(' ',3,' ')
                       ||to_char(vr_nragenci,'fm0000')
@@ -1534,8 +1539,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||'00'
                       ||rpad(rw_craplau.cdseqtel,60,' ')
                       ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
-                      ||RPAD(' ',12,' ')||'0';                       
-          END IF;            
+                      ||RPAD(' ',12,' ')||'0';              
+        END IF;
         END IF;
         
         

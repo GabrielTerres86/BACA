@@ -24,7 +24,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2006                      Ultima alteracao: 22/09/2016
+   Data    : Dezembro/2006                      Ultima alteracao: 25/10/2017
    
    Dados referentes ao programa:
 
@@ -149,6 +149,9 @@
                             
               22/09/2016 - Alterar para exibir o glb_dscritic ao invés do glb_cdcritic
                            (Lucas Ranghetti #500917)
+						   
+			  25/10/2017 - Desabilitando a opcao "B", conforme solicitado no chamado
+						   654712. (Kelvin)	
 ............................................................................. */
 
 { includes/var_online.i }
@@ -585,10 +588,11 @@ DO WHILE TRUE:
   IF glb_cddopcao = "B"   THEN
     DO:
 
-        IF RETURN-VALUE <> "OK"   THEN
+        MESSAGE "Opcao desabilitada.".
+		/*IF RETURN-VALUE <> "OK"   THEN
           NEXT.
         
-        RUN opcao_b.
+        RUN opcao_b.*/
 
     END.
    ELSE

@@ -12703,7 +12703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 11/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -12736,6 +12736,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             12 - Desconto de Cheque
     --                            para expirar 7 dias apos criação.
     --                            PRJ300 - Desconto de Cheque (Lombardi)
+    --
+    --               11/10/2017 - Adicionado valição para identificar se a 
+    --                            transação de folha de pagamento possui apenas
+    --                            contas da cooperativa, ou se possui CTASAL, para 
+    --                            que utilize o horário correto (Douglas - Chamado 707072)
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -12822,9 +12827,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       SELECT tbfolha_trans_pend.idestouro
             ,tbfolha_trans_pend.idopcao_debito
             ,tbfolha_trans_pend.dtdebito
+            ,tbfolha_trans_pend.cdcooper
+            ,tbfolha_trans_pend.cdempres
+            ,tbfolha_trans_pend.nrsequencia_folha
       FROM   tbfolha_trans_pend
       WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cdtrapen;
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;      
+      
+      -- Quantidade de folha de pagamento para a Cooperativa e para a CTASAL
+      CURSOR cr_qtd_folha(pr_cdcooper IN craplfp.cdcooper%TYPE
+                         ,pr_cdempres IN craplfp.cdempres%TYPE
+                         ,pr_nrseqpag IN craplfp.nrseqpag%TYPE) IS
+      SELECT NVL(SUM( DECODE(idtpcont, 'C', 1, 0)), 0) qtd_coop,
+             NVL(SUM( DECODE(idtpcont, 'T', 1, 0)), 0) qtd_ctasal
+        FROM craplfp lfp
+       WHERE lfp.cdcooper = pr_cdcooper
+         AND lfp.cdempres = pr_cdempres
+         AND lfp.nrseqpag = pr_nrseqpag;
+      rw_qtd_folha cr_qtd_folha%ROWTYPE;
       
       --Cursor de aprovacao
       CURSOR cr_tbgen_aprova_trans_pend( pr_cddoitem IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE) IS  
@@ -13052,12 +13072,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            --Fechar Cursor
            CLOSE cr_tbfolha_trans_pend;
            
+           -- Se solicita estouro
            IF rw_tbfolha_trans_pend.idestouro = 1 THEN
+              -- Vamos utiliar o horario limite para solicitação do estouro
               vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(14).hrfimpag,'hh24:mi'),'sssss'); --Horário Limite Folha 'FOLHAIB_HOR_LIM_SOL_EST';
            ELSIF rw_tbfolha_trans_pend.dtdebito > vr_datdodia THEN
+              -- Se for para o dia seguinte seguinte, utilizar o horario de agendamento
               vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(12).hrfimpag,'hh24:mi'),'sssss'); --Horário Limite Folha 'FOLHAIB_HOR_LIM_AGENDA';
            ELSE
+              -- Verificar se a folha de pagamento em questão possui apenas contas da cooperativa
+              -- ou se possui também CTASAL
+              OPEN cr_qtd_folha(pr_cdcooper => rw_tbfolha_trans_pend.cdcooper
+                               ,pr_cdempres => rw_tbfolha_trans_pend.cdempres
+                               ,pr_nrseqpag => rw_tbfolha_trans_pend.nrsequencia_folha);
+              FETCH cr_qtd_folha INTO rw_qtd_folha;
+              -- Fecha cursor
+              CLOSE cr_qtd_folha;
+              
+              -- verificar se existe apenas CTASAL
+              IF rw_qtd_folha.qtd_ctasal > 0 AND rw_qtd_folha.qtd_coop = 0 THEN           
+                -- Se possui apenas CTASAL, utilizar o horario da portabilidade
               vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(13).hrfimpag,'hh24:mi'),'sssss'); --Horário Limite Folha 'FOLHAIB_HOR_LIM_PORTAB';
+              ELSE
+                -- Caso contrário, utilizar o horario limite da cooperativa
+                vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(19).hrfimpag,'hh24:mi'),'sssss'); --Horário Limite Folha 'FOLHAIB_HOR_LIM_PAG_COOP';
+              END IF;
            END IF;   
         ELSIF vr_tptransa = 8 THEN -- Débito Fácil
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(11).hrfimpag,'hh24:mi'),'sssss');

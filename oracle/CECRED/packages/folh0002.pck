@@ -3341,7 +3341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
    --                          de performance - Marcos(Supero)
-   --
+   -- 
    --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
    --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
    --
@@ -3386,7 +3386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                   ,ass.nrdconta
                   ,ass.vllimcre;
       rw_crappfp cr_crappfp%ROWTYPE;
-
+      
       -- Busca os dados de convenios
       CURSOR cr_crappfp_aprovados(p_cdcooper crapcop.cdcooper%TYPE
                                  ,p_cdempres crapemp.cdempres%TYPE) IS
@@ -3403,7 +3403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           FROM crapass ass
               ,crapemp emp
               ,crappfp pfp
-         WHERE pfp.cdcooper = 1 --> Cooperativa conectada
+         WHERE pfp.cdcooper = p_cdcooper --> Cooperativa conectada
            AND pfp.idsitapr = 5 --> pendentes
            AND pfp.flsitdeb = 0
            AND pfp.cdcooper = emp.cdcooper
@@ -3531,7 +3531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
             -- Adquire saldo disponível total da conta
             vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp;
-
+            
             OPEN cr_crappfp_aprovados(p_cdcooper => vr_cdcooper
                                      ,p_cdempres => rw_crappfp.cdempres);
               FETCH cr_crappfp_aprovados

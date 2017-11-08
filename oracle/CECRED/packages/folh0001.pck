@@ -1217,7 +1217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,emp.dsdemail
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
-
+  
   rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
   
   -- Variaveis
@@ -1262,7 +1262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END IF;
         
         vr_saldo := (vr_tab_saldo(0).vlsddisp + vr_tab_saldo(0).vllimcre);
-
+        
         --Busca também os pagamentos aprovados para somar
         OPEN cr_crapemp_debito_pendente(pr_cdcooper => pr_cdcooper
                                        ,pr_cdempres => rw_crapemp.cdempres);
@@ -8138,11 +8138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                --Acionar a rotina 6.2
                pc_cr_pagto_aprovados_ctasal(vr_cdcooper, rw_crapdat);
-            END IF;
 
-            -- Acionar a rotina 06.03
-            pc_atualiza_xml_comprov_liquid(vr_cdcooper, rw_crapdat);
-            
             --Faz o processamanento dos pagamentos carregados pela tela SOL062 (Antigos)
             SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => vr_cdcooper
                                       ,pr_cdagenci => 0
@@ -8151,6 +8147,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                       ,pr_cdempres => 0
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
+          END IF;
+
+            -- Acionar a rotina 06.03
+            pc_atualiza_xml_comprov_liquid(vr_cdcooper, rw_crapdat);
+            
           END IF;
 
   -------- ROTINA 07 - Cobrança das tarifas pendentes -----------------------------------------------

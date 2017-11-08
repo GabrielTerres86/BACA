@@ -53,9 +53,10 @@
  * 035: [29/06/2016] Kelvin		   (CECRED)	: Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461 
  * 036: [08/08/2016] Fabricio      (CECRED) : Alterado id do form utilizado na function ImprimeExtratoCartao2 (chamado 477696).
  * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
-										      conforme solicitado no chamado 508426. (Kelvin)
-   038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
-   039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
+ *                                            conforme solicitado no chamado 508426. (Kelvin)
+ * 038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
+ * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1471,16 +1472,27 @@ function validarNovoCartao() {
 		return false;
     }
 	
-	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) && nmempres.trim() == "") {
+	// Validações para cartão PJ
+	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) ) {
+		// Nome da Empresa deve estar preenchido
+		if (nmempres.trim() == "") {
 		hideMsgAguardo();
 		showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
+		// Nome da Empresa não pode conter mais de 23 caracteres
+		if (nmempres.length > 23) {
+			hideMsgAguardo();
+			showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
 	
-	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) && nmempres.length > 23) {
+		// Nome da Empresa não pode conter numeros
+		if ( /[0-9]/gm.test(nmempres) ){
 		hideMsgAguardo();
-        showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error", "Empresa do Plastico n&atilde;o pode conter n&uacute;meros.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
+	}
 	}
 	
 	if (tpdpagto == 0) {
@@ -4298,7 +4310,7 @@ function lerCartaoChip() {
 				
 				if (sTagPortador == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[2]);
-					eval("oRetornoJson = " + oRetornoJson);
+				eval("oRetornoJson = " + oRetornoJson);
 					sTagPortador = oRetornoJson.szTagsData;		
 				}
 				
@@ -4315,7 +4327,7 @@ function lerCartaoChip() {
 				
 				if (sTagNumeroCartao == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[2]);
-					eval("oRetornoJson = " + oRetornoJson);
+				eval("oRetornoJson = " + oRetornoJson);
 					sTagNumeroCartao = oRetornoJson.szTagsData;
 				}
 				
