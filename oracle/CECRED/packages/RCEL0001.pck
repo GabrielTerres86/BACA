@@ -3892,7 +3892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
          AND req.nrddd = pr_nrddd
          AND req.nrcelular = pr_nrcelular
          AND req.vlrecarga = pr_vlrecarga
-         AND ((SYSDATE - dttransa) * 24 * 60) < 5; -- Menos de 10 minutos atrás
+         AND ((SYSDATE - dttransa) * 24 * 60) < 5; -- Menos de 5 minutos atrás
       vr_operacao_repetida NUMBER := 0;
       
 		BEGIN
