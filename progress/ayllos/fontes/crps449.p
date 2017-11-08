@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Ze Eduardo/Mirtes/Julio
-   Data    : Maio/2005.                         Ultima atualizacao: 14/10/2016
+   Data    : Maio/2005.                         Ultima atualizacao: 08/11/2017
 
    Dados referentes ao programa:
 
@@ -89,6 +89,9 @@
                
                14/10/2016 - Adicionar ordecacao para o registro "B" tpdcontr = 3, listar 
                             primeiro os cancelados (Lucas Ranghetti #506030)
+                            
+               08/11/2017 - Alterar para gravar a versao do layout de debito dinamicamente no 
+                            header do arquivo (Lucas Ranghetti #789879)
 ............................................................................. */
 
 { includes/var_batch.i {1} }
@@ -842,7 +845,8 @@ PROCEDURE efetua_geracao_arquivos_debitos:
                        aux_nmdbanco  FORMAT "x(20)"
                        aux_dtmvtolt  FORMAT "x(08)"
                        aux_nrseqarq  FORMAT "999999"
-                       "04DEBITO AUTOMATICO" 
+                       gnconve.nrlayout FORMAT "99"
+                       "DEBITO AUTOMATICO" 
                        FILL(" ",52) FORMAT "x(52)" SKIP.
 
             aux_flgfirst = FALSE.
@@ -902,7 +906,8 @@ PROCEDURE efetua_geracao_arquivos_autorizacao:
                        aux_nmdbanco  FORMAT "x(20)"
                        aux_dtmvtolt  FORMAT "x(08)"
                        aux_nrseqarq  FORMAT "999999"
-                       "04DEBITO AUTOMATICO"
+                       gnconve.nrlayout FORMAT "99"
+                       "DEBITO AUTOMATICO"
                        FILL(" ",52) FORMAT "x(52)" SKIP.
 
             aux_flgfirst = FALSE.
