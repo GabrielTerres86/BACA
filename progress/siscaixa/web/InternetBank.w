@@ -2843,7 +2843,7 @@ PROCEDURE proc_operacao13:
                                                  INPUT aux_dtmvtopr,
                                                  INPUT aux_inproces,
                                                 OUTPUT aux_dsmsgerr,
-                                                OUTPUT TABLE xml_operacao13).
+                                                OUTPUT TABLE xml_operacao).
 
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -2851,25 +2851,9 @@ PROCEDURE proc_operacao13:
             RETURN.
         END.
 
-    FOR EACH xml_operacao13 NO-LOCK: 
+    FOR EACH xml_operacao NO-LOCK: 
 
-        {&out} xml_operacao13.dscabini
-               xml_operacao13.dtmvtolt 
-               xml_operacao13.nrctremp
-               xml_operacao13.vlemprst
-               xml_operacao13.qtpreemp
-               xml_operacao13.qtprecal 
-               xml_operacao13.vlpreemp 
-               xml_operacao13.vlsdeved 
-               xml_operacao13.dslcremp
-               xml_operacao13.dsfinemp
-               xml_operacao13.nmprimtl
-               xml_operacao13.tpemprst
-               xml_operacao13.flgpreap
-               xml_operacao13.cdorigem
-               xml_operacao13.dtapgoib
-			   xml_operacao13.nrdrecid
-               xml_operacao13.dscabfim.
+        {&out} xml_operacao.dslinxml.
 
     END.
                 

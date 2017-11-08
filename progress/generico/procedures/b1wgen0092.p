@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 07/11/2017
     
    Dados referentes ao programa:
    
@@ -190,6 +190,9 @@
                            
               20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
                            o primeiro titular da conta é de menor (Tiago/Thiago #652776)
+                           
+              07/11/2017 - Retornar indicador de situacao e descricao de protocolo
+                           na consulta de autorizacoes e lancamentos (David).
                            
 .............................................................................*/
 
@@ -2463,13 +2466,15 @@ PROCEDURE busca_autorizacoes_cadastradas:
         CREATE tt-autorizacoes-cadastradas.
         ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
                tt-autorizacoes-cadastradas.nmrescon = ""
-               tt-autorizacoes-cadastradas.cdempcon = IF  crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
-               tt-autorizacoes-cadastradas.cdsegmto = IF  crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
+               tt-autorizacoes-cadastradas.cdempcon = IF crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
+               tt-autorizacoes-cadastradas.cdsegmto = IF crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
                tt-autorizacoes-cadastradas.vlmaxdeb = crapatr.vlrmaxdb
                tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext
                tt-autorizacoes-cadastradas.inaltera = aux_inaltera
-               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor.
+               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor
+               tt-autorizacoes-cadastradas.insituac = IF crapatr.dtfimsus <> ? AND crapatr.dtfimsus > par_dtmvtolt THEN 2 ELSE 1
+               tt-autorizacoes-cadastradas.dssituac = IF tt-autorizacoes-cadastradas.insituac = 1 THEN 'ATIVO' ELSE 'SUSPENSO'.
                
         RELEASE crapscn.
         RELEASE gnconve.
@@ -3852,7 +3857,11 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-
+                                      
+        IF  NOT AVAIL gnconve  AND
+            NOT AVAIL crapscn  THEN
+            NEXT.
+            
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
@@ -3863,7 +3872,9 @@ PROCEDURE busca_lancamentos:
                tt-lancamentos.situacao = IF craplau.flgblqdb THEN
                                             "BLOQUEADO"
                                          ELSE 
-                                            "PENDENTE".
+                                            "PENDENTE"
+               tt-lancamentos.insituac = IF craplau.flgblqdb THEN 2 ELSE 1
+               tt-lancamentos.dsprotoc = "".
     END.
 
     /* Ira consultar registros de Debito Facil somente se for a opcao de consulta */
@@ -3892,6 +3903,18 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
+                          
+                IF  NOT AVAIL gnconve  AND
+                    NOT AVAIL crapscn  THEN
+                    NEXT.
+            
+                FOR FIRST crappro FIELDS (dsprotoc)
+                                  WHERE crappro.cdcooper = craplcm.cdcooper AND
+                                        crappro.nrdconta = craplcm.nrdconta AND
+                                        crappro.cdtippro = 15               AND
+                                        crappro.dtmvtolt = craplcm.dtmvtolt AND
+                                        crappro.nrdocmto = craplcm.nrdocmto AND
+                                        crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
         
                 CREATE tt-lancamentos.
                 ASSIGN tt-lancamentos.dtmvtolt = craplcm.dtmvtolt
@@ -3900,7 +3923,9 @@ PROCEDURE busca_lancamentos:
                        tt-lancamentos.nrdocmto = craplcm.nrdocmto
                        tt-lancamentos.vllanmto = craplcm.vllanmto
                        tt-lancamentos.cdhistor = craplcm.cdhistor
-                       tt-lancamentos.situacao = "EFETIVADO".
+                       tt-lancamentos.situacao = "EFETIVADO"
+                       tt-lancamentos.insituac = 3
+                       tt-lancamentos.dsprotoc = IF AVAIL crappro THEN crappro.dsprotoc ELSE "".
             END.
         END. 
 
