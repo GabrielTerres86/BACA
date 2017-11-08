@@ -1,5 +1,13 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPTTL_ATLZ
-  AFTER INSERT OR UPDATE OR DELETE ON CRAPTTL
+  AFTER INSERT OR UPDATE OR DELETE 
+        OF dsnatura,cdufnatu,nrcpfcgc,nmextttl,dtcnscpf,cdsitcpf,dtatutel,idorgexp,
+           cdsexotl,cdestcvl,dtnasttl,cdnacion,tpnacion,tpdocttl,nrdocttl,dtemdttl,
+           cdufdttl,inhabmen,dthabmen,grescola,cdfrmttl,cdnatopc,dsproftl,dsjusren,
+           nmpaittl,nmmaettl,nrcpfemp,nmextemp,tpcttrab,cdturnos,cdnvlcgo,dtadmemp,
+           cdocpttl,nrcadast,vlsalari,tpdrendi##1,vldrendi##1,tpdrendi##2,vldrendi##2,tpdrendi##3,
+           vldrendi##3,tpdrendi##4,vldrendi##4,tpdrendi##5,vldrendi##5,tpdrendi##6,vldrendi##6,idseqttl
+                 
+        ON CRAPTTL
   FOR EACH ROW  
   /* ..........................................................................
     

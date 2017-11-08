@@ -366,7 +366,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
                  tpcadastro          = pr_pessoa_fisica.tpcadastro, 
                  cdoperad_altera     = pr_pessoa_fisica.cdoperad_altera,
                  idcorrigido         = pr_pessoa_fisica.idcorrigido,
-                 dtalteracao         = SYSDATE
+                 dtalteracao         = SYSDATE,
+                 dtrevisao_cadastral = pr_pessoa_fisica.dtrevisao_cadastral
            WHERE idpessoa = pr_pessoa_fisica.idpessoa;
         EXCEPTION
           WHEN OTHERS THEN

@@ -1,5 +1,9 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPJUR_ATLZ
-  AFTER INSERT OR UPDATE OR DELETE ON CRAPJUR
+  AFTER INSERT OR UPDATE OR DELETE 
+     OF nmextttl,dtatutel,nmfansia,nrinsest,natjurid,vlfatano,dtiniatv,qtfilial,
+        qtfuncio,vlcaprea,dtregemp,nrregemp,dtinsnum,nrcdnire,flgrefis,dsendweb,
+        nrinsmun,cdseteco,cdrmativ,nrlicamb,dtvallic,orregemp,tpregtrb
+     ON CRAPJUR
   FOR EACH ROW  
   /* ..........................................................................
     
