@@ -1279,7 +1279,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1377,6 +1377,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 16. /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                     WHEN 12 THEN
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
+                    WHEN 22 THEN
+                        ASSIGN aux_conttabs = 22. /*DOCUMENTO CÔNJUGE*/
                     WHEN 40 THEN 
                         ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
                     WHEN 45 THEN

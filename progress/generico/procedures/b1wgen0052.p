@@ -2354,6 +2354,52 @@ PROCEDURE Grava_Dados:
                                                     ASSIGN crapdoc.flgdigit = FALSE.
                                                     LEAVE ContadorDoc4.
                                                 END.              
+                                        END.	   
+                                        /* Gerar pendencia de conjuge */
+                                        ContadorDoc22: DO aux_contador = 1 TO 10:
+
+                                            FIND FIRST crapdoc WHERE 
+                                                               crapdoc.cdcooper = par_cdcooper AND
+                                                               crapdoc.nrdconta = par_nrdconta AND
+                                                               crapdoc.tpdocmto = 22           AND
+                                                               crapdoc.dtmvtolt = par_dtmvtolt AND
+                                                               crapdoc.idseqttl = par_idseqttl AND
+                                                               crapdoc.nrcpfcgc = aux_nrcpfcgc
+                                                               EXCLUSIVE NO-ERROR.
+    
+                                            IF  NOT AVAILABLE crapdoc THEN
+                                                DO:
+                                                    IF LOCKED(crapdoc) THEN
+                                                        DO:
+                                                            IF aux_contador = 10 THEN
+                                                                DO:
+                                                                    ASSIGN aux_cdcritic = 341.
+                                                                    LEAVE ContadorDoc22.
+                                                                END.
+                                                            ELSE 
+                                                                DO: 
+                                                                    PAUSE 1 NO-MESSAGE.
+                                                                    NEXT ContadorDoc22.
+                                                                END.
+                                                        END.
+                                                    ELSE        
+                                                        DO:
+                                                            CREATE crapdoc.
+                                                            ASSIGN crapdoc.cdcooper = par_cdcooper
+                                                                   crapdoc.nrdconta = par_nrdconta
+                                                                   crapdoc.flgdigit = FALSE
+                                                                   crapdoc.dtmvtolt = par_dtmvtolt
+                                                                   crapdoc.tpdocmto = 22
+                                                                   crapdoc.idseqttl = par_idseqttl
+                                                                   crapdoc.nrcpfcgc = aux_nrcpfcgc.
+                                                            VALIDATE crapdoc.
+                                                        END.
+                                                END.
+                                            ELSE
+                                                DO:
+                                                    ASSIGN crapdoc.flgdigit = FALSE.
+                                                    LEAVE ContadorDoc22.
+                                                END.              
                                         END.
                                     END.
                                 
