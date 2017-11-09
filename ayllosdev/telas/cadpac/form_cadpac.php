@@ -43,14 +43,30 @@
         <input type="text" id="dstelsit" name="dstelsit" />
         <label for="dsemasit">E-mail:</label>
         <input type="text" id="dsemasit" name="dsemasit" />
-        <label for="dshorsit">Horário:</label>
-        <textarea name="dshorsit" id="dshorsit"></textarea>
+		<label for="hrinipaa">Horário de Atendimento:</label>
+        <input type="text" id="hrinipaa" name="hrinipaa" value="00:00" />
+        <label for="hrfimpaa">até</label>
+        <input type="text" id="hrfimpaa" name="hrfimpaa" value="00:00" />
+        <label for="rotulo_h">h</label>
+		<label for="dssitpaa">Situação:</label>		
+		<input type="text" id="dssitpaa" name="dssitpaa"/>		
+		<label for="indspcxa">Possui Caixa Presencial</label>
+		<select id="indspcxa" name="indspcxa">
+			<option value="0">NAO</option>
+			<option value="1">SIM</option>
+		</select>
+		<br clear="all" />		
+		<label for="indsptaa">Possui Caixa Eletrônico</label>
+		<select id="indsptaa" name="indsptaa">
+			<option value="0">NAO</option>
+			<option value="1">SIM</option>
+		</select>
+		<br clear="all" />
         <label for="nrlatitu">Latitude:</label>
         <input type="text" id="nrlatitu" name="nrlatitu" />
         <label for="nrlongit">Longitude:</label>
         <input type="text" id="nrlongit" name="nrlongit" />
 	</fieldset>
-
     <div id="divTabCampos" style="padding:7px 3px 0px 3px;">
         <table width="100%"  border="0" cellspacing="0" cellpadding="0">
             <tr>

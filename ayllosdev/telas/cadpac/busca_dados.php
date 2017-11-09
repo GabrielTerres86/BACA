@@ -169,7 +169,11 @@
          echo "$('#nmpasite', '#frmCadpac').val('".getByTagName($registros->tags,'NMPASITE')."');";
          echo "$('#dstelsit', '#frmCadpac').val('".getByTagName($registros->tags,'DSTELSIT')."');";
          echo "$('#dsemasit', '#frmCadpac').val('".getByTagName($registros->tags,'DSEMASIT')."');";
-         echo "$('#dshorsit', '#frmCadpac').val('".preg_replace('/\r\n|\r|\n/','\n',getByTagName($registros->tags,'DSHORSIT'))."');";
+		 echo "$('#hrinipaa', '#frmCadpac').val('".getByTagName($registros->tags,'HRINIPAA')."');";
+		 echo "$('#hrfimpaa', '#frmCadpac').val('".getByTagName($registros->tags,'HRFIMPAA')."');";
+		 echo "$('#dssitpaa', '#frmCadpac').val('".getByTagName($registros->tags,'DSSITPAA')."');";		 
+		 echo "$('#indspcxa', '#frmCadpac').val('".getByTagName($registros->tags,'INDSPCXA')."');";
+		 echo "$('#indsptaa', '#frmCadpac').val('".getByTagName($registros->tags,'INDSPTAA')."');";
          echo "$('#nrlatitu', '#frmCadpac').val('".getByTagName($registros->tags,'NRLATITU')."');";
          echo "$('#nrlongit', '#frmCadpac').val('".getByTagName($registros->tags,'NRLONGIT')."');";
          echo "$('#cdagenci', '#frmCadpac').desabilitaCampo();";
