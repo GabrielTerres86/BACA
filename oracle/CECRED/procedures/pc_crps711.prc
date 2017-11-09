@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      Sistema : Baixas Operacionais DDA0108R2 - LAUTOM
      Sigla   : CRED
      Autor   : Ricardo Linhares
-     Data    : Dezembro/2016                     Ultima atualizacao: 08/08/2017
+     Data    : Dezembro/2016                     Ultima atualizacao: 31/10/2017
 
      Dados referentes ao programa:
 
@@ -14,9 +14,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
 
      Alteracoes: 01/08/2017 - Incluido rotina para enviar titulos pagos em contigencia
                               para a JD-CIP. PRJ340-NPC (Odirlei-AMcom)
-
+     
      08/08/2017 - Ajustado data de credito do boleto em funçao da data de 
                   movimento do sistema. (Rafael)
+                  
+     31/10/2017 - Utilizar data do cash para registro de movimento da baixa operacional (Rafael).
 
   ............................................................................ */
 
@@ -312,7 +314,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
       
     FOR rw_jd IN cr_jd (pr_dtmvtoan => pr_data_filtro) LOOP
        pr_baixa_operac(rw_jd.rownum).cdcooper := rw_jd.cdcooper;
-       pr_baixa_operac(rw_jd.rownum).dtmvtolt := rw_crapdat.dtmvtolt;
+       pr_baixa_operac(rw_jd.rownum).dtmvtolt := rw_crapdat.dtmvtocd;
        pr_baixa_operac(rw_jd.rownum).nrtit_legado := rw_jd.idtituloleg;
        pr_baixa_operac(rw_jd.rownum).nroperac_legado := nvl(rw_jd.idopleg,0);
        pr_baixa_operac(rw_jd.rownum).nroperac_jd := rw_jd.idopjd;
@@ -554,7 +556,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
         
         -- Atribui a cooperativa a partir do boleto
         vr_baixa_operac(vr_index).cdcooper := vr_cdcooper;      
-        vr_baixa_operac(vr_index).dtmvtolt := rw_crapdat.dtmvtolt;
+        vr_baixa_operac(vr_index).dtmvtolt := rw_crapdat.dtmvtocd;
         
         -- Totalizacao para os Logs
         IF vr_baixa_operac(vr_index).tpoperac_jd = 'BO' THEN
@@ -582,7 +584,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                                                                        ,pr_nrdconta => rw_crapcob.nrdconta
                                                                        ,pr_nrconven => rw_crapcob.nrcnvcob
                                                                        ,pr_vlbaixa  => vr_baixa_operac(vr_index).vlbaixa
-                                                                       ,pr_dtprbaix => rw_crapdat.dtmvtolt);
+                                                                       ,pr_dtprbaix => rw_crapdat.dtmvtocd);
         
      END LOOP;
    

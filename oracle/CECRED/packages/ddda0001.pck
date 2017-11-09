@@ -436,6 +436,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             29/08/2017 - Retirado mensagem de logs da proc_message.log e direcionado para o log
   --                          principal da NPC. (Rafael)
   --
+  --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
+  --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -538,7 +541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.dtmvtolt
           ,crapcob.qtdiaprt
           ,crapcob.vljurdia
-          ,crapcob.tpdmulta
+          ,decode(nvl(crapcob.tpdmulta,0),1,1,2,2,3) tpdmulta /*SD#769996*/
           ,crapcob.vlrmulta
           ,crapcob.flgaceit
           ,crapcob.cdcartei
@@ -3924,6 +3927,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     -- 
     --             20/10/2017 - Retirar cursor cr_abertura e utilizar função fn_datamov (SD#754622 - AJFink)
     --
+    --             26/10/2017 - Incluir gravacao de log NPCB0001.pc_gera_log_npc no when others
+    --                          dos inserts (SD#769996 - AJFink)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4261,6 +4267,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             vr_cdcritic := 0;
             vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT. ' ||
                            sqlerrm;
+
+            --> Gerar log para facilitar identificação de erros SD#769996
+            BEGIN
+              NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
+                                        pr_nmrotina => 'pc_remessa_titulos_dda',
+                                        pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
+            EXCEPTION
+              WHEN OTHERS THEN
+                NULL;
+            END; 
+
             pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
             pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;
             
@@ -4296,6 +4313,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             WHEN Others THEN
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL. '||SQLERRM;
+
+              --> Gerar log para facilitar identificação de erros SD#769996
+              BEGIN
+                NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
+                                          pr_nmrotina => 'pc_remessa_titulos_dda',
+                                          pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  NULL;
+              END;
 
               pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
               pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           

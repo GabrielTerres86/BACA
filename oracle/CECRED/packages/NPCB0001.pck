@@ -209,6 +209,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
                                   ,pr_vldpagto IN NUMBER   --> Valor do pagamento
+                                  ,pr_idvlrmax     IN NUMBER DEFAULT 1     --> Validar valor maximo                                                                    
                                   ,pr_tpmaxpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
                                   ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
@@ -234,6 +235,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_idvlrmax     IN NUMBER DEFAULT 1      --> Validar valor maximo                                                                      
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
@@ -980,6 +982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
                                   ,pr_vldpagto IN NUMBER   --> Valor do pagamento
+                                  ,pr_idvlrmax IN NUMBER DEFAULT 1  --> Validar valor maximo
                                   ,pr_tpmaxpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
                                   ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
@@ -992,13 +995,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 30/10/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Validar se valor esta entre maximo e minimo
-      Alteração : 
+      Alteração : 30/10/2017 - Criado parametro para validar valor maximo de pagamento (Rafael/Ademir)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1019,11 +1022,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       vr_vlminpgt := pr_vltitulo /100*pr_vlminpgt;      
     END IF;
   
-    IF pr_vldpagto BETWEEN vr_vlminpgt AND  vr_vlmaxpgt THEN
-      RETURN 1; --Está entre valor maximo e minimo
+    IF pr_vldpagto < vr_vlminpgt THEN
+      RETURN 0; -- Valor a pagar menor que o mínimo
     END IF;
   
-    RETURN 0;
+    IF pr_vldpagto > vr_vlmaxpgt AND pr_idvlrmax = 1 THEN
+      RETURN 0; -- Valor a pagar maior que o máximo
+    END IF;    
+    
+    RETURN 1;
   EXCEPTION
     WHEN OTHERS THEN
       raise_application_error(-20501,'Erro ao validar valor max. e min.: '||SQLERRM);
@@ -1136,6 +1143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_idvlrmax     IN NUMBER DEFAULT 1     --> Validar valor maximo
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
@@ -1266,6 +1274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> Validar se valor esta entre maximo e minimo
         IF 0 = fn_valid_max_min_valor 
                                 (pr_vltitulo => vr_tituloCIP.VlrTit             --> Valor do titulo
+                                ,pr_idvlrmax => pr_idvlrmax                     --> Validar o valor maximo
                                 ,pr_vldpagto => pr_vldpagto                              --> Valor do pagamento
                                 ,pr_tpmaxpgt => vr_tituloCIP.IndrVlr_PercMaxTit --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlmaxpgt => vr_tituloCIP.Vlr_PercMaxTit     --> Valor maximo de pagamento
@@ -1300,6 +1309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> Validar se valor esta entre maximo e minimo
         IF 0 = fn_valid_max_min_valor 
                                 (pr_vltitulo => vr_tituloCIP.VlrTit             --> Valor do titulo
+                                ,pr_idvlrmax => pr_idvlrmax                     --> Validar o valor maximo                                
                                 ,pr_vldpagto => pr_vldpagto                              --> Valor do pagamento
                                 ,pr_tpmaxpgt => 'V'                                      --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlmaxpgt => vr_tituloCIP.VlrTit             --> Valor maximo de pagamento

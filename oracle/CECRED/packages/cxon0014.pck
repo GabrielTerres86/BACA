@@ -4901,6 +4901,8 @@ END pc_gera_titulos_iptu_prog;
   --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
   --
   --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
+  -- 
+  --               30/10/2017 - Nao validar valor maximo do boleto ao verificar multiplos pagamentos. (Rafael)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -6272,6 +6274,7 @@ END pc_gera_titulos_iptu_prog;
                            ,pr_dtagenda  => pr_dt_agendamento   --> Data agendada para pagmento do boleto
                            ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
+                           ,pr_idvlrmax  => 0                   --> *** Nao validar valor maximo ***
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
                            ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
