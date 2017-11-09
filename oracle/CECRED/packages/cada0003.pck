@@ -2875,6 +2875,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
 
+        BEGIN
+          INSERT INTO crapdoc
+            (cdcooper,
+             nrdconta,
+             flgdigit,
+             dtmvtolt,
+             tpdocmto,
+             idseqttl,
+             nrcpfcgc)
+           VALUES
+            (pr_cdcooper,
+             pr_nrdconta_dst,
+             0,
+             rw_crapdat.dtmvtolt,
+             22,
+             1,
+             rw_crapass.nrcpfcgc);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN
