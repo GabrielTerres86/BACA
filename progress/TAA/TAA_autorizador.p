@@ -304,6 +304,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          
             13/10/2017 - #765295 Criada a rotina busca_convenio_nome, operacao 
                          76, para logar o nome do convenio (Carlos)
+
+            09/11/2017 - Ajuste na rotina lancamentos-futuros para retornar no XML os valores
+                         totais que sao calculados na bo03
+                         Heitor (Mouts) - Chamado 689749
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -9412,21 +9416,28 @@ PROCEDURE lancamentos-futuros:
     
     END.
     
-    
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLLAUDEB","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(tt-totais-futuros.vllaudeb).
-    xField:APPEND-CHILD(xText).
-    
     /* ---------- */
     xDoc:CREATE-NODE(xField,"vllautom","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(tt-totais-futuros.vllautom).
+    xField:APPEND-CHILD(xText).
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"vllaudeb","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-totais-futuros.vllaudeb).
+    xField:APPEND-CHILD(xText).
+	
+	  /* ---------- */
+    xDoc:CREATE-NODE(xField,"vllaucre","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-totais-futuros.vllaucre).
     xField:APPEND-CHILD(xText).
        
       
