@@ -183,8 +183,7 @@ DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 
 
-DEF TEMP-TABLE tt-titulares-organ LIKE tt-titulares.
-DEF TEMP-TABLE tt-titulares-nomes LIKE tt-titulares. /* LUNELLI */
+DEF TEMP-TABLE tt-titulares-nomes LIKE tt-titulares.
 
 /*................................. FUNCTIONS ................................*/
 
@@ -547,16 +546,13 @@ PROCEDURE carrega-titulares.
             
             END. /** Fim do FOR EACH crapttl **/
                                    
-            FOR EACH tt-titulares NO-LOCK:
-                CREATE tt-titulares-organ.
-                BUFFER-COPY tt-titulares TO tt-titulares-organ.
-            END.            
+            /* Selecionar apenas primeiro nome. */            
+            FIND FIRST tt-titulares NO-LOCK NO-ERROR NO-WAIT.
             
-            IF  TEMP-TABLE tt-titulares-organ:HAS-RECORDS AND 
+            IF  TEMP-TABLE tt-titulares:HAS-RECORDS AND 
                 par_flmobile <> YES                       THEN
                 DO:                
-                    RUN organiza-nomes-titulares (INPUT TABLE tt-titulares-organ,
-                                                 OUTPUT TABLE tt-titulares).                
+                    RUN organiza-nomes-titulares (INPUT-OUTPUT TABLE tt-titulares).                
                 END.
                 
         END.
@@ -596,7 +592,8 @@ PROCEDURE carrega-titulares.
                        tt-titulares.nrcpfope = 0
                        tt-titulares.incadsen = aux_incadsen
                        tt-titulares.inbloque = aux_inbloque
-                       tt-titulares.inpessoa = crapass.inpessoa.
+                       tt-titulares.inpessoa = crapass.inpessoa
+                       tt-titulares.idastcjt = crapass.idastcjt.
             END.
             ELSE DO: /* Exige assinatura conjunta */
 
@@ -681,7 +678,8 @@ PROCEDURE carrega-titulares.
                            tt-titulares.nrcpfope = 0
                            tt-titulares.incadsen = aux_incadsen
                            tt-titulares.inbloque = aux_inbloque
-                           tt-titulares.inpessoa = crapass.inpessoa.
+                           tt-titulares.inpessoa = crapass.inpessoa
+                           tt-titulares.idastcjt = crapass.idastcjt.
                 END.
             END.
             
@@ -713,33 +711,19 @@ PROCEDURE carrega-titulares.
                            tt-titulares.nrcpfope = crapopi.nrcpfope
                            tt-titulares.incadsen = aux_incadsen
                            tt-titulares.inbloque = aux_inbloque
-                           tt-titulares.inpessoa = crapass.inpessoa.
+                           tt-titulares.inpessoa = crapass.inpessoa
+                           tt-titulares.idastcjt = crapass.idastcjt.
     
                 END. /** Fim do FOR EACH crapopi **/
             END. /** Fim do IF par_flmobile **/
             
-            
             /* Selecionar apenas primeiro nome. */
-            IF  crapass.idastcjt = 0 THEN 
-                DO:
-                    FOR EACH tt-titulares WHERE tt-titulares.nrcpfope <> 0 NO-LOCK :
-                        CREATE tt-titulares-organ.
-                        BUFFER-COPY tt-titulares TO tt-titulares-organ.
-                    END.
-                END.
-            ELSE IF  crapass.idastcjt = 1 THEN
-                DO:
-                    FOR EACH tt-titulares NO-LOCK:
-                        CREATE tt-titulares-organ.
-                        BUFFER-COPY tt-titulares TO tt-titulares-organ.
-                    END.
-                END.
+            FIND FIRST tt-titulares NO-LOCK NO-ERROR NO-WAIT.
                     
-            IF  TEMP-TABLE tt-titulares-organ:HAS-RECORDS AND 
+            IF  TEMP-TABLE tt-titulares:HAS-RECORDS AND 
                 par_flmobile <> YES                       THEN
                 DO:                
-                    RUN organiza-nomes-titulares (INPUT TABLE tt-titulares-organ,
-                                                 OUTPUT TABLE tt-titulares).
+                    RUN organiza-nomes-titulares (INPUT-OUTPUT TABLE tt-titulares).
                 END.
         END.
 
@@ -3957,8 +3941,7 @@ END PROCEDURE.
 /*............................ PROCEDURES INTERNAS ...........................*/
 PROCEDURE organiza-nomes-titulares:
 
-    DEF INPUT PARAM TABLE FOR tt-titulares.    
-    DEF OUTPUT PARAM TABLE FOR tt-titulares-nomes.    
+    DEF INPUT-OUTPUT PARAM TABLE FOR tt-titulares.
     
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_posinome AS INTE                                    NO-UNDO.
@@ -3971,6 +3954,11 @@ PROCEDURE organiza-nomes-titulares:
     
     FOR EACH tt-titulares-nomes EXCLUSIVE-LOCK BY tt-titulares-nomes.nmtitula:
         
+        IF tt-titulares-nomes.inpessoa = 2 AND    /* Pessoa Jur */                
+           tt-titulares-nomes.idastcjt = 0 AND    /* Sem Ass. Conj */
+           tt-titulares-nomes.nrcpfope = 0 THEN   /* Nao é operador, é preposto */
+           NEXT.
+
         ASSIGN aux_novonome = "".
         
         loop:
@@ -4007,6 +3995,13 @@ PROCEDURE organiza-nomes-titulares:
         
         ASSIGN tt-titulares-nomes.nmtitula = TRIM(aux_novonome).
     
+    END.
+    
+    EMPTY TEMP-TABLE tt-titulares.
+    
+    FOR EACH tt-titulares-nomes NO-LOCK BY tt-titulares-nomes.nmtitula:
+        CREATE tt-titulares.
+        BUFFER-COPY tt-titulares-nomes TO tt-titulares.
     END.
     
 END PROCEDURE.
