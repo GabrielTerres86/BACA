@@ -9522,9 +9522,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 					 CLOSE cr_operacao_duplicada;
 					 -- Gerar crítica
            vr_cdcritic := 0;
-					 					 vr_dscritic := '<![CDATA[você já possui um agendamento cadastrado com os mesmos dados informados. </br>'
-																 || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes. </br>'
-																 || '<center>Consulte suas recargas agendadas e/ou transações pendentes.</center>]]>';
+					 vr_dscritic := '<![CDATA[Você já possui uma transação pendente de aprovação com os mesmos dados informados. </br>'
+											 || '<center>Consulte suas transações pendentes.</center>]]>';
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
 				 END IF;
