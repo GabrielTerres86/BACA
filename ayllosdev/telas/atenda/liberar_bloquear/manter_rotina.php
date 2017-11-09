@@ -34,7 +34,7 @@
 	$flgcrdpa = (isset($_POST['flgcrdpa'])) ? $_POST['flgcrdpa'] : '0';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '1';
 	$dsmotmaj = (isset($_POST['dsmotmaj'])) ? $_POST['dsmotmaj'] : '';
-	
+
 	$dsmotmaj = utf8_decode($dsmotmaj);
 	$dsmotmaj = removeCaracteresInvalidos($dsmotmaj);
 	$dsmotmaj = retiraAcentos($dsmotmaj);
