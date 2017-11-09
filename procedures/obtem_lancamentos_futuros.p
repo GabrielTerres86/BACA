@@ -5,8 +5,11 @@ Objetivo : Obter o lancamentos Futuros
 Autor    : Lenilson (Mouts)
 Data     : Outubro 2016
 
+Alteracoes: 09/11/2017 - Alteradas variaveis utilizadas no calculo total de debitos
+                         e creditos. Rotina se perdia no calculo quando havia lancamento
+                         futuro de credito.
+                         Heitor (Mouts) - Chamado 689749
 
-Ultima alteração: 
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_dtiniext    AS DATE                     NO-UNDO.
@@ -19,6 +22,10 @@ DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 DEFINE VARIABLE aux_nmtitula            AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_vlsddisp            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllautom            AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllautoma           AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllaudeb            AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllaudebi           AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllaucred           AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllauded            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlldeb              AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_debcre              AS CHARACTER                NO-UNDO.
@@ -456,45 +463,30 @@ DO:
                    aux_vllcre = aux_vllcre + DECIMAL(aux_vlldeb).
                END.    
 
+			IF  xField:NAME = "VLLAUTOM"  THEN
+               DO: 
+                   aux_vllautoma = DECIMAL(xText:NODE-VALUE).
+               END.
+			
+			IF  xField:NAME = "VLLAUDEB"  THEN
+               DO: 
+                   aux_vllaudebi = DECIMAL(xText:NODE-VALUE).
+               END.
+			
+			IF  xField:NAME = "VLLAUCRE"  THEN
+               DO: 
+                   aux_vllaucred = DECIMAL(xText:NODE-VALUE).
+               END.
         END. /* Fim DO..TO.. */
         
         LEAVE.
 
     END. /* Fim WHILE */
 
-/* obtem os valores dos saldos - nao logar */
-RUN procedures/obtem_saldo_limite.p ( INPUT 0,
-                                     OUTPUT aux_vlsddisp,
-                                     OUTPUT aux_vllautom,
-                                     OUTPUT aux_vllaucre,
-                                     OUTPUT aux_vlsdbloq,
-                                     OUTPUT aux_vlblqtaa,
-                                     OUTPUT aux_vlsdblpr,
-                                     OUTPUT aux_vlsdblfp,
-                                     OUTPUT aux_vlsdchsl,
-                                     OUTPUT aux_vllimcre,
-                                     OUTPUT aux_idastcjt,
-                                     OUTPUT par_flgderro).
-               
-               IF  xField:NAME = "vllautom"  THEN
-                     aux_conttext = DECIMAL(xText:NODE-VALUE).
-                     IF aux_conttext = 0 THEN
-                       DO:
-                        aux_vllautom = 0. 
-par_tximpres = par_tximpres +
-               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_conttext),"zzzzz,zz9.99-")    + 
-               "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(aux_conttext),"zzzzz,zz9.99-")    . 
-                       END.
-                     
-                    ELSE   
-                       DO:
-                        aux_vllauded = DECIMAL(xText:NODE-VALUE) - DECIMAL(aux_vllcre). 
-par_tximpres = par_tximpres +
-               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllauded),"zzzzz,zz9.99-")   + 
-               "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
-                       END.
-        
- 
+	par_tximpres = par_tximpres +
+               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllaudebi),"zzzzz,zz9.99-")   + 
+               "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(aux_vllautoma),"zzzzz,zz9.99-"). 
+
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
     DELETE OBJECT xField.
@@ -593,8 +585,8 @@ IF  AVAIL tt-dados-cpa THEN
 
 RUN procedures/imprime_saldo_limite_lanc.p ( INPUT aux_nmtitula,
                                         INPUT aux_vlsddisp, 
-                                        INPUT aux_vllautom, 
-                                            INPUT aux_vllcre,
+                                        INPUT aux_vllaudebi, 
+                                        INPUT aux_vllaucred,
                                         INPUT aux_vlsdbloq, 
                                         INPUT aux_vlblqtaa,
                                         INPUT aux_vlsdblpr, 
@@ -602,9 +594,9 @@ RUN procedures/imprime_saldo_limite_lanc.p ( INPUT aux_nmtitula,
                                         INPUT aux_vlsdchsl,
                                         INPUT aux_vllimcre, 
                                         INPUT aux_vldiscrd, /* pré-aprovado */
-                                            INPUT aux_vlsddisp,
-                                            INPUT aux_vllautom + aux_vllcre + aux_vlsddisp,
-                                       OUTPUT aux_tximpres).
+                                        INPUT aux_vlsddisp,
+                                        INPUT aux_vllautoma + aux_vlsddisp,
+                                        OUTPUT aux_tximpres).
 
 
 RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
