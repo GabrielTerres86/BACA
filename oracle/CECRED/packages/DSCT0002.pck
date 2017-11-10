@@ -442,6 +442,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --              24/07/2017 - Alterar cdoedptl para idorgexp.
   --                           PRJ339-CRM  (Odirlei-AMcom)
   --
+  --             03/10/2017 - Imprimir conta quando o avalista for cooperado
+  --                          Junior (Mouts) - Chamado 767055
+  --
   --------------------------------------------------------------------------------------------------------------*/
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -3691,10 +3694,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         IF  vr_tab_dados_avais(vr_idxavais).nrcpfcgc > 0 THEN
           IF pr_tpctrlim = 2 THEN
             vr_rel_dscpfav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                         pr_inpessoa => 1 );
+                                                         pr_inpessoa => 1 )||''||gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava);
           ELSE
             vr_rel_dscpfav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                                     pr_inpessoa => 1 );
+                                                                     pr_inpessoa => 1 )||''||gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava);
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav1 := vr_tab_dados_avais(vr_idxavais).nrdocava;
@@ -3743,10 +3746,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         IF  vr_tab_dados_avais(vr_idxavais).nrcpfcgc > 0 THEN
           IF pr_tpctrlim = 2 THEN
             vr_rel_dscpfav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                         pr_inpessoa => 1 );
+                                                         pr_inpessoa => 1 )||''||gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava);
           ELSE
             vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                                     pr_inpessoa => 1 );
+                                                                     pr_inpessoa => 1 )||''||gene0002.fn_mask_conta(vr_tab_dados_avais(vr_idxavais).nrctaava);
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav2 := vr_tab_dados_avais(vr_idxavais).nrdocava;
