@@ -125,6 +125,54 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                         ,pr_retxml   OUT CLOB                      --> Arquivo de retorno do XML                                        
                                         ,pr_dsretorn OUT VARCHAR2);         
                                               
+	PROCEDURE pc_detalhe_compr_incl_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);
+																				
+  PROCEDURE pc_detalhe_compr_alte_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);	
+																																							
+  PROCEDURE pc_detalhe_compr_excl_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);
+																				
+	PROCEDURE pc_detalhe_compr_isus_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);	
+																																						
+	PROCEDURE pc_detalhe_compr_esus_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);			
+																																				
+	PROCEDURE pc_detalhe_compr_bloq_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);	
+																																						
+  PROCEDURE pc_detalhe_compr_libr_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);																																							                                             
   -- Pagamento DARF                                      
   PROCEDURE pc_detalhe_compr_pag_darf(pr_cdcooper IN crappro.cdcooper%TYPE --> Código da cooperativa
                                      ,pr_nrdconta IN crappro.nrdconta%TYPE --> Número da conta
@@ -1918,6 +1966,820 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     
   END pc_detalhe_compr_pag_deb_aut;
 
+	-- Operar Débito Automático
+	PROCEDURE pc_detalhe_compr_oper_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                        ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2) IS          -- OK/NOK
+  BEGIN
+    
+    DECLARE
+    
+      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção 
+      vr_dscritic    crapcri.dscritic%TYPE;
+      vr_cdcritic    crapcri.cdcritic%TYPE;
+      vr_des_erro    VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+      gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_dsprotoc => pr_dsprotoc
+                                            ,pr_cdorigem => pr_cdorigem
+                                            ,pr_protocolo => vr_protocolo
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        vr_des_erro := 'Erro em pc_detalhe_compr_oper_debaut:' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;			                  		
+			
+			CASE vr_protocolo(vr_protocolo.FIRST).dsinform##1
+        WHEN 'Cadastro - Inclusao' THEN
+					pc_detalhe_compr_incl_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Cadastro - Alteracao' THEN
+					pc_detalhe_compr_alte_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Cadastro - Exclusao' THEN
+					pc_detalhe_compr_excl_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Suspensao - Inclusao' THEN
+					pc_detalhe_compr_isus_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Suspensao - Exclusao' THEN
+					pc_detalhe_compr_esus_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Bloqueio de Debito - Inclusao' THEN
+					pc_detalhe_compr_bloq_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																			
+				WHEN 'Bloqueio de Debito - Exclusao' THEN
+					pc_detalhe_compr_libr_debaut(pr_cdcooper  => pr_cdcooper
+																			,pr_nrdconta  => pr_nrdconta
+																			,pr_protocolo => vr_protocolo
+																			,pr_retxml    => pr_retxml
+																			,pr_dsretorn  => pr_dsretorn
+																			,pr_dscritic  => vr_dscritic);
+																							
+			END CASE;
+				
+			-- Verifica se retornou erro
+			IF pr_dsretorn <> 'OK' OR vr_dscritic IS NOT NULL THEN
+				vr_des_erro := 'Erro em pc_detalhe_compr_oper_debaut:' || vr_dscritic;
+				RAISE vr_exc_erro;
+			END IF;       			
+			
+			EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_retxml := '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_retxml :=   '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK'; 
+			
+			END;
+			
+  END pc_detalhe_compr_oper_debaut;
+
+  PROCEDURE pc_detalhe_compr_incl_debaut(pr_cdcooper  IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta  IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML
+																				,pr_dsretorn OUT VARCHAR2              -- OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2) IS          
+  BEGIN
+    
+    DECLARE
+		
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+								
+				vr_des_erro := 'Associado nao cadastrado.';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+			     
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+                                  '<dstippro>' || 'Cadastro de Débito Automático - Inclusão'                                                  || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dshisext>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dshisext>' ||
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';      
+    END;
+    
+  END pc_detalhe_compr_incl_debaut;
+			
+	PROCEDURE pc_detalhe_compr_alte_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+				vr_des_erro := 'Associado nao cadastrado.';				
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+									      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+                                  '<dstippro>' || 'Cadastro de Débito Automático - Alteração'                                                 || '</dstippro>' ||
+																	'<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb_ant>'  || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb>' ||
+																	'<dshisext_ant>'  || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext>' ||
+																  '<vlmaxdeb_novo>' || TRIM(gene0002.fn_busca_entrada(5, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb>' ||
+																	'<dshisext_novo>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext>' ||																	
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');            
+
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';	      
+    END;
+    
+  END pc_detalhe_compr_alte_debaut;
+
+	PROCEDURE pc_detalhe_compr_excl_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);     
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+				vr_des_erro := 'Associado nao cadastrado.';				
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+			      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+																	'<dstippro>' || 'Cadastro de Débito Automático - Exclusão'                                                  || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dshisext>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dshisext>' ||
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK'; 
+    END;
+    
+  END pc_detalhe_compr_excl_debaut;
+
+	PROCEDURE pc_detalhe_compr_isus_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+        vr_des_erro := 'Associado nao cadastrado.';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+																	'<dstippro>' || 'Suspensão de Débito Automático - Inclusão'                                                 || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||																	
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dtinisus>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtinisus>' ||
+																	'<dtfimsus>' || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtfimsus>' ||																	
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';     
+    END;
+    
+  END pc_detalhe_compr_isus_debaut;
+
+	PROCEDURE pc_detalhe_compr_esus_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo --> registro
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+        vr_des_erro := 'Associado nao cadastrado.';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+			      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+																	'<dstippro>' || 'Suspensão de Débito Automático - Exclusão'                                                 || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||																	
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dtinisus>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtinisus>' ||
+																	'<dtfimsus>' || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtfimsus>' ||																	
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+    END;
+    
+  END pc_detalhe_compr_esus_debaut;
+	
+	PROCEDURE pc_detalhe_compr_bloq_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo --> registro
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+        vr_des_erro := 'Associado nao cadastrado.';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+																	'<dstippro>' || 'Bloqueio de Débito Automático - Inclusão'                                                  || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||																	
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtvencto>' ||
+																	'<vldocmto>' || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vldocmto>' ||
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+			END;
+    
+  END pc_detalhe_compr_bloq_debaut;
+	
+	PROCEDURE pc_detalhe_compr_libr_debaut(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                        ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                        ,pr_protocolo IN gene0006.typ_tab_protocolo --> registro
+                                        ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                        ,pr_dsretorn OUT VARCHAR2
+																				,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    
+    DECLARE
+    
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_info_sac typ_reg_info_sac;
+      vr_des_erro  VARCHAR2(4000);      
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+											 pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;
+				
+        vr_des_erro := 'Associado nao cadastrado.';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');         
+      
+      FOR vr_ind IN 1..pr_protocolo.count LOOP
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+				                          '<cdtippro>' || to_char(pr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+																	'<dstippro>' || 'Bloqueio de Débito Automático - Exclusão'                                                  || '</dstippro>' ||																
+                                  '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
+																	'<nrcpfpre>' || to_char(pr_protocolo(vr_ind).nrcpfpre)                                                      || '</nrcpfpre>' ||
+																	'<nmoperad>' || to_char(pr_protocolo(vr_ind).nmoperad)                                                      || '</nmoperad>' ||
+																	'<nrcpfope>' || to_char(pr_protocolo(vr_ind).nrcpfope)                                                      || '</nrcpfope>' ||
+																	'<nmconven>' || to_char(pr_protocolo(vr_ind).dscedent)                                                      || '</nmconven>' ||
+																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||																	
+																	'<vlmaxdeb>' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vlmaxdeb>' ||
+																	'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</dtvencto>' ||
+																	'<vldocmto>' || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</vldocmto>' ||
+                                  '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>'  ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>');
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+                             
+      pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_dscritic := vr_des_erro;
+					pr_dsretorn := 'NOK';            
+      
+    END;
+    
+  END pc_detalhe_compr_libr_debaut;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
   -- Pagamento DARF
   PROCEDURE pc_detalhe_compr_pag_darf(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                      ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
@@ -2789,7 +3651,13 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                         ,pr_cdorigem => pr_cdorigem
                                         ,pr_retxml =>   pr_retxml
                                         ,pr_dsretorn => pr_dsretorn);                              
-         
+				WHEN pr_cdtippro = 11 THEN
+					pc_detalhe_compr_oper_debaut(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dsprotoc => pr_dsprotoc
+                                      ,pr_cdorigem => pr_cdorigem
+                                      ,pr_retxml =>   pr_retxml
+                                      ,pr_dsretorn => pr_dsretorn);         
         WHEN pr_cdtippro = 12 THEN
           pc_detalhe_compr_res_apli_pos(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
