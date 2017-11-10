@@ -1962,12 +1962,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    29/12/2016 - P340 - Adição da chamada ao CRPS618 para envio de boletos a CIP 
   						               	  (Ricardo Linhares).                                
                                 
-				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
-								(Andrei - Mouts). 
+         				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+				                				(Andrei - Mouts). 
 
                   14/07/2017 - Retirado verificação de pagador DDA e ROLLOUT. Essa verificação é
                                feita no pc_crps618. (Rafael)
-
+                               
                   21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
     ............................................................................ */   
@@ -5534,7 +5534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 17/03/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 26/10/2017
 
        Dados referentes ao programa:
 
@@ -5560,6 +5560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    07/06/2017 - Trocar na validação de Serasa qtdiaprt por qtdianeg. Somente
                                 quando pr_rec_cobranca.flserasa = 1. (SD#686881 - AJFink)
+
+                   26/10/2017 - Validar CPF e CNPJ de acordo com o tipo de inscricao (Rafael)
 
     ............................................................................ */   
     
@@ -5685,6 +5687,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo := '46';
       RAISE vr_exc_reje;
     END IF;
+
+    -- se pagador dor PF, entao validar CPF
+    IF pr_rec_cobranca.cdtpinsc = 1 THEN
+      gene0005.pc_valida_cpf(pr_nrcalcul => pr_rec_cobranca.nrinssac,
+                             pr_stsnrcal => vr_stsnrcal);                             
+      -- Verifica se o CPF esta correto
+      IF NOT vr_stsnrcal THEN
+        -- Tipo/Numero de Inscricao do Sacado Invalidos
+        vr_rej_cdmotivo := '46';
+        RAISE vr_exc_reje;
+      END IF;                             
+    END IF;
+    
+    -- se pagador dor PJ, entao validar CNPJ
+    IF pr_rec_cobranca.cdtpinsc = 2 THEN
+      gene0005.pc_valida_cnpj(pr_nrcalcul => pr_rec_cobranca.nrinssac,
+                              pr_stsnrcal => vr_stsnrcal);                             
+      -- Verifica se o CNPJ esta correto
+      IF NOT vr_stsnrcal THEN
+        -- Tipo/Numero de Inscricao do Sacado Invalidos
+        vr_rej_cdmotivo := '46';
+        RAISE vr_exc_reje;
+      END IF;                             
+    END IF;        
     
     -- 10.3Q Valida Nome do Sacado
     IF TRIM(pr_rec_cobranca.nmdsacad) IS NULL THEN
@@ -7903,7 +7929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 17/03/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 26/10/2017
 
        Dados referentes ao programa:
 
@@ -7929,6 +7955,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
                                 Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
                                (Douglas - Chamado 601436)
+                               
+                   26/10/2017 - Validar CPF e CNPJ de acordo com o tipo de inscricao (Rafael)                               
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8554,7 +8582,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
-  
+    
+    -- se pagador dor PF, entao validar CPF
+    IF pr_rec_cobranca.cdtpinsc = 1 THEN
+      gene0005.pc_valida_cpf(pr_nrcalcul => pr_rec_cobranca.nrinssac,
+                             pr_stsnrcal => vr_stsnrcal);                             
+      -- Verifica se o CPF esta correto
+      IF NOT vr_stsnrcal THEN
+      -- Tipo/Numero de Inscricao do Sacado Invalidos
+      vr_rej_cdmotivo := '46';
+      RAISE vr_exc_reje;
+      END IF;                             
+    END IF;
+      
+    -- se pagador dor PJ, entao validar CNPJ
+    IF pr_rec_cobranca.cdtpinsc = 2 THEN
+      gene0005.pc_valida_cnpj(pr_nrcalcul => pr_rec_cobranca.nrinssac,
+                              pr_stsnrcal => vr_stsnrcal);                             
+      -- Verifica se o CNPJ esta correto
+      IF NOT vr_stsnrcal THEN
+        -- Tipo/Numero de Inscricao do Sacado Invalidos
+        vr_rej_cdmotivo := '46';
+        RAISE vr_exc_reje;
+      END IF;                             
+    END IF;
+
     -- 40.7 Nome do Sacado
     IF TRIM(pr_rec_cobranca.nmdsacad) IS NULL THEN
       
@@ -13150,7 +13202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto := 'NOK';
 
     end;
-       
+
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';
@@ -14631,7 +14683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto := 'NOK';
 
     end;
-       
+
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';
