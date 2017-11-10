@@ -341,6 +341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<dssitlau>' || vr_tab_age_recarga(vr_idx).dssit_operacao                                                          || '</dssitlau>' ||                                  
 																		'<vldocmto>' || to_char(vr_tab_age_recarga(vr_idx).vlrecarga,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
 																		'<incancel>' || vr_tab_age_recarga(vr_idx).incancel                                                                || '</incancel>' ||
+                                    '<nrdddtel>' || gene0002.fn_mask(vr_tab_age_recarga(vr_idx).nrddd,'(99)')                                          || '</nrdddtel>' ||
 																		'<nrtelefo>' || gene0002.fn_mask(vr_tab_age_recarga(vr_idx).nrcelular,'99999-9999')                                || '</nrtelefo>' ||
 																		'<nmoperad>' || vr_tab_age_recarga(vr_idx).nmoperadora                                                             || '</nmoperad>' ||
 																		'<dscritic>' || vr_tab_age_recarga(vr_idx).dscritic                                                                || '</dscritic>' ||
@@ -1152,12 +1153,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 								,(CASE WHEN darf.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END) AS dstiptra
                 ,darf.dsidentif_pagto AS dsdpagto
                 ,darf.dsnome_fone AS dsnomfon
+                ,darf.tpcaptura
+                ,darf.dtapuracao
+                ,darf.nrcpfcgc
+                ,darf.cdtributo
+                ,darf.nrrefere
+                ,darf.vlreceita_bruta
+                ,darf.vlpercentual
+                ,darf.vlprincipal
+                ,darf.vlmulta
+                ,darf.vljuros
            FROM craplau lau
       LEFT JOIN tbpagto_agend_darf_das darf
              ON darf.idlancto = lau.idlancto
 		  LEFT JOIN crapcop cop
 		       ON cop.cdcooper = lau.cdcooper
           WHERE lau.idlancto = pr_idlancto;
+
       rw_agendamento cr_agendamento%ROWTYPE;
     
       BEGIN
@@ -1217,27 +1229,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     =>
-                                '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
-																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
-															  '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
-																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
-																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
-																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
-																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
-																'<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
-                                '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
-																'<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
-                                '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||																
-                                '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
-                                '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
-																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||
-																'<dssituac>' || rw_agendamento.dssituac || '</dssituac>' ||
-																'<dstipcap>' || rw_agendamento.dstipcap || '</dstipcap>' ||
-																'<dslinhad>' || rw_agendamento.dslindig || '</dslinhad>' ||																															  
-                                '<dsnomfon>' || rw_agendamento.dsnomfon || '</dsnomfon>' ||
-                                '<dsdpagto>' || rw_agendamento.dsdpagto || '</dsdpagto>' ||                                
-                                '<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||                                
+                               ,pr_texto_novo     => '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
+                                                     '<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+                                                     '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
+                                                     '<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
+                                                     '<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
+                                                     '<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
+                                                     '<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
+                                                     '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+                                                     '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
+                                                     '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
+                                                     '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||																
+                                                     '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
+                                                     '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
+                                                     '<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||
+                                                     '<dssituac>' || rw_agendamento.dssituac || '</dssituac>' ||
+                                                     '<dstipcap>' || rw_agendamento.dstipcap || '</dstipcap>' ||
+                                                     '<dslinhad>' || rw_agendamento.dslindig || '</dslinhad>' ||																															  
+                                                     '<dsnomfon>' || rw_agendamento.dsnomfon || '</dsnomfon>' ||
+                                                     '<dsdpagto>' || rw_agendamento.dsdpagto || '</dsdpagto>');
+
+        IF rw_agendamento.tpcaptura <> 1 THEN
+           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<dtapurac>' || rw_agendamento.dtapuracao      || '</dtapurac>' ||
+                                                        '<nrcpfcgc>' || rw_agendamento.nrcpfcgc        || '</nrcpfcgc>' ||
+                                                        '<cdtribut>' || rw_agendamento.cdtributo       || '</cdtribut>' ||
+                                                        '<nrrefere>' || rw_agendamento.nrrefere        || '</nrrefere>' ||
+                                                        '<dtvencto>' || rw_agendamento.dtvencto        || '</dtvencto>' ||
+                                                        '<vlrecbru>' || rw_agendamento.vlreceita_bruta || '</vlrecbru>' ||
+                                                        '<vlpercen>' || rw_agendamento.vlpercentual    || '</vlpercen>' ||
+                                                        '<vlprinci>' || rw_agendamento.vlprincipal     || '</vlprinci>' ||
+                                                        '<vlrmulta>' || rw_agendamento.vlmulta         || '</vlrmulta>' ||
+                                                        '<vlrjuros>' || rw_agendamento.vljuros         || '</vlrjuros>');
+
+        END IF;
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||                                
                                 '<infosac>'  ||
                                     '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                     '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 

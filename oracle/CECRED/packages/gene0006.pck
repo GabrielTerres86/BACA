@@ -82,7 +82,9 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,cdagectl crapcop.cdagectl%TYPE
 					,nrcelular   VARCHAR2(100)
           ,nmoperadora VARCHAR2(100)
-					,nrnsuope    VARCHAR2(100));
+					,nrnsuope    VARCHAR2(100)
+          ,cdhistor craphis.cdhistor%TYPE
+          ,cdagesic crapcop.cdagesic%TYPE);
 
   /* Definição da PL Table de registros de protocolos */
   TYPE typ_tab_protocolo IS TABLE OF typ_reg_protocolo INDEX BY PLS_INTEGER;
@@ -1326,7 +1328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 05/06/2017
+    --  Data     : Junho/2013.                   Ultima atualização: 30/10/2017
     --
     --  Dados referentes ao programa:
     --
@@ -1353,20 +1355,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --
     --              05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
 		--            	             da transação (David).
+    --
+    --              30/10/2017 - Adequação da procedure conforme 
+    --                           generico\procedures\bo_algoritmo_seguranca.p, Prj. 285
+    --                           (Jean Michel).
     -- .............................................................................
   BEGIN
     DECLARE
-      vr_exc_erro   EXCEPTION;             --> Controle de execução
-      vr_dtinipro   DATE;                  --> Auxiliar para data inicial do protocolo
-      vr_dtfimpro   DATE;                  --> Auxiliar para data final do protocolo
-      vr_exc_iter   EXCEPTION;             --> Controle de iteração
-      vr_index      NUMBER;                --> Indexador para PL Table
-      vr_nmoperad   crapopi.nmoperad%TYPE; --> Nome operador
+      vr_exc_erro   EXCEPTION;                   --> Controle de execução
+      vr_dtinipro   DATE;                        --> Auxiliar para data inicial do protocolo
+      vr_dtfimpro   DATE;                        --> Auxiliar para data final do protocolo
+      vr_exc_iter   EXCEPTION;                   --> Controle de iteração
+      vr_index      NUMBER;                      --> Indexador para PL Table
+      vr_nmoperad   crapopi.nmoperad%TYPE;       --> Nome operador
+      vr_cdcritic   crapcri.cdcritic%TYPE := 0;  --> Código da crítica
+      vr_dscritic   crapcri.dscritic%TYPE := ''; --> Descrição da crítica
 
       -- Buscar dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper IN crappro.cdcooper%TYPE) IS   --> Código da cooperativa
         SELECT cp.cdbcoctl
               ,cp.cdagectl
+              ,cp.cdagesic
         FROM crapcop cp
         WHERE cp.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -1414,6 +1423,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           AND rownum = 1;
       rw_crapopi cr_crapopi%ROWTYPE;
 
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
     BEGIN
       -- Validar dados da cooperativa
       OPEN cr_crapcop(pr_cdcooper);
@@ -1426,6 +1438,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         RAISE vr_exc_erro;
       ELSE
         CLOSE cr_crapcop;
+      END IF;
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
       END IF;
 
       -- Assimilar valores de saída
@@ -1453,6 +1482,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
         -- Bloco para iteração (escape)
         BEGIN
+
+          -- Nao carregar Protocolo pagamento fatura caso seja o dia de geracao, devido o pagamento
+          -- ainda poder ser estornado.
+          IF rw_crappro.cdtippro = 15  AND rw_crappro.dtmvtolt = rw_crapdat.dtmvtolt THEN 
+		         CONTINUE;
+          END IF;
+   
           -- Validar para TAA
           IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
             RAISE vr_exc_iter;
@@ -1464,11 +1500,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           END IF;
 
           -- Incrementa quantidade de registros
-          pr_qttotreg := pr_qttotreg + 1;
+          pr_qttotreg := pr_qttotreg + 1; 
 
           -- Valida condições sobre o registro
           IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
             RAISE vr_exc_iter;
+          END IF;
+
+          IF pr_cdorigem = 3 AND -- InternetBank
+             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
+            CONTINUE;
+          END IF;
+
+          IF pr_cdorigem = 3 AND -- InternetBank
+             rw_crappro.cdtippro = 20 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
+            CONTINUE;
+          END IF;
+
+          IF pr_cdorigem = 4 AND -- TAA
+             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
+            CONTINUE;
+          END IF;
+          
+          IF pr_cdorigem = 20 AND -- TAA
+             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
+            CONTINUE;
           END IF;
 
           vr_nmoperad := '';
@@ -1505,15 +1561,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).nrcpfpre := rw_crappro.nrcpfpre;
           pr_protocolo(vr_index).nmoperad := vr_nmoperad;
           pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
+          pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-          IF rw_crappro.cdtippro IN (2,6,9,15) THEN
+          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,11,13,15,16,17,18,19,20) THEN
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
 		  
-		  IF rw_crappro.cdtippro IN (20) THEN
-			pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
-			pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
+		      IF rw_crappro.cdtippro IN (20) THEN
+             pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
+             pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
           END IF;
 
           -- Valida TAA
@@ -1540,6 +1597,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       END LOOP;
     EXCEPTION
       WHEN vr_exc_erro THEN
+        IF vr_cdcritic > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        pr_dscritic := vr_dscritic;
         pr_dscritic := 'Erro em GENE0006.pc_lista_protocolos: ' || pr_dscritic;
       WHEN OTHERS THEN
         pr_dscritic := 'Erro em GENE0006.pc_lista_protocolos: ' || SQLERRM;

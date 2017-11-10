@@ -516,7 +516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     =>
-                                  '<nrtelefo>' || vr_protocolo(vr_ind).nrcelular   || '</nrtelefo>' ||
+                                  '<nrdddtel>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).nrcelular, ' ')) || '</nrdddtel>' ||
+                                  '<nrtelefo>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).nrcelular, ' ')) || '</nrtelefo>' ||
                                   '<nmoperad>' || vr_protocolo(vr_ind).nmoperadora || '</nmoperad>');   
 				END IF;
 				
@@ -656,6 +657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nmtitdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),15))           || '</nmtitdst>' ||
                                   '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),1,4)) || '</cdagedst>' ||
                                   '<nmcopdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),8))   || '</nmcopdst>' ||
+                                  '<dttransf>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                      || '</dttransf>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||
                                   '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                             || '</nmprepos>' ||
@@ -675,7 +677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>'
+                             ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
                              
       pr_dsretorn := 'OK';   
@@ -731,7 +733,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
       vr_info_sac typ_reg_info_sac;     
@@ -773,17 +774,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
@@ -801,6 +802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||                                  
                                   '<cdbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),1,3)) || '</cdbandst>' ||
                                   '<dsbandst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'),7))   || '</dsbandst>' ||                                                                   
+                                  '<nrispbif>' || TRIM(REPLACE(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#'),'.','')) || '</nrispbif>' ||
                                   '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),1,4)) || '</cdagedst>' ||
                                   '<dsagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2, '#'),8))   || '</dsagedst>' ||                                                                    
                                   '<dsctadst>' || TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##2, '#')) || '</dsctadst>' ||
@@ -823,13 +825,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                '</dados>' );          
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>'
+                             ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
                              
-     pr_dsretorn := 'OK';
-       
+       pr_dsretorn := 'OK';
+  
       EXCEPTION								
 				WHEN vr_exc_erro THEN  							
 					
@@ -881,7 +883,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -923,22 +924,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Cecred><Protocolos>');       
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
-          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+          gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
@@ -1015,11 +1016,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>'
+                             ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
                              
       pr_dsretorn := 'OK';   
-       
+ 
       EXCEPTION								
 				WHEN vr_exc_erro THEN  							
 					
@@ -1071,7 +1072,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE; 
       vr_info_sac typ_reg_info_sac;
@@ -1113,17 +1113,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');  
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
@@ -1164,11 +1164,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>'
+                             ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
                              
       pr_dsretorn := 'OK';   
-       
+
       EXCEPTION								
 				WHEN vr_exc_erro THEN  							
 					
@@ -1224,7 +1224,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 			vr_cdtippag    INTEGER;
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -1266,11 +1265,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);  
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);  
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
                              
@@ -1291,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					vr_cdtippag := 2;
         END IF;
         
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 															 
 															   '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -1325,12 +1324,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  '</infosac>' );
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);   
-                             
-      pr_retxml := vr_clob;                          
                              
       pr_dsretorn := 'OK';   
        
@@ -1384,7 +1381,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -1426,17 +1422,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');  
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
 															    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
@@ -1470,12 +1466,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
       pr_dsretorn := 'OK';   
        
@@ -1530,7 +1524,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;     
@@ -1572,22 +1565,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');        
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
 															    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
                                   '<dstippro>' || to_char(vr_protocolo(vr_ind).dsinform##1)                                                   || '</dstippro>' ||
-                                  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<nrdplano>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdplano>' ||
                                   '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||
@@ -1595,6 +1588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																	'<dsdplano>' || TRIM(vr_protocolo(vr_ind).dsinform##3)                                                      || '</dsdplano>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+                                  '<dtmvtolt>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                        || '</dtmvtolt>' ||
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
                                   '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -1611,12 +1605,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '</infosac>');																	
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -1671,7 +1663,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -1713,17 +1704,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');        
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 															    
 															    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -1761,12 +1752,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -1821,7 +1810,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -1863,17 +1851,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');         
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<dados>'||
@@ -1889,8 +1877,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
-                                  '<dscedent>' || vr_protocolo(vr_ind).dscedent                                                                                      || '</dscedent>' ||
-                                  '<nridenti>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nridenti>' ||
+                                  '<nmconven>' || vr_protocolo(vr_ind).dscedent                                                                                      || '</nmconven>' ||
+                                  '<idconsum >' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</idconsum>' ||
                                   '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
                                   '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																	'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
@@ -1909,7 +1897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>'
+                             ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
                              
       pr_dsretorn := 'OK';   
@@ -1965,7 +1953,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_tpcaptur INTEGER;
@@ -2010,11 +1997,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');        
       
@@ -2026,7 +2013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					
 				  vr_cdtribut := TO_NUMBER(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')));
 
-          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+          gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     =>
 																    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2044,7 +2031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
 																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||																
- 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
+ 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -2052,7 +2039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
 					IF vr_cdtribut = 6106 THEN 
-						gene0002.pc_escreve_xml(pr_xml            => vr_clob
+						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
 																			'<nrrefere>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrrefere>' ||
@@ -2060,7 +2047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																			'<vlrecbru>0,00</vlrecbru>'                                                                                                         ||
 																			'<vlpercen>0</vlpercen>');
 					ELSE
-						gene0002.pc_escreve_xml(pr_xml            => vr_clob
+						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
 																			'<dtvencto></dtvencto>' ||
@@ -2069,7 +2056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																			'<vlpercen>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlpercen>');
 					END IF;
 				  
-					gene0002.pc_escreve_xml(pr_xml            => vr_clob
+					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     =>
 																'<cdtribut>' || vr_cdtribut                                                                                                            || '</cdtribut>' ||
@@ -2095,7 +2082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					
 				   vr_cdempcon := TO_NUMBER(SUBSTR(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), 16, 4));
           
-           gene0002.pc_escreve_xml(pr_xml            => vr_clob
+           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																  ,pr_texto_completo => vr_xml_temp      
 																  ,pr_texto_novo     => 
 																		'<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2106,7 +2093,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+                                    '<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																		'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+                                    '<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||																
@@ -2115,8 +2104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<cdempcon>' || to_char(vr_cdempcon)                                                                                               || '</cdempcon>' ||																				
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
-																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
-																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
+																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
+																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
 																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																		'<nrdocdar>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrdocdar>' ||
 																		'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
@@ -2140,12 +2129,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -2200,7 +2187,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_tpcaptur INTEGER;
@@ -2246,11 +2232,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');     
       
@@ -2267,7 +2253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 						vr_dtagenda := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(18, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 				  END IF;
 
-          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+          gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     =>
 																    '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2284,8 +2270,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
-                                    '<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
-																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||																
+                                    '<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
+																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||																
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -2293,7 +2279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
 					IF vr_cdtribut = 6106 THEN 
-						gene0002.pc_escreve_xml(pr_xml            => vr_clob
+						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
 																			'<nrrefere>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrrefere>' ||
@@ -2301,7 +2287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																			'<vlrecbru>0,00</vlrecbru>'                                                                                                         ||
 																			'<vlpercen>0</vlpercen>');
 					ELSE
-						gene0002.pc_escreve_xml(pr_xml            => vr_clob
+						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
 																			'<dtvencto></dtvencto>' ||
@@ -2310,7 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																			'<vlpercen>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</vlpercen>');
 					END IF;
 				  
-					gene0002.pc_escreve_xml(pr_xml            => vr_clob
+					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     =>
 																'<cdtribut>' || vr_cdtribut                                                                                                            || '</cdtribut>' ||
@@ -2347,7 +2333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 						 END IF; 
            END IF;
 					 
-					 gene0002.pc_escreve_xml(pr_xml            => vr_clob
+					 gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	,pr_texto_completo => vr_xml_temp      
 																	,pr_texto_novo     => 
 																		'<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2358,7 +2344,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
+																		'<nrcpfpre>' || to_char(vr_protocolo(vr_ind).nrcpfpre)                                                                             || '</nrcpfpre>' ||
 																		'<nmoperad>' || to_char(vr_protocolo(vr_ind).nmoperad)                                                                             || '</nmoperad>' ||
+																		'<nrcpfope>' || to_char(vr_protocolo(vr_ind).nrcpfope)                                                                             || '</nrcpfope>' ||
 																		'<cdtipcap>' || to_char(vr_tpcaptur)                                                                                               || '</cdtipcap>' ||
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
@@ -2367,9 +2355,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<cdempcon>' || to_char(vr_cdempcon)                                                                                               || '</cdempcon>' ||																				
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
-																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
-																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
-																		'<nrdocdar>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrdocdar>' ||
+																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
+																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
+																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																		'<nrdocdar></nrdocdar>'                                                                                                            ||
 																		'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
 																		'<dsdpagto>' || CASE vr_cdempcon 
@@ -2393,12 +2381,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -2453,8 +2439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
-			vr_cdempcon INTEGER;
+      vr_cdempcon INTEGER;
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
@@ -2496,11 +2481,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');        
       
@@ -2508,7 +2493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 				
 			  vr_cdempcon := TO_NUMBER(SUBSTR(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), 16, 4));
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 															 ,pr_texto_completo => vr_xml_temp      
 															 ,pr_texto_novo     => 
 																'<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2529,8 +2514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																'<cdempcon>' || to_char(vr_cdempcon)                                                                                               || '</cdempcon>' ||																				
 																'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
-																'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
-																'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
+																'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
+																'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
 																'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																'<nrdocdas>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrdocdas>' ||
 																'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
@@ -2549,12 +2534,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'</infosac>');
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -2609,7 +2592,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
       vr_exc_erro    EXCEPTION;       --> Controle de exceção      
       vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob CLOB;       
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
 			vr_cdempcon INTEGER;
@@ -2653,11 +2635,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
       vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
       
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
        -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');        
       
@@ -2670,7 +2652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					vr_dtagenda := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(18, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 				END IF;
 
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 															 ,pr_texto_completo => vr_xml_temp      
 															 ,pr_texto_novo     => 
 																'<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                                             || '</cdtippro>' ||
@@ -2691,15 +2673,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																'<cdempcon>' || to_char(vr_cdempcon)                                                                                               || '</cdempcon>' ||																				
 																'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
-																'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
-																'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
+																'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
+																'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
 																'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																'<nrdocdas>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrdocdas>' ||
 																'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
 																'<dsdpagto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(12,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsdpagto>' ||
 																'<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
 																'<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
-																'<dtagenda>' || vr_dtagenda                                                                                                            || '</dtagenda>' ||
+																'<dtagenda>' || vr_dtagenda                                                                                                        || '</dtagenda>' ||
 																'<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                                                      || '</nrseqaut>' ||
 																'<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
 																'<infosac>' ||
@@ -2713,12 +2695,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       END LOOP;
       
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Comprovante>'
                              ,pr_fecha_xml      => TRUE);      
-                             
-      pr_retxml := vr_clob;
 			
 			pr_dsretorn := 'OK';   
        
@@ -2957,7 +2937,7 @@ PROCEDURE pc_dados_compr_trf_recebida(pr_cdcooper IN crappro.cdcooper%TYPE  --> 
     
     /* ................................................................................
 
-     Programa: pc_dados_compr_trf_recebida
+     Programa: pc_dados_compr_trf_recebida            
      Sistema : Internet Banking
      Sigla   : COMP
      Autor   : David
@@ -3321,7 +3301,8 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
       vr_dscritic VARCHAR2(1000); 
       vr_idx_ted  NUMBER := 0;
       vr_info_sac typ_reg_info_sac;     
-    
+      vr_inpesrem INTEGER := 0;
+      vr_inpesdst INTEGER := 0;
     BEGIN
             
       SSPB0001.pc_obtem_log_cecred(pr_cdcooper => pr_cdcooper
@@ -3362,7 +3343,20 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
-            
+  
+      IF vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem <= 11 THEN    
+        vr_inpesrem := 1; -- FISICA
+      ELSE
+        vr_inpesrem := 2; -- JURIDICA
+      END IF;
+
+      IF vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst <= 11 THEN    
+        vr_inpesdst := 1; -- FISICA
+      ELSE
+        vr_inpesdst := 2; -- JURIDICA
+      END IF;
+      
+
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => 
@@ -3372,14 +3366,14 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                 '<cdbanrem>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdbanrem),3,0) || '</cdbanrem>' ||
                                 '<cdagerem>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdagerem),4,0) || '</cdagerem>' ||
                                 '<nrctarem>' || TRIM(GENE0002.fn_mask_conta(vr_tab_logspb_detalhe(vr_idx_ted).nrctarem)) || '</nrctarem>' ||
-                                --'<nrcpfrem>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).nrcpfrem,vr_inpesrem) || '</nrcpfrem>' ||
-                                '<nrcpfrem>' || TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem) || '</nrcpfrem>' ||
+                                '<nrcpfrem>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem,vr_inpesrem) || '</nrcpfrem>' ||
+                                --'<nrcpfrem>' || TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem) || '</nrcpfrem>' || JMD
                                 '<nmremete>' || vr_tab_logspb_detalhe(vr_idx_ted).dsnomrem || '</nmremete>' ||
                                 '<cdbandst>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdbandst),3,0) || '</cdbandst>' ||
                                 '<cdagedst>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdagedst),4,0) || '</cdagedst>' ||
                                 '<nrctadst>' || TRIM(GENE0002.fn_mask_conta(vr_tab_logspb_detalhe(vr_idx_ted).nrctadst)) || '</nrctadst>' ||
-                                --'<nrcpfdst>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).nrcpfdst,vr_inpesdst) || '</nrcpfdst>' ||
-                                '<nrcpfdst>' || TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst) || '</nrcpfdst>' ||
+                                '<nrcpfdst>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst,vr_inpesdst) || '</nrcpfdst>' ||
+                                --'<nrcpfdst>' || TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst) || '</nrcpfdst>' || JMD
                                 '<nmdestin>' || vr_tab_logspb_detalhe(vr_idx_ted).dsnomdst || '</nmdestin>' ||
                                 '<vldocmto>' || to_char(vr_tab_logspb_detalhe(vr_idx_ted).vltransa,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')  || '</vldocmto>' ||
                                 '<dttransa>' || to_char(vr_tab_logspb_detalhe(vr_idx_ted).dttransa, 'DD/MM/RRRR')         || '</dttransa>' ||
