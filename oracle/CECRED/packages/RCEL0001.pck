@@ -958,6 +958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
       vr_nrdrowid ROWID;
+      vr_dserrlog VARCHAR2(10000);
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
@@ -1186,9 +1187,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					 CLOSE cr_operacao_duplicada;
 					 -- Gerar crítica
            vr_cdcritic := 0;
-					 vr_dscritic := '<![CDATA[você já possui um agendamento cadastrado com os mesmos dados informados. </br>'
+					 vr_dscritic := '<![CDATA[Você já possui um agendamento cadastrado com os mesmos dados informados. </br>'
 					             || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes. </br>'
 											 || '<center>Consulte suas recargas agendadas.</center>]]>';
+					 -- Gravar erro para o log
+           vr_dserrlog := 'Você já possui um agendamento cadastrado com os mesmos dados informados.'
+					             || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes.'
+											 || ' Consulte suas recargas agendadas.';
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
 				 END IF;
@@ -1204,6 +1209,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         
+				-- Se retornou erro para o log
+				IF trim(vr_dserrlog) IS NOT NULL THEN
+					-- Utilizar erro do log
+					vr_dscritic := vr_dserrlog;
+				END IF;  
+				      
         -- Gerar log
 				GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
 														,pr_cdoperad => '996' 
@@ -2102,7 +2113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			,dtrecarga
 																			,cdcanal
 																			,vlrecarga
-																			,cdproduto)
+																			,cdproduto
+																			,insit_operacao)
 															 VALUES(pr_cdcooper
 																		 ,pr_nrdconta
 																		 ,pr_nrdddtel
@@ -2112,7 +2124,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																		 ,trunc(SYSDATE)
 																		 ,CASE pr_flmobile WHEN 1 THEN 10 ELSE pr_idorigem END
 																		 ,pr_vlrecarga
-																		 ,pr_cdproduto)
+																		 ,pr_cdproduto
+																		 ,0)
 														RETURNING idoperacao
 																		 ,insit_operacao
 																 INTO rw_operacao.idoperacao
@@ -2159,7 +2172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			    END IF;
 				
 				-- Se for registro em processamento
-				IF rw_operacao.insit_operacao IS NULL THEN
+				IF rw_operacao.insit_operacao = 0 THEN
 					-- Devemos atualizar o registro de operação de recarga
 					UPDATE tbrecarga_operacao 
 					   SET insit_operacao = 8 -- Transação abortada
@@ -2206,7 +2219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
 				
 				-- Se for registro em processamento
-				IF rw_operacao.insit_operacao IS NULL THEN
+				IF rw_operacao.insit_operacao = 0 THEN
 					-- Devemos atualizar o registro de operação de recarga
 					UPDATE tbrecarga_operacao 
 					   SET insit_operacao = 8 -- Transação abortada
@@ -2247,7 +2260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				END IF;
 				
 				-- Se for registro em processamento
-				IF rw_operacao.insit_operacao IS NULL THEN
+				IF rw_operacao.insit_operacao = 0 THEN
 					-- Devemos atualizar o registro de operação de recarga
 					UPDATE tbrecarga_operacao 
 					   SET insit_operacao = 8 -- Transação abortada
@@ -3937,22 +3950,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         
 				-- Apenas para recargas efetuadas no mesmo dia
 				IF pr_cddopcao = 1 THEN
-        -- Valida requisição duplicada (Mobile)
-        OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
-                                 ,pr_nrdconta  => pr_nrdconta
-                                 ,pr_dtrecarga => vr_dtrecarga
-                                 ,pr_nrddd     => vr_nrddd
-                                 ,pr_nrcelular => vr_nrcelular
-                                 ,pr_vlrecarga => vr_vlrecarga);
-        FETCH cr_operacao_repetida
-        INTO vr_operacao_repetida;
-        CLOSE cr_operacao_repetida;
-        
-        IF vr_operacao_repetida > 0 THEN
-           vr_cdcritic := 0;
-           vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
-           RAISE vr_exc_erro;    
-        END IF;
+					-- Valida requisição duplicada (Mobile)
+					OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+																	 ,pr_nrdconta  => pr_nrdconta
+																	 ,pr_dtrecarga => vr_dtrecarga
+																	 ,pr_nrddd     => vr_nrddd
+																	 ,pr_nrcelular => vr_nrcelular
+																	 ,pr_vlrecarga => vr_vlrecarga);
+					FETCH cr_operacao_repetida
+					INTO vr_operacao_repetida;
+					CLOSE cr_operacao_repetida;
+	        
+					IF vr_operacao_repetida > 0 THEN
+						 vr_cdcritic := 0;
+						 vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
+						 RAISE vr_exc_erro;    
+					END IF;
         END IF;      
       END IF;
       
