@@ -2901,6 +2901,12 @@ PROCEDURE proc_operacao14:
                xml_operacao14a.dslcremp
                xml_operacao14a.dsfinemp
                xml_operacao14a.nmprimtl
+               xml_operacao14a.qtpreres
+               xml_operacao14a.dsprodut
+               xml_operacao14a.cddlinha
+               xml_operacao14a.dsdlinha
+               xml_operacao14a.cdfinali
+               xml_operacao14a.dsfinali
                xml_operacao14a.dscabfim.
                
     FOR EACH xml_operacao14b NO-LOCK: 
@@ -3407,7 +3413,8 @@ PROCEDURE proc_operacao26:
                               aux_dtmvtocd
                           ELSE
                               DATE(GET-VALUE("aux_dtmvtopg"))
-           aux_cdctrlcs = GET-VALUE("aux_cdctrlcs").
+           aux_cdctrlcs = GET-VALUE("aux_cdctrlcs")
+           aux_vlapagar = DECI(GET-VALUE("aux_vlapagar")).
     
     RUN sistema/internet/fontes/InternetBank26.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3428,6 +3435,7 @@ PROCEDURE proc_operacao26:
                                                   INPUT aux_nrcpfope,
                                                   INPUT aux_flmobile,
                                                   INPUT aux_cdctrlcs,
+                                                  INPUT aux_vlapagar,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao26).
     
@@ -7351,6 +7359,8 @@ END PROCEDURE.
 PROCEDURE proc_operacao156:
 
     aux_nrctremp = INT(GET-VALUE("nrctremp")).
+    aux_listapar = GET-VALUE("listapar").
+    aux_tipopgto = INT(GET-VALUE("tipopgto")).
     
     RUN sistema/internet/fontes/InternetBank156.p (INPUT aux_cdcooper,
                                                    INPUT 90,    /*cdagenci*/
@@ -7364,6 +7374,8 @@ PROCEDURE proc_operacao156:
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_dtmvtoan,
                                                    INPUT aux_dtmvtocd,
+                                                   INPUT aux_listapar, 
+                                                   INPUT aux_tipopgto,                                                  
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
 

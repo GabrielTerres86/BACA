@@ -306,6 +306,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2);        --> Retorno de critica (OK ou NOK)
@@ -2320,6 +2321,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                               ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2) IS      --> Retorno de critica (OK ou NOK)
@@ -2388,7 +2390,6 @@ create or replace package body cecred.PAGA0002 is
 
     vr_dstransa  VARCHAR2(500) := NULL;
     vr_dstrans1  VARCHAR2(500) := NULL;
-    vr_vllanmto  NUMBER;
     vr_nrdrowid  ROWID;
     vr_dtvencto  DATE;
     vr_nmconban  VARCHAR2(100);
@@ -2418,6 +2419,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlabatim  NUMBER;
     vr_vloutdeb  NUMBER;
     vr_vloutcre  NUMBER;
+    vr_vlapagar  NUMBER;
 
     vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
@@ -2450,7 +2452,6 @@ create or replace package body cecred.PAGA0002 is
     CLOSE cr_crapass;
 
     -- inicializar variaveis
-    vr_vllanmto := pr_vllanmto;
     vr_lindigi1 := pr_lindigi1;
     vr_lindigi2 := pr_lindigi2;
     vr_lindigi3 := pr_lindigi3;
@@ -2458,6 +2459,12 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
+    
+    IF NVL(pr_vlapagar,0) > 0 THEN
+		   vr_vlapagar := pr_vlapagar;
+  	ELSE
+	 	   vr_vlapagar := pr_vllanmto;
+    END IF;
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -2496,7 +2503,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtmvtolt     => pr_dtmvtolt         --> Data Movimento
                          ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                          ,pr_dtmvtopg     => pr_dtmvtopg         --> Data Pagamento
-                         ,pr_vllanmto     => vr_vllanmto         --> Valor Lancamento
+                         ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
                          ,pr_cddbanco     => 0                   --> Codigo banco
                          ,pr_cdageban     => 0                   --> Codigo Agencia
                          ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia

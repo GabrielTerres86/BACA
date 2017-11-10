@@ -161,7 +161,9 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                                            STRING(tt-dados-epr.cdfinemp) +
                                            "</cdfinali><dsfinali>" +
                                            TRIM(SUBSTR(tt-dados-epr.dsfinemp,INDEX(tt-dados-epr.dsfinemp,"-",1) + 1)) +
-                                           "</dsfinali></EMPRESTIMO>".
+                                           "</dsfinali><flgrelat>" +
+                                           (IF tt-dados-epr.flgpreap AND (tt-dados-epr.cdorigem = 3 OR tt-dados-epr.cdorigem = 4) THEN "1" ELSE "0") +
+                                           "</flgrelat></EMPRESTIMO>".
                         
         END. 
                                 

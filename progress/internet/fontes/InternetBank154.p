@@ -119,6 +119,7 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
                          + "<dsdlinha>" + TRIM(SUBSTR(tt-dados-epr.dslcremp,INDEX(tt-dados-epr.dslcremp,"-",1) + 1)) + "</dsdlinha>" 
                          + "<cdfinali>" + STRING(tt-dados-epr.cdfinemp) + "</cdfinali>"
                          + "<dsfinali>" + TRIM(SUBSTR(tt-dados-epr.dsfinemp,INDEX(tt-dados-epr.dsfinemp,"-",1) + 1)) + "</dsfinali>"
+                         + "<inproces>" + (IF par_inproces = 1 THEN "1" ELSE "0" + "</inproces>"
                          + "</EMPRESTIMO>".
               END.
 
