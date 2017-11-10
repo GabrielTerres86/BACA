@@ -506,7 +506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_1cicl,'ddmmyyyyhh24:mi')
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_1cicl,'ddmmyyyyhh24:mi')
     or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_2cicl,'ddmmyyyyhh24:mi')
-               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi') THEN
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi')
+    or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi') THEN
       CCRD0006.gera_arquivo_xml_23(pr_dscritic => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
@@ -514,13 +516,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     END IF;
     
     -- executa o processo CCRD0006.gera_arquivo_25
-    -- Alterado para utilizar a mesma grade do agendamento pois o arquivo 25 será gerado no processo de efetivação do agendamento
-    --if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_25_1cicl,'ddmmyyyyhh24:mi')
-    --           and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_25_1cicl,'ddmmyyyyhh24:mi')
-    --or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_25_2cicl,'ddmmyyyyhh24:mi')
-    --           and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_25_2cicl,'ddmmyyyyhh24:mi') THEN
-    if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
-               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi') THEN
+    if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_25_1cicl,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_25_1cicl,'ddmmyyyyhh24:mi')
+    or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_25_2cicl,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_25_2cicl,'ddmmyyyyhh24:mi') THEN
       CCRD0006.gera_arquivo_xml_25(pr_dscritic => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
@@ -2074,7 +2073,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                     ,tbdomic_liqtrans_centraliza tlc
                WHERE tll.idlancto = tlc.idlancto
                  AND tll.idarquivo = d.idarquivo
-                 AND tll.insituacao in (1));
+                 AND tll.insituacao in (1))
+         AND ((d.nmarquivo_origem LIKE '%PGT' AND 
+             (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_1cicl,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_1cicl,'ddmmyyyyhh24:mi'))
+          or (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_2cicl,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi')))
+          OR (d.nmarquivo_origem NOT LIKE '%PGT' AND 
+              sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi')));
 
     CURSOR c1 (pr_idarquivo IN NUMBER) IS
       SELECT tll.nrcnpjbase_principal
