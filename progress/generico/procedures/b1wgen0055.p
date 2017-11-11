@@ -1960,20 +1960,23 @@ PROCEDURE Grava_Dados:
     RELEASE crapass.
     RELEASE crapttl.
         
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    /* Apenas chamar replicacao ao incluir titular  */
+    IF par_cddopcao = "I" THEN
+    DO:
+      { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
                         
-    RUN STORED-PROCEDURE pc_marca_replica_ayllos 
-      aux_handproc = PROC-HANDLE NO-ERROR
-               (INPUT par_cdcooper,  
-                INPUT par_nrdconta,
-                INPUT par_idseqttl,
-               OUTPUT "").
+      RUN STORED-PROCEDURE pc_marca_replica_ayllos 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                 (INPUT par_cdcooper,  
+                  INPUT par_nrdconta,
+                  INPUT par_idseqttl,
+                 OUTPUT "").
 
-    CLOSE STORED-PROC pc_marca_replica_ayllos 
-        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      CLOSE STORED-PROC pc_marca_replica_ayllos 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
-    
+      { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
+    END.
         
     IF  VALID-HANDLE(h-b1wgen0060) THEN
         DELETE OBJECT h-b1wgen0060.
