@@ -469,6 +469,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                                    ,pr_cdacesso => 'HORARIO_SLC_33_CANCEL'),7);
     vr_database_name   := GENE0001.fn_database_name;
 
+    -- executa o processo CCRD0006.pc_leitura_arquivo_xml
+    CCRD0006.pc_leitura_arquivos_xml(pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_saida;
+    END IF;
 
     if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi') THEN
@@ -478,13 +484,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
       END IF;
-    END IF;
-
-    -- executa o processo CCRD0006.pc_leitura_arquivo_xml
-    CCRD0006.pc_leitura_arquivos_xml(pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);
-    IF vr_dscritic IS NOT NULL THEN
-       RAISE vr_exc_saida;
     END IF;
 
     -- executa o processo CCRD0006.pr_processa_reg_pendentes
@@ -507,7 +506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_1cicl,'ddmmyyyyhh24:mi')
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_1cicl,'ddmmyyyyhh24:mi')
     or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_2cicl,'ddmmyyyyhh24:mi')
-               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi') THEN
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi')
+    or sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi') THEN
       CCRD0006.gera_arquivo_xml_23(pr_dscritic => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
@@ -2072,7 +2073,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                     ,tbdomic_liqtrans_centraliza tlc
                WHERE tll.idlancto = tlc.idlancto
                  AND tll.idarquivo = d.idarquivo
-                 AND tll.insituacao in (1));
+                 AND tll.insituacao in (1))
+         AND ((d.nmarquivo_origem LIKE '%PGT' AND 
+             (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_1cicl,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_1cicl,'ddmmyyyyhh24:mi'))
+          or (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_23_2cicl,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi')))
+          OR (d.nmarquivo_origem NOT LIKE '%PGT' AND 
+              sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_efetiva_agend,'ddmmyyyyhh24:mi')
+                          and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_efetiva_agend,'ddmmyyyyhh24:mi')));
 
     CURSOR c1 (pr_idarquivo IN NUMBER) IS
       SELECT tll.nrcnpjbase_principal
@@ -6981,7 +6990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 --        (rw_lancamento.tparquivo = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf) = 'S')) THEN
 --       Incluída a validação da forma de transferência para validar apenas se for = 3 (SILOC)        
         (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf <> 3) OR
-        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf,'S') = 'S')) THEN
+        (rw_lancamento.tparquivo = 3 AND rw_lancamento.tpforma_transf = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpj_credenciador, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf,'S') = 'S')) THEN
           
         FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
           -- Limpa a variavel de erro
@@ -7998,7 +8007,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                     case instr(upper(lct.nmcredenciador),'STONE') when 0 then
                           case instr(upper(lct.nmcredenciador),'BRADESCO') when 0 then
                                case instr(upper(lct.nmcredenciador),'SOROCRED') when 0 then
-                                    upper(lct.nmcredenciador)
+                                    case instr(upper(lct.nmcredenciador),'BANESTES') when 0 then
+                                         upper(lct.nmcredenciador)
+                                    else 'BANESTES' end
                                else 'SOROCRED' end
                           else 'BRADESCO' end
                     else 'STONE' end
@@ -9007,7 +9018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       SELECT 'S' id_existe_liquid
              ,msg.rowid
          FROM tbdomic_liqtrans_mensagem msg
-        WHERE (substr(msg.nrcnpjcpf_crentraliza,1,8) = pr_cnpjliqdant
+        WHERE (to_number(msg.nrcnpjcpf_crentraliza) = to_number(pr_cnpjliqdant)
            OR msg.nrcnpjcpf_crentraliza IS NULL)
           AND msg.insituacao = 0
           AND msg.vlliquidacao = pr_vlrlancto

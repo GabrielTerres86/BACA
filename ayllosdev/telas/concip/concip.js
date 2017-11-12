@@ -14,6 +14,7 @@ var cCddopcao, cTodosCabecalho, cTodosFrmArquivo, cTodosFrmConta, dtmvtolt, glbA
 
 // Definição de algumas variáveis globais 
 var cddopcao = 'A';
+var nriniseqAtual = 1;
 
 //Formulários
 var frmCab = 'frmCab';
@@ -75,7 +76,7 @@ function estadoInicial() {
     controlaFoco();
 
     $('#dtinicio', '#frmArquivo').val(dtmvtolt);
-    $('#dtafinal', '#frmArquivo').val(dtmvtolt);
+    $('#dtafinal', '#frmArquivo').val(dtmvtolt).removeAttr('tabindex');
 
     $('#cddopcao', '#frmCab').habilitaCampo().val(cddopcao);
     $('#cddopcao', '#' + frmCab).focus();
@@ -400,6 +401,8 @@ function controlaOperacao(operacao) {
 
     if (operacao == 'A') {
         buscaArquivos(1, 15);
+    } else if(operacao == 'AC'){
+        buscaArquivos(nriniseqAtual, 15);
     } else {
         buscaContas(1, 15);
     }
@@ -413,6 +416,7 @@ function buscaArquivos(nriniseq, nrregist) {
     var dtinicio = $('#dtinicio', '#frmArquivo').val();
     var dtafinal = $('#dtafinal', '#frmArquivo').val();
 
+    nriniseqAtual = nriniseq;
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando consulta ...");
@@ -486,9 +490,11 @@ function formataArquivos() {
     arrayLargura[0] = '293px';
     arrayLargura[1] = '38px';
     arrayLargura[2] = '87px';
-    arrayLargura[3] = '91px';
+    arrayLargura[3] = '74px';
     arrayLargura[4] = '87px';
     arrayLargura[5] = '220px';
+    arrayLargura[6] = '74px';
+    arrayLargura[7] = '23px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'left';
@@ -498,6 +504,7 @@ function formataArquivos() {
     arrayAlinha[4] = 'center';
     arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'center';
+    arrayAlinha[7] = 'center';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
@@ -906,7 +913,7 @@ function chamaRotinaArquivo() {
     $('#divListaConta').html('');
     $('#frmConta').css({'display': 'none'});
     $('#divBotoesConta').css({'display': 'none'});
-    controlaOperacao('A');
+    controlaOperacao('AC');
 
 }
 
