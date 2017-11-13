@@ -1997,7 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
       -- Verifica se retornou erro
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        vr_des_erro := 'Erro em pc_detalhe_compr_oper_debaut:' || vr_dscritic;
+        vr_des_erro := vr_dscritic || ' (' || vr_protocolo(vr_protocolo.FIRST).dsinform##1 || ')';
         RAISE vr_exc_erro;
       END IF;			                  		
 			
@@ -2062,7 +2062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 				
 			-- Verifica se retornou erro
 			IF pr_dsretorn <> 'OK' OR vr_dscritic IS NOT NULL THEN
-				vr_des_erro := 'Erro em pc_detalhe_compr_oper_debaut:' || vr_dscritic;
+				vr_des_erro := vr_dscritic || ' (' || vr_protocolo(vr_protocolo.FIRST).dsinform##1 || ')';
 				RAISE vr_exc_erro;
 			END IF;       			
 			
@@ -2239,10 +2239,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																	'<dttransa>' || to_char(pr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(pr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
 																	'<idconsum>' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo(vr_ind).dsinform##3, '#'))                   || '</idconsum>' ||
-																	'<vlmaxdeb_ant>'  || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb>' ||
-																	'<dshisext_ant>'  || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext>' ||
-																  '<vlmaxdeb_novo>' || TRIM(gene0002.fn_busca_entrada(5, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb>' ||
-																	'<dshisext_novo>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext>' ||																	
+																	'<vlmaxdeb_ant>'  || TRIM(gene0002.fn_busca_entrada(4, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb_ant>'  ||
+																	'<dshisext_ant>'  || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext_ant>'  ||
+																  '<vlmaxdeb_novo>' || TRIM(gene0002.fn_busca_entrada(5, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</vlmaxdeb_novo>' ||
+																	'<dshisext_novo>' || TRIM(gene0002.fn_busca_entrada(3, pr_protocolo(vr_ind).dsinform##3, '#'))              || '</dshisext_novo>' ||
                                   '<dsprotoc>' || pr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
                                   '<infosac>'  ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
