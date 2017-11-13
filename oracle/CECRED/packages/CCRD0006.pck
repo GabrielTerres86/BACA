@@ -6605,7 +6605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               ,tbdomic_liqtrans_arquivo arq
          WHERE lau.cdcooper = pr_cdcooper
            AND lau.dtmvtopg = pr_dtprocesso
-           AND lau.cdhistor in (2442,2443,2444,2445,2450,2453,2478)   -- crédito
+           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445) --crédito
            AND lau.dtdebito IS NULL
            AND lct.insituacao in (0,2)          --Alteração necessária para confirmar débito apenas quando retorna arquivo com confirmação
            AND pdv.nrliquidacao = substr(lau.cdseqtel,1,21)
@@ -7456,6 +7456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_nrdolote := 1;  -- fixa 1 no número do lote
 
+          --2444	Cielo	01.027.058/0001-91 
           -- Atualiza os historicos de lancamento
           IF rw_lancamento.tparquivo = 1 THEN    -- crédito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
@@ -7468,11 +7469,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2450;
              ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
                vr_cdhistor := 2453;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- VERO
                vr_cdhistor := 2478;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2484;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2485;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2486;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2487;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2488;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2489;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2490;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2491;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- SAFRAPAY
+               vr_cdhistor := 2492;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
+          --2448	Cielo	01.027.058/0001-91 
           ELSIF rw_lancamento.tparquivo = 2 THEN -- débito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2448;
@@ -7486,10 +7506,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2413;
              ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
                vr_cdhistor := 2479;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+               vr_cdhistor := 2479;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2493;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2494;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2495;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2496;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2497;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2498;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2499;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2500;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
+               vr_cdhistor := 2501;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
           ELSE                                 -- antecipação
+--2456	Cielo	01.027.058/0001-91 
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2456;
              ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
@@ -7500,8 +7541,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2452;
              ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
                vr_cdhistor := 2414;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL / VERO
                vr_cdhistor := 2480;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2502;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2503;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2504;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2505;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2506;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2507;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2508;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2509;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
+               vr_cdhistor := 2510;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2457;
              END IF;
@@ -8051,7 +8110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           case instr(upper(lct.nmcredenciador),'BRADESCO') when 0 then
                                case instr(upper(lct.nmcredenciador),'SOROCRED') when 0 then
                                     case instr(upper(lct.nmcredenciador),'BANESTES') when 0 then
-                                         upper(lct.nmcredenciador)
+                                         case instr(upper(lct.nmcredenciador),'SAFRA') when 0 then
+                                              upper(lct.nmcredenciador)
+                                         else 'SAFRA' end
                                     else 'BANESTES' end
                                else 'SOROCRED' end
                           else 'BRADESCO' end
