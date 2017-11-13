@@ -317,10 +317,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
   BEGIN
     
-    vr_conteudo.put('CodigoLote', pr_idlotsms);
+    -- Montar o conteúdo do JSON para envio via POST
+    vr_conteudo.put('CodigoLote', pr_idlotsms); -- Código do Lote
+    vr_conteudo.put('CodigoProduto', 21); -- Código do produto
     
     AYMA0001.pc_consumir_ws_rest_aymaru
-                        (pr_rota       => '/Cobranca/Utils/EnviarAlertaBoletos'
+                        (pr_rota       => '/Comunicacao/Sms/EnviarLote'
                         ,pr_verbo      => WRES0001.POST
                         ,pr_servico    => 'SMS.BOLETOS'
                         ,pr_parametros => vr_parametros
@@ -5725,9 +5727,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  TRIM(vr_dscritic) IS NOT NULL THEN
                 vr_cdorgexp := NULL;
                 vr_nmorgexp := NULL; 
-              END IF;  
             END IF;
-            
+            END IF;
+
 
             -- monta registro de DETALHE (Tipo 2)
             vr_dsdettp2 := ('CCB3'                           /* Pedido */                                                  ||
@@ -6027,52 +6029,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
               THEN*/
 
-                -- Verificar se houve alteração no grupo de afinidade - por PA
-                -- a alteracao de PA deve ser a primeira, ou separado por virgula
-                IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
-                   upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
-                   upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
-                   upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
-                   upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
-                   upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
-                  vr_flaltafn := TRUE;
-                END IF;
+              -- Verificar se houve alteração no grupo de afinidade - por PA
+              -- a alteracao de PA deve ser a primeira, ou separado por virgula
+              IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
+                vr_flaltafn := TRUE;
+              END IF;
 
-                -- verificar se houve alteração no Bairro ou Rua
-                IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
-                   upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
-                   upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                   upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
-                   upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
-                   upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
-                   upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
-                   upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
-                   upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
-                  vr_flalttpe := TRUE;
-                END IF;
+              -- verificar se houve alteração no Bairro ou Rua
+              IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
+                 upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
+                vr_flalttpe := TRUE;
+              END IF;
 
-                -- Verificar se foi alterado Estado, cidade ou CEP
-                IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
-                   upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
-                   upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
-                   upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                   upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
-                   upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
-                   upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
-                   upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
-                   upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
-                  vr_flaltcep := TRUE;
-                END IF;
+              -- Verificar se foi alterado Estado, cidade ou CEP
+              IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
+                vr_flaltcep := TRUE;
+              END IF;
 
-                -- Verificar se houve alteração do telefone do cooperado
-                IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
-                  vr_flalttfc := TRUE;
-                END IF;
+              -- Verificar se houve alteração do telefone do cooperado
+              IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
+                vr_flalttfc := TRUE;
+              END IF;
                 
               /*  END IF;  -- Condição IF comentada conforme comentário anterior */
               
@@ -6093,24 +6095,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  vr_vllimalt IS NOT NULL THEN   -- Alterado Limite
               
                 -- Tp. Operac.: Modificação de Conta Cartão (ENDEREÇO/PA/TELEFONE/LIMITE)
-              vr_tipooper := '02';
+                vr_tipooper := '02';
                   
-              -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
-              gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
-                                         rw_crapcol,
-                                         rw_crapdat,
-                                         rw_crapadc,
-                                         rw_crapcrd_loop_alt.nrcctitg,
-                                         vr_tipooper,
-                                         rw_crapcrd_loop_alt.inpessoa,
-                                        (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
-                                         rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
-                                         rw_crapacb.cdgrafin,
-                                         vr_flaltafn,    -- pr_flaltafn
-                                         vr_flaltcep,    -- pr_flaltcep
-                                         vr_flalttpe,    -- pr_flalttpe
-                                         vr_flalttfc,    -- pr_flalttfc
-                                         vr_vllimalt);   -- pr_vllimalt
+                -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
+                gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
+                                           rw_crapcol,
+                                           rw_crapdat,
+                                           rw_crapadc,
+                                           rw_crapcrd_loop_alt.nrcctitg,
+                                           vr_tipooper,
+                                           rw_crapcrd_loop_alt.inpessoa,
+                                          (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
+                                           rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
+                                           rw_crapacb.cdgrafin,
+                                           vr_flaltafn,    -- pr_flaltafn
+                                           vr_flaltcep,    -- pr_flaltcep
+                                           vr_flalttpe,    -- pr_flalttpe
+                                           vr_flalttfc,    -- pr_flalttfc
+                                           vr_vllimalt);   -- pr_vllimalt
               
               END IF;
               
@@ -7700,7 +7702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     -- Montar a mensagem a ser enviada
                     vr_dsmsgsms := GENE0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
                                                               ,pr_cdproduto         => 21 -- CARTAO CREDITO CECRED
-                                                              ,pr_cdtipo_mensagem   => 18 -- Tipo de mensagem 
+                                                              ,pr_cdtipo_mensagem   => 22 -- Tipo de mensagem 
                                                               ,pr_sms               => 1  -- Indicador de SMS 
                                                               ,pr_valores_dinamicos => vr_dsvlrmsg);
                     
@@ -8133,12 +8135,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         
         -- Atualizar os registros de majoração
         UPDATE integradados.sasf_majoracaocartao@sasp maj
-	         SET maj.cdmajorado    = vr_cdmajora
-	           , maj.dsexclusao    = vr_dscritic
-	       WHERE maj.cdcooper      = pr_cdcooper
-	         AND maj.nrdconta      = pr_nrdconta
-	         AND maj.nrcontacartao = pr_nrctacrd
-	         AND maj.cdmajorado    = 4; -- Pendente
+	         SET maj.cdmajorado        = vr_cdmajora
+             , maj.dtmajoracaocartao = SYSTIMESTAMP
+	           , maj.dsexclusao        = vr_dscritic
+	       WHERE maj.cdcooper          = pr_cdcooper
+	         AND maj.nrdconta          = pr_nrdconta
+	         AND maj.nrcontacartao     = pr_nrctacrd
+	         AND maj.cdmajorado        = 4; -- Pendente
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -8704,35 +8707,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   
                   END IF;
                   
-                     -- Se encotrou registro e possui o rowid
-                     IF rg_atulimi.dsdrowid IS NOT NULL THEN
-                       -- Atualizar a situação do controle de atualizacoes de limites de conta cartao
-                       BEGIN
-                         UPDATE tbcrd_limite_atualiza  atu
-                            SET atu.tpsituacao = 4           -- CRITICA
-                              , atu.cdcribcb   = vr_codrejei -- Código da rejeição
-                              , atu.dtretorno  = TRUNC(SYSDATE)
-                          WHERE atu.rowid      = rg_atulimi.dsdrowid;
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao atualizar tbcrd_limite_atualiza: '||SQLERRM;
-                           RAISE vr_exc_saida;
-                       END;
-                     END IF;
+                  -- Se encotrou registro e possui o rowid
+                  IF rg_atulimi.dsdrowid IS NOT NULL THEN
+                    -- Atualizar a situação do controle de atualizacoes de limites de conta cartao
+                    BEGIN
+                      UPDATE tbcrd_limite_atualiza  atu
+                         SET atu.tpsituacao = 4           -- CRITICA
+                           , atu.cdcribcb   = vr_codrejei -- Código da rejeição
+                           , atu.dtretorno  = TRUNC(SYSDATE)
+                       WHERE atu.rowid      = rg_atulimi.dsdrowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro ao atualizar tbcrd_limite_atualiza: '||SQLERRM;
+                        RAISE vr_exc_saida;
+                    END;
+                  END IF;
                      
-                     -- Atualizar o registro de majoração
-                     pc_atualiza_majoracao(pr_cdcooper => vr_cdcooper
-                                          ,pr_nrdconta => vr_nrdconta
-                                          ,pr_nrctacrd => vr_nrdctitg
-                                          ,pr_cdcodigo => vr_codrejei
-                                          ,pr_dscritic => vr_dscritic);
+                  -- Atualizar o registro de majoração
+                  pc_atualiza_majoracao(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => vr_nrdconta
+                                       ,pr_nrctacrd => vr_nrdctitg
+                                       ,pr_cdcodigo => vr_codrejei
+                                       ,pr_dscritic => vr_dscritic);
                       
-                     -- Se ocorreu algum erro
-                     IF vr_dscritic IS NOT NULL THEN
-                       -- Exception
-                       RAISE vr_exc_saida;
-                     END IF;
-                     
+                  -- Se ocorreu algum erro
+                  IF vr_dscritic IS NOT NULL THEN
+                    -- Exception
+                    RAISE vr_exc_saida;
+                  END IF;
+                                                 
                   CONTINUE;
                   
                 ELSE
@@ -10221,10 +10224,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     
         -- Se houve retorno de algum erro      
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Em caso de erro deve setar o lote como FALHA
+         /* BEGIN
+            UPDATE tbgen_sms_lote lot
+               SET lot.idsituacao = 'F' -- Falha
+             WHERE lot.idlote_sms = vr_idlotsms;
+          EXCEPTION 
+            WHEN OTHERS THEN
+              -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
+              RAISE vr_exc_saida;
+          END;  */
+        
           RAISE vr_exc_saida;
         END IF;
                           
+        -- Fechar a situação do lote
+       /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
+                                     ,pr_dscritic   => vr_dscritic);
+        
+        -- Se houve retorno de algum erro      
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;*/
+        
       END IF;
+      
       
       -- Adiciona a linha ao XML
       pc_escreve_xml(vr_xml_lim_cartao,'</crrl707>');
