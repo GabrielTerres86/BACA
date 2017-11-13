@@ -1082,7 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
           IF pr_tpoperacao <> 3 AND pr_telefone_new.tptelefone = 3 THEN 
             BEGIN          
               UPDATE crapcje cje
-                 SET cje.nrfonemp = '('||pr_telefone_new.nrddd||')'||pr_telefone_new.nrtelefone                   
+                 SET cje.nrfonemp = '('||pr_telefone_new.nrddd||')'||pr_telefone_new.nrtelefone,
+                     cje.nrramemp = nvl(pr_telefone_new.nrramal,0)
                WHERE cje.cdcooper = vr_tab_contas(idx).cdcooper
                  AND cje.nrdconta = vr_tab_contas(idx).nrdconta
                  AND cje.idseqttl = vr_tab_contas(idx).idseqttl
@@ -1100,7 +1101,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             --Em caso de exclusao deve ser limpo os campos
             BEGIN          
               UPDATE crapcje cje
-                 SET cje.nrfonemp = ' '
+                 SET cje.nrfonemp = ' ',
+                     cje.nrramemp = 0
                WHERE cje.cdcooper = vr_tab_contas(idx).cdcooper
                  AND cje.nrdconta = vr_tab_contas(idx).nrdconta
                  AND cje.idseqttl = vr_tab_contas(idx).idseqttl

@@ -2019,10 +2019,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         FETCH cr_pessoa_fis INTO rw_pessoa_cje;
         CLOSE cr_pessoa_fis;
         
-        IF nvl(pr_crapcje.nmconjug,'XXX') <> nvl(rw_pessoa_cje.nmpessoa,'XX') THEN
+        IF nvl(pr_crapcje.nmconjug,'XXX') <> nvl(rw_pessoa_cje.nmpessoa,'XXX') THEN
           vr_idpessoa_cje := NULL;
         ELSE
           vr_idpessoa_cje := rw_pessoa_rel.idpessoa_relacao;  
+          
+          --> Tratativa para não levar para o cadastro unico os dados do cadastro temporario do conjuge
+          --> gerado na tela matric
+          IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND 
+             nvl(rw_pessoa_cje.nrcpf,0) <> nvl(pr_crapcje.nrcpfcjg,0) THEN
+            vr_dscritic := 'Cadastro Temporario, não atualizar.'; 
+            RAISE vr_exc_erro;             
+          END IF;   
+          
         END IF;
         
        
