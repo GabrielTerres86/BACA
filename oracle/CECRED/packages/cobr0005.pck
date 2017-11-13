@@ -6497,7 +6497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_nmarqlog  VARCHAR2(50);
     vr_cdprodut  tbgen_sms_lote.cdproduto%TYPE;
     vr_dsassunt  VARCHAR2(100);
-    
+        
   BEGIN
     
     --> Atualizar registro
@@ -6645,20 +6645,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     ............................................................................ */
     --------------->> CURSORES <<----------------
-    -- Buscar o produto do lote 
-    CURSOR cr_produto IS 
-      SELECT cdproduto 
-        FROM tbgen_sms_lote lote
-       WHERE lote.idlote_sms = pr_idlotsms;
-    
     -------------->> VARIAVEIS <<----------------
     vr_idsms      INTEGER;
     vr_sucess     VARCHAR2(10);
     vr_cdretorn   VARCHAR2(10);
     vr_Detail     VARCHAR2(1000);
-    vr_StatusCode VARCHAR2(10);
-    vr_DetailCode VARCHAR2(10);
-    vr_cdprodut   tbgen_sms_lote.cdproduto%TYPE;
     
     vr_dscritic   VARCHAR2(1000);
     vr_exc_erro   EXCEPTION;
@@ -6674,12 +6665,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     
   BEGIN
-    
-    -- Buscar o produto do lote
-    OPEN  cr_produto;
-    FETCH cr_produto INTO vr_cdprodut;
-    CLOSE cr_produto;  
-  
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
     
@@ -6701,26 +6686,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_idx := vr_tab_campos.first;
       WHILE vr_idx IS NOT NULL LOOP
       
-        vr_idsms      := vr_tab_campos(vr_idx)('Id');
-        vr_sucess     := vr_tab_campos(vr_idx)('Success');  
-        vr_Detail     := vr_tab_campos(vr_idx)('Detail');  
-        vr_StatusCode := vr_tab_campos(vr_idx)('StatusCode');  
-        vr_DetailCode := vr_tab_campos(vr_idx)('DetailCode');  
+        vr_idsms  := vr_tab_campos(vr_idx)('Id');
+        vr_sucess := vr_tab_campos(vr_idx)('Success');  
+        vr_Detail := vr_tab_campos(vr_idx)('Detail');  
         
-        -- Se o produto for 21 - Cartão de Crédito
-        IF vr_cdprodut = 21 THEN
-          vr_cdretorn := vr_StatusCode;
-          -- Caso seja interessante gravar o DetailCode, será necessário criar o campo na tabela
-        ELSE
-        IF upper(vr_sucess) = 'TRUE' THEN
-          vr_cdretorn := 00;
-        ELSIF upper(vr_sucess) = 'FALSE' THEN 
-          vr_cdretorn := 10;
-        ELSE
-          vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
-          RAISE vr_exc_erro;
-        END IF;
-        END IF;
+          IF upper(vr_sucess) = 'TRUE' THEN
+            vr_cdretorn := 00;
+          ELSIF upper(vr_sucess) = 'FALSE' THEN 
+            vr_cdretorn := 10;
+          ELSE
+            vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
+            RAISE vr_exc_erro;
+          END IF;
         
         pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
                                ,pr_idsms      => vr_idsms     --> Identificador do SMS

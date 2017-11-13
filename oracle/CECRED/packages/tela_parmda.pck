@@ -351,6 +351,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- Novos campos de controle - Prj360
     vr_retxml := vr_retxml || '<prod_enviasms>' || rw_produt.flgenvia_sms || '</prod_enviasms>';
     vr_retxml := vr_retxml || '<prod_flcbrtar>' || rw_produt.flgcobra_tarifa || '</prod_flcbrtar>';
+    -- Somente o débito automático tem configuração de horário, pois integra com a zenvia através de FTP
+    -- A integração via Aymaru não está preparada para essa configuração.
+    IF pr_cdprodut = 10 THEN -- Déb. Automático
+      vr_retxml := vr_retxml || '<flghrenviosms>1</flghrenviosms>';
+    ELSE
+      vr_retxml := vr_retxml || '<flghrenviosms>0</flghrenviosms>';
+    END IF;
     
     vr_retxml := vr_retxml || '<mensagens>';
     
@@ -491,7 +498,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- VALIDAÇÕES
     -- Valida os campos obrigatórios caso envia SMS
     IF pr_flgenvia_sms = 1 THEN
-        IF pr_hrenvio_sms_fmt IS NULL THEN
+        IF pr_hrenvio_sms_fmt IS NULL AND 
+           pr_cdprodut = 10 THEN -- Somente produto débito automático possui horário de envio
           vr_dscritic := 'Horario de envio e obrigatorio.';
           pr_nmdcampo := 'hrenvio_sms';
           RAISE vr_exc_saida;

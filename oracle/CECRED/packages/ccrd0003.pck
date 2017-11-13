@@ -280,7 +280,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
   
   
   --> Enviar lote de SMS para o Aymaru
-  PROCEDURE pc_enviar_lote_SMS ( pr_idlotsms  IN tbgen_sms_lote.idlote_sms%TYPE
+  PROCEDURE pc_enviar_lote_SMS ( pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                ,pr_idlotsms  IN tbgen_sms_lote.idlote_sms%TYPE
                                 ,pr_dscritic OUT VARCHAR2 
                                 ,pr_cdcritic OUT INTEGER )IS
                                   
@@ -317,6 +318,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
   BEGIN
     
+    /* Só vamos enviar o SMS se for a base for produção, para evitar envio de SMS indevido na base de teste. */
+    IF gene0001.fn_database_name <> gene0001.fn_param_sistema('CRED',pr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
+      pr_dscritic := 'Lote de SMS não enviado pois a base não é PRODUÇÃO.';
+      RETURN;
+    END IF; 
+  
     -- Montar o conteúdo do JSON para envio via POST
     vr_conteudo.put('CodigoLote', pr_idlotsms); -- Código do Lote
     vr_conteudo.put('CodigoProduto', 21); -- Código do produto
@@ -7449,13 +7456,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                        ,pr_nrctacrd IN tbcrd_limite_atualiza.nrconta_cartao%TYPE
                        ,pr_vllimalt IN tbcrd_limite_atualiza.vllimite_alterado%TYPE) IS
         SELECT ROWID dsdrowid
+              ,atu.cdadmcrd
           FROM tbcrd_limite_atualiza  atu
          WHERE atu.cdcooper          = pr_cdcooper
            AND atu.nrdconta          = pr_nrdconta
            AND atu.nrconta_cartao    = pr_nrctacrd
            AND atu.vllimite_alterado = pr_vllimalt
            AND atu.tpsituacao        = 2;    /* Enviado ao Bancoob */
-      rg_atulimi   cr_atulimi%ROWTYPE;
+      rw_atulimi   cr_atulimi%ROWTYPE;
       
       -- Buscar o parametro de envio de SMS de cada cooperativa para o produto CARTAO DE CREDITO
       CURSOR cr_enviasms  IS 
@@ -7551,7 +7559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                       pr_nmrescop IN crapcop.nmrescop%TYPE,
                                       pr_nmextage IN crapage.nmextage%TYPE,
                                       pr_nmprimtl IN crapass.nmprimtl%TYPE,
-                                      pr_rowidlim IN VARCHAR2,
+                                      pr_rwatulim IN cr_atulimi%ROWTYPE,
                                       pr_xml_lim_cartao IN OUT CLOB,
                                       pr_des_erro OUT VARCHAR2,
                                       pr_cdcritic OUT INTEGER,
@@ -7588,6 +7596,159 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_craptlc    BOOLEAN := FALSE;
         vr_cdlimcrd   crawcrd.cdlimcrd%TYPE; --> Codigo da linha do valor de credito
         vr_nrcrcard   VARCHAR2(19);
+        vr_primvez    BOOLEAN := TRUE;
+          
+        PROCEDURE atualiza_historico_limite(pr_cdcooper  IN crawcrd.cdcooper%TYPE,
+                                            pr_nrdconta  IN crawcrd.nrdconta%TYPE,
+                                            pr_nrdctitg  IN crawcrd.nrcctitg%TYPE,                                          
+                                            pr_rwatulim  IN cr_atulimi%ROWTYPE,
+                                            pr_rwcrawcrd IN cr_crawcrd_limite%ROWTYPE,
+                                            pr_cdcritic OUT INTEGER,
+                                            pr_dscritic OUT VARCHAR2) IS
+        
+          vr_idlotaux   tbgen_sms_lote.idlote_sms%TYPE; --> Lote do SMS auxiliar
+        
+            BEGIN
+            
+              -- Se foi informado o rowid da alteração de limite
+          IF pr_rwatulim.dsdrowid IS NOT NULL THEN
+                
+            -- Atualizaremos a alteração do limite se for o mesmo cartão da atualização
+            -- e se for o primeiro cartao (para nao enviar sms para os adicionais).
+            IF pr_rwatulim.cdadmcrd  = pr_rwcrawcrd.cdadmcrd AND 
+               pr_rwcrawcrd.nrseqreg = 1 THEN
+                
+                -- verifica se deve enviar SMS
+                IF NVL(vr_tab_enviasms(pr_cdcooper),0) = 1 THEN
+                  -- Buscar o cadastro do celular do cooperado
+                  OPEN  cr_craptfc(pr_cdcooper -- pr_cdcooper
+                                  ,pr_nrdconta); -- pr_nrdconta 
+                  FETCH cr_craptfc INTO rw_craptfc;
+                  
+                  -- Se encontrar cadastro de celular
+                  IF cr_craptfc%FOUND THEN
+
+                    -- Popular a variável com os valores dinâmicos para a rotina
+                    vr_dsvlrmsg := '#DescricaoCartao#='||rw_crapadc.nmresadm;
+
+                    -- Montar a mensagem a ser enviada
+                    vr_dsmsgsms := GENE0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
+                                                              ,pr_cdproduto         => 21 -- CARTAO CREDITO CECRED
+                                                              ,pr_cdtipo_mensagem   => 22 -- Tipo de mensagem 
+                                                              ,pr_sms               => 1  -- Indicador de SMS 
+                                                              ,pr_valores_dinamicos => vr_dsvlrmsg);
+                    
+                    -- Se não há lote de SMS criado
+                    IF vr_idlotsms IS NULL THEN
+                      -- Cria o lote de sms
+                      esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
+                                               ,pr_idtpreme      => 'SMSCRDBCB'
+                                               ,pr_dsagrupador   => pr_nmrescop
+                                               ,pr_idlote_sms    => vr_idlotsms
+                                               ,pr_dscritic      => pr_dscritic);
+                      
+                      -- Se retornar erro 
+                      IF pr_dscritic IS NOT NULL THEN
+                        RAISE vr_exc_erro;
+                      END IF;
+                      
+                    END IF; -- vr_idlotsms IS NULL
+                    
+                    -- Gerar registro do SMS a ser enviado
+                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_idlotsms
+                                           ,pr_cdcooper   => pr_cdcooper
+                                           ,pr_nrdconta   => pr_nrdconta
+                                           ,pr_idseqttl   => 1
+                                           ,pr_dhenvio    => SYSDATE
+                                         ,pr_nrddd      => rw_craptfc.nrdddtfc
+                                         ,pr_nrtelefone => rw_craptfc.nrtelefo
+                                           ,pr_cdtarifa   => NULL
+                                           ,pr_dsmensagem => vr_dsmsgsms
+                                           ,pr_idsms      => vr_idsms
+                                           ,pr_dscritic   => pr_dscritic);
+                    
+                    -- Se retornar erro 
+                    IF pr_dscritic IS NOT NULL THEN
+                      RAISE vr_exc_erro;
+                    END IF;
+                    
+                  END IF; -- cr_craptfc%FOUND
+                  
+                  -- Fechar o cursor
+                  CLOSE cr_craptfc;
+                  
+                vr_idlotaux := vr_idlotsms; -- Carrega o id do lote na var auxiliar
+              ELSE
+                vr_idlotaux := null;        -- Esvazia o id do lote na var auxiliar
+                END IF;  -- NVL(vr_enviasms,0) = 1 -- Se envia SMS
+                
+              -- Atualiza os dados do registro de controle de alteração de limite
+              BEGIN
+                UPDATE tbcrd_limite_atualiza atu
+                   SET atu.dtretorno  = SYSDATE
+                     , atu.tpsituacao = 3   /* Concluido com Sucesso */
+                     , atu.idlote_sms = vr_idlotaux
+                 WHERE ROWID = pr_rwatulim.dsdrowid;
+              EXCEPTION 
+                WHEN OTHERS THEN
+                  pr_dscritic := 'Erro ao atualizar tbcrd_limite_atualiza: ' || SQLERRM;
+                  RAISE vr_exc_erro;
+              END;
+                
+            END IF; -- IF pr_rwatulim.cdadmcrd = rw_crawcrd_limite.cdadmcrd THEN
+                
+              ELSE  -- Se não foi informado
+                
+            -- Soh entraremos se for a primeira vez por conta cartao, para nao criar historicos excessivos
+            IF vr_primvez THEN
+                -- Verifica se houve alteração do limite
+              IF pr_vllimcrd <> pr_rwcrawcrd.vllimcrd THEN
+                  
+                  -- Insere o registro de atualização de limite
+                  BEGIN
+                    INSERT INTO tbcrd_limite_atualiza
+                                   (cdcooper
+                                   ,nrdconta
+                                   ,nrconta_cartao
+                                   ,dtalteracao
+                                   ,dtretorno
+                                   ,tpsituacao
+                                   ,vllimite_anterior
+                                   ,vllimite_alterado
+                                   ,cdcanal
+                                 ,cdcribcb
+                                 ,cdadmcrd)
+                          VALUES (pr_cdcooper                 -- cdcooper
+                                 ,pr_nrdconta                 -- nrdconta
+                                 ,pr_nrdctitg                 -- nrconta_cartao
+                                 ,SYSDATE                     -- dtalteracao
+                                 ,SYSDATE                     -- dtretorno
+                                 ,3 -- Concluído com Sucesso  -- tpsituacao 
+                                 ,pr_rwcrawcrd.vllimcrd       -- vllimite_anterior
+                                 ,pr_vllimcrd                 -- vllimite_alterado
+                                 ,15 -- Sipagnet              -- cdcanal
+                                 ,NULL                        -- cdcribcb
+                                 ,pr_rwcrawcrd.cdadmcrd);-- cdadmcrd                     
+                  EXCEPTION 
+                    WHEN OTHERS THEN
+                      pr_dscritic := 'Erro ao inserir tbcrd_limite_atualiza: ' || SQLERRM;
+                      RAISE vr_exc_erro;
+                  END;              
+                vr_primvez := FALSE;
+                                  
+              END IF;  --  pr_vllimcrd <> rw_crawcrd_limite.vllimcrd 
+            END IF;  -- IF vr_primvez THEN
+          END IF;  -- pr_rwatulim IS NOT NULL
+          
+        EXCEPTION
+          WHEN vr_exc_erro THEN
+            pr_des_erro := 'NOK';
+          WHEN OTHERS THEN
+            pr_des_erro := 'NOK';
+            --Variavel de erro recebe erro ocorrido
+            pr_cdcritic := 0;
+            pr_dscritic := 'Erro ao atualizar os dados do cartao. Rotina PC_CRPS672.atualiza_historico_limite. '||sqlerrm;
+        END atualiza_historico_limite;
           
       BEGIN
         
@@ -7667,124 +7828,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 pr_dscritic := 'Erro ao atualizar crawcrd: ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;    
-            
-            -- Atualizar as informações apenas para o primeiro registro, evitando o envio
-            -- de SMS repetidos e o excesso de insert no histórico
-            IF rw_crawcrd_limite.nrseqreg = 1 THEN
-              
-              -- Se foi informado o rowid da alteração de limite
-              IF pr_rowidlim IS NOT NULL THEN
-                -- Atualiza os dados do registro de controle de alteração de limite
-                BEGIN
-                  UPDATE tbcrd_limite_atualiza atu
-                     SET atu.dtretorno  = TRUNC(SYSDATE)
-                       , atu.tpsituacao = 3   /* Concluido com Sucesso */
-                   WHERE ROWID = pr_rowidlim;
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                    pr_dscritic := 'Erro ao atualizar tbcrd_limite_atualiza: ' || SQLERRM;
-                    RAISE vr_exc_erro;
-                END;
                 
-                -- verifica se deve enviar SMS
-                IF NVL(vr_tab_enviasms(pr_cdcooper),0) = 1 THEN
-                  -- Buscar o cadastro do celular do cooperado
-                  OPEN  cr_craptfc(pr_cdcooper -- pr_cdcooper
-                                  ,pr_nrdconta); -- pr_nrdconta 
-                  FETCH cr_craptfc INTO rw_craptfc;
-                  
-                  -- Se encontrar cadastro de celular
-                  IF cr_craptfc%FOUND THEN
-
-                    -- Popular a variável com os valores dinâmicos para a rotina
-                    vr_dsvlrmsg := '#DescricaoCartao#='||rw_crapadc.nmresadm;
-
-                    -- Montar a mensagem a ser enviada
-                    vr_dsmsgsms := GENE0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
-                                                              ,pr_cdproduto         => 21 -- CARTAO CREDITO CECRED
-                                                              ,pr_cdtipo_mensagem   => 22 -- Tipo de mensagem 
-                                                              ,pr_sms               => 1  -- Indicador de SMS 
-                                                              ,pr_valores_dinamicos => vr_dsvlrmsg);
-                    
-                    -- Se não há lote de SMS criado
-                    IF vr_idlotsms IS NULL THEN
-                      -- Cria o lote de sms
-                      esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
-                                               ,pr_idtpreme      => 'SMSCRDBCB'
-                                               ,pr_dsagrupador   => pr_nmrescop
-                                               ,pr_idlote_sms    => vr_idlotsms
-                                               ,pr_dscritic      => pr_dscritic);
-                      
-                      -- Se retornar erro 
-                      IF pr_dscritic IS NOT NULL THEN
-                        RAISE vr_exc_erro;
-                      END IF;
-                      
-                    END IF; -- vr_idlotsms IS NULL
-                    
-                    -- Gerar registro do SMS a ser enviado
-                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_idlotsms
-                                           ,pr_cdcooper   => pr_cdcooper
-                                           ,pr_nrdconta   => pr_nrdconta
-                                           ,pr_idseqttl   => 1
-                                           ,pr_dhenvio    => SYSDATE
-                                           ,pr_nrddd      => 47 -- rw_craptfc.nrdddtfc
-                                           ,pr_nrtelefone => 991276173 -- rw_craptfc.nrtelefo   VER RENATO... TELEFONE PARA EVITAR ENVIO INDEVIDO
-                                           ,pr_cdtarifa   => NULL
-                                           ,pr_dsmensagem => vr_dsmsgsms
-                                           ,pr_idsms      => vr_idsms
-                                           ,pr_dscritic   => pr_dscritic);
-                    
-                    -- Se retornar erro 
-                    IF pr_dscritic IS NOT NULL THEN
-                      RAISE vr_exc_erro;
-                    END IF;
-                    
-                  END IF; -- cr_craptfc%FOUND
-                  
-                  -- Fechar o cursor
-                  CLOSE cr_craptfc;
-                END IF;  -- NVL(vr_enviasms,0) = 1 -- Se envia SMS
+            /* Procedimento responsavel por atualizar o historico de limites da conta cartao,
+               bem como, por atualizar o status das majoracoes de limite, quando for o caso.
+               Tambem cria as mensagens de SMS para envio para o cooperado. */
+            atualiza_historico_limite(pr_cdcooper  => pr_cdcooper,
+                                      pr_nrdconta  => pr_nrdconta,
+                                      pr_nrdctitg  => pr_nrdctitg,
+                                      pr_rwatulim  => pr_rwatulim,
+                                      pr_rwcrawcrd => rw_crawcrd_limite,
+                                      pr_cdcritic  => pr_cdcritic,
+                                      pr_dscritic  => pr_dscritic);
+            IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
                 
-                
-              ELSE  -- Se não foi informado
-                
-                -- Verifica se houve alteração do limite
-                IF pr_vllimcrd <> rw_crawcrd_limite.vllimcrd THEN
-                  
-                  -- Insere o registro de atualização de limite
-                  BEGIN
-                    INSERT INTO tbcrd_limite_atualiza
-                                   (cdcooper
-                                   ,nrdconta
-                                   ,nrconta_cartao
-                                   ,dtalteracao
-                                   ,dtretorno
-                                   ,tpsituacao
-                                   ,vllimite_anterior
-                                   ,vllimite_alterado
-                                   ,cdcanal
-                                   ,cdcribcb)
-                            VALUES (pr_cdcooper                -- cdcooper
-                                   ,pr_nrdconta                -- nrdconta
-                                   ,pr_nrdctitg                -- nrconta_cartao
-                                   ,TRUNC(SYSDATE)             -- dtalteracao
-                                   ,TRUNC(SYSDATE)             -- dtretorno
-                                   ,3 -- Concluído com Sucesso -- tpsituacao 
-                                   ,rw_crawcrd_limite.vllimcrd -- vllimite_anterior
-                                   ,pr_vllimcrd                -- vllimite_alterado
-                                   ,15 -- Sipagnet             -- cdcanal
-                                   ,NULL);                     -- cdcribcb
-                  EXCEPTION 
-                    WHEN OTHERS THEN
-                      pr_dscritic := 'Erro ao inserir tbcrd_limite_atualiza: ' || SQLERRM;
-                      RAISE vr_exc_erro;
-                  END;              
-                
-                
-                END IF;  --  pr_vllimcrd <> rw_crawcrd_limite.vllimcrd 
-              END IF;  -- pr_rowidlim IS NOT NULL
-            END IF;  -- rw_crawcrd_limite.nrseqreg = 1
           END IF;                    
                       
         END LOOP; /* END FOR rw_crawcrd_limite */
@@ -8111,7 +8169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       BEGIN
         
         -- Se tem código de erro 
-        IF pr_cdcritic IS NOT NULL THEN
+        IF pr_cdcritic IS NOT NULL OR pr_cdcodigo IS NOT NULL THEN
           -- Coloca o código de Majoração como REJEITADO
           vr_cdmajora := 2;
           
@@ -8649,11 +8707,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 ,vr_nrdconta   -- pr_nrdconta
                                 ,vr_nrdctitg   -- pr_nrctacrd
                                 ,vr_vllimcrd); -- pr_vllimalt
-                FETCH cr_atulimi INTO rg_atulimi;
+                FETCH cr_atulimi INTO rw_atulimi;
                 
                 -- Se não encontrar registro
                 IF cr_atulimi%NOTFOUND THEN
-                  rg_atulimi := NULL;
+                  rw_atulimi := NULL;
                 END IF;              
                 
                 -- Fecha o cursor
@@ -8708,20 +8766,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
                   
                   -- Se encotrou registro e possui o rowid
-                  IF rg_atulimi.dsdrowid IS NOT NULL THEN
+                  IF rw_atulimi.dsdrowid IS NOT NULL THEN
                     -- Atualizar a situação do controle de atualizacoes de limites de conta cartao
                     BEGIN
                       UPDATE tbcrd_limite_atualiza  atu
                          SET atu.tpsituacao = 4           -- CRITICA
                            , atu.cdcribcb   = vr_codrejei -- Código da rejeição
                            , atu.dtretorno  = TRUNC(SYSDATE)
-                       WHERE atu.rowid      = rg_atulimi.dsdrowid;
+                       WHERE atu.rowid      = rw_atulimi.dsdrowid;
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_dscritic := 'Erro ao atualizar tbcrd_limite_atualiza: '||SQLERRM;
-                        RAISE vr_exc_saida;
+                        pc_log_message;
                     END;
-                  END IF;
                      
                   -- Atualizar o registro de majoração
                   pc_atualiza_majoracao(pr_cdcooper => vr_cdcooper
@@ -8732,8 +8789,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       
                   -- Se ocorreu algum erro
                   IF vr_dscritic IS NOT NULL THEN
-                    -- Exception
-                    RAISE vr_exc_saida;
+                      pc_log_message;
+                    END IF;
+                    
                   END IF;
                                                  
                   CONTINUE;
@@ -8757,7 +8815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         pr_nmrescop       => rw_crapcop_cdagebcb.nmrescop,
                                         pr_nmextage       => rw_crapass.nmextage,
                                         pr_nmprimtl       => rw_crapass.nmprimtl,
-                                        pr_rowidlim       => rg_atulimi.dsdrowid,
+                                        pr_rwatulim       => rw_atulimi,
                                         pr_xml_lim_cartao => vr_xml_lim_cartao,
                                         pr_des_erro       => vr_des_erro,
                                         pr_cdcritic       => vr_cdcritic,
@@ -8766,8 +8824,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   IF vr_des_erro <> 'OK' THEN
                     pc_log_message;
                     vr_des_erro := '';
-                  END IF;
-                  
+                  ELSE                  
+                    -- Se deu certo, vamos atualizar o status da majoracao
+                    IF rw_atulimi.dsdrowid IS NOT NULL THEN
                   -- Atualizar o registro de majoração
                   pc_atualiza_majoracao(pr_cdcooper => vr_cdcooper
                                           ,pr_nrdconta => vr_nrdconta
@@ -8777,8 +8836,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   
                   -- Se ocorreu algum erro
                   IF vr_dscritic IS NOT NULL THEN
-                    -- Exception
-                    RAISE vr_exc_saida;
+                        pc_log_message;
+                      END IF;
+                    END IF;
+                    
                   END IF;
                   
                 END IF; /* END IF substr(vr_des_text,275,3) <> '000'  THEN */
@@ -10218,7 +10279,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
       IF vr_idlotsms IS NOT NULL THEN
         --> Enviar lote de SMS para o Aymaru
-        pc_enviar_lote_SMS(pr_idlotsms => vr_idlotsms
+        pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
+                          ,pr_idlotsms => vr_idlotsms
                           ,pr_dscritic => vr_dscritic
                           ,pr_cdcritic => vr_cdcritic);
                     
@@ -10235,9 +10297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               RAISE vr_exc_saida;
           END;  */
         
-          RAISE vr_exc_saida;
+          pc_log_message;
         END IF;
-                          
+        
         -- Fechar a situação do lote
        /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
                                      ,pr_dscritic   => vr_dscritic);
