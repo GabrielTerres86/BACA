@@ -35,8 +35,11 @@ CREATE OR REPLACE PACKAGE CECRED.esms0001 AS
                                  ,pr_cdhistor   IN crapatr.cdhistor%TYPE
                                  ,pr_idlote_sms IN OUT tbgen_sms_controle.idlote_sms%TYPE
                                  ,pr_dscritic   OUT VARCHAR2);
-
+                                 
   FUNCTION fn_busca_token_zenvia(pr_cdproduto IN NUMBER) RETURN VARCHAR2;
+
+  PROCEDURE pc_atualiza_status_msg_soa (pr_idlotsms   IN tbgen_sms_lote.idlote_sms%TYPE   --> Numero do lote de SMS
+                                       ,pr_xmlrequi   IN xmltype);                        --> Xml contendo os retornos dos SMSs enviados
 
 END esms0001;
 /
@@ -983,6 +986,114 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                        pr_cdcooper => 0,
                                        pr_cdacesso => vr_cdacesso);
   END fn_busca_token_zenvia;
+
+  --> Rotina para atualizar situação do SMS - chamada SOA
+  PROCEDURE pc_atualiza_status_msg_soa ( pr_idlotsms   IN tbgen_sms_lote.idlote_sms%TYPE,  --> Numer do lote de SMS
+                                         pr_xmlrequi   IN xmltype) IS                      --> Requeisicao xml
+                                  
+  /* ............................................................................
+
+       Programa: pc_atualiza_status_msg_soa
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Anderson Fossa
+       Data    : Setembro/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para atualizar situação do SMS - chamada SOA
+                   (Baseado na procedure de mesmo nome da COBR0005)
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    -------------->> VARIAVEIS <<----------------
+    vr_idsms      INTEGER;
+    vr_cdretorn   VARCHAR2(10);
+    vr_Detail     VARCHAR2(1000);
+    
+    vr_dscritic   VARCHAR2(1000);
+    vr_exc_erro   EXCEPTION;
+    vr_nmarqlog   VARCHAR2(50);
+    
+    --Variaveis Documentos DOM
+    vr_xmldoc     xmldom.DOMDocument;
+    vr_lista_nodo xmldom.DOMNodeList;    
+    vr_nodo       xmldom.DOMNode;        
+    vr_idx        VARCHAR2(500);
+    
+    vr_tab_campos gene0007.typ_mult_array;
+    
+    
+  BEGIN
+    
+    vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
+    
+    ----------------------------------------------------
+    --            GRAVAR OS DADOS DO CONTRATO         --
+    ----------------------------------------------------      
+    --> BUSCAR CONTRATOS DO ACORDO
+    -- Listar nós contrado
+    vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'mensagem');        
+    FOR vr_linha IN 0..(xmldom.getLength(vr_lista_nodo)-1) LOOP
+      --Buscar Nodo Corrente
+      vr_nodo:= xmldom.item(vr_lista_nodo,vr_linha);
+      
+      gene0007.pc_itera_nodos (pr_nodo       => vr_nodo      --> Xpath do nodo a ser pesquisado
+                              ,pr_nivel      => 0            --> Nível que será pesquisado
+                              ,pr_list_nodos => vr_tab_campos--> PL Table com os nodos resgatados
+                              ,pr_des_erro   => vr_dscritic);
+                      
+      vr_idx := vr_tab_campos.first;
+      WHILE vr_idx IS NOT NULL LOOP
+      
+        vr_idsms    := vr_tab_campos(vr_idx)('Id');
+        vr_cdretorn := vr_tab_campos(vr_idx)('StatusCode');  
+        vr_Detail   := vr_tab_campos(vr_idx)('Detail');
+        
+        COBR0005.pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
+                                        ,pr_idsms      => vr_idsms     --> Identificador do SMS
+                                        ,pr_cdretorn   => vr_cdretorn  --> Código de retor
+                                        ,pr_dsretorn   => vr_Detail    --> Detalhe do retorno
+                                        ,pr_dscritic   => vr_dscritic);
+        
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        vr_idx := vr_tab_campos.next(vr_idx);
+        
+      END LOOP;
+    END LOOP;            
+                                                   
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
+                                                pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+    
+      -- Envio centralizado de log de erro
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                ,pr_ind_tipo_log => 2
+                                ,pr_nmarqlog     => vr_nmarqlog
+                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                 || 'ESMS0001.pc_atualiza_status_msg_soa --> '
+                                                 || vr_dscritic );
+    WHEN OTHERS THEN
+    
+      vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
+                                                pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                                                
+      vr_dscritic := 'Não foi possivel atualizar SMS '||pr_idlotsms||'-'||vr_idsms||': '||SQLERRM;
+      -- Envio centralizado de log de erro
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                ,pr_ind_tipo_log => 3
+                                ,pr_nmarqlog     => vr_nmarqlog
+                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                 || 'ESMS0001.pc_atualiza_status_msg_soa --> '
+                                                 || vr_dscritic );
+  END pc_atualiza_status_msg_soa; 
 
 END esms0001;
 /
