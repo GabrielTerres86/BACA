@@ -57,6 +57,7 @@
  * 038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
  * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
  * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
+ * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1466,6 +1467,13 @@ function validarNovoCartao() {
 		return false;
     }
     
+	if (inpessoa == 1 && nrdoccrd.length > 15) {
+        hideMsgAguardo();
+        showError("error", "Identidade nao pode ter mais de 15 caracteres.", "Alerta - Ayllos", "$('#nrdoccrd','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
+    
+	
 	if (dtnasccr == "") {
         hideMsgAguardo();
         showError("error", "013 - Data errada.", "Alerta - Ayllos", "$('#dtnasccr','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1476,23 +1484,23 @@ function validarNovoCartao() {
 	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) ) {
 		// Nome da Empresa deve estar preenchido
 		if (nmempres.trim() == "") {
-		hideMsgAguardo();
-		showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
+			hideMsgAguardo();
+			showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
 		// Nome da Empresa não pode conter mais de 23 caracteres
 		if (nmempres.length > 23) {
 			hideMsgAguardo();
 			showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}
-	
+	    
 		// Nome da Empresa não pode conter numeros
 		if ( /[0-9]/gm.test(nmempres) ){
-		hideMsgAguardo();
+			hideMsgAguardo();
 			showError("error", "Empresa do Plastico n&atilde;o pode conter n&uacute;meros.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
+			return false;
+		}
 	}
 	
 	if (tpdpagto == 0) {
