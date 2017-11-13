@@ -15,6 +15,10 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
             15/10/2015 - Autenticacao GPS limitado com 48 colunas 
                          (Guilherme/SUPERO).
 
+		    13/02/2017 - Passado por parametro que a autenticação da GPS está
+			             Ok qdo for a segunda parte GPS2, para que seja possível
+						 fechar a janela de autenticação com o comando ESC
+						 (Tiago/Elton SD585615).
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -378,7 +382,7 @@ PROCEDURE process-web-request :
                           {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"), 48)) '",2,1,0,0,0,0) </script>'.
                           {&OUT}
                           '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                          "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS1" + 
+                          "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS1" + "&aut=" + "ok"  + 
                           "&v_psetcook=" + "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
                           </script>'.
                       END.
