@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 14/07/2017
+    Data    : janeiro/2012.                     Ultima atualizacao: 10/10/2017
  
     Dados referentes ao programa:
  
@@ -94,10 +94,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              
                 14/07/2017 - Retirado verificação do inproces da crapdat. Dessa forma
                              o programa pode ser executado todos os dias. (Rafael)
+
+                20/09/2017 - Ajustado para que e a validação de envio do titulo para a CIP
+                             seja feita com duas variáveis, pois caso o pagador não seja DDA
+                             e o primeiro titulo identificado como dentro da faixa de ROLLOUT,
+                             todos os titulos que serão processados em seguida tambem serão
+                             registrados (Douglas - Chamado 756559)
+  
+                10/10/2017 - Ajustar padrão de Logs
+                             Ajustar padrão de Exception Others
+                             Inclui nome do modulo logado
+                             Padrões na chamada pc_gera_log_batch
+                             ( Belli - Envolti - Chamados 729095 - 758611 ) 
+
+                20/10/2017 - O boleto foi gerado pela Conta Online para integração on-line
+                             com a CIP. No mesmo momento a rotina de carga normal também estava
+                             inicou a execução. O boleto foi enviado tanto pela processo normal
+                             quanto pela carga on-line. Incluída verificação do IDTITLEG para
+                             evitar envio de título já registrado. (SD#777146 - AJFink)
+
+                            
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
-  vr_dsarqlog     CONSTANT VARCHAR2(12) := 'crps618.log'; -- Nome do arquivo de log
+  -- excluida variavel não utilizada vr_dsarqlog - 10/10/2017 - Ch 758611 
   vr_vllimcab     CONSTANT NUMBER       := 99999999.99;    -- Define o valor limite da cabine
   vr_cdoperad     CONSTANT VARCHAR2(10) := '1';           -- Código do operador - verificar se será fixo ou parametro
 
@@ -191,6 +211,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
        AND cob.dtvencto >= pr_dtmvtolt 
        AND cob.vltitulo >= pr_vlrollou
        AND nvl(cob.nrdident,0) = 0
+       AND nvl(cob.idtitleg,0) = 0 /*SD#777146*/
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac
@@ -277,6 +298,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
        AND ((NVL(pr_nrdconta,0) > 0 AND cob.inregcip = 1) OR
             (NVL(pr_nrdconta,0) = 0 ))
        AND nvl(cob.nrdident,0) = 0
+	   AND nvl(cob.idtitleg,0) = 0 /*SD#777146*/
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac
@@ -291,19 +313,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
   vr_tb_remessa_dda     DDDA0001.typ_tab_remessa_dda;
   vr_tb_retorno_dda     DDDA0001.typ_tab_retorno_dda;
   
-  vr_inauxtab           NUMBER;
+  -- excluida variavel não utilizada vr_inauxtab - 10/10/2017 - Ch 758611 
   vr_tppessoa           VARCHAR2(1);
   vr_flgsacad           NUMBER;
+  vr_flgrollout         INTEGER;
   vr_cdcritic           NUMBER;
   vr_dscritic           VARCHAR2(1000);
   vr_des_erro           VARCHAR2(10);
   vr_insitpro           NUMBER;
 
   vr_tpdenvio           INTEGER;
-  vr_flgerlog           BOOLEAN;
+  
+  -- excluida variavel não utilizada vr_flgerlog - 10/10/2017 - Ch 758611 
   vr_cdcooper           crapcop.cdcooper%TYPE;
-  vr_idx_lat            VARCHAR2(60);
-  vr_tab_lat_consolidada PAGA0001.typ_tab_lat_consolidada;
+  vr_nrdconta_loop      crapcob.cdcooper%TYPE := 0;
+  
+  -- excluida variavel não utilizada vr_idx_lat - 10/10/2017 - Ch 758611   
+  -- excluida variavel não utilizada vr_tab_lat_consolidada - 10/10/2017 - Ch 758611 
   
   -- EXCEPTIONS
   vr_exc_saida          EXCEPTION;     
@@ -320,12 +346,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
     vr_nrcnvcob  crapcob.cdcooper%TYPE;
     vr_nrdocmto  crapcob.cdcooper%TYPE;
     vr_dscmplog  VARCHAR2(200);
-    
+    vr_cdcritic  INTEGER;
+    vr_dscritic  VARCHAR2(4000);
+
     
   BEGIN
-        
+    -- Incluir set modulo - Chamado 758611 - 10/10/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_'||UPPER(vr_cdprogra) || '.pc_atualiza_status_envio_dda', pr_action => NULL);
+
+    -- Inicializada variavel - 10/10/2017 - Ch 758611 
+    vr_cdcritic := 0;        
     vr_index := pr_tab_remessa_dda.FIRST;
-      
+    
     WHILE vr_index IS NOT NULL LOOP      
 
       -- Verifica se ocorreu erro
@@ -339,10 +371,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                , idopeleg = 0
                , inenvcip = 0 -- não enviar
                , dhenvcip = null
-           WHERE ROWID = pr_tab_remessa_dda(vr_index).rowidcob;
+           WHERE ROWID = pr_tab_remessa_dda(vr_index).rowidcob;     
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro[1] ao atualizar CRAPCOB: '||SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapcob:' ||
+                           ' flgcbdda:0, insitpro:0, idtitleg:0, idopeleg:0, inenvcip:0, dhenvcip:NULL'||
+                           ', com rowid:' || pr_tab_remessa_dda(vr_index).rowidcob ||    
+                           '. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
       ELSE      
@@ -355,11 +393,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                , dhenvcip = SYSDATE
            WHERE ROWID = pr_tab_remessa_dda(vr_index).rowidcob
            RETURNING cdcooper,nrdconta,nrcnvcob,nrdocmto
-                INTO vr_cdcooper,vr_nrdconta,vr_nrcnvcob,vr_nrdocmto;           
-            
+                INTO vr_cdcooper,vr_nrdconta,vr_nrcnvcob,vr_nrdocmto;        
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro[2] ao atualizar CRAPCOB: '||SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapcob:' ||
+                           ' flgcbdda:1, insitpro:2, inenvcip:2, dhenvcip:'||SYSDATE||
+                           ', com rowid:' || pr_tab_remessa_dda(vr_index).rowidcob ||    
+                           '. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;      
         
@@ -388,15 +431,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              ,'Titulo enviado a CIP'||vr_dscmplog   -- dslogtit 
                              ,'1'                      -- cdoperad 
                              ,TRUNC(SYSDATE)           -- dtaltera 
-                             ,GENE0002.fn_busca_time); -- hrtransa 
+                             ,GENE0002.fn_busca_time); -- hrtransa     
         EXCEPTION 
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao gerar Log do boleto: '||SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);    
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapcol:' ||
+                           ' vr_cdcooper:' || vr_cdcooper ||', vr_nrdconta:' || vr_nrdconta || 
+                           ', vr_nrcnvcob:' || vr_nrcnvcob ||', vr_nrdocmto:' || vr_nrdocmto || 
+                           ', dslogtit:Titulo enviado a CIP'||vr_dscmplog ||
+                           ', cdoperad:1, dtaltera:'||TRUNC(SYSDATE) || ', hrtransa:'||GENE0002.fn_busca_time ||
+                           '. ' || SQLERRM;
             RETURN;
         END;
-        
-        
-            
       END IF; /* fim - return_value */       
           
       vr_index := pr_tab_remessa_dda.NEXT(vr_index);      
@@ -404,45 +452,59 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
         
   EXCEPTION 
     WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+
+      -- Devolvemos código e critica encontradas
+      pr_cdcritic := nvl(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel atualizar crapcob status DDA: '||SQLERRM;  
-       
+      -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLErrm;  
   END pc_atualiza_status_envio_dda;  
   
   --> Rotina para controlar geração da carga inicial do NPC
-  PROCEDURE pc_carga_inic_npc(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                              pr_cdbcoctl IN crapcop.cdbcoctl%TYPE,      
+  PROCEDURE pc_carga_inic_npc(pr_cdcooper   IN crapcop.cdcooper%TYPE,
+                              pr_cdbcoctl   IN crapcop.cdbcoctl%TYPE,      
                               pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE,
                               pr_cdagectl   IN crapcop.cdagectl%TYPE,
-                              pr_dscritic  OUT VARCHAR2) IS
+                              pr_dscritic  OUT VARCHAR2,
+                              pr_cdcritic  OUT INTEGER) IS
   
     vr_dstextab     craptab.dstextab%TYPE;  
     vr_tab_campos   gene0002.typ_split;  
+    vr_cdcritic     INTEGER;
     vr_dscritic     VARCHAR2(4000);
     
-  
   BEGIN
-  
+    -- Incluir set modulo - Chamados 758611 - 10/10/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_'||UPPER(vr_cdprogra) || '.pc_carga_inic_npc', pr_action => NULL);
+
     --> Buscar dados
-    vr_dstextab := TABE0001.fn_busca_dstextab
-                                     (pr_cdcooper => pr_cdcooper
-                                     ,pr_nmsistem => 'CRED'
-                                     ,pr_tptabela => 'GENERI'
-                                     ,pr_cdempres => 0
-                                     ,pr_cdacesso => 'ROLLOUT_CIP_CARGA'
-                                     ,pr_tpregist => 0); 
-      
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => 0
+                                             ,pr_cdacesso => 'ROLLOUT_CIP_CARGA'
+                                             ,pr_tpregist => 0);    
+
     vr_tab_campos:= gene0002.fn_quebra_string(vr_dstextab,';');
     
     IF vr_tab_campos.count > 0 THEN
       --> Verificar se esta no dia da cargar inicial da faixa de rollout
       --> e se ainda nao rodou a carga
+
       IF to_date(vr_tab_campos(2),'DD/MM/RRRR') = pr_rw_crapdat.dtmvtolt AND 
          vr_tab_campos(1) = 0 THEN
          
         vr_tb_remessa_dda.DELETE();
         vr_tb_retorno_dda.DELETE(); 
+
          
         -- Buscar titulos que atendem a regra de rollout da carga inicial
         FOR rw_titulos IN cr_titulos_carga(pr_cdcooper => pr_cdcooper
@@ -461,14 +523,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                                          ,pr_dtmvtolt => SYSDATE
                                          ,pr_dsmensag => 'Falha no envio para a CIP (valor superior ao suportado)'
                                          ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => vr_dscritic);
-          
+                                         ,pr_dscritic => vr_dscritic);           
             -- Se ocorrer erro
             IF vr_des_erro <> 'OK' THEN
+              vr_cdcritic := 0;
               RAISE vr_exc_saida;
             END IF;
           END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab        
-
 
           -- Rotina para criação de titulo
           DDDA0001.pc_cria_remessa_dda(pr_rowid_cob => rw_titulos.rowidcob
@@ -480,24 +541,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                                      , pr_flgdprot => (CASE rw_titulos.flgdprot WHEN 0 THEN FALSE ELSE TRUE END)
                                      , pr_tab_remessa_dda => vr_tb_remessa_dda
                                      , pr_cdcritic => vr_cdcritic
-                                     , pr_dscritic => vr_dscritic);
-                                  
+                                     , pr_dscritic => vr_dscritic);                                
           IF trim(vr_dscritic) IS NOT NULL THEN
              RAISE vr_exc_saida;
           END IF;
-                               
-                                            
         END LOOP;  
         
         -- Realizar a remessa de títulos DDA
         DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                        ,pr_tab_retorno_dda => vr_tb_retorno_dda
                                        ,pr_cdcritic        => vr_cdcritic
-                                       ,pr_dscritic        => vr_dscritic);
-        
+                                       ,pr_dscritic        => vr_dscritic);       
         -- Verificar se ocorreu erro
         IF trim(vr_dscritic) IS NOT NULL THEN
-          pr_dscritic := 'Erro na rotina PC_REMESSA_TITULOS_DDA[carga NPC]: '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
         
@@ -506,13 +562,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                                     ,pr_tpdenvio        => 2
                                     ,pr_cdcritic        => vr_cdcritic
                                     ,pr_dscritic        => vr_dscritic);
-                                    
-        -- Verificar se ocorreu erro
         IF trim(vr_dscritic) IS NOT NULL THEN
-          pr_dscritic := 'Erro na rotina PC_ATUALIZA_STATUS_ENVIO_DDA[carga NPC]: '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;                                  
-              
+             
+        -- Incluir set modulo - Chamados 758611 - 10/10/2017
+        GENE0001.pc_set_modulo(pr_module => 'PC_'||UPPER(vr_cdprogra), pr_action => NULL);
+
         --> Atualizar tab para informar que ja gerou dados da carga
         BEGIN
           UPDATE craptab tab
@@ -522,11 +578,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
              AND upper(tptabela) = 'GENERI'
              AND cdempres        = 0
              AND upper(cdacesso) = 'ROLLOUT_CIP_CARGA'
-             AND tpregist        = 0; 
-          
+             AND tpregist        = 0;     
         EXCEPTION 
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tab ROLLOUT_CIP_CARGA: '|| SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craptab:' ||
+                           ' com cdcooper:' ||pr_cdcooper||', upper(nmsistem):CRED'||
+                           ', upper(tptabela):GENERI, cdempres:0, upper(cdacesso):ROLLOUT_CIP_CARGA'||
+                           ', tpregist:0. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
         
@@ -537,69 +598,88 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
         --> commitar carga
         COMMIT;  
       END IF;     
-       
     END IF;
     
   EXCEPTION 
     WHEN vr_exc_saida THEN
-      
       -- limpar temptables
       vr_tb_remessa_dda.DELETE();
       vr_tb_retorno_dda.DELETE();       
-      
+
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+
+      -- Devolvemos código e critica encontradas
+      pr_cdcritic := nvl(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
+
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLErrm;  
 
       -- limpar temptables
       vr_tb_remessa_dda.DELETE();
       vr_tb_retorno_dda.DELETE(); 
-      
-      pr_dscritic := 'Não foi possivel gerar carga inicial: '||SQLERRM;
   END pc_carga_inic_npc;
   
   --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-  PROCEDURE pc_controla_log_batch(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                                  pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    vr_dscritic_aux VARCHAR2(4000);
-  BEGIN
-  
-    --> Apenas gerar log se for processo batch/job ou erro  
-    IF nvl(pr_nrdconta,0) = 0 OR  pr_dstiplog = 'E' THEN
-    
-      vr_dscritic_aux := pr_dscritic;
-      
-      --> Se é erro e possui conta, concatenar o numero da conta no erro
-      IF pr_nrdconta <> 0 THEN
-        vr_dscritic_aux := vr_dscritic_aux||' - Conta: '||pr_nrdconta;
-      END IF;
-      
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                               ,pr_nomdojob  => vr_cdprogra    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => vr_dscritic_aux    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-  
-    END IF;
+  PROCEDURE pc_controla_log_batch(pr_cdcooper_in   IN crapcop.cdcooper%TYPE,
+                                  pr_dstiplog      IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                  pr_dscritic      IN VARCHAR2 DEFAULT NULL,
+                                  pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0,
+                                  pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0) IS
+    -- Refeita rotina de log - 10/10/2017 - Ch 758611 
+    vr_dscritic_aux VARCHAR2(4000);  
+    vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
+    vr_tpocorrencia tbgen_prglog_ocorrencia.tpocorrencia%type;
+  BEGIN     
+      vr_dscritic_aux := pr_dscritic ||
+                         '. Conta Processo:' || vr_nrdconta_loop || 
+                         ', cdcooper:' || pr_cdcooper      ||
+                         ', nrdconta:' || pr_nrdconta;      
+      IF pr_dstiplog IN ('O', 'I', 'F') THEN
+        vr_tpocorrencia := 4; 
+      ELSE
+        vr_tpocorrencia := 2;       
+      END IF;      
+      --> Controlar geração de log de execução dos jobs                                
+      CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                             pr_cdprograma    => vr_cdprogra, 
+                             pr_cdcooper      => pr_cdcooper_in, 
+                             pr_tpexecucao    => 2, --job
+                             pr_tpocorrencia  => vr_tpocorrencia,
+                             pr_cdcriticidade => pr_cdcriticidade,
+                             pr_cdmensagem    => pr_cdmensagem,
+                             pr_dsmensagem    => vr_dscritic_aux,                             
+                             pr_idprglog      => vr_idprglog,
+                             pr_nmarqlog      => NULL);
+  EXCEPTION  
+    WHEN OTHERS THEN  
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
   END pc_controla_log_batch;
   
   /**********************************************************/
    
 BEGIN
-  
-  -- Incluir nome do módulo logado
-  gene0001.pc_informa_acesso(pr_module => 'PC_'||UPPER(vr_cdprogra),
-                             pr_action => vr_cdprogra);
-      
- 
+  -- Incluir nome do módulo logado - 10/10/2017 - Ch 758611 
+  gene0001.pc_informa_acesso(pr_module => 'PC_'||UPPER(vr_cdprogra), 
+                             pr_action => NULL);
+
   -- Percorrer as cooperativas
   FOR rw_crapcop IN cr_crapcop LOOP
-  
+
+    -- Variavel colocada para o inicio da rotina - 10/10/2017 - Ch 758611    
+    --> variavel apenas para controle do log, caso seja abortado o programa
+    vr_cdcooper := rw_crapcop.cdcooper;
     /* Busca data do sistema */ 
     OPEN  BTCH0001.cr_crapdat(rw_crapcop.cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+
     -- Verificar se existe informação, e gerar erro caso não exista
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       -- Fechar o cursor
@@ -611,56 +691,45 @@ BEGIN
     END IF;
     -- Fechar 
     CLOSE BTCH0001.cr_crapdat;
-        
+
     -- Log de início da execução
-    pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
-                          pr_dstiplog  => 'I');
-    
-    --> variavel apenas para controle do log, caso seja abortado o programa
-    vr_cdcooper := rw_crapcop.cdcooper;
-    
-    /* DESNECESSÁRIO POIS O LOOP JÁ EH POR COOPERATIVA
-    -- Verifica se a cooperativa esta cadastrada 
-    OPEN  cr_crapcop(vr_cdcooper);
-    FETCH cr_crapcop INTO vr_inregist;
-    
-    -- Verificar se existe informação, e gerar erro caso não exista
-    IF cr_crapcop%NOTFOUND THEN
-      -- Fechar o cursor
-      CLOSE cr_crapcop;
-      -- Gerar exceção
-      vr_cdcritic := 651;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_crapcop; */
-    
-    
+    pc_controla_log_batch(pr_cdcooper_in   => rw_crapcop.cdcooper,
+                          pr_dstiplog      => 'I');
+
+    -- Eliminado comentarios - 10/10/2017 - Ch 758611         
+   
     --> Marcar processo como chamada online
-    --tipo de envio(0-normal/batch, 1-online,2-carga inicial)
+    --tipo de envio(0-normal/batch, 1-online, 2-carga inicial)
     vr_tpdenvio := 0;
     
     IF pr_nrdconta > 0 THEN
       vr_tpdenvio := 1;
     END IF;
-    
+
     IF vr_tpdenvio = 0 THEN
       --> Controlar geração da carga inicial do NPC
       pc_carga_inic_npc(pr_cdcooper   => rw_crapcop.cdcooper,
                         pr_cdbcoctl   => rw_crapcop.cdbcoctl,      
                         pr_rw_crapdat => rw_crapdat,
                         pr_cdagectl   => rw_crapcop.cdagectl,
-                        pr_dscritic   => vr_dscritic);
-
+                        pr_dscritic   => vr_dscritic,
+                        pr_cdcritic   => vr_cdcritic);
       -- Verifica se ocorreu erro
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      -- Incluir nome do módulo logado - 10/10/2017 - Ch 758611 
+      gene0001.pc_set_modulo(pr_module => 'PC_'||UPPER(vr_cdprogra), pr_action => NULL);
     END IF;
 
     -- Limpar registros de memória
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
+
+    -- Inicializar ROLLOUT e o sacado DDA
+    vr_flgrollout := 0;
+    vr_flgsacad   := 0;
+    vr_insitpro   := 0; -- nao eh sacado DDA 
     
     -- Rotina para registrar os títulos na CIP
     FOR rw_titulos IN cr_titulos(pr_cdcooper => rw_crapcop.cdcooper
@@ -668,9 +737,18 @@ BEGIN
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+  
+      -- variavel apenas para controle do log, caso seja abortado o programa - 10/10/2017 - Ch 758611
+      vr_nrdconta_loop := rw_titulos.nrdconta;     
+
+      -- Inicializar o ROLLOUT a cada titulo
+      vr_flgrollout := 0;
+      vr_insitpro   := 0; -- nao eh sacado DDA 
       
       -- Se for o primeiro NRINSSAC
       IF rw_titulos.nrseqreg = 1 THEN
+        -- Inicializar a FLAG DDA para cada sacado
+        vr_flgsacad := 0;
           
         -- Verificar o tipo da inscrição
         IF rw_titulos.cdtpinsc = 1 THEN
@@ -685,17 +763,10 @@ BEGIN
                                        ,pr_flgsacad => vr_flgsacad
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
-
+    
         -- Verifica se ocorreu erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
-        END IF;
-          
-        -- Verifica sacado - Se TRUE
-        IF vr_flgsacad = 1 THEN
-          vr_insitpro := 2;   -- enviar/enviado p/ CIP
-        ELSE
-          vr_insitpro := 0;   -- nao eh sacado DDA 
         END IF;
           
       END IF; -- FIM: rw_titulos.nrseqreg = 1
@@ -717,21 +788,26 @@ BEGIN
                                      ,pr_dtmvtolt => SYSDATE
                                      ,pr_dsmensag => 'Falha no envio para a CIP (valor superior ao suportado)'
                                      ,pr_des_erro => vr_des_erro
-                                     ,pr_dscritic => vr_dscritic);
-      
+                                     ,pr_dscritic => vr_dscritic);     
+
         -- Se ocorrer erro
         IF vr_des_erro <> 'OK' THEN
+          vr_cdcritic := 0;
           RAISE vr_exc_saida;
         END IF;
       END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab
       
       --> Verificar rollout da plataforma de cobrança
-      IF 1 = NPCB0001.fn_verifica_rollout 
+      vr_flgrollout := NPCB0001.fn_verifica_rollout 
                                  ( pr_cdcooper     => rw_titulos.cdcooper, --> Codigo da cooperativa
                                    pr_dtmvtolt     => rw_crapdat.dtmvtolt, --> Data de movimento
                                    pr_vltitulo     => rw_titulos.vltitulo, --> Valor do titulo
-                                   pr_tpdregra     => 1)    THEN           --> Tipo de regra de rollout(1-registro,2-pagamento)      
-        vr_insitpro := 2;
+                                   pr_tpdregra     => 1);                  --> Tipo de regra de rollout(1-registro,2-pagamento)                          
+      -- Verifica sacado - Se TRUE
+      IF vr_flgsacad = 1 OR vr_flgrollout = 1 THEN
+        vr_insitpro := 2;   -- enviar/enviado p/ CIP
+      ELSE
+        vr_insitpro := 0;   -- nao eh sacado DDA 
       END IF;
 
       -- Se sacado for DDA, entao titulo eh DDA 
@@ -746,8 +822,7 @@ BEGIN
                                    , pr_flgdprot => (CASE rw_titulos.flgdprot WHEN 0 THEN FALSE ELSE TRUE END)
                                    , pr_tab_remessa_dda => vr_tb_remessa_dda
                                    , pr_cdcritic => vr_cdcritic
-                                   , pr_dscritic => vr_dscritic);
-              
+                                   , pr_dscritic => vr_dscritic);           
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
@@ -761,11 +836,15 @@ BEGIN
                , inenvcip = 0 -- não enviar
                , dhenvcip = NULL
                , inregcip = 0 -- sem registro na CIP
-           WHERE ROWID = rw_titulos.rowidcob;
-                     
+           WHERE ROWID = rw_titulos.rowidcob;    
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro[3] ao atualizar CRAPCOB: '||SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapcob:' ||
+                           ' flgcbdda:0, insitpro:0, inenvcip:0, dhenvcip:NULL, inregcip:0'||
+                           ', com rowid:' || rw_titulos.rowidcob||'. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
       END IF;
@@ -775,11 +854,9 @@ BEGIN
     DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                    ,pr_tab_retorno_dda => vr_tb_retorno_dda
                                    ,pr_cdcritic        => vr_cdcritic
-                                   ,pr_dscritic        => vr_dscritic);
-    
+                                   ,pr_dscritic        => vr_dscritic);   
     -- Verificar se ocorreu erro
     IF trim(vr_dscritic) IS NOT NULL THEN
-      pr_dscritic := 'Erro na rotina PC_REMESSA_TITULOS_DDA: '||vr_dscritic;
       RAISE vr_exc_saida;
     END IF;
     
@@ -791,30 +868,27 @@ BEGIN
                                   
     -- Verificar se ocorreu erro
     IF trim(vr_dscritic) IS NOT NULL THEN
-      pr_dscritic := 'Erro na rotina PC_ATUALIZA_STATUS_ENVIO_DDA: '||vr_dscritic;
       RAISE vr_exc_saida;
     END IF;                                      
-    
+    -- Incluir nome do módulo logado - 10/10/2017 - Ch 758611 
+    gene0001.pc_set_modulo(pr_module => 'PC_'||UPPER(vr_cdprogra), pr_action => NULL);
+
     -- Rotina para buscar o "OK" da CIP
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
         
-    -- Log de início da execução
-    pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
-                          pr_dstiplog  => 'F');
-    
+    -- Log de término da execução
+    pc_controla_log_batch(pr_cdcooper_in  => rw_crapcop.cdcooper,
+                          pr_dstiplog     => 'F');
                                                   
     --> Gravar dados a cada cooperativa (batch)
     IF nvl(pr_nrdconta,0) = 0 THEN
       COMMIT;
     END IF;
-    
   END LOOP; -- Fim loop cooperativas    
   
 EXCEPTION
-  
   WHEN vr_exc_saida THEN
-    
     -- Rotina para buscar o "OK" da CIP
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
@@ -827,12 +901,13 @@ EXCEPTION
     -- Devolvemos código e critica encontradas
     pr_cdcritic := nvl(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
-    
+
     -- Log de erro início da execução
-    pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
-                          pr_dstiplog  => 'F',
-                          pr_dscritic  => pr_dscritic);
-    
+    pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper,
+                          pr_dstiplog      => 'E',
+                          pr_dscritic      => pr_dscritic,
+                          pr_cdcriticidade => 1,
+                          pr_cdmensagem    => pr_cdcritic);
     
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
@@ -840,20 +915,23 @@ EXCEPTION
     END IF;
     
   WHEN OTHERS THEN
+    -- No caso de erro de programa gravar tabela especifica de log - 10/10/2017 - Ch 758611 
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
     
     -- Rotina para buscar o "OK" da CIP
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
   
     -- Efetuar retorno do erro não tratado
-    pr_cdcritic := 0;
-    pr_dscritic := SQLERRM;
+    pr_cdcritic := 9999;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLErrm;  
     
     -- Log de erro início da execução
-    pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
-                          pr_dstiplog  => 'F',
-                          pr_dscritic  => pr_dscritic);
-    
+    pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper,
+                          pr_dstiplog      => 'E',
+                          pr_dscritic      => pr_dscritic,
+                          pr_cdcriticidade => 2,
+                          pr_cdmensagem    => pr_cdcritic);
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
       ROLLBACK;
