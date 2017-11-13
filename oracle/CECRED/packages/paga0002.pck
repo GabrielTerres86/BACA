@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 17/04/2017
+   Data    : 13/04/2011                        Ultima atualizacao: 22/02/2017
 
    Dados referentes ao programa:
 
@@ -236,7 +236,14 @@ create or replace package cecred.PAGA0002 is
            ,vlrjuros NUMBER
            ,vlrtotal NUMBER
            ,vlrrecbr NUMBER
-           ,vlrperce NUMBER);   
+           ,vlrperce NUMBER
+           ,idlancto NUMBER(15)
+           ,gps_cddpagto NUMBER
+           ,gps_dscompet VARCHAR2(7)
+           ,gps_cdidenti NUMBER
+           ,gps_vlrdinss NUMBER
+           ,gps_vlrouent NUMBER
+           ,gps_vlrjuros NUMBER);
            
   --Tipo de tabela de memoria para dados de agendamentos
   TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;
@@ -680,6 +687,10 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+  
+  /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -690,7 +701,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 10/07/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -777,12 +788,18 @@ create or replace package body cecred.PAGA0002 is
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
   --
   --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  
+                 03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2)
   --
   --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
   --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
   --
   --             10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
   --                          um agendamento de Transferencia (Lucas Ranghetti #676219)
+  --
+  --             03/10/2017 - #765090 Nas transferências, na mensagem de horário para saldo em conta, 
+  --                          mostrar os minutos em múltiplos de 5 arredondando para baixo. 
+  --                          Ex.: Cadastrado: 21:04 -> Mostrar: 21:00 (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1420,6 +1437,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
     END pc_grava_favorito;
 
+
+
   BEGIN
     -- Definir descrição da transação
     SELECT DECODE(pr_flgexecu,1,NULL,'Valida ')||
@@ -1459,7 +1478,6 @@ create or replace package body cecred.PAGA0002 is
        RAISE vr_exc_erro;
     END IF;
 
-   
     /** Agendamento recorrente **/
     IF pr_idagenda = 3 THEN
 
@@ -2045,8 +2063,10 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN
-          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'sssss'), 'hh24:mi');
+        IF pr_cdtiptra IN(1,5) THEN          
+          -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
+                        to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
         ELSE
           vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
         END IF;
@@ -2338,6 +2358,8 @@ create or replace package body cecred.PAGA0002 is
 
                   24/09/2015 - Realizado a inclusão do pr_nmdatela (Adriano - SD 328034).
 
+                  03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2).                  
+
 
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
@@ -2436,6 +2458,7 @@ create or replace package body cecred.PAGA0002 is
        RAISE vr_exc_erro;
     END IF;
 
+    
     /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
     INET0001.pc_verifica_operacao
                          (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -2512,10 +2535,6 @@ create or replace package body cecred.PAGA0002 is
           -- buscar descrição
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
 
-        END IF;
-
-        IF TRIM(pr_dscedent) IS NOT NULL THEN
-          vr_dscritic := vr_dscritic||' - '||pr_dscedent;
         END IF;
 
         -- Se retornou critica , deve abortar
@@ -8126,6 +8145,14 @@ create or replace package body cecred.PAGA0002 is
             -- Utilizar a data do parâmetro
             vr_dtmvtoan := pr_dtmvtoan;
     END IF;
+          
+          -- Chamar rotina para realizar o processamento dos lançamentos
+          -- referentes a Tributacao de Juros ao Capital (22/08/2017 - Renato Darosci)
+          -- A rotina é autonoma e em caso de erro não irá para o processo, irá apenas
+          -- enviar o e-mail de erro.
+          pc_apura_lcm_his_emprestimo(pr_cdcooper => rw_coop.cdcooper
+                                     ,pr_dtrefere => vr_dtmvtoan);
+          
           -- Também devemos garantir que não tenha havido apuração no dia
           OPEN cr_apuracao(rw_coop.cdcooper,vr_dtmvtoan);
           FETCH cr_apuracao
@@ -8598,6 +8625,7 @@ create or replace package body cecred.PAGA0002 is
           ,lau.nmprepos
           ,lau.dslindig
           ,lau.idlancto
+          ,lau.nrseqagp
       FROM craplau lau
     WHERE (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta
@@ -8745,6 +8773,27 @@ create or replace package body cecred.PAGA0002 is
 
     rw_darf_das cr_darf_das%ROWTYPE;
     
+    VC_TIPO_PROTOCOLO_GPS CONSTANT number(5) := 13;
+    
+     CURSOR cr_gps(pr_cdcooper IN crappro.cdcooper%TYPE
+                  ,pr_nrdconta IN crappro.nrdconta%TYPE
+                  ,pr_nrseqaut IN crappro.nrseqaut%TYPE
+                  ,pr_dtmvtolt IN crappro.dtmvtolt%TYPE) IS
+         SELECT TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, pro.dsinform##3, '#')), ':')) cddpagto
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, pro.dsinform##3, '#')), ':')) dscompet
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, pro.dsinform##3, '#')), ':')) cdidenti              
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, pro.dsinform##3, '#')), ':')) vlrdinss
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, pro.dsinform##3, '#')), ':')) vlrouent
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, pro.dsinform##3, '#')), ':')) vlrjuros              
+           FROM crappro pro
+          WHERE pro.cdcooper = pr_cdcooper
+            AND pro.nrdconta = pr_nrdconta
+            AND pro.nrseqaut = pr_nrseqaut
+            AND pro.dtmvtolt = pr_dtmvtolt
+            AND pro.cdtippro = VC_TIPO_PROTOCOLO_GPS;
+                     
+    rw_gps cr_gps%ROWTYPE;
+
     ---------------> VARIAVEIS DE ERROS <-----------------
     vr_exc_erro     EXCEPTION;
     vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -8779,6 +8828,14 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrtotal tbpagto_agend_darf_das.vlprincipal%TYPE := 0;
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
+
+    -- GPS
+    vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
+    vr_gps_dscompet VARCHAR2(10);            -- 04 - Competência
+    vr_gps_cdidenti craplgp.cdidenti%TYPE; -- 05 - Identificador
+    vr_gps_vlrdinss craplgp.vlrdinss%TYPE; -- 06 - Valor INSS (R$)
+    vr_gps_vlrouent craplgp.vlrouent%TYPE; -- 09 - Valor Outras Entidades (R$)
+    vr_gps_vlrjuros craplgp.vlrjuros%TYPE; -- 10 - ATM / Multa e Juros (R$)
 
     vr_nmprimtl crapass.nmprimtl%TYPE := '';
     vr_tab_dados_agendamento PAGA0002.typ_tab_dados_agendamento;
@@ -8928,12 +8985,13 @@ create or replace package body cecred.PAGA0002 is
             END IF;
 
             -- Se for GPS, nao permite cancelar na tela de Agendamentos            
-            IF rw_craplau.dscedent LIKE '%GPS IDENTIFICADOR%' THEN
+            /*
+            IF rw_craplau.nrseqagp > 0 THEN
               vr_incancel := 3;
-            END IF;    
+            END IF;   */         
 
             -- Se for DARF/DAS e jah foi efetivado nao pode ser permitido o cancelamento.
-            IF rw_craplau.cdtiptra = 10 AND rw_craplau.insitlau = 2 THEN
+            IF (rw_craplau.cdtiptra = 10 OR (rw_craplau.cdtiptra = 2 AND rw_craplau.nrseqagp > 0)) AND rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
             END IF;
 
@@ -9102,6 +9160,45 @@ create or replace package body cecred.PAGA0002 is
           CLOSE cr_crapopi;
         END IF;
         
+        -- Se for GPS
+        IF rw_craplau.nrseqagp > 0 THEN
+
+		  vr_dstiptra := 'GPS';
+                  
+          OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
+                     ,pr_nrdconta => rw_craplau.nrdconta
+                     ,pr_nrseqaut => rw_craplau.nrseqagp
+                     ,pr_dtmvtolt => rw_craplau.dtmvtolt);
+
+          FETCH cr_gps INTO rw_gps;
+
+          IF cr_gps%NOTFOUND THEN
+            CLOSE cr_gps;
+--            vr_dscritic := 'Lançamento não encontrado';
+--            RAISE vr_exc_erro;
+          ELSE
+
+            CLOSE cr_gps;
+            vr_gps_cddpagto := rw_gps.cddpagto;
+            vr_gps_dscompet := rw_gps.dscompet;
+            vr_gps_cdidenti := rw_gps.cdidenti;
+            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'9G999D99');
+            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
+            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
+          END IF;
+
+        ELSE
+          vr_gps_cddpagto := 0;
+          vr_gps_dscompet := '';
+          vr_gps_cdidenti := 0;
+          vr_gps_vlrdinss := 0;
+          vr_gps_vlrouent := 0;
+          vr_gps_vlrjuros := 0;
+          
+        END IF;
+        
+        
+
         vr_cdindice := vr_tab_dados_agendamento.COUNT() + 1;
 
         vr_tab_dados_agendamento(vr_cdindice).dtmvtopg := rw_craplau.dtmvtopg;
@@ -9142,6 +9239,14 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrtotal := vr_vlrtotal;
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
+        vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
+        -- GPS
+        vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
+        vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;
+        vr_tab_dados_agendamento(vr_cdindice).gps_cdidenti := vr_gps_cdidenti;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrdinss := vr_gps_vlrdinss;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrouent := vr_gps_vlrouent;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrjuros := vr_gps_vlrjuros;
 
       END IF;
 
@@ -9318,6 +9423,12 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<vlrrecbr>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrrecbr) || '</vlrrecbr>'
                                                   ||  '<vlrperce>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrperce) || '</vlrperce>'
                                                   ||  '<incancel>' || NVL(TO_CHAR(vr_tab_dados_agendamento(vr_contador).incancel),0) || '</incancel>'
+                                                  ||  '<gps_cddpagto>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_cddpagto) || '</gps_cddpagto>'
+                                                  ||  '<gps_dscompet>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_dscompet) || '</gps_dscompet>'
+                                                  ||  '<gps_cdidenti>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_cdidenti) || '</gps_cdidenti>'
+                                                  ||  '<gps_vlrdinss>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrdinss) || '</gps_vlrdinss>'
+                                                  ||  '<gps_vlrouent>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrouent) || '</gps_vlrouent>'
+                                                  ||  '<gps_vlrjuros>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrjuros) || '</gps_vlrjuros>'                                                                                                                                                                                                                                                          
                                                 || '</dados>');
       END LOOP;
 
@@ -9880,6 +9991,93 @@ create or replace package body cecred.PAGA0002 is
 
   END pc_cancelar_agendamento;
 
+  -- Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos
+  PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
+                                       ,pr_dtrefere IN DATE   ) IS           -- Data de referencia
+    /* ..........................................................................
+    --
+    --  Programa : pc_apura_juros_capital        
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Renato Darosci - Supero
+    --  Data     : Agosto/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Realizar a apuração diária dos lançamentos dos históricos de 
+    --               pagamento de empréstimos e gravar os valores em uma tabela auxiliar
+    -- ..........................................................................*/
+    
+    -- ROTINA CRIADA COM PRAGMA AUTONOMO PARA QUE O COMMIT DA MESMA NÃO AFETE ROTINAS CHAMADORAS.
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    
+    ---------------> VARIAVEIS <-----------------
+    -- Variaveis de erro    
+    vr_cdcritic        crapcri.cdcritic%TYPE;
+    vr_dscritic        VARCHAR2(4000);
+    -- Variáveis de Excecao
+    vr_exc_erro        EXCEPTION;
+    -- Variáveis
+    vr_cdoperac_pagepr   NUMBER;
+    
+  BEGIN
+    
+    -- Buscar o código de operação para os registros
+    vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+    
+    -- Garantir que em caso de reprocessamento os registros sejam recalculados
+    DELETE TBCC_OPERACOES_DIARIAS  tab
+     WHERE tab.cdcooper   = pr_cdcooper
+       AND tab.cdoperacao = vr_cdoperac_pagepr
+       AND tab.dtoperacao = pr_dtrefere;
+    
+    -- Inserir os regitros referente aos lançamentos do dia
+    INSERT INTO TBCC_OPERACOES_DIARIAS(cdcooper, nrdconta, cdoperacao, dtoperacao, vloperacao)
+       (SELECT pr_cdcooper
+             , lcm.nrdconta
+             , vr_cdoperac_pagepr
+             , pr_dtrefere
+             , SUM(decode(lcm.cdhistor,
+                          108, lcm.vllanmto,
+                          275, lcm.vllanmto,
+                         1539, lcm.vllanmto,
+                          393, lcm.vllanmto,
+                         1706, lcm.vllanmto * -1,
+                           99, lcm.vllanmto * -1,
+                            0)) vllanmto
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.cdhistor IN (108, 275, 1539, 393, 1706, 99)
+           AND lcm.dtmvtolt = pr_dtrefere
+         GROUP BY pr_cdcooper
+               , lcm.nrdconta
+               , vr_cdoperac_pagepr
+               , pr_dtrefere);
+    
+    -- Efetivar os dados gerados
+    COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Desfazer alterações pendentes
+      ROLLBACK;
+      -- Efetuar montagem de e-mail
+      gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
+                                ,pr_cdprogra    => 'SOBR0001.pc_apura_juros_capital'
+                                ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'ERRO_EMAIL_JOB')
+                                ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||pr_cdcooper
+                                ,pr_des_corpo   => 'Olá, <br><br>'
+                                                || 'Foram encontrados problemas durante o processo de apuração '
+                                                || 'dos valores de Históricos dos Lançamentos de Empréstimos. <br> '
+                                                || 'Erro encontrado:<br>'||SQLERRM
+                                ,pr_des_anexo   => ''
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
+      -- Gravar a solictação do e-mail para envio posterior
+      COMMIT;
+  END pc_apura_lcm_his_emprestimo;
+  
 
 END PAGA0002;
 /
