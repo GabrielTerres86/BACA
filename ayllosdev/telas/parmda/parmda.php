@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 04/05/2016
  * OBJETIVO     : Mostrar tela PARMDA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 31/08/2017 - Alterar o nome da tela (Renato Darosci - Prj360)
  */
 ?>
 
@@ -20,8 +20,7 @@
 	require_once("../../includes/carrega_permissoes.php");	
 	
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br">
+<html>
     <head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
 		<meta http-equiv="Pragma" content="no-cache">
@@ -59,7 +58,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('PARMDA - Parâmetros de Mensagens do Débito Automático') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('PARMDA - Par&acirc;metros de Mensagens de Alerta') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>

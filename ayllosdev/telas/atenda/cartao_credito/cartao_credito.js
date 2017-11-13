@@ -58,6 +58,7 @@
  * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
  * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
  * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
+ * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualização do histórico de alteração de limites (P360)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1144,6 +1145,36 @@ function controlaLayout(nomeForm) {
         cDssencon.addClass('campo').css({ 'width': '50px' });
 	
 		cDssennov.focus();	
+		
+	} else if (nomeForm == 'divConteudoHistorico') {
+	
+        var divRegistro = $('div.divRegistros', '#' + nomeForm);
+        var tabela = $('table', divRegistro);
+						
+        divRegistro.css('height', '150px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		var arrayAlinha = new Array();
+		
+        arrayLargura[0] = '120px';
+		arrayLargura[1] = '100px';
+		arrayLargura[2] = '120px';
+					
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+						
+        tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+        $('tbody > tr', tabela).each(function () {
+            if ($(this).hasClass('corSelecao')) {
+				$(this).focus();		
+			}
+		});
+		
     } else if (nomeForm == 'fieldsetTAA') {
         $('#fieldsetTAA').css({ 'border': '1px solid #bbb', 'margin': '3px', 'padding': '0px 3px 5px 3px' });
         $('legend:first', '#fieldsetTAA').css({ 'font-size': '11px', 'color': '#333', 'margin-left': '5px', 'padding': '0px 2px' });
@@ -1484,17 +1515,17 @@ function validarNovoCartao() {
 	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) ) {
 		// Nome da Empresa deve estar preenchido
 		if (nmempres.trim() == "") {
-			hideMsgAguardo();
-			showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-			return false;
-		}
+		hideMsgAguardo();
+		showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
 		// Nome da Empresa não pode conter mais de 23 caracteres
 		if (nmempres.length > 23) {
-			hideMsgAguardo();
-			showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-			return false;
-		}
-	    
+		hideMsgAguardo();
+        showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 		// Nome da Empresa não pode conter numeros
 		if ( /[0-9]/gm.test(nmempres) ){
 			hideMsgAguardo();
@@ -4319,7 +4350,7 @@ function lerCartaoChip() {
 				if (sTagPortador == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[2]);
 				eval("oRetornoJson = " + oRetornoJson);
-					sTagPortador = oRetornoJson.szTagsData;		
+				sTagPortador = oRetornoJson.szTagsData;
 				}
 				
 				// Busca Numero do cartao
@@ -4336,7 +4367,7 @@ function lerCartaoChip() {
 				if (sTagNumeroCartao == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[2]);
 				eval("oRetornoJson = " + oRetornoJson);
-					sTagNumeroCartao = oRetornoJson.szTagsData;
+				sTagNumeroCartao = oRetornoJson.szTagsData;
 				}
 				
 				// Buscar Validade do cartao                
@@ -4349,11 +4380,11 @@ function lerCartaoChip() {
 					eval("oRetornoJson = " + oRetornoJson);
 					sTagDataValidade = oRetornoJson.szTagsData;
 				}
-												
+				
 				if (sTagDataValidade == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[2]);				
-					eval("oRetornoJson = " + oRetornoJson);
-					sTagDataValidade = oRetornoJson.szTagsData;
+				eval("oRetornoJson = " + oRetornoJson);
+				sTagDataValidade = oRetornoJson.szTagsData;
 				}
 				
 				// Carrega conteúdo da opção através de ajax
@@ -5256,3 +5287,33 @@ function controlaLayoutRepresentantes() {
 	bloqueiaFundo($('#divUsoGenerico'));
 	return false;	
 }	
+
+// Função para mostrar o histórico de alteração de limite de crédito
+function mostraHisLimite() {
+
+    // ALTERAÇÃO
+    var nomeForm = 'frmHistoricoLimite';
+	var nrcctitg = $('#nrcctitg', '#frmDadosCartao').val();
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando hist&oacute;rico de limite de cr&eacute;dito ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/consultar_historico_limite.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrcctitg: nrcctitg,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao2").html(response);
+        }
+    });
+}

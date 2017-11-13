@@ -1,17 +1,20 @@
 /*!
- * FONTE        : autori.js
+ * FONTE        : parmda.js
  * CRIAÇÃO      : Dionathan Henchel
  * DATA CRIAÇÃO : 04/05/2016
  * OBJETIVO     : Biblioteca de funções da tela PARMDA
  * --------------
  * ALTERAÇÕES   : 
+ *			[30/08/2017] - Realizar as alterações pertinentes as novas funcionalidades de
+ * 						   parametrização das mensagens de SMS (Renato Darosci - Prj360)
  */
 
 // Definição de algumas variáveis globais
 var cddopcao = ''; // Armazena a operação corrente da tela PARMDA
+var cdprodut = ''; // Armazena o código do produto selecionado
 var cdcooper = ''; // Armazena a cooperativa atual (Se for 0 seleciona todas)
 
-var frmCab,cCddopcao,cCdcooper,cTodosCabecalho,cTodosPrincipal;
+var frmCab,cCddopcao,cCdprodut,cCdcooper,cTodosCabecalho,cTodosPrincipal;
 
 $(document).ready(function() {
 	
@@ -47,18 +50,24 @@ function formataCabecalho() {
 	
 	// cabecalho
 	var rCddopcao = $('label[for="cddopcao"]','#frmCab');
+	var rCdprodut = $('label[for="cdprodut"]','#frmCab');
 	var rCdcooper = $('label[for="cdcooper"]','#frmCab');
 	
 	cCddopcao = $('#cddopcao','#frmCab');
+	cCdprodut = $('#cdprodut','#frmCab');
 	cCdcooper = $('#cdcooper','#frmCab');
 	
 	cTodosCabecalho = $('input[type="text"],input[type="checkbox"],select','#frmCab');
 	
-	rCddopcao.css('margin-left', '5px');
-	rCdcooper.css('margin-left', '5px');
+	// Configurar os labels
+	rCddopcao.css('width','85px');
+	rCdprodut.addClass('rotulo').css({'width':'85px'});
+	rCdcooper.addClass('rotulo').css({'width':'85px'});
 	
+	// Configurar os campos
 	cCddopcao.css('width', '400px');	
-	cCdcooper.css('width', '100px');
+	cCdprodut.css('width', '300px');	
+	cCdcooper.css('width', '150px');	
 	
 	layoutPadrao();
 	return false;
@@ -144,10 +153,19 @@ function habilitaopcaotodas() {
 
 function LiberaCampos() {
 	
+	$('input,select','#frmCab').removeClass('campoErro');
+	
 	if ( cCddopcao.hasClass('campoTelaSemBorda')  ) { return false; }	
 	
 	cddopcao = cCddopcao.val();
+	cdprodut = normalizaNumero(cCdprodut.val());
 	cdcooper = normalizaNumero(cCdcooper.val());
+	
+	if (cdprodut == "") {
+		showError("error","Favor selecionar Produto.","Alerta - Ayllos","focaCampoErro('cdprodut','frmCab')");
+		return false; 
+	}
+	
 	
 	//Desabilita campos do cabeçalho
 	cTodosCabecalho.desabilitaCampo();
@@ -240,6 +258,7 @@ function realizaOperacao(pcddopcao) {
 			url   : UrlSite + 'telas/parmda/manter_rotina.php', 		
 			data: {
 				cddopcao	    : pcddopcao,
+				cdprodut		: cdprodut,
 				cdcooper	    : cdcooper,
 				flgenvia_sms    : flgenvia_sms,
 				flgcobra_tarifa : flgcobra_tarifa,
@@ -286,4 +305,25 @@ function realizaOperacao(pcddopcao) {
 
 	
 	return false;	
+}
+
+function tratarCamposPrincipal(ifenviasms, idflcbrtar) {
+	
+	// Verifica o flag de envio SMS 
+	if (ifenviasms == "S") {
+		$('#div_flgenvia_sms').css({'display':'block'});
+		$('#div_hrenvio_sms').css({'display':'block'});
+	} else {
+		$('#div_flgenvia_sms').css({'display':'none'});
+		$('#div_hrenvio_sms').css({'display':'none'});
+	}
+	
+	// Verifica o flag de cobrança de tarifa
+	if (idflcbrtar == "S") {
+		$('#div_flgcobra_tarifa').css({'display':'block'});
+	} else {
+		$('#div_flgcobra_tarifa').css({'display':'none'});
+	}
+	
+	return true;
 }

@@ -6,6 +6,8 @@
  * OBJETIVO     : Rotina para manter as operações da tela PARMDA
  * --------------
  * ALTERAÇÕES   : 
+ *			[30/08/2017] - Realizar as alterações pertinentes as novas funcionalidades de
+ * 						   parametrização das mensagens de SMS. (Renato Darosci - Prj360)
  * -------------- 
  */
 ?> 
@@ -25,6 +27,7 @@
 	
 	// Recebe a operação que está sendo realizada
 	$cddopcao		 = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
+	$cdprodut		 = (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : '' ;
 	$cdcooper		 = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : '' ;
 	$flgenvia_sms	 = (isset($_POST['flgenvia_sms'])) ? $_POST['flgenvia_sms'] : '' ;
 	$flgcobra_tarifa = (isset($_POST['flgcobra_tarifa'])) ? $_POST['flgcobra_tarifa'] : '' ;
@@ -54,11 +57,12 @@
 			exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 		}
 	}
-
+	
 	// Montar o xml de Requisicao
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooperalt>$cdcooper</cdcooperalt>";
+	$xml .= "   <cdprodut>$cdprodut</cdprodut>";
 	
 	switch($cddopcao) {
 		case 'A': 
@@ -111,6 +115,12 @@
 		$vltarifa_pj     = formataMoeda(getByTagName($registro,'vltarifa_pj'));
 		$hrenvio_sms     = getByTagName($registro,'hrenvio_sms');
 	
+		// Ler o retorno dos flags para controle de tela - Prj360
+		$prod_enviasms = getByTagName($registro,'prod_enviasms'); 
+		$prod_flcbrtar = getByTagName($registro,'prod_flcbrtar'); 
+		
+		echo "tratarCamposPrincipal('" . $prod_enviasms . "','" . $prod_flcbrtar . "');";
+	
 		echo "$('#flgenvia_sms',   '#frmPrincipal').attr('checked',$flgenvia_sms);";
 	    echo "$('#flgcobra_tarifa','#frmPrincipal').attr('checked',$flgcobra_tarifa);";
 		echo "$('#cdtarifa_pf',    '#frmPrincipal').val('$cdtarifa_pf');";
@@ -123,7 +133,7 @@
 		$ultimofieldset = '';
 		
 		// Gera os campos das mensagens
-		foreach( $registro[7]->tags as $msg ) {
+		foreach( $registro[9]->tags as $msg ) {
 			$cdtipo_mensagem = $msg->attributes['CDTIPO_MENSAGEM'];
 			$dscampo = $msg->tags[0]->cdata;
 			$dsmensagem = $msg->tags[1]->cdata;
@@ -135,6 +145,7 @@
 				if ($ultimofieldset != '') //Fecha o fieldset anterior
 					$htmlmensagens .= "</fieldset>";
 				
+				$htmlmensagens .= "<br/>";
 				$htmlmensagens .= "<fieldset><legend>".htmlentities($fieldset)."</legend>";
 				$ultimofieldset = $fieldset;
 			}
