@@ -36,6 +36,8 @@ CREATE OR REPLACE PACKAGE CECRED.esms0001 AS
                                  ,pr_idlote_sms IN OUT tbgen_sms_controle.idlote_sms%TYPE
                                  ,pr_dscritic   OUT VARCHAR2);
 
+  FUNCTION fn_busca_token_zenvia(pr_cdproduto IN NUMBER) RETURN VARCHAR2;
+
 END esms0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
@@ -961,6 +963,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         pr_dscritic := 'Erro nao tratado na rotina ESMS0001.pc_escreve_sms_debaut: ' || SQLERRM;
       END IF;
   END;
+
+  FUNCTION fn_busca_token_zenvia(pr_cdproduto IN NUMBER) RETURN VARCHAR2 IS --> Codigo do Produto utilizado para o servico SMS 
+    -- ..........................................................................
+    --
+    --  Programa : fn_busca_token_zenvia
+    --  Sigla    : CECRED
+    --  Autor    : Anderson Fossa
+    --  Data     : Setembro/2017.                   Ultima atualizacao: 
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Rotina para buscar o usuario e senha para envio de SMS atraves da Zenvia
+    --
+    -- .............................................................................
+    vr_cdacesso crapprm.cdacesso%TYPE;
+  BEGIN
+      vr_cdacesso := 'TOKEN.ZENVIA.'||TO_CHAR(nvl(pr_cdproduto,0));
+      RETURN gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                       pr_cdcooper => 0,
+                                       pr_cdacesso => vr_cdacesso);
+  END fn_busca_token_zenvia;
 
 END esms0001;
 /
