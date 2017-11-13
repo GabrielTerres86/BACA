@@ -44,6 +44,9 @@ function estadoInicial() {
 	
 	cTodosCabecalho.habilitaCampo();
 	cCddopcao.focus();
+
+    // Setar todos os inputs com tabindex = 0
+	$(":input", '#frmCab').attr('tabindex', 0);
 }
 
 function formataCabecalho() {
@@ -58,7 +61,7 @@ function formataCabecalho() {
 	cCdcooper = $('#cdcooper','#frmCab');
 	
 	cTodosCabecalho = $('input[type="text"],input[type="checkbox"],select','#frmCab');
-	
+
 	// Configurar os labels
 	rCddopcao.css('width','85px');
 	rCdprodut.addClass('rotulo').css({'width':'85px'});

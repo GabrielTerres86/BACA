@@ -20,14 +20,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SOLCC IS
                30/06/2016 - #454336 Incluído log de início, fim e erro na execução do job
                             (Carlos)
 
+               31/08/2017 - Incluir a chamada da rotina de processamento dos registros de 
+                            majoração(CRPS725), antes da execução do CRPS671 (Renato - Prj360)
   ..........................................................................*/
   
     ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra   crapprg.cdprogra%TYPE;           --> Código do programa
     vr_infimsol   PLS_INTEGER;                     --> Variável de Retorno Nome do Campo
     vr_cdcritic   PLS_INTEGER;                     --> Variável de Retorno Nome do Campo
-    vr_dserro varchar2(2000);
-    vr_dtvalida DATE;                              --> Variavel que retorna o dia valido
+  vr_dserro     VARCHAR2(2000);
+  vr_dtvalida   DATE;                            --> Variavel que retorna o dia valido
 
     vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcrd_bancoob_envia_solcc';
     vr_flgerlog  BOOLEAN := FALSE;
@@ -75,6 +77,23 @@ BEGIN
       -- Início da execução do job
       pc_controla_log_batch(pr_dstiplog => 'I');
       
+      --------------------------------------------------------
+      
+      pc_crps725(pr_dscritic => vr_dserro);
+      
+      IF TRIM(vr_dserro) IS NOT NULL THEN       
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dserro);
+                              
+        -- Finalizar da execução do job
+        pc_controla_log_batch(pr_dstiplog => 'F');
+        
+        -- Encerrar a execução em caso de erro
+        RETURN;
+      END IF; 
+      
+      --------------------------------------------------------
+      
       pc_crps671(pr_cdcooper => 3,
                  pr_flgresta => 1,
                  pr_stprogra =>  vr_cdprogra,
@@ -88,6 +107,8 @@ BEGIN
                               pr_dscritic => vr_dserro);
     END IF; 
               
+      --------------------------------------------------------
+            
       -- Fim da execução do job
       pc_controla_log_batch(pr_dstiplog => 'F');
   END IF;

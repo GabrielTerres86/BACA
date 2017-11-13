@@ -118,6 +118,16 @@
 		// Ler o retorno dos flags para controle de tela - Prj360
 		$prod_enviasms = getByTagName($registro,'prod_enviasms'); 
 		$prod_flcbrtar = getByTagName($registro,'prod_flcbrtar'); 
+		$flghrenviosms = getByTagName($registro,'flghrenviosms');
+
+		/* Habilita horário de envio de SMS  */
+		if ($flghrenviosms == 1) {
+		  echo "$('#hrenvio_sms','#frmPrincipal').css({'display':'block'});";
+	      echo "$('label[for=\"hrenvio_sms\"]','#frmPrincipal').css({'display':'block'});";
+		} else {
+		  echo "$('#hrenvio_sms','#frmPrincipal').css({'display':'none'});";
+	      echo "$('label[for=\"hrenvio_sms\"]','#frmPrincipal').css({'display':'none'});";
+		}
 		
 		echo "tratarCamposPrincipal('" . $prod_enviasms . "','" . $prod_flcbrtar . "');";
 	
@@ -133,7 +143,7 @@
 		$ultimofieldset = '';
 		
 		// Gera os campos das mensagens
-		foreach( $registro[9]->tags as $msg ) {
+		foreach( $registro[10]->tags as $msg ) {
 			$cdtipo_mensagem = $msg->attributes['CDTIPO_MENSAGEM'];
 			$dscampo = $msg->tags[0]->cdata;
 			$dsmensagem = $msg->tags[1]->cdata;
