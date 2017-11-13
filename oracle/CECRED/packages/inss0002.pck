@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 17/07/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 13/11/2017
 
    Dados referentes ao programa:
 
@@ -432,18 +432,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             (Tiago/Fabricio SD616352).             
                             
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+      			                crapass, crapttl, crapjur (Adriano - P339).
 
                25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
-                           em que o dia que antecede o final de semana ou feriado nacional
-                           (Lucas Ranghetti #671126)      
+                            em que o dia que antecede o final de semana ou feriado nacional
+                            (Lucas Ranghetti #671126)      
                             
                17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
 
                08/09/2017 - Implementação GPS para Mobile.
-				    		(P 356.2 - Ricardo Linhares)
+				    		            (P 356.2 - Ricardo Linhares)
+                            
+               13/11/2017 - Enviar e-mail para a area de convenios caso a validacao do xml
+                            com o WebService do Sicredi ocorra erro (Lucas Ranghetti #751056)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -472,6 +474,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        AND lot.cdbccxlt = pr_cdbccxlt
        AND lot.nrdolote = pr_nrdolote
        FOR UPDATE NOWAIT;
+       
+  -- quantidade de e-mails enviados
+  CURSOR cr_crapsle(pr_cdprogra IN VARCHAR2
+                   ,pr_dtmvtolt IN DATE
+                   ,pr_dsassunt IN VARCHAR2) IS
+  SELECT COUNT(1) qtdemail
+    FROM crapsle e
+   WHERE e.flenviad = 'S'
+     AND upper(e.cdprogra) = upper(pr_cdprogra)
+     AND trunc(e.dtsolici) = pr_dtmvtolt
+     AND upper(e.dsassunt) = upper(pr_dsassunt);
+   rw_crapsle cr_crapsle%ROWTYPE;
 
   -- TIPO
   TYPE typ_xmldata IS RECORD(-- Linha Cabecalho
@@ -511,7 +525,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   vr_nrdrowid    ROWID;
   vr_nrdrowid1  ROWID;
   vr_dtcompet   VARCHAR(6); 
-
+  vr_critigps   VARCHAR2(1000);
+  vr_envemail   BOOLEAN; 
 
   vr_exc_saida      EXCEPTION;       --> Controle de Exceção
   vr_exit           EXCEPTION;
@@ -1709,7 +1724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       OR TRIM(pr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_saida;
       END IF;
-
+       
       --Realizar o Parse do Arquivo XML
       vr_xmldoc := xmldom.newdomdocument(vr_xml);
 
@@ -1728,12 +1743,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       IF XMLDOM.getNodeValue(vr_nodo) IS NULL OR XMLDOM.getNodeValue(vr_nodo) <> 'true' THEN
         RAISE vr_exc_saida;
       END IF;
-
+           
       EXCEPTION
         WHEN OTHERS THEN
                   
         pr_dscritic := 'Validacao de GPS nao efetuada.';
 
+        -- Enviar e-mail para a area de convenios caso ocorra algum erro inesperado com o 
+        -- WebService Sicredi
+        OPEN cr_crapsle(pr_cdprogra => 'INSS0002',
+                        pr_dtmvtolt => trunc(SYSDATE), 
+                        pr_dsassunt => 'ERRO - Validacao GPS WebService Sicredi');
+        FETCH cr_crapsle INTO rw_crapsle;
+
+        IF cr_crapsle%FOUND THEN
+          CLOSE cr_crapsle;
+          
+          -- Limitado a 5 e-mails
+          IF rw_crapsle.qtdemail < 5 THEN
+            vr_envemail:= TRUE; -- Enviar e-mail caso seja menor que 5 ja enviados
+          ELSE
+            vr_envemail:= FALSE; -- Não enviar e-mail caso seja maior que 5 ja enviados
+          END IF;
+        ELSE
+          CLOSE cr_crapsle;
+          vr_envemail:= TRUE; -- enviar e-mail caso seja o primeiro do dia
+        END IF;
+
+        IF vr_envemail THEN
+          -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
+          gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
+                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_assunto => 'ERRO - Validacao GPS WebService Sicredi'
+                                    ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
+                                                     ||' WebService do Sicredi.</br></br>'
+                                                     ||'<b>Servico indisponivel!</b>'
+                                    ,pr_des_anexo   => vr_msgenvio||';'||vr_msgreceb
+                                    ,pr_flg_enviar  => 'S'
+                                    ,pr_des_erro    => vr_critigps);
+        END IF;
+        
         RAISE vr_exc_saida;
       END;
     END IF;
@@ -2452,6 +2501,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       --Se o retorno da tag não for TRUE
       IF XMLDOM.getNodeValue(vr_nodo) IS NULL THEN
         pr_dscritic := 'Arrecadacao de GPS não efetuada!';
+
+        -- Enviar e-mail para a area de convenios caso ocorra algum erro inesperado com o 
+        -- WebService Sicredi
+        OPEN cr_crapsle(pr_cdprogra => 'INSS0002',
+                        pr_dtmvtolt => trunc(SYSDATE), 
+                        pr_dsassunt => 'ERRO - Arrecadacao GPS WebService Sicredi');
+        FETCH cr_crapsle INTO rw_crapsle;
+
+        IF cr_crapsle%FOUND THEN
+          CLOSE cr_crapsle;
+          
+          -- Limitado a 5 e-mails
+          IF rw_crapsle.qtdemail < 5 THEN
+            vr_envemail:= TRUE; -- Enviar e-mail caso seja menor que 5 ja enviados
+          ELSE
+            vr_envemail:= FALSE; -- Não enviar e-mail caso seja maior que 5 ja enviados
+          END IF;
+        ELSE
+          CLOSE cr_crapsle;
+          vr_envemail:= TRUE; -- enviar e-mail caso seja o primeiro do dia
+        END IF;
+
+        IF vr_envemail THEN
+          -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
+          gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
+                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_assunto => 'ERRO - Arrecadacao GPS WebService Sicredi'
+                                    ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
+                                                     ||' WebService do Sicredi.</br></br>'
+                                                     ||'<b>Servico indisponivel!</b>'
+                                    ,pr_des_anexo   => vr_msgenvio||';'||vr_msgreceb
+                                    ,pr_flg_enviar  => 'S'
+                                    ,pr_des_erro    => vr_critigps);
+        END IF;
 
         RAISE vr_exc_saida;
       ELSE
@@ -3711,12 +3794,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
           -- Exception
-          RAISE vr_exc_saida;
+          RAISE vr_exc_saida;       
        END IF;
 
        IF pr_idorigem = 2 THEN
          pr_dscritic := REPLACE(REPLACE(vr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
        END IF;
+
+       
 
        IF vr_dscritic LIKE '%ERR-SVC%' THEN
           pr_dscritic := TRIM(REPLACE(vr_dscritic,'ERR-SVC','(Erro no serviço)'));
