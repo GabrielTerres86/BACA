@@ -2,16 +2,19 @@
 
 /*************************************************************************
 	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 16/10/2017
+	Autor: Gabriel						Ultima atualizacao: 13/11/2017
 	Data : Janeiro/2011
 	
 	Objetivo: Listar os telefones.
 	
 	Alteracoes: 13/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
-
+	
 	            16/10/2017 - Alterado para que fosse possivel copiar o numero do 
 				             telefone atraves de um botao posicionado na grid
 							 (Tiago #755346)
+							 
+				13/11/2017 - Retirado icone ao lado do numero do telefone 
+				             (Tiago #755346)
 *************************************************************************/
 
 session_start();
@@ -92,7 +95,7 @@ function exibeErro($msgErro) {
 
 <div id="divResultado">
     <input type="text" id="nrfonres" value="" />
-	<div class="divRegistros">
+	<div class="divRegistros">	
 		<table>
 			<thead>
 				<tr>
@@ -107,7 +110,7 @@ function exibeErro($msgErro) {
 			<tbody>
 				<?  $cont = 0;
 				    foreach($telefones as $telefone) {
-									
+						
 						$cont++;
 						$nmopetfn = getByTagName($telefone->tags,'nmopetfn'); // $telefone->tags[0]->cdata;
 						$nrdddtfc = getByTagName($telefone->tags,'nrdddtfc'); //$telefone->tags[1]->cdata;
@@ -116,7 +119,7 @@ function exibeErro($msgErro) {
 						$destptfc = getByTagName($telefone->tags,'destptfc');
 						$nmpescto = getByTagName($telefone->tags,'nmpescto'); 
 						
-					?>
+					?>					
 					
 					<tr onClick="copier('<?php echo $nrfonres; ?>')">
 					
@@ -125,11 +128,11 @@ function exibeErro($msgErro) {
 					    <td><span><? echo $nrdddtfc; ?></span>
 							<?php echo formataNumericos("999",$nrdddtfc); ?>  </td>
 						
-						<td><?php echo $nrfonres; ?><img src="<?php echo $UrlImagens; ?>geral/copy_icon.png" width="19px" height="19px" border="0" title="copiar telefone para a area de transfer&ecirc;ncia"></td>
+						<td title="copiar telefone para a area de transfer&ecirc;ncia"><?php echo $nrfonres; ?></td>
 						
 					    <td><span><? echo $nrdramal; ?></span>
 							<?php echo formataNumericos("zzzz",$nrdramal); ?> </td>
-						
+						 
 				     	<td> <?php echo $destptfc; ?> </td>
 						
 				     	<td> <?php echo $nmpescto; ?> </td>
