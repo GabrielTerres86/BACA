@@ -1682,6 +1682,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_obj_proposta.put('propostasPendentesValor'     ,fn_decimal_ibra(vr_vlprapne) );
       vr_obj_proposta.put('limiteCooperadoValor'        ,fn_decimal_ibra(nvl(vr_vllimdis,0)) );
       
+      -- Busca PDF gerado pela análise automática do Motor        
+      vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
+                                                       ,pr_nrdconta => pr_nrdconta
+                                                       ,pr_nrctremp => pr_nrctremp);
+                                                       
+      vr_obj_proposta.put('protocoloPolitica'          ,vr_dsprotoc);
+      
       -- Copiar parâmetro
       vr_nmarquiv := pr_nmarquiv;
       
@@ -1740,74 +1747,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         IF vr_nmarquiv <> NVL(pr_nmarquiv,' ') THEN 
           -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
           GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nmarquiv);
-      END IF;
+        END IF;
+      END IF;  
                 
-        -- Busca PDF gerado pela análise automática do Motor        
-              vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
-                                                               ,pr_nrdconta => pr_nrdconta
-                                                               ,pr_nrctremp => pr_nrctremp);
-        -- Se houve        
-              IF vr_dsprotoc IS NOT NULL THEN
+      -- Se encontrou PDF de análise Motor
+      IF vr_dsprotoc IS NOT NULL THEN
                 
-                -- Diretorio para salvar
-                vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
-                                                     ,pr_cdcooper => 3
-                                                     ,pr_nmsubdir => '/log/webservices'); 
+        -- Diretorio para salvar
+        vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
+                                             ,pr_cdcooper => 3
+                                             ,pr_nmsubdir => '/log/webservices'); 
 
-          -- Utilizar o protocolo para nome do arquivo
-          vr_nmarquiv := vr_dsprotoc || '.pdf';
+        -- Utilizar o protocolo para nome do arquivo
+        vr_nmarquiv := vr_dsprotoc || '.pdf';
 
-                -- Comando para download
-                vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+        -- Comando para download
+        vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
 
-                -- Substituir o caminho do arquivo a ser baixado
-                vr_dscomando := replace(vr_dscomando
-                                       ,'[local-name]'
-                                       ,vr_dsdirarq || '/' || vr_nmarquiv);
+        -- Substituir o caminho do arquivo a ser baixado
+        vr_dscomando := replace(vr_dscomando
+                               ,'[local-name]'
+                               ,vr_dsdirarq || '/' || vr_nmarquiv);
 
-                -- Substiruir a URL para Download
-                vr_dscomando := REPLACE(vr_dscomando
-                                       ,'[remote-name]'
-                                       ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
-                                       ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
-                                       || '_result/' || vr_dsprotoc || '/pdf');
+        -- Substiruir a URL para Download
+        vr_dscomando := REPLACE(vr_dscomando
+                               ,'[remote-name]'
+                               ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                               ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                               || '_result/' || vr_dsprotoc || '/pdf');
 
-                -- Executar comando para Download
-                GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                                     ,pr_des_comando => vr_dscomando);
+        -- Executar comando para Download
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_dscomando);
 
-                
-                -- Se NAO encontrou o arquivo
-                IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
-                  vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
-                  RAISE vr_exc_erro;
-                  END IF;
+        
+        -- Se NAO encontrou o arquivo
+        IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+          vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
+          RAISE vr_exc_erro;
+          END IF;
+          
+        -- Converter arquivo PDF para clob em base64 para enviar via json
+        pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
+                               ,pr_json_value_arq => vr_json_valor
+                               ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+          RAISE vr_exc_erro;
+        END IF;
                   
-                -- Converter arquivo PDF para clob em base64 para enviar via json
-                pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
-                                       ,pr_json_value_arq => vr_json_valor
-                                       ,pr_dscritic       => vr_dscritic);
-                IF TRIM(vr_dscritic) IS NOT NULL THEN                        
-                  RAISE vr_exc_erro;
-                END IF;
-                  
-                -- Gerar objeto json para a imagem 
-                vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
-                vr_obj_imagem.put('conteudo'    ,vr_json_valor);
-                vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
-                vr_obj_imagem.put('validadeData','');
-                -- incluir objeto imagem na proposta
-                vr_lst_doctos.append(vr_obj_imagem.to_json_value());
-                  
-                -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
-                GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
+        -- Gerar objeto json para a imagem 
+        vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
+        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+        vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
+        vr_obj_imagem.put('validadeData','');
+        -- incluir objeto imagem na proposta
+        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
+          
+        -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+        GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
                 
       END IF;
         
-        -- Incluiremos os documentos ao json principal
-         vr_obj_proposta.put('documentos',vr_lst_doctos);
-        
-      END IF;
+      -- Incluiremos os documentos ao json principal
+      vr_obj_proposta.put('documentos',vr_lst_doctos);
                  
     ELSE -- caso for CDC, enviar vazio
       vr_obj_proposta.put('endividamentoContaValor'     ,'');
