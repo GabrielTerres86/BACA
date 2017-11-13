@@ -415,6 +415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CLOSE cr_crapfer;
 
     -- Verifica se alguma cooperativa esta em processo noturno
+    /* Procedimento comentado. Esse tratamento está sendo feito usando a dtmvtopr
     OPEN cr_crapdat;
     FETCH cr_crapdat INTO rw_crapdat;
     IF cr_crapdat%FOUND THEN
@@ -422,6 +423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       RETURN; -- Encerra o programa;
     END IF;
     CLOSE cr_crapdat;
+	*/
 
     -- Inicio processo completo de carga e geração do domicilio bancario
     -- *****************************************************************
