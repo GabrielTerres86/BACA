@@ -229,18 +229,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
 					
+					vr_cdtiptra.extend(2);
+					vr_cdtiptra(1) := 2;  -- Pagamento
+					vr_cdtiptra(2) := 10; -- DARF/DAS
+
+				ELSIF pr_cdtipmod = 2 THEN -- Transferências 
+					
 					vr_cdtiptra.extend(4);
 					vr_cdtiptra(1) := 1; -- Transferencias inter
 					vr_cdtiptra(2) := 3; -- Credito salario
 					vr_cdtiptra(3) := 4; -- TED
 					vr_cdtiptra(4) := 5; -- Transferencias intra
 
-				ELSIF pr_cdtipmod = 2 THEN -- Transferências 
-					
-					vr_cdtiptra.extend(2);
-					vr_cdtiptra(1) := 2;  -- Pagamento
-					vr_cdtiptra(2) := 10; -- DARF/DAS
-								
 				END IF;
 						
 				PAGA0002.pc_obtem_agendamentos(pr_cdcooper => pr_cdcooper
@@ -307,18 +307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<insitlau>' || vr_agendamento(vr_idx).insitlau                                                               || '</insitlau>' ||
 																		'<dssitlau>' || vr_agendamento(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
 																		'<vldocmto>' || to_char(vr_agendamento(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
-																		'<incancel>' || vr_agendamento(vr_idx).incancel                                                               || '</incancel>');
-
-					 IF pr_cdtipmod = 1 THEN -- Pagamentos
-						 gene0002.pc_escreve_xml(pr_xml            => pr_retxml
-																		,pr_texto_completo => vr_xml_temp      
-																		,pr_texto_novo     => '<dscritic>' || vr_agendamento(vr_idx).dscritic || '</dscritic>');
-					 END IF;
-					 
-					 gene0002.pc_escreve_xml(pr_xml            => pr_retxml
-																	,pr_texto_completo => vr_xml_temp      
-																	,pr_texto_novo     => '</Agendamento>' );
-																															 
+																		'<incancel>' || vr_agendamento(vr_idx).incancel                                                               || '</incancel>' ||
+																		'<dscritic>' || vr_agendamento(vr_idx).dscritic                                                               || '</dscritic>' ||
+																	'</Agendamento>');																															 
 				END LOOP;
 			END IF;
 			
@@ -408,11 +399,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     vr_xml_temp VARCHAR2(32726) := '';
     vr_des_erro    VARCHAR2(4000);
     vr_nmoperad crapopi.nmoperad%TYPE := '';
+		vr_info_sac COMP0002.typ_reg_info_sac;
 
     CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
-      SELECT to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+      SELECT LPAD(cop.cdagectl,4,'0') AS cdagectl
+			      ,LPAD(cop.cdbcoctl,3,'0') AS cdbcoctl
+			      ,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+						,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
             ,lau.cdcooper
             ,lau.nrdconta 
+            ,TRIM(GENE0002.fn_mask_conta(lau.nrdconta)) AS dsdconta
+						,lau.cdtiptra
+            ,'TED' AS dstiptra 
             ,lau.hrtransa
             ,lau.nrdocmto
             ,lau.insitlau
@@ -426,11 +424,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,lau.dtdebito
             ,NVL2(ban.cdbccxlt, LPAD(ban.cdbccxlt,4,'0') || ' - ' || REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsdbanco
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
+						,NVL(ban.cdbccxlt, 0) AS cdbandst
+						,NVL2(ban.cdbccxlt, REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsbandst						
+						,NVL(agb.cdageban, 0) AS cdagedst
+						,NVL2(agb.cdageban, REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsagedst						
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) || ' - ' || cti.nmtitula AS dstitula
+            ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) AS dsctadst
+						,cti.nmtitula AS dstitdst
             ,lau.nmprepos
             ,lau.nrcpfpre
             ,lau.nrcpfope
        FROM craplau lau
+	LEFT JOIN crapcop cop
+         ON cop.cdcooper = lau.cdcooper
   LEFT JOIN crapban ban
          ON ban.cdbccxlt = lau.cddbanco
   LEFT JOIN crapagb agb
@@ -478,6 +484,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
         END IF;
       END IF;
 
+			-- Buscar dados do associado
+			OPEN cr_crapass (pr_cdcooper => rw_agendamento.cdcooper,
+											 pr_nrdconta => rw_agendamento.nrdconta);
+			FETCH cr_crapass INTO rw_crapass;
+
+			IF cr_crapass%NOTFOUND THEN
+				CLOSE cr_crapass;								
+				vr_des_erro := 'Associado nao cadastrado.';								
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE cr_crapass;
+			END IF;
+				
+			vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
+
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
@@ -489,27 +510,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => 
-                              '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
-                              '<hrtransa>' || rw_agendamento.hrtransa || '</hrtransa>' ||
+															'<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
+															'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
                               '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
-                              '<insitlau>' || rw_agendamento.insitlau || '</insitlau>' ||
-                              '<dssitlau>' || rw_agendamento.dssitlau || '</dssitlau>' ||
-                              '<vllanaut>' || rw_agendamento.vllanaut || '</vllanaut>' ||
-                              '<dtdebito>' || rw_agendamento.dtdebito || '</dtdebito>' ||
-                              '<dsdbanco>' || rw_agendamento.dsdbanco || '</dsdbanco>' ||
-                              '<dsdagenc>' || rw_agendamento.dsdagenc || '</dsdagenc>' ||
-                              '<dstitula>' || rw_agendamento.dstitula || '</dstitula>' ||
+															'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
+															'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
+															'<nrdconta>' || rw_agendamento.dsdconta || '</nrdconta>' ||
+															'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
                               '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
                               '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
                               '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
-                              '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>');   
+															'<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||
+															'<cdbandst>' || rw_agendamento.cdbandst || '</cdbandst>' ||
+															'<dsbandst>' || rw_agendamento.dsbandst || '</dsbandst>' ||
+															'<cdagedst>' || rw_agendamento.cdagedst || '</cdagedst>' ||
+															'<dsagedst>' || rw_agendamento.dsagedst || '</dsagedst>' ||
+															'<dsctadst>' || rw_agendamento.dsctadst || '</dsctadst>' ||
+															'<dstitdst>' || rw_agendamento.dstitdst || '</dstitdst>' ||
+															'<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
+															'<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
+															'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||																
+															'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||																
+															'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
+															'<infosac>'  ||
+																	'<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+																	'<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+																	'<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+																	'<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+																	'<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+																	'<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+															'</infosac>');
      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</Agendamento>'
                              ,pr_fecha_xml      => TRUE);      
                              
-
       pr_dsretorn := 'OK';                             
 
       EXCEPTION								
@@ -561,11 +597,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       vr_xml_temp VARCHAR2(32726) := '';
       vr_des_erro VARCHAR2(4000);
       vr_nmoperad crapopi.nmoperad%TYPE := '';
+			vr_info_sac COMP0002.typ_reg_info_sac;
 
       CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
-        SELECT lau.dttransa
+        SELECT LPAD(cop_origem.cdagectl,4,'0') AS cdagectl
+				      ,LPAD(cop_origem.cdbcoctl,3,'0') AS cdbcoctl
+				      ,cop_destino.nmrescop AS nmcopdst
+							,LPAD(cop_destino.cdagectl,4,'0') AS cdagedst
+							,ass_origem.nmprimtl
+							,ass_destino.nmprimtl AS nmtitdst
+							,lau.nrctadst
+				      ,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
               ,lau.cdcooper
               ,lau.nrdconta
+              ,TRIM(GENE0002.fn_mask_conta(lau.nrdconta)) AS dsdconta
+							,lau.cdtiptra
+							,DECODE(lau.cdtiptra, 1, 'Transferencia', 3, 'Crédito de Salário', 'Transferencia') AS dstiptra
               ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
               ,lau.nrdocmto
               ,lau.insitlau
@@ -576,18 +623,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                      WHEN 4 THEN 'Nao Efetivado'
                 END AS dssitlau
               ,lau.vllanaut
-              ,lau.dtdebito
-              ,LPAD(cop.cdagectl,4,'0') || ' - ' || cop.nmrescop AS dsdcoper
-              ,TRIM(GENE0002.fn_mask_conta(lau.nrctadst)) || ' - ' || ass.nmprimtl AS dstitula
+              ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
+              ,LPAD(cop_destino.cdagectl,4,'0') || ' - ' || cop_destino.nmrescop AS dsdcoper
+              ,TRIM(GENE0002.fn_mask_conta(lau.nrctadst)) || ' - ' || ass_destino.nmprimtl AS dstitula
+              ,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
               ,lau.nmprepos
               ,lau.nrcpfpre
+							,lau.dscedent
               ,lau.nrcpfope
          FROM craplau lau
-    LEFT JOIN crapcop cop
-           ON cop.cdagectl = lau.cdageban
-    LEFT JOIN crapass ass
-           ON ass.cdcooper = cop.cdcooper
-          AND ass.nrdconta = lau.nrctadst
+    LEFT JOIN crapcop cop_origem
+           ON cop_origem.cdcooper = lau.cdcooper
+		LEFT JOIN crapcop cop_destino
+           ON cop_destino.cdagectl = lau.cdageban
+		LEFT JOIN crapass ass_origem
+           ON ass_origem.cdcooper = lau.cdcooper
+          AND ass_origem.nrdconta = lau.nrdconta
+    LEFT JOIN crapass ass_destino
+           ON ass_destino.cdcooper = cop_destino.cdcooper
+          AND ass_destino.nrdconta = lau.nrctadst		
     LEFT JOIN crapcti cti
            ON cti.cdcooper = lau.cdcooper
           AND cti.nrdconta = lau.nrdconta
@@ -630,6 +684,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
           END IF;
         END IF;
 
+				-- Buscar dados do associado
+				OPEN cr_crapass (pr_cdcooper => rw_agendamento.cdcooper,
+												 pr_nrdconta => rw_agendamento.nrdconta);
+				FETCH cr_crapass INTO rw_crapass;
+
+				IF cr_crapass%NOTFOUND THEN
+					CLOSE cr_crapass;								
+					vr_des_erro := 'Associado nao cadastrado.';								
+					RAISE vr_exc_erro;
+				ELSE
+					CLOSE cr_crapass;
+				END IF;
+				
+				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
+
         dbms_lob.createtemporary(pr_retxml, TRUE);
         dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
          
@@ -641,19 +710,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
-                                '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
-                                '<hrtransa>' || rw_agendamento.hrtransa || '</hrtransa>' ||
+															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
+																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
                                 '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
-                                '<insitlau>' || rw_agendamento.insitlau || '</insitlau>' ||
-                                '<dssitlau>' || rw_agendamento.dssitlau || '</dssitlau>' ||
-                                '<vllanaut>' || rw_agendamento.vllanaut || '</vllanaut>' ||
-                                '<dtdebito>' || rw_agendamento.dtdebito || '</dtdebito>' ||
-                                '<dsdcoper>' || rw_agendamento.dsdcoper || '</dsdcoper>' ||
-                                '<dstitula>' || rw_agendamento.dstitula || '</dstitula>' ||
+																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
+																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
+																'<nrdconta>' || rw_agendamento.dsdconta || '</nrdconta>' ||
+																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
                                 '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
                                 '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
                                 '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
-                                '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>');
+																'<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||
+																'<cdagedst>' || rw_agendamento.cdagedst || '</cdagedst>' ||
+																'<nmcopdst>' || rw_agendamento.nmcopdst || '</nmcopdst>' ||
+																'<nrctadst>' || rw_agendamento.nrctadst || '</nrctadst>' ||
+																'<nmtitdst>' || rw_agendamento.nmtitdst || '</nmtitdst>' ||
+                                '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
+                                '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
+																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||																
+																'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||																
+																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
+                                '<infosac>'  ||
+                                    '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                    '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                    '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                    '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                    '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                    '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                '</infosac>');
        
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp
@@ -1672,34 +1756,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      ..................................................................................*/          
  
-     CASE pr_cdtiptra
-       WHEN 1 THEN
+     CASE 
+       WHEN pr_cdtiptra = 1 OR pr_cdtiptra = 3 THEN -- Transferência ou Crédito Salário
          pc_detalhe_agendamento_trans(pr_idlancto => pr_idlancto
                                      ,pr_retxml   => pr_retxml
                                      ,pr_dsretorn => pr_dsretorn);
-       WHEN 2 THEN -- Pagamento (Conv/Boleto e GPS)
+       WHEN pr_cdtiptra = 2 THEN -- Pagamento (Conv/Boleto e GPS)
          pc_detalhe_agendamento_pagam(pr_idlancto => pr_idlancto
                                      ,pr_retxml   => pr_retxml
                                      ,pr_dsretorn => pr_dsretorn);                              
-       WHEN 4 THEN
+       WHEN pr_cdtiptra = 4 THEN
          pc_detalhe_agendamento_ted(pr_idlancto => pr_idlancto
                                    ,pr_retxml   => pr_retxml
                                    ,pr_dsretorn => pr_dsretorn);
-       WHEN 10 THEN
+       WHEN pr_cdtiptra = 10 THEN
          pc_detalhe_agendamento_darf(pr_idlancto => pr_idlancto
                                     ,pr_retxml   => pr_retxml
                                     ,pr_dsretorn => pr_dsretorn);                                   
-       WHEN 11 THEN
+       WHEN pr_cdtiptra = 11 THEN
          pc_detalhe_agendamento_das(pr_idlancto => pr_idlancto
                                    ,pr_retxml   => pr_retxml
                                    ,pr_dsretorn => pr_dsretorn);  																	 			
-		   WHEN 20 THEN
+		   WHEN pr_cdtiptra = 20 THEN
          pc_detalhe_age_recarga_cel(pr_idlancto => pr_idlancto
                                    ,pr_retxml   => pr_retxml
                                    ,pr_dsretorn => pr_dsretorn);  
-																	 
-																	 
-																	                  
        ELSE
          pr_dsretorn := 'NOK';
          pr_retxml := '<dsmsgerr>Operacao inexistente</dsmsgerr>';                                                    
