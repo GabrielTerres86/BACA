@@ -464,7 +464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 04/08/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 14/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -513,7 +513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          pois estava ocasionando problemas na abertura de contas 
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   --
-  --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
+  --             19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
   --
   --             21/02/2017 - Removido um dos meses exibido pela rotina pc_lista_cred_recebidos,
   --                          pois a tela é semestral e estava sendo exibido 7 meses, conforme 
@@ -531,6 +531,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 						 (Adriano - P339).
   --
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  --
+  --             14/11/2017 - Efetuar tratamentos para gravar corretamente os registros na tabela
+  --                          crapdoc na procedure pc_duplica_conta (Lucas Ranghetti #760235)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -1563,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 24/07/2017
+    --  Data     :                      Ultima atualizacao: 14/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -1572,7 +1575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --
     --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
     --                            PRJ339-CRM  (Odirlei-AMcom)
-    -- .............................................................................*/
+    
+                     14/11/2017 - Efetuar tratamentos para gravar corretamente os registros
+                                  na tabela crapdoc (Lucas Ranghetti #760235)
+     .............................................................................*/
 
       -- Cursor sobre a tabela de associados
       CURSOR cr_crapass IS
@@ -1654,6 +1660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Variaveis gerais
       vr_contador PLS_INTEGER := 0;
       vr_vlcapmin crapmat.vlcapini%TYPE; --> Valor de capital minumo para a conta
+      vr_cdestcvl INTEGER;
+      vr_criestcv BOOLEAN;
+      vr_idseqttl INTEGER;
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -1895,7 +1904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           (pr_nrdconta_dst,
            rw_crapdat.dtmvtolt,
            pr_cdoperad,
-           'Duplicacao com base na conta '||gene0002.fn_mask_conta(pr_nrdconta_org),
+           'Duplicacao com base na conta '||gene0002.fn_mask_conta(pr_nrdconta_org)||',',
            1,
            2,
            pr_cdcooper);
@@ -2150,7 +2159,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 1..7 LOOP
+      FOR x IN 1..7 LOOP      
+        
+        -- Tratamentos efetuados com base na b1wgen0055
+        -- Para os documentos (CPF,CARTEIRA DE IDENTIFICACAO E COMPROVANTE DE RENDA) 
+        -- criar pendencia somemente para pessoa fisica
+        IF x IN(1,2,5) AND rw_crapass.inpessoa <> 1 THEN
+          continue;
+        END IF;        
+        
+        -- Validar estado civil
+        IF x = 4 THEN        
+          IF rw_crapass.inpessoa = 1 THEN
+            SELECT cdestcvl INTO vr_cdestcvl
+                FROM crapttl
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta_org
+                 AND idseqttl = 1;        
+          ELSE
+            vr_cdestcvl:= 0;
+          END IF;  
+          
+          IF vr_cdestcvl IN(2,3,4,8,9,11,12) AND 
+             rw_crapass.inpessoa = 1 THEN
+            vr_criestcv:= TRUE;
+          ELSE
+            vr_criestcv:= FALSE;
+          END IF;
+          
+          -- Estado civil criar somente para pessoa fisica e a variavel vr_criestcv seja true
+          IF NOT vr_criestcv THEN
+            continue;
+          END IF;
+        END IF;
+        
+        -- Pessoa juridica vamos gravar como zero a titularidade
+        IF rw_crapass.inpessoa <> 1 THEN
+          vr_idseqttl:= 0;
+        ELSE
+          vr_idseqttl:= 1;        
+        END IF;
+        
         -- Insere na tabela de documentos digitalizados - GED
         BEGIN
           INSERT INTO crapdoc
@@ -2159,14 +2208,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              flgdigit,
              dtmvtolt,
              tpdocmto,
-             idseqttl)
+             idseqttl,
+             cdoperad)
            VALUES
             (pr_cdcooper,
              pr_nrdconta_dst,
              0,
              rw_crapdat.dtmvtolt,
              x,
-             1);
+             vr_idseqttl,
+             nvl(pr_cdoperad,' '));
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
