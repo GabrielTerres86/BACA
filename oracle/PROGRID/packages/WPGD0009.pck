@@ -610,7 +610,7 @@ FROM (
                                                     || '<progress>' || vr_tab_inscritos(vr_contador).progress || '</progress>'
                                                     || '<dtpreins>' || TO_CHAR(TO_DATE(vr_tab_inscritos(vr_contador).dtpreins)) || '</dtpreins>'
                                                     || '<qtfaleve>' || vr_tab_inscritos(vr_contador).qtfaleve || '</qtfaleve>'
-                                                    || '<flginsin>' || vr_tab_inscritos(vr_contador).flginsin || '</flginsin>'
+                                                    || '<flginsin>' || vr_tab_inscritos(vr_contador).flginsin || '</flginsin>' 
                                                     || '<nrficpre>' || vr_tab_inscritos(vr_contador).nrficpre || '</nrficpre>'
                                                     || '</inscrito>');
         END LOOP;
