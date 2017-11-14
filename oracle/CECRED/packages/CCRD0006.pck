@@ -330,7 +330,48 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   PROCEDURE pc_insere_msg_domicilio (pr_vlrlancto     IN NUMBER
                                     ,pr_cnpjliqdant   IN VARCHAR2
                                     ,pr_dscritic      OUT VARCHAR2);
-
+/*
+  PROCEDURE pc_insere_msg_ltr_str (pr_VlrLanc        IN NUMBER
+													        ,pr_CodMsg			   IN VARCHAR2
+											  		      ,pr_NumCtrlLTR	   IN VARCHAR2
+													        ,pr_NumCtrlSTR	   IN VARCHAR2
+													        ,pr_ISPBLTR        IN VARCHAR2
+													        ,pr_ISPBIFDebtd    IN VARCHAR2
+													        ,pr_ISPBIFCredtd   IN VARCHAR2
+													        ,pr_CNPJNLiqdant   IN VARCHAR2
+													        ,pr_IdentdPartCamr IN VARCHAR2
+													        ,pr_AgCredtd       IN VARCHAR2
+													        ,pr_CtCredtd       IN VARCHAR2
+													        ,pr_AgDebtd        IN VARCHAR2
+													        ,pr_Hist           IN VARCHAR2
+													        ,pr_FinlddIF       IN VARCHAR2
+													        ,pr_TpPessoaDebtd_Remet IN VARCHAR2
+													        ,pr_CNPJ_CPFDeb    IN VARCHAR2
+													        ,pr_NomCliDebtd    IN VARCHAR2
+													        ,pr_FinlddCli      IN VARCHAR2
+													        ,pr_DtHrBC         IN VARCHAR2
+                                  ,pr_DtMovto        IN VARCHAR2
+                                  ,pr_dscritic       OUT VARCHAR2);
+                                  
+  PROCEDURE pc_insere_msg_slc (pr_VlrLanc            IN NUMBER
+                              ,pr_CodMsg			       IN VARCHAR2
+                              ,pr_NumCtrlSLC    	   IN VARCHAR2
+                              ,pr_ISPBIF             IN VARCHAR2
+                              ,pr_DtLiquid           IN VARCHAR2
+                              ,pr_NumSeqCicloLiquid  IN VARCHAR2
+                              ,pr_CodProdt           IN VARCHAR2
+                              ,pr_IdentLinhaBilat    IN VARCHAR2
+                              ,pr_TpDeb_Cred         IN VARCHAR2
+                              ,pr_ISPBIFCredtd       IN VARCHAR2
+                              ,pr_ISPBIFDebtd        IN VARCHAR2
+                              ,pr_CNPJNLiqdantDebtd  IN VARCHAR2
+                              ,pr_NomCliDebtd        IN VARCHAR2
+                              ,pr_CNPJNLiqdantCredtd IN VARCHAR2
+                              ,pr_NomCliCredtd       IN VARCHAR2
+                              ,pr_DtHrSLC            IN VARCHAR2
+                              ,pr_DtMovto            IN VARCHAR2
+                              ,pr_dscritic           OUT VARCHAR2);
+*/                              
   FUNCTION fn_valida_liquid_antecipacao (pr_vlrlancto     IN NUMBER
                                         ,pr_cnpjliqdant   IN VARCHAR2
                                         ,pr_dtreferencia  IN DATE
@@ -415,6 +456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CLOSE cr_crapfer;
 
     -- Verifica se alguma cooperativa esta em processo noturno
+    /* Comentado para não fazer mais essa validação. Estamos usando a dtmvtopr
     OPEN cr_crapdat;
     FETCH cr_crapdat INTO rw_crapdat;
     IF cr_crapdat%FOUND THEN
@@ -422,6 +464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       RETURN; -- Encerra o programa;
     END IF;
     CLOSE cr_crapdat;
+    */
 
     -- Inicio processo completo de carga e geração do domicilio bancario
     -- *****************************************************************
@@ -6562,7 +6605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               ,tbdomic_liqtrans_arquivo arq
          WHERE lau.cdcooper = pr_cdcooper
            AND lau.dtmvtopg = pr_dtprocesso
-           AND lau.cdhistor in (2442,2443,2444,2445,2450,2453,2478)   -- crédito
+           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445) --crédito
            AND lau.dtdebito IS NULL
            AND lct.insituacao in (0,2)          --Alteração necessária para confirmar débito apenas quando retorna arquivo com confirmação
            AND pdv.nrliquidacao = substr(lau.cdseqtel,1,21)
@@ -7413,6 +7456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
           vr_nrdolote := 1;  -- fixa 1 no número do lote
 
+          --2444	Cielo	01.027.058/0001-91 
           -- Atualiza os historicos de lancamento
           IF rw_lancamento.tparquivo = 1 THEN    -- crédito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
@@ -7425,11 +7469,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2450;
              ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
                vr_cdhistor := 2453;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- VERO
                vr_cdhistor := 2478;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2484;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2485;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2486;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2487;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2488;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2489;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2490;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2491;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- SAFRAPAY
+               vr_cdhistor := 2492;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
+          --2448	Cielo	01.027.058/0001-91 
           ELSIF rw_lancamento.tparquivo = 2 THEN -- débito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2448;
@@ -7443,10 +7506,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2413;
              ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
                vr_cdhistor := 2479;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+               vr_cdhistor := 2479;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2493;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2494;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2495;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2496;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2497;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2498;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2499;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2500;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
+               vr_cdhistor := 2501;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
           ELSE                                 -- antecipação
+--2456	Cielo	01.027.058/0001-91 
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2456;
              ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
@@ -7457,8 +7541,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2452;
              ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
                vr_cdhistor := 2414;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
+             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL / VERO
                vr_cdhistor := 2480;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN -- BANESCARD
+               vr_cdhistor := 2502;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN -- SOROCRED
+               vr_cdhistor := 2503;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN -- VERDECARD
+               vr_cdhistor := 2504;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN -- CREDSYSTEM
+               vr_cdhistor := 2505;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN -- PAGSEGURO
+               vr_cdhistor := 2506;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN -- GETNET
+               vr_cdhistor := 2507;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN -- GLOBAL PAYMENTS
+               vr_cdhistor := 2508;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN -- ADYEN
+               vr_cdhistor := 2509;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
+               vr_cdhistor := 2510;
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2457;
              END IF;
@@ -8008,7 +8110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                           case instr(upper(lct.nmcredenciador),'BRADESCO') when 0 then
                                case instr(upper(lct.nmcredenciador),'SOROCRED') when 0 then
                                     case instr(upper(lct.nmcredenciador),'BANESTES') when 0 then
-                                         upper(lct.nmcredenciador)
+                                         case instr(upper(lct.nmcredenciador),'SAFRA') when 0 then
+                                              upper(lct.nmcredenciador)
+                                         else 'SAFRA' end
                                     else 'BANESTES' end
                                else 'SOROCRED' end
                           else 'BRADESCO' end
@@ -9006,7 +9110,148 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         RETURN;
 
   END;
+/*
+  PROCEDURE pc_insere_msg_ltr_str(pr_VlrLanc        IN NUMBER
+													       ,pr_CodMsg			    IN VARCHAR2
+											  		     ,pr_NumCtrlLTR	    IN VARCHAR2
+													       ,pr_NumCtrlSTR	    IN VARCHAR2
+													       ,pr_ISPBLTR        IN VARCHAR2
+													       ,pr_ISPBIFDebtd    IN VARCHAR2
+													       ,pr_ISPBIFCredtd   IN VARCHAR2
+													       ,pr_CNPJNLiqdant   IN VARCHAR2
+													       ,pr_IdentdPartCamr IN VARCHAR2
+													       ,pr_AgCredtd       IN VARCHAR2
+													       ,pr_CtCredtd       IN VARCHAR2
+													       ,pr_AgDebtd        IN VARCHAR2
+													       ,pr_Hist           IN VARCHAR2
+													       ,pr_FinlddIF       IN VARCHAR2
+													       ,pr_TpPessoaDebtd_Remet IN VARCHAR2
+													       ,pr_CNPJ_CPFDeb    IN VARCHAR2
+													       ,pr_NomCliDebtd    IN VARCHAR2
+													       ,pr_FinlddCli      IN VARCHAR2
+													       ,pr_DtHrBC         IN VARCHAR2
+                                 ,pr_DtMovto        IN VARCHAR2
+                                 ,pr_dscritic       OUT VARCHAR2) IS
+  BEGIN
+    INSERT INTO TBDOMIC_LIQTRANS_MSG_LTRSTR
+          (DHEXECUCAO
+          ,CDMSG
+          ,CDCONTROLE_LTR
+          ,CDCONTROLE_STR
+          ,CDISPB_LTR
+          ,CDISPB_IF_DEBITADA
+          ,CDISPB_IF_CREDITADA
+          ,NRCNPJ_NLIQUIDANTE
+          ,NRPARTICIPANTE_CAMARA
+          ,NRAGENCIA_CREDITADA
+          ,CDCONTA_CREDITADA
+          ,NRAGENCIA_DEBITADA
+          ,VLLANCAMENTO
+          ,DSHISTORICO
+          ,CDFINALIDADE_IF
+          ,TPPESSOA_DEBITADA
+          ,NRCNPJ_CPF_CLIENTE_DEBITADO
+          ,NMCLIENTE_DEBITADO
+          ,CDFINALIDADE_CLIENTE
+          ,DHBC
+          ,DTMOVIMENTO
+          ,INSITUACAO)
+    VALUES
+          (SYSDATE
+          ,pr_CodMsg
+          ,decode(pr_NumCtrlLTR,'-1',NULL,pr_NumCtrlLTR)
+          ,decode(pr_NumCtrlSTR,'-1',NULL,pr_NumCtrlSTR)
+          ,decode(pr_ISPBLTR,'-1',NULL,pr_ISPBLTR)
+          ,decode(pr_ISPBIFDebtd,'-1',NULL,pr_ISPBIFDebtd)
+          ,decode(pr_ISPBIFCredtd,'-1',NULL,pr_ISPBIFCredtd)
+          ,decode(pr_CNPJNLiqdant,'-1',NULL,pr_CNPJNLiqdant)
+          ,decode(pr_IdentdPartCamr,'-1',NULL,pr_IdentdPartCamr)
+          ,decode(pr_AgCredtd,'-1',NULL,pr_AgCredtd)
+          ,decode(pr_CtCredtd,'-1',NULL,pr_CtCredtd)
+          ,decode(pr_AgDebtd,'-1',NULL,pr_AgDebtd)
+          ,pr_VlrLanc
+          ,decode(pr_Hist,'-1',NULL,pr_Hist)
+          ,decode(pr_FinlddIF,'-1',NULL,pr_FinlddIF)
+          ,decode(pr_TpPessoaDebtd_Remet,'-1',NULL,pr_TpPessoaDebtd_Remet)
+          ,decode(pr_CNPJ_CPFDeb,'-1',NULL,pr_CNPJ_CPFDeb)
+          ,decode(pr_NomCliDebtd,'-1',NULL,pr_NomCliDebtd)
+          ,decode(pr_FinlddCli,'-1',NULL,pr_FinlddCli)
+          ,to_date(pr_DtHrBC, 'YYYY-MM-DD"T"HH24:MI:SS')
+          ,to_date(pr_DtMovto, 'YYYY-MM-DD')
+          ,0);
+     commit;
+  EXCEPTION
+     WHEN OTHERS THEN
+        pr_dscritic := 'ERRO ao tentar incluir registro na tabela TBDOMIC_LIQTRANS_MSG_LTRSTR: '||SQLERRM;
+        RETURN;
+  END;
 
+  PROCEDURE pc_insere_msg_slc (pr_VlrLanc            IN NUMBER
+                              ,pr_CodMsg			       IN VARCHAR2
+                              ,pr_NumCtrlSLC    	   IN VARCHAR2
+                              ,pr_ISPBIF             IN VARCHAR2
+                              ,pr_DtLiquid           IN VARCHAR2
+                              ,pr_NumSeqCicloLiquid  IN VARCHAR2
+                              ,pr_CodProdt           IN VARCHAR2
+                              ,pr_IdentLinhaBilat    IN VARCHAR2
+                              ,pr_TpDeb_Cred         IN VARCHAR2
+                              ,pr_ISPBIFCredtd       IN VARCHAR2
+                              ,pr_ISPBIFDebtd        IN VARCHAR2
+                              ,pr_CNPJNLiqdantDebtd  IN VARCHAR2
+                              ,pr_NomCliDebtd        IN VARCHAR2
+                              ,pr_CNPJNLiqdantCredtd IN VARCHAR2
+                              ,pr_NomCliCredtd       IN VARCHAR2
+                              ,pr_DtHrSLC            IN VARCHAR2
+                              ,pr_DtMovto            IN VARCHAR2
+                              ,pr_dscritic           OUT VARCHAR2) IS
+  BEGIN
+    INSERT INTO TBDOMIC_LIQTRANS_MENSAGEM_SLC
+          (DHEXECUCAO
+          ,CDMSG
+          ,CDCONTROLE_SLC
+          ,CDISPB_IF
+          ,DTLIQUIDACAO
+          ,NRSEQ_CICLO_LIQUIDACAO
+          ,CDPRODUTO
+          ,CDLINHA_BILATERAL
+          ,TPDEBITO_CREDITO
+          ,CDISPB_IF_CREDITADA
+          ,CDISPB_IF_DEBITADA
+          ,VLLANCAMENTO
+          ,NRCNPJ_NLIQUIDANTE_DEBITADO
+          ,NMCLIENTE_DEBITADO
+          ,NRCNPJ_NLIQUIDANTE_CREDITADO
+          ,NMCLIENTE_CREDITADO
+          ,DHSLC
+          ,DTMOVIMENTO
+          ,INSITUACAO)
+    VALUES
+          (SYSDATE
+          ,pr_CodMsg
+          ,decode(pr_NumCtrlSLC,'-1',NULL,pr_NumCtrlSLC)
+          ,decode(pr_ISPBIF,'-1',NULL,pr_ISPBIF)
+          ,to_date(pr_DtLiquid,'YYYY-MM-DD')
+          ,decode(pr_NumSeqCicloLiquid,'-1',NULL,pr_NumSeqCicloLiquid)
+          ,decode(pr_CodProdt,'-1',NULL,pr_CodProdt)
+          ,decode(pr_IdentLinhaBilat,'-1',NULL,pr_IdentLinhaBilat)
+          ,decode(pr_TpDeb_Cred,'-1',NULL,pr_TpDeb_Cred)
+          ,decode(pr_ISPBIFCredtd,'-1',NULL,pr_ISPBIFCredtd)
+          ,decode(pr_ISPBIFDebtd,'-1',NULL,pr_ISPBIFDebtd)
+          ,pr_VlrLanc
+          ,decode(pr_CNPJNLiqdantDebtd,'-1',NULL,pr_CNPJNLiqdantDebtd)
+          ,decode(pr_NomCliDebtd,'-1',NULL,pr_NomCliDebtd)
+          ,decode(pr_CNPJNLiqdantCredtd,'-1',NULL,pr_CNPJNLiqdantCredtd)
+          ,decode(pr_NomCliCredtd,'-1',NULL,pr_NomCliCredtd)
+          ,to_date(pr_DtHrSLC, 'YYYY-MM-DD"T"HH24:MI:SS')
+          ,to_date(pr_DtMovto, 'YYYY-MM-DD')
+          ,0);
+    commit;
+  EXCEPTION
+     WHEN OTHERS THEN
+        pr_dscritic := 'ERRO ao tentar incluir registro na tabela TBDOMIC_LIQTRANS_MENSAGEM_SLC: '||SQLERRM;
+        RETURN;
+  END;
+*/
   FUNCTION fn_valida_liquid_antecipacao (pr_vlrlancto     IN NUMBER
                                         ,pr_cnpjliqdant   IN VARCHAR2
                                         ,pr_dtreferencia  IN DATE
@@ -9023,7 +9268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND msg.insituacao = 0
           AND msg.vlliquidacao = pr_vlrlancto
           AND TRUNC(msg.dhexecucao) = pr_dtreferencia
-          AND pr_tpformatransf = 3;
+          AND pr_tpformatransf = 3
+        ORDER BY idmensagem;
 /* Essa validação está suspensa por enquanto.
    Está comentada porque pode voltar a ser necessária após a implantação em 23/10/2017
      UNION ALL
