@@ -570,7 +570,6 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   PROCEDURE pc_efetiva_revisao(pr_idpessoa       IN NUMBER,  -- Registro de bens
                                pr_dtatualizacao  IN DATE, -- Data de atualizacao da regra
                                pr_cdoperad       IN VARCHAR2, -- Codigo do operador
-                               pr_tpcanal_atualizacao IN NUMBER, -- Canal que foi feito a atualizacao (1-Ayllos/2-Caixa/3-Internet/4-Cash/5-Ayllos WEB/6-URA/7-Batch/8-Mensageria/9-Mobile/10-CRM)
                                pr_dscritic OUT VARCHAR2);  -- Retorno de Erro
 END cada0012;
 /
@@ -4074,7 +4073,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   PROCEDURE pc_efetiva_revisao(pr_idpessoa       IN NUMBER,  -- Registro de bens
                                pr_dtatualizacao  IN DATE, -- Data de atualizacao da regra
                                pr_cdoperad       IN VARCHAR2, -- Codigo do operador
-                               pr_tpcanal_atualizacao IN NUMBER, -- Canal que foi feito a atualizacao (1-Ayllos/2-Caixa/3-Internet/4-Cash/5-Ayllos WEB/6-URA/7-Batch/8-Mensageria/9-Mobile/10-CRM)
                                pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     ---------------> CURSORES <----------------- 
 		-- Busca o tipo de pessoa
@@ -4347,40 +4345,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     -- ..........................................................................*/
 		-- Verificar existência de conta
 		CURSOR cr_crapass IS
-      SELECT cdmotdem
-        FROM crapass
+      SELECT cdsitdct
+        FROM crapass 
        where crapass.cdcooper = pr_cdcooper
          and crapass.nrdconta = pr_nrdconta;
 
 		rw_crapass cr_crapass%ROWTYPE;
-    ---------------> VARIAVEIS <-----------------     
+    
+    
+    CURSOR cr_log IS
+      SELECT i.dsdadant, 
+             i.dsdadatu
+        FROM craplgm m, craplgi i
+       where m.cdcooper = i.cdcooper
+         and m.nrdconta = i.nrdconta
+         and m.idseqttl = i.idseqttl
+         and m.dttransa = i.dttransa
+         and m.hrtransa = i.hrtransa
+         and m.nrsequen = i.nrsequen
+         and m.cdcooper = pr_cdcooper
+         and m.nrdconta = pr_nrdconta
+         and m.dstransa = 'Alteração Situação Conta'
+       order by m.dttransa desc, m.hrtransa desc;
+       
+     rw_log cr_log%ROWTYPE;
+       
+   ---------------> VARIAVEIS <-----------------     
+    vr_nrdrowid  ROWID;
+    vr_dsorigem  VARCHAR2(30) := NULL; 
     -- Tratamento de erros  																			
 		vr_exc_erro EXCEPTION;
 		vr_cdcritic PLS_INTEGER;
 		vr_dscritic VARCHAR2(4000);
 																			
   BEGIN
-		
+		-- verifica existência da conta
+		OPEN cr_crapass;
+		FETCH cr_crapass INTO rw_crapass;
+			
+		-- Se não encontrou a conta
+		IF cr_crapass%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_crapass;
+			-- Gerar crítica
+			vr_dscritic := 'Conta não encontrada';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+    --
+		-- Fechar cursor
+		CLOSE cr_crapass;
+    --
+    IF pr_cdmotdem = 0 THEN
+      --
 			-- verifica existência da conta
-			OPEN cr_crapass;
-			FETCH cr_crapass INTO rw_crapass;
+			OPEN cr_log;
+			FETCH cr_log INTO rw_log;
 			
 			-- Se não encontrou a conta
-			IF cr_crapass%NOTFOUND THEN
+			IF cr_log%NOTFOUND THEN
 				-- Fechar cursor
-				CLOSE cr_crapass;
+				CLOSE cr_log;
 				-- Gerar crítica
-				vr_dscritic := 'Conta não encontrada';
+				vr_dscritic := 'Situação anterior não cadastrada';
 				-- Levantar exceção
 				RAISE vr_exc_erro;
 			END IF;
+      --
 			-- Fechar cursor
-			CLOSE cr_crapass;
-
-      -- Atualiza tabela de contas
+			CLOSE cr_log;
+      --
+      --  
+     END IF;
+     --
+     -- Atualiza tabela de contas
       BEGIN
         UPDATE crapass
-           set cdsitdct = decode(pr_cdmotdem,0,null,pr_cdmotdem) 
+           set cdsitdct = decode(pr_cdmotdem,0,rw_log.dsdadant,pr_cdmotdem) 
          where cdcooper = pr_cdcooper
            and nrdconta = pr_nrdconta;
       EXCEPTION
@@ -4391,6 +4432,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 				  -- Levantar exceção
 			  	RAISE vr_exc_erro;          
       END;
+      --
+      vr_dsorigem := gene0001.vr_vet_des_origens(7);            
+      -- Gerar log 
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => 1
+                        ,pr_dscritic => null
+                        ,pr_dsorigem => vr_dsorigem
+                        ,pr_dstransa => 'Alteração Situação Conta'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => ' '
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+        
+      IF pr_cdmotdem = 0 THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'cdsitdct',
+                                pr_dsdadant => rw_crapass.cdsitdct,
+                                pr_dsdadatu => rw_log.dsdadant); 
+      ELSE
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'cdsitdct',
+                                pr_dsdadant => rw_crapass.cdsitdct,
+                                pr_dsdadatu => pr_cdmotdem);        
+      END IF;
+      --
 		
   EXCEPTION
 		WHEN vr_exc_erro THEN
@@ -4598,20 +4667,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       RAISE vr_exc_erro;
     end if;
     --   
-    if pr_dtdesligamento is null and  pr_tpsaque = 2 then
-      vr_dscritic := 'Parâmetro data de desligamento é obrigatório para Saque por desligamento.';
-      RAISE vr_exc_erro;
-    end if;
+    --if pr_dtdesligamento is null and  pr_tpsaque = 2 then
+    --  vr_dscritic := 'Parâmetro data de desligamento é obrigatório para Saque por desligamento.';
+    --  RAISE vr_exc_erro;
+    --end if;
     --    
     if pr_dtsolicitacao is null then
       vr_dscritic := 'Parâmetro data de solicitação workflow é obrigatório.';
       RAISE vr_exc_erro;
     end if;    
     -- 
-    if pr_dtcredito is null then
-      vr_dscritic := 'Parâmetro data de crédito de saque de cotas é obrigatório.';
-      RAISE vr_exc_erro;
-    end if;     
+    --if pr_dtcredito is null then
+    --  vr_dscritic := 'Parâmetro data de crédito de saque de cotas é obrigatório.';
+    --  RAISE vr_exc_erro;
+    --end if;     
     --     
     if pr_cdoperadaprov is null then
       vr_dscritic := 'Parâmetro data de operador aprovador de workflow é obrigatório.';
@@ -4626,9 +4695,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     vr_tbcotas_saque_controle.vlsaque        := pr_vlsaque;       
     vr_tbcotas_saque_controle.tpiniciativa   := pr_tpiniciativa;        
     vr_tbcotas_saque_controle.dtaprovwork    := pr_dtaprovwork;
-    vr_tbcotas_saque_controle.dtdesligamento := pr_dtdesligamento;
+    vr_tbcotas_saque_controle.dtdesligamento := null;--pr_dtdesligamento;
     vr_tbcotas_saque_controle.dtsolicitacao  := pr_dtsolicitacao;
-    vr_tbcotas_saque_controle.dtcredito      := pr_dtcredito;
+    vr_tbcotas_saque_controle.dtcredito      := null;--pr_dtcredito;
     vr_tbcotas_saque_controle.cdoperad_aprov := pr_cdoperadaprov;
 
 
@@ -4642,7 +4711,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
-      pr_dscritic := 'Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||
+      pr_dscritic := 'CADA0012-Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||
+                     ' COOP:'||pr_cdcooper||
+                     ' MOT:'||pr_cdmotivo||
+                     ' CONTA:'||pr_nrdconta||
+                     ' TIPO:'||pr_tpsaque||
+                     ' DEV:'||pr_iddevolucao||
+                     ' VALOR:'||pr_vlsaque||
+                     ' INIC:'||pr_tpiniciativa||
+                     ' DTWORK:'||pr_dtaprovwork||
+                     ' DTSOL:'||pr_dtsolicitacao||
+                     ' OPERA:'||pr_cdoperadaprov||' - '||
                      SQLERRM;
   END pc_cadast_aprov_saque_cotas; 
 END cada0012;
