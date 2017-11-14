@@ -421,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                    WHEN 4 THEN 'Nao Efetivado'
               END AS dssitlau
             ,TO_CHAR(lau.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') AS vllanaut
-            ,lau.dtdebito
+						,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
             ,NVL2(ban.cdbccxlt, LPAD(ban.cdbccxlt,4,'0') || ' - ' || REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsdbanco
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
 						,NVL(ban.cdbccxlt, 0) AS cdbandst
@@ -515,7 +515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                               '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 															'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 															'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
-															'<nrdconta>' || rw_agendamento.dsdconta || '</nrdconta>' ||
+															'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
 															'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
                               '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
                               '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
@@ -715,7 +715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                 '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
 																'<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
 																'<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
-																'<nrdconta>' || rw_agendamento.dsdconta || '</nrdconta>' ||
+																'<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
 																'<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
                                 '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
                                 '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
@@ -814,10 +814,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                    WHEN 4 THEN 'Nao Efetivado'
               END AS dssitlau
             ,lau.vllanaut
-						,lau.dttransa
-						,lau.dtvencto
-            ,lau.dtdebito
-						,lau.dtmvtopg	
+						,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+						,to_char(lau.dtvencto, 'DD/MM/RRRR') AS dtvencto
+            ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
+						,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
 						,lau.nrcpfope
             ,lau.nmprepos
             ,lau.nrcpfpre
@@ -990,8 +990,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				      ,cop.cdbcoctl
               ,cop.cdagectl
 							,lau.nrdconta
-				      ,lau.dttransa
-							,lau.dtmvtopg
+				      ,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+							,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
               ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
               ,lau.nrdocmto
               ,lau.insitlau
@@ -1001,25 +1001,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                      WHEN 3 THEN 'Cancelado'
                      WHEN 4 THEN 'Nao Efetivado'
                 END AS dssituac
-              ,lau.dtdebito
+              ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
               ,nvl(lau.nmprepos, '') AS nmprepos
               ,lau.nrcpfpre
 							,lau.nrcpfope
-              ,lau.dtvencto
+              ,to_char(lau.dtvencto, 'DD/MM/RRRR') AS dtvencto
 							,lau.cdtiptra
 							,lau.vllanaut
 							,nvl(lau.dslindig, '') AS dslindig
               ,(CASE WHEN darf.tpcaptura = 1 THEN 'COM CÓDIGO DE BARRAS' ELSE 'SEM CÓDIGO DE BARRAS' END) AS dstipcap
               ,darf.dsidentif_pagto AS dsdpagto
               ,darf.dsnome_fone AS dsnomfon 
-              ,darf.dtapuracao AS dtapurac
+              ,to_char(darf.dtapuracao, 'DD/MM/RRRR') AS dtapurac
               ,darf.cdtributo AS cdreceit
               ,darf.nrrefere AS nrrefere
               ,darf.nrcpfcgc AS nrcpfcgc						
               ,darf.vlprincipal AS vlprinci 
               ,darf.vlmulta AS vlrmulta
               ,darf.vljuros AS vlrjuros
-							,darf.dtvencto AS darf_dtvencto
+							,to_char(darf.dtvencto, 'DD/MM/RRRR') AS darf_dtvencto
               ,NVL(darf.vlprincipal,0) + NVL(darf.vlmulta,0) + NVL(darf.vljuros,0) AS vlrtotal
 							,(CASE WHEN darf.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END) AS dstiptra
               ,darf.vlreceita_bruta AS vlrrecbr
@@ -1214,8 +1214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				        ,cop.cdbcoctl
                 ,cop.cdagectl
 				        ,lau.nrdconta
-                ,lau.dttransa
-								,lau.dtmvtopg
+                ,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+								,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
                 ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
                 ,lau.nrdocmto
                 ,lau.insitlau
@@ -1225,11 +1225,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                        WHEN 3 THEN 'Cancelado'
                        WHEN 4 THEN 'Nao Efetivado'
                   END AS dssituac
-                ,lau.dtdebito
+                ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
                 ,nvl(lau.nmprepos, '') AS nmprepos 
                 ,lau.nrcpfpre               
 								,lau.nrcpfope
-                ,lau.dtvencto
+                ,to_char(lau.dtvencto, 'DD/MM/RRRR') AS dtvencto
 							  ,lau.cdtiptra
 							  ,lau.vllanaut
 							  ,nvl(lau.dslindig, '') AS dslindig
@@ -1238,7 +1238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                 ,darf.dsidentif_pagto AS dsdpagto
                 ,darf.dsnome_fone AS dsnomfon
                 ,darf.tpcaptura
-                ,darf.dtapuracao
+                ,to_char(darf.dtapuracao, 'DD/MM/RRRR') AS dtapuracao
                 ,darf.nrcpfcgc
                 ,darf.cdtributo
                 ,darf.nrrefere
@@ -1435,10 +1435,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                    WHEN 4 THEN 'Nao Efetivado'
               END AS dssitlau
             ,lau.vllanaut
-						,lau.dttransa
-						,lau.dtvencto
-            ,lau.dtdebito
-						,lau.dtmvtopg						
+						,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+						,to_char(lau.dtvencto, 'DD/MM/RRRR') AS dtvencto
+            ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
+						,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
 						,lau.nrcpfope
             ,lau.nmprepos
             ,lau.nrcpfpre
