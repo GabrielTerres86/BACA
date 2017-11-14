@@ -484,8 +484,8 @@ PROCEDURE CriaListaEventos :
                       AND crapedp.tpevento <> 10              
                       AND crapedp.tpevento <> 11 NO-LOCK,
 
-            EACH crapadp WHERE crapadp.idevento = crapeap.idevento
-                           AND (crapadp.nrseqint = 0 AND crapadp.idevento = 2)
+            EACH crapadp WHERE (crapadp.idevento = crapeap.idevento
+                            OR (crapadp.nrseqint = 0 AND crapadp.idevento = 2))
                            AND crapadp.cdcooper = crapeap.cdcooper 
                            AND crapadp.cdagenci = crapeap.cdagenci
                            AND crapadp.dtanoage = crapeap.dtanoage
