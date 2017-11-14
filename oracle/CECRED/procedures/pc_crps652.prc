@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 17/09/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 14/11/2017
 
    Dados referentes ao programa:
 
@@ -207,6 +207,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                17/09/2017 - Ajuste para efetuar a regularização do contrato quando o mesmo for liquidado
                             (Jonata - SD 742850). 
+                            
+               14/11/2017 - Log de trace da exception others (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -5391,11 +5393,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
      EXCEPTION
        WHEN vr_exc_fimprg THEN
-         -- Se foi retornado apenas codigo
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descricao da critica
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+         -- Buscar a descricao da critica
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Se foi gerada critica para envio ao log
          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
            -- Envio centralizado de log de erro
@@ -5416,11 +5416,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Efetuar commit pois gravaremos o que foi processado ate entao
          COMMIT;
        WHEN vr_exc_saida THEN
-         -- Se foi retornado apenas codigo
-         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-           -- Buscar a descricao
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-         END IF;
+
+         -- Buscar a descricao
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
          -- Devolvemos codigo e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := vr_dscritic;
@@ -5429,6 +5428,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          --Zerar tabela de memoria auxiliar
          pc_limpa_tabela;
        WHEN OTHERS THEN
+
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+       
+         cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                      pr_compleme => vr_dscritic);
+
          -- Efetuar retorno do erro nao tratado
          pr_cdcritic := 0;
          pr_dscritic := sqlerrm;

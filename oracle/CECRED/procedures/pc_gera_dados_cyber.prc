@@ -1,5 +1,21 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_gera_dados_cyber IS
+CREATE OR REPLACE PROCEDURE CECRED.pc_gera_dados_cyber(pr_dscritic OUT VARCHAR2) IS
 BEGIN 
+
+/* .............................................................................
+
+  Programa: PC_GERA_DADOS_CYBER
+  Sistema : Conta-Corrente - Cooperativa de Credito
+  Sigla   : CRED
+  Autor   : 
+  Data    : 2017.                                     Ultima atualizacao: 14/11/2017
+  Dados referentes ao programa:
+    Frequencia: Diaria. Seg-sex, 08h
+    Programa Chamador: JBCYB_GERA_DADOS_CYBER
+
+  Alteracoes: 14/11/2017 - Log de trace da exception others e retorno de crítica para
+                           o programa chamador (Carlos)
+  .............................................................................. */  
+
   DECLARE
     
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -97,6 +113,8 @@ BEGIN
   EXCEPTION
     WHEN vr_exc_erro THEN  
 
+      pr_dscritic := vr_dscritic;
+
       GENE0001.pc_gera_erro(pr_cdcooper => vr_cdcooper
                            ,pr_cdagenci => 1
                            ,pr_nrdcaixa => 100
@@ -114,7 +132,12 @@ BEGIN
 
       ROLLBACK;
         
-    WHEN OTHERS THEN     
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper, 
+                                   pr_compleme => vr_dscritic);
+
+      pr_dscritic := vr_dscritic;
+      
       -- Erro
       vr_cdcritic:= 0;
       vr_dscritic:= 'Erro na rotina pc_gera_dados_cyber. '||sqlerrm;
@@ -133,7 +156,6 @@ BEGIN
       -- Log de erro de execucao
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
-
       ROLLBACK;                             
         
   END;          
