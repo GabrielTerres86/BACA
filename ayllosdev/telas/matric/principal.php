@@ -18,6 +18,7 @@
  *                                      como parametros pois a BO não utiliza o mesmo.
  * 008: [26/06/2017] Jonata     (RKAM): Ajustes para inclusão da nova opção "G" (P364).
  * 009: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
+ * 010: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  */ 
 
 	session_start();	
@@ -328,7 +329,6 @@
   
 	<?}?>
 	
-	<a href="#" class="botao" id="btGerarTedCapital" onClick="abrirRotina('TED_CAPITAL', 'Conta Destino Para Envio De TED Capital', 'contas_ted_capital', 'contas_ted_capital', 'TED_CAPITAL'); return false;" >Gerar TED Capital</a>
 	
 
 	<a href="#" class="opConsultar botao" id="btProsseguirCns" >Prosseguir</a>

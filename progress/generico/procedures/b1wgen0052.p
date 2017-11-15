@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
+    Data    : Junho/2010                      Ultima atualizacao: 14/11/2017
   
     Dados referentes ao programa:
   
@@ -123,6 +123,9 @@
                              para garantir replicaçao dos dados da tbcadast.
                              PRJ339 - CRM (Odirlei-AMcom)
                
+			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
+						     para pesquisa e retornar valor total da pesquisa
+							 (Jonata - RKAM P364). 
 
 ............................................................................*/
 
@@ -3199,9 +3202,11 @@ PROCEDURE busca_contas_demitidas:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrdconta LIKE crapass.nrdconta             NO-UNDO.
 	DEF INPUT  PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF INPUT  PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtdregis AS INTE                           NO-UNDO.
+	DEF OUTPUT PARAM par_vlrtotal AS DEC                            NO-UNDO.
 
 	DEF OUTPUT PARAM TABLE FOR tt-contas_demitidas.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -3240,9 +3245,13 @@ PROCEDURE busca_contas_demitidas:
 	   END.
 	       							 
 	FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
-					 WHERE  crapass.cdcooper = par_cdcooper AND				           
-						   (crapass.cdsitdct = 7            OR
+					 WHERE  crapass.cdcooper = par_cdcooper  AND				           
+					       (par_nrdconta = 0                 OR
+						    crapass.nrdconta = par_nrdconta) AND
+						   (crapass.cdsitdct = 4             OR
+						    crapass.cdsitdct = 7             OR
 						    crapass.cdsitdct = 8            )
+
 						    NO-LOCK:
 		
 		ASSIGN aux_vldcotas = 0.
@@ -3278,7 +3287,8 @@ PROCEDURE busca_contas_demitidas:
 				
 			END.
 			
-		ASSIGN par_qtdregis = par_qtdregis + 1.
+		ASSIGN par_qtdregis = par_qtdregis + 1
+		       par_vlrtotal = par_vlrtotal + aux_vldcotas.
 
 		/* controles da paginação */
 		IF  (par_qtdregis < par_nriniseq                    OR

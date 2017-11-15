@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 29/09/2017
+    Data    : Junho/2010                      Ultima atualizacao: 14/11/2017
   
     Dados referentes ao programa:
   
@@ -158,6 +158,8 @@
 							 
 				29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
 							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).
+
+               14/11/2017 - Corrigido consulta do produtos impeditivos para desligamento (Jonata - RKAM P364).
 ........................................................................*/
 
 
@@ -168,7 +170,6 @@
 { sistema/generico/includes/b1wgen0052tt.i }
 { sistema/generico/includes/b1wgen0079tt.i }
 { sistema/generico/includes/b1wgen0001tt.i }
-{ sistema/generico/includes/b1wgen0016tt.i }
 { sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
@@ -1352,7 +1353,6 @@ PROCEDURE Produtos_Servicos_Ativos:
     DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0016 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0082 AS HANDLE                                  NO-UNDO.
 	DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
 
@@ -1407,6 +1407,7 @@ PROCEDURE Produtos_Servicos_Ativos:
                    tt-prod_serv_ativos.nmproser = "Poupanca Programada".
         END.
     
+		
         /***************** Limite de Desconto de Cheques *********************/
         IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                                         craplim.nrdconta = par_nrdconta AND
@@ -1446,68 +1447,34 @@ PROCEDURE Produtos_Servicos_Ativos:
         END.
 
 		
-		RUN sistema/generico/procedures/b1wgen0016.p 
-					PERSISTENT SET h-b1wgen0016.
-				   
-		RUN obtem-agendamentos IN h-b1wgen0016 (
-							   INPUT par_cdcooper,
-							   INPUT 90,
-							   INPUT 900,
-							   INPUT par_nrdconta,
-							   INPUT "INTERNET",
-							   INPUT par_dtmvtolt,
-							   INPUT par_dtmvtolt,
-							   INPUT ?,
-							   INPUT 1,
-							   INPUT 0,
-							   INPUT 1,
-							  OUTPUT aux_dstrans1,
-							  OUTPUT aux_dscritic,
-							  OUTPUT aux_qttotage,
-							  OUTPUT TABLE tt-dados-agendamento).
-
-		DELETE PROCEDURE h-b1wgen0016.
-
-		IF  RETURN-VALUE <> "OK"  THEN
-			DO:
-				FIND FIRST tt-erro.
-		        ASSIGN par_cdcritic = tt-erro.cdcritic.
-        END.
-
-		IF  CAN-FIND(FIRST tt-dados-agendamento NO-LOCK)  THEN
-			DO:
-            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
-            CREATE tt-prod_serv_ativos.
-            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                       tt-prod_serv_ativos.nmproser = "Agendamentos programados.".
-        END.
-
 		
 		/* Buscar quantidade de folhas de cheque em uso */
-		FOR EACH crapfdc FIELDS(cdcooper) 
+		FOR EACH crapfdc FIELDS(cdcooper nrdconta cdbanchq cdagechq nrctachq nrcheque) 
 						  WHERE crapfdc.cdcooper = par_cdcooper 
 							AND crapfdc.nrdconta = par_nrdconta
 							AND crapfdc.incheque = 0 
 							AND crapfdc.dtliqchq = ? 
-								NO-LOCK:
+							AND crapfdc.dtemschq <> ? 
+							AND crapfdc.dtretchq <> ?
+							NO-LOCK:
 								
-			FIND FIRST crapneg WHERE crapneg.nrdconta = crapfdc.nrdconta AND
+			FIND FIRST crapneg WHERE crapneg.cdcooper = crapfdc.cdcooper AND
+								     crapneg.nrdconta = crapfdc.nrdconta AND
 									 crapneg.cdbanchq = crapfdc.cdbanchq AND
 									 crapneg.cdagechq = crapfdc.cdagechq AND
 									 crapneg.nrctachq = crapfdc.nrctachq AND
 									 crapneg.cdhisest = 1 				AND
-									 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque AND
-									 CAN-DO("12,13", STRING(crapneg.cdobserv)) 
+									 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque 
 									 NO-LOCK NO-ERROR.
 								
 			IF NOT AVAIL crapneg THEN
 			   DO:
-            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
-            CREATE tt-prod_serv_ativos.
-            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                   tt-prod_serv_ativos.nmproser = "Cheque".
-			      LEAVE.
-        END. 
+					ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+					CREATE tt-prod_serv_ativos.
+					ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+						   tt-prod_serv_ativos.nmproser = "Cheque".
+						  LEAVE.
+				END. 
 
 		END.
 		
@@ -1595,7 +1562,7 @@ PROCEDURE Produtos_Servicos_Ativos:
             ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
             CREATE tt-prod_serv_ativos.
             ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                   tt-prod_serv_ativos.nmproser = "Lancamento Futuro".    
+                   tt-prod_serv_ativos.nmproser = "Lancamentos Futuros".    
         END.
 
 

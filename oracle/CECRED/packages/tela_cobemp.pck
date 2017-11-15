@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   --  Sistema  : Rotinas da Tela Ayllos Web COBEMP
   --  Sigla    : TELA
   --  Autor    : Daniel Zimmermann
-  --  Data     : Agosto - 2015.                   Ultima atualizacao: 27/09/2016
+  --  Data     : Agosto - 2015.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -175,6 +175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   -- Alteracoes: 27/09/2016 - Inclusao de verificacao de contratos de acordos
   --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
+  --             14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
@@ -1220,7 +1221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : TELA
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: --/--/----
+      Data    : Agosto/15.                    Ultima atualizacao: 14/11/2017
 
       Dados referentes ao programa:
 
@@ -1230,7 +1231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       Observacao: -----
 
-      Alteracoes:
+      Alteracoes: 14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
     ..............................................................................*/
 			DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -1530,7 +1531,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 						  gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nrctremp', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).nrctremp, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nrctacob', pr_tag_cont => vr_nrdconta_cob, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nrcnvcob', pr_tag_cont => vr_nrcnvcob, pr_des_erro => vr_dscritic);
-							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dstipcob', pr_tag_cont => vr_dstipcob, pr_des_erro => vr_dscritic);              
+							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dstipcob', pr_tag_cont => vr_dstipcob, pr_des_erro => vr_dscritic); 
+							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inliquid', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).inliquid, pr_des_erro => vr_dscritic);              
 
               --IF ( vr_tab_dados_epr(vr_ind_cde).vltotpag > 0 ) THEN
                  vr_auxconta := vr_auxconta + 1;

@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 27/03/2017 ***//
+//*** Data : Agosto/2007                  Última Alteração: 14/11/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -77,6 +77,8 @@
 				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)		 
 
                   14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+
+                  14/11/2017 - Não apresentar pop-up de anotações quando impedimentos estiver sendo executado (Jonata - P364).
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -544,7 +546,7 @@ function obtemCabecalho() {
 				if (executandoImpedimentos){
 				    // Limpar tela anterior
 					$("#divMsgsAlerta").css('visibility', 'hidden');
-
+					$("#divAnotacoes").css('visibility', 'hidden');
 					sequenciaImpedimentos();
 				}
 

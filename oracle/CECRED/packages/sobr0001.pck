@@ -16,6 +16,9 @@ CREATE OR REPLACE PACKAGE CECRED.sobr0001 AS
   vr_cdhisjur_cot CONSTANT craphis.cdhistor%TYPE := 926;  /* Juros sobre Capital */
   vr_cdhisirr_cot CONSTANT craphis.cdhistor%TYPE := 922;  /* IR Sobre Capital */
   
+  vr_cdhiscot_dem_pf CONSTANT craphis.cdhistor%TYPE := 2079; -- CAPITAL DISPONIVEL PARA SAQUE CONTA ENCERRADA PF
+  vr_cdhiscot_dem_pj CONSTANT craphis.cdhistor%TYPE := 2080; -- CAPITAL DISPONIVEL PARA SAQUE CONTA ENCERRADA PJ
+ 
   -- Constantes dos históricos de lançamento em Conta Corrente
   vr_cdhisopc_cta CONSTANT craphis.cdhistor%TYPE := 2178; /* Sobras sobre Operações de Crédito */
   vr_cdhisdep_cta CONSTANT craphis.cdhistor%TYPE := 2189; /* Sobras sobre Depósitos em Conta Quando unificado */
@@ -23,6 +26,9 @@ CREATE OR REPLACE PACKAGE CECRED.sobr0001 AS
   vr_cdhisdpa_cta CONSTANT craphis.cdhistor%TYPE := 2176; /* Sobras sobre Depósito a Vista */
   vr_cdhistar_cta CONSTANT craphis.cdhistor%TYPE := 2179; /* Sobras sobre Tarifas Pagas    */
   vr_cdhisaut_cta CONSTANT craphis.cdhistor%TYPE := 2177; /* Sobras sobre Auto Atendimento */ 
+
+  vr_cdhiscta_dem_pf CONSTANT craphis.cdhistor%TYPE := 2061; -- DEBITO SALDO DEPOSITO CONTA ENCERRADA PF
+  vr_cdhiscta_dem_pj CONSTANT craphis.cdhistor%TYPE := 2062; -- DEBITO SALDO DEPOSITO CONTA ENCERRADA PJ
 
   -- Procedure para calculo e credito do retorno de sobras e juros sobre o capital. Emissao do relatorio CRRL043
   PROCEDURE pc_calculo_retorno_sobras(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
@@ -77,6 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
     RECORD(dsrowid  ROWID
           ,nrdconta crapass.nrdconta%TYPE
           ,inpessoa NUMBER(17,2)
+          ,dtelimin crapass.dtelimin%TYPE
 
           ,flraimfx NUMBER(1)
           ,qtraimfx crapcot.qtraimfx%TYPE
@@ -1288,6 +1295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_tab_crrl048(vr_indice).dsrowid := vr_tab_crapcot(idx).nrrowid;
             vr_tab_crrl048(vr_indice).nrdconta := vr_tab_crapcot(idx).nrdconta;
             vr_tab_crrl048(vr_indice).inpessoa := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa;
+            vr_tab_crrl048(vr_indice).dtelimin := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin;
             
             vr_tab_crrl048(vr_indice).flraimfx := 0;
           vr_tab_crrl048(vr_indice).qtraimfx := vr_qtraimfx;
@@ -1492,8 +1500,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                      vr_cdbccxlt,
                      vr_nrdolote,
                      vr_tab_crrl048(vr_indice).nrdconta,
-                     8005||lpad(vr_cdhisopc_cot,4,'0'),
-                     vr_cdhisopc_cot,
+                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisopc_cot
+                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                               ,8005||vr_cdhiscot_dem_pj)),
+                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisopc_cot
+                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                               ,vr_cdhiscot_dem_pj)),
                      vr_tab_crrl048(vr_indice).vlretcrd_cot,
                      rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1534,8 +1546,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                      vr_tab_crrl048(vr_indice).nrdconta,
                      vr_tab_crrl048(vr_indice).nrdconta,
                      gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                     8005||vr_cdhisopc_cta,
-                     vr_cdhisopc_cta,
+                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisopc_cta
+                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                               ,8005||vr_cdhiscta_dem_pj)),
+                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisopc_cta
+                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                               ,vr_cdhiscta_dem_pj)),
                      vr_tab_crrl048(vr_indice).vlretcrd_cta,
                      rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
@@ -1584,8 +1600,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdbccxlt,
                        vr_nrdolote,
                        vr_tab_crrl048(vr_indice).nrdconta,
-                       8005||vr_cdhisdep_cot,
-                       vr_cdhisdep_cot,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdep_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdep_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                                 ,vr_cdhiscot_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
@@ -1626,8 +1646,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).nrdconta,
                        vr_tab_crrl048(vr_indice).nrdconta,
                        gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       8005||vr_cdhisdep_cta,
-                       vr_cdhisdep_cta,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdep_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdep_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                                 ,vr_cdhiscta_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
@@ -1674,8 +1698,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdbccxlt,
                        vr_nrdolote,
                        vr_tab_crrl048(vr_indice).nrdconta,
-                       8005||vr_cdhisdpa_cot,
-                       vr_cdhisdpa_cot,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpa_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpa_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                                 ,vr_cdhiscot_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljursdm_cot,
                        rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1716,8 +1744,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).nrdconta,
                        vr_tab_crrl048(vr_indice).nrdconta,
                        gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       8005||vr_cdhisdpa_cta,
-                       vr_cdhisdpa_cta,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpa_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpa_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                                 ,vr_cdhiscta_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljursdm_cta,
                        rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1763,8 +1795,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdbccxlt,
                        vr_nrdolote,
                        vr_tab_crrl048(vr_indice).nrdconta,
-                       8005||vr_cdhisdpp_cot,
-                       vr_cdhisdpp_cot,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpp_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpp_cot
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                                 ,vr_cdhiscot_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljurapl_cot,
                        rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1805,8 +1841,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).nrdconta,
                        vr_tab_crrl048(vr_indice).nrdconta,
                        gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       8005||vr_cdhisdpp_cta,
-                       vr_cdhisdpp_cta,
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpp_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
+                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpp_cta
+                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                                 ,vr_cdhiscta_dem_pj)),
                        vr_tab_crrl048(vr_indice).vljurapl_cta,
                        rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1850,8 +1890,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  vr_cdbccxlt,
                  vr_nrdolote,
                  vr_tab_crrl048(vr_indice).nrdconta,
-                 8005||lpad(vr_cdhisjur_cot,4,'0'),
-                 vr_cdhisjur_cot,
+                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||lpad(vr_cdhisjur_cot,4,'0')
+                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                           ,8005||vr_cdhiscot_dem_pj)),
+                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,lpad(vr_cdhisjur_cot,4,'0')
+                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                           ,vr_cdhiscot_dem_pj)),
                  vr_tab_crrl048(vr_indice).vljurcap,
                      rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1893,8 +1937,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  vr_cdbccxlt,
                  vr_nrdolote,
                  vr_tab_crrl048(vr_indice).nrdconta,
-                 8005||lpad(vr_cdhisirr_cot,4,'0'),
-                 vr_cdhisirr_cot,
+                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||lpad(vr_cdhisirr_cot,4,'0')
+                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                           ,8005||vr_cdhiscot_dem_pj)),
+                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,lpad(vr_cdhisirr_cot,4,'0')
+                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                           ,vr_cdhiscot_dem_pj)),
                  vr_tab_crrl048(vr_indice).vldeirrf,
                      rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1938,8 +1986,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_cdbccxlt,
                    vr_nrdolote,
                    vr_tab_crrl048(vr_indice).nrdconta,
-                   8005||vr_cdhistar_cot,
-                   vr_cdhistar_cot,
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhistar_cot
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                             ,8005||vr_cdhiscot_dem_pj)),
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhistar_cot
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                             ,vr_cdhiscot_dem_pj)),
                    vr_tab_crrl048(vr_indice).vljurtar_cot,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -1980,8 +2032,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).nrdconta,
                    vr_tab_crrl048(vr_indice).nrdconta,
                    gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   8005||vr_cdhistar_cta,
-                   vr_cdhistar_cta,
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhistar_cta
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                             ,8005||vr_cdhiscta_dem_pj)),
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhistar_cta
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                             ,vr_cdhiscta_dem_pj)),
                    vr_tab_crrl048(vr_indice).vljurtar_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2025,8 +2081,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_cdbccxlt,
                    vr_nrdolote,
                    vr_tab_crrl048(vr_indice).nrdconta,
-                   8005||vr_cdhisaut_cot,
-                   vr_cdhisaut_cot,
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisaut_cot
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
+                                                                                                             ,8005||vr_cdhiscot_dem_pj)),
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisaut_cot
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
+                                                                                                             ,vr_cdhiscot_dem_pj)),
                    vr_tab_crrl048(vr_indice).vljuraut_cot,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2068,8 +2128,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).nrdconta,
                    vr_tab_crrl048(vr_indice).nrdconta,
                    gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   8005||vr_cdhisaut_cta,
-                   vr_cdhisaut_cta,
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisaut_cta
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
+                                                                                                             ,8005||vr_cdhiscta_dem_pj)),
+                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisaut_cta
+                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
+                                                                                                             ,vr_cdhiscta_dem_pj)),
                    vr_tab_crrl048(vr_indice).vljuraut_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Mostrar opcao Principal da rotina de Impedimentos Desligamento da tela de CONTAS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 14/11/2017 - Ajsute para inclusão de novo item para impedimento (Jonata - RKAM P364).
  * --------------
 
  */	
@@ -85,7 +85,7 @@
 	$xmlObjServicos2   = getObjectXML($xmlResult);	
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjServicos2->roottag->tags[0]->name) == 'ERRO') {
+	if (isset($xmlObjServicos2->roottag->tags[0]->name) && strtoupper($xmlObjServicos2->roottag->tags[0]->name) == 'ERRO') {	
 		exibirErro('error',$xmlObjServicos2->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);fechaRotina(divRotina);',false);
 	}
 
@@ -108,15 +108,20 @@
 	 foreach ($emprestimos as $r) {
 		
 		$inprejuz = getByTagName($r->tags, 'inprejuz');
-		
-		// se esta em prejuizo
-		if ($inprejuz == 1){
-			$valor_emprestimos += getByTagName($r->tags, 'vlpreemp');
-		}else{
-			$valor_emprestimos += getByTagName($r->tags, 'vlsdeved');
+		$inliquid = getByTagName($r->tags, 'inliquid');
+
+		//Somente incrementar valor para contratos não liquidados
+		if($inliquid == 0){
+			// se esta em prejuizo
+			if ($inprejuz == 1){
+				$valor_emprestimos += getByTagName($r->tags, 'vlpreemp');
+			}else{
+				$valor_emprestimos += getByTagName($r->tags, 'vlsdeved');
+			}
 		}
 	}
 	
+
 	include('form_impedimentos_desligamento.php');
 	
 ?>
