@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: plano_de_capital.php                                      
 	 Autor: David                                                     
-	 Data : Outubro/2007                 Ultima Alteracao: 23/03/2017 
+	 Data : Outubro/2007                 Ultima Alteracao: 14/11/2017 
 	                                                                  
 	 Objetivo  : Mostrar opcao Plano de Capital o da rotina de        
 	             Capital da tela ATENDA                               
@@ -31,6 +31,8 @@
                 22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
                              para coleta da assinatura 
                             (Jonata - RKAM / M294).   
+
+			   14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando (Jonata - RKAM P364).
                           
 	***********************************************************************/
 	
@@ -57,7 +59,8 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
-
+	$sitaucaoDaContaCrm = $_POST["sitaucaoDaContaCrm"];
+	
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -170,103 +173,119 @@
 	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
 		
 </div>
-					
+
 
 <div id="divBotoesSenha" style="display:none;">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
+  <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
   <input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,true);return false;">
-	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
-</div>				
-					
+  <input type="image" id="btImprimir" src=""<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
+</div>
+
 <form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_cancelamento.php" name="frmTermoCancela" id="frmTermoCancela" method="post">
-<input type="hidden" name="nrdconta" id="nrdconta" value="">
-<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
-</form>
-<form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_autorizacao.php" name="frmTermoAutoriza" id="frmTermoAutoriza" method="post">
-<input type="hidden" name="nrdconta" id="nrdconta" value="">
-<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+	<input type="hidden" name="nrdconta" id="nrdconta" value="">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+	</form>
+	<form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_autorizacao.php" name="frmTermoAutoriza" id="frmTermoAutoriza" method="post">
+	<input type="hidden" name="nrdconta" id="nrdconta" value="">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>	
 
 <script type="text/javascript"> 
 
-// Configura propriedades do campo "flgpagto" conforme tipo de d&eacute;bito
-$("#dtdpagto","#frmNovoPlano").unbind("keydown");
-$("#dtdpagto","#frmNovoPlano").unbind("keyup");
-$("#dtdpagto","#frmNovoPlano").unbind("blur");
-$("#flgpagto","#frmNovoPlano").unbind("change");
+	// Configura propriedades do campo "flgpagto" conforme tipo de d&eacute;bito
+	$("#dtdpagto","#frmNovoPlano").unbind("keydown");
+	$("#dtdpagto","#frmNovoPlano").unbind("keyup");
+	$("#dtdpagto","#frmNovoPlano").unbind("blur");
+	$("#flgpagto","#frmNovoPlano").unbind("change");
 
-$("#flgpagto","#frmNovoPlano").bind("change",function() {
-	if ($(this).val() == "no") { // Se for d&eacute;bito em Conta
-		$("#dtdpagto","#frmNovoPlano").removeProp("disabled").removeClass("campoTelaSemBorda").attr("class","campo");; 
-		$("#dtdpagto","#frmNovoPlano").val("<?php echo $glbvars["dtmvtolt"]; ?>");
-		$("#dtdpagto","#frmNovoPlano").bind("keydown",function(e) { return $(this).setMaskOnKeyDown("DATE","","",e); });
-		$("#dtdpagto","#frmNovoPlano").bind("keyup",function(e) { return $(this).setMaskOnKeyUp("DATE","","",e); });
-		$("#dtdpagto","#frmNovoPlano").bind("blur",function() { return $(this).setMaskOnBlur("DATE","","","divRotina"); });
-	} else { // Se for d&eacute;bito em Folha
-		$("#dtdpagto","#frmNovoPlano").prop("disabled",true).removeClass("campo").attr("class","campoTelaSemBorda");
-		$("#dtdpagto","#frmNovoPlano").val("<?php echo $plano[7]->cdata; ?>");
-		$("#dtdpagto","#frmNovoPlano").unbind("keydown");
-		$("#dtdpagto","#frmNovoPlano").unbind("keyup");
-		$("#dtdpagto","#frmNovoPlano").unbind("blur");
-	}
-});
+	$("#flgpagto","#frmNovoPlano").bind("change",function() {
+		if ($(this).val() == "no") { // Se for d&eacute;bito em Conta
+			$("#dtdpagto","#frmNovoPlano").removeProp("disabled").removeClass("campoTelaSemBorda").attr("class","campo");; 
+			$("#dtdpagto","#frmNovoPlano").val("<?php echo $glbvars["dtmvtolt"]; ?>");
+			$("#dtdpagto","#frmNovoPlano").bind("keydown",function(e) { return $(this).setMaskOnKeyDown("DATE","","",e); });
+			$("#dtdpagto","#frmNovoPlano").bind("keyup",function(e) { return $(this).setMaskOnKeyUp("DATE","","",e); });
+			$("#dtdpagto","#frmNovoPlano").bind("blur",function() { return $(this).setMaskOnBlur("DATE","","","divRotina"); });
+		} else { // Se for d&eacute;bito em Folha
+			$("#dtdpagto","#frmNovoPlano").prop("disabled",true).removeClass("campo").attr("class","campoTelaSemBorda");
+			$("#dtdpagto","#frmNovoPlano").val("<?php echo $plano[7]->cdata; ?>");
+			$("#dtdpagto","#frmNovoPlano").unbind("keydown");
+			$("#dtdpagto","#frmNovoPlano").unbind("keyup");
+			$("#dtdpagto","#frmNovoPlano").unbind("blur");
+		}
+	});
 
-// Aciona evento "change" ao campo flgpagto
-$("#flgpagto","#frmNovoPlano").trigger("change");
+	// Aciona evento "change" ao campo flgpagto
+	$("#flgpagto","#frmNovoPlano").trigger("change");
 
-// Seta m&aacute;scara aos campos vlprepla, vlcorfix e qtpremax
-$("#vlprepla","#frmNovoPlano").setMask("DECIMAL","zzz.zzz.zz9,99","","");
-$("#vlcorfix","#frmNovoPlano").setMask("DECIMAL","zzz.zzz.zz9,99","","");
-$("#qtpremax","#frmNovoPlano").setMask("INTEGER","zzz","","");
+	// Seta m&aacute;scara aos campos vlprepla, vlcorfix e qtpremax
+	$("#vlprepla","#frmNovoPlano").setMask("DECIMAL","zzz.zzz.zz9,99","","");
+	$("#vlcorfix","#frmNovoPlano").setMask("DECIMAL","zzz.zzz.zz9,99","","");
+	$("#qtpremax","#frmNovoPlano").setMask("INTEGER","zzz","","");
 
-// Aumenta tamanho do div onde o conte&uacute;do da op&ccedil;&atilde;o ser&aacute; visualizado
-$("#divConteudoOpcao").css("height","145px");
+	// Aumenta tamanho do div onde o conte&uacute;do da op&ccedil;&atilde;o ser&aacute; visualizado
+	$("#divConteudoOpcao").css("height","145px");
 
-controlaLayout('PLANO_CAPITAL');
+	controlaLayout('PLANO_CAPITAL');
 
-var aux_flcancel = "<?php echo $plano[4]->cdata; ?>";
+	var aux_flcancel = "<?php echo $plano[4]->cdata; ?>";
 
-var cTodos       = $('select,input','#frmNovoPlano');
+	var cTodos       = $('select,input','#frmNovoPlano');
 
-$('#divBotoesSenha','#divConteudoOpcao').html("");
-$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
+	$('#divBotoesSenha','#divConteudoOpcao').html("");
+	$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
 
-$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaSenhaMagnetico(\\\'cancelarPlanoAtual()\\\',\\\'<?php echo $nrdconta ?>\\\')\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
-$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirPlano()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+	$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaSenhaMagnetico(\\\'cancelarPlanoAtual()\\\',\\\'<?php echo $nrdconta ?>\\\')\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+	$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirPlano()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
 
-if (aux_flcancel == "yes") {
-    $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,true);return false;">');
-	  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,false);return false;">');
-	
-	cTodos.desabilitaCampo();
-	
-	$('#vlprepla','#frmNovoPlano').habilitaCampo();
-	$('#cdtipcor','#frmNovoPlano').habilitaCampo();
-	$('#vlcorfix','#frmNovoPlano').habilitaCampo();
-    $('#senha','#frmNovoPlano').habilitaCampo();
-    $('#autorizacao','#frmNovoPlano').habilitaCampo();
-    
-} else {
-	  $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,true);return false;">');
-	  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,false);return false;">');
-	
-	
-	$('#dtultatu','#frmNovoPlano').desabilitaCampo();
-	$('#dtproatu','#frmNovoPlano').desabilitaCampo();
-    $('#senha','#frmNovoPlano').habilitaCampo();
-    $('#autorizacao','#frmNovoPlano').habilitaCampo();
-}
+	if (aux_flcancel == "yes") {
+		$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,true);return false;">');
+		  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,false);return false;">');
 		
-$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
-$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
+		cTodos.desabilitaCampo();
+		
+		$('#vlprepla','#frmNovoPlano').habilitaCampo();
+		$('#cdtipcor','#frmNovoPlano').habilitaCampo();
+		$('#vlcorfix','#frmNovoPlano').habilitaCampo();
+		$('#senha','#frmNovoPlano').habilitaCampo();
+		$('#autorizacao','#frmNovoPlano').habilitaCampo();
+		
+	} else {
+		  $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,true);return false;">');
+		  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,false);return false;">');
+		
+		
+		$('#dtultatu','#frmNovoPlano').desabilitaCampo();
+		$('#dtproatu','#frmNovoPlano').desabilitaCampo();
+		$('#senha','#frmNovoPlano').habilitaCampo();
+		$('#autorizacao','#frmNovoPlano').habilitaCampo();
+	}
+			
+	$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
+	$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
 
-habilitaValor();
+	habilitaValor();
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
+	// Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 
-$("#vlprepla","#frmNovoPlano").focus();
+	$("#vlprepla","#frmNovoPlano").focus();
+	
+	
+	<?php if($sitaucaoDaContaCrm == '2' || 
+			 $sitaucaoDaContaCrm == '3' || 
+			 $sitaucaoDaContaCrm == '4' || 
+			 $sitaucaoDaContaCrm == '5' || 
+			 $sitaucaoDaContaCrm == '7' || 
+			 $sitaucaoDaContaCrm == '8' || 
+			 $sitaucaoDaContaCrm == '9' ){?>
+		
+		cTodos.desabilitaCampo();
+		$('#divBotoesSenha','#divConteudoOpcao').html("");
+		$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
+		
+	<?}?>
+	
 </script>

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : Maio/2017.                       Ultima atualizacao:  /  /  
+   Data    : Maio/2017.                       Ultima atualizacao:14/11/2017
 
    Dados referentes ao programa:
 
@@ -12,7 +12,7 @@
    Objetivo  : BO de Comunicacao XML VS BO de envio de informacoes 
                para o Desligamento de cooperados (b1wgen0197.p)
 
-   Alteracoes:
+   Alteracoes: 14/11/2017 - Corrigido mensagem na rotina de verificacao de cartao (Jonata - RKAM P364).
    
 .............................................................................*/   
 
@@ -171,7 +171,7 @@ PROCEDURE seta_vendas_cartao:
     ELSE 
         DO:
             CREATE tt-msg-confirma.
-            ASSIGN tt-msg-confirma.dsmensag = "Efetue o cancelamento do cartao junto a Instituicao Financeira.".            
+            ASSIGN tt-msg-confirma.dsmensag = "Cooperado possui cartao BB, efetue o cancelamento do cartao junto a Instituicao Financeira.".            
             
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,

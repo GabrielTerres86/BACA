@@ -10,6 +10,8 @@
  *				  10/06/2016 - Incluir style nas divs (Lucas Ranghetti #422753) 
  *
  *				  14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+
+                  14/11/2017 - Ajuste para receber o tipo de consulta (Jonata - P364)
  */
 ?>
 
@@ -147,6 +149,8 @@
 		produtosCancMAtenda = produtosAtenda.split("|");
 		produtosCancMContas = produtosContas.split("|");
 		produtosCancMCheque = produtosCheque.split("|");
+		tppeschq = produtosCancMCheque[0];
+
 		eval(produtosCancMCheque[posicao - 1]);		
 		posicao++;
 		if (nrdconta != '') {

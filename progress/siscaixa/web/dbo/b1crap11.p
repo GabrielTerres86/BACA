@@ -45,6 +45,9 @@
                 12/06/2017 - Bloquear lancamento do historico 
                              762 - Despesa de Falha Operacional na viacredi
                              (Tiago/Fabricio #661260).
+
+                14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital
+				             na rotina 11 (Jonata - RKAM P364).
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -150,7 +153,7 @@ PROCEDURE valida-lancamento-boletim:
        END.
    
    
-    IF  craphis.tplotmov <> 22  THEN 
+    IF  craphis.tplotmov <> 22    THEN 
         DO:
             ASSIGN i-cod-erro  = 100
                    c-desc-erro = " ".
@@ -210,6 +213,203 @@ PROCEDURE valida-lancamento-boletim:
     RETURN "OK".
 END PROCEDURE.
 
+PROCEDURE valida-lancamento-capital:
+    DEF INPUT  PARAM p-cooper        AS CHAR.
+	DEF INPUT  PARAM p-conta		 AS DEC.
+    DEF INPUT  PARAM p-cod-operador  AS char.
+    DEF INPUT  PARAM p-cod-agencia   AS INTE.
+    DEF INPUT  PARAM p-nro-caixa     AS INTE.
+    DEF INPUT  PARAM p-cod-histor    AS INTE.
+	
+	DEF OUTPUT PARAM p-valor-capital AS DEC.
+	DEF OUTPUT PARAM p-origem-devolucao AS INT.
+	 
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+
+    RUN elimina-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa).
+    
+    RUN verifica-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa).
+					   
+    IF p-cod-histor = 2083 THEN
+       DO:
+			FIND LAST craplct WHERE craplct.cdcooper = crapcop.cdcooper  AND
+								    craplct.nrdconta = p-conta           AND
+								   (craplct.cdhistor = 2079              OR
+								    craplct.cdhistor = 2080)
+								    NO-LOCK NO-ERROR. 
+									 
+			IF  NOT AVAIL craplct  THEN 
+				DO:
+				    /*
+					FIND FIRST tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+														tbcotas_devolucao.nrdconta = p-conta          AND
+														tbcotas_devolucao.tpdevolucao = 3             AND /*COTAS*/ 
+														tbcotas_devolucao.dtinicio_credito <> ? 
+														NO-LOCK NO-ERROR.
+					
+					IF NOT AVAIL tbcotas_devolucao THEN
+						DO:
+							ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Nao existe capital para devolucao".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+							
+						END.
+					ELSE 
+					IF tbcotas_devolucao.vlcapital - tbcotas_devolucao.vlpago = 0 THEN
+					   DO:
+					        ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Valor ja pago em " + string(DTINICIO_CREDITO,'99/99/9999) + ".".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+					   					   
+					   END.
+					*/
+					
+					ASSIGN /*p-valor-capital = tbcotas_devolucao.vlcapital - tbcotas_devolucao.vlpago*/
+					       p-origem-devolucao = 1.
+					
+					
+				END.
+			ELSE
+			    DO:
+					FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+											craplcm.nrdconta = p-conta          AND
+										   (craplcm.cdhistor = 2081  			OR
+											craplcm.cdhistor = 2082)
+											NO-LOCK NO-ERROR. 
+									 
+					IF  AVAIL craplcm  THEN 
+						DO:
+							ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Valor ja pago.".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+							
+						END.
+				
+				END.
+				
+				ASSIGN p-valor-capital = craplct.vllanmto.
+			
+	    END.
+	ELSE If p-cod-histor = 2065 THEN
+	   DO:
+	        FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+								    craplcm.nrdconta = p-conta          AND
+								   (craplcm.cdhistor = 2061  			OR
+								    craplcm.cdhistor = 2062)
+									NO-LOCK NO-ERROR. 
+									 
+			IF  NOT AVAIL craplcm  THEN 
+				DO:
+				    /*
+					FIND FIRST tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+														tbcotas_devolucao.nrdconta = p-conta          AND
+														tbcotas_devolucao.tpdevolucao = 4             AND /*DEPOSITO A VISTA*/
+														tbcotas_devolucao.dtinicio_credito <> ?
+														NO-LOCK NO-ERROR.
+					
+					
+					IF NOT AVAIL tbcotas_devolucao THEN
+						DO:
+							ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Nao existe deposito a vista para devolucao".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+							
+						END.
+					ELSE 
+					IF tbcotas_devolucao.vlcapital - tbcotas_devolucao.vlpago = 0 THEN
+					   DO:
+					        ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Valor ja pago em " + string(DTINICIO_CREDITO,'99/99/9999) + ".".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+					   
+					   
+					   END.
+					*/
+					ASSIGN /*p-valor-capital = tbcotas_devolucao.vlcapital - tbcotas_devolucao.vlpago*/
+					       p-origem-devolucao = 1.
+					
+					
+				END.
+			ELSE
+				DO:				
+					FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+											craplcm.nrdconta = p-conta          AND
+										   (craplcm.cdhistor = 2063  			OR
+											craplcm.cdhistor = 2064)
+											NO-LOCK NO-ERROR. 
+									 
+					IF  AVAIL craplcm  THEN 
+						DO:
+							ASSIGN i-cod-erro  = 0
+								   c-desc-erro = "Valor ja pago.".
+							RUN cria-erro (INPUT p-cooper,
+										   INPUT p-cod-agencia,
+										   INPUT p-nro-caixa,
+										   INPUT i-cod-erro,
+										   INPUT c-desc-erro,
+										   INPUT YES).
+							RETURN "NOK".
+							
+						END.
+				
+				
+				END.
+				
+				ASSIGN p-valor-capital = craplcm.vllanmto.
+			
+	   END.
+	 ELSE
+	    DO:
+		    ASSIGN i-cod-erro  = 0
+				   c-desc-erro = "Historico invalido.".
+			RUN cria-erro (INPUT p-cooper,
+						   INPUT p-cod-agencia,
+						   INPUT p-nro-caixa,
+						   INPUT i-cod-erro,
+						   INPUT c-desc-erro,
+						   INPUT YES).
+			RETURN "NOK".
+		
+		END.
+	
+    RETURN "OK".
+	
+END PROCEDURE.
+
 PROCEDURE retorna-valor-historico:
 
     DEF INPUT  PARAM p-cooper        AS CHAR.
@@ -255,6 +455,7 @@ PROCEDURE grava-lancamento-boletim:
     DEF INPUT  PARAM p-nro-caixa            AS INTE.
     DEF INPUT  PARAM p-cod-histor           AS INTE.    
     DEF INPUT  PARAM p-vlr-docto            AS DEC.
+	DEF INPUT  PARAM p-conta			    AS DEC.
     DEF INPUT  PARAM p-dsc-compl1           AS CHAR.
     DEF INPUT  PARAM p-dsc-compl2           AS CHAR.
     DEF INPUT  PARAM p-dsc-compl3           AS CHAR.
@@ -267,13 +468,15 @@ PROCEDURE grava-lancamento-boletim:
     DEF INPUT  PARAM p-hist-contab          AS CHAR.
 
     DEF INPUT  PARAM p-docto                AS INTE.
+	DEF INPUT  PARAM p-origem-devolucao    	AS INTE.
     DEF OUTPUT PARAM p-pg                   AS LOG.
     DEF OUTPUT PARAM p-literal-autentica    AS CHAR.
     DEF OUTPUT PARAM p-ult-sequencia        AS INTE.
 
     DEF VAR v-saldo-caixa AS DECI.
     DEF VAR v-flg-sangria AS LOGI.
- 
+    DEF VAR aux_nrseqdig  AS DEC.
+
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
     RUN elimina-erro (INPUT p-cooper,
@@ -543,24 +746,387 @@ PROCEDURE grava-lancamento-boletim:
         END.
     END.
 
-    CREATE craplcx.
-    ASSIGN craplcx.cdcooper = crapcop.cdcooper
-           craplcx.dtmvtolt = crapdat.dtmvtolt
-           craplcx.cdagenci = p-cod-agencia
-           craplcx.nrdcaixa = p-nro-caixa
-           craplcx.cdopecxa = p-cod-operador
-           craplcx.nrdocmto = i-nro-docto
-           craplcx.nrseqdig = crapbcx.qtcompln + 1
-           craplcx.nrdmaqui = p-nro-caixa
-           craplcx.cdhistor = p-cod-histor
-           aux_complemento  = STRING(CAPS(p-dsc-compl1),"x(26)")  + 
-                              STRING(CAPS(p-dsc-compl2),"x(26)")  +
-                              STRING(CAPS(p-dsc-compl3),"x(26)") 
-           craplcx.dsdcompl = aux_complemento
-           crapbcx.qtcompln = crapbcx.qtcompln + 1
-           craplcx.vldocmto = p-vlr-docto.
-           
+	/* Busca a proxima sequencia do campo crapmat.nrseqcar */
+    RUN STORED-PROCEDURE pc_sequence_progress
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                        ,INPUT "NRSEQDIG"
+                                        ,INPUT STRING(crapcop.cdcooper)
+                                        ,INPUT "N"
+                                        ,"").
+        
+    CLOSE STORED-PROC pc_sequence_progress
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+    ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+                            WHEN pc_sequence_progress.pr_sequence <> ?.
 
+	IF p-cod-histor = 2065 THEN	   
+      DO:
+	     FOR FIRST crapass FIELDS(nrdconta ) 
+	                  WHERE crapass.cdcooper = crapcop.cdcooper  AND
+                            crapass.nrdconta = p-conta 
+                            NO-LOCK:
+	     END.
+
+		 IF NOT AVAIL crapass THEN
+		    DO:
+			    ASSIGN i-cod-erro = 9
+                       c-desc-erro = "".
+
+                RUN cria-erro (INPUT p-cooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+
+                RETURN "NOK".
+			
+			END.
+
+	     FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+		                          craplcm.nrdconta = p-conta         AND
+								 (craplcm.cdhistor = 2061             OR
+								  craplcm.cdhistor = 2062)
+								  NO-LOCK NO-ERROR.
+
+		 IF NOT AVAIL craplcm THEN
+		    DO:
+			
+				FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+											 tbcotas_devolucao.nrdconta = p-conta          AND
+											 tbcotas_devolucao.tpdevolucao = 4 /*DEPOSITO*/
+											 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+											 
+				IF NOT AVAIL tbcotas_devolucao THEN
+					DO:
+					   ASSIGN i-cod-erro = 0
+							  c-desc-erro = "Cooperado nao tem valor a receber.".
+
+					   RUN cria-erro (INPUT p-cooper,
+									  INPUT p-cod-agencia,
+									  INPUT p-nro-caixa,
+									  INPUT i-cod-erro,
+									  INPUT c-desc-erro,
+									  INPUT YES).
+
+					   RETURN "NOK".
+					
+					
+					END.
+					
+			END.
+		ELSE	
+			DO:
+			
+				 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+										  craplcm.nrdconta = p-conta         AND
+										 (craplcm.cdhistor = 2063             OR
+								  craplcm.cdhistor = 2064)
+								  NO-LOCK NO-ERROR.
+
+		 IF AVAIL craplcm THEN
+		    DO:
+			   ASSIGN i-cod-erro = 0
+                      c-desc-erro = "Valor ja pago em " + string(craplcm.dtmvtolt,'99/99/9999').
+
+               RUN cria-erro (INPUT p-cooper,
+                              INPUT p-cod-agencia,
+                              INPUT p-nro-caixa,
+                              INPUT i-cod-erro,
+                              INPUT c-desc-erro,
+                              INPUT YES).
+
+               RETURN "NOK".
+
+			END.
+	     ELSE
+		    DO:
+			    /*Origem da devolucao tbcotas_devolucao*/
+				IF p-origem-devolucao = 1 THEN 
+					DO:
+					    /*
+					    FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+													 tbcotas_devolucao.nrdconta = p-conta          AND
+													 tbcotas_devolucao.tpdevolucao = 4 /*DEPOSITO*/
+													 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+													 
+						IF NOT AVAIL tbcotas_devolucao THEN
+							DO:
+							   ASSIGN i-cod-erro = 0
+									  c-desc-erro = "Registro de devolucao de capital nao encontrado.".
+
+							   RUN cria-erro (INPUT p-cooper,
+											  INPUT p-cod-agencia,
+											  INPUT p-nro-caixa,
+											  INPUT i-cod-erro,
+											  INPUT c-desc-erro,
+											  INPUT YES).
+
+							   RETURN "NOK".
+							
+							
+							END.
+						ELSE IF 
+						
+							ASSIGN tbcotas_devolucao.vlpago = p-vlr-docto.
+						*/
+
+			END.
+	     ELSE
+		    DO:
+				 IF crapass.inpessoa = 1 THEN
+					DO:
+                          
+						CREATE craplcm.
+						ASSIGN craplcm.cdcooper = crapcop.cdcooper
+							   craplcm.dtmvtolt = crapdat.dtmvtolt
+							   craplcm.cdagenci = p-cod-agencia
+							   craplcm.cdbccxlt  = 100
+							   craplcm.nrdolote = 600040
+									   craplcm.nrdconta = p-conta
+							   craplcm.nrdocmto = i-nro-docto
+							   craplcm.vllanmto = p-vlr-docto 
+							craplcm.cdhistor = 2063
+							craplcm.nrseqdig = aux_nrseqdig
+									   craplcm.nrdctabb = p-conta
+									   craplcm.nrdctitg = STRING(p-conta,"99999999")
+							craplcm.cdpesqbb = "CRAP54," + p-codigo.
+                          
+				END.                          
+				ELSE
+				DO:
+                          
+					CREATE craplcm.
+					ASSIGN craplcm.cdcooper = crapcop.cdcooper
+							craplcm.dtmvtolt = crapdat.dtmvtolt
+							craplcm.cdagenci = p-cod-agencia
+							craplcm.cdbccxlt  = 100
+									   craplcm.nrdolote = 600040
+									   craplcm.nrdconta = p-conta
+							craplcm.nrdocmto = i-nro-docto
+							craplcm.vllanmto = p-vlr-docto 
+							craplcm.cdhistor = 2064
+							craplcm.nrseqdig = aux_nrseqdig
+									   craplcm.nrdctabb = p-conta
+									   craplcm.nrdctitg = STRING(p-conta,"99999999")
+							craplcm.cdpesqbb = "CRAP54," + p-codigo.
+								  
+							END.
+                          
+				END.
+
+			CREATE craplcx.
+			ASSIGN craplcx.cdcooper = crapcop.cdcooper
+					craplcx.cdagenci = p-cod-agencia
+					craplcx.cdopecxa = p-cod-operador
+					craplcx.dtmvtolt = crapdat.dtmvtolt
+					craplcx.cdhistor = 2065					         
+					   craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
+					craplcx.nrdocmto = i-nro-docto
+					craplcx.nrseqdig = aux_nrseqdig
+					craplcx.vldocmto = p-vlr-docto
+					craplcx.nrdmaqui = crapbcx.nrdmaqui.
+	       END.
+			END.
+        
+	  END.
+	ELSE 
+	IF p-cod-histor = 2083 THEN
+	    DO:
+			 FOR FIRST crapass FIELDS(nrdconta) 
+						  WHERE crapass.cdcooper = crapcop.cdcooper  AND
+								crapass.nrdconta = p-conta 
+								NO-LOCK:
+			 END.
+			 
+			IF NOT AVAIL crapass THEN 
+				DO:
+					ASSIGN i-cod-erro = 9
+						   c-desc-erro = "".
+
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+
+					RETURN "NOK".
+				
+				END.
+
+			 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+								     craplcm.nrdconta = p-conta          AND
+									 (craplcm.cdhistor = 2079             OR
+                                     craplcm.cdhistor = 2080)
+								     NO-LOCK NO-ERROR.
+
+			 IF NOT AVAIL craplcm THEN
+				DO:
+				
+					FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+												 tbcotas_devolucao.nrdconta = p-conta          AND
+												 tbcotas_devolucao.tpdevolucao = 3 /*Capital*/
+												 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+												 
+					IF NOT AVAIL tbcotas_devolucao THEN
+						DO:
+						   ASSIGN i-cod-erro = 0
+								  c-desc-erro = "Cooperado nao tem valor a receber.".
+
+						   RUN cria-erro (INPUT p-cooper,
+										  INPUT p-cod-agencia,
+										  INPUT p-nro-caixa,
+										  INPUT i-cod-erro,
+										  INPUT c-desc-erro,
+										  INPUT YES).
+
+						   RETURN "NOK".
+						
+						
+						END.
+						
+				END.
+			ELSE	
+				DO:
+				
+					 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+											 craplcm.nrdconta = p-conta          AND
+											(craplcm.cdhistor = 2081             OR
+											 craplcm.cdhistor = 2082             )
+											 NO-LOCK NO-ERROR.
+
+			 IF AVAIL craplcm THEN
+				DO:
+				   ASSIGN i-cod-erro = 0
+						  c-desc-erro = "Valor ja pago em " + string(craplcm.dtmvtolt,'99/99/9999').
+
+				   RUN cria-erro (INPUT p-cooper,
+								  INPUT p-cod-agencia,
+								  INPUT p-nro-caixa,
+								  INPUT i-cod-erro,
+								  INPUT c-desc-erro,
+								  INPUT YES).
+
+				   RETURN "NOK".
+
+				END.
+			 ELSE
+			   DO:
+					/*Origem da devolucao tbcotas_devolucao*/
+					IF p-origem-devolucao = 1 THEN 
+						DO:
+							/*
+							FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+														 tbcotas_devolucao.nrdconta = p-conta          AND
+														 tbcotas_devolucao.tpdevolucao = 3 /*Capital*/
+														 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+														 
+							IF NOT AVAIL tbcotas_devolucao THEN
+								DO:
+								   ASSIGN i-cod-erro = 0
+										  c-desc-erro = "Registro de devolucao de capital nao encontrado.".
+
+								   RUN cria-erro (INPUT p-cooper,
+												  INPUT p-cod-agencia,
+												  INPUT p-nro-caixa,
+												  INPUT i-cod-erro,
+												  INPUT c-desc-erro,
+												  INPUT YES).
+
+								   RETURN "NOK".
+								
+								
+								END.
+							ELSE
+								ASSIGN tbcotas_devolucao.vlpago = p-vlr-docto.
+								
+							*/								
+							
+						END.
+					ELSE
+						DO:
+							IF crapass.inpessoa = 1 THEN
+								DO:
+										  
+									CREATE craplcm.
+									ASSIGN craplcm.cdcooper = crapcop.cdcooper
+											craplcm.dtmvtolt = crapdat.dtmvtolt
+											craplcm.cdagenci = p-cod-agencia
+											craplcm.cdbccxlt  = 100
+											craplcm.nrdolote = 600042
+											craplcm.nrdconta = p-conta
+											craplcm.nrdocmto = i-nro-docto
+											craplcm.vllanmto = p-vlr-docto 
+											craplcm.cdhistor = 2081
+											craplcm.nrseqdig = aux_nrseqdig
+											craplcm.nrdctabb = p-conta
+											craplcm.nrdctitg = STRING(p-conta,"99999999")
+											craplcm.cdpesqbb = "CRAP54," + p-codigo.
+										  
+								END.                          
+							ELSE
+								DO:
+										  
+									CREATE craplcm.
+									ASSIGN craplcm.cdcooper = crapcop.cdcooper
+											craplcm.dtmvtolt = crapdat.dtmvtolt
+											craplcm.cdagenci = p-cod-agencia
+											craplcm.cdbccxlt  = 100
+											craplcm.nrdolote = 600042
+											craplcm.nrdconta = p-conta
+											craplcm.nrdocmto = i-nro-docto
+											craplcm.vllanmto = p-vlr-docto 
+											craplcm.cdhistor = 2082
+											craplcm.nrseqdig = aux_nrseqdig
+											craplcm.nrdctabb = p-conta
+											craplcm.nrdctitg = STRING(p-conta,"99999999")
+											craplcm.cdpesqbb = "CRAP54," + p-codigo.
+										  
+								END.
+
+							CREATE craplcx.
+							ASSIGN craplcx.cdcooper = crapcop.cdcooper
+									craplcx.cdagenci = p-cod-agencia
+									craplcx.cdopecxa = p-cod-operador
+									craplcx.dtmvtolt = crapdat.dtmvtolt
+									craplcx.cdhistor = 2083					         
+									craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
+									craplcx.nrdocmto = i-nro-docto
+									craplcx.nrseqdig = aux_nrseqdig
+									craplcx.vldocmto = p-vlr-docto
+									craplcx.nrdmaqui = crapbcx.nrdmaqui.
+									
+						END.
+					
+        END.
+						
+				END.
+				
+	  END.
+	ELSE
+	  DO:	  
+	     CREATE craplcx.
+		 ASSIGN craplcx.cdcooper = crapcop.cdcooper
+	 		    craplcx.dtmvtolt = crapdat.dtmvtolt
+	 		    craplcx.cdagenci = p-cod-agencia
+	 		    craplcx.nrdcaixa = p-nro-caixa
+	 		    craplcx.cdopecxa = p-cod-operador
+	 		    craplcx.nrdocmto = i-nro-docto
+			    craplcx.nrseqdig = crapbcx.qtcompln + 1
+			    craplcx.nrdmaqui = p-nro-caixa
+			    craplcx.cdhistor = p-cod-histor
+			    aux_complemento  = STRING(CAPS(p-dsc-compl1),"x(26)")  + 
+								   STRING(CAPS(p-dsc-compl2),"x(26)")  +
+								   STRING(CAPS(p-dsc-compl3),"x(26)") 
+			    craplcx.dsdcompl = aux_complemento
+			    crapbcx.qtcompln = crapbcx.qtcompln + 1
+			    craplcx.vldocmto = p-vlr-docto.
+	  
+	  END.  
+
+	
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     RUN grava-autenticacao  IN h-b1crap00 (INPUT p-cooper,
                                            INPUT p-cod-agencia,

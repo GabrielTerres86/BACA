@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Junho/2017
  * OBJETIVO     : Biblioteca de funções da rotina Impedimentos Desligamento da tela de CONTAS
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 14/11/2017 - Ajsute para inclusão de novo item para impedimento (Jonata - RKAM P364).
  * --------------
  */
 
@@ -59,9 +59,17 @@ function controlaLayout(operacao) {
 	
 	$('#divConteudoOpcao').hide(0, function() {
 
-		// Controla a altura da tela		
-		$('#divConteudoOpcao').css('width','670px');
-		$('#divConteudoOpcao').css('height','640px');
+		// Controla a altura da tela
+	    $('#divConteudoOpcao').css({ 'height': 'auto' });
+		$('#divImpedimentos').css({ 'display': 'block', 'height': '100%' });
+
+		$('#frmCancAuto').css({ 'display': 'block', 'float': 'left', 'width': '40%' });
+		$('#frmCancManl').css({ 'display': 'block', 'float': 'left', 'width': '60%' });
+
+		$('#divBotoes', '#divImpedimentos').css({ 'display': 'block', 'margin-top': '5px', 'margin-bottom': '10px', 'text-align': 'center', 'width': '100%' });
+		$('#divBotoesAuto', '#divImpedimentos').css({ 'display': 'block', 'float': 'left', 'width': '40%' });
+		$('#divBotoesManual', '#divImpedimentos').css({ 'display': 'block', 'float': 'right', 'width': '60%' });
+		$('fieldset', '#divImpedimentos').css({ 'padding': '0px', 'height': '100%', 'width': '95%' });
 								
 		layoutPadrao();
 		hideMsgAguardo();
@@ -252,20 +260,19 @@ function efetuaCancelamentoManual(){
 
 					break;
 
-				//ATENDA -> POUPANÇA PROGRAMADA
-				case "7":
+			    //ATENDA -> POUPANÇA PROGRAMADA
+			    case "7":
 
-					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ATENDA ...\'); ' + 
+			        produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ATENDA ...\'); ' +
 										   'setaParametros(\'ATENDA\',\'\',nrdconta,flgcadas); ' +
 										   'setaImped();' +
 										   'direcionaTela(\'ATENDA\',\'no\');';
-					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'Poupan&ccedil;a Programada\',\'poupanca_programada\');';
-					produtosCancMContas[index] = '';
-					produtosCancMCheque[index] = '';
-					index++;
+			        produtosCancMAtenda[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'Poupan&ccedil;a Programada\',\'poupanca_programada\');';
+			        produtosCancMContas[index] = '';
+			        produtosCancMCheque[index] = '';
+			        index++;
 
-					break;
-
+			        break;
 				//PAGAMENTO POR ARQUIVO
 				case "8":
 
@@ -388,18 +395,26 @@ function efetuaCancelamentoManual(){
 
 					break;
 
-				//MANTAL -> FOLHAS DE CHEQUE EM USO
+			    //CHEQUE -> FOLHAS DE CHEQUE EM USO
 				case "15":
 					
-					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela MANTAL ...\'); ' + 
+				    produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' +
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+				    produtosCancMAtenda[index] = '';
+				    produtosCancMContas[index] = '';
+				    produtosCancMCheque[index] = 'tppeschq = \'1\';'; // Chq em uso
+				    index++;
+
+                    produtosCancM[index]= 'showMsgAguardo(\'Aguarde, carregando tela MANTAL ...\'); ' +
 										   'setaParametrosImped(\'MANTAL\',\'\',nrdconta,flgcadas, \'IMPEDI\'); ' +
 										   'setaImped();' +
 										   'direcionaTela(\'MANTAL\',\'no\');';
-					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = '';
-					produtosCancMCheque[index] = '';
+					produtosCancMAtenda[index]= '';
+					produtosCancMContas[index]= '';
+					produtosCancMCheque[index]= '';
 					index++;
-
 					
 					break;
 
@@ -497,6 +512,30 @@ function efetuaCancelamentoManual(){
 					index++;
 					
 					break;
+
+			    //CHEQUE -> FOLHAS DE CHEQUE EM ESTOQUE
+			    case "23":
+
+			        produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' +
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+			        produtosCancMAtenda[index] = '';
+			        produtosCancMContas[index] = '';
+			        produtosCancMCheque[index] = 'tppeschq = \'2\';'; // Chq EM ESTOQUE / ARQUIVO
+			        index++;
+
+			        produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela MANTAL ...\'); ' +
+										   'setaParametrosImped(\'MANTAL\',\'\',nrdconta,flgcadas, \'IMPEDI\'); ' +
+										   'setaImped();' +
+										   'direcionaTela(\'MANTAL\',\'no\');';
+			        produtosCancMAtenda[index] = '';
+			        produtosCancMContas[index] = '';
+			        produtosCancMCheque[index] = '';
+			        index++;
+
+			        break;
+
 					
 			}
 			produtosCancM[index - 1] = 'cdproduto = ' + $(this).attr('id') + ";" + produtosCancM[index - 1];			
