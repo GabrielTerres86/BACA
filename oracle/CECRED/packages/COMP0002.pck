@@ -313,7 +313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       BEGIN
     
         CASE
-          WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 1 THEN -- Transferencia Realizada
+          WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
             vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
           WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 3 THEN -- Transferencia Recebida
@@ -322,7 +322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             vr_dsprotoc := pr_protocolo.dscedent;          
           WHEN pr_protocolo.cdtippro = 3 THEN -- Capital;
             vr_dsprotoc := pr_protocolo.dsinform##1;
-          WHEN pr_protocolo.cdtippro = 9 AND pr_cdtipmod = 1 THEN -- TED Realizada
+          WHEN pr_protocolo.cdtippro = 9 AND pr_cdtipmod = 2 THEN -- TED Realizada
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(4, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##3, '#'));
           WHEN pr_protocolo.cdtippro = 9 AND pr_cdtipmod = 3 THEN -- TED Recebida
             vr_dsprotoc := pr_protocolo.dsinform##2;
