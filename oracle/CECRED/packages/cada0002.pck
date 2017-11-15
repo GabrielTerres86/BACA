@@ -3680,6 +3680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrctatrf';
           CLOSE cr_crapcti_2;
+          CLOSE cr_crapcti;
           RAISE vr_exc_saida;
         
         ELSE
@@ -3693,6 +3694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
             pr_nmdcampo := 'nrctatrf';
             CLOSE cr_crapcti_2;
+            CLOSE cr_crapcti;
             RAISE vr_exc_saida;
 
           END IF;
@@ -3921,6 +3923,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         vr_dscritic := '';
         RAISE vr_exc_saida;
       END IF;
+      
+      CLOSE cr_crapass;
 
       -- Verifica se cooperado e demitido
       IF rw_crapass.dtdemiss IS NOT NULL THEN
@@ -3938,7 +3942,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         OPEN cr_crapttl(pr_cdcooper => rw_crapcop_2.cdcooper
                        ,pr_nrdconta => pr_nrctatrf
                        ,pr_idseqttl => 1);
-                
+
+        FETCH cr_crapttl INTO rw_crapttl;        
+        
         IF cr_crapttl%FOUND THEN
           pr_nmtitula := rw_crapttl.nmextttl;
           pr_nrcpfcgc := rw_crapttl.nrcpfcgc;
@@ -3948,7 +3954,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           pr_nrcpfcgc := rw_crapass.nrcpfcgc;
           pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,1);
         END IF;
-
+        
+        CLOSE cr_crapttl;
       ELSE
         pr_inpessoa := 2;
         pr_intipcta := 1;

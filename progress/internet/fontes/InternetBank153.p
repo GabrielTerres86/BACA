@@ -527,6 +527,7 @@ ELSE IF par_tpoperac = 8 THEN DO:
                           INPUT par_tpdpagto,         /* pr_tpdpagto */                          
                           INPUT IF LENGTH(par_sftcdbar) = 48 THEN par_sftcdbar ELSE "", /* pr_dslindig */
                           INPUT IF par_cdbarras <> "" THEN par_cdbarras ELSE IF LENGTH(par_sftcdbar) = 44 THEN par_sftcdbar ELSE "", /* pr_cdbarras */
+                          INPUT par_dtcompet,         /* pr_mmaacomp */
                           INPUT par_vldoinss,         /* pr_vlrdinss */                          
                           INPUT par_vloutent,         /* pr_vlrouent */
                           INPUT par_vlatmjur,         /* pr_vlrjuros */

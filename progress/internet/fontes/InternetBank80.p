@@ -39,7 +39,6 @@ DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscpfcgc AS CHAR                                           NO-UNDO.
-DEF VAR aux_nmtitula AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                           NO-UNDO.
 DEF VAR aux_msgaviso AS CHAR                                           NO-UNDO.
 
@@ -119,8 +118,6 @@ IF  NOT VALID-HANDLE(h-b1wgen0015)  THEN
         RETURN "NOK".
     END.
 
-ASSIGN aux_nmtitula = par_nmtitula.
-
 FOR FIRST crapcti FIELDS(cdcooper) WHERE crapcti.cdcooper = par_cdcooper
                                      AND crapcti.nrdconta = par_nrdconta
                                      AND crapcti.cddbanco = par_cddbanco
@@ -152,7 +149,7 @@ IF  NOT AVAIL crapcti  THEN
                                                 INPUT-OUTPUT par_nrcpfcgc,
                                                 INPUT TRUE,
                                                 INPUT par_rowidcti, /* Validacao de Registro */
-                                                INPUT-OUTPUT aux_nmtitula,
+                                                INPUT-OUTPUT par_nmtitula,
                                                OUTPUT aux_dscpfcgc,
                                                OUTPUT aux_nmdcampo,
                                                OUTPUT TABLE tt-erro).
