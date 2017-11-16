@@ -1542,6 +1542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                 '<dttransa>' || rw_agendamento.dttransa || '</dttransa>'  ||																
                                 '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>'  ||
 																'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>'  ||																
+																'<dtvencto>' || rw_agendamento.dtvencto || '</dtvencto>'  ||																												
 																'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
 																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>'  ||																
                                 '<infosac>'  ||

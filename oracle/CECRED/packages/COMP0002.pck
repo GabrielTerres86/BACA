@@ -2900,7 +2900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dtapurac>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtapurac>' ||
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
-					IF vr_cdtribut = 6106 THEN 
+					IF vr_cdtribut <> 6106 THEN 
 						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
@@ -2921,7 +2921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     =>
-																'<cdtribut>' || vr_cdtribut                                                                                                            || '</cdtribut>' ||
+																'<cdtribut>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9,  vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</cdtribut>' ||
 																'<vlprinci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(12, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlprinci>' ||
 																'<vlrmulta>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(13, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlrmulta>' ||
 																'<vlrjuros>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(14, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlrjuros>' ||
@@ -3140,7 +3140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dtapurac>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtapurac>' ||
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
-					IF vr_cdtribut = 6106 THEN 
+					IF vr_cdtribut <> 6106 THEN 
 						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
@@ -3161,7 +3161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     =>
-																'<cdtribut>' || vr_cdtribut                                                                                                            || '</cdtribut>' ||
+																'<cdtribut>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9,  vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</cdtribut>' ||
 																'<vlprinci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(12, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlprinci>' ||
 																'<vlrmulta>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(13, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlrmulta>' ||
 																'<vlrjuros>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(14, vr_protocolo(vr_ind).dsinform##3, '#')), ':'))    || '</vlrjuros>' ||
