@@ -99,7 +99,14 @@
     29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                         
 
     20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
-                 PRJ340 - NPC (Odirlei-AMcom)                         
+                 PRJ340 - NPC (Odirlei-AMcom)      
+                   									
+	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
+				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
+
+    25/10/2017 - Ajuste para criar arquivo de chamada web com chaves para tratamento
+				 de concorrência.
+                 PRJ356.4 - DDA (Ricardo Linhares)  
 .............................................................................*/
 
 
@@ -230,6 +237,21 @@ ASSIGN aux_dsdmoeda[1]  = "RESERVADO PARA USO FUTURO"
 
 /*................................. FUNCTIONS ...............................*/
 
+FUNCTION GetSalt RETURNS RAW ():
+    SECURITY-POLICY:SYMMETRIC-ENCRYPTION-ALGORITHM = "AES_CBC_256".
+    RETURN GENERATE-RANDOM-KEY.
+END FUNCTION.
+
+FUNCTION gerar-chave RETURNS CHARACTER():
+
+  DEFINE VARIABLE rSalt AS RAW NO-UNDO.
+  DEFINE VARIABLE cSalt AS CHARACTER NO-UNDO.
+
+  cSalt = STRING(HEX-ENCODE(GetSalt())).
+
+  RETURN cSalt.
+
+END.
 
 FUNCTION cria-tag RETURNS LOGICAL (INPUT par_dsnomtag AS CHAR,
                                    INPUT par_dsvaltag AS CHAR,
@@ -1608,12 +1630,14 @@ PROCEDURE obtem-dados-legado PRIVATE:
                           "SOAP.MESSAGE.ENVIO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
            aux_msgreceb = "/usr/coop/" + crapcop.dsdircop + "/arq/" +
                           "SOAP.MESSAGE.RECEBIMENTO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
 
@@ -2387,7 +2411,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                          INTE(SUBSTR(hXmlText:NODE-VALUE,7,2)),
                                          INTE(SUBSTR(hXmlText:NODE-VALUE,1,4))).
         WHEN "VlrTit" THEN 
-            ASSIGN aux_vltitulo = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vltitulo = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "NumDocTit" THEN 
             ASSIGN aux_nrdocmto = hXmlText:NODE-VALUE.
         WHEN "CodCartTit" THEN
@@ -2412,7 +2436,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                   ELSE
                                       "".
         WHEN "VlrAbattTit" THEN
-            ASSIGN aux_vlrabati = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrabati = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         
         WHEN "JurosTit" THEN 
             /** Leitura dos Nodes "multas" - Instrucoes **/
@@ -2443,7 +2467,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                       "".
                                                 
                 ELSE IF hXmlNode3:NAME = "VlrPercJurosTit" THEN
-            ASSIGN aux_vlrdmora = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrdmora = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
 
             END. /** Fim do DO ... TO **/  
         
@@ -2470,7 +2494,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                                 "". 
                                                 
                 ELSE IF hXmlNode3:NAME = "VlrPercMultaTit" THEN
-            ASSIGN aux_vlrmulta = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrmulta = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
                 
               
 
@@ -2538,7 +2562,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                     DO:
         
                         ASSIGN bb-descto-tit-sacado-dda.vldescto = 
-                                             DECI(hXmlText:NODE-VALUE).
+                                             DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
                   END.     
                     END.
 
@@ -2567,13 +2591,13 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
             
         END.
         WHEN "VlrCalcdDesct" THEN
-            ASSIGN aux_vldsccal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vldsccal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrCalcdJuros" THEN
-            ASSIGN aux_vljurcal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vljurcal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrCalcdMulta" THEN
-            ASSIGN aux_vlmulcal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlmulcal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrTotCobrar" THEN
-            ASSIGN aux_vltotcob = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vltotcob = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
 
         WHEN "CidSacdEletrnc" THEN
             ASSIGN aux_nmcidsac = substituir_caracter(INPUT hXmlText:NODE-VALUE).

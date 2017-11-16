@@ -20,6 +20,9 @@
               01/12/2014 - De acordo com a circula 3.656 do Banco Central, substituir nomenclaturas 
                            Cedente por Beneficiário e  Sacado por Pagador 
                            Chamado 229313 (Jean Reddiga - RKAM).    
+
+				25/10/2017 -  Ajustado para especificar adesão de DDA pelo Mobile
+							  PRJ356.4 - DDA (Ricardo Linhares)
                            
 .............................................................................*/
 
@@ -215,6 +218,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                      INPUT tel_idseqttl,
                                      INPUT glb_dtmvtolt,
                                      INPUT TRUE,
+									 INPUT 0,
                                     OUTPUT TABLE tt-erro).
 
              DELETE PROCEDURE h-b1wgen0078.
