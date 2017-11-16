@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 22/04/2016
+   Data    : Junho/95.                       Ultima atualizacao: 02/08/2017
 
    Dados referentes ao programa:
 
@@ -215,6 +215,29 @@ BEGIN
                                 SD358495 e 358499 (Odirlei-AMcom)       
                                 
                  22/04/2016 - Incluso tratamento para não debitar contas com ação judicial (Daniel)                     
+
+                 20/05/2016 - Incluido nas consultas da craplau
+                              craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
+
+                 02/03/2017 - Incluido nas consultas da craplau 
+                              craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+         		     04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                     (Jonata - RKAM M311).
+                 
+                 26/07/2017 - Inclusão na tabela de erros Oracle
+                            - Padronização de logs
+                            - Inclusão parâmetros nas mensagens
+                            - Chamado 709894 (Ana Volles - Envolti)
+
+                 02/08/2017 - Inclusão parâmetros nas mensagens de erro de insert e update
+                            - Chamado 709894 (Ana Volles - Envolti)
+
+                 21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                              (Ana - Envolti - Chamado 746134)
+
+				 16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
+							  (Mauricio - Mouts)
   ............................................................................................*/
   
   DECLARE
@@ -265,6 +288,10 @@ BEGIN
 	  vr_gerandb NUMBER := 1; -- Gera crapndb
 
     vr_dsctajud crapprm.dsvlrprm%TYPE;
+
+    --Chamado 709894
+    vr_dsparam  varchar2(2000);
+    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;      
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -327,6 +354,7 @@ BEGIN
              lau.cdempres,
              lau.rowid,
              lau.flgblqdb,
+             lau.idlancto,            
              ROW_NUMBER() OVER(PARTITION BY lau.cdagenci,
                                             lau.cdbccxlt,
                                             lau.cdbccxpg,
@@ -337,19 +365,28 @@ BEGIN
                                         lau.cdhistor,
                                         lau.nrdocmto) AS seqlauto
         FROM craplau lau
-       WHERE lau.cdcooper = pr_cdcooper                                         -- CODIGO DA COOPERATIVA
-         AND lau.dtmvtopg <= pr_dtmvtopr                                        -- DATA DE PAGAMENTO
-         AND lau.insitlau = 1                                                   -- SITUACAO DO LANCAMENTO
-         AND lau.dsorigem NOT IN ('CAIXA','INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','CAPTACAO','DEBAUT')-- ORIGEM DA OPERACAO
+       WHERE lau.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
+         AND lau.dtmvtopg <= pr_dtmvtopr -- DATA DE PAGAMENTO
+         AND lau.insitlau = 1 -- SITUACAO DO LANCAMENTO
+         AND lau.dsorigem NOT IN ('CAIXA'
+                                 ,'INTERNET'
+                                 ,'TAA'
+                                 ,'PG555'
+                                 ,'CARTAOBB'
+                                 ,'BLOQJUD'
+                                 ,'DAUT BANCOOB'
+                                 ,'CAPTACAO'
+                                 ,'DEBAUT'
+                                 ,'TRMULTAJUROS'
+                                 ,'ADIOFJUROS'
+                                 ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
-       ORDER BY lau.cdagenci,
-                lau.cdbccxlt,
-                lau.cdbccxpg,
-                lau.cdhistor,
-                lau.nrdocmto,
-                lau.progress_recid;
-
-
+       ORDER BY lau.cdagenci
+               ,lau.cdbccxlt
+               ,lau.cdbccxpg
+               ,lau.cdhistor
+               ,lau.nrdocmto
+               ,lau.progress_recid;
     rw_craplau cr_craplau%ROWTYPE;
 
     -- BUSCA LANCAMENTOS AUTOMATICOS
@@ -796,12 +833,14 @@ BEGIN
         vr_des_chave_ag      varchar2(8);
         vr_des_chave_det     varchar2(54);
         
-        
-        
       BEGIN
         -- INICIALIZAR O CLOB (XML)
         dbms_lob.createtemporary(vr_clobxml, TRUE);
         dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
+
+        --Inclusão nome do módulo logado - Chamado 709894
+        gene0001.pc_set_modulo(pr_module => 'PC_CRPS123'
+                              ,pr_action => 'pc_gera_relatorio');
 
         -- INICIO DO ARQUIVO XML
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
@@ -832,6 +871,12 @@ BEGIN
             -- MONTAR MENSAGEM DE CRITICA
             vr_cdcritic := 60;
             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_craprej.dtmvtolt
+                        ||',Cdagenci='||rw_craprej.cdagenci
+                        ||',Cdbccxlt='||rw_craprej.cdbccxlt
+                        ||',Nrdolote='||rw_craprej.nrdolote;
+            
             -- EFETUA RAISE POIS A CRITICA
             RAISE vr_exc_saida;
           ELSE
@@ -860,7 +905,7 @@ BEGIN
             CLOSE cr_craprej_I;
           END IF;
 
-          vr_cdcritic := 0; -- ODIGO DE CRITICA
+          vr_cdcritic := 0; -- CODIGO DE CRITICA
           vr_dsintegr := 'DEBITO EM CONTA'; -- DESCRICAO DA INTEGRACAO
 
           vr_qtdifeln := rw_craplot_II.qtcompln - rw_craplot_II.qtinfoln;
@@ -1065,6 +1110,10 @@ BEGIN
 
         -- VERIFICA SE OCORREU UMA CRITICA
         IF vr_dscritic IS NOT NULL THEN
+          --Chamado 709894
+          vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtolt
+                      ||',Dsarquiv='||vr_dsarquiv
+                      ||',Cdprogra='||vr_cdprogra;
           RAISE vr_exc_saida;
         END IF;
 
@@ -1147,7 +1196,6 @@ BEGIN
     vr_dsarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C',
                                          pr_cdcooper => pr_cdcooper) || vr_dsarquiv;
     
-
     -- ABRE O CURSOR DE LOTE E FAZ A ATRIBUICAO DO CODIGO DO LOTE CONSULTADO
     OPEN cr_craplot(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
                     pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
@@ -1176,6 +1224,7 @@ BEGIN
     -- ABRE O CURSOR REFERENTE AOS LANCAMENTOS AUTOMATICOS
     OPEN cr_craplau(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
                     pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
+
     LOOP
       FETCH cr_craplau
         INTO rw_craplau;
@@ -1198,7 +1247,6 @@ BEGIN
 		      CONTINUE;        
 		    END IF;
       END IF; 
-
 
       -- VERIFICA CODIGO DO BANCO / CAIXA
       IF rw_craplau.cdbccxlt = 911 THEN
@@ -1323,8 +1371,12 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
-            vr_dscritic := 'Problema ao inserir na tabela CRAPLOT: ' ||
-                           sqlerrm;
+            vr_dscritic := 'Problema ao inserir na tabela CRAPLOT: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtopr
+                        ||',Cdagenci='||vr_cdagenci
+                        ||',Cdbccxlt='||vr_cdbccxlt
+                        ||',Nrdolote='||vr_nrdolote;
             RAISE vr_exc_saida;
         END;
       ELSE
@@ -1346,6 +1398,9 @@ BEGIN
                         pr_nrdconta => vr_nrdconta);
         FETCH cr_crapass
           INTO rw_crapass;
+
+        --Chamado 709894
+        vr_dsparam := 'Nrdconta='||vr_nrdconta;
 
         -- SE NÃO ENCONTRAR
         IF cr_crapass%NOTFOUND THEN
@@ -1417,6 +1472,9 @@ BEGIN
       FETCH cr_crapsld
         INTO rw_crapsld;
 
+      --Chamado 709894
+      vr_dsparam := 'Nrdconta='||vr_nrdconta;
+
       -- SE NÃO ENCONTRAR
       IF cr_crapsld%NOTFOUND THEN
 
@@ -1438,6 +1496,9 @@ BEGIN
                           pr_cdhistor => rw_craplau.cdhistor); -- CODIGO DO HISTORICO
         FETCH cr_craphis_I
           INTO rw_craphis_I;
+
+          --Chamado 709894
+          vr_dsparam := 'Cdhistor='||rw_craplau.cdhistor;
 
         IF cr_craphis_I%NOTFOUND THEN
           -- FECHAR O CURSOR
@@ -1479,12 +1540,23 @@ BEGIN
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
 
           -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
          IF vr_cdcritic > 0 THEN
+          --Chamado 709894
+          vr_dsparam := 'Cdhistor='||rw_craplau.cdhistor
+                      ||',Nrdconta='||rw_craplau.nrdconta
+                      ||',Cdrefere='||rw_crapatr.cdrefere
+                      ||',Vllanaut='||rw_craplau.vllanaut
+                      ||',Cdseqtel='||rw_craplau.cdseqtel
+                      ||',Nrdocmto='||rw_craplau.nrdocmto
+                      ||',Cdagesic='||rw_crapcop.cdagesic
+                      ||',Nrctacns='||rw_crapass.nrctacns
+                      ||',Cdempres='||rw_craplau.cdempres;
             RAISE vr_exc_saida;
          END IF;
         
@@ -1581,6 +1653,9 @@ BEGIN
         FETCH cr_crapepr
           INTO rw_crapepr;
 
+        --Chamado 709894
+        vr_dsparam := 'Nrdconta='||rw_craplau.nrdconta;
+
         IF cr_crapepr%NOTFOUND THEN
           -- FECHAR O CURSOR
           CLOSE cr_crapepr;
@@ -1658,6 +1733,20 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao inserir na tabela CRAPREJ: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_craplot_II.dtmvtolt
+                        ||',Cdagenci='||rw_craplot_II.cdagenci
+                        ||',Cdbccxlt='||rw_craplot_II.cdbccxlt
+                        ||',Nrdolote='||rw_craplot_II.nrdolote
+                        ||',Tplotmov='||rw_craplot_II.tplotmov
+                        ||',Cdhistor='||rw_craplau.cdhistor
+                        ||',Nrdconta='||vr_nrdconta
+                        ||',Nrdctabb='||rw_craplau.nrdctabb
+                        ||',Dsdctitg='||vr_dsdctitg
+                        ||',Nrseqdig='||rw_craplau.nrseqdig
+                        ||',Nrdocmto='||rw_craplau.nrdocmto
+                        ||',Vllanaut='||rw_craplau.vllanaut
+                        ||',Dtdaviso='||rw_craplau.dtmvtolt;
             RAISE vr_exc_saida;
         END;
 
@@ -1707,8 +1796,19 @@ BEGIN
           -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Problema ao inserir na tabela CRAPLCM: ' ||
-                           sqlerrm;
+            vr_dscritic := 'Problema ao inserir na tabela CRAPLCM: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_craplot_II.dtmvtolt
+                        ||',Cdagenci='||rw_craplot_II.cdagenci
+                        ||',Cdbccxlt='||rw_craplot_II.cdbccxlt
+                        ||',Nrdolote='||rw_craplot_II.nrdolote
+                        ||',Cdhistor='||rw_craplau.cdhistor
+                        ||',Nrdconta='||vr_nrdconta
+                        ||',Nrdctabb='||rw_craplau.nrdctabb
+                        ||',Nrseqdig='||rw_craplot_II.nrseqdig
+                        ||',Nrdocmto='||vr_nrdocmto
+                        ||',Vllanaut='||rw_craplau.vllanaut
+                        ||',Dtdaviso='||rw_craplau.dtmvtolt;
             RAISE vr_exc_saida;
         END;
 
@@ -1727,6 +1827,8 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLOT: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Rowid='||rw_craplot_II.rowid;
             RAISE vr_exc_saida;
         END;
 
@@ -1734,7 +1836,6 @@ BEGIN
         IF rw_craplau.cdcritic <> 951 THEN
 
           BEGIN
-
             UPDATE craplau
                SET craplau.cdcritic = NVL(vr_cdcritic, 0)
              WHERE craplau.rowid = rw_craplau.rowid;
@@ -1742,8 +1843,9 @@ BEGIN
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' ||
-                             sqlerrm;
+              vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+              --Chamado 709894
+              vr_dsparam := 'Rowid='||rw_craplau.rowid;
               RAISE vr_exc_saida;
           END;
         END IF;
@@ -1769,6 +1871,8 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Rowid='||rw_craplau.rowid;
             RAISE vr_exc_saida;
         END;
 
@@ -1797,6 +1901,8 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+              --Chamado 709894
+              vr_dsparam := 'Rowid='||rw_craplau.rowid;
               RAISE vr_exc_saida;
           END;
 
@@ -1812,8 +1918,9 @@ BEGIN
               -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' ||
-                               sqlerrm;
+                vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+                --Chamado 709894
+                vr_dsparam := 'Rowid='||rw_craplau.rowid;
                 RAISE vr_exc_saida;
             END;
 
@@ -1833,6 +1940,8 @@ BEGIN
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+                --Chamado 709894
+                vr_dsparam := 'Rowid='||rw_craplau.rowid;
                 RAISE vr_exc_saida;
             END;
 
@@ -1847,8 +1956,9 @@ BEGIN
                 -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
               EXCEPTION
                 WHEN OTHERS THEN
-                  vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' ||
-                                 sqlerrm;
+                  vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+                  --Chamado 709894
+                  vr_dsparam := 'Rowid='||rw_craplau.rowid;
                   RAISE vr_exc_saida;
               END;
             END IF;          
@@ -1895,6 +2005,8 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Problema ao atualizar registro na tabela CRAPATR: ' || sqlerrm;
+              --Chamado 709894
+              vr_dsparam := 'Rowid='||rw_crapatr.rowid;
               RAISE vr_exc_saida;
           END;
         END IF;
@@ -1940,6 +2052,11 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao inserir na tabela CRAPREJ: ' || sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_craplot_II.dtmvtolt
+                        ||',Cdagenci='||rw_craplot_II.cdagenci
+                        ||',Cdbccxlt='||rw_craplot_II.cdbccxlt
+                        ||',Nrdolote='||rw_craplot_II.nrdolote;
             RAISE vr_exc_saida;
         END;
 
@@ -1952,6 +2069,9 @@ BEGIN
 
     -- FUNCAO P/ CRIAR O RELATORIO DA INTEGRACAO
     pc_gera_relatorio(pr_cdcooper => pr_cdcooper);
+
+    -- Incluir nome do módulo logado - Chamado 709894
+    GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action =>  null); 
 
     -- SE HOUVE CONTAS MIGRADAS INCLUI AS CONTAS NO RELATORIO
     IF vr_migracao = 1 THEN
@@ -1979,13 +2099,23 @@ BEGIN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
 
-      -- ENVIO CENTRALIZADO DE LOG DE ERRO
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- ERRO TRATATO
-                                 pr_des_log      => to_char(sysdate,
-                                                            'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> ' || vr_dscritic);
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||vr_dscritic ||
+                             '. Cdcooper=' || pr_cdcooper ||
+                             ','||vr_dsparam;
+
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL,
+                             pr_idprglog      => vr_idprglog);
 
       -- CHAMAMOS A FIMPRG PARA ENCERRARMOS O PROCESSO SEM PARAR A CADEIA
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
@@ -2002,13 +2132,59 @@ BEGIN
       END IF;
       -- DEVOLVEMOS CÓDIGO E CRITICA ENCONTRADAS DAS VARIAVEIS LOCAIS
       pr_cdcritic := NVL(vr_cdcritic, 0);
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic||vr_dsparam;
+
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||vr_dscritic ||
+                             '. Cdcooper=' || pr_cdcooper ||
+                             ','||vr_dsparam;
+
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL,
+                             pr_idprglog      => vr_idprglog);
+
       -- EFETUAR ROLLBACK
       ROLLBACK;
     WHEN OTHERS THEN
       -- EFETUAR RETORNO DO ERRO NÃO TRATADO
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
+
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||pr_dscritic ||
+                             '. Cdcooper=' || pr_cdcooper ||
+                             ' ,Flgresta=' || pr_flgresta ||
+                             ' ,Stprogra=' || pr_stprogra ||
+                             ' ,Infimsol=' || pr_infimsol ;
+
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL,
+                             pr_idprglog      => vr_idprglog);
+
+      --Inclusão na tabela de erros Oracle - Chamado 709894
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
+
+
+
       -- EFETUAR ROLLBACK
       ROLLBACK;
   END;
