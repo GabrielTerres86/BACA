@@ -110,7 +110,7 @@
                 07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
                              gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
                              problema com validacao da data de nascimento.
-                             Heitor (Mouts) - Chamado 702785
+                             Heitor (Mouts) - Chamado 702785   	
 
 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
@@ -226,7 +226,7 @@ PROCEDURE Busca_Dados:
             END.
 
         IF  RETURN-VALUE <> "OK" THEN
-            LEAVE Busca.
+               LEAVE Busca.
 
         ASSIGN aux_returnvl = "OK".
 
@@ -948,6 +948,12 @@ PROCEDURE Valida_Dados:
 
             END.
 
+        /* Nao validar para tela MATRIC Inclusao, pois validaçao deverá chamar apos a gravaçao
+           e replicaçao da estrutura de pessao  */    
+           
+        IF par_nmdatela <> 'MATRIC' OR 
+           par_cddopcao <> 'I' THEN
+        DO:   
         IF   par_inpessoa = 1    AND 
              par_idorigem <> 1   AND
              par_dtnasctl <> ?   AND
@@ -1018,7 +1024,7 @@ PROCEDURE Valida_Dados:
                                          INPUT tt-resp.dtnascin,
                                          INPUT tt-resp.cddosexo,
                                          INPUT tt-resp.cdestciv,
-                                           INPUT tt-resp.cdnacion,
+                                         INPUT tt-resp.cdnacion,
                                          INPUT tt-resp.dsnatura,
                                          INPUT tt-resp.cdcepres,
                                          INPUT tt-resp.dsendres,
@@ -1052,6 +1058,7 @@ PROCEDURE Valida_Dados:
                 IF VALID-HANDLE(h-b1wgen0072) THEN
                    DELETE PROCEDURE(h-b1wgen0072).              
 
+           END.
            END.
 
         /* Se esta na inclusao, gerar a nova conta no final da validacao */
@@ -2275,7 +2282,7 @@ PROCEDURE Grava_Dados:
                                                     ASSIGN crapdoc.flgdigit = FALSE.
                                                     LEAVE ContadorDoc4.
                                                 END.              
-                                        END.	   
+                                        END.
                                     END.
                                 
                                 /* Gerar pendencia de cartao assinatura */
@@ -2356,7 +2363,7 @@ PROCEDURE Grava_Dados:
                             END. /* fim do pessoa fisica */
                         ELSE /* Juridica */
                             DO:
-                                
+
                                 ContadorDoc10: DO aux_contador = 1 TO 10:       
                                     FIND FIRST crapdoc WHERE 
                                                crapdoc.cdcooper = par_cdcooper AND

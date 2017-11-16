@@ -37,6 +37,10 @@
               17/08/2015 - Adicionado replace de apostrofo na descricao do bem.
                            (Jorge/Gielow) - SD 320666             
           
+              11/10/2017 - REMOVIDO REPLICACAO DE BENS pois replicaçao será realizada 
+                           pelas triggres do cadastro de pessoa unificado.
+                           PRJ339 -CRM (Odirlei-AMcom)
+          
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0056tt.i &TT-LOG=SIM }
@@ -598,6 +602,9 @@ PROCEDURE exclui-registro:
             DELETE crapbem.     
 
         /* Realiza a replicacao dos dados p/as contas relacionadas ao coop. */
+        /** REMOVIDO REPLICACAO DE BENS pois replixaçao será realizada pelas triggres do cadastro de pessoa 
+          unificado
+        
         IF  par_idseqttl = 1 AND par_nmdatela = "CONTAS" THEN 
             DO:
                IF  NOT VALID-HANDLE(h-b1wgen0077) THEN
@@ -626,6 +633,7 @@ PROCEDURE exclui-registro:
                IF  RETURN-VALUE <> "OK" THEN
                    UNDO Exclui, LEAVE Exclui.
             END.
+            */
 
             FIND FIRST bcrapttl WHERE bcrapttl.cdcooper = par_cdcooper AND
                                       bcrapttl.nrdconta = par_nrdconta AND

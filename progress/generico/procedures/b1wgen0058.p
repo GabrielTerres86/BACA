@@ -170,7 +170,7 @@
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
-
+                
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
 
@@ -179,9 +179,13 @@
 
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
-
+ 
 				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
-                              
+                
+				19/10/2017 - Ajustado rotina Busca_Dados_Cto, para carregar ass por cpf
+                             mesmo que conta ja esteja demitida.
+                             PRJ339 - CRM (Odirlei-AMcom) 
+              
                 03/11/2017 - Correcao no carregamento de bens para procurador na tela CONTAS.
 							 Busca_Dados_Ass SD 778432. (Carlos Rafael Tanholi).
 .....................................................................................*/
@@ -710,10 +714,10 @@ PROCEDURE Busca_Dados_Cto:
             END.
         ELSE
         IF  par_nrcpfcto <> 0  THEN
-            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss)
+            FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc inpessoa dtdemiss) NO-LOCK
                               WHERE crabass.cdcooper = par_cdcooper AND
-                                    crabass.nrcpfcgc = par_nrcpfcto AND 
-									crabass.dtdemiss = ? NO-LOCK:
+                                    crabass.nrcpfcgc = par_nrcpfcto 
+                                 BY crabass.dtdemiss DESC   :
             END.
             
         IF  NOT AVAILABLE crabass THEN
@@ -730,7 +734,7 @@ PROCEDURE Busca_Dados_Cto:
 						ASSIGN par_cdcritic = 64.
                LEAVE BuscaCto.
             END.
-            END.
+			END.
 
         IF  par_nrdconta = crabass.nrdconta  THEN
             DO:
@@ -1807,23 +1811,23 @@ PROCEDURE Valida_Dados:
         ASSIGN tot_persocio = par_persocio.
         
         
-	    /* procuradores da conta */
-	    FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
-	 	 					   crapavt.tpctrato = 6 /*procurad*/ AND
-							   crapavt.nrdconta = par_nrdconta   AND
-							   crapavt.nrctremp = par_idseqttl   
-							   NO-LOCK:
-		   /* despreza a conta em questao pois ja alimentou no variavel tot_persocio */
-		   /* IF  crapavt.nrdctato = par_nrdctato  THEN 
-			    NEXT. */
-	   
-		    IF  crapavt.nrcpfcgc = aux_nrcpfcto  THEN 
-			    NEXT.
-	   
-	   
-		    ASSIGN tot_persocio = tot_persocio + crapavt.persocio.
-	   
-	    END.
+               /* procuradores da conta */
+               FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
+                                      crapavt.tpctrato = 6 /*procurad*/ AND
+                                      crapavt.nrdconta = par_nrdconta   AND
+                                      crapavt.nrctremp = par_idseqttl   
+                                      NO-LOCK:
+                   /* despreza a conta em questao pois ja alimentou no variavel tot_persocio */
+                  /* IF  crapavt.nrdctato = par_nrdctato  THEN 
+                       NEXT. */
+               
+                   IF  crapavt.nrcpfcgc = aux_nrcpfcto  THEN 
+                       NEXT.
+               
+               
+                   ASSIGN tot_persocio = tot_persocio + crapavt.persocio.
+               
+               END.
 
         IF par_nmrotina <> "PROCURADORES"             AND
            par_nmrotina <> "PROCURADORES_FISICA"       AND
@@ -3020,7 +3024,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_inpessoa AS INT                                     NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
-
+    
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "I" THEN 
                               "Inclusao" 
