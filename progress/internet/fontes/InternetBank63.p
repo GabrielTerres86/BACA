@@ -14,6 +14,9 @@
     Alteracoes: 26/07/2011 - Substituido o campo nrlivdda pelo idlivdda
                              na crapcop (Gabriel).
                             
+				25/10/2017 -  Adicionado novos campos para exibição de DDA no Mobile
+							  PRJ356.4 - DDA (Ricardo Linhares)
+                            
 ..............................................................................*/
 
 CREATE WIDGET-POOL.    
@@ -150,7 +153,11 @@ DO:
          + "<nmrescop>" + STRING(tt-crapcop.nmrescop) + "</nmrescop>"
          + "<nmcidade>" + STRING(tt-crapcop.nmcidade) + "</nmcidade>"
          + "<cdufdcop>" + STRING(tt-crapcop.cdufdcop) + "</cdufdcop>"
-         + "<nrcpfcgc>" + STRING(tt-sacado-eletronico.nrcpfcgc) + "</nrcpfcgc>".
+         + "<nrcpfcgc>" + STRING(tt-sacado-eletronico.nrcpfcgc) + "</nrcpfcgc>"
+		 + "<inpessoa>" + STRING(tt-sacado-eletronico.inpessoa) + "</inpessoa>"
+         + "<dspessoa>" + STRING(tt-sacado-eletronico.dspessoa) + "</dspessoa>"
+         + "<nmextttl>" + STRING(tt-sacado-eletronico.nmextttl) + "</nmextttl>"
+         + "<dscpfcgc>" + STRING(tt-sacado-eletronico.dscpfcgc) + "</dscpfcgc>".         
           
     END.
     ELSE

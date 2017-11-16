@@ -105,6 +105,11 @@
 				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
 
     06/09/2017 - Removido tag JDNPCSitTitulo por orientação da JD. (Rafael)
+
+
+    25/10/2017 - Ajuste para criar arquivo de chamada web com chaves para tratamento
+				 de concorrência.
+                 PRJ356.4 - DDA (Ricardo Linhares)  
 .............................................................................*/
 
 
@@ -235,6 +240,21 @@ ASSIGN aux_dsdmoeda[1]  = "RESERVADO PARA USO FUTURO"
 
 /*................................. FUNCTIONS ...............................*/
 
+FUNCTION GetSalt RETURNS RAW ():
+    SECURITY-POLICY:SYMMETRIC-ENCRYPTION-ALGORITHM = "AES_CBC_256".
+    RETURN GENERATE-RANDOM-KEY.
+END FUNCTION.
+
+FUNCTION gerar-chave RETURNS CHARACTER():
+
+  DEFINE VARIABLE rSalt AS RAW NO-UNDO.
+  DEFINE VARIABLE cSalt AS CHARACTER NO-UNDO.
+
+  cSalt = STRING(HEX-ENCODE(GetSalt())).
+
+  RETURN cSalt.
+
+END.
 
 FUNCTION cria-tag RETURNS LOGICAL (INPUT par_dsnomtag AS CHAR,
                                    INPUT par_dsvaltag AS CHAR,
@@ -1613,12 +1633,14 @@ PROCEDURE obtem-dados-legado PRIVATE:
                           "SOAP.MESSAGE.ENVIO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
            aux_msgreceb = "/usr/coop/" + crapcop.dsdircop + "/arq/" +
                           "SOAP.MESSAGE.RECEBIMENTO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
 
@@ -2014,6 +2036,9 @@ PROCEDURE requisicao-lista-titulos PRIVATE:
               INPUT "string", INPUT hXmlMetodo).
 
     cria-tag (INPUT "CNPJ_CPFPagdr", INPUT STRING(par_nrcpfcgc), 
+              INPUT "int", INPUT hXmlMetodo).
+
+    cria-tag (INPUT "JDNPCSitTitulo", INPUT STRING(par_cdsittit), 
               INPUT "int", INPUT hXmlMetodo).
 
     IF   aux_dtvenini <> ?   THEN

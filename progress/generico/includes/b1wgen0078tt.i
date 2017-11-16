@@ -37,6 +37,7 @@ DEF TEMP-TABLE tt-sacado-eletronico NO-UNDO
     FIELD dssituac AS CHAR FORMAT "x(44)"
     FIELD nrcpfcgc AS DECI
     FIELD dscpfcgc AS CHAR FORMAT "x(21)"
+    FIELD inpessoa AS INTE
     FIELD dspessoa AS CHAR FORMAT "x(15)"
     FIELD nmextttl AS CHAR FORMAT "x(50)"
     FIELD btnconsu AS LOGI 

@@ -25,6 +25,9 @@
                  
     24/09/2013 - Informar horario de pagto de VR Boletos no XML. (Rafael)            
                             
+	25/10/2017 -  Permitir filtrar situação do Boleto na pesquisa de titulos
+				  PRJ356.4 - DDA (Ricardo Linhares)   
+							
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -57,10 +60,25 @@ DEF  INPUT PARAM par_nritmini AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_nritmfin AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_idordena AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgerlog AS LOGI                                  NO-UNDO.
+DEF  INPUT PARAM par_cdsittit AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
+
+
+IF par_inpessoa = 0 THEN DO:
+  FOR FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND 
+						  crapass.nrdconta = par_nrdconta 
+						  NO-LOCK. END.
+  
+  IF AVAILABLE crapass  THEN
+	 ASSIGN par_inpessoa = crapass.inpessoa.
+  ELSE 
+	 ASSIGN par_inpessoa = 1.	
+END. 
+
+
 
 RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
 
@@ -153,7 +171,8 @@ RUN lista-titulos-sacado IN h-b1wgen0079
                                INPUT par_dtvenfin,
                                INPUT par_nritmini,
                                INPUT par_nritmfin,
-                               INPUT 0,  /** Situacao **/
+							   INPUT par_cdsittit, /* Situacao */
+							   /*INPUT 0, */  /** Situacao **/
                                INPUT par_idordena,
                                INPUT par_flgerlog,
                               OUTPUT aux_qttitulo,

@@ -15,6 +15,9 @@
     
     Alteracoes: 
                             
+					25/10/2017 -  Ajustado para especificar adesão de DDA pelo Mobile
+								  PRJ356.4 - DDA (Ricardo Linhares)
+							
 ..............................................................................*/
 
 CREATE WIDGET-POOL.    
@@ -36,6 +39,7 @@ DEF  INPUT PARAM par_idorigem AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_nrdconta AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_idseqttl AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtmvtolt AS DATE                                  NO-UNDO.
+DEF  INPUT PARAM par_flmobile AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -61,6 +65,7 @@ RUN aderir-sacado IN h-b1wgen0078 (INPUT par_cdcooper,
                                    INPUT par_idseqttl,
                                    INPUT par_dtmvtolt,
                                    INPUT TRUE,
+								   INPUT par_flmobile,
                                   OUTPUT TABLE tt-erro).
 DELETE PROCEDURE h-b1wgen0078.
 

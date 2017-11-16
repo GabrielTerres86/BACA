@@ -687,6 +687,9 @@
 				 06/09/2017 - Alterações na chamada de pagamento GPS.
 							  (P.356.2 - Ricardo Linhares)
                               
+                25/10/2017 -  Ajustes diversos para projeto de DDA Mobile
+                              PRJ356.4 - DDA (Ricardo Linhares)
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1222,6 +1225,10 @@ DEF VAR aux_titulo4  AS DECI								 		   NO-UNDO.
 DEF VAR aux_titulo5  AS DECI				 						   NO-UNDO.
 DEF VAR aux_codigo_barras AS CHAR      								   NO-UNDO.
 DEF VAR aux_tppacote AS INTE                                            NO-UNDO.
+
+/* Operacao 62 */
+DEF VAR aux_dssittit AS CHAR NO-UNDO.
+DEF VAR aux_cdsittit AS INTE NO-UNDO.
 
 /*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
@@ -3438,7 +3445,8 @@ PROCEDURE proc_operacao26:
                               aux_dtmvtocd
                           ELSE
                               DATE(GET-VALUE("aux_dtmvtopg"))
-           aux_cdctrlcs = GET-VALUE("aux_cdctrlcs").
+           aux_cdctrlcs = GET-VALUE("aux_cdctrlcs")
+           aux_vlapagar = DECI(GET-VALUE("aux_vlapagar")).
     
     RUN sistema/internet/fontes/InternetBank26.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3459,6 +3467,7 @@ PROCEDURE proc_operacao26:
                                                   INPUT aux_nrcpfope,
                                                   INPUT aux_flmobile,
                                                   INPUT aux_cdctrlcs,
+                                                  INPUT aux_vlapagar,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao26).
     
@@ -4525,7 +4534,13 @@ PROCEDURE proc_operacao62:
            aux_nritmfin = INTE(GET-VALUE("nritmfin"))
            aux_idordena = INTE(GET-VALUE("idordena"))
            aux_inpessoa = INTE(GET-VALUE("inpessoa"))
+           aux_dssittit = GET-VALUE("sittitul")
            aux_flgerlog = LOGICAL(GET-VALUE("flgerlog")).
+
+    IF aux_dssittit = "" THEN
+      ASSIGN aux_cdsittit = 0.
+    ELSE
+      ASSIGN aux_cdsittit = INTE(aux_dssittit).
 
     RUN sistema/internet/fontes/InternetBank62.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4538,6 +4553,7 @@ PROCEDURE proc_operacao62:
                                                   INPUT aux_nritmfin,
                                                   INPUT aux_idordena,
                                                   INPUT aux_flgerlog,
+                                                  INPUT aux_cdsittit,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -4555,6 +4571,8 @@ PROCEDURE proc_operacao62:
 END PROCEDURE.
 
 PROCEDURE proc_operacao63:
+    
+    
     
     RUN sistema/internet/fontes/InternetBank63.p (INPUT aux_cdcooper,
                                                   INPUT 90,
@@ -4593,6 +4611,7 @@ PROCEDURE proc_operacao64:
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
+                                                  INPUT INTE(aux_flmobile),
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
