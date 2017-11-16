@@ -366,7 +366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
             ,psf.inhabilitacao_menor inhabilitacaoMenor
             ,psf.dthabilitacao_menor dthabilitacaoMenor
             ,psf.cdestado_civil cdestadoCivil 
-            ,psf.cdnatureza_ocupacao cdNaturezaOcupacao 
+            ,pre.cdocupacao cdNaturezaOcupacao 
             ,pre.nrcadastro cdCadastroEmpresa 
             ,pssMae.Nmpessoa nmmae
             ,pssConjugue.Nmpessoa nmconjugue

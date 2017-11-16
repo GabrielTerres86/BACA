@@ -2904,7 +2904,8 @@ PROCEDURE Valida_Fis PRIVATE :
             IF CAN-FIND ( crapemp WHERE crapemp.cdcooper = par_cdcooper
                                   AND   crapemp.cdempres = par_cdempres
                                   AND   crapemp.flgvlddv = TRUE) THEN
-            DO:
+            /* Consistencia 41 - Cadastro/dv errado comentada porque a informacao que vem do CRM nao valida digito verificador */                      
+            /*DO:
                 /* verificar o digito do cadastro */
                 IF  NOT ValidaDigFun(INPUT par_cdcooper,
                                      INPUT 0,
@@ -2916,7 +2917,7 @@ PROCEDURE Valida_Fis PRIVATE :
                            par_cdcritic = 41.
                     LEAVE ValidaFis.
                 END.
-            END.
+            END.*/
         END.
 
         /* Ocupacao */
