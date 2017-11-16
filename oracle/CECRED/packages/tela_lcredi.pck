@@ -66,6 +66,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LCREDI is
                                     ,pr_cdhistor IN craplcr.cdhistor%type --> Código do histórico 
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
+                                    ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica   
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica  
@@ -134,6 +135,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LCREDI is
                                     ,pr_cdfinali IN VARCHAR2              --> Finalidades 
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
+                                    ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -239,6 +241,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Observacao: -----
     
         Alteracoes: 28/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+                    
+                    10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
+    ..............................................................................*/
+
     CURSOR cr_craplcr(p_cdcooper IN crapcop.cdcooper%type
                      ,p_cdlcremp IN craplcr.cdlcremp%type) IS 
       SELECT c.dslcremp
@@ -267,6 +273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.tpctrato
            , c.tpdescto
            , c.nrdevias
+           , c.permingr
            , c.cdusolcr
            , c.tplcremp
            , decode(c.tplcremp,1,'Normal',2,'Equiv. Salarial') dstipolc
@@ -460,6 +467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'txmaxima', pr_tag_cont => to_char(rw_craplcr.txmaxima,'fm990d000','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'tpctrato', pr_tag_cont => rw_craplcr.tpctrato, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'tpdescto', pr_tag_cont => rw_craplcr.tpdescto, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'permingr', pr_tag_cont => to_char(rw_craplcr.permingr,'fm990d00'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'nrdevias', pr_tag_cont => rw_craplcr.nrdevias, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'cdusolcr', pr_tag_cont => rw_craplcr.cdusolcr, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'tplcremp', pr_tag_cont => rw_craplcr.tplcremp, pr_des_erro => vr_dscritic);
@@ -999,6 +1007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                     ,pr_cdhistor IN craplcr.cdhistor%type --> Código do histórico  
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
+                                    ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG  
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica    
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica    
@@ -1027,6 +1036,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
 								 (Andrei - RKAM).		
 
                     28/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+                    
+                    10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
     ..............................................................................*/
 	CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
@@ -1037,6 +1048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.tplcremp
            , c.tpdescto
            , c.nrdevias
+           , c.permingr
            , c.cdusolcr
            , c.flgtarif
            , c.flgtaiof
@@ -1121,6 +1133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     vr_incalpre crapccp.incalpre%TYPE;
     vr_txbaspre crapccp.incalpre%TYPE;
     vr_incalcul crapccp.incalpre%TYPE;
+    vr_permingr craplcr.permingr%TYPE;
     
     --> Tabela de retorno do operadores que estao alocando a tabela especifidada
     vr_tab_locktab GENE0001.typ_tab_locktab;
@@ -1234,10 +1247,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
       
     END IF;
     
-    IF pr_tpctrato NOT IN (1,2,3) THEN
+    IF pr_tpctrato NOT IN (1,2,3,4) THEN
       
       vr_cdcritic := 529;
       pr_nmdcampo := 'tpctrato';
+        
+      RAISE  vr_exc_saida;
+      
+    END IF;
+    
+    IF pr_tpctrato <> 4 THEN
+      vr_permingr := 0;
+    ELSE
+      vr_permingr := pr_permingr;
+    END IF;
+    
+    IF pr_tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+      
+      vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+      pr_nmdcampo := 'permingr';
         
       RAISE  vr_exc_saida;
       
@@ -1582,6 +1610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.perjurmo = pr_perjurmo
            , c.tpdescto = pr_tpdescto
            , c.nrdevias = pr_nrdevias
+           , c.permingr = vr_permingr
            , c.cdusolcr = pr_cdusolcr
            , c.flgtarif = pr_flgtarif
            , c.flgtaiof = pr_flgtaiof
@@ -1723,6 +1752,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     'Alterou o Nr. de Vias da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || rw_craplcr.nrdevias || 
                                                     ' para ' || pr_nrdevias || '.');
+          
+    END IF;
+    
+    IF vr_permingr <> rw_craplcr.permingr THEN    
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'lcredi.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Alterou o Percentual minimo da cobertura da garantia de aplicacao ' ||
+                                                    'da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || rw_craplcr.permingr || 
+                                                    ' para ' || vr_permingr || '.');
           
     END IF;
     
@@ -2170,6 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                     ,pr_cdfinali IN VARCHAR2              --> Finalidades  
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
+                                    ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -2198,6 +2242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
 								 (Andrei - RKAM).		   
 
                     28/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+                    
+                    10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
     ..............................................................................*/
     CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
@@ -2261,6 +2307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     vr_incalcul crapccp.incalpre%TYPE;
     vr_nrseqlch craplch.nrseqlch%TYPE;
     vr_split    gene0002.typ_split := gene0002.typ_split();
+    vr_permingr craplcr.permingr%TYPE;
     
   BEGIN
     
@@ -2347,10 +2394,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
       
     END IF;
     
-    IF pr_tpctrato NOT IN (1,2,3) THEN
+    IF pr_tpctrato NOT IN (1,2,3,4) THEN
       
       vr_cdcritic := 529;
       pr_nmdcampo := 'tpctrato';
+        
+      RAISE  vr_exc_saida;
+      
+    END IF;
+    
+    IF pr_tpctrato <> 4 THEN
+      vr_permingr := 0;
+    ELSE
+      vr_permingr := pr_permingr;
+    END IF;
+    
+    IF pr_tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+      
+      vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+      pr_nmdcampo := 'permingr';
         
       RAISE  vr_exc_saida;
       
@@ -2625,6 +2687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     BEGIN
       INSERT INTO craplcr(craplcr.cdlcremp
                          ,craplcr.tpctrato
+                         ,craplcr.permingr
                          ,craplcr.flgsaldo
                          ,craplcr.flgstlcr
                          ,craplcr.cdcooper
@@ -2672,6 +2735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                          ,craplcr.cddindex)      
                    VALUES(pr_cdlcremp
                          ,pr_tpctrato
+                         ,vr_permingr
                          ,0
                          ,1
                          ,vr_cdcooper

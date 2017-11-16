@@ -11,6 +11,7 @@
               27/03/2017 - Inclusao dos campos Produto e Indexador.
                            (Jaison/James - PRJ298)
 						  
+ 			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado opção 4 no campo Modelo. (Lombardi - PRJ404)
 						  
 ************************************************************************/
 
@@ -156,6 +157,7 @@ function formataFormularioConsulta() {
     $('label[for="tpdescto"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="tpctrato"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "70px" });
     $('label[for="nrdevias"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
+    $('label[for="permingr"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "235px" });
     $('label[for="flgrefin"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgreneg"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "130px" });
     $('label[for="cdusolcr"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
@@ -207,6 +209,7 @@ function formataFormularioConsulta() {
     $('#tpdescto', '#frmConsulta').css({ 'width': '200px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#tpctrato', '#frmConsulta').css({ 'width': '170px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#nrdevias', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '1');
+    $('#permingr', '#frmConsulta').css({ 'width': '105px', 'text-align': 'right' }).desabilitaCampo().css('text-align', 'right').setMask('DECIMAL','zz9,99','.','');
     $('#flgrefin', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#flgreneg', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#cdusolcr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
@@ -346,8 +349,33 @@ function formataFormularioConsulta() {
 
     });
 
+    //Define ação para o campo tpctrato
+    $('#tpctrato', '#frmConsulta').unbind('change').bind('change', function () {
+
+        if ($(this).val() == 4) {
+            $("#permingr", "#frmConsulta").val('100,00').habilitaCampo();
+        } else {
+			$("#permingr", "#frmConsulta").val('0,00').desabilitaCampo();
+		}
+    });
+	
     //Define ação para o campo nrdevias
     $("#nrdevias", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+
+	//Define ação para o campo permingr
+    $("#permingr", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -1109,6 +1137,8 @@ function formataFormularioConsulta() {
 
         ($('#cddopcao', '#frmCab').val() == 'I') ? $("#tpctrato", "#frmConsulta").habilitaCampo() : $("#tpctrato", "#frmConsulta").desabilitaCampo();
 
+		($("#tpctrato", "#frmConsulta").val() == 4) ? $('#permingr', '#frmConsulta').habilitaCampo() : $('#permingr', '#frmConsulta').desabilitaCampo();
+
         ($('#flgcrcta', '#frmConsulta').val() == 0) ? $('#cdhistor', '#frmConsulta').habilitaCampo() : $('#cdhistor', '#frmConsulta').desabilitaCampo();
 
         if ($('#cdusolcr', '#frmConsulta').val() == 0) {
@@ -1355,6 +1385,7 @@ function alterarLinhaCredito() {
     var tpdescto = $('#tpdescto', '#frmConsulta').val();
     var tpctrato = $('#tpctrato', '#frmConsulta').val();
     var nrdevias = $('#nrdevias', '#frmConsulta').val();
+    var permingr = isNaN(parseFloat($('#permingr', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permingr', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
     var flgrefin = $('#flgrefin', '#frmConsulta').val();
     var flgreneg = $('#flgreneg', '#frmConsulta').val();
     var cdusolcr = $('#cdusolcr', '#frmConsulta').val();
@@ -1410,6 +1441,7 @@ function alterarLinhaCredito() {
             tpdescto: tpdescto,
             tpctrato: tpctrato,
             nrdevias: nrdevias,
+			permingr: permingr,
             flgrefin: flgrefin,
             flgreneg: flgreneg,
             cdusolcr: cdusolcr,
@@ -1476,6 +1508,7 @@ function incluirLinhaCredito() {
     var tpdescto = $('#tpdescto', '#frmConsulta').val();
     var tpctrato = $('#tpctrato', '#frmConsulta').val();
     var nrdevias = $('#nrdevias', '#frmConsulta').val();
+    var permingr = isNaN(parseFloat($('#permingr', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permingr', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
     var flgrefin = $('#flgrefin', '#frmConsulta').val();
     var flgreneg = $('#flgreneg', '#frmConsulta').val();
     var cdusolcr = $('#cdusolcr', '#frmConsulta').val();
@@ -1531,6 +1564,7 @@ function incluirLinhaCredito() {
             tpdescto: tpdescto,
             tpctrato: tpctrato,
             nrdevias: nrdevias,
+			permingr: permingr,
             flgrefin: flgrefin,
             flgreneg: flgreneg,
             cdusolcr: cdusolcr,

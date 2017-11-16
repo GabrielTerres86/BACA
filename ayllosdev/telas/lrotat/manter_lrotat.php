@@ -1,12 +1,14 @@
 <?php
 /*!
- * FONTE        : manter_lrotat.php                        Última alteração: 12/07/2016
+ * FONTE        : manter_lrotat.php                        Última alteração: 11/10/2017
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 06/07/2016
  * OBJETIVO     : Responsável por realizar a inclusão/alteração da linha de crédito rotativo
  * --------------
  * ALTERAÇÕES   : 12/07/2016 - Ajustes para finzaliZação da conversáo 
-                               (Andrei - RKAM) 
+ *                             (Andrei - RKAM) 
+ *
+ *				  11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
  * --------------
  */
 
@@ -30,6 +32,9 @@
     $qtvcapce = (isset($_POST["qtvcapce"])) ? $_POST["qtvcapce"] : 0;
     $vllimmax = (isset($_POST["vllimmax"])) ? $_POST["vllimmax"] : 0;
     $vllmaxce = (isset($_POST["vllmaxce"])) ? $_POST["vllmaxce"] : 0;
+    
+    $tpctrato = (isset($_POST["tpctrato"])) ? $_POST["tpctrato"] : 0;
+    $permingr = (isset($_POST["permingr"])) ? $_POST["permingr"] : 0;
     
     $qtdiavig = (isset($_POST["qtdiavig"])) ? $_POST["qtdiavig"] : 0;
     $txjurfix = (isset($_POST["txjurfix"])) ? $_POST["txjurfix"] : 0;
@@ -82,6 +87,10 @@
     $xml       .= "     <origrecu>".$origrecu."</origrecu>";
     $xml       .= "     <cdmodali>".$cdmodali."</cdmodali>";
     $xml       .= "     <cdsubmod>".$cdsubmod."</cdsubmod>";
+    if($cddopcao == "I") {
+		$xml   .= "     <tpctrato>".$tpctrato."</tpctrato>";
+	}
+    $xml       .= "     <permingr>".$permingr."</permingr>";
     $xml       .= " </Dados>";
     $xml       .= "</Root>";
     
@@ -125,6 +134,14 @@
         //Quantidade de dia vigência
         if ( $GLOBALS["qtdiavig"] == 0){ 
             exibirErro('error','Dias de vig&ecirc;ncia do contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioLrotat();focaCampoErro(\'qtdiavig\',\'frmLrotat\');',false);
+        }
+		
+		IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 4){ 
+			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmLrotat\');',false);
+		}
+		
+		IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
+			exibirErro('error','Percentual minimo da cobertura da garantia de aplicacao inv&aacute;lido. Deve ser entre \"0.01\" e \"300\".','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'permingr\',\'frmLrotat\');',false);
         }
         
         //Código da modalidade

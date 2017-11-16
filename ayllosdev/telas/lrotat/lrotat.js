@@ -9,6 +9,8 @@
  *
  *                05/12/2016 - P341-Automatização BACENJUD - Alterar a validação do deparetamento
  *                             para tratar pelo código do mesmo (Renato Darosci)
+ *
+ *				  10/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
  * --------------
  */
 
@@ -137,6 +139,8 @@ function formataFormularioLrotat(){
     $('label[for="txjurfix"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px", 'padding-right': '114px' });
     $('label[for="txjurvar"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px", 'padding-right': '114px' });
     $('label[for="txmensal"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px", 'padding-right': '114px' });
+    $('label[for="tpctrato"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
+    $('label[for="permingr"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="dsencfin1"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="dsencfin2"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="dsencfin2"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
@@ -158,6 +162,8 @@ function formataFormularioLrotat(){
     $('#txjurfix', '#frmLrotat').css({ 'width': '110px', 'text-align': 'right' }).desabilitaCampo().addClass('porcento_6').attr('maxlength', '10').css({ 'text-align': 'right' });
     $('#txjurvar', '#frmLrotat').css({ 'width': '110px', 'text-align': 'left' }).desabilitaCampo().addClass('porcento_6').attr('maxlength', '10').css({ 'text-align': 'right' });
     $('#txmensal', '#frmLrotat').css({ 'width': '110px', 'text-align': 'left' }).desabilitaCampo().addClass('porcento_6').attr('maxlength', '10').css({ 'text-align': 'right' });
+    $('#tpctrato', '#frmLrotat').css({ 'width': '110px', 'text-align': 'left' }).desabilitaCampo();
+    $('#permingr', '#frmLrotat').css({ 'width': '110px', 'text-align': 'right' }).desabilitaCampo().setMask('DECIMAL','zz9,99','.','');
     $('#dsencfin1', '#frmLrotat').css({ 'width': '380px', 'text-align': 'left' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '50');
     $('#dsencfin2', '#frmLrotat').css({ 'width': '380px', 'text-align': 'left' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '50');
     $('#dsencfin3', '#frmLrotat').css({ 'width': '380px', 'text-align': 'left' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '50');
@@ -206,6 +212,8 @@ function formataFormularioLrotat(){
 	        $("#dssitlcr", "#frmLrotat").desabilitaCampo();
 	        $("#qtvcapce", "#frmLrotat").desabilitaCampo();
 	        $("#txmensal", "#frmLrotat").desabilitaCampo();
+	        $("#tpctrato", "#frmLrotat").desabilitaCampo();
+	        $("#permingr", "#frmLrotat").desabilitaCampo();
 	        $("#dsmodali", "#frmLrotat").desabilitaCampo();
 	        $("#dssubmod", "#frmLrotat").desabilitaCampo();
 
@@ -329,6 +337,23 @@ function formataFormularioLrotat(){
 	        });
 
 	        $("#txjurvar", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
+
+	            if (divError.css('display') == 'block') { return false; }
+
+	            $('input,select').removeClass('campoErro');
+
+	            // Se é a tecla ENTER, TAB, F1
+	            if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+
+	                $(this).nextAll('.campo:first').focus();
+
+	                return false;
+
+	            }
+
+	        });
+
+	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
 
@@ -543,6 +568,7 @@ function formataFormularioLrotat(){
 	            $("#qtdiavig", "#frmLrotat").habilitaCampo();
 	            $("#txjurfix", "#frmLrotat").habilitaCampo();
 	            $("#txjurvar", "#frmLrotat").habilitaCampo();
+				($("#tpctrato", "#frmLrotat").val() == 4) ? $('#permingr', '#frmLrotat').habilitaCampo() : $('#permingr', '#frmLrotat').desabilitaCampo();
 	            $("#dsencfin1", "#frmLrotat").habilitaCampo();
 	            $("#dsencfin2", "#frmLrotat").habilitaCampo();
 	            $("#dsencfin3", "#frmLrotat").habilitaCampo();
@@ -569,6 +595,8 @@ function formataFormularioLrotat(){
 	        $("#qtdiavig", "#frmLrotat").habilitaCampo();
 	        $("#txjurfix", "#frmLrotat").habilitaCampo();
 	        $("#txjurvar", "#frmLrotat").habilitaCampo();
+			$("#tpctrato", "#frmLrotat").habilitaCampo();
+			($("#tpctrato", "#frmLrotat").val() == 4) ? $('#permingr', '#frmLrotat').habilitaCampo() : $('#permingr', '#frmLrotat').desabilitaCampo();
 	        $("#dsencfin1", "#frmLrotat").habilitaCampo();
 	        $("#dsencfin2", "#frmLrotat").habilitaCampo();
 	        $("#dsencfin3", "#frmLrotat").habilitaCampo();
@@ -697,6 +725,50 @@ function formataFormularioLrotat(){
 	        });
 
 	        $("#txjurvar", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
+
+	            if (divError.css('display') == 'block') { return false; }
+
+	            $('input,select').removeClass('campoErro');
+
+	            // Se é a tecla ENTER, TAB, F1
+	            if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+
+	                $(this).nextAll('.campo:first').focus();
+
+	                return false;
+
+	            }
+
+	        });
+
+	        $("#tpctrato", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
+
+	            if (divError.css('display') == 'block') { return false; }
+
+	            $('input,select').removeClass('campoErro');
+
+	            // Se é a tecla ENTER, TAB, F1
+	            if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+
+	                $(this).nextAll('.campo:first').focus();
+
+	                return false;
+
+	            }
+
+	        });
+
+			//Define ação para o campo tpctrato
+			$('#tpctrato', '#frmLrotat').unbind('change').bind('change', function () {
+
+				if ($(this).val() == 4) {
+					$("#permingr", "#frmLrotat").val('100,00').habilitaCampo();
+				} else {
+					$("#permingr", "#frmLrotat").val('0,00').desabilitaCampo();
+				}
+			});
+
+	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
 
@@ -1035,6 +1107,8 @@ function manterLrotat() {
     var txjurfix = isNaN(parseFloat($('#txjurfix', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#txjurfix', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."));
     var txjurvar = isNaN(parseFloat($('#txjurvar', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#txjurvar', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."));
     var txmensal = isNaN(parseFloat($('#txmensal', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#txmensal', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."));
+    var tpctrato = $('#tpctrato', '#frmLrotat').val();
+    var permingr = isNaN(parseFloat($('#permingr', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permingr', '#frmLrotat').val().replace(/\./g, "").replace(/\,/g, "."));
     var dsencfin1  = $('#dsencfin1', '#frmLrotat').val();
     var dsencfin2  = $('#dsencfin2', '#frmLrotat').val();
     var dsencfin3 = $('#dsencfin3', '#frmLrotat').val();
@@ -1060,6 +1134,8 @@ function manterLrotat() {
             vllimmax: vllimmax,
             vllmaxce: vllmaxce,
             txmensal: txmensal,
+			tpctrato: tpctrato,
+			permingr: permingr,
             qtdiavig: qtdiavig, 
             txjurfix: txjurfix,
             txjurvar: txjurvar,

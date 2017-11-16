@@ -14,7 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela LROTAT
   --
   -- Alteracoes: 12/07/2016 - Ajustes para finzalização da conversão da tela LROTAT
-  --                          (Andrei - RKAM).
+  --                          (Andrei - RKAM).	  
+  --             16/11/2016 - Inclusao dos campos Modelo e % Mínimo Garantia na tela.
+  --                          (Lombardi - PRJ404)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_consulta_lrotat(pr_cddopcao IN VARCHAR2
@@ -64,6 +66,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
                                ,pr_cdmodali IN craplrt.cdmodali%TYPE
                                ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
                                ,pr_cddepart IN NUMBER
+                               ,pr_permingr IN craplrt.permingr%TYPE
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -90,6 +93,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
                              ,pr_cdmodali IN craplrt.cdmodali%TYPE
                              ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
                              ,pr_cddepart IN NUMBER
+                             ,pr_tpctrato IN craplrt.tpctrato%TYPE
+                             ,pr_permingr IN craplrt.permingr%TYPE
                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -209,6 +214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
             ,lrt.txjurvar
             ,lrt.txmensal
             ,lrt.vltarifa
+            ,lrt.tpctrato
+            ,lrt.permingr
             ,lrt.qtvcapce
             ,lrt.vllmaxce
             ,lrt.cdmodali
@@ -430,6 +437,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'txmensal',
                              pr_tag_cont => to_char(rw_craplrt.txmensal,'fm990d000000','NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'tpctrato',
+                             pr_tag_cont => to_char(rw_craplrt.tpctrato),
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'permingr',
+                             pr_tag_cont => to_char(rw_craplrt.permingr,'fm990d00','NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1004,6 +1025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                                ,pr_cdmodali IN craplrt.cdmodali%TYPE
                                ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
                                ,pr_cddepart IN NUMBER
+                               ,pr_permingr IN craplrt.permingr%TYPE
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1049,6 +1071,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       vr_idorigem VARCHAR2(100);   
       vr_txmensal NUMBER(9,6) := 0;    
       
+      -- Variaveis auxiliares
+      vr_permingr craplrt.permingr%TYPE;
+      
       CURSOR cr_craplrt(pr_cdcooper IN craplrt.cdcooper%TYPE
                        ,pr_cddlinha IN craplrt.cddlinha%TYPE) IS
       SELECT lrt.cdcooper,
@@ -1062,6 +1087,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
              lrt.qtvcapce,
              lrt.txjurfix,
              lrt.txjurvar,
+             lrt.tpctrato,
+             lrt.permingr,
              lrt.dsencfin##1,
              lrt.dsencfin##2,
              lrt.dsencfin##3,
@@ -1244,6 +1271,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       END IF;
                            
+      IF rw_craplrt.tpctrato NOT IN (0,4) THEN
+        
+        vr_cdcritic := 529;
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
+      IF rw_craplrt.tpctrato <> 4 THEN
+        vr_permingr := 0;
+      ELSE
+        vr_permingr := pr_permingr;
+      END IF;
+      
+      IF rw_craplrt.tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+        
+        vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+        pr_nmdcampo := 'permingr';
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
       BEGIN
         UPDATE craplrt lrt
            SET lrt.dsdlinha = UPPER(pr_dsdlinha) ,
@@ -1254,6 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                lrt.txjurfix = pr_txjurfix,
                lrt.txjurvar = pr_txjurvar,
                lrt.txmensal = vr_txmensal,
+               lrt.permingr = vr_permingr,
                lrt.vllimmax = pr_vllimmax,
                lrt.vllmaxce = pr_vllmaxce,
                lrt.dsencfin##1 = pr_dsencfin1,
@@ -1413,6 +1464,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       END IF;
       
+      IF rw_craplrt.permingr <> vr_permingr THEN
+        
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'lrotat.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                      'Alterou o/a Percentual minimo da cobertura da garantia de aplicacao ' || 
+                                                      to_char(rw_craplrt.permingr,'fm990d00') || ' para ' || to_char(vr_permingr,'fm990d00') || ' da linha ' ||       
+                                                      rw_craplrt.cddlinha || '.');
+      
+      END IF;
+      
       IF rw_craplrt.dsencfin##1 <> pr_dsencfin1 OR 
          rw_craplrt.dsencfin##2 <> pr_dsencfin2 OR
          rw_craplrt.dsencfin##3 <> pr_dsencfin3 THEN
@@ -1487,6 +1552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                              ,pr_cdmodali IN craplrt.cdmodali%TYPE
                              ,pr_cdsubmod IN craplrt.cdsubmod%TYPE
                              ,pr_cddepart IN NUMBER
+                             ,pr_tpctrato IN craplrt.tpctrato%TYPE
+                             ,pr_permingr IN craplrt.permingr%TYPE
                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1531,7 +1598,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
     
+    
       vr_txmensal NUMBER(9,6) := 0; 
+      vr_permingr craplrt.permingr%TYPE;
     
       CURSOR cr_craplrt(pr_cdcooper IN craplrt.cdcooper%TYPE
                        ,pr_cddlinha IN craplrt.cddlinha%TYPE
@@ -1634,6 +1703,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       END IF;
       
+      IF pr_tpctrato NOT IN (1,4) THEN
+        
+        vr_cdcritic := 529;
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
+      IF pr_tpctrato <> 4 THEN
+        vr_permingr := 0;
+      ELSE
+        vr_permingr := pr_permingr;
+      END IF;
+      
+      IF pr_tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+        
+        vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+        pr_nmdcampo := 'permingr';
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
       BEGIN
         INSERT INTO craplrt lrt
               (lrt.cddlinha
@@ -1649,6 +1741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
               ,lrt.txmensal
               ,lrt.vllimmax
               ,lrt.vllmaxce
+              ,lrt.tpctrato
+              ,lrt.permingr
               ,lrt.dsencfin##1
               ,lrt.dsencfin##2
               ,lrt.dsencfin##3
@@ -1668,6 +1762,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
               ,vr_txmensal
               ,pr_vllimmax
               ,pr_vllmaxce
+              ,pr_tpctrato
+              ,vr_permingr
               ,pr_dsencfin1
               ,pr_dsencfin2
               ,pr_dsencfin3

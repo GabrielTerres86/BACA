@@ -16,6 +16,9 @@
               27/03/2017 - Inclusao dos campos Produto e Indexador. Ajuste na
                            label de Taxa variavel. (Jaison/James - PRJ298)
 
+ 			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
+						   opção 4 no campo Modelo. (Lombardi - PRJ404)
+
  * ********************************************************************* */
 
 	session_start();
@@ -74,12 +77,16 @@
 			<option value="1" <?php if (getByTagName($linha->tags,'tpctrato') == 1) { ?> selected <?php } ?> >Empr&eacute;stimo</option>
 			<option value="2" <?php if (getByTagName($linha->tags,'tpctrato') == 2) { ?> selected <?php } ?> >Aliena&ccedil;&atilde;o fiduciaria</option>
 			<option value="3" <?php if (getByTagName($linha->tags,'tpctrato') == 3) { ?> selected <?php } ?> >Hipoteca</option>
+			<option value="4" <?php if (getByTagName($linha->tags,'tpctrato') == 4) { ?> selected <?php } ?> >Aplica&ccedil;&atilde;o</option>
 		</select>
 						
 		<br />
 
 		<label for="nrdevias"><? echo utf8ToHtml("Quantidade de vias:"); ?></label>
 		<input  type="text" id="nrdevias" name="nrdevias"value="<?echo getByTagName($linha->tags,'nrdevias'); ?>" > 
+		
+		<label for="permingr"><? echo utf8ToHtml("% M&iacute;nimo Garantia:"); ?></label>
+		<input  type="text" id="permingr" name="permingr"value="<?echo getByTagName($linha->tags,'permingr') ? getByTagName($linha->tags,'permingr') : '0,00'; ?>" > 
 		
 		<br />
 

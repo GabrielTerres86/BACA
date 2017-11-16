@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : ldesco.php                        Última alteração: 
+ * FONTE        : ldesco.php                        Última alteração: 11/10/2017
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 17/11/2016
  * OBJETIVO     : Mostrar tela LDESCO
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   :  11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
  * --------------
  */
 
@@ -74,9 +74,11 @@
     $('#descricao','#frmLdesco').val('<?echo getByTagName($linhas->tags,'DSDLINHA'); ?>');
     $('#taxamora','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXJURMOR'); ?>');
     $('#taxamensal','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXMENSAL'); ?>');
+    $('#tpctrato','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TPCTRATO'); ?>');
     $('#taxadiaria','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXDIARIA'); ?>');
     $('#qtvias','#frmLdesco').val('<?echo getByTagName($linhas->tags,'NRDEVIAS'); ?>');
     $('#tarifa','#frmLdesco').val('<?echo getByTagName($linhas->tags,'FLGTARIF')?>');
+    $('#permingr','#frmLdesco').val('<?echo getByTagName($linhas->tags,'PERMINGR')?>');
     $('#situacao','#frmLdesco').val('<?echo getByTagName($linhas->tags,'DSSITLCR'); ?>');
 
     formataLinhaDesconto();
