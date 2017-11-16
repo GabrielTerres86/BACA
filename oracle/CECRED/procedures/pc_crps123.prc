@@ -235,6 +235,9 @@ BEGIN
 
                  21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
+
+				 16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
+							  (Mauricio - Mouts)
   ............................................................................................*/
   
   DECLARE
@@ -375,7 +378,8 @@ BEGIN
                                  ,'CAPTACAO'
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
-                                 ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
+                                 ,'ADIOFJUROS'
+                                 ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
        ORDER BY lau.cdagenci
                ,lau.cdbccxlt
