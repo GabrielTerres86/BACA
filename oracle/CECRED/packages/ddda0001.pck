@@ -414,10 +414,11 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                                      ,pr_cdcodbar IN VARCHAR2    --> Codigo de barras do titulo
                                      ,pr_des_erro OUT VARCHAR2   --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2); --> Descricao erro
-                                     
-PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
-                              ,pr_nrdconta IN crapass.nrdconta%TYPE
-                              ,pr_notif_dda IN typ_reg_notif_dda);
+  
+  -- Procedure para criação de notificação e Push para DDA                                   
+  PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                ,pr_notif_dda IN typ_reg_notif_dda);
 
 END ddda0001;
 /
@@ -2763,6 +2764,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                          alterando filtro de data na busca dos novos titulos, e ajustado mensagem para
     --                          exibir corretamente no Internetbank
     --                          SD388026 (Odirlei-AMcom)               
+    --
+    --              
+    --             16/11/2017 - Ajustado mascara no filtro de data para consulta no dblink
+    --                          Criado chamada pra procedure de notificação / PUSH DDA
+    --                          P356.4 (Ricardo Linhares)                 
     ---------------------------------------------------------------------------------------------------------------
   
     /* Busca dos dados do associado */
