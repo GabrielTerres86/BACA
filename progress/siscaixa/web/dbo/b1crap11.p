@@ -793,13 +793,14 @@ PROCEDURE grava-lancamento-boletim:
 		 IF NOT AVAIL craplcm THEN
 		    DO:
 			
-				FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+				/* DEMETRIUS
+        FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
 											 tbcotas_devolucao.nrdconta = p-conta          AND
 											 tbcotas_devolucao.tpdevolucao = 4 /*DEPOSITO*/
 											 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 											 
 				IF NOT AVAIL tbcotas_devolucao THEN
-					DO:
+					DO:*/
 					   ASSIGN i-cod-erro = 0
 							  c-desc-erro = "Cooperado nao tem valor a receber.".
 
@@ -808,12 +809,12 @@ PROCEDURE grava-lancamento-boletim:
 									  INPUT p-nro-caixa,
 									  INPUT i-cod-erro,
 									  INPUT c-desc-erro,
-									  INPUT YES).
+										INPUT YES).
 
 					   RETURN "NOK".
 					
 					
-					END.
+					/*END.*/
 					
 			END.
 		ELSE	
@@ -965,13 +966,14 @@ PROCEDURE grava-lancamento-boletim:
 			 IF NOT AVAIL craplcm THEN
 				DO:
 				
-					FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
+					/* DEMETRIUS
+          FIND tbcotas_devolucao WHERE tbcotas_devolucao.cdcooper = crapcop.cdcooper AND
 												 tbcotas_devolucao.nrdconta = p-conta          AND
 												 tbcotas_devolucao.tpdevolucao = 3 /*Capital*/
 												 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 												 
 					IF NOT AVAIL tbcotas_devolucao THEN
-						DO:
+						DO:*/
 						   ASSIGN i-cod-erro = 0
 								  c-desc-erro = "Cooperado nao tem valor a receber.".
 
@@ -984,8 +986,7 @@ PROCEDURE grava-lancamento-boletim:
 
 						   RETURN "NOK".
 						
-						
-						END.
+						/*END.*/
 						
 				END.
 			ELSE	
