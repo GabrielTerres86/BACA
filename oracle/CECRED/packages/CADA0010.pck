@@ -3641,10 +3641,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
     
     -- Loop sobre os registros encontrados
     FOR x IN 1..vr_relacao.count LOOP
-      -- Se tiver mais de 2000 registros, sai da rotina para nao interromper a performance
-      -- Se retirar a linha abaixo, o JOB que executa de minuto em minuto ficará travado.
-      -- Este problema ocorre quando atualiza contas pesadas (Exemplo: Viacredi)
-      EXIT WHEN x > 2000;
       -- Se o tipo de relacao for de conjuge ou empresa do conjuge
       IF vr_relacao(x).tprelacao IN (1,  -- Conjuge (crapcje)
                                      2,  -- Empresa de trabalho do conjuge (crapcje)
