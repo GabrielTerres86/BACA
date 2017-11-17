@@ -43,7 +43,7 @@
 
     Programa: b1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima Atualizacao: 19/07/2017
+    Data    : Novembro/2009                   Ultima Atualizacao: 17/11/2017
            
     Dados referentes ao programa:
                 
@@ -145,6 +145,11 @@
                              
                 19/07/2017 - Alterado impressao-log-pdf e impressao-log-csv para quando
                              chamar obtem-log-cecred nao limitar os resultados a 9999 (Tiago #708595)
+							 
+				17/11/2017 - Ajustado o relatorio da opcao R para 234 colunas, e tambem o relatorio da opcao
+							 L aumentado o tamanho da conta do remetente e destinatario, conforme solicitado
+							 no chamado 776168. (Kelvin).
+
 ..............................................................................*/
 
 
@@ -199,39 +204,39 @@ DEF VAR aux_dtmvtlog AS DATE                                           NO-UNDO.
 FORM SKIP(2) 
      aux_dstitcab NO-LABEL FORMAT "x(35)"
      SKIP(1)
-     WITH NO-BOX WIDTH 132 FRAME f_titulo.
+     WITH NO-BOX WIDTH 234 FRAME f_titulo.
 
 FORM "                       DESTINATARIO                       "
      "                        REMETENTE                         "
      SKIP
-     "----------------------------------------------------------"
-     "----------------------------------------------------------"
+     "---------------------------------------------------------------------------------------------------   "
+     "   ---------------------------------------------------------------------------------------------------"
      SKIP
      "BCO  AGE          CONTA/DV DESTINATARIO           CPF/CNPJ" 
      "BCO  AGE          CONTA/DV REMETENTE              CPF/CNPJ"
      "         VALOR"
      SKIP
-     aux_pontilha FORMAT "x(132)"
-     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_cabecalho.
+     aux_pontilha FORMAT "x(234)"
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_cabecalho.
 
-FORM aux_dslinlog FORMAT "x(132)"
-     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_rejeitadas.
+FORM aux_dslinlog FORMAT "x(234)"
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_rejeitadas.
 
 FORM tt-logspb-detalhe.cdbandst FORMAT "zz9"
-     tt-logspb-detalhe.cdagedst FORMAT "zzz9"
-     tt-logspb-detalhe.nrctadst FORMAT "xxxxxxx.xxx.xxx-x"
-     tt-logspb-detalhe.dsnomdst FORMAT "x(16)"
-     tt-logspb-detalhe.dscpfdst FORMAT "99999999999999"
-     tt-logspb-detalhe.cdbanrem FORMAT "zz9"
-     tt-logspb-detalhe.cdagerem FORMAT "zzz9"
-     tt-logspb-detalhe.nrctarem FORMAT "xxxxxxx.xxx.xxx-x"
-     tt-logspb-detalhe.dsnomrem FORMAT "x(16)"
-     tt-logspb-detalhe.dscpfrem FORMAT "99999999999999"
-     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99"
+     tt-logspb-detalhe.cdagedst FORMAT "zzz9" AT 6
+     tt-logspb-detalhe.nrctadst FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" AT 13
+     tt-logspb-detalhe.dsnomdst FORMAT "x(40)" AT 43
+     tt-logspb-detalhe.dscpfdst FORMAT "99999999999999" AT 86
+     tt-logspb-detalhe.cdbanrem FORMAT "zz9" AT 107
+     tt-logspb-detalhe.cdagerem FORMAT "zzz9" AT 112
+     tt-logspb-detalhe.nrctarem FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" AT 119
+     tt-logspb-detalhe.dsnomrem FORMAT "x(40)" AT 150
+     tt-logspb-detalhe.dscpfrem FORMAT "99999999999999" AT 192
+     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" AT 230
      SKIP
      "MOTIVO:"
      tt-logspb-detalhe.dsmotivo FORMAT "x(90)"
-     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_devolucao.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_devolucao.
 
 FORM SKIP(1)
      aux_dtmvtlog LABEL "DATA" FORMAT "99/99/9999"
@@ -253,7 +258,7 @@ FORM SKIP(1)
      tt-logspb-totais.vlenvnok AT 044 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
      tt-logspb-totais.vlrrecok AT 069 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
      tt-logspb-totais.vlrecnok AT 100 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
-     WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totais.
+     WITH NO-BOX SIDE-LABELS WIDTH 234 FRAME f_totais.
                                                                     
 /* BUSCA O ISPB DA CECRED PARA ALIMENTAR A TELA DE DETALHES*/
 FIND crapban  WHERE crapban.cdbccxlt = 85 NO-LOCK NO-ERROR.
@@ -979,13 +984,13 @@ PROCEDURE imprime-relatorio:
     ASSIGN par_nmarqimp = "/usr/coop/" + crapcop.dsdircop + "/rl/O538_" + 
                           par_dsiduser + "_" + 
                                   STRING(TIME,"99999") + ".ex"
-           aux_pontilha = FILL("-",132).
+           aux_pontilha = FILL("-",234).
       
     UNIX SILENT VALUE("rm " + par_nmarqimp + " 2> /dev/null").
                             
     OUTPUT STREAM str_1 TO VALUE(par_nmarqimp) PAGED PAGE-SIZE 84.
 
-    { sistema/generico/includes/b1cabrel132.i "11" "538" }
+    { sistema/generico/includes/b1cabrel234.i "15" "538" }
     
     FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
                                           
@@ -2394,12 +2399,12 @@ PROCEDURE impressao-log-pdf:
          tt-logspb-detalhe.nrctrlif COLUMN-LABEL "Num.Controle"  FORMAT "x(20)"                         
          tt-logspb-detalhe.cdbandst COLUMN-LABEL "Banco Dst."    FORMAT "zz9"
          tt-logspb-detalhe.cdagedst COLUMN-LABEL "Age. Dst."     FORMAT "zzz9"
-         tt-logspb-detalhe.nrctadst COLUMN-LABEL "Conta Dst."    FORMAT "xxxxxxx.xxx.xxx-x"
+         tt-logspb-detalhe.nrctadst COLUMN-LABEL "Conta Dst."    FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x"
          tt-logspb-detalhe.dscpfdst COLUMN-LABEL "Cpf/Cnpj Dst." FORMAT "99999999999999"
          tt-logspb-detalhe.dsnomdst COLUMN-LABEL "Nome Dst."     FORMAT "x(16)"                         
          tt-logspb-detalhe.cdbanrem COLUMN-LABEL "Banco Rem."    FORMAT "zz9"
          tt-logspb-detalhe.cdagerem COLUMN-LABEL "Age. Rem."     FORMAT "zzz9"
-         tt-logspb-detalhe.nrctarem COLUMN-LABEL "Conta Rem."    FORMAT "xxxxxxx.xxx.xxx-x"
+         tt-logspb-detalhe.nrctarem COLUMN-LABEL "Conta Rem."    FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x"
          tt-logspb-detalhe.dscpfrem COLUMN-LABEL "Cpf/Cnpj Rem." FORMAT "99999999999999"
          tt-logspb-detalhe.dsnomrem COLUMN-LABEL "Nome Rem."     FORMAT "x(16)"                         
          tt-logspb-detalhe.vltransa COLUMN-LABEL "Valor"         FORMAT "zzz,zzz,zz9.99"                
@@ -2598,12 +2603,12 @@ PROCEDURE impressao-log-csv:
                          tt-logspb-detalhe.nrctrlif FORMAT "x(20)" ";"
                          tt-logspb-detalhe.cdbandst FORMAT "zz9" ";"
                          tt-logspb-detalhe.cdagedst FORMAT "zzz9" ";"
-                         tt-logspb-detalhe.nrctadst FORMAT "xxxxxxx.xxx.xxx-x" ";"
+                         tt-logspb-detalhe.nrctadst FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" ";"
                          tt-logspb-detalhe.dscpfdst FORMAT "99999999999999" ";"
                          tt-logspb-detalhe.dsnomdst FORMAT "x(50)" ";"
                          tt-logspb-detalhe.cdbanrem FORMAT "zz9" ";"
                          tt-logspb-detalhe.cdagerem FORMAT "zzz9" ";"
-                         tt-logspb-detalhe.nrctarem FORMAT "xxxxxxx.xxx.xxx-x" ";"
+                         tt-logspb-detalhe.nrctarem FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" ";"
                          tt-logspb-detalhe.dscpfrem FORMAT "99999999999999" ";"
                          tt-logspb-detalhe.dsnomrem FORMAT "x(50)" ";"
                          tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" ";"
