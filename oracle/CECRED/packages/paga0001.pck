@@ -22630,128 +22630,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
    
         IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
-           
-          FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
-                                         ,pr_nrdconta  => rw_craplau.nrdconta
-                                         ,pr_cdsitsnh  => 1
-                                         ,pr_tpdsenha  => 1) LOOP
-
-            --Verificar a conta de destino
-            OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_cddbanco => rw_craplau.cddbanco
-                           ,pr_nrctatrf => rw_craplau.nrctadst
-                           ,pr_cdageban => rw_craplau.cdageban);
-                                 
-            FETCH cr_crapcti INTO rw_crapcti;
-
-            vr_nmtldest := '';
-                  
-            IF cr_crapcti%FOUND THEN
-               vr_nmtldest := rw_crapcti.nmtitula;
-            END IF;
-                  
-            CLOSE cr_crapcti;
-
-            IF rw_crapass.inpessoa = 1 THEN
-              
-              OPEN cr_crapttl (pr_cdcooper  => rw_crapsnh2.cdcooper
-                              ,pr_nrdconta  => rw_crapsnh2.nrdconta
-                              ,pr_idseqttl  => rw_crapsnh2.idseqttl);
-                                    
-              FETCH cr_crapttl INTO rw_crapttl;
-
-              IF cr_crapttl%FOUND THEN
-
-                CLOSE cr_crapttl;
-                    
-                vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                               'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                               '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                               ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                               to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                               '</b> por insuficiência de saldo.';
-
-                -- Criação de mensagem de notificação no internetbank
-                GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                           ,pr_nrdconta   => rw_craplau.nrdconta
-                                           ,pr_idseqttl   => rw_crapsnh2.idseqttl
-                                           ,pr_cdprogra   => pr_nmdatela
-                                           ,pr_inpriori   => 0
-                                           ,pr_dsdmensg   => vr_dsdmensg
-                                           ,pr_dsdassun   => 'Transação não efetivada'
-                                           ,pr_dsdremet   => rw_crapcop.nmrescop
-                                           ,pr_dsdplchv   => 'Sem Saldo'
-                                           ,pr_cdoperad   => '1'
-                                           ,pr_cdcadmsg   => '0'
-                                           ,pr_dscritic   => vr_dscritic2);
-                                               
-                EXIT;
-                  
-              ELSE
-                CLOSE cr_crapttl;                           
-              END IF;
-            
-            ELSE
-               
-              IF rw_crapass.idastcjt = 0 THEN
-										
-							  vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-														  'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-															'<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-															' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-															to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-															'</b> por insuficiência de saldo.';
-
-								-- Criação de mensagem de notificação no internetbank
-								GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-																				   ,pr_nrdconta   => rw_craplau.nrdconta
-																				   ,pr_idseqttl   => rw_crapsnh2.idseqttl
-																				   ,pr_cdprogra   => pr_nmdatela
-																					 ,pr_inpriori   => 0
-																					 ,pr_dsdmensg   => vr_dsdmensg
-																					 ,pr_dsdassun   => 'Transação não efetivada'
-																					 ,pr_dsdremet   => rw_crapcop.nmrescop
-																					 ,pr_dsdplchv   => 'Sem Saldo'
-																					 ,pr_cdoperad   => '1'
-																					 ,pr_cdcadmsg   => '0'
-																					 ,pr_dscritic   => vr_dscritic2);
-									
-              ELSE
-										
-                  FOR rw_crapsnh3 IN cr_crapsnh3(pr_cdcooper => pr_cdcooper
-                                                ,pr_nrdconta => rw_craplau.nrdconta) LOOP
-
-                    vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                                   'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                   '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                                   ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                                   to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                                   '</b> por insuficiência de saldo.';
-																									
-                    -- Criação de mensagem de notificação no internetbank
-                    GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                               ,pr_nrdconta   => rw_craplau.nrdconta
-                                               ,pr_idseqttl   => rw_crapsnh3.idseqttl
-                                               ,pr_cdprogra   => pr_nmdatela
-                                               ,pr_inpriori   => 0
-                                               ,pr_dsdmensg   => vr_dsdmensg
-                                               ,pr_dsdassun   => 'Transação não efetivada'
-                                               ,pr_dsdremet   => rw_crapcop.nmrescop
-                                               ,pr_dsdplchv   => 'Sem Saldo'
-                                               ,pr_cdoperad   => '1'
-                                               ,pr_cdcadmsg   => '0'
-                                               ,pr_dscritic   => vr_dscritic2);
-
-                  END LOOP;
-                  
-               END IF;
-               
-             END IF;
-               
-           END LOOP;
           
-         END IF;
+          --Verificar a conta de destino
+          OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_craplau.nrdconta
+                         ,pr_cddbanco => rw_craplau.cddbanco
+                         ,pr_nrctatrf => rw_craplau.nrctadst
+                         ,pr_cdageban => rw_craplau.cdageban);
+                                 
+          FETCH cr_crapcti INTO rw_crapcti;
+
+          vr_nmtldest := '';
+                  
+          IF cr_crapcti%FOUND THEN
+             vr_nmtldest := rw_crapcti.nmtitula;
+          END IF;
+                  
+          CLOSE cr_crapcti;
+          
+          vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
+                         'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                         '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
+                         ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
+                         to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                         '</b> por insuficiência de saldo.';
+
+          -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
+          GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
+                                     ,pr_nrdconta   => rw_craplau.nrdconta
+                                   --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
+                                     ,pr_cdprogra   => pr_nmdatela
+                                     ,pr_inpriori   => 0
+                                     ,pr_dsdmensg   => vr_dsdmensg
+                                     ,pr_dsdassun   => 'Transação não efetivada'
+                                     ,pr_dsdremet   => rw_crapcop.nmrescop
+                                     ,pr_dsdplchv   => 'Sem Saldo'
+                                     ,pr_cdoperad   => '1'
+                                     ,pr_cdcadmsg   => '0'
+                                     ,pr_dscritic   => vr_dscritic2);
+          
+        END IF;
           
        END IF;
        
