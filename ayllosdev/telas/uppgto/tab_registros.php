@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Setembro/2017
  * OBJETIVO     : Tabela que apresenta os detalhes
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   :  17/11/2017 - Ajustes melhoria 271.3 (Tiago).
                     
  * --------------
  */ 
@@ -42,12 +42,12 @@
 							<td><span><? echo getByTagName($result->tags,'nmarquiv'); ?></span> <? echo getByTagName($result->tags,'nmarquiv'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'dhdgerac'); ?></span> <? echo getByTagName($result->tags,'dhdgerac'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'nmcedent'); ?></span> <? echo getByTagName($result->tags,'nmcedent'); ?> </td>
-							<td><span><? echo str_replace(",",".",getByTagName($result->tags,'vltitulo')); ?></span><? echo number_format(str_replace(",",".",getByTagName($result->tags,'vltitulo')),2,",","."); ?> </td>
+							<td><span><? echo getByTagName($result->tags,'vltitulo'); ?></span><? echo getByTagName($result->tags,'vltitulo'); ?> </td>
 							
 							<input type="hidden" id="hdnmarquiv" name="hdnmarquiv" value="<? echo getByTagName($result->tags,'nmarquiv'); ?>" />
 							<input type="hidden" id="hddhdgerac" name="hddhdgerac" value="<? echo getByTagName($result->tags,'dhdgerac'); ?>" />
 							<input type="hidden" id="hdnmcedent" name="hdnmcedent" value="<? echo getByTagName($result->tags,'nmcedent'); ?>" />
-							<input type="hidden" id="hdvltitulo" name="hdvltitulo" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vltitulo')),2,",",".");  ?>" />
+							<input type="hidden" id="hdvltitulo" name="hdvltitulo" value="<? echo getByTagName($result->tags,'vltitulo');  ?>" />
 							<input type="hidden" id="hddtvencto" name="hddtvencto" value="<? echo getByTagName($result->tags,'dtvencto'); ?>" />
 							<input type="hidden" id="hddtdpagto" name="hddtdpagto" value="<? echo getByTagName($result->tags,'dtdpagto'); ?>" />
 							<input type="hidden" id="hdnrconven" name="hdnrconven" value="<? echo getByTagName($result->tags,'nrconven'); ?>" />							

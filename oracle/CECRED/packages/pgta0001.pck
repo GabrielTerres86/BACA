@@ -8677,7 +8677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 
     ..............................................................................*/
     ---------> CURSORES <--------
     --> Buscar logs
@@ -9224,7 +9224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        Sistema : CECRED
        Sigla   : PGTA
        Autor   : Douglas Quisinski
-       Data    : Agosto/17.                    Ultima atualizacao: --/--/----
+       Data    : Agosto/17.                    Ultima atualizacao: 17/11/2017
     
        Dados referentes ao programa:
     
@@ -9234,7 +9234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
        Observacao: -----
     
-       Alteracoes:
+       Alteracoes: 17/11/2017 - Ajustes de format vltitulo, vlpagto melhoria 271.3 (Tiago)
     ..............................................................................*/
 
     -- Tabela para arqmazenar os titulos agendados
@@ -9302,8 +9302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                      ' <nmcedent>' || vr_tab_agd_pgt_arq(vr_idx).nmcedent || '</nmcedent>' ||
                                                      ' <dtvencto>' || vr_tab_agd_pgt_arq(vr_idx).dtvencto || '</dtvencto>' ||
                                                      ' <dtdpagto>' || vr_tab_agd_pgt_arq(vr_idx).dtdpagto || '</dtdpagto>' ||
-                                                     ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00')||'</vltitulo>'||
-                                                     ' <vldpagto>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vldpagto,'fm999G999G999G990D00')||'</vldpagto>'||
+                                                     ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vltitulo>'||
+                                                     ' <vldpagto>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vldpagto,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vldpagto>'||
                                                      ' <nrconven>' || vr_tab_agd_pgt_arq(vr_idx).nrconven || '</nrconven>' ||
                                                      ' <cdocorre>' || vr_tab_agd_pgt_arq(vr_idx).cdocorre || '</cdocorre>' ||
                                                      ' <dsocorre>' || vr_tab_agd_pgt_arq(vr_idx).dsocorre || '</dsocorre>' ||
@@ -9385,7 +9385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         Sistema : CECRED
         Sigla   : COBRAN
         Autor   : Tiago
-        Data    : Agosto/17.                    Ultima atualizacao: --/--/----
+        Data    : Agosto/17.                    Ultima atualizacao: 17/11/2017
     
         Dados referentes ao programa:
     
@@ -9395,7 +9395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 17/11/2017 - Ajustes de format vltitulo melhoria 271.3 (Tiago)
     ..............................................................................*/
     ---------> CURSORES <--------
     --> Buscar logs
@@ -9503,7 +9503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                        ' <nmcedent>' || vr_tab_agd_pgt_arq(vr_idx).nmcedent || '</nmcedent>' ||
                        ' <dtvencto>' || vr_tab_agd_pgt_arq(vr_idx).dtvencto || '</dtvencto>' ||
                        ' <dtdpagto>' || vr_tab_agd_pgt_arq(vr_idx).dtdpagto || '</dtdpagto>' ||
-                       ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00')||'</vltitulo>'||
+                       ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vltitulo>'||
                        ' <nrconven>' || vr_tab_agd_pgt_arq(vr_idx).nrconven || '</nrconven>' ||
                        ' <cdocorre>' || vr_tab_agd_pgt_arq(vr_idx).cdocorre || '</cdocorre>' ||
                        ' <dsocorre>' || vr_tab_agd_pgt_arq(vr_idx).dsocorre || '</dsocorre>' ||
