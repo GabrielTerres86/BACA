@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
   /* Rotina para geracao de mensagens para o servico do site */
   PROCEDURE pc_gerar_mensagem(pr_cdcooper IN crapmsg.cdcooper%TYPE
                              ,pr_nrdconta IN crapmsg.nrdconta%TYPE
-                             ,pr_idseqttl IN crapmsg.idseqttl%TYPE
+                             ,pr_idseqttl IN crapmsg.idseqttl%TYPE DEFAULT NULL
                              ,pr_cdprogra IN crapmsg.cdprogra%TYPE
                              ,pr_inpriori IN crapmsg.inpriori%TYPE
                              ,pr_dsdmensg IN crapmsg.dsdmensg%TYPE
@@ -209,6 +209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 19/06/2017 - #642644 Ajustada a rotina pc_solicita_email para gravar a mensagem de 
                              "email enviado" no proc_message, inclusive no ELSE dos anexos (Carlos)
+                             
+                17/10/2017 - Ajuste na pc_gerar_mensagem para não obrigar mais o idseqttl, se este vier nulo, então
+                             o o programa vai percorrer todos os usuários da conta no ibank (Pablão)
 ..............................................................................*/
 
   /* Saída com erro */
@@ -1367,7 +1370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
   -- Rotina para geracao de mensagens para o servico do site
   PROCEDURE pc_gerar_mensagem(pr_cdcooper IN crapmsg.cdcooper%TYPE
                              ,pr_nrdconta IN crapmsg.nrdconta%TYPE
-                             ,pr_idseqttl IN crapmsg.idseqttl%TYPE
+                             ,pr_idseqttl IN crapmsg.idseqttl%TYPE DEFAULT NULL
                              ,pr_cdprogra IN crapmsg.cdprogra%TYPE
                              ,pr_inpriori IN crapmsg.inpriori%TYPE
                              ,pr_dsdmensg IN crapmsg.dsdmensg%TYPE
@@ -1391,57 +1394,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     -- Objetivo  : Geracao de mensagens para o servico do site
     --
     -- Alterações: 20/10/2016 - Utilização da fn_sequence. (Pablão)
+    --
+    --             16/10/2017 - Alteração para utilizar a vw_usuarios_internet, e quando não
+    --                          receber titular, deve gerar mensagem para todos os usuários
+    --                          (Pablão)
     ---------------------------------------------------------------------------------------------------------------
     
-    /* Busca dos dados do associado */
-    CURSOR cr_crapass(pr_cdcooper IN craptab.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT crapass.nrdconta
-            ,crapass.nmprimtl
-            ,crapass.inpessoa
-            ,crapass.cdagenci
-            ,crapass.vllimcre
-            ,crapass.nrcpfcgc
-        FROM crapass
-       WHERE crapass.cdcooper = pr_cdcooper
-             AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;
+    
+    --Selecionar titulares com senhas ativas
+    CURSOR cr_usuarios_internet IS
+     SELECT usr.*
+           ,cop.nmrescop
+       FROM vw_usuarios_internet usr
+           ,crapcop              cop
+      WHERE usr.cdcooper = cop.cdcooper
+        AND usr.cdcooper = pr_cdcooper
+        AND usr.nrdconta = pr_nrdconta
+        AND (pr_idseqttl IS NULL OR usr.idseqttl = pr_idseqttl);
+    TYPE typ_usuarios_internet IS TABLE OF cr_usuarios_internet%ROWTYPE INDEX BY PLS_INTEGER;
+    vr_usuarios_internet typ_usuarios_internet;
     
     vr_nrdmensg crapmsg.nrdmensg%TYPE := 0;
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
     
   BEGIN
   
-    -- Obtém o proximo valor da sequence
+    /* trocando caracteres especiais */
+    vr_dsdmensg := REPLACE(vr_dsdmensg, '<', '%3C');
+    vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
+    vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
+    
+    OPEN cr_usuarios_internet;
+   FETCH cr_usuarios_internet BULK COLLECT
+    INTO vr_usuarios_internet;
+   CLOSE cr_usuarios_internet;
+    
+    FOR idx IN 1 .. vr_usuarios_internet.count LOOP
+    
+      -- Obtém o proximo valor da sequence32
     vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
                               ,pr_nmdcampo => 'NRDMENSG'
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
                               ,pr_flgdecre => 'N');
   
-    -- Busca os dados do associado
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass
-      INTO rw_crapass;
-    CLOSE cr_crapass;
-  
-    -- Busca os dados da cooperativa
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-    FETCH cr_crapcop
-      INTO rw_crapcop;
-    CLOSE cr_crapcop;
-  
     /* trocando "#cooperado#" pelo nome do cooperado,
-    trocando #cooperativa# pelo nome fantasia da cooperativa,
-    trocando caracteres especiais */
-    vr_dsdmensg := REPLACE(pr_dsdmensg
-                          ,'%23cooperado%23'
-                          ,rw_crapass.nmprimtl);
-    vr_dsdmensg := REPLACE(vr_dsdmensg
-                          ,'%23cooperativa%23'
-                          ,rw_crapcop.nmrescop);
-    vr_dsdmensg := REPLACE(vr_dsdmensg, '<', '%3C');
-    vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
-    vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
+      trocando #cooperativa# pelo nome fantasia da cooperativa
+      trocando #titular# pelo nome do titular da conta */
+      vr_dsdmensg := REPLACE(pr_dsdmensg,'%23cooperado%23',vr_usuarios_internet(idx).nmextttl);
+      vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperativa%23',vr_usuarios_internet(idx).nmrescop);
   
     BEGIN
       INSERT INTO crapmsg
@@ -1461,9 +1461,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         ,cdoperad
         ,cdcadmsg)
       VALUES
-        (pr_cdcooper
-        ,pr_nrdconta
-        ,pr_idseqttl
+          (vr_usuarios_internet(idx).cdcooper
+          ,vr_usuarios_internet(idx).nrdconta
+          ,vr_usuarios_internet(idx).idseqttl
         ,vr_nrdmensg
         ,pr_cdprogra
         ,trunc(SYSDATE)
@@ -1480,6 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       WHEN OTHERS THEN
         pr_dscritic := 'Erro ao inserir CRAPMSG: ' || SQLERRM;
     END;
+    END LOOP;
   END pc_gerar_mensagem;
 
   -- Rotina para buscar conteúdo das mensagens do iBank/SMS

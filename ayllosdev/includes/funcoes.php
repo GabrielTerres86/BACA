@@ -11,7 +11,6 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
 - GUILHERME BOETTCHER (SUPERO)
 *******************************************************************************
 
-
  * FONTE        : funcoes.php
  * CRIAÇÃO      : David
  * DATA CRIAÇÃO : Julho/2007
@@ -68,12 +67,13 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 045: [08/05/2017] Andrey (MOUTS)         : Incluir funcao validar_cnpj e validar_cpf.
  * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
+	 * 045: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
  */
-?>
-<?php
+
 // Função para requisição de dados através de XML 
 // Função retorna string com XML de retorno	
 // Includes necessárias: - includes/config.php
+	
 function getDataXML($xmlRequest,$flgPermissao=true,$flgBlank=true,$codCooper=0) {
 	global $DataServer; // Nome do servidor com base de dados PROGRESS
 	global $glbvars;
@@ -1193,18 +1193,18 @@ function xmlFilho($array, $pai, $filho) {
 	$xml = "<".$pai.">";	
 
 	if ( count($array) > 0 ) { 
-		foreach ( $array as $a ) {
+	foreach ( $array as $a ) {
 		
-			$xml .= "<".$filho.">";	
+		$xml .= "<".$filho.">";	
 
-			foreach ( $a as $c => $v ) {
-				$xml .= "<".$c.">";	
-				$xml .= "$v";	
-				$xml .= "</".$c.">";	
-			}
-
-			$xml .= "</".$filho.">";	
+		foreach ( $a as $c => $v ) {
+			$xml .= "<".$c.">";	
+			$xml .= "$v";	
+			$xml .= "</".$c.">";	
 		}
+
+		$xml .= "</".$filho.">";	
+	}
 	}
 	$xml .= "</".$pai.">";	
 	
@@ -1474,23 +1474,23 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
 
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
     $endereco = dirname(dirname(__FILE__)) . '/xml';
-
+	
 	//valida a existencia do arquivo
 	if (file_exists($endereco."/in.xml")) {
-		$arquivo = fopen($endereco."/in.xml","w");
-		fwrite($arquivo, $xml);
-		fclose($arquivo);
+	$arquivo = fopen($endereco."/in.xml","w");
+	fwrite($arquivo, $xml);
+	fclose($arquivo);
 	}
 		
 	$retXML = dbProcedure($xml);
 
 	//valida a existencia do arquivo
 	if (file_exists($endereco."/out.xml")) {
-		$arquivo = fopen($endereco."/out.xml", "w");
-		fwrite($arquivo, $retXML);
-		fclose($arquivo);
+	$arquivo = fopen($endereco."/out.xml", "w");
+	fwrite($arquivo, $retXML);
+	fclose($arquivo);
 	}
-
+	
 	return $retXML;
 }
 
@@ -1743,4 +1743,9 @@ function validar_cpf($cpf = null) {
     }
 }
 
+// Função para retornar o status code de arquivo ou domínio
+function get_http_response_code($url) {
+	$headers = get_headers($url);
+	return substr($headers[0], 9, 3);
+}
 ?>

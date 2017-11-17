@@ -81,6 +81,7 @@
 				<?php if($idastcjt == 1){?>
 				<a class="botao" href="#" style='padding:2px 5px;' onClick="obtemDadosLimitesprep();return false;">Limites de Preposto</a>
 				<?php }?>
+				<a class="botao" href="#" onClick="desativarPush();return false;" >&nbsp;Desativar alertas do Cecred Mobile&nbsp;</a>
 				<br />
 				<a class="botao" href="#" style='margin:10px; padding:2px 5px;' onClick = "acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');">Voltar</a>
 			</div>
@@ -92,7 +93,7 @@
 controlaLayout('frmOpHabilitacao');
 
 // Aumenta tamanho do div onde o conte&uacute;do da op&ccedil;&atilde;o ser&aacute; visualizado
-$("#divConteudoOpcao").css("height","85");
+$("#divConteudoOpcao").css("height","115");
 
 // Esconde mensagem de aguardo
 hideMsgAguardo();
