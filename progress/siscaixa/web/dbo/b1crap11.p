@@ -259,8 +259,8 @@ PROCEDURE valida-lancamento-capital:
 						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															  INPUT p-conta, /*Conta*/                    
 															  INPUT 3, /*Cotas*/                    															     
-															 OUTPUT "", /*Valor do capital*/                       
-															 OUTPUT "", /*Data de pagemento*/                        
+															 OUTPUT ?, /*Valor do capital*/                       
+															 OUTPUT ?, /*Data de pagemento*/                        
 															 OUTPUT ?, /*Valor pago*/                        
 															 OUTPUT 0, /*Codigo da critica*/                    
 															 OUTPUT ""). /*Descricao da critica*/               
@@ -299,7 +299,7 @@ PROCEDURE valida-lancamento-capital:
 					IF (aux_vlcapital - aux_vlpago) = 0 THEN
 					   DO:
 					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999) + ".".
+								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
 							RUN cria-erro (INPUT p-cooper,
 										   INPUT p-cod-agencia,
 										   INPUT p-nro-caixa,
@@ -359,8 +359,8 @@ PROCEDURE valida-lancamento-capital:
 						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															  INPUT p-conta, /*Conta*/                    
 															  INPUT 4, /*Deposito a vista*/                    															     
-															 OUTPUT "", /*Valor do capital*/                       
-															 OUTPUT "", /*Data de pagemento*/                        
+															 OUTPUT ?, /*Valor do capital*/                       
+															 OUTPUT ?, /*Data de pagemento*/                        
 															 OUTPUT ?, /*Valor pago*/                        
 															 OUTPUT 0, /*Codigo da critica*/                    
 															 OUTPUT ""). /*Descricao da critica*/               
@@ -399,7 +399,7 @@ PROCEDURE valida-lancamento-capital:
 					IF (aux_vlcapital - aux_vlpago) = 0 THEN
 					   DO:
 					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999) + ".".
+								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
 							RUN cria-erro (INPUT p-cooper,
 										   INPUT p-cod-agencia,
 										   INPUT p-nro-caixa,
@@ -853,8 +853,8 @@ PROCEDURE grava-lancamento-boletim:
 					aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 														INPUT p-conta, /*Conta*/                    
 														INPUT 4, /*Deposito a vista*/                    															     
-														OUTPUT "", /*Valor do capital*/                       
-														OUTPUT "", /*Data de pagemento*/                        
+														OUTPUT ?, /*Valor do capital*/                       
+														OUTPUT ?, /*Data de pagemento*/                        
 														OUTPUT ?, /*Valor pago*/                        
 														OUTPUT 0, /*Codigo da critica*/                    
 														OUTPUT ""). /*Descricao da critica*/               
@@ -1057,8 +1057,8 @@ PROCEDURE grava-lancamento-boletim:
 						aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															INPUT p-conta, /*Conta*/                    
 															INPUT 3, /*Capital*/                    															     
-															OUTPUT "", /*Valor do capital*/                       
-															OUTPUT "", /*Data de pagemento*/                        
+															OUTPUT ?, /*Valor do capital*/                       
+															OUTPUT ?, /*Data de pagemento*/                        
 															OUTPUT ?, /*Valor pago*/                        
 															OUTPUT 0, /*Codigo da critica*/                    
 															OUTPUT ""). /*Descricao da critica*/               
