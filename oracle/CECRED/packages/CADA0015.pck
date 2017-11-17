@@ -2029,7 +2029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           IF nvl(pr_crapcje.nrcpfcjg,0) = 0 AND 
              nvl(rw_pessoa_cje.nrcpf,0) <> nvl(pr_crapcje.nrcpfcjg,0) THEN
             vr_dscritic := 'Cadastro Temporario, não atualizar.'; 
-            RAISE vr_exc_erro;             
+            RAISE vr_exc_saida;             
           END IF;   
           
         END IF;
@@ -2549,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       
         CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => pr_idpessoa,
                                           pr_tprelacao=> 4, -- Mae
-                                          pr_nmpessoa => pr_crapavt.nmpaicto,
+                                          pr_nmpessoa => pr_crapavt.nmmaecto,
                                           pr_cdoperad => pr_cdoperad,
                                           pr_cdcritic => vr_cdcritic,
                                           pr_dscritic => vr_dscritic);
