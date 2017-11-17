@@ -693,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 14/11/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 16/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -774,9 +774,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
   --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
-  -
+  --
   --             14/11/2017 - Inclusao de novas rotinas e corrigido lancamentos decorrente a deoluvcao
   --                         capital (JOnata - RKAM P364).
+  --
+  --             16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -12575,6 +12577,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        AND ass.cdcooper = tb.cdcooper
        AND ass.nrdconta = tb.nrdconta
        ORDER BY tb.nrdconta;
+       
+    -- Cursor sobre a tabela de associados  
+    CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE)IS
+    SELECT nrdconta
+      FROM crapass
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
 
     -- Variável de críticas
     vr_cdcritic      crapcri.cdcritic%TYPE;
@@ -12621,6 +12632,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Levanta exceção
       RAISE vr_exc_saida;
     END IF;
+    
+    IF nvl(pr_nrdconta,0) <> 0 THEN 
+      -- Busca os dados do associado
+      OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      -- Se nao encontrar o associado, encerra o programa com erro
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic := 9;
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crapass;
+      
+    END IF;   
     
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -12691,7 +12717,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   EXCEPTION
     WHEN vr_exc_saida THEN
 
-      pr_cdcritic := vr_cdcritic;
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
 
       -- Carregar XML padrão para variável de retorno não utilizada.
