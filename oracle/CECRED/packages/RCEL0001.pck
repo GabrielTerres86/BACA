@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   
   /* CONSTANTES */
   ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
+  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 7;
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
                                      ,pr_dtrefere IN DATE) RETURN DATE IS
@@ -4512,7 +4512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
                              '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
                              '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
-              vr_variaveis_notif('#motivo') := 'Saldo insuficiente para débito. O sistema fará novas tentativas de débito ate as 20h';
+              vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
               --> buscar mensagem 
               vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
                                                         ,pr_cdproduto         => 32
@@ -4544,7 +4544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
 															 '#Motivo#=Número de telefone inválido.';
                
-                vr_variaveis_notif('#motivo') := 'Número de telefone inválido';
+                vr_variaveis_notif('#motivo') := 'número de telefone inválido';
 							ELSE -- Senão tratar erro genérico
 								-- Erros validados pelo sistema da CECRED
             vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||

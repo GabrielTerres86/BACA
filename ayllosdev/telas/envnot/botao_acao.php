@@ -70,6 +70,8 @@
 					<tr style="height: 30px;">
 						<td>
 							<input type="text" class="campo" name="dsmensagem_acao_mobile" id="dsmensagem_acao_mobile" maxlength="1000" style="width: 477px;" />
+							<br/>
+							<span style="display: inline-block;"><?php echo utf8ToHtml('<b>Observação: </b>Após ler a mensagem de confirmação, o cooperado terá duas opções para selecionar: “Cancelar e OK”') ?></span>
 						</td>
 					</tr>
 				</table>

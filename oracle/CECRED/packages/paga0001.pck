@@ -2022,12 +2022,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   
   /* CONSTANTES */
   ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_TRANSFERENCIA       CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2;
-  MOTIVO_TED                 CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;
-  MOTIVO_PAGAMENTO_TITULO    CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;
-  MOTIVO_PAGAMENTO_CONVENIO  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5;
-  MOTIVO_PAGAMENTO_DARFDAS   CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 6;
-  MOTIVO_PAGAMENTO_GPS       CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 7;
+  MOTIVO_TRANSFERENCIA       CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1;
+  MOTIVO_TED                 CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2;
+  MOTIVO_PAGAMENTO_TITULO    CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;
+  MOTIVO_PAGAMENTO_CONVENIO  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;
+  MOTIVO_PAGAMENTO_DARFDAS   CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5;
+  MOTIVO_PAGAMENTO_GPS       CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 6;
 
   /* Funcao para buscar a data do dia */
   FUNCTION fn_busca_datdodia (pr_cdcooper IN crapcop.cdcooper%type) RETURN DATE IS

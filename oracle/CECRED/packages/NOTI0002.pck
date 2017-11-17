@@ -2,7 +2,7 @@ CREATE OR REPLACE PACKAGE CECRED.NOTI0002 IS
 
   -- Author  : Pablão
   -- Created : 19/10/2017 10:04:24
-  -- Purpose : Pachage com todas as procedures relacionadas à configuração e visualização das notificações no Cecred Mobile e Internet Bank
+  -- Purpose : Package com todas as procedures relacionadas à configuração e visualização das notificações no Cecred Mobile e Internet Bank
   
   -- Quantidade de notificações não visualizadas pelo cooperado
   PROCEDURE pc_qtd_notif_nao_visualizadas(pr_cdcooper IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
@@ -463,15 +463,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
                                        ,pr_xml_ret            OUT CLOB --> Retorno XML
                                         ) IS
   
+    -- Cursor para obter o estado atual do 
+    CURSOR cr_log IS
+    SELECT ori.cdorigem_mensagem
+          ,ori.dsorigem_mensagem
+          ,DECODE(NVL(prm_ant.inpush_ativo, 1),1,'Habilitado','Desabilitado') dspush_ativo_ant
+          ,DECODE(NVL(prm_atu.inpush_ativo, NVL(prm_ant.inpush_ativo, 1)),1,'Habilitado','Desabilitado') dspush_ativo_atu
+      FROM tbgen_notif_msg_origem    ori
+          ,tbgen_notif_push_orig_prm prm_ant
+          ,(SELECT to_number(regexp_substr(item, '[^-]+', 1, 1)) cdorigem_mensagem
+                  ,to_number(regexp_substr(item, '[^-]+', 1, 2)) inpush_ativo
+              FROM (SELECT regexp_substr(pr_lstconfg, '[^;]+', 1, LEVEL) item
+                      FROM dual
+                   CONNECT BY LEVEL <= regexp_count(pr_lstconfg, '[^;]+'))) prm_atu
+     WHERE ori.cdorigem_mensagem = prm_ant.cdorigem_mensagem(+)
+       AND ori.cdorigem_mensagem = prm_atu.cdorigem_mensagem(+)
+       AND prm_ant.cdcooper(+) = pr_cdcooper
+       AND prm_ant.nrdconta(+) = pr_nrdconta
+       AND prm_ant.idseqttl(+) = pr_idseqttl
+     ORDER BY ori.cdorigem_mensagem;
+    
     -- Variáveis de Exceção
     vr_dscritic VARCHAR2(1000);
     vr_exception EXCEPTION;
-  
+    vr_dsmsgsuc VARCHAR2(1000);
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR(500);
+    
   BEGIN
     
     -- Atualiza a situação do dispositivo. Seta TODOS os demais para 0 - Cada coop/conta/titular só pode ter 1 ativo
     UPDATE dispositivomobile dsp
        SET dsp.pushhabilitado = DECODE(dsp.dispositivomobileid, pr_dispositivomobileid, pr_recbpush, 0)
+          --,dsp.tokendispositivofcm = DECODE(dsp.dispositivomobileid, pr_dispositivomobileid, pr_chavedsp, dsp.tokendispositivofcm)
      WHERE dsp.cooperativaid = pr_cdcooper
        AND dsp.numeroconta = pr_nrdconta
        AND dsp.titularid = pr_idseqttl;
@@ -480,6 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
     dbms_lob.createtemporary(pr_xml_ret, TRUE);
     dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
     
+    -- Se houver lista de parâmetros atualiza os itens
     IF TRIM(pr_lstconfg) IS NOT NULL THEN
       --Quebra a string do parâmetro pr_lsttipos, e atualiza os registros na tabela
       MERGE INTO tbgen_notif_push_orig_prm prm
@@ -512,9 +537,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
           ,pr_idseqttl
           ,lst.cdorigem_mensagem
           ,lst.inpush_ativo);
+      
+      vr_dstransa := 'Alteração das configurações das notificações no Cecred Mobile.';
+      vr_dsmsgsuc := 'Configurações alteradas com sucesso.';
+    ELSE
+      IF pr_recbpush = 1 THEN
+         vr_dstransa := 'Habilitação das notificações no Cecred Mobile.';
+         vr_dsmsgsuc := 'Notificações habilitadas com sucesso.';
+      ELSE
+         vr_dstransa := 'Desabilitação das notificações no Cecred Mobile.';
+         vr_dsmsgsuc := 'Notificações desabilitadas com sucesso.';
+      END IF;
     END IF;
-  
-    pr_xml_ret := '<dsmsgsuc>' || 'Configurações alteradas com sucesso.' || '</dsmsgsuc>';
+    
+    -- Gerar log
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => '996' 
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_cdcanal)
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => 'INTERNETBANK'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+                        
+    -- Se houver lista de parâmetros gera lista de itens no log
+    IF TRIM(pr_lstconfg) IS NOT NULL THEN
+      
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Notificações Habilitadas'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => CASE pr_recbpush WHEN 1 THEN 'Habilitado'
+                                                                ELSE 'Desabilitado' END);
+    
+      FOR rw_log IN cr_log LOOP
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => rw_log.dsorigem_mensagem
+                                 ,pr_dsdadant => rw_log.dspush_ativo_ant
+                                 ,pr_dsdadatu => rw_log.dspush_ativo_atu);
+      END LOOP;
+    
+    END IF;
+    
+    pr_xml_ret := '<dsmsgsuc>' || vr_dsmsgsuc || '</dsmsgsuc>';
   
   EXCEPTION
     WHEN OTHERS THEN

@@ -1022,6 +1022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     -- Se for um operador de cooperativa, ignora o filtro de cooperativas e trava a coop atual
     IF vr_cdcooper <> 3 THEN
       vr_dsfiltro_cooperativas := vr_cdcooper;
+    ELSE
+      vr_dsfiltro_cooperativas := pr_dsfiltro_cooperativas;
     END IF;
     
     -- Valida os dados da mensagem

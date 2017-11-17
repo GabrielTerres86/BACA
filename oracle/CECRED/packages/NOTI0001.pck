@@ -2,7 +2,7 @@ CREATE OR REPLACE PACKAGE CECRED.NOTI0001 IS
 
   -- Author  : Pablão
   -- Created : 22/08/2017 10:04:24
-  -- Purpose : Pachage com todas as procedures relacionadas ao envio de notificações para o Cecred Mobile e Internet Bank
+  -- Purpose : Package com todas as procedures relacionadas ao envio de notificações para o Cecred Mobile e Internet Bank
 
   -- Definição da tipo de registro que representa os dados do destinatário de uma notificação
   TYPE typ_destinatario_notif IS RECORD(
@@ -87,7 +87,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
       SELECT usr.*
             ,REPLACE(nmrescop, ' AV', ' ALTO VALE') nmrescop
             ,cop.nmextcop
-            ,REPLACE(to_char(usr.nrdconta / 10, 'fm999999G999D9'),',' ,'-') nrdcontafmt
+            ,REPLACE(to_char(usr.nrdconta / 10, 'fm999999G990D0'),',' ,'-') nrdcontafmt
             ,gene0002.fn_mask_cpf_cnpj(usr.nrcpfcgc, usr.inpessoa) nrcpfcgcfmt
         FROM vw_usuarios_internet usr
             ,crapcop              cop
@@ -750,9 +750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     FOR idx IN 1 .. vr_lotes.count LOOP
       BEGIN
         
-      vr_conteudo.put('CodigoLote', vr_lotes(idx).cdlote_push ); -- Codigo do lote de push
+      vr_conteudo.put('Lote', vr_lotes(idx).cdlote_push ); -- Codigo do lote de push
 			-- Consumir rest do AYMARU
-			AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/api/Ayllos/Mobile/Push/Enviar'
+			AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Mobile/Push/Enviar'
 																				 ,pr_verbo => WRES0001.POST
 																				 ,pr_servico => 'PUSH.MOBILE'
 																				 ,pr_parametros => vr_parametros
@@ -765,7 +765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
         IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           -- Gerar crítica
           vr_cdcritic := 0;
-          vr_dscritic := 'Não foi possível efetuar a recarga.';
+          vr_dscritic := 'Erro ao tentar enviar o push.';
           RAISE ex_erro;
         END IF;
       
@@ -794,7 +794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
           ,err.cdstatus
           ,err.dsstatus
       FROM tbgen_notif_push psh
-          ,XMLTABLE('pushesinvalidos/push' PASSING
+          ,XMLTABLE('lote/pushesinvalidos/push' PASSING
                     pr_xmlerros
                     COLUMNS cdnotificacao NUMBER(15) PATH '/push/cdnotificacao'
                            ,iddispositivo_mobile NUMBER(20) PATH '/push/iddispositivo'

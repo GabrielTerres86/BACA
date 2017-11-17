@@ -27,7 +27,7 @@
 			<td>
 				<input type="text" class="campo" name="dtenvio_mensagem" id="dtenvio_mensagem" style="width:70px;" readonly="readonly" value="<?php echo($dtenvio_mensagem); ?>" />
 			</td>
-			<td><label for="hrenvio_mensagem"><? echo utf8ToHtml('Hora:'); ?></label></td>
+			<td><label for="hrenvio_mensagem" style="margin-left: 5px;"><? echo utf8ToHtml('Hora:'); ?></label></td>
 			<td>
 				<input type="text" class="campo" name="hrenvio_mensagem" id="hrenvio_mensagem" value="<?php echo($hrenvio_mensagem); ?>" style="width:40px;" maxlength="5" />
 			</td>

@@ -56,7 +56,7 @@
 				<tr>
 					<td style="text-align: left;" >
 						<input type="checkbox" id="nrdias_semana_3" name="nrdias_semana_3" />
-						<label for="dstexto_botao_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Ter&ccedil;-feira') ?></label>
+						<label for="dstexto_botao_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Ter&ccedil;a-feira') ?></label>
 					</td>
 					<td>
 						<input type="checkbox" id="nrsemanas_3" name="nrsemanas_3" />
