@@ -806,6 +806,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
+
+  /* Calcular a quantidade de dias que o emprestimo está em atraso */
+  FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
+                                   ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
+                                   ,pr_nrctremp IN crappep.nrctremp%TYPE --> Numero do Contrato de empréstimo
+                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
+                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
+   RETURN INTEGER;
                                                                    
 END empr0001;
 /
