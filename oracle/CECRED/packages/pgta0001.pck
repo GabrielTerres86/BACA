@@ -2646,7 +2646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            IF TRIM(vr_des_linha) IS NULL THEN
              CONTINUE;
            END IF;
-
+           
            -- Tamanho da linha fora do padrão
            IF LENGTH(vr_des_linha) <> 241 THEN
              vr_des_erro := 'Tamanho da linha divergente do padrao CNAB240! Linha: ' || vr_idlinha;
@@ -3318,12 +3318,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            vr_des_erro := 'Arquivo nao possui Trailer de Arquivo.';
            vr_tab_err_arq(vr_tab_err_arq.COUNT() + 1) := vr_des_erro;
        END IF;
-
+       
        -- Verificar se houve erro nas validações do arquivo
        IF vr_tab_err_arq.COUNT > 0 THEN
          RAISE vr_exc_saida;
        END IF;
-
+       
        -- Rotina para mover o arquivo processado para a pasta
        -- <cooperativa>/salvar
 
@@ -3983,7 +3983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   vr_dscritic := 'Erro ao inserir crapdpt: '||SQLERRM;
                   RAISE vr_exc_critico;
             END;
-
+            
             -- Atualizar crapdpt original com o mesmo IDLANCTO
             BEGIN
               UPDATE crapdpt dpt
@@ -5040,7 +5040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
-        END IF;
+      END IF;
       --Fechar Cursor
       IF cr_email%ISOPEN THEN
         CLOSE cr_email;
@@ -5615,7 +5615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Escrever Erro Apresentado no Arquivo
       GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
-
+      
       -- Gerar o LOG de arquivo processado com sucesso
       PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -6255,9 +6255,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
           RAISE vr_exc_erro;
         END IF;
-
+        
         pr_dsinform := gene0007.fn_caract_acento('O arquivo de retorno foi disponibilizado no FTP.');
-
+        
         -- Gerar o LOG do erro que aconteceu durante o processamento
         PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
@@ -9228,7 +9228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        Sistema : CECRED
        Sigla   : PGTA
        Autor   : Douglas Quisinski
-       Data    : Agosto/17.                    Ultima atualizacao: --/--/----
+       Data    : Agosto/17.                    Ultima atualizacao: 17/11/2017
     
        Dados referentes ao programa:
     
@@ -9238,7 +9238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
        Observacao: -----
     
-       Alteracoes:
+       Alteracoes: 17/11/2017 - Ajustes de format vltitulo, vlpagto melhoria 271.3 (Tiago)
     ..............................................................................*/
 
     -- Tabela para arqmazenar os titulos agendados
@@ -9306,8 +9306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                      ' <nmcedent>' || vr_tab_agd_pgt_arq(vr_idx).nmcedent || '</nmcedent>' ||
                                                      ' <dtvencto>' || vr_tab_agd_pgt_arq(vr_idx).dtvencto || '</dtvencto>' ||
                                                      ' <dtdpagto>' || vr_tab_agd_pgt_arq(vr_idx).dtdpagto || '</dtdpagto>' ||
-                                                     ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00')||'</vltitulo>'||
-                                                     ' <vldpagto>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vldpagto,'fm999G999G999G990D00')||'</vldpagto>'||
+                                                     ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vltitulo>'||
+                                                     ' <vldpagto>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vldpagto,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vldpagto>'||
                                                      ' <nrconven>' || vr_tab_agd_pgt_arq(vr_idx).nrconven || '</nrconven>' ||
                                                      ' <cdocorre>' || vr_tab_agd_pgt_arq(vr_idx).cdocorre || '</cdocorre>' ||
                                                      ' <dsocorre>' || vr_tab_agd_pgt_arq(vr_idx).dsocorre || '</dsocorre>' ||
@@ -9389,7 +9389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         Sistema : CECRED
         Sigla   : COBRAN
         Autor   : Tiago
-        Data    : Agosto/17.                    Ultima atualizacao: --/--/----
+        Data    : Agosto/17.                    Ultima atualizacao: 17/11/2017
     
         Dados referentes ao programa:
     
@@ -9399,7 +9399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 17/11/2017 - Ajustes de format vltitulo melhoria 271.3 (Tiago)
     ..............................................................................*/
     ---------> CURSORES <--------
     --> Buscar logs
@@ -9507,7 +9507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                        ' <nmcedent>' || vr_tab_agd_pgt_arq(vr_idx).nmcedent || '</nmcedent>' ||
                        ' <dtvencto>' || vr_tab_agd_pgt_arq(vr_idx).dtvencto || '</dtvencto>' ||
                        ' <dtdpagto>' || vr_tab_agd_pgt_arq(vr_idx).dtdpagto || '</dtdpagto>' ||
-                       ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00')||'</vltitulo>'||
+                       ' <vltitulo>' || to_char(vr_tab_agd_pgt_arq(vr_idx).vltitulo,'fm999G999G999G990D00','NLS_NUMERIC_CHARACTERS = '',.''')||'</vltitulo>'||
                        ' <nrconven>' || vr_tab_agd_pgt_arq(vr_idx).nrconven || '</nrconven>' ||
                        ' <cdocorre>' || vr_tab_agd_pgt_arq(vr_idx).cdocorre || '</cdocorre>' ||
                        ' <dsocorre>' || vr_tab_agd_pgt_arq(vr_idx).dsocorre || '</dsocorre>' ||
