@@ -8471,7 +8471,18 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
         END.
 
     IF  craplcr.flgtarif = TRUE THEN
-        ASSIGN par_cdlcremp = 0.
+        DO:
+          ASSIGN par_cdlcremp = 0.
+        END.
+    ELSE
+        DO:
+          ASSIGN par_cdhistor = crapfvl.cdhistor
+                 par_cdhisest = crapfvl.cdhisest
+                 par_vltarifa = 0.
+                 
+          RETURN "OK".
+          
+        END.
         
     ASSIGN aux_contador = 0.
 
