@@ -282,7 +282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   
   /* CONSTANTES */
   ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
+  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 7;
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
                                      ,pr_dtrefere IN DATE) RETURN DATE IS
@@ -4428,7 +4428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM crapcop cop
          WHERE cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-      
+    	
       -- Busca dos dados do associado
       CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -4557,7 +4557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_tab_critic(vr_index).situacao   := 0;
           vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
           vr_tab_critic(vr_index).dscritic   := gene0007.fn_caract_acento(nvl(vr_dscritic,''));
-        
+          
           -- Variáveis para envio de notificações no Mobile/Novo IB
           vr_variaveis_notif('#dataagendamento') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           vr_variaveis_notif('#valor') := to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
@@ -4586,7 +4586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
                              '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
                              '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
-              vr_variaveis_notif('#motivo') := 'Saldo insuficiente para débito. O sistema fará novas tentativas de débito ate as 20h';
+              vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
               --> buscar mensagem 
               vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
                                                         ,pr_cdproduto         => 32
@@ -4617,8 +4617,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
 															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
 															 '#Motivo#=Número de telefone inválido.';
-
-                vr_variaveis_notif('#motivo') := 'Número de telefone inválido';
+               
+                vr_variaveis_notif('#motivo') := 'número de telefone inválido';
 							ELSE -- Senão tratar erro genérico
 								-- Erros validados pelo sistema da CECRED
             vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
@@ -4640,7 +4640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                            '#Motivo#='   ||vr_dscritic;
                
                 vr_variaveis_notif('#motivo') := vr_dscritic;
-            END IF;          
+            END IF;
               
             --> buscar mensagem 
             vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
@@ -4654,29 +4654,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           IF vr_dscritic <> 'Não há saldo suficiente para a operação.' OR
              vr_flultexe <> 1 THEN
             -- Busca todos os usuarios ativos com senha no IB
-
-                   -- Manda mensagem na conta do cooperado
-                   GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                                             ,pr_nrdconta => rw_tbrecarga.nrdconta
+            
+            -- Manda mensagem na conta do cooperado
+            GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_tbrecarga.nrdconta
                                       --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
-                                             ,pr_cdprogra => pr_nmdatela
-                                             ,pr_inpriori => 0
-                                             ,pr_dsdmensg => vr_dsdmensg
-                                             ,pr_dsdassun => 'Transação não efetivada'
-                                             ,pr_dsdremet => rw_crapcop.nmrescop
-                                             ,pr_dsdplchv => 'Sem Saldo'
-                                             ,pr_cdoperad => 0
-                                             ,pr_cdcadmsg => 0
-                                             ,pr_dscritic => vr_dscritic);
-                        
+                                      ,pr_cdprogra => pr_nmdatela
+                                      ,pr_inpriori => 0
+                                      ,pr_dsdmensg => vr_dsdmensg
+                                      ,pr_dsdassun => 'Transação não efetivada'
+                                      ,pr_dsdremet => rw_crapcop.nmrescop
+                                      ,pr_dsdplchv => 'Sem Saldo'
+                                      ,pr_cdoperad => 0
+                                      ,pr_cdcadmsg => 0
+                                      ,pr_dscritic => vr_dscritic);
+                                      
             -- Cria uma notificação
             NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                         ,pr_cdmotivo_mensagem => MOTIVO_RECARGA_CELULAR
                                       --,pr_dhenvio => SYSDATE
                                         ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                        ,pr_nrdconta => rw_tbrecarga.nrdconta
                                         ,pr_variaveis => vr_variaveis_notif);
-           END IF;   
+          END IF;
           
            -- Limpa variaveis de critica
            vr_cdcritic := 0;

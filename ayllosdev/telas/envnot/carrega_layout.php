@@ -134,7 +134,7 @@
 			echo "</div>";
 			echo "<div style=\"padding-top:20px;\">&nbsp;</div>";
 			include 'titulo.php';
-			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
+			echo "<br/><fieldset style=\"background-color: #dbe2da;\"><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';
@@ -197,7 +197,7 @@
 			echo "<input type=\"hidden\" name=\"cdoperad\" id=\"cdoperad\" value=\"".$glbvars["cdoperad"]."\" />";
 			
 			include 'titulo.php';
-			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
+			echo "<br/><fieldset style=\"background-color: #dbe2da;\"><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';
@@ -274,8 +274,8 @@
 		$tpfiltro = getByTagName($msgManu,'TPFILTRO');
 		$dsfiltro_cooperativas = getByTagName($msgManu,'DSFILTRO_COOPERATIVAS');
     $dsfiltro_tipos_conta = getByTagName($msgManu,'DSFILTRO_TIPOS_CONTA');
-		$dsfiltro_tipos_conta_fis = (isset($arrDsFiltro[0]) && $arrDsFiltro[0] == 1) ? " checked" : "";
-		$dsfiltro_tipos_conta_jur = (isset($arrDsFiltro[1]) && $arrDsFiltro[0] == 2) ? " checked" : "";
+		$dsfiltro_tipos_conta_fis = in_array(1, $arrDsFiltro) ? " checked" : "";
+		$dsfiltro_tipos_conta_jur = in_array(2, $arrDsFiltro)  ? " checked" : "";
 		$dsfiltro_tipos_conta_fis = " checked";	
 		$dsfiltro_tipos_conta_jur = " checked";	
 		
@@ -288,7 +288,7 @@
 			echo "<input type=\"hidden\" name=\"idorigem\" id=\"idorigem\" value=\"".$glbvars["idorigem"]."\" />";
 			echo "<input type=\"hidden\" name=\"cdoperad\" id=\"cdoperad\" value=\"".$glbvars["cdoperad"]."\" />";
 			include 'titulo.php';
-			echo "<br/><fieldset><legend><b>Tela de detalhamento</b></legend>";
+			echo "<br/><fieldset style=\"background-color: #dbe2da;\"><legend><b>Tela de detalhamento</b></legend>";
 			include 'banner_detalhamento.php';
 			include 'conteudo.php';
 			include 'botao_acao.php';

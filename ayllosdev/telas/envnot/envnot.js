@@ -291,9 +291,13 @@ function carregaImagem(tipoImg){
 function exibeBanner(){
 		
 	if($('#inexibir_banner').is(':checked')){
-		$('#divNmimagem_banner').show(); $('#divBannerObs').show();
+		$('#divNmimagem_banner').show();
+		$('#divBadge_banner').show();
+		$('#divBannerObs').show();
 	}else{
-		$('#divNmimagem_banner').hide(); $('#divBannerObs').hide();
+		$('#divNmimagem_banner').hide();
+		$('#divBadge_banner').hide();
+		$('#divBannerObs').hide();
 	}
 }
 
@@ -376,53 +380,53 @@ function validaDados(){
 	
 	//VALIDA OS CAMPOS OBRIGATÓRIOS
 	if(dstitulo_mensagem == ""){
-		dscritic = "Título é obrigatório";
+		dscritic = "T&iacute;tulo &eacute; obrigat&oacute;rio";
 		flgerror = true;
 	}else if(cdicone == 0 || cdicone < 0){
-		dscritic = "Ícone é obrigatório";
+		dscritic = "&Iacute;cone &eacute; obrigat&oacute;rio";
 		flgerror = true;
 	}else if(dstexto_mensagem == ""){
-		dscritic = "Mensagem é obrigatória";
+		dscritic = "Mensagem &eacute; obrigat&oacute;ria";
 		flgerror = true;
 	}else if(inexibir_banner == 1 && nmimagem_banner == ""){
-    dscritic = "Exibir Banner está ativo mas nenhuma imagem foi selecionada";
+    dscritic = "Exibir Banner est&aacute; ativo mas nenhuma imagem foi selecionada";
 		flgerror = true;
 	}else if(dshtml_mensagem == ""){
-		dscritic = "Conteúdo é obrigatório";
+		dscritic = "Conte&uacute;do &eacute; obrigat&oacute;rio";
 		flgerror = true;
 	}else if(inexibe_botao_acao_mobile == 1){
 		if(dstexto_botao_acao_mobile == ""){
-		  dscritic = "O texto do botão de ação do Cecred Mobile é obrigatório";
+		  dscritic = "O texto do bot&atilde;o de a&ccedil;&atilde;o do Cecred Mobile &eacute; obrigat&oacute;rio";
 			flgerror = true;
 		}else if(idacao_botao_acao_mobile == 1 && dslink_acao_mobile == ""){
-			dscritic = "URL do botão de ação é obrigatório";
+			dscritic = "URL do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;rio";
 			flgerror = true;
 		}else if(idacao_botao_acao_mobile == 2 && cdmenu_acao_mobile == ""){
-			dscritic = "Tela do Cecred Mobile do botão de ação é obrigatória";	
+			dscritic = "Tela do Cecred Mobile do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;ria";	
 			flgerror = true;
 		}
 	}	
     
 	//VALIDA AS MENSAGENS AUTOMÁTICAS RECORRENTES (Tipo: Serviços)
   if(cdtipo_mensagem == 1){ // Serviços
-  	if(intipo_repeticao != 1 && intipo_repeticao != 2){ // Se não for selecionado nenhum tipo de recorrência
-			dscritic = "Obrigatório escolher um tipo de recorrência: Por mês ou por semana";
+  	if(intipo_repeticao != 1 && intipo_repeticao != 2){ // Se n&atilde;o for selecionado nenhum tipo de recorrência
+			dscritic = "Obrigat&oacute;rio escolher um tipo de recorr&ecirc;ncia: Por m&ecirc;s ou por semana";
 		}else if(intipo_repeticao == 1 && (nrdias_semana == "" || nrsemanas == "")){ // Se for semana
-			dscritic = "Para ativar a recorrência por semana é necessário informar os dias e as semanas em que deve ocorrer os envios da mensagem";
-		}else if(intipo_repeticao == 2 && (nrdias_mes == "" || nrmeses == "")){ // Se for mês
-			dscritic = "Para ativar a recorrência por mês é necessário informar os dias e os meses em que deve ocorrer os envios da mensagem";
+			dscritic = "Para ativar a recorr&ecirc;ncia por semana &eacute; necess&aacute;rio informar os dias e as semanas em que deve ocorrer os envios da mensagem";
+		}else if(intipo_repeticao == 2 && (nrdias_mes == "" || nrmeses == "")){ // Se for m&ecirc;s
+			dscritic = "Para ativar a recorr&ecirc;ncia por m&ecirc;s &eacute; necess&aacute;rio informar os dias e os meses em que deve ocorrer os envios da mensagem";
 		}
 	}else if(cdtipo_mensagem == 3){ // VALIDA AS MENSAGENS MANUAIS (Tipo: Avisos)
       if(dhenvio_mensagem == ""){
-        dscritic = "Data do envio da mensagem é obrigatória";
+        dscritic = "Data do envio da mensagem &eacute; obrigat&oacute;ria";
       }else if(hrenvio_mensagem == ""){
-        dscritic = "Hora do envio da mensagem é obrigatória";
+        dscritic = "Hora do envio da mensagem &eacute; obrigat&oacute;ria";
       }else if(tpfiltro != 1 && tpfiltro != 2){
-        dscritic = "É necessário escolher um tipo de filtro";
+        dscritic = "&Eacute; necess&aacute;rio escolher um tipo de filtro";
       }else if((dsfiltro_cooperativas == "" || dsfiltro_cooperativas == 0) && tpfiltro == 1){
-        dscritic = "É necessário selecionar ao menos uma cooperativa";
+        dscritic = "&Eacute; necess&aacute;rio selecionar ao menos uma cooperativa";
       }else if((dsfiltro_tipos_conta == "" || dsfiltro_tipos_conta == 0) && tpfiltro == 1){
-        dscritic = "É necessário selecionar ao menos um tipo de conta";
+        dscritic = "&Eacute; necess&aacute;rio selecionar ao menos um tipo de conta";
       }
   }
 	

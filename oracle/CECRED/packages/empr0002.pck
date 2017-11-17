@@ -4537,9 +4537,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     RETURN 'SELECT usu.cdcooper
                   ,usu.nrdconta
                   ,usu.idseqttl
-                  ,''#valorcalculado=R$ '' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '','' ||
-                   ''#valorcontratado=R$ '' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '','' ||
-                   ''#valordisponivel=R$ '' || to_char(val.vllimdis, ''fm99g999g990d00'') dsvariaveis
+                  ,''#valorcalculado='' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valorcontratado='' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valordisponivel='' || to_char(val.vllimdis, ''fm99g999g990d00'') dsvariaveis
               FROM (SELECT *
                       FROM (SELECT cpa.cdcooper
                                   ,cpa.nrdconta
