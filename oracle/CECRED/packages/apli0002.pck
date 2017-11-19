@@ -9383,6 +9383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       WHERE lct.cdcooper = pr_cdcooper
       AND   lct.nrdconta = pr_nrdconta
       AND   lct.cdhistor IN (2079,2080,2136)
+	    AND   lct.dtmvtolt >= '27/11/2017' 
       AND NOT EXISTS (SELECT 1 FROM craplcm lcm
                               WHERE lcm.cdcooper = lct.cdcooper
                                 AND lcm.nrdconta = lct.nrdconta
