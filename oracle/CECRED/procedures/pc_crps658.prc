@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autora  : Lucas R.
-      Data    : Setembro/2013                        Ultima atualizacao: 14/06/2017
+      Data    : Setembro/2013                        Ultima atualizacao: 13/02/2017
 
       Dados referentes ao programa:
 
@@ -40,9 +40,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                
                   13/02/2017 - Remover envio de e-mail para quando as criticas 190 e 191
                                (Lucas Ranghetti #597333)
-                               
-                  14/06/2017 - Ajuste para logar o cancelamento de consórcios (Jonata - RKAM / P364).                               
-                  
       ............................................................................*/
 
 
@@ -190,7 +187,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       vr_texto_email     VARCHAR2(4000);        --> Texto do email de erro
       vr_nmarqimp        VARCHAR2(100);         --> Nome arquivo a ser processado
       vr_idxass          VARCHAR2(20);          --> indice da temp table da crapass
-      vr_nrdrowid        ROWID;
       
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
@@ -690,44 +686,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro ao atualizar crapcns: ' || SQLERRM;
                   END;
-
-                  --Gravar log somente se estiver cancelando o consórcio (P364).
-                  IF vr_flgativo = 0 THEN
-                    
-                    -- Gerar informações do log
-                    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                                        ,pr_cdoperad => 1
-                                        ,pr_dscritic => NULL
-                                        ,pr_dsorigem => 'AYLLOS'
-                                        ,pr_dstransa => 'Cancelamento de consorcio'
-                                        ,pr_dttransa => TRUNC(SYSDATE)
-                                        ,pr_flgtrans => 1 --> TRUE
-                                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                                        ,pr_idseqttl => 1
-                                        ,pr_nmdatela => 'CRPS658'
-                                        ,pr_nrdconta => vr_nrdconta
-                                        ,pr_nrdrowid => vr_nrdrowid);
-
-                    -- Gerar log do nrctacns
-                    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                             ,pr_nmdcampo => 'nrctacns'
-                                             ,pr_dsdadant => NULL
-                                             ,pr_dsdadatu => trim(to_char(vr_nrctacns,'9999G999G999')));
-                                             
-                    -- Gerar log do nrctrato
-                    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                             ,pr_nmdcampo => 'nrctrato'
-                                             ,pr_dsdadant => NULL
-                                             ,pr_dsdadatu => trim(to_char(vr_nrctrato,'99G999G999G999')));
-                                             
-                    -- Gerar log do flgativo
-                    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                             ,pr_nmdcampo => 'flgativo'
-                                             ,pr_dsdadant => NULL
-                                             ,pr_dsdadatu => vr_flgativo);
-                              
-                  END IF;
-
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir crapcns: ' || SQLERRM;
               END;

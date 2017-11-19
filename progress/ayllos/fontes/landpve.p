@@ -312,11 +312,6 @@
                             
                29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
                             (Lucas Ranghetti #681579)
-
-               11/07/2017 - Ajustes historico 354
-                            (Demetrius Wolff MOUTS - Prj 364)
-
-
                             
                17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                             conta e referencia no mesmo dia(dtmvtolt) porem com valores
@@ -1259,7 +1254,7 @@ DO WHILE TRUE:
                                ELSE 
                                    ASSIGN aux_cdrefere = craplau.nrdocmto.
                                
-                    END.
+                            END.
                     END.
 
                IF   aux_flgerros  THEN
@@ -1470,8 +1465,8 @@ DO WHILE TRUE:
            craplcm.cdhistor = 931   THEN  /* credito cotas proc */
            DO:
                IF   craplcm.cdhistor = 354   THEN
-                    ASSIGN his_cdhistor = 2136
-                           his_nrdolote = 600038.
+                    ASSIGN his_cdhistor = 81
+                           his_nrdolote = 10002.
                ELSE
                IF   craplcm.cdhistor = 451   THEN
                     ASSIGN his_cdhistor = 402
@@ -1614,53 +1609,6 @@ DO WHILE TRUE:
                     craplcm.cdhistor = 451   OR
                     craplcm.cdhistor = 127   THEN
                     DO: 
-						IF craplcm.cdhistor = 354 THEN
-							DO: 
-								FIND crablcm WHERE 
-									 crablcm.cdcooper = glb_cdcooper            AND
-									 crablcm.dtmvtolt = tel_dtmvtolt            AND
-									 crablcm.cdagenci = 1                       AND
-									 crablcm.cdbccxlt = 100                     AND
-									 crablcm.nrdolote = his_nrdolote            AND
-									 crablcm.nrdctabb = INT(craplcm.cdpesqbb)   AND
-									 crablcm.nrdocmto = craplcm.nrdocmto
-									 USE-INDEX craplcm1
-									 EXCLUSIVE-LOCK NO-ERROR.
-						  
-								IF   NOT AVAILABLE crablcm   THEN
-									 DO:
-										 glb_cdcritic = 81.
-										 RUN fontes/critic.p.
-										 MESSAGE glb_dscritic.
-										 BELL.
-										 UNDO, NEXT.
-									 END.
-						
-								UNIX SILENT VALUE("echo " + 
-												  STRING(glb_dtmvtolt,"99/99/9999") +
-												  " - " +
-												  STRING(TIME,"HH:MM:SS") +
-												  " - EXCLUSAO TRF. VAL." + "' --> '"  +
-												  " Operador: " + glb_cdoperad +
-												  " Hst: " +
-												  STRING(craplcm.cdhistor,"zzz9") +
-												  " De: " + 
-												  STRING(craplcm.nrdconta,
-														 "zzzz,zzz,9") +
-												  " Para: " + 
-												  STRING(crablcm.nrdconta,
-														 "zzzz,zzz,9") +
-												  " Docmto: " + 
-												  STRING(craplcm.nrdocmto,
-														 "zzz,zzz,zz9") +
-												  " Valor: " + 
-												  STRING(craplcm.vllanmto,
-														 "zzz,zzz,zzz,zz9.99") +
-												  " >> log/landpv.log").
-							
-								DELETE crablcm.
-							END.
-							
                         ASSIGN aux_flexclcm = NO.
                         FIND craplct WHERE craplct.cdcooper = glb_cdcooper  AND
                                            craplct.dtmvtolt = tel_dtmvtolt  AND
@@ -1731,9 +1679,7 @@ DO WHILE TRUE:
                                           UNDO, NEXT.
                                       END.
                              END.
-							 
-						IF  NOT aux_flexclcm   THEN 
-						DO: 
+                        IF   NOT aux_flexclcm   THEN DO: 
 
                         FIND crapcot WHERE crapcot.cdcooper = glb_cdcooper AND
                                            crapcot.nrdconta = craplct.nrdconta
@@ -1768,8 +1714,7 @@ DO WHILE TRUE:
 
                         DELETE craplct.
                         END.
-					
-                    END. /* FIM DO */
+                    END.
                ELSE 
                     IF  craplcm.cdhistor = 931 THEN 
                         DO:   
