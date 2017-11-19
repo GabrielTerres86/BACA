@@ -3,7 +3,7 @@
    Programa: Includes/var_hisopcr.i
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2012.                   Ultima atualizacao: 06/10/2016
+   Data    : Fevereiro/2012.                   Ultima atualizacao: 19/11/2017
 
    Dados referentes ao programa:
   
@@ -15,8 +15,10 @@
                
                11/08/2015 - Adicionado novos historicos. (Reinert)
                 
-                           06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
-                                                        Prj. 302. (Jean Michel)
+               06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
+                            Prj. 302. (Jean Michel)
+
+			   19/11/2017 - Incusao do historico 354 (Jonata - RKAM P364).
                 
 ............................................................................*/
 DEF VAR aux_histcred  AS INT EXTENT INIT [1032,        /* Contrato Empr */
@@ -132,6 +134,7 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,        /* Contrato Empr */
                                           2421, /* DESP REC CRED */
                                           2422, /* ESTJUROS PREJ */
                                           2423, /* EST.ENCA.PREJ */
-                                          2424 /* EST.DESP.PREJ */] NO-UNDO.
+                                          2424, /* EST.DESP.PREJ */
+										  354  /* credito cotas */] NO-UNDO.
                         
                                             
