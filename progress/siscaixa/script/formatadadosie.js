@@ -51,6 +51,8 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
            23/08/2016  - Adicionado funções "setFocus()" e "callBlass()", para chamada do cartão assinatura (Evandro - RKAM).
 		   
 		   04/09/2017 - Removido rotinas 84, 85 pois nao serao mais usadas (Tiago/Elton #679866).
+		   
+		   16/11/2017 - Iclusao da rotina 97. (SD 788441 - Kelvin).
 */
 
 // < ! --
@@ -748,6 +750,9 @@ function change_location() {
     }
     else if(document.forms[0].v_rotina.value == 89) {
          top.frames[1].window.location.href="crap089.htm";
+    }
+	else if(document.forms[0].v_rotina.value == 97) {
+         top.frames[1].window.location.href="crap097.htm";
     }
     else if(document.forms[0].v_rotina.value == 'at' || document.forms[0].v_rotina.value == 'AT') {
         top.frames[1].window.location.href='login.w?v_prog=autentmenu.w';
