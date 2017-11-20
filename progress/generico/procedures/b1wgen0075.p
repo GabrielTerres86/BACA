@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 16/08/2017
+    Data    : Maio/2010                   Ultima atualizacao: 27/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -95,9 +95,19 @@
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 							
+               11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                            Projeto 339 - CRM. (Lombardi)		 
+							
 			   16/08/2017 - Ajustes realizado para que não se crie crapenc sem informar 
 							ao menos o CEP na tela comercial. (Kelvin/Andrino)
 
+			   27/09/2017 - Removido regra que fazia com que só carregasse endereco comercial
+							caso Tp. Ctr. Trab. seja diferente de 3. (PRJ339 - Kelvin/Andrino).
+              13/10/2017 - Removido tratamento para colocar como inpolexp
+                           qnd for da natureza de ocupacao igual a 99, pois
+                           campo nao existe mais e nao era utilizado. 
+                           PRJ339-CRM (Odirlei-AMcom)
+			  
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -258,9 +268,9 @@ PROCEDURE Busca_Dados:
                 tt-comercial.inpolexp    = par_inpolexp.
 
         
-
-        IF  tt-comercial.tpcttrab <> 3 THEN
-            DO:
+		/*Regra removida solicitacao Andrino (PRJ339)*/
+        /*IF  tt-comercial.tpcttrab <> 3 THEN
+            DO:*/ 
                /* Endereco */
                FOR LAST crapenc FIELDS(nrcepend dsendere nrendere complend 
                                        nmbairro nmcidade cdufende nrcxapst)
@@ -279,7 +289,7 @@ PROCEDURE Busca_Dados:
                        tt-comercial.ufresct1 = crapenc.cdufende
                        tt-comercial.cxpotct1 = crapenc.nrcxapst.
                END.
-            END.
+            /*END.*/
 
         /* empresa */
         FOR FIRST crapemp FIELDS(cdcooper nmextemp nrcepend dsendemp nrendemp
@@ -292,11 +302,17 @@ PROCEDURE Busca_Dados:
             ASSIGN tt-comercial.nmresemp = crapemp.nmresemp.
 
             /* Empresas diversas */
+            IF par_cddopcao <> "C" AND 
+               par_cddopcao <> "CA" THEN
+            DO:
+            
             IF  crapemp.cdempres <> 81   AND
                 NOT(crapemp.cdcooper = 2 AND crapemp.cdempres = 88) THEN
                 DO:
                    ASSIGN
                        tt-comercial.nmextemp = crapemp.nmextemp
+                         tt-comercial.nrcpfemp = STRING(crapemp.nrdocnpj,
+                                                        "99999999999999")
                        tt-comercial.cepedct1 = crapemp.nrcepend
                        tt-comercial.endrect1 = CAPS(crapemp.dsendemp)
                        tt-comercial.nrendcom = crapemp.nrendemp
@@ -304,10 +320,9 @@ PROCEDURE Busca_Dados:
                        tt-comercial.bairoct1 = CAPS(crapemp.nmbairro)
                        tt-comercial.cidadct1 = CAPS(crapemp.nmcidade)
                        tt-comercial.ufresct1 = CAPS(crapemp.cdufdemp)
-                       tt-comercial.nrcpfemp = STRING(crapemp.nrdocnpj,
-                                                      "99999999999999")
                        tt-comercial.cxpotct1 = 0.
                 END.
+        END.
         END.
 
         IF  NOT AVAILABLE crapemp THEN
@@ -1027,7 +1042,8 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 5            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl                    
+                                       crapdoc.idseqttl = par_idseqttl AND 
+                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1053,7 +1069,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 5
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc5.
                                 END.
@@ -1139,7 +1156,8 @@ PROCEDURE Grava_Dados:
                       crapdoc.nrdconta = par_nrdconta AND
                       crapdoc.tpdocmto = 37           AND
                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                      crapdoc.idseqttl = par_idseqttl 
+                      crapdoc.idseqttl = par_idseqttl AND 
+                      crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                       NO-LOCK: END.
 
             IF NOT AVAILABLE crapdoc THEN
@@ -1151,7 +1169,8 @@ PROCEDURE Grava_Dados:
                        crapdoc.dtmvtolt = par_dtmvtolt
                        crapdoc.tpdocmto = 37
                        crapdoc.idseqttl = par_idseqttl
-                       crapdoc.cdoperad = par_cdoperad.
+                       crapdoc.cdoperad = par_cdoperad
+                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                 VALIDATE crapdoc.
             END.
 
@@ -1215,12 +1234,6 @@ PROCEDURE Grava_Dados:
             UNDO Grava, LEAVE Grava.
         END.
          
-        /* Encontrar a Ocupacao */
-        FIND gncdocp WHERE gncdocp.cdocupa = par_cdocpttl NO-LOCK NO-ERROR.
-
-        /* Pessoa politicamente exposta se Natureza da ocupacao = 99 */
-        ASSIGN crapttl.inpolexp = INT((gncdocp.cdnatocp = 99)) WHEN AVAIL gncdocp.
- 
         IF par_cepedct1 <> 0 THEN
 		   DO:
 		      ASSIGN
@@ -2614,7 +2627,8 @@ PROCEDURE Grava_Dados_Ppe:
                 crapdoc.nrdconta = crapttl.nrdconta AND
                 crapdoc.tpdocmto = 37               AND
                 crapdoc.dtmvtolt = par_dtmvtolt     AND
-                crapdoc.idseqttl = crapttl.idseqttl 
+                crapdoc.idseqttl = crapttl.idseqttl AND
+                crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                 NO-LOCK NO-ERROR.
 
             IF NOT AVAILABLE crapdoc THEN
@@ -2626,7 +2640,8 @@ PROCEDURE Grava_Dados_Ppe:
                        crapdoc.dtmvtolt = par_dtmvtolt
                        crapdoc.tpdocmto = 37
                        crapdoc.idseqttl = crapttl.idseqttl
-                       crapdoc.cdoperad = par_cdoperad.
+                       crapdoc.cdoperad = par_cdoperad
+                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                 VALIDATE crapdoc.
             END.
 

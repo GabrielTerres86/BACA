@@ -12,6 +12,12 @@
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  *
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *
+ * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
+
+ *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)	
  */	
 ?>
 	
@@ -54,15 +60,19 @@
 			<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 			<select name="tpdocava" id="tpdocava">
 				<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
 				<option value="CI" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CI"){ echo " selected"; } ?>>CI</option>
-				<option value="CP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CP"){ echo " selected"; } ?>>CP</option>
+				<option value="CN" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CN"){ echo " selected"; } ?>>CN</option>
+				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
+				<option value="RE" <? if (getByTagName($registros[0]->tags,'tpdocava') == "RE"){ echo " selected"; } ?>>RE</option>
+				<option value="PP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "PP"){ echo " selected"; } ?>>PP</option>
 				<option value="CT" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CT"){ echo " selected"; } ?>>CT</option>
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo getByTagName($registros[0]->tags,'nrdocava') ?>" />
 			
 			<label for="cdoeddoc" class="rotulo-linha">Org.Emi.:</label>
 			<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo getByTagName($registros[0]->tags,'cdoeddoc') ?>" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
 			
 			<label for="cdufddoc" class="rotulo-linha">U.F.:</label>
 			<? echo selectEstado('cdufddoc', getByTagName($registros[0]->tags,'cdufddoc'), 1) ?>
@@ -112,15 +122,12 @@
 			<input name="complend" id="complend" type="text" value="<? echo getByTagName($registros[0]->tags,'complend') ?>" />
 			<br />
 
-			<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-			<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($registros[0]->tags,'nrcxapst') ?>" />		
+			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
+			<? echo selectEstado('cdufresd', getByTagName($registros[0]->tags,'cdufresd'), 1); ?>		
 
 			<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 			<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($registros[0]->tags,'nmbairro') ?>" />								
 			<br />	
-
-			<label for="cdufresd"><? echo utf8ToHtml('U.F.:') ?></label>
-			<? echo selectEstado('cdufresd', getByTagName($registros[0]->tags,'cdufresd'), 1); ?>	
 
 			<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 			<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registros[0]->tags,'nmcidade') ?>" />

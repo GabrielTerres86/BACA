@@ -10,6 +10,10 @@
  *                
  *				  16/07/2015 : Reformulacao cadastral (Gabriel-RKAM).
  *                25/04/2017 : Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
+ *				  25/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -37,15 +41,20 @@
 		<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 		<select name="tpdocava" id="tpdocava">
 			<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
 			<option value="CI" <? if ($frm_tpdeiden == "CI"){ echo " selected"; } ?>>CI</option>
-			<option value="CP" <? if ($frm_tpdeiden == "CP"){ echo " selected"; } ?>>CP</option>
+			<option value="CN" <? if ($frm_tpdeiden == "CN"){ echo " selected"; } ?>>CN</option>
+			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
+			<option value="RE" <? if ($frm_tpdeiden == "RE"){ echo " selected"; } ?>>RE</option>
+			<option value="PP" <? if ($frm_tpdeiden == "PP"){ echo " selected"; } ?>>PP</option>
 			<option value="CT" <? if ($frm_tpdocava == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nridenti; ?>" />
 		
 		<label for="cdoeddoc" class="rotulo-60">Org.Emi.:</label>
 		<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo $frm_dsorgemi; ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
+		
 		<br />
 		
 		<label for="cdufddoc" class="rotulo rotulo-70">U.F.:</label>
@@ -100,15 +109,12 @@
 		<input name="complend" id="complend" type="text" value="<? echo $frm_dscomres; ?>" />
 		<br />
 		
-		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo $frm_nrcxpost; ?>" />		
+		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
+		<? echo selectEstado('cdufende', $frm_dsdufres, 1); ?>	
 		
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo $frm_dsbaires; ?>" />								
 		<br />	
-		
-		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
-		<? echo selectEstado('cdufende', $frm_dsdufres, 1); ?>	
 		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
 		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo $frm_dscidres ?>" />

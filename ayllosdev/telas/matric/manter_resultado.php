@@ -7,15 +7,25 @@
 	  --------------
 	  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
  				
- 				 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
+ 					 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
 				  
-				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
+					 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
 					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
 					
 				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
 
 					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+				 
+				 28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
+                              esteja cadastrado na cooperativa. (Kelvin)
+					 
+				 
+				 	 
+                 23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+                              replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)                    
+                              
+					 
 	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
@@ -108,8 +118,17 @@
 				
 		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
 		
-		echo "verificaResponsavelLegal();";
+        //Removido, pois tela será aberta apos salvar os dados, devido a replicação de dados da pessoa.
+		//echo "verificaResponsavelLegal();";
+		//die();	
+		
+	}
 
+    // Se for opcao AR, para apenas validar o preenchimento do responsavel legal,
+    //  deve chamar rotina pra continuar fluxo da tela
+    if ($operacao == 'AR'){
+
+      //echo 'impressao_inclusao();';
 		die();	
 		
 	}
@@ -173,7 +192,9 @@
 		$stringArrayMsg = implode( "|", $msg);
 		
 		if ($operacao == 'VI') {
-			$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            //Alterado, pois tela deverá validar responsavel legal apos salvar os dados, devido a replicação de dados da pessoa.		    
+			//$metodo = ($inpessoa == 1) ? "impressao_inclusao();" : "abrirProcuradores();";
+            $metodo = ($inpessoa == 1) ? "verificaResponsavelLegal();" : "abrirProcuradores();";
 		}
 		else {
 			$metodo = "estadoInicial();";	
@@ -202,6 +223,19 @@
 		$nomeForm  = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 		$metodoNao = ( $inpessoa == 1 ) ? "$('#dtnasctl','#frmFisico').focus();" : "$('#dtcnscpf','#frmJuridico').focus();";
 	
+		$flgdpcnt = $xmlObjeto->flgopcao[0]->flgdpcnt;
+		
+		//Nao fara nada e continuara a acao normalmente
+		if ($flgdpcnt == 1) {
+			if ($inpessoa == 1) {
+				echo "$('#dtnasctl','#frmFisico').focus();";
+			}
+			else {
+				echo "$('#dtcnscpf','#frmJuridico').focus();";
+			}
+		}
+		//Devera solicitar a duplicacao da conta
+		else if($flgdpcnt == 2) {
 		// Se ja poussui uma conta, perguntar se deseja duplicar 
 		if ( count ($xmlObjeto->inf) == 1) {
 			$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
@@ -228,13 +262,92 @@
 			$metodoSim = "mostrarRotina('LCC');"; 
 			exibirConfirmacao('CPF/CNPJ já possui a conta na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);			
 		}
-		else { // Sem contas para duplicar, vai para o proximo campo
-			if ($inpessoa == 1) {
-				echo "$('#dtnasctl','#frmFisico').focus();";
 			}
-			else {
-				echo "$('#dtcnscpf','#frmJuridico').focus();";
-			}
+		//devera carregar as informacoes nos campos da matric
+		else if($flgdpcnt == 3) {
+			$dtconsultarfb = $xmlObjeto->infcadastro[0]->dtconsultarfb;
+			$nrcpfcgc = $xmlObjeto->infcadastro[0]->nrcpfcgc;
+			$cdsituacaoRfb = $xmlObjeto->infcadastro[0]->cdsituacaoRfb;
+			$nmpessoa = $xmlObjeto->infcadastro[0]->nmpessoa;
+			$nmpessoaReceita = $xmlObjeto->infcadastro[0]->nmpessoaReceita;
+			$tpsexo = $xmlObjeto->infcadastro[0]->tpsexo;
+			$dtnascimento = $xmlObjeto->infcadastro[0]->dtnascimento;
+			$tpdocumento = $xmlObjeto->infcadastro[0]->tpdocumento;
+			$nrdocumento = $xmlObjeto->infcadastro[0]->nrdocumento;
+			$idorgaoExpedidor = $xmlObjeto->infcadastro[0]->idorgaoExpedidor;
+			$cdufOrgaoExpedidor = $xmlObjeto->infcadastro[0]->cdufOrgaoExpedidor;
+			$dtemissaoDocumento = $xmlObjeto->infcadastro[0]->dtemissaoDocumento;
+			$tpnacionalidade = $xmlObjeto->infcadastro[0]->tpnacionalidade;
+			$inhabilitacaoMenor = $xmlObjeto->infcadastro[0]->inhabilitacaoMenor;
+			$dthabilitacaoMenor = $xmlObjeto->infcadastro[0]->dthabilitacaoMenor;
+			$cdestadoCivil = $xmlObjeto->infcadastro[0]->cdestadoCivil;
+			$nmmae = $xmlObjeto->infcadastro[0]->nmmae;
+			$nmconjugue = $xmlObjeto->infcadastro[0]->nmconjugue;
+			$nmpai = $xmlObjeto->infcadastro[0]->nmpai;
+			$naturalidadeDsCidade = $xmlObjeto->infcadastro[0]->naturalidadeDsCidade;
+			$naturalidadeCdEstado = $xmlObjeto->infcadastro[0]->naturalidadeCdEstado;
+			$comercialNrddd = $xmlObjeto->infcadastro[0]->comercialNrddd;
+			$comercialNrTelefone = $xmlObjeto->infcadastro[0]->comercialNrTelefone;
+			$residencialNrddd = $xmlObjeto->infcadastro[0]->residencialNrddd;
+			$residencialNrTelefone = $xmlObjeto->infcadastro[0]->residencialNrTelefone;
+			$celularCdOperadora = $xmlObjeto->infcadastro[0]->celularCdOperadora;
+			$celularNrDdd = $xmlObjeto->infcadastro[0]->celularNrDdd;
+			$celularNrTelefone = $xmlObjeto->infcadastro[0]->celularNrTelefone;
+			$residencialNrCep = $xmlObjeto->infcadastro[0]->residencialNrCep;
+			$residencialNmLogradouro = $xmlObjeto->infcadastro[0]->residencialNmLogradouro;
+			$residencialNrLogradouro = $xmlObjeto->infcadastro[0]->residencialNrLogradouro;
+			$residencialDsComplemento = $xmlObjeto->infcadastro[0]->residencialDsComplemento;
+			$residencialNmBairro = $xmlObjeto->infcadastro[0]->residencialNmBairro;
+			$residencialCdEstado = $xmlObjeto->infcadastro[0]->residencialCdEstado;
+			$residencialDsCidade = $xmlObjeto->infcadastro[0]->residencialDsCidade;
+			$residencialTporigem = $xmlObjeto->infcadastro[0]->residencialTporigem;
+			$correspondenciaNrCep = $xmlObjeto->infcadastro[0]->correspondenciaNrCep;
+			$correspondenciaNmLogradouro = $xmlObjeto->infcadastro[0]->correspondenciaNmLogradouro;
+			$correspondenciaNrLogradouro = $xmlObjeto->infcadastro[0]->correspondenciaNrLogradouro;
+			$correspondenciaDsComplemento = $xmlObjeto->infcadastro[0]->correspondenciaDsComplemento;
+			$correspondenciaNmBairro = $xmlObjeto->infcadastro[0]->correspondenciaNmBairro;
+			$correspondenciaCdEstado = $xmlObjeto->infcadastro[0]->correspondenciaCdEstado;
+			$correspondenciaDsCidade = $xmlObjeto->infcadastro[0]->correspondenciaDsCidade;
+			$correspondenciaTporigem = $xmlObjeto->infcadastro[0]->correspondenciaTporigem;
+			$comercialNrCep = $xmlObjeto->infcadastro[0]->comercialNrCep;
+            $comercialNmLogradouro = $xmlObjeto->infcadastro[0]->comercialNmLogradouro;
+            $comercialNrLogradouro = $xmlObjeto->infcadastro[0]->comercialNrLogradouro;
+            $comercialDsComplemento = $xmlObjeto->infcadastro[0]->comercialDsComplemento;
+            $comercialNmBairro = $xmlObjeto->infcadastro[0]->comercialNmBairro;
+            $comercialCdEstado = $xmlObjeto->infcadastro[0]->comercialCdEstado;
+            $comercialDsCidade = $xmlObjeto->infcadastro[0]->comercialDsCidade;
+            $comercialTporigem = $xmlObjeto->infcadastro[0]->comercialTporigem;
+			$dsnacion = $xmlObjeto->infcadastro[0]->dsnacion;
+			$cdExpedidor = $xmlObjeto->infcadastro[0]->cdExpedidor;
+			$dsdemail = $xmlObjeto->infcadastro[0]->dsdemail;
+			$nmfantasia = $xmlObjeto->infcadastro[0]->nmfantasia;
+			$nrInscricao = $xmlObjeto->infcadastro[0]->nrInscricao;      
+			$nrLicenca = $xmlObjeto->infcadastro[0]->nrLicenca;        
+			$cdNatureza = $xmlObjeto->infcadastro[0]->cdNatureza;
+			$cdSetor = $xmlObjeto->infcadastro[0]->cdSetor;
+			$cdRamo = $xmlObjeto->infcadastro[0]->cdRamo;
+			$cdCnae = $xmlObjeto->infcadastro[0]->cdCnae;
+			$dtInicioAtividade = $xmlObjeto->infcadastro[0]->dtInicioAtividade;
+			$cdNaturezaOcupacao = $xmlObjeto->infcadastro[0]->cdNaturezaOcupacao;
+			$cdNacionalidade = $xmlObjeto->infcadastro[0]->cdNacionalidade;
+			$cdCadastroEmpresa = $xmlObjeto->infcadastro[0]->cdCadastroEmpresa;
+			
+			$metodoSim = str_replace("\r\n", "", "populaCamposRelacionamento('$dtconsultarfb', '$nrcpfcgc', '$cdsituacaoRfb', '$nmpessoa', '$nmpessoaReceita', '$tpsexo', '$dtnascimento',
+																			 '$tpdocumento', '$nrdocumento', '$idorgaoExpedidor', '$cdufOrgaoExpedidor', '$dtemissaoDocumento', '$tpnacionalidade', 
+																			 '$inhabilitacaoMenor', '$dthabilitacaoMenor', '$cdestadoCivil', '$nmmae', '$nmconjugue', '$nmpai', '$naturalidadeDsCidade', 
+																			 '$naturalidadeCdEstado','$comercialNrddd', '$comercialNrTelefone', '$residencialNrddd', '$residencialNrTelefone', '$celularCdOperadora', 
+																			 '$celularNrDdd', '$celularNrTelefone', '$residencialNrCep', '$residencialNmLogradouro', '$residencialNrLogradouro', '$residencialDsComplemento', 
+																			 '$residencialNmBairro', '$residencialCdEstado','$residencialDsCidade', '$residencialTporigem', '$correspondenciaNrCep', 
+																			 '$correspondenciaNmLogradouro', '$correspondenciaNrLogradouro', '$correspondenciaDsComplemento', '$correspondenciaNmBairro', 
+																			 '$correspondenciaCdEstado', '$correspondenciaDsCidade', '$correspondenciaTporigem', '$dsnacion','$cdExpedidor', '$dsdemail',
+																			 '$nmfantasia', '$comercialNrCep', '$comercialNmLogradouro', '$comercialNrLogradouro', '$comercialDsComplemento', '$comercialNmBairro',
+																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
+																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade', '$cdCadastroEmpresa');");
+			
+			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
+			
+			exibirConfirmacao('Cadastro já existe na base, deseja iniciar relacionamento?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
+			
 		}
 			
 	}	

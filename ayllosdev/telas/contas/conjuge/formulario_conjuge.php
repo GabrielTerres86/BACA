@@ -11,6 +11,9 @@
  * 002: [24/08/2015] Gabriel (RKAM)      : Reformulacao Cadastral (Gabriel)
  * 003: [13/06/2017] Adrian: Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
+ * 004: [25/09/2017] Kelvin              : Adicionado uma lista de valores para carregar orgao emissor (PRJ339).
+ * 005: [28/08/2017] Lucas Reinert		 : Alterado tipos de documento para utilizarem CI, CN, 
+ *              						   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
 ?>
 
@@ -37,9 +40,11 @@
 		<label for="tpdoccje">Documento:</label>
 		<select name="tpdoccje" id="tpdoccje">
 			<option value=""   <? if (getByTagName($conjuge,'tpdoccje') == ""  ){ echo " selected"; } ?>> - </option> 
-			<option value="CH" <? if (getByTagName($conjuge,'tpdoccje') == "CH"){ echo " selected"; } ?>>CH</option>
 			<option value="CI" <? if (getByTagName($conjuge,'tpdoccje') == "CI"){ echo " selected"; } ?>>CI</option>
-			<option value="CP" <? if (getByTagName($conjuge,'tpdoccje') == "CP"){ echo " selected"; } ?>>CP</option>
+			<option value="CN" <? if (getByTagName($conjuge,'tpdoccje') == "CN"){ echo " selected"; } ?>>CN</option>
+			<option value="CH" <? if (getByTagName($conjuge,'tpdoccje') == "CH"){ echo " selected"; } ?>>CH</option>
+			<option value="RE" <? if (getByTagName($conjuge,'tpdoccje') == "RE"){ echo " selected"; } ?>>RE</option>
+			<option value="PP" <? if (getByTagName($conjuge,'tpdoccje') == "PP"){ echo " selected"; } ?>>PP</option>
 			<option value="CT" <? if (getByTagName($conjuge,'tpdoccje') == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdoccje" id="nrdoccje" type="text" value="<? echo getByTagName($conjuge,'nrdoccje') ?>" />
@@ -48,6 +53,8 @@
 		
 		<label for="cdoedcje">Org.Emi.:</label>
 		<input name="cdoedcje" id="cdoedcje" type="text" value="<? echo getByTagName($conjuge,'cdoedcje') ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedcje" id="nmoedcje" type="text" style="display:none;" />
 					
 		<label for="cdufdcje">U.F.:</label>
 		<? echo selectEstado('cdufdcje', getByTagName($conjuge,'cdufdcje'), 1) ?>

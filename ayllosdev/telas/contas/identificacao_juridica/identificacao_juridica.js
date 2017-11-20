@@ -17,6 +17,8 @@
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
  * 010: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.      
+ * 012: [12/08/2017] Lombardi                  : Criada a função dossieDigidoc.	PRJ339 CRM
+ 
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -43,7 +45,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		$('#imgAbaDir' + i).attr('src',UrlImagens + 'background/mnu_nld.gif');
 		$('#imgAbaCen' + i).css('background-color','#C6C8CA');
 	}
-
+	
 	/*inpessoa 3 não tem idseqttl, então para não passar null
 	  na requisição, passamos 0 para não gerar problemas.*/
 	if (inpessoa == 3)
@@ -153,7 +155,7 @@ function manterRotina(operacao) {
 	qtfoltal = trim($('#qtfoltal','#frmDadosIdentJuridica').val());
 	dtcadass = trim($('#dtcadass','#frmDadosIdentJuridica').val());
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
-	nrlicamb = $('#nrlicamb', '#frmDadosIdentJuridica').val();
+	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax
@@ -405,4 +407,37 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('REGISTRO','Registro','registro');		
+}
+
+function dossieDigidoc() {
+	showMsgAguardo('Aguarde...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/contas/dossie_digidoc.php',
+		data: {
+      nrcpfcgc: $('#nrcpfcgc','#frmDadosIdentJuridica').val(),
+      nrdconta: nrdconta,
+      redirect: 'html_ajax'
+    },
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			exibeRotina($('#divUsoGenerico'));
+      $('#divUsoGenerico').css({'margin-top': '170px'});
+      $('#divUsoGenerico').css({'width': '400px'});
+      $('#divUsoGenerico').centralizaRotinaH();
+			bloqueiaFundo( $('#divUsoGenerico') );
+      layoutPadrao();
+
+      return false;
+		}
+	});
 }

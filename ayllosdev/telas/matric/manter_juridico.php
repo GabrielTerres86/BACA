@@ -8,6 +8,7 @@
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
+ *                16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  */
 ?> 
 
@@ -97,6 +98,8 @@
 		$xml .= "<$key>$value</$key>";   
 		
 	} 
+	
+	$xml .= "<nrcxapst>0</nrcxapst>"; 	
 	
 	if($procedure == "grava_dados" || $procedure == "valida_dados"){ 
 

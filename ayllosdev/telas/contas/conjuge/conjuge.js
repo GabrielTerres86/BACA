@@ -16,6 +16,7 @@
  * 007: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
+ * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 // Definindo variáveis globais 
@@ -583,7 +584,15 @@ function controlaPesquisas() {
 					colunas 	= 'Código;grescola;20%;right|Escolaridade;dsescola;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
 					return false;
-				
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoedcje'){								
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoedcje;100px;S;|Descrição;nmoedcje;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa("ZOOM0001", procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
+					return false;
 				// Curso Superior
 				} else if ( campoAnterior == 'cdfrmttl' ) {
 					procedure	= 'busca_formacao';
@@ -597,7 +606,7 @@ function controlaPesquisas() {
 				// Natureza Ocupação
 				} else if ( campoAnterior == 'cdnatopc' ) {
 					filtrosPesq = "Cód. Nat. Ocupação;cdnatopc;30px;S;0|Natureza da Ocupação;rsnatocp;200px;S;";
-                    colunas = 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
+					colunas 	= 'Código;cdnatocp;25%;right|Natureza da Ocupação;rsnatocp;75%;left';
                     mostraPesquisa("ZOOM0001", "BUSCANATOCU", "Natureza da Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
 
 					return false;

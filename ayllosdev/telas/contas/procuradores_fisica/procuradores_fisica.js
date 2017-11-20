@@ -10,6 +10,10 @@
  *				  25/09/2013 - Alteração da função de salvar poderes (Jean Michel).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+*				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
+ *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).		                         
+ *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 var nrcpfcgc = '';
@@ -297,7 +301,6 @@ function manterRotinaProcuradores(operacao) {
 	dsrelbem = $('#dsrelbem','#frmDadosProcuradores').val(); 
 	dtvalida = $('#dtvalida','#frmDadosProcuradores').val(); 
 	vledvmto = $('#vledvmto','#frmDadosProcuradores').val();	
-	nrcxapst = $('#nrcxapst','#frmDadosProcuradores').val();
 	dthabmen = $('#dthabmen','#frmDadosProcuradores').val();
 	inhabmen = $('#inhabmen','#frmDadosProcuradores').val();
 		
@@ -309,7 +312,6 @@ function manterRotinaProcuradores(operacao) {
 	nrcpfcgc = normalizaNumero( nrcpfcgc );
 	nrendere = normalizaNumero( nrendere );
 	nrcepend = normalizaNumero( nrcepend );
-	nrcxapst = normalizaNumero( nrcxapst );
 	
 	cdoeddoc = trim( cdoeddoc );
 	nmdavali = trim( nmdavali );
@@ -350,8 +352,8 @@ function manterRotinaProcuradores(operacao) {
 			nrendere: nrendere,	nrcepend: nrcepend, dsrelbem: dsrelbem,	
 			dtvalida: dtvalida, vledvmto: vledvmto,	cdsexcto: cdsexcto,	
 			cdufresd: cdufresd, nrdconta: nrdconta, idseqttl: idseqttl, 
-			nrcxapst: nrcxapst, nrdrowid: nrdrowid, dthabmen: dthabmen,
-			inhabmen: inhabmen, dadosXML: dadosXML, camposXML: camposXML,
+			nrdrowid: nrdrowid, dthabmen: dthabmen, inhabmen: inhabmen, 
+			dadosXML: dadosXML, camposXML: camposXML,
 			operacao: operacao, 
 			redirect: 'script_ajax'
 		}, 
@@ -374,7 +376,7 @@ function estadoInicialProcuradores() {
 
 	var cNrConta		= $('#nrdctato','#frmDadosProcuradores');
 	var cCPF			= $('#nrcpfcgc','#frmDadosProcuradores');
-	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+	var camposGrupo2	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto','#frmDadosProcuradores');
 	var camposGrupo3	= $('#dtvalida','#frmDadosProcuradores');		
 	var sexo			= $('input[name="cdsexcto"]');	
 	var cDescBem		= $('#dsrelbem','#frmDadosProcuradores');
@@ -490,7 +492,6 @@ function controlaLayoutProcuradores( operacao ) {
 		var rEnd		= $('label[for="dsendres"]','#'+nomeFormProcuradores);
 		var rNum		= $('label[for="nrendere"]','#'+nomeFormProcuradores);
 		var rCom		= $('label[for="complend"]','#'+nomeFormProcuradores);
-		var rCax		= $('label[for="nrcxapst"]','#'+nomeFormProcuradores);	
 		var rBai		= $('label[for="nmbairro"]','#'+nomeFormProcuradores);
 		var rEst		= $('label[for="cdufresd"]','#'+nomeFormProcuradores);	
 		var rCid		= $('label[for="nmcidade"]','#'+nomeFormProcuradores);
@@ -499,17 +500,15 @@ function controlaLayoutProcuradores( operacao ) {
 		rEnd.addClass('rotulo-linha').css('width','35px');
 		rNum.addClass('rotulo').css('width','70px');
 		rCom.addClass('rotulo-linha').css('width','52px');
-		rCax.addClass('rotulo').css('width','70px');
-		rBai.addClass('rotulo-linha').css('width','52px');
 		rEst.addClass('rotulo').css('width','70px');
-		rCid.addClass('rotulo-linha').css('width','52px');
+		rBai.addClass('rotulo-linha').css('width','52px');
+		rCid.addClass('rotulo').css('width','70');
 		
 		// campo endereco
 		var cCep		= $('#nrcepend','#'+nomeFormProcuradores);
 		var cEnd		= $('#dsendres','#'+nomeFormProcuradores);
 		var cNum		= $('#nrendere','#'+nomeFormProcuradores);
 		var cCom		= $('#complend','#'+nomeFormProcuradores);
-		var cCax		= $('#nrcxapst','#'+nomeFormProcuradores);		
 		var cBai		= $('#nmbairro','#'+nomeFormProcuradores);
 		var cEst		= $('#cdufresd','#'+nomeFormProcuradores);	
 		var cCid		= $('#nmcidade','#'+nomeFormProcuradores);
@@ -518,10 +517,9 @@ function controlaLayoutProcuradores( operacao ) {
 		cEnd.addClass('alphanum').css('width','306px').attr('maxlength','40');
 		cNum.addClass('numerocasa').css('width','65px').attr('maxlength','7');
 		cCom.addClass('alphanum').css('width','306px').attr('maxlength','40');	
-		cCax.addClass('caixapostal').css('width','65px').attr('maxlength','6');	
-		cBai.addClass('alphanum').css('width','306px').attr('maxlength','40');	
 		cEst.css('width','65px');	
-		cCid.addClass('alphanum').css('width','306px').attr('maxlength','25');
+		cBai.addClass('alphanum').css('width','306px').attr('maxlength','40');	
+		cCid.addClass('alphanum').css('width','429px').attr('maxlength','25');
 
 		var endDesabilita = $('#dsendres,#cdufresd,#nmbairro,#nmcidade','#'+nomeFormProcuradores);
 		
@@ -551,7 +549,7 @@ function controlaLayoutProcuradores( operacao ) {
 		$('#persemon,#qtprebem','#frmProcBens').css({'width':'40px'});			
 		
 		// INICIA CONTROLE DA TELA
-		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmDadosProcuradores');
+		var camposGrupo2  = $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#dthabmen,#inhabmen,#cdestcvl,#nrdocava,#cdoeddoc,#cdufresd,#dtemddoc,#cdnacion,#dsnacion,#dsnatura,#dsendres,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto','#frmDadosProcuradores');
 		var camposGrupo3  = $('#dtvalida','#frmDadosProcuradores');		
 		var sexo 		  = $('input[name="cdsexcto"]');
 
@@ -847,7 +845,6 @@ function controlaLayoutProcuradores( operacao ) {
 	$('#nrcpfcgc','#frmDadosProcuradores').trigger('blur');
 	$('#nrendere','#frmDadosProcuradores').trigger('blur');
 	$('#nrcepend','#frmDadosProcuradores').trigger('blur');
-	$('#nrcxapst','#frmDadosProcuradores').trigger('blur');
 		
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
@@ -909,6 +906,16 @@ function controlaPesquisasProcuradores() {
 					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;				
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoeddoc'){			
+					bo 		    = "ZOOM0001"
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoeddoc;100px;S;|Descrição;nmoeddoc;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
+					return false;
 				// Naturalidade
 				} else if ( campoAnterior == 'dsnatura' ) {
 					bo			= 'b1wgen0059.p';
@@ -1346,16 +1353,16 @@ function controlaLayoutPoder() {
 	$('.divRegistros > table > thead').remove();
 }
 
-function controlaOperacaoPoderes(operacao){
-    switch (operacao) {
+function controlaOperacaoPoderes(operacao) {
+	switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-        }
+}
 
 function salvarPoderes(){
 	

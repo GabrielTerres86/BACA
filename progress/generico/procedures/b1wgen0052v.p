@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
+    Data    : Junho/2010                      Ultima atualizacao: 29/09/2017
   
     Dados referentes ao programa:
   
@@ -150,7 +150,11 @@
 				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
 							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
 							
+                28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							 CH, RE, PP E CT. (PRJ339 - Reinert)
                              
+			    29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
+							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).                          
 ........................................................................*/
 
 
@@ -368,9 +372,9 @@ PROCEDURE Valida_Dados :
             LEAVE Valida.
         
         
-        IF par_inpessoa <> 2 AND
-           par_cddopcao <> "X" AND
-		   par_cddopcao <> "J" THEN
+        IF par_inpessoa = 1    AND
+           (par_cddopcao = "I" OR
+		   par_cddopcao = "A") THEN
            DO:
               /* Identificar orgao expedidor */
               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
@@ -1082,7 +1086,7 @@ PROCEDURE Valida_Procurador :
                END.
 
             /* Tipo do documento */
-            IF NOT CAN-DO("CH,CI,CP,CT",tt-crapavt.tpdocava) THEN  
+            IF NOT CAN-DO("CI,CN,CH,RE,PP,CT",tt-crapavt.tpdocava) THEN  
                DO:                                      
                   ASSIGN par_nmdcampo = "tpdocava"         
                          par_dscritic = "O tipo de documento do Procurador " +
@@ -2598,7 +2602,7 @@ PROCEDURE Valida_Fis PRIVATE :
             END.
 
         /* Documento - tipo */
-        IF  LOOKUP(par_tpdocptl,"CI,CH,CP,CT") = 0 THEN
+        IF  LOOKUP(par_tpdocptl,"CI,CN,CH,RE,PP,CT") = 0 THEN
             DO:
                ASSIGN par_nmdcampo = "tpdocptl"
                       par_cdcritic = 21.

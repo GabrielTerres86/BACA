@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0070.p
     Autor     : David
-    Data      : Abril/2010                  Ultima Atualizacao: 17/01/2017
+    Data      : Abril/2010                  Ultima Atualizacao: 05/10/2017
     
     Dados referentes ao programa:
 
@@ -44,6 +44,9 @@
                       
                  17/01/2017 - Adicionado chamada a procedure de replicacao do 
                               telefone para o CDC. (Reinert Prj 289)                                       
+
+				 05/10/2017 - Incluindo procedure para replicar informacoes do crm. 
+							 (PRJ339 - Kelvin/Andrino).
 .............................................................................*/
 
 
@@ -790,6 +793,47 @@ PROCEDURE gerenciar-telefone:
 
         IF  par_cddopcao = "I"  THEN 
             DO: 
+                IF par_nmdatela = "MATRIC" THEN 
+                  DO:
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                    RUN STORED-PROCEDURE pc_busca_nrseqtel 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT crapass.nrcpfcgc,  
+                              INPUT par_tptelefo,						  
+                             OUTPUT 0,
+                             OUTPUT "").
+
+                    CLOSE STORED-PROC pc_busca_nrseqtel
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+              
+                    ASSIGN aux_cdseqtfc = 0
+                           aux_cdseqtfc = pc_busca_nrseqtel.pr_nrseqtel 
+                                WHEN pc_busca_nrseqtel.pr_nrseqtel <> ?
+                           aux_dscritic = ""                         
+                           aux_dscritic = pc_busca_nrseqtel.pr_dscritic 
+                                WHEN pc_busca_nrseqtel.pr_dscritic <> ?.						
+                  
+                   
+                    /* Verificar se sequencial ja esta em uso, caso esteja buscar o ultimo
+                      tratamento necessario, pois na tela MATRIC permite cadastrar dois telefones
+                      assim a nova estrutura ainda nao estara atualizada retornando o mesmo seq, duas vezes */
+                    FIND FIRST craptfc 
+                         WHERE craptfc.cdcooper = par_cdcooper AND
+                               craptfc.nrdconta = par_nrdconta AND
+                               craptfc.idseqttl = par_idseqttl AND
+                               craptfc.cdseqtfc = aux_cdseqtfc
+                              NO-LOCK NO-ERROR.
+                              
+                    IF AVAILABLE craptfc THEN          
+                      ASSIGN aux_cdseqtfc = 0.
+                  
+                  END.
+                
+                IF par_nmdatela <> "MATRIC" OR aux_cdseqtfc = 0 THEN
+                  DO:
                 FIND LAST craptfc WHERE craptfc.cdcooper = par_cdcooper AND
                                         craptfc.nrdconta = par_nrdconta AND
                                         craptfc.idseqttl = par_idseqttl
@@ -799,6 +843,7 @@ PROCEDURE gerenciar-telefone:
                                           craptfc.cdseqtfc + 1
                                       ELSE 
                                           1.
+                  END.
 
                 /* Se veio pelo TAA, validar se fone ja existe */
                 IF  par_idorigem = 4 THEN DO:

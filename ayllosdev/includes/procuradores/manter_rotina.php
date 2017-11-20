@@ -12,6 +12,9 @@
  *                11/01/2016 - Validar exclusão de representante (David)
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
  */
 ?>
  
@@ -57,7 +60,7 @@
 	$vledvmto = (isset($_POST["vledvmto"])) ? $_POST["vledvmto"] : "";
 	$cdsexcto = (isset($_POST["cdsexcto"])) ? $_POST["cdsexcto"] : "";
 	$cdufresd = (isset($_POST["cdufresd"])) ? $_POST["cdufresd"] : "";
-	$nrcxapst = (isset($_POST["nrcxapst"])) ? $_POST["nrcxapst"] : "";	
+	$nrcxapst = 0;
 	$dadosXML = (isset($_POST['dadosXML'])) ? $_POST['dadosXML'] : '';
 	$camposXML = (isset($_POST['camposXML'])) ? $_POST['camposXML'] : '';
 	
@@ -186,7 +189,7 @@
 				
 			}
 			}
-			
+
 		}
 		
 		if($procedure == 'valida_dados' ||
@@ -261,7 +264,7 @@
 			}
 		}
 		}
-		
+
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 			
@@ -440,7 +443,7 @@
 		if (!validaInteiro($GLOBALS['nrdctato'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 				
 		// Tipo de Documento
-		if (!in_array($GLOBALS['tpdocava'],array('CH','CI','CP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmDadosProcuradores\')',false);
+		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmDadosProcuradores\')',false);
 		
 		// Numero de Documento
 		if ($GLOBALS['nrdocava']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmDadosProcuradores\')',false);
