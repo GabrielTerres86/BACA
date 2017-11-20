@@ -415,7 +415,10 @@ PROCEDURE CriaListaEventos :
              vetoreventos = vetoreventos + ",flgativo:'no',flgevobr:'" + STRING(crapedp.flgtdpac,"yes/no") + "'~}".
                            
     END.
-
+			
+		IF SUBSTR(vetoreventos,1,1) = ',' THEN
+			ASSIGN vetoreventos = SUBSTR(vetoreventos,2).
+			
     RUN RodaJavaScript("meventos.push("  + vetoreventos + ");"). 
 
 END PROCEDURE.
