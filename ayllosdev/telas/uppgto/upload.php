@@ -695,7 +695,7 @@
 		geraLogArqRemessa("Erro no recebimento do arquivo: " . strtoupper(substr($decriptado,1,2)) . " (Etapa 3 de 3)", $nrdconta, $cdoperad, $aux_remessa, $file["name"]);		
 		$funcao = "msgError('error','".utf8ToHtml( removeCaracteresInvalidos($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata))."','hideMsgAguardo();');";
     }else{
-		geraLogArqRemessa("Recebido pelo Ayllos (Etapa 2 de 3)", $nrdconta, $cdoperad, $aux_remessa, $file["name"]);
+		geraLogArqRemessa("Recebido pelo sistema (Etapa 2 de 3)", $nrdconta, $cdoperad, $aux_remessa, $file["name"]);
 		$registros = $xmlObjeto->roottag->tags[0]->tags;
 		$arr = $xmlObjeto->roottag->tags[0];   // returns an array
 		//echo "<script>parent.framePrincipal.eval( 'showError('inform','Arquivo importado com sucesso.','Alerta - Ayllos','',false);' );</script>";

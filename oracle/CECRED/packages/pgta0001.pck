@@ -8681,7 +8681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 
     ..............................................................................*/
     ---------> CURSORES <--------
     --> Buscar logs
@@ -8942,6 +8942,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                          AND dptr.nrconven = hptr.nrconven
                          AND dptr.nrdconta = hptr.nrdconta
                          AND dptr.cdcooper = hptr.cdcooper
+                         AND hptr.dtmvtolt >= (
+                                               select min(hptref.dtmvtolt)
+                                               from crapdpt dptref
+                                                   ,craphpt hptref
+                                               where dptref.tpmvtorg is not null
+                                                 and dptref.nrremret = hptref.nrremret
+                                                 and dptref.intipmvt = hptref.intipmvt
+                                                 and dptref.nrconven = hptref.nrconven
+                                                 and dptref.nrdconta = hptref.nrdconta
+                                                 and dptref.cdcooper = hptref.cdcooper
+                                                 and hptref.intipmvt = 2 /*retorno*/
+                                                 and hptref.nrconven = hptr.nrconven
+                                                 and hptref.nrdconta = hptr.nrdconta
+                                                 and hptref.cdcooper = hptr.cdcooper
+                                              )                         
                             -- Numero da Remessa
                          AND (pr_nrremess IS NULL OR
                              (pr_nrremess IS NOT NULL AND
@@ -10802,6 +10817,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                      AND dptr.nrconven = hptr.nrconven
                      AND dptr.nrdconta = hptr.nrdconta
                      AND dptr.cdcooper = hptr.cdcooper
+                     AND hptr.dtmvtolt >= (
+                                           select min(hptref.dtmvtolt)
+                                           from crapdpt dptref
+                                               ,craphpt hptref
+                                           where dptref.tpmvtorg is not null
+                                             and dptref.nrremret = hptref.nrremret
+                                             and dptref.intipmvt = hptref.intipmvt
+                                             and dptref.nrconven = hptref.nrconven
+                                             and dptref.nrdconta = hptref.nrdconta
+                                             and dptref.cdcooper = hptref.cdcooper
+                                             and hptref.intipmvt = 2 /*retorno*/
+                                             and hptref.nrconven = hptr.nrconven
+                                             and hptref.nrdconta = hptr.nrdconta
+                                             and hptref.cdcooper = hptr.cdcooper
+                                          )                     
                      --
                      AND hptr.nrremret = NVL(pr_nrremret,hptr.nrremret)
                      AND (hptr.nmarquiv LIKE '%'||TRIM(pr_nmarquiv)||'%' OR TRIM(pr_nmarquiv) IS NULL)
