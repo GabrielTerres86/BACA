@@ -550,6 +550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   SELECT ass.nrdconta,
          ass.nrcpfcgc,
          ass.inpessoa,
+         decode(ass.inpessoa,1,1,2) inpessoa_vld,
          ass.cdcooper
     FROM crapass ass
    WHERE ass.cdcooper = pr_cdcooper
@@ -4543,6 +4544,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
        
                    29/12/2016 - P340 - Ajustes para pagamentos divergentes (Ricardo Linhares)
+
+                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4674,7 +4678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
@@ -4818,6 +4822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquicvo Header do lote
 
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
+
+                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4909,7 +4916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Lote Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Lote incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
