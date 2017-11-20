@@ -5,14 +5,14 @@
                          
 -------------------------------------------------------------------------------------->
 <html>
-<head>
+  <head>
     <link REL=STYLESHEET TYPE="text/css" HREF="/cecred/estilos/estiloage.css">
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
     <script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
     <script type="text/javascript" src="/cecred/scripts/scripts.js"></script>	
     <script type="text/javascript" src="/cecred/scripts/funcoes.js"></script>
-</head>
-<script language="JavaScript">
+   </head>
+    <script language="JavaScript">
       // variaveis q aramazenam os valores das coordenadas x e y da div onde esta o nome do PAC
       var vXD=0;vYD=0;vXCabec=0;vYCabec=0;
       /*
@@ -249,7 +249,7 @@
         }
         
       }
-</script>
+    </script>
     <script language="SpeedScript">
 
       /***************************************************************************************************/
@@ -416,7 +416,6 @@
       IF REQUEST_METHOD = "POST" THEN 
 	    bloco:  
         DO: 
-          
           ASSIGN aux_cdcooper = INT(GET-VALUE("aux_cdcooper"))
                  aux_cdcopope = INT(GET-VALUE("aux_cdcopope"))
                  aux_cdoperad = GET-VALUE("aux_cdoperad")
@@ -515,6 +514,7 @@
 		  END.
 		ELSE
 			DO:
+				
          /* Verificando se o POST foi feito para enviar nova agenda */
 		IF GET-VALUE("envia") = "sim" THEN
           DO:
@@ -648,17 +648,18 @@
                                crapadp.cdagenci = INT(ENTRY(aux_i,aux_pac))    
                                crapadp.nrmeseve = INT(ENTRY(aux_i,aux_mes)).
                       END.
-                  END.  
+                  END.  /* IF AVAIL crapadp THEN */
                 ELSE /* caso registro nao exista */
                   DO:
 					
-					IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
-						DO:
+										/*IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
+											DO:JMD LIB*/
 					
                         /* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
                                aux_contnrseq = 0.
-                        agenda:
+                        
+												agendaNrseqdig:
                         DO WHILE TRUE:
                           IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                             DO:
@@ -666,10 +667,10 @@
                               IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                                 DO:
                                   ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                                  leave agenda.
+                                  leave agendaNrseqdig.
                                 END.
                               ELSE
-                                LEAVE agenda.
+                                LEAVE agendaNrseqdig.
                               
                             END.
                           ELSE
@@ -682,12 +683,12 @@
                                     RETURN "NOK".
                                   END.
                               ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                                LEAVE agenda.      
+                                LEAVE agendaNrseqdig.      
                             END.												
                             
                           ASSIGN aux_contnrseq = aux_contnrseq + 1.
                           
-                        END.
+                        END. /* agendaNrseqdig: */
                         /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         
                         CREATE crapadp.
@@ -777,6 +778,7 @@
                           END. /* crapagp.idstagen > 4 */
 						ELSE
 							DO:
+														
 								FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
 																	 AND crapagp.cdcooper = gnpapgd.cdcooper
 																	 AND crapagp.dtanoage = gnpapgd.dtanonov
@@ -799,7 +801,7 @@
 									END. /* AVAILABLE crapagp */
 							END. /* ELSE  crapagp.idstagen */
                         VALIDATE crapadp.
-					 END. /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
+									/*END. JMD LIB*/ /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
                   END. /* /* caso registro nao exista */ */
 			END. /* REPEAT */
 		  END. /* ELSE */
@@ -1026,28 +1028,28 @@
       <input type="hidden" name="aux_cdcopope" value="`aux_cdcopope`" />
       <input type="hidden" name="aux_cdoperad" value="`aux_cdoperad`" />
       <table  height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
-    <tr>
+        <tr>
           <td height="20" colspan="5">
             <table width="100%"  border="0" cellspacing="0" cellpadding="0">
               <tr> 
-            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
                 <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
                 <td height="20" class="linkGuia">Composição das Agendas</td>
                 <td width="80" class="linkGuia" align="right">wpgd0023</td>
-            <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
-    </tr>
+                <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+              </tr>
             </table>
           </td>
         </tr>
-    <tr valign="top" bgcolor="#FFFFFF">
-      <td colspan="5">
+        <tr valign="top" bgcolor="#FFFFFF"> 
+          <td colspan="5"> 
             <table id="tbprimeira" width="100%" height="80%" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999" >
-                <tr>
+              <tr> 
                 <td align="left" valign="top" bgcolor="#FFFFFF">    
                   <fieldset style="border: 2px solid #6B7984; margin-left: 2px;margin-right: 2px;padding-top: 0.35em;padding-bottom: 0.625em;padding-left: 0.75em;padding-right: 0.75em;">
                   <legend style="fotn-color:black;">FILTROS</legend>
                     <table id="tbanobase" width="100%" cellpadding="0" cellspacing="0" border="0" >
-                            <tr>
+                      <tr> 
                         <td height="23" align="left" valign="middle" class="NomeCampo">Cooperativa:
                           <select name="aux_cdcooper" class="Campo" id="cdcooper" onchange="document.form.aux_dtanoage.value=''; buscaEvento(this.value)" class="LinhaTabelaSelect">
                             <script language="SpeedScript">
@@ -1141,7 +1143,7 @@
                               ASSIGN aux_corfundo = "white".
                             </script>
                           </select>
-                                          </td>
+                        </td>
                         <td height="23" align="left" valign="middle" class="NomeCampo">
                           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventos:
                           <select name="aux_selevento" class="Campo" id="cdevento" onchange="buscaEvento(this.value)">
@@ -1178,14 +1180,14 @@
                             <script language="SpeedScript">						
                               END.             
                             </script>               							              
-                                                        </select>
-                                          </td>
+                          </select>                          
+                        </td>
                         <td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">Ano Base:
                           <input type="text" name="aux_dtanoage" size="4" class="Campo" onChange="aguarde(); document.form.submit();" value="`aux_dtanoage`">						 
 						  
                         </td>
-                                        </tr>
-                                </table>
+                      </tr>
+                    </table>
                   </fieldset>
       
                   <fieldset style="border: 2px solid #6B7984; margin-left: 2px;margin-right: 2px;padding-top: 0.35em;padding-bottom: 0.625em;padding-left: 0.75em;padding-right: 0.75em;">
@@ -1195,10 +1197,10 @@
                         <td width="250" height="23" align="left" valign="middle" class="NomeCampo">
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PAs:
                         <select name="aux_cdagenci" class="Campo" id="cdagenci" onchange="mudaTitulo(this.options[this.selectedIndex].innerText)"></select>
-                              </td>
+                        </td>
                         <td class="NomeCampo" width="100">PA para Inclusão:</td>
                         <td nowrap id="tdpac" width="60" class="LinhaTabelaSelect" ><div STYLE="width:'55px';BACKGROUND-COLOR:'`aux_corfundo`';" class="infparcela"  id="novo" nowrap>&nbsp;</div></td>
-                            </tr>
+                      </tr>
                     </table> <!-- tbcabec --> 
                   </fieldset>
     
@@ -1225,18 +1227,18 @@
                         <script language="SpeedScript">
                           END.
                         </script>
-                                                        </tr>
-                                                </table>      
+                      </tr>
+                    </table>
                   </fieldset>
-                                            </td>
-                                          </tr>
-                        <tr>
+                </td>
+              </tr>
+              <tr>
                 <td align="left" valign="top" bgcolor="#FFFFFF">              
                   <table class="dataTable" cellpadding="0" cellspacing="0">
                     <tr class="dataTableRow">
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabevento">
                         <div STYLE="width:'120px'"><font color="#000000">Eventos</font></div>
-                                            </td>
+                      </td>
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabjan"><div STYLE="width:'55px'"><font color="#000000">Janeiro</font></div></td>
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabfev"><div STYLE="width:'55px'"><font color="#000000">Fevereiro</font></div></td>
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabmar"><div STYLE="width:'55px'"><font color="#000000">Março</font></div></td>
@@ -1250,11 +1252,11 @@
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabnov"><div STYLE="width:'55px'"><font color="#000000">Novembro</font></div></td>
                       <td  height="26" nowrap background="/cecred/images/menu/fnd_title.jpg" class="dataTableHeader" id="cabdez"><div STYLE="width:'55px'"><font color="#000000">Dezembro</font></div></td>
                       <td width="3%" height="26">&nbsp;</td>
-                                          </tr>
-                                  </table>
-                    </td>
-                            </tr>
-                              <tr>
+                    </tr>
+                  </table>
+                </td>  
+              </tr> 
+              <tr>
                 <td align="left" valign="top" bgcolor="#FFFFFF" >              
                   <table class="dataTable" id="selecao" cellpadding="0" cellspacing="0" border="0"> 
                     <script language="SpeedScript">                                                 
@@ -1391,7 +1393,7 @@
                                    aux_mescont = aux_mescont + 1.
                           END. /* do meses */
                         </script>            
-                                          </tr>
+                      </tr>
                     <script language="SpeedScript">                                                        
                         END. 
                           
@@ -1415,9 +1417,9 @@
                       RUN RodaJavaScript("SET_DHTML(CURSOR_HAND," + aux_evts + ");").         
                       RUN RodaJavaScript("hideMsgAguardo()").
                     </script>        
-                                       </table>
-                        </td>
-                            </tr>
+                  </table>          
+                </td>
+              </tr>
               <tr>
                 <td valign="bottom" align="center" bgcolor="#FFFFFF">
                   <br>
@@ -1425,13 +1427,13 @@
                     <img src="/cecred/images/botoes/btn_salvar.gif" onClick="salvar();" style="cursor: hand; ">
                     <img src="/cecred/images/botoes/btn_gerar_agenda.gif" onClick="gerar();" style="cursor: hand; ">
                     <img src="/cecred/images/botoes/btn_liberar_agenda.gif" onClick="enviar();" style="cursor: hand; ">
-                  </td>
-                </tr>
-              </table>
-      </td>
-    </tr>
-  </table>
-
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    
       <input type="hidden" name="aux_dsendurl" value="`AppURL`">
       <input type="hidden" name="ultimadiv" value="`aux_contador + 1`">
       <input type="hidden" name="ultimalinha" value="`aux_linha + 1`">
@@ -1445,9 +1447,9 @@
       <input type="hidden" name="gera" value="">
       <input type="hidden" name="envia" value="">
       <input type="hidden" name="auxdstextab" value="`aux_dstextab`">
-         
+
     </form>
-         
+    
     <script language="JavaScript">
       var tdev='';tdp='';tdx=0;tdy=0;tdbg='';tdrw='';tde=0;tdm=0;
       // evento chamado ao clicar na div para arrastar 
@@ -1465,18 +1467,18 @@
             tdm  = mesEvento[i].m;
             if (tdev=='novo') {
               tdp  = document.form.cdagenci.value;
-        }
+            }
             mesEvento[i].a='s';
             break;
-    }
-   }
-}
-
+          }
+        }
+      }
+      
       // evento chamdo após a div ser arrastada
       function eventoDropado(){
-
+      
         var posicionou=false; // flag indicando se jah achou onde a div deve ser posicionada
-
+        
         ehdd = false; // flag indicando que a div é movel
         ehexclusao = false; // flag indicando se é uma exclusao de evento
         eheventodopac = false; // flag indicando se o pac esta relacionado com o evento (crapeap)
@@ -1485,25 +1487,25 @@
           dd.obj.x <= (findPosX(document.all['tdpac']) + parseInt(vXD) ))) &&
           ((dd.obj.y >= findPosY(document.all['tdpac']) &&
           dd.obj.y <= (findPosY(document.all['tdpac']) + parseInt(vXD) )))) // se foi posicionado dentro da lixeira      
-         {
+          {  
             ehexclusao=true;
-         }
-            
+          }
+
         for (i=0;i<mesEvento.length;i++){
           // despreza o evento excluido e nao deixa mudar de posicao
           if (document.all[mesEvento[i].ev].style.backgroundColor=='#000000'){
             break;
-    }
-
+          }
+          
          if (((dd.obj.x >= findPosX(document.all[mesEvento[i].td]) &&
               dd.obj.x <= (findPosX(document.all[mesEvento[i].td]) + parseInt(vXD)))) &&
               ((dd.obj.y >= findPosY(document.all[mesEvento[i].td]) &&
               dd.obj.y <= (findPosY(document.all[mesEvento[i].td]) + parseInt(vYD))))){ // se foi posicionado dentro de uma celula valida                        
-
+              
               if ((document.all[mesEvento[i].ev].innerText != '') /* && (mesEvento[i].ev != 'novo')*/  ){ // regra para nao sobrepor eventos
                 break;
-   }
-               
+              }     
+              
               if ((document.form.aux_selevento.value==0) &&
                   (mesEvento[i].ev!='novo')) { // ao mostrar todos os eventos, validar se evento esta relacionado ao pac
                 eheventodopac = false;
@@ -1512,30 +1514,30 @@
                     if (maux_acdagenci[k] == tdp) {
                       if (maux_acdevento[k] == mesEvento[i].e) {
                         eheventodopac = true;
-            } 
-            }  
-         } 
+                      }
+                    }
+                  }
                   if (eheventodopac==false){
                     alert("PA não está relacionado com esse evento.");break;
-   }
-   }
-}
-
+                  }
+                }
+              }
+              
               if (dd.obj.name == 'novo') {           
                 mesEvento[i].p  = document.form.cdagenci.value;
                 document.all[mesEvento[i].ev].innerText = document.all[dd.obj.name].innerText.substr(0,9);
-
+                
 				//Adicionado valores para centralizar a posição do pac ao voltar (Vanessa)
 				dd.obj.moveTo(parseInt(findPosX(document.all['tdpac']))+5,parseInt(findPosY(document.all['tdpac']))+7);
-   
+                
 				for (j=0;j<dd.elements.length;j++) {
                   if (mesEvento[i].ev==dd.elements[j].name){
                     ehdd=true;break;
-      }
-   }
+                  }
+                }
                 if (ehdd==false){
                   ADD_DHTML(mesEvento[i].ev+CURSOR_HAND);
-}
+                }
               }else{
                 // pede confirmacao para transferir um evento com pré-inscritos
                 if((document.all[tdev].idinseve=='yes')&&
@@ -1549,18 +1551,18 @@
 
                   // deixar a cor de fundo da div onde estava o pac com a cor da div posicionada
                   document.all[tdev].style.backgroundColor = document.all[mesEvento[i].ev].style.backgroundColor;   
-   
+
                   document.all[mesEvento[i].ev].style.backgroundColor = tdbg; 
                   document.all[mesEvento[i].ev].title = document.all[tdev].title; 
                   document.all[mesEvento[i].ev].idinseve = document.all[tdev].idinseve;
                   document.all[tdev].idinseve='no';
-   
+
                   document.all[tdev].title = ''; // limpar o title na div onde estava o pac
                   mesEvento[i].bg = tdbg;
                   mesEvento[i].p  = tdp;
                   document.all[mesEvento[i].ev].registro = tdrw; 
                   mesEvento[i].rw = tdrw;
-      
+                  
                   if ((mesEvento[i].m != tdm) &&
                   (mesEvento[i].bg != 'white')){
                     mesEvento[i].mo = 'X';
@@ -1569,13 +1571,13 @@
                   for (j=0;j<dd.elements.length;j++) {
                     if (mesEvento[i].ev==dd.elements[j].name){
                       ehdd=true;break;
-              }
-              }
-
+                    }
+                  }
+                  
                   if(ehdd==false){
                     ADD_DHTML(mesEvento[i].ev+CURSOR_HAND);
                   }
-
+                  
                   if (mesEvento[i].m != tdm){
                     document.all[mesEvento[i].ev].style.backgroundColor = '#FFFF99';
                   }
@@ -1592,11 +1594,11 @@
                 ehexclusao=false;
               }
             }       
-
+            
            if ((posicionou==true)&&(ehexclusao==false)){
               break;
-              }
-              }
+            }
+          }
 
         /*if (posicionou==false){
           if (dd.obj.name=="novo"){
@@ -1606,10 +1608,10 @@
           }
         } */
       }
-
+      
       var mpac = new Array();
       mpac = [`vetorpac`];
-
+      
       var poseventos = new Array();
       poseventos = [`c-poseventos`];
       mesEvento.push({mo:'',m:0,e:0,x:0,y:0,p:'0',td:'tdpac',ix:0,ev:'novo'});
@@ -1640,14 +1642,14 @@
                     (document.form.auxdstextab.value == '5')){
 
                     if (mesEvento[j].mo=prompt('Motivo da Transferência do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Não informado.'}
- 
-}
+
+                    }
 
                     if ((mesEvento[j].bg == 'white') &&
                     (document.form.auxdstextab.value == '5')){
 
                     if (mesEvento[j].mo=prompt('Motivo do Acréscimo do Evento no PA: ' + document.all[mesEvento[j].ev].innerText.toUpperCase(),'')) {}else{mesEvento[j].mo='Não informado.'}
-   }
+                    }
 
                     if ((mesEvento[j].bg == '#e4e6dd') &&
                         (document.form.auxdstextab.value == '5')){
@@ -1658,12 +1660,12 @@
                     break;
                   }        
               }                            
-   }
-}
+            }
+          }
         }else{ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+        }
 
         document.form.auxpac.value=mPacs;
         document.form.auxmes.value=mMes;
@@ -1676,18 +1678,18 @@
       
       function mudaEvento(){
         var dtanoage = document.form.aux_dtanoage.value;
-
+      
         if(dtanoage == 0){
           buscaEvento();
-}
-}
-
+        }
+      }
+      
       function buscaEvento(){
         var dtanoage = document.form.aux_dtanoage.value;
         document.form.mudaevento.value="sim";
         aguarde();
         document.form.submit();
-      }         
+      }
       
       function gerar(){
         var vaux = document.form.aux_lspermis.value; 
@@ -1698,8 +1700,8 @@
         }else{ 
           alert('Desculpe, mas você não tem permissão para executar esta função.'); 
           return false;
-   }
-}
+        }
+      }
 
       function enviar(){
         var vaux = document.form.aux_lspermis.value; 
@@ -1708,9 +1710,9 @@
           aguarde();
           document.form.submit();
         }else{ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false;
+        }
       }
 
       function EdEvento(rowid,mes,idstagen ){
@@ -1721,12 +1723,12 @@
           window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=yes,menubar=no,scrollbars=yes,resizable=yes,width=615,height=440,top=10,left=10');
         } 
       }
-
+          
       function mudaCorDiv(rowid,cor){
 
         var contador=0;
         var pula=0;
-   
+        
         while(true){
           contador = contador + 1;   
 
@@ -1739,7 +1741,7 @@
             }else{
               continue;
             }
-   }
+          }
 
           if(document.all['nome' + contador].registro==rowid){
             document.all['nome' + contador].style.backgroundColor = cor;
@@ -1751,17 +1753,17 @@
             break;             
           }
           pula = 0;
-   }  
-}
+        }   
+      }    
 
       NomeDoProgramaPrincipal  = '/wpgd0023.w';
       NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
       document.form.action = NomeDoProgramaPrincipal;
-   
+      
       if (document.all.cdagenci.selectedIndex >= 0){
         document.all[document.form.novopac.value].innerHTML = document.all.cdagenci.options[document.all.cdagenci.selectedIndex].innerText.substr(0,9);
-}
-
+      }	  
+	  
     </script>
     <script language="SpeedScript">
       IF aux_segevento <> ''  THEN DO:
@@ -1774,13 +1776,13 @@
     
     <script language="SpeedScript">
       END.
-</script>
+    </script>
 
     <script language="JavaScript">
       // faz com que a janela de aguarde feche
       hideMsgAguardo();
       // tira a moldura dos totais
-
+      
       $("#aux_qttoteve").css({"border": "none"});
       $("#aux_qttotint").css({"border": "none"});
       $("#aux_qttotger").css({"border": "none"});
