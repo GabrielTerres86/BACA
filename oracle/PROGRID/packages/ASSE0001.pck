@@ -543,7 +543,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.ASSE0001 IS
         FROM crapldp ldp
        WHERE ldp.idevento = pr_idevento
          AND ldp.cdcooper = pr_cdcooper
-         AND ldp.cdagenci = pr_cdagenci
+         AND ldp.cdagenci = DECODE(pr_cdagenci,0,ldp.cdagenci,pr_cdagenci)
          AND ldp.nrseqdig = pr_nrseqdig;
 
     rw_crapldp cr_crapldp%ROWTYPE;   
