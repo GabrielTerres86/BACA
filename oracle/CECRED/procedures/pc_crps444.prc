@@ -873,7 +873,7 @@ BEGIN
                FROM crapage age
               WHERE age.cdcooper = pr_cdcooper
                 AND age.insitage = 1
-                AND age.cdagenci NOT IN (90,91,999)
+                AND age.cdagenci NOT IN (90,91,95,999)
              ORDER BY cdagenci);
 
      --Variaveis Locais
