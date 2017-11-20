@@ -416,6 +416,9 @@ PROCEDURE CriaListaEventos :
                            
     END.
 
+		IF SUBSTR(vetoreventos,1,1) = ',' THEN
+			ASSIGN vetoreventos = SUBSTR(vetoreventos,2).
+			
     RUN RodaJavaScript("meventos.push("  + vetoreventos + ");"). 
 
 END PROCEDURE.
