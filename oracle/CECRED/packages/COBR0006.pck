@@ -9131,6 +9131,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 			       13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -9910,6 +9913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                             
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -9941,6 +9945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -9971,6 +9976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -9995,6 +10001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
   END pc_intarq_remes_cnab240_001;
   
@@ -10039,6 +10046,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
                    13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
 
     ............................................................................ */   
     
@@ -10902,6 +10912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                         
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -10933,6 +10944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -10963,6 +10975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -10987,6 +11000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc;
   END pc_intarq_remes_cnab240_085;
   
   --> Integrar/processar arquivo de remessa CNAB400
@@ -11027,6 +11041,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    04/04/2017 - Inclusão da busca do parâmetro DIASVCTOCEE, pois fazia atribuição
                                 da variável vr_diasvcto sem buscar o parâmetro (AJFink-SD#643179). 
+
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
 
     ............................................................................ */   
     
@@ -11805,6 +11822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF; 
                         
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -11836,6 +11854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -11866,6 +11885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN OTHERS THEN
     
@@ -11891,6 +11911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
   END pc_intarq_remes_cnab400_085;
   
