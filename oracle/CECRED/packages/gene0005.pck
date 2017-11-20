@@ -29,6 +29,17 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
   -- Vetor para armazenar as informacões dos feriados
   vr_tab_feriado typ_tab_feriado;
 
+  CURSOR cr_calciof (pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+     SELECT  crapass.nrdconta
+            ,crapass.inpessoa
+            ,crapjur.tpregtrb
+            ,crapjur.natjurid
+     FROM crapass
+     LEFT JOIN crapjur ON crapjur.cdcooper = crapass.cdcooper AND crapjur.nrdconta = crapass.nrdconta
+     WHERE  crapass.cdcooper = pr_cdcooper
+            AND crapass.nrdconta = pr_nrdconta;
+   rw_calciof cr_calciof%ROWTYPE;
   /* Procedimento padrão de busca de informacões de CPMF */
   PROCEDURE pc_busca_cpmf(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                          ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
@@ -42,8 +53,8 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                          ,pr_dscritic OUT VARCHAR2);
 
   /* Procedimento padrão de busca de informacões de IOF */
-  PROCEDURE pc_busca_iof (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
-                         ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+  PROCEDURE pc_busca_iof (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                         ,pr_tpiof     IN tbgen_taxa_iof.tpiof%TYPE --> Tipo de IOF: 1-Taxa para Simples Nacional/ 2-Taxa IOF Principal PF/ 3-Taxa IOF Principal PJ/ 4-Taxa IOF Complementar
                          ,pr_dtiniiof  OUT DATE                 --> Data Inicio IOF
                          ,pr_dtfimiof  OUT DATE                 --> Data Final IOF
                          ,pr_txccdiof  OUT NUMBER               --> Taxa iof
@@ -58,6 +69,46 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                               ,pr_txiofrda  OUT NUMBER               --> Taxa iof rdca
                               ,pr_cdcritic  OUT NUMBER               --> Codigo do erro
                               ,pr_dscritic  OUT VARCHAR2);           --> Retorno de erro
+		/* Procedimento padrão de busca de informacões de IOF para Simples Nacional */
+		PROCEDURE pc_busca_iof_sn(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+		/* Procedimento padrão de busca de informacões de IOF para pessoa física */
+		PROCEDURE pc_busca_iof_pf(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+		/* Procedimento padrão de busca de informacões de IOF para pessoa jurídica */
+		PROCEDURE pc_busca_iof_pj(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+    PROCEDURE pc_busca_iof_adic(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														   ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														   ,pr_dtfimiof OUT DATE --> Data Final IOF
+														   ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														   ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														   ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+    /* Procedure para cálculo do IOF, IOF Complementar e IOF Adicional */
+    PROCEDURE pc_calcula_valor_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
+                                  ,pr_qtdiaiof IN NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
+                                  ,pr_vloperacao IN NUMBER              --> Valor total da operação (pode ser negativo também)
+                                  ,pr_flgrvvlr IN BOOLEAN               --> Flag indicando se deve gravar ou não a imunidade tributária
+                                  ,pr_rw_calciof IN gene0005.rw_calciof%TYPE  --> Rowtype para um cursor de crapass (com os campos inpessoa, tpregtrb e natjurid)
+                                  ,pr_vliofpri OUT NUMBER               --> Retorno do valor do IOF principal
+                                  ,pr_vliofadi OUT NUMBER               --> Retorno do valor do IOF adicional
+                                  ,pr_vliofcpl OUT NUMBER               --> Retorno do valor do IOF complementar
+                                  ,pr_vltotiof OUT NUMBER               --> Retorno do valor total de IOF (sem considerar atraso)
+                                  ,pr_flgimune OUT BOOLEAN);            --> Retorno da flag se possui imunidade tributária
 
   /* Programa para Buscar as Contas Centralizadoras do BBrasil. */
   FUNCTION fn_busca_conta_centralizadora (pr_cdcooper IN gnctace.cdcooper%TYPE     --> Cooperativa
@@ -213,10 +264,6 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
 		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
 								  RETURN INTEGER;
-
-  FUNCTION fn_saldo_conta_investimento(pr_cdcooper IN crapsli.cdcooper%TYPE  --> Cooperativa
-                                      ,pr_nrdconta IN crapsli.nrdconta%TYPE) --> Conta cooperado
-                                       RETURN NUMBER;
 																	
   END GENE0005;
 /
@@ -227,7 +274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 15/05/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 28/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -257,8 +304,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --
   --             16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
   --                          novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
+  --      
+  --             28/09/2017 - Incluir validação para caso o tamanho do cpf for maior 
+  --                          que 11 posições não aceite o cadastro do mesmo 
+  --                          (Lucas Ranghetti #717352)   
+  --             27/10/2017 - Alterada a função pc_busca_iof para contemplar as alterações do projeto 410.
+  --                          Agora as taxas de IOF ficarão na tabela tbgen_taxa_iof e não mais na craptab.
+  --                          (Diogo - MoutS)   
   ---------------------------------------------------------------------------------------------------------------
-  
+
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
    vr_nrctaint       crapprm.dsvlrprm%TYPE;
@@ -335,8 +389,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   END pc_busca_cpmf;
 
   /* Procedimento padrão de busca de informacões de IOF */
-  PROCEDURE pc_busca_iof (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
-                         ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+  PROCEDURE pc_busca_iof (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                         ,pr_tpiof     IN tbgen_taxa_iof.tpiof%TYPE --> Tipo de IOF: 1-Taxa para Simples Nacional/ 2-Taxa IOF Principal PF/ 3-Taxa IOF Principal PJ/ 4-Taxa IOF Complementar
                          ,pr_dtiniiof  OUT DATE                 --> Data Inicio IOF
                          ,pr_dtfimiof  OUT DATE                 --> Data Final IOF
                          ,pr_txccdiof  OUT NUMBER               --> Taxa iof
@@ -356,38 +410,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --   Objetivo  : Mostrar a tela IOF.
     --
     --   Alteracoes:  29/01/2013 - Conversão Progress --> Oracle PLSQL (Alisson - Amcom)
+    --                27/10/2017 - Alterada a função pc_busca_iof para contemplar as alterações do projeto 410.
+    --                             Agora as taxas de IOF ficarão na tabela tbgen_taxa_iof e não mais na craptab. 
     -- .............................................................................
     DECLARE
-      vr_dstextab craptab.dstextab%TYPE;
+      --Excecao
+      vr_exc_erro EXCEPTION;
+      CURSOR cr_tabgen_iof(pr_tpiof IN tbgen_taxa_iof.tpiof%TYPE, pr_dtmvtolt IN DATE) IS
+        SELECT MAX(t.vltaxa_iof) AS vltaxa_iof, MAX(t.dtinicio_vigencia) AS dtinicio_vigencia, 
+               MAX(t.dtfinal_vigencia) AS dtfinal_vigencia
+        FROM tbgen_taxa_iof t
+        WHERE t.tpiof = pr_tpiof AND pr_dtmvtolt BETWEEN dtinicio_vigencia AND dtfinal_vigencia
+        ORDER BY t.dtfinal_vigencia, t.dtinicio_vigencia;
+      rw_tabgen_taxa_iof cr_tabgen_iof%ROWTYPE;
     BEGIN
       --Inicializa variavel de erro
+      pr_cdcritic := 0;
       pr_dscritic := NULL;
-      -- Buscar dados de CPMF na tabela de parametros
-       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                     ,pr_nmsistem => 'CRED'
-                     ,pr_tptabela => 'USUARI'
-                     ,pr_cdempres => 11
-                     ,pr_cdacesso => 'VLIOFOPFIN'
-                     ,pr_tpregist => 1);
-      -- Se encontrar
-      IF vr_dstextab IS NOT NULL THEN
-        -- Povoar as informacões conforme as regras da versão anterior
-        pr_dtiniiof := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
-        pr_dtfimiof := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
-        IF pr_dtmvtolt BETWEEN  pr_dtiniiof AND pr_dtfimiof THEN
-          pr_txccdiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
-        ELSE
+      --Retornos
+      pr_dtiniiof := NULL;
+      pr_dtfimiof := NULL;
           pr_txccdiof := 0;
+      --Se passar um tipo inválido, gera raise
+      IF pr_tpiof <= 0 OR pr_tpiof > 4 THEN
+         pr_cdcritic := 915;
+         RAISE vr_exc_erro;
         END IF;
+      OPEN cr_tabgen_iof(pr_tpiof => pr_tpiof, pr_dtmvtolt => pr_dtmvtolt);
+      FETCH cr_tabgen_iof INTO rw_tabgen_taxa_iof;
+      --Não encontrou, gera raise
+      IF cr_tabgen_iof%NOTFOUND THEN
+         pr_cdcritic := 915;
+         CLOSE cr_tabgen_iof;
+         RAISE vr_exc_erro;
       ELSE
-        -- Montar retorno de erro
-        pr_cdcritic := 915;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 915);
+         pr_dtiniiof := rw_tabgen_taxa_iof.dtinicio_vigencia;
+         pr_dtfimiof := rw_tabgen_taxa_iof.dtfinal_vigencia;
+         pr_txccdiof := rw_tabgen_taxa_iof.vltaxa_iof;
       END IF;
+      CLOSE cr_tabgen_iof;
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF pr_cdcritic > 0 THEN
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        ELSE
+          pr_dscritic := 'Problemas ao buscar Tabela IOF. Erro na GENE0005.pc_busca_iof: '||sqlerrm;
+        END IF;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Problemas ao buscar Tabela IOF para Cooperativa '||pr_cdcooper||'. Erro na GENE0005.pc_busca_iof: '||sqlerrm;
+        pr_dscritic := 'Problemas ao buscar Tabela IOF. Erro na GENE0005.pc_busca_iof: '||sqlerrm;
     END;
   END pc_busca_iof;
 
@@ -463,6 +534,388 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
   END pc_busca_iof_rdca;
 
+		/* Procedimento padrão de busca de informacões de IOF para Simples Nacional */
+		PROCEDURE pc_busca_iof_sn(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+		BEGIN
+				-- ..........................................................................
+				--
+				--  Programa : pc_busca_iof_sn
+				--   Sistema : Conta-Corrente - Cooperativa de Credito
+				--   Sigla   : CRED
+				--   Autor   : Diogo - MoutS
+				--   Data    : Outubro/2017                    Ultima atualizacao: 
+				--
+				--   Dados referentes ao programa:
+				--   Frequencia: Diario (on-line)
+				--   Objetivo  : Buscar Informacoes IOF do Simples Nacional.
+				--
+				--   Alteracoes:  
+				-- .............................................................................
+				GENE0005.pc_busca_iof(pr_dtmvtolt => pr_dtmvtolt,
+															pr_tpiof    => 1,
+															pr_dtiniiof => pr_dtiniiof,
+															pr_dtfimiof => pr_dtfimiof,
+															pr_txccdiof => pr_txccdiof,
+															pr_cdcritic => pr_cdcritic,
+															pr_dscritic => pr_dscritic);
+		END pc_busca_iof_sn;
+		/* Procedimento padrão de busca de informacões de IOF para pessoa física */
+		PROCEDURE pc_busca_iof_pf(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+		BEGIN
+				-- ..........................................................................
+				--
+				--  Programa : pc_busca_iof_pf
+				--   Sistema : Conta-Corrente - Cooperativa de Credito
+				--   Sigla   : CRED
+				--   Autor   : Diogo - MoutS
+				--   Data    : Outubro/2017                    Ultima atualizacao: 
+				--
+				--   Dados referentes ao programa:
+				--   Frequencia: Sempre que for solicitado
+				--   Objetivo  : Buscar Informacoes IOF para pessoa física.
+				--
+				--   Alteracoes:  
+				-- .............................................................................
+				GENE0005.pc_busca_iof(pr_dtmvtolt => pr_dtmvtolt,
+															pr_tpiof    => 2,
+															pr_dtiniiof => pr_dtiniiof,
+															pr_dtfimiof => pr_dtfimiof,
+															pr_txccdiof => pr_txccdiof,
+															pr_cdcritic => pr_cdcritic,
+															pr_dscritic => pr_dscritic);
+		END pc_busca_iof_pf;
+		/* Procedimento padrão de busca de informacões de IOF para pessoa jurídica */
+		PROCEDURE pc_busca_iof_pj(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														 ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														 ,pr_dtfimiof OUT DATE --> Data Final IOF
+														 ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														 ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+		BEGIN
+				-- ..........................................................................
+				--
+				--  Programa : pc_busca_iof_pj
+				--   Sistema : Conta-Corrente - Cooperativa de Credito
+				--   Sigla   : CRED
+				--   Autor   : Diogo - MoutS
+				--   Data    : Outubro/2017                    Ultima atualizacao: 
+				--
+				--   Dados referentes ao programa:
+				--   Frequencia: Sempre que for solicitado
+				--   Objetivo  : Buscar Informacoes IOF para pessoa jurídica.
+				--
+				--   Alteracoes:  
+				-- .............................................................................
+				GENE0005.pc_busca_iof(pr_dtmvtolt => pr_dtmvtolt,
+															pr_tpiof    => 3,
+															pr_dtiniiof => pr_dtiniiof,
+															pr_dtfimiof => pr_dtfimiof,
+															pr_txccdiof => pr_txccdiof,
+															pr_cdcritic => pr_cdcritic,
+															pr_dscritic => pr_dscritic);
+		END pc_busca_iof_pj;
+    /* Procedimento padrão de busca de informacões de IOF adicional */
+		PROCEDURE pc_busca_iof_adic(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+														   ,pr_dtiniiof OUT DATE --> Data Inicio IOF
+														   ,pr_dtfimiof OUT DATE --> Data Final IOF
+														   ,pr_txccdiof OUT NUMBER --> Taxa iof rdca
+														   ,pr_cdcritic OUT NUMBER --> Codigo do erro
+														   ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+		BEGIN
+				-- ..........................................................................
+				--
+				--  Programa : pc_busca_iof_pj
+				--   Sistema : Conta-Corrente - Cooperativa de Credito
+				--   Sigla   : CRED
+				--   Autor   : Diogo - MoutS
+				--   Data    : Outubro/2017                    Ultima atualizacao: 
+				--
+				--   Dados referentes ao programa:
+				--   Frequencia: Sempre que for solicitado
+				--   Objetivo  : Buscar Informacoes IOF adicional.
+				--
+				--   Alteracoes:  
+				-- .............................................................................
+				GENE0005.pc_busca_iof(pr_dtmvtolt => pr_dtmvtolt,
+															pr_tpiof    => 4,
+															pr_dtiniiof => pr_dtiniiof,
+															pr_dtfimiof => pr_dtfimiof,
+															pr_txccdiof => pr_txccdiof,
+															pr_cdcritic => pr_cdcritic,
+															pr_dscritic => pr_dscritic);
+		END pc_busca_iof_adic;
+    /* Procedure para cálculo do IOF, IOF Complementar e IOF Adicional */
+    PROCEDURE pc_calcula_valor_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
+                                  ,pr_qtdiaiof IN NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
+                                  ,pr_vloperacao IN NUMBER              --> Valor total da operação (pode ser negativo também)
+                                  ,pr_flgrvvlr IN BOOLEAN               --> Flag indicando se deve gravar ou não a imunidade tributária
+                                  ,pr_rw_calciof IN gene0005.rw_calciof%TYPE  --> Rowtype para um cursor de crapass (com os campos inpessoa, tpregtrb e natjurid)
+                                  ,pr_vliofpri OUT NUMBER               --> Retorno do valor do IOF principal
+                                  ,pr_vliofadi OUT NUMBER               --> Retorno do valor do IOF adicional
+                                  ,pr_vliofcpl OUT NUMBER               --> Retorno do valor do IOF complementar
+                                  ,pr_vltotiof OUT NUMBER               --> Retorno do valor total de IOF (sem considerar atraso)
+                                  ,pr_flgimune OUT BOOLEAN) IS          --> Retorno da flag se possui imunidade tributária
+    BEGIN
+        /* ..........................................................................
+				   Programa : pc_calcula_valor_iof
+				   Sistema : Conta-Corrente - Cooperativa de Credito
+				   Sigla   : CRED
+				   Autor   : Diogo - MoutS
+				   Data    : Outubro/2017                    Ultima atualizacao: 
+				   Dados referentes ao programa:
+				   Frequencia: Sempre que for solicitado
+				   Objetivo  : Rotina criada para centralizar o cálculo do IOF normal, 
+                       IOF adicional e IOF complementar
+                       ==> Regras IOF principal:
+                       Para valores até R$ 30.000,00:
+                            - Pessoas jurídicas optante pelo simples nacional: GENE0005.pc_busca_iof_sn (hoje é 0.00137%)
+                       Para valores acima de R$ 30.000,00:
+                            - Pessoas jurídicas cooperativas: taxa isenta
+                            - Pessoas com imunidade tributária: taxa isenta
+                            - Pessoas jurídicas: GENE0005.pc_busca_iof_pj (hoje é 0.0041%)
+                            - Pessoas físicas: GENE0005.pc_busca_iof_pf (hoje é 0.0082%)
+                       ==> Regras IOF Adicional:
+                       Buscar a taxa com GENE0005.pc_busca_iof_pj (hoje é 0.38%)
+                       ==> Regras IOF complementar
+                       Mesma regra do IOF principal, sobre os dias de atraso                       
+				   Alteracoes:  
+				 .............................................................................*/
+       DECLARE
+         /*
+           Cursores
+         */
+         CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+           SELECT  crapass.nrdconta
+                  ,crapass.inpessoa
+                  ,crapjur.tpregtrb
+                  ,crapjur.natjurid
+           FROM crapass
+           LEFT JOIN crapjur ON crapjur.cdcooper = crapass.cdcooper AND crapjur.nrdconta = crapass.nrdconta
+           WHERE  crapass.cdcooper = pr_cdcooper
+                  AND crapass.nrdconta = pr_nrdconta;
+		     rw_crapass cr_crapass%ROWTYPE;
+         /*
+           Variável de excecão
+         */
+				 vr_exc_saida EXCEPTION;
+         vr_exc_erro  EXCEPTION;
+         /*
+           Variáveis gerais
+         */
+         vr_vloperacao_abs   NUMBER := 0;
+         vr_dtiniiof         DATE;
+         vr_dtfimiof         DATE;
+         vr_txccdiof_pf      NUMBER;
+         vr_txccdiof_pj      NUMBER;
+         vr_txccdiof_sn      NUMBER;
+         vr_cdcritic         NUMBER;
+         vr_dscritic         VARCHAR2(4000);
+         vr_qtdiaiof         NUMBER;
+         vr_flgimune         BOOLEAN;
+         /*
+           Funções / procedures auxiliares
+         */
+         -- Função para verificar se o associado possui imunidade tributária. Se tiver, retorna zero.
+         -- Se não tiver, retorna o valor da operação * alíquota passada.
+         FUNCTION calcula_iof_imunidade(vr_vloper IN NUMBER, vr_taxiof IN NUMBER) RETURN NUMBER IS
+           vr_retvalor NUMBER;
+         BEGIN
+           vr_retvalor := 0;
+           -- Se qualquer valor passado for zero, retona zero..
+           IF vr_vloper = 0 OR vr_taxiof = 0 THEN
+             RETURN 0;
+           END IF;
+           -- Calcula o valor
+           vr_retvalor := (vr_vloper * vr_taxiof);
+           -- Verifica a imunidade tributária
+           IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper,
+                                               pr_nrdconta => pr_nrdconta,
+                                               pr_dtmvtolt => pr_dtmvtolt,
+                                               pr_flgrvvlr => pr_flgrvvlr,
+                                               pr_cdinsenc => 3,
+                                               pr_vlinsenc => ROUND(vr_retvalor, 2),
+                                               pr_flgimune => vr_flgimune,
+                                               pr_dsreturn => vr_dscritic,
+                                               pr_tab_erro => vr_tab_erro);
+           -- Erro
+           IF (vr_dscritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL) AND vr_dscritic <> 'OK' THEN
+             -- Se possui erro no vetor
+             IF vr_tab_erro.Count() > 0 THEN
+               vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+               vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+             ELSE
+               vr_cdcritic := 0;
+               vr_dscritic := 'Não foi possivel carregar a tarifa.';
+             END IF;
+             RAISE vr_exc_erro;             
+           END IF;
+           pr_flgimune := vr_flgimune;
+           IF vr_flgimune = TRUE THEN
+              -- Tem imunidade, zera o valor..
+              vr_retvalor := 0;
+           END IF;
+           -- Se for pessoa jurídica Cooperativa, não cobra IOF
+           IF rw_crapass.natjurid = 2143 THEN 
+              vr_retvalor := 0;
+           END IF;
+           RETURN vr_retvalor;
+         END;
+         -- Função interna auxiliar que efetua o cálculo do valor do IOF para pessoa física ou jurídica
+         FUNCTION calcula_iof_pf_pj(vr_vloper IN NUMBER) RETURN NUMBER IS
+           vr_retvalor NUMBER;
+         BEGIN
+             vr_retvalor := 0;
+             IF rw_crapass.inpessoa = 1 THEN
+                -- Pessoa física
+               vr_retvalor := calcula_iof_imunidade(vr_vloper => vr_vloper, vr_taxiof => vr_txccdiof_pf); 
+             ELSE
+               -- Pessoa jurídica
+               vr_retvalor := calcula_iof_imunidade(vr_vloper => vr_vloper, vr_taxiof => vr_txccdiof_pj); 
+             END IF;
+             RETURN vr_retvalor;
+         END;
+         -- Função interna auxiliar que efetua o cálculo do valor do IOF de 
+         -- acordo com as regras definidas
+         FUNCTION calcula_iof(vr_vloper IN NUMBER) RETURN NUMBER IS
+           vr_retvalor NUMBER;
+         BEGIN
+           vr_retvalor := 0;
+           -- Valor <= 30K
+           IF vr_vloper <= 30000 THEN
+             -- Verifica se é optante do Simples Nacional
+             IF rw_crapass.inpessoa = 2 AND rw_crapass.tpregtrb = 1 THEN
+               -- Verifica se possui imunidade. Se tiver, vai retornar 0; Se não tiver, retorna valor * taxa.
+               vr_retvalor := calcula_iof_imunidade(vr_vloper => vr_vloper, vr_taxiof => vr_txccdiof_sn); 
+             ELSE
+               -- Calculo normal (PF / PJ)
+               vr_retvalor := calcula_iof_pf_pj(vr_vloper);
+             END IF;
+           ELSE
+             -- valor > 30K
+             -- Calculo normal (PF / PJ)
+             vr_retvalor := calcula_iof_pf_pj(vr_vloper);
+           END IF;
+           RETURN vr_retvalor;
+         END;
+         -- Função interna auxiliar para buscar a taxa de IOF de acordo com o tipo passado
+         -- Valores aceitos: 
+         -- PF - para pessoas físicas
+         -- PJ - para pessoas jurídicas
+         -- SN - para pessoas jurídicas optantes pelo simples nacional
+         -- IOF - para taxa de IOF adicional
+         FUNCTION busca_taxa_iof(vr_tipo VARCHAR2) RETURN NUMBER IS
+           vr_retvalor NUMBER;
+         BEGIN
+           vr_retvalor := 0;
+           CASE vr_tipo
+             WHEN 'PF' THEN
+               -- Busca taxa de IOF para pessoa física
+               GENE0005.pc_busca_iof_pf(pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_dtiniiof => vr_dtiniiof
+                                       ,pr_dtfimiof => vr_dtfimiof
+                                       ,pr_txccdiof => vr_retvalor
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+               IF vr_dscritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
+                 RAISE vr_exc_erro; 
+               END IF;
+             WHEN 'PJ' THEN
+               -- Busca taxa de IOF para pessoa jurídica
+               GENE0005.pc_busca_iof_pj(pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_dtiniiof => vr_dtiniiof
+                                       ,pr_dtfimiof => vr_dtfimiof
+                                       ,pr_txccdiof => vr_retvalor
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+               IF vr_dscritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
+                 RAISE vr_exc_erro; 
+               END IF;
+             WHEN 'SN' THEN
+               -- Busca taxa de IOF para simples nacional
+               GENE0005.pc_busca_iof_sn(pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_dtiniiof => vr_dtiniiof
+                                       ,pr_dtfimiof => vr_dtfimiof
+                                       ,pr_txccdiof => vr_retvalor
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+               IF vr_dscritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
+                 RAISE vr_exc_erro; 
+               END IF;
+             WHEN 'IOF' THEN
+               -- Busca taxa IOF adicional
+               GENE0005.pc_busca_iof_adic(pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_dtiniiof => vr_dtiniiof
+                                         ,pr_dtfimiof => vr_dtfimiof
+                                         ,pr_txccdiof => vr_retvalor
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+               IF vr_dscritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
+                 RAISE vr_exc_erro; 
+               END IF;
+               ELSE 
+                 -- Parâmetro enviado inválido.
+                 vr_retvalor := 0;
+           END CASE;
+           RETURN vr_retvalor;
+         END;
+         /*
+           Início
+         */         
+       BEGIN
+         pr_vliofpri := 0;
+         pr_vliofadi := 0;
+         pr_vliofcpl := 0;
+         vr_vloperacao_abs := ABS(pr_vloperacao);
+         -- Busca informações da pessoa
+         --OPEN cr_crapass(pr_cdcooper => pr_cdcooper,pr_nrdconta => pr_nrdconta);
+         --FETCH cr_crapass INTO rw_crapass;
+         -- Busca taxa de IOF para pessoa física
+         vr_txccdiof_pf := busca_taxa_iof('PF');
+         -- Busca taxa de IOF para pessoa jurídica
+         vr_txccdiof_pj := busca_taxa_iof('PJ');
+         -- Busca taxa de IOF para pessoa jurídica
+         vr_txccdiof_sn := busca_taxa_iof('SN');
+         -- Cálculo do IOF adicional
+         IF pr_vloperacao > 0 THEN
+            pr_vliofadi := calcula_iof_imunidade(vr_vloper => pr_vloperacao, vr_taxiof => busca_taxa_iof('IOF'));
+         END IF;
+         -- Cálculo do IOF principal
+         pr_vliofpri := calcula_iof(vr_vloperacao_abs);
+         -- Cálculo IOF complementar atraso         
+         IF pr_qtdiaiof > 0 THEN
+            vr_qtdiaiof := pr_qtdiaiof;
+            IF vr_qtdiaiof > 365 THEN
+               vr_qtdiaiof := 365;
+            END IF;
+            pr_vliofcpl := vr_qtdiaiof * calcula_iof(vr_vloperacao_abs);            
+         END IF;
+         
+         pr_vltotiof := pr_vliofadi + pr_vliofpri;
+         
+         EXCEPTION
+           WHEN vr_exc_erro THEN
+             -- Futuro...
+             RAISE vr_exc_saida;
+           WHEN OTHERS THEN
+             --Variavel de erro recebe erro ocorrido
+             vr_dscritic := 'Erro ao calcular IOF. Rotina GENE0005.pc_calcula_valor_iof. '||sqlerrm;
+             --Sair do programa
+             RAISE vr_exc_saida;
+      END;
+    END pc_calcula_valor_iof;
   /* Programa para Buscar as Contas Centralizadoras do BBrasil. */
   FUNCTION fn_busca_conta_centralizadora (pr_cdcooper IN gnctace.cdcooper%TYPE     --> Cooperativa
                                          ,pr_tpregist IN gnctace.tpregist%TYPE)    --> Tipo de registro desejado
@@ -1339,9 +1792,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     DECLARE
      -- Buscar das informacães de bloqueio judicial na conta
      CURSOR cr_crapblj IS
-       -- Demetrius colocado funcao SUM -- melhoria 460
-       SELECT nvl(sum(vlbloque),0) vlbloque
-             ,nvl(sum(vlresblq),0) vlresblq
+       SELECT vlbloque
+             ,vlresblq
          FROM crapblj
         WHERE cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
@@ -1545,6 +1997,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       --Validar o cpf
   PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
                           ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
+   /****************************************************************************************  
+       Programa : pc_valida_cpf
+       Sistema  : Conta-Corrente - Cooperativa de Credito
+       Sigla    : CRED                          
+       Autor    : Alisson C. Berrido - Amcom
+       Data     : Julho/2013.                                   Ultima Alteração: 28/09/2017
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Validar cpf informado
+              
+       Alterações: 28/09/2017 - Incluir validação para caso o tamanho do cpf for maior 
+                                que 11 posições não aceite o cadastro do mesmo 
+                                (Lucas Ranghetti #717352)   
+   *****************************************************************************************/
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1556,6 +2024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           vr_vlresult INTEGER:= 0;
         BEGIN
           IF LENGTH(pr_nrcalcul) < 5 OR
+             LENGTH(pr_nrcalcul) > 11 OR
              pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
                              66666666666,77777777777,88888888888,99999999999) THEN
             --Retornar com erro
@@ -2871,34 +3340,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 		END;																 
   END fn_valida_depart_operad;
 
-  FUNCTION fn_saldo_conta_investimento(pr_cdcooper IN crapsli.cdcooper%TYPE  --> Cooperativa
-	                                  ,pr_nrdconta IN crapsli.nrdconta%TYPE) --> Conta cooperado
-								  RETURN NUMBER IS
-  BEGIN
-    DECLARE
-      vr_vlsddisp   crapsli.vlsddisp%TYPE;
-
-      CURSOR cr_crapsli(pr_cdcooper IN crapsli.cdcooper%TYPE
-                       ,pr_nrdconta IN crapsli.nrdconta%TYPE) IS
-        SELECT vlsddisp
-          FROM crapsli
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND dtrefere = LAST_DAY(TRUNC(sysdate));
-    BEGIN
-      OPEN cr_crapsli(pr_cdcooper => pr_cdcooper
-                 	 ,pr_nrdconta => pr_nrdconta);
-      FETCH cr_crapsli INTO vr_vlsddisp;
-      IF cr_crapsli%NOTFOUND THEN
-        vr_vlsddisp := 0;
-      END IF;
-     CLOSE cr_crapsli;
-
-     RETURN NVL(vr_vlsddisp, 0);
-	 
-    END;
-  END fn_saldo_conta_investimento;
-
-  
 END GENE0005;
 /
