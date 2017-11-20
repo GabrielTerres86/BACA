@@ -416,7 +416,6 @@
       IF REQUEST_METHOD = "POST" THEN 
 	    bloco:  
         DO: 
-          
           ASSIGN aux_cdcooper = INT(GET-VALUE("aux_cdcooper"))
                  aux_cdcopope = INT(GET-VALUE("aux_cdcopope"))
                  aux_cdoperad = GET-VALUE("aux_cdoperad")
@@ -436,7 +435,7 @@
                     ASSIGN aux_dtanoage = gnpapgd.dtanonov.
                 END.
             END.
-            
+          
           IF NOT AVAIL gnpapgd THEN
             DO:
               IF aux_dtanoage <> 0 THEN
@@ -492,31 +491,32 @@
 				END.
 			
 			  IF (gnpapgd.lsmeseve = ? OR gnpapgd.lsmeseve = "") AND gnpapgd.idevento <> 2 THEN
-			DO:          
-			  RUN RodaJavaScript("alert('Para a geração da agenda, favor cadastrar os meses para atribuição de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
-			  LEAVE bloco.              
-			END.
+					DO:          
+						RUN RodaJavaScript("alert('Para a geração da agenda, favor cadastrar os meses para atribuição de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
+						LEAVE bloco.              
+					END.
           
 		  RUN CriaAgenda.
 			  
 		  IF aux_erro = NO AND RETURN-VALUE <> "NOK" THEN
-			DO:
-			  FOR EACH  crapagp WHERE crapagp.idevento = gnpapgd.idevento
-								  AND crapagp.cdcooper = gnpapgd.cdcooper
-								  AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
-				ASSIGN crapagp.idstagen = 4.  
-			  END.
-			  
-			  ASSIGN aux_dstextab = '4'.
-			  
-			  RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botão ~"Liberar Agenda~"')").
-			END.
+				DO:
+					FOR EACH  crapagp WHERE crapagp.idevento = gnpapgd.idevento
+										AND crapagp.cdcooper = gnpapgd.cdcooper
+										AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
+						ASSIGN crapagp.idstagen = 4.  
+					END.
+					
+					ASSIGN aux_dstextab = '4'.
+					
+					RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botão ~"Liberar Agenda~"')").
+				END.
 			
 		  END.
 		ELSE
 			DO:
+				
          /* Verificando se o POST foi feito para enviar nova agenda */
-		IF GET-VALUE("envia") = "sim" THEN
+				IF GET-VALUE("envia") = "sim" THEN
           DO:
             
             IF CAN-FIND(FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
@@ -604,19 +604,19 @@
               RUN RodaJavaScript("alert('A agenda foi liberada com sucesso.')").
           END. /* GET-VALUE("envia") */
         ELSE
-		  DO:
+					DO:
             
-			  ASSIGN aux_pac     = GET-VALUE("auxpac")
-					 aux_mes     = GET-VALUE("auxmes")
-					 aux_motivos = GET-VALUE("auxmotivos")
-					 aux_evento  = GET-VALUE("auxevento")
-					 aux_rowid   = GET-VALUE("auxrowid").
+						ASSIGN aux_pac     = GET-VALUE("auxpac")
+									 aux_mes     = GET-VALUE("auxmes")
+									 aux_motivos = GET-VALUE("auxmotivos")
+									 aux_evento  = GET-VALUE("auxevento")
+									 aux_rowid   = GET-VALUE("auxrowid").
                
               REPEAT aux_i=1 TO NUM-ENTRIES(aux_pac):
                 FIND crapadp WHERE ROWID(crapadp) = TO-ROWID(ENTRY(aux_i,aux_rowid)) EXCLUSIVE-LOCK NO-ERROR. /* verifica se o evento já existe na agenda */
                 IF AVAIL crapadp THEN
                   DO:
-           
+										
                     /* caso esteja marcado para deletar*/
                     IF ENTRY(aux_i,aux_pac) = "X" THEN 
                       DELETE crapadp.
@@ -648,17 +648,18 @@
                                crapadp.cdagenci = INT(ENTRY(aux_i,aux_pac))    
                                crapadp.nrmeseve = INT(ENTRY(aux_i,aux_mes)).
                       END.
-                  END.  
+                  END.  /* IF AVAIL crapadp THEN */
                 ELSE /* caso registro nao exista */
                   DO:
-					
-					IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
-						DO:
-					
+										
+										/*IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
+											DO:JMD LIB*/
+										
                         /* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
                                aux_contnrseq = 0.
-                        agenda:
+                        
+												agendaNrseqdig:
                         DO WHILE TRUE:
                           IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                             DO:
@@ -666,10 +667,10 @@
                               IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                                 DO:
                                   ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                                  leave agenda.
+                                  leave agendaNrseqdig.
                                 END.
                               ELSE
-                                LEAVE agenda.
+                                LEAVE agendaNrseqdig.
                               
                             END.
                           ELSE
@@ -682,12 +683,12 @@
                                     RETURN "NOK".
                                   END.
                               ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                                LEAVE agenda.      
+                                LEAVE agendaNrseqdig.      
                             END.												
                             
                           ASSIGN aux_contnrseq = aux_contnrseq + 1.
                           
-                        END.
+                        END. /* agendaNrseqdig: */
                         /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         
                         CREATE crapadp.
@@ -701,11 +702,11 @@
                                crapadp.idstaeve  = 1 /*Agendado */
                                crapadp.cdcopope  = aux_cdcopope
                                crapadp.cdoperad  = aux_cdoperad.
-
-						FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
-          								     AND crapagp.cdcooper = gnpapgd.cdcooper
-											 AND crapagp.dtanoage = gnpapgd.dtanonov
-											 AND crapagp.cdagenci = INT(ENTRY(aux_i,aux_pac)) NO-LOCK NO-ERROR.
+																								
+												FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																						 AND crapagp.cdcooper = gnpapgd.cdcooper
+																						 AND crapagp.dtanoage = gnpapgd.dtanonov
+																						 AND crapagp.cdagenci = INT(ENTRY(aux_i,aux_pac)) NO-LOCK NO-ERROR.
 							   
                         /* Se a agenda já está liberada, guarda o mes de agendamento inicial do novo evento,
                         e cria o histórico de acréscimo */
@@ -774,34 +775,35 @@
                                 /* "mata" a instância da BO */  
                                 DELETE PROCEDURE h-b1wpgd0029 NO-ERROR.          
                               END. /* AVAIL craprap */
-                          END. /* crapagp.idstagen > 4 */
-						ELSE
-							DO:
-								FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
-																	 AND crapagp.cdcooper = gnpapgd.cdcooper
-																	 AND crapagp.dtanoage = gnpapgd.dtanonov
-																	 AND crapagp.cdagenci <> INT(ENTRY(aux_i,aux_pac)) 
-																	 AND crapagp.idstagen = 5 NO-LOCK NO-ERROR NO-WAIT.
-																	 
-								IF AVAILABLE crapagp THEN
-									DO:
-										
-										FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
-																				 AND crapagp.cdcooper = gnpapgd.cdcooper
-																				 AND crapagp.dtanoage = gnpapgd.dtanonov
-																				 AND crapagp.cdagenci = INT(ENTRY(aux_i,aux_pac)) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-											
-										IF AVAILABLE crapagp AND crapagp.idstagen < 5 THEN /* 5-Liberado*/
-											DO:
-												ASSIGN crapagp.idstagen = 5.
-											END.																	
+													END. /* crapagp.idstagen > 4 */
+												ELSE
+													DO:
+														
+														FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																							 AND crapagp.cdcooper = gnpapgd.cdcooper
+																							 AND crapagp.dtanoage = gnpapgd.dtanonov
+																							 AND crapagp.cdagenci <> INT(ENTRY(aux_i,aux_pac)) 
+																							 AND crapagp.idstagen = 5 NO-LOCK NO-ERROR NO-WAIT.
+																							 
+														IF AVAILABLE crapagp THEN
+															DO:
+																
+																FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																										 AND crapagp.cdcooper = gnpapgd.cdcooper
+																										 AND crapagp.dtanoage = gnpapgd.dtanonov
+																										 AND crapagp.cdagenci = INT(ENTRY(aux_i,aux_pac)) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+																	
+																IF AVAILABLE crapagp AND crapagp.idstagen < 5 THEN /* 5-Liberado*/
+																	DO:
+																		ASSIGN crapagp.idstagen = 5.
+																	END.																	
 
-									END. /* AVAILABLE crapagp */
-							END. /* ELSE  crapagp.idstagen */
-                        VALIDATE crapadp.
-					 END. /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
+															END. /* AVAILABLE crapagp */
+													END. /* ELSE  crapagp.idstagen */
+									VALIDATE crapadp.
+									/*END. JMD LIB*/ /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
                   END. /* /* caso registro nao exista */ */
-			END. /* REPEAT */
+				END. /* REPEAT */
 		  END. /* ELSE */
 		END.
       END. /* REQUEST_METHOD = POST */
