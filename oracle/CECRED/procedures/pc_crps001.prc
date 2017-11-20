@@ -191,8 +191,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             (Carlos Rafael Tanholi).                                                              
 
                06/10/2016 - Incluido consulta de valor de acordo de emprestimo bloqueado,
-                            Prj. 302 (Jean Michel)             
-                            
+                            Prj. 302 (Jean Michel)                         
+
                01/03/2017 - Incluir criação de craplau caso cooperado nao tenha saldo para 
                             efetuar lançamentos para o historico 323 e 38 (Lucas Ranghetti M338.1)
 
@@ -201,8 +201,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                           - Adicionar Round 2 para o valor vliofmes (Lucas Ranghetti M338.1)
 
-			         26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
-			                      Heitor (Mouts) - Melhoria 440
+			   26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
+			                Heitor (Mouts) - Melhoria 440
 
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
@@ -709,6 +709,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_ingerneg  BOOLEAN := TRUE;
        vr_des_erro  VARCHAR2(100);
 
+       vr_vliofpri NUMBER := 0; --> valor do IOF principal
+       vr_vliofadi NUMBER := 0; --> valor do IOF adicional
+       vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
+       vr_vltotiof NUMBER := 0; --> Valor total do IOF (sem considerar atraso)
+       vr_rw_calciof gene0005.rw_calciof%TYPE;
        vr_idlancto NUMBER;
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
@@ -773,7 +778,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          -- Apenas fechar o cursor
          CLOSE cr_crapcop;
        END IF;
-       
+
        -- Verifica se a cooperativa esta cadastrada
        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
        FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -792,7 +797,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          --Atribuir a proxima data do movimento
          vr_dtmvtopr:= rw_crapdat.dtmvtopr;
          --Atribuir a data do movimento anterior
-         vr_dtmvtoan:= rw_crapdat.dtmvtoan;        
+         vr_dtmvtoan:= rw_crapdat.dtmvtoan;
          --Atribuir a quantidade de dias uteis
          vr_qtdiaute:= rw_crapdat.qtdiaute;
        END IF;
@@ -827,8 +832,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        END IF;
 
        -- Procedimento padrão de busca de informações de IOF
-       gene0005.pc_busca_iof (pr_cdcooper  => pr_cdcooper
-                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+       gene0005.pc_busca_iof_adic (pr_dtmvtolt  => rw_crapdat.dtmvtolt
                              ,pr_dtiniiof  => vr_dtiniiof
                              ,pr_dtfimiof  => vr_dtfimiof
                              ,pr_txccdiof  => vr_txccdiof
@@ -1008,8 +1012,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
 
            --Se for primeiro dia util e tiver IOF a cobrar
-           IF To_Char(vr_dtmvtolt,'MM') <> To_Char(vr_dtmvtoan,'MM') THEN 
-           
+           IF To_Char(vr_dtmvtolt,'MM') <> To_Char(vr_dtmvtoan,'MM') THEN
+
              IF round(rw_crapsld.vliofmes,2) > 0 THEN
 
                -- Verificar a imunidade tributária
@@ -1024,12 +1028,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                   ,pr_tab_erro => vr_tab_erro);
 
                -- Se não possui imunidade tributária
-               IF NOT vr_flgimune THEN               
+               IF NOT vr_flgimune THEN
                
                  --Se o usuario existir na tabela de memoria e for pessoa fisica ou juridica
                  IF vr_tab_crapass.EXISTS(rw_crapsld.nrdconta) AND
                     vr_tab_crapass(rw_crapsld.nrdconta).inpessoa < 3 THEN
-                   
+
                     -- Verificar Saldo do cooperado
                     extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper, 
                                                 pr_rw_crapdat => rw_crapdat, 
@@ -1164,124 +1168,124 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      rw_crapsld.vlbasiof:= 0;
                      
                    ELSE -- Caso contrario segue criando registro na conta corrente
-                     --Verificar se o lote existe
-                     OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                                     ,pr_dtmvtolt => vr_dtmvtolt
-                                     ,pr_cdagenci => 1
-                                     ,pr_cdbccxlt => 100
-                                     ,pr_nrdolote => 8450);
-                     --Posicionar no proximo registro
-                     FETCH cr_craplot INTO rw_craplot;
-                     --Se encontrou registro
-                     IF cr_craplot%NOTFOUND THEN
-                       --Criar lote
-                       BEGIN
-                         --Inserir a capa do lote retornando informacoes para uso posterior
-                         INSERT INTO craplot (cdcooper
-                                             ,dtmvtolt
-                                             ,cdagenci
-                                             ,cdbccxlt
-                                             ,nrdolote
-                                             ,tplotmov)
-                                     VALUES  (pr_cdcooper
-                                             ,vr_dtmvtolt
-                                             ,1
-                                             ,100
-                                             ,8450
-                                             ,1)
-                                     RETURNING cdcooper
-                                              ,dtmvtolt
-                                              ,cdagenci
-                                              ,cdbccxlt
-                                              ,nrdolote
-                                              ,tplotmov
-                                              ,ROWID
-                                     INTO  rw_craplot.cdcooper
-                                          ,rw_craplot.dtmvtolt
-                                          ,rw_craplot.cdagenci
-                                          ,rw_craplot.cdbccxlt
-                                          ,rw_craplot.nrdolote
-                                          ,rw_craplot.tplotmov
-                                          ,rw_craplot.rowid;
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao inserir na tabela craplot. '||SQLERRM;
-                           --Sair do programa
-                           RAISE vr_exc_saida;
-                       END;
-                     END IF;
-                     --Fechar Cursor
-                     CLOSE cr_craplot;
-
-                     --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+                   --Verificar se o lote existe
+                   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                                   ,pr_dtmvtolt => vr_dtmvtolt
+                                   ,pr_cdagenci => 1
+                                   ,pr_cdbccxlt => 100
+                                   ,pr_nrdolote => 8450);
+                   --Posicionar no proximo registro
+                   FETCH cr_craplot INTO rw_craplot;
+                   --Se encontrou registro
+                   IF cr_craplot%NOTFOUND THEN
+                     --Criar lote
                      BEGIN
-                       INSERT INTO craplcm (cdcooper
+                       --Inserir a capa do lote retornando informacoes para uso posterior
+                       INSERT INTO craplot (cdcooper
                                            ,dtmvtolt
                                            ,cdagenci
                                            ,cdbccxlt
                                            ,nrdolote
-                                           ,nrdconta
-                                           ,nrdctabb
-                                           ,nrdctitg
-                                           ,nrdocmto
-                                           ,cdhistor
-                                           ,nrseqdig
-                                           ,vllanmto
-                                           ,cdpesqbb
-                                           ,vldoipmf)
+                                           ,tplotmov)
                                    VALUES  (pr_cdcooper
-                                           ,rw_craplot.dtmvtolt
-                                           ,rw_craplot.cdagenci
-                                           ,rw_craplot.cdbccxlt
-                                           ,rw_craplot.nrdolote
-                                           ,rw_crapsld.nrdconta
-                                           ,rw_crapsld.nrdconta
-                                           ,to_char(rw_crapsld.nrdconta,'fm00000000')
-                                           ,99999323
-                                           ,323
-                                           ,Nvl(rw_craplot.nrseqdig,0) + 1
-                                           ,round(rw_crapsld.vliofmes,2)
-                                           ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
-                                           ,0)
-                                   RETURNING vllanmto
+                                           ,vr_dtmvtolt
+                                           ,1
+                                           ,100
+                                           ,8450
+                                           ,1)
+                                   RETURNING cdcooper
+                                            ,dtmvtolt
+                                            ,cdagenci
+                                            ,cdbccxlt
+                                            ,nrdolote
+                                            ,tplotmov
                                             ,ROWID
-                                   INTO     rw_craplcm.vllanmto
-                                           ,rw_craplcm.rowid;
-
-                       -- Se na carga inicial não haviam lançamentos do dia para a conta
-                       IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
-                         -- Indica que agora há
-                         vr_tab_craplcm(rw_crapsld.nrdconta):= rw_crapsld.nrdconta;
-                       END IF;
+                                   INTO  rw_craplot.cdcooper
+                                        ,rw_craplot.dtmvtolt
+                                        ,rw_craplot.cdagenci
+                                        ,rw_craplot.cdbccxlt
+                                        ,rw_craplot.nrdolote
+                                        ,rw_craplot.tplotmov
+                                        ,rw_craplot.rowid;
                      EXCEPTION
                        WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao inserir na tabela craplcm. '|| SQLERRM;
+                         vr_dscritic := 'Erro ao inserir na tabela craplot. '||SQLERRM;
                          --Sair do programa
                          RAISE vr_exc_saida;
                      END;
-
-                     --Atualizar capa do Lote
-                     BEGIN
-                       UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + rw_craplcm.vllanmto
-                                         ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + rw_craplcm.vllanmto
-                                         ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                         ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                         ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-                       WHERE craplot.ROWID = rw_craplot.ROWID;
-                     EXCEPTION
-                       WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao atualizar tabela craplot. '||SQLERRM;
-                         --Sair do programa
-                         RAISE vr_exc_saida;
-                     END;
-
-                     --Incrementar a quantidade de lancamentos no mes
-                     rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
-                     --Zerar valor iof no mes
-                     rw_crapsld.vliofmes:= 0;
-                     --Zerar valor base iof
-                     rw_crapsld.vlbasiof:= 0;
                    END IF;
+                   --Fechar Cursor
+                   CLOSE cr_craplot;
+
+                   --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+                   BEGIN
+                     INSERT INTO craplcm (cdcooper
+                                         ,dtmvtolt
+                                         ,cdagenci
+                                         ,cdbccxlt
+                                         ,nrdolote
+                                         ,nrdconta
+                                         ,nrdctabb
+                                         ,nrdctitg
+                                         ,nrdocmto
+                                         ,cdhistor
+                                         ,nrseqdig
+                                         ,vllanmto
+                                         ,cdpesqbb
+                                         ,vldoipmf)
+                                 VALUES  (pr_cdcooper
+                                         ,rw_craplot.dtmvtolt
+                                         ,rw_craplot.cdagenci
+                                         ,rw_craplot.cdbccxlt
+                                         ,rw_craplot.nrdolote
+                                         ,rw_crapsld.nrdconta
+                                         ,rw_crapsld.nrdconta
+                                         ,to_char(rw_crapsld.nrdconta,'fm00000000')
+                                         ,99999323
+                                         ,323
+                                         ,Nvl(rw_craplot.nrseqdig,0) + 1
+                                         ,round(rw_crapsld.vliofmes,2)
+                                         ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
+                                         ,0)
+                                 RETURNING vllanmto
+                                          ,ROWID
+                                 INTO     rw_craplcm.vllanmto
+                                         ,rw_craplcm.rowid;
+
+                     -- Se na carga inicial não haviam lançamentos do dia para a conta
+                     IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
+                       -- Indica que agora há
+                       vr_tab_craplcm(rw_crapsld.nrdconta):= rw_crapsld.nrdconta;
+                     END IF;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao inserir na tabela craplcm. '|| SQLERRM;
+                       --Sair do programa
+                       RAISE vr_exc_saida;
+                   END;
+
+                   --Atualizar capa do Lote
+                   BEGIN
+                     UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + rw_craplcm.vllanmto
+                                       ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + rw_craplcm.vllanmto
+                                       ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                                       ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                       ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+                     WHERE craplot.ROWID = rw_craplot.ROWID;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao atualizar tabela craplot. '||SQLERRM;
+                       --Sair do programa
+                       RAISE vr_exc_saida;
+                   END;
+
+                   --Incrementar a quantidade de lancamentos no mes
+                   rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
+                   --Zerar valor iof no mes
+                   rw_crapsld.vliofmes:= 0;
+                   --Zerar valor base iof
+                   rw_crapsld.vlbasiof:= 0;
+                 END IF;
                  END IF;
                ELSE
                  --Zerar valor iof no mes
@@ -1479,145 +1483,145 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld.vljuresp,0);
                      
                    ELSE -- Caso contrario segue criando registro na conta corrente
-                   
-                       --Verificar se o lote existe
-                       OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                                       ,pr_dtmvtolt => vr_dtmvtolt
-                                       ,pr_cdagenci => 1
-                                       ,pr_cdbccxlt => 100
-                                       ,pr_nrdolote => 8450);
-                       --Posicionar no proximo registro
-                       FETCH cr_craplot INTO rw_craplot;
 
-                       --Se encontrou registro
-                       IF cr_craplot%NOTFOUND THEN
-                         --Criar lote
-                         BEGIN
-                           --Inserir a capa do lote retornando informacoes para uso posterior
-                           INSERT INTO craplot (cdcooper
-                                               ,dtmvtolt
-                                               ,cdagenci
-                                               ,cdbccxlt
-                                               ,nrdolote
-                                               ,tplotmov)
-                                       VALUES  (pr_cdcooper
-                                               ,vr_dtmvtolt
-                                               ,1
-                                               ,100
-                                               ,8450
-                                               ,1)
-                                       RETURNING cdcooper
-                                                ,dtmvtolt
-                                                ,cdagenci
-                                                ,cdbccxlt
-                                                ,nrdolote
-                                                ,tplotmov
-                                                ,ROWID
-                                       INTO  rw_craplot.cdcooper
-                                            ,rw_craplot.dtmvtolt
-                                            ,rw_craplot.cdagenci
-                                            ,rw_craplot.cdbccxlt
-                                            ,rw_craplot.nrdolote
-                                            ,rw_craplot.tplotmov
-                                            ,rw_craplot.rowid;
-                         EXCEPTION
-                           WHEN OTHERS THEN
-                             vr_dscritic := 'Erro ao inserir na tabela craplot. '||SQLERRM;
-                             --Sair do programa
-                             RAISE vr_exc_saida;
-                         END;
-                       END IF;
-                       --Fechar Cursor
-                       CLOSE cr_craplot;
+                 --Verificar se o lote existe
+                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                                 ,pr_dtmvtolt => vr_dtmvtolt
+                                 ,pr_cdagenci => 1
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_nrdolote => 8450);
+                 --Posicionar no proximo registro
+                 FETCH cr_craplot INTO rw_craplot;
 
-                       --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
-                       BEGIN
-                         INSERT INTO craplcm (cdcooper
-                                             ,dtmvtolt
-                                             ,cdagenci
-                                             ,cdbccxlt
-                                             ,nrdolote
-                                             ,nrdconta
-                                             ,nrdctabb
-                                             ,nrdctitg
-                                             ,nrdocmto
-                                             ,cdhistor
-                                             ,nrseqdig
-                                             ,vllanmto
-                                             ,vldoipmf
-                                             ,cdcoptfn)
-                                     VALUES  (pr_cdcooper
-                                             ,rw_craplot.dtmvtolt
-                                             ,rw_craplot.cdagenci
-                                             ,rw_craplot.cdbccxlt
-                                             ,rw_craplot.nrdolote
-                                             ,rw_crapsld.nrdconta
-                                             ,rw_crapsld.nrdconta
-                                             ,GENE0002.FN_MASK(rw_crapsld.nrdconta, '99999999')
-                                             ,99999938
-                                             ,38
-                                             ,Nvl(rw_craplot.nrseqdig,0) + 1
-                                             ,rw_crapsld.vljuresp
-                                             ,TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2)
-                                             ,0)
-                                     RETURNING craplcm.vllanmto
-                                              ,craplcm.vldoipmf
-                                              ,ROWID
-                                     INTO     rw_craplcm.vllanmto
-                                             ,rw_craplcm.vldoipmf
-                                             ,rw_craplcm.rowid;
+                 --Se encontrou registro
+                 IF cr_craplot%NOTFOUND THEN
+                   --Criar lote
+                   BEGIN
+                     --Inserir a capa do lote retornando informacoes para uso posterior
+                     INSERT INTO craplot (cdcooper
+                                         ,dtmvtolt
+                                         ,cdagenci
+                                         ,cdbccxlt
+                                         ,nrdolote
+                                         ,tplotmov)
+                                 VALUES  (pr_cdcooper
+                                         ,vr_dtmvtolt
+                                         ,1
+                                         ,100
+                                         ,8450
+                                         ,1)
+                                 RETURNING cdcooper
+                                          ,dtmvtolt
+                                          ,cdagenci
+                                          ,cdbccxlt
+                                          ,nrdolote
+                                          ,tplotmov
+                                          ,ROWID
+                                 INTO  rw_craplot.cdcooper
+                                      ,rw_craplot.dtmvtolt
+                                      ,rw_craplot.cdagenci
+                                      ,rw_craplot.cdbccxlt
+                                      ,rw_craplot.nrdolote
+                                      ,rw_craplot.tplotmov
+                                      ,rw_craplot.rowid;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := 'Erro ao inserir na tabela craplot. '||SQLERRM;
+                       --Sair do programa
+                       RAISE vr_exc_saida;
+                   END;
+                 END IF;
+                 --Fechar Cursor
+                 CLOSE cr_craplot;
 
-                         -- Se na carga inicial não haviam lançamentos do dia para a conta
-                         IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
-                           -- Indica que agora há
-                           vr_tab_craplcm(rw_crapsld.nrdconta):= rw_crapsld.nrdconta;
-                         END IF;
+                 --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+                 BEGIN
+                   INSERT INTO craplcm (cdcooper
+                                       ,dtmvtolt
+                                       ,cdagenci
+                                       ,cdbccxlt
+                                       ,nrdolote
+                                       ,nrdconta
+                                       ,nrdctabb
+                                       ,nrdctitg
+                                       ,nrdocmto
+                                       ,cdhistor
+                                       ,nrseqdig
+                                       ,vllanmto
+                                       ,vldoipmf
+                                       ,cdcoptfn)
+                               VALUES  (pr_cdcooper
+                                       ,rw_craplot.dtmvtolt
+                                       ,rw_craplot.cdagenci
+                                       ,rw_craplot.cdbccxlt
+                                       ,rw_craplot.nrdolote
+                                       ,rw_crapsld.nrdconta
+                                       ,rw_crapsld.nrdconta
+                                       ,GENE0002.FN_MASK(rw_crapsld.nrdconta, '99999999')
+                                       ,99999938
+                                       ,38
+                                       ,Nvl(rw_craplot.nrseqdig,0) + 1
+                                       ,rw_crapsld.vljuresp
+                                       ,TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2)
+                                       ,0)
+                               RETURNING craplcm.vllanmto
+                                        ,craplcm.vldoipmf
+                                        ,ROWID
+                               INTO     rw_craplcm.vllanmto
+                                       ,rw_craplcm.vldoipmf
+                                       ,rw_craplcm.rowid;
 
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
-                           --Sair do programa
-                           RAISE vr_exc_saida;
-                       END;
+                   -- Se na carga inicial não haviam lançamentos do dia para a conta
+                   IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
+                     -- Indica que agora há
+                     vr_tab_craplcm(rw_crapsld.nrdconta):= rw_crapsld.nrdconta;
+                   END IF;
 
-                       --Incrementar o total a debito
-                       rw_craplot.vlinfodb:= Nvl(rw_craplot.vlinfodb,0) + Nvl(rw_craplcm.vllanmto,0);
-                       --Incrementar o total a debito compensado
-                       rw_craplot.vlcompdb:= Nvl(rw_craplot.vlcompdb,0) + Nvl(rw_craplcm.vllanmto,0);
-                       --Incrementar a quantidade total de lancamentos
-                       rw_craplot.qtinfoln:= Nvl(rw_craplot.qtinfoln,0) + 1;
-                       --Incrementar a quantidade total de lancamentos compensados
-                       rw_craplot.qtcompln:= Nvl(rw_craplot.qtcompln,0) + 1;
-                       --Incrementar o numero sequencial da capa
-                       rw_craplot.nrseqdig:= Nvl(rw_craplot.nrseqdig,0) + 1;
-                       --Incrementar a quantidade de lancamentos no mes
-                       rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
-                       --Acumular o valor do lancamento nos juros
-                       vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                     vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
+                     --Sair do programa
+                     RAISE vr_exc_saida;
+                 END;
 
-                       --Se cobrar cpmf
-                       IF vr_flgdcpmf THEN
-                         --Acumular o valor do lancamento no valor base ipmf
-                         vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
-                         --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                         vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
-                       END IF;
+                 --Incrementar o total a debito
+                 rw_craplot.vlinfodb:= Nvl(rw_craplot.vlinfodb,0) + Nvl(rw_craplcm.vllanmto,0);
+                 --Incrementar o total a debito compensado
+                 rw_craplot.vlcompdb:= Nvl(rw_craplot.vlcompdb,0) + Nvl(rw_craplcm.vllanmto,0);
+                 --Incrementar a quantidade total de lancamentos
+                 rw_craplot.qtinfoln:= Nvl(rw_craplot.qtinfoln,0) + 1;
+                 --Incrementar a quantidade total de lancamentos compensados
+                 rw_craplot.qtcompln:= Nvl(rw_craplot.qtcompln,0) + 1;
+                 --Incrementar o numero sequencial da capa
+                 rw_craplot.nrseqdig:= Nvl(rw_craplot.nrseqdig,0) + 1;
+                 --Incrementar a quantidade de lancamentos no mes
+                 rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
+                 --Acumular o valor do lancamento nos juros
+                 vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
 
-                       --Atualizar capa do Lote
-                       BEGIN
-                         UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + rw_craplcm.vllanmto
-                                           ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + rw_craplcm.vllanmto
-                                           ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                           ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                           ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-                         WHERE craplot.ROWID = rw_craplot.ROWID;
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao atualizar tabela craplot. '||SQLERRM;
-                           --Sair do programa
-                           RAISE vr_exc_saida;
-                       END;
-                 
+                 --Se cobrar cpmf
+                 IF vr_flgdcpmf THEN
+                   --Acumular o valor do lancamento no valor base ipmf
+                   vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
+                   --Acumular no valor do ipmf o valor do ipmf existente no lancamento
+                   vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
+                 END IF;
+
+                 --Atualizar capa do Lote
+                 BEGIN
+                   UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + rw_craplcm.vllanmto
+                                     ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + rw_craplcm.vllanmto
+                                     ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                                     ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                     ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+                   WHERE craplot.ROWID = rw_craplot.ROWID;
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                     vr_dscritic := 'Erro ao atualizar tabela craplot. '||SQLERRM;
+                     --Sair do programa
+                     RAISE vr_exc_saida;
+                 END;
+               
                  END IF; -- Final da verificacao do saldo 
                
                END IF;
@@ -1679,6 +1683,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Verificar se a conta possui lancamentos no dia
            IF vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
 
+             OPEN gene0005.cr_calciof(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => rw_crapsld.nrdconta);
+             FETCH gene0005.cr_calciof INTO vr_rw_calciof;
              --Percorrer vetor de lancamentos
              FOR rw_craplcm IN cr_craplcm (pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_crapsld.nrdconta
@@ -1888,18 +1895,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                         ' COOP ANT = ' || rw_craptco.cdcopant ||
                                         ' CONTA = '    || gene0002.fn_mask_conta(rw_crapsld.nrdconta) ||
                                         ' CHEQUE = '   || vr_nrchqsdv;
-
+                                                                                                 
                          -- Envio centralizado de log de erro
-                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                       || vr_cdprogra || ' --> '
+                          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                     || vr_cdprogra || ' --> '
                                                                        || vr_dscritic
                                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
-                         vr_cdcritic := NULL;
-                         vr_dscritic := NULL;
-                         -- Indicador de controle                                          
-                         vr_ingerneg := FALSE;
+                          vr_cdcritic := NULL;
+                          vr_dscritic := NULL;
+                          -- Indicador de controle                                          
+                          vr_ingerneg := FALSE;
   										 END IF;
                        
                        -- Se o cursor estiver aberto
@@ -1918,10 +1925,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                       ' CHEQUE = ' || vr_nrchqsdv;
 
                        -- Envio centralizado de log de erro
-                       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                 ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                     || vr_cdprogra || ' --> '
+                        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                   || vr_cdprogra || ' --> '
                                                                      || vr_dscritic,
                                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                         vr_cdcritic := NULL;
@@ -2054,6 +2061,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
 
            --Cobranca de IOF    linha(883)
+           
            --Se a taxa de iof for maior que zero
            IF vr_txccdiof > 0   THEN
              --Se o valor do iof atual menos valor iof anterior for maior zero
@@ -2072,30 +2080,58 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                vr_qtdiaiof := vr_qtdiaiof -1;
                --> Calcular valor adicional do IOF dos dias não uteis(final de semana e feriado)
                --> considerando o saldo anterior
-               IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
+               GENE0005.pc_calcula_valor_iof(pr_cdcooper => pr_cdcooper               --> CÃ³digo da cooperativa
+                                            ,pr_nrdconta => rw_crapsld.nrdconta       --> NÃºmero da conta
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data do movimento para busca na tabela de IOF
+                                            ,pr_qtdiaiof => vr_qtdiaiof               --> Qde dias em atraso (cÃ¡lculo IOF atraso)
+                                            ,pr_vloperacao => round(vr_vliofant,2)    --> Valor total da operaÃ§Ã£o (pode ser negativo tambÃ©m)
+                                            ,pr_flgrvvlr => TRUE                      --> Flag indicando se deve gravar ou nÃ£o a imunidade tributÃ¡ria
+                                            ,pr_rw_calciof => vr_rw_calciof
+                                            ,pr_vliofpri => vr_vliofpri               --> Retorno do valor do IOF principal
+                                            ,pr_vliofadi => vr_vliofadi               --> Retorno do valor do IOF adicional
+                                            ,pr_vliofcpl => vr_vliofcpl               --> Retorno do valor do IOF complementar
+                                            ,pr_vltotiof => vr_vltotiof               --> Retorno do valor tota de IOF (sem considerar atraso)
+                                            ,pr_flgimune => vr_flgimune);             --> Retorno da flag se possui imunidade tributÃ¡ria
+               vr_vltariof_adic := vr_vliofcpl;
+               /*IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
                  vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000082);
                ELSE
                  vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000041);
-               END IF;
+               END IF;*/
              
-           END IF;
-
-             IF vr_vliofatu > 0 THEN               
+             END IF;
                    
+             IF vr_vliofatu > 0 THEN               
+               GENE0005.pc_calcula_valor_iof(pr_cdcooper => pr_cdcooper               --> CÃ³digo da cooperativa
+                                            ,pr_nrdconta => rw_crapsld.nrdconta       --> NÃºmero da conta
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data do movimento para busca na tabela de IOF
+                                            ,pr_qtdiaiof => 0                         --> Qde dias em atraso (cÃ¡lculo IOF atraso)
+                                            ,pr_vloperacao => round(vr_vliofatu,2)    --> Valor total da operaÃ§Ã£o (pode ser negativo tambÃ©m)
+                                            ,pr_flgrvvlr => TRUE                      --> Flag indicando se deve gravar ou nÃ£o a imunidade tributÃ¡ria
+                                            ,pr_rw_calciof => vr_rw_calciof
+                                            ,pr_vliofpri => vr_vliofpri               --> Retorno do valor do IOF principal
+                                            ,pr_vliofadi => vr_vliofadi               --> Retorno do valor do IOF adicional
+                                            ,pr_vliofcpl => vr_vliofcpl               --> Retorno do valor do IOF complementar
+                                            ,pr_vltotiof => vr_vltotiof               --> Retorno do valor tota de IOF (sem considerar atraso)
+                                            ,pr_flgimune => vr_flgimune);             --> Retorno da flag se possui imunidade tributÃ¡ria
+               vr_vltariof_adic := vr_vltariof_adic + vr_vliofpri;
                --> Calcular valor adicional do IOF
-               IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
+               /*IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
                  vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000082);
                ELSE
                  vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000041);
-               END IF;
+               END IF;*/
              END IF;
            END IF;
-
-
+          
+           --Soma o IOF principal + adicional 
+           /*vr_vltariof_adic := vr_vltariof_adic + vr_vliofpri;*/
+           
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof:= Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
            rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(vr_vlbasiof * vr_txccdiof,2);
+           /*rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(vr_vliofpri,2);*/
            -- Incrementar com valor de tarifa de IOF adicional
            rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
 
