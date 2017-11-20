@@ -82,14 +82,10 @@ BEGIN
       pc_crps725(pr_dscritic => vr_dserro);
       
       IF TRIM(vr_dserro) IS NOT NULL THEN       
+        /* Vamos logar o erro e continuar o processo. */
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dserro);
-                              
-        -- Finalizar da execução do job
-        pc_controla_log_batch(pr_dstiplog => 'F');
-        
-        -- Encerrar a execução em caso de erro
-        RETURN;
+        vr_dserro := null;
       END IF; 
       
       --------------------------------------------------------
@@ -105,13 +101,13 @@ BEGIN
       IF TRIM(vr_dserro) IS NOT NULL THEN       
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dserro);
-    END IF; 
+      END IF; 
               
       --------------------------------------------------------
             
       -- Fim da execução do job
       pc_controla_log_batch(pr_dstiplog => 'F');
-  END IF;
+    END IF;
 
   END IF;
 
