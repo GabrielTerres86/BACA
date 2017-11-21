@@ -283,7 +283,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
   CURSOR cr_crapatr(pr_cdcooper IN crapatr.cdcooper%TYPE,
                     pr_nrdconta IN crapatr.nrdconta%TYPE,
                     pr_cdhistor IN crapatr.cdhistor%TYPE,
-                    pr_cdrefere IN crapatr.cdrefere%TYPE) IS
+                    pr_cdrefere IN crapatr.cdrefere%TYPE,
+                    pr_nrdocmto IN crapatr.cdrefere%TYPE) IS
     SELECT atr.dtfimatr
           ,atr.cdrefere
           ,atr.dtultdeb
@@ -297,8 +298,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      WHERE atr.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
        AND atr.nrdconta = pr_nrdconta -- NUMERO DA CONTA
        AND atr.cdhistor = pr_cdhistor -- CODIGO DO HISTORICO
-       AND atr.cdrefere = pr_cdrefere; -- COD. REFERENCIA
+       AND atr.cdrefere IN( pr_cdrefere, pr_nrdocmto); -- COD. REFERENCIA
   rw_crapatr cr_crapatr%ROWTYPE;     
+  
+  CURSOR cr_crapcns (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
+   SELECT s.progress_recid
+     FROM crapcns s
+    WHERE s.cdcooper = pr_cdcooper
+      AND s.nrdconta = pr_nrdconta;
+   rw_crapcns cr_crapcns%ROWTYPE;
 
   /* Efetua consulta para listar todos os débitos automáticos dos convênios do Sicredi que não tiveram saldo no
    processo noturno anterior para realizar o lançamento do débito.
@@ -477,6 +486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     vr_lau_nrcpfope  craplau.nrcpfope%TYPE;
     vr_lau_nrcpfpre  craplau.nrcpfpre%TYPE;
     vr_lau_nmprepos  craplau.nmprepos%TYPE;
+    vr_lau_nrcrcard  craplau.nrcrcard%TYPE;
     
     -- Protocolo
     vr_dsinfor1  crappro.dsinform##1%TYPE;
@@ -758,14 +768,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                    craplau.nrterfin,
                    craplau.nrcpfope,
                    craplau.nrcpfpre,
-                   craplau.nmprepos
+                   craplau.nmprepos,
+                   craplau.nrcrcard
               INTO vr_lau_dsorigem,
                    vr_lau_cdcoptfn,
                    vr_lau_cdagetfn,
                    vr_lau_nrterfin,
                    vr_lau_nrcpfope,
                    vr_lau_nrcpfpre,
-                   vr_lau_nmprepos;
+                   vr_lau_nmprepos,
+                   vr_lau_nrcrcard;
 
         -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
       EXCEPTION
@@ -778,8 +790,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
         -- Atualiza data do último débito da autorização
         OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta,
-                        pr_cdhistor => pr_cdhistor,
-                        pr_cdrefere => pr_nrdocmto);
+                        pr_cdhistor => pr_cdhistor,                       
+                        pr_cdrefere => nvl(vr_lau_nrcrcard,0),
+                        pr_nrdocmto => pr_nrdocmto);
         FETCH cr_crapatr INTO rw_crapatr;
 
         IF cr_crapatr%NOTFOUND THEN
@@ -874,6 +887,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
               RAISE vr_exc_erro;
             END;                
           END IF;
+        END IF;
+      ELSE -- Consorcios
+      
+         -- Validar se existe conta consorcio
+         OPEN cr_crapcns(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta);
+         FETCH cr_crapcns INTO rw_crapcns;        
+         
+         IF cr_crapcns%NOTFOUND THEN
+          -- FECHAR O CURSOR
+          CLOSE cr_crapcns;
+          -- retorna erro para procedure chamadora
+          vr_dscritic := 'Conta consorcio nao cadastrada.';
+          RAISE vr_exc_erro;
+        ELSE
+          -- FECHAR O CURSOR
+          CLOSE cr_crapcns;
         END IF;
       END IF;
     ELSE
