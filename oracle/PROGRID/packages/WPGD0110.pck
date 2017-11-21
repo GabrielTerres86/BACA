@@ -286,16 +286,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   BEGIN
     DECLARE
 
-      -- Cursor sobre o cadastro de eventos
-      CURSOR cr_crapedp IS
-      SELECT cdevento, nmevento
-        FROM crapedp
-       WHERE (cdcooper = 0)
-       ORDER BY nmevento;
-        
-      rw_crapedp cr_crapedp%ROWTYPE;
-
-
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_age IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -311,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
       rw_crapedp_age cr_crapedp_age%ROWTYPE;      
       
       -- Cursor sobre os eventos da agenda 
-      CURSOR cr_crapedp_coop_age(pr_cdcoop_agenci IN VARCHAR2) IS
+      CURSOR cr_crapedp_coop_age(pr_cdagenci IN VARCHAR2) IS
       SELECT DISTINCT ce.cdevento, ce.nmevento       
       FROM crapeap c, 
            crapsde cs,
@@ -334,7 +324,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND c.flgevsel = 1  
         AND cs.hrsugini IS NOT NULL                 
         AND (c.dtanoage = pr_dtanoage OR pr_dtanoage = 0)         
-        AND (ce.cdcooper|| '|' ||c.cdagenci = pr_cdcoop_agenci OR (pr_cdcoop_agenci = '0' AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0) ) )
+        AND (ce.cdcooper|| '|' ||c.cdagenci = pr_cdagenci OR (pr_cdagenci = '0' AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0) ) )
+        AND (ce.cdcooper = c.cdcooper)
+        AND (ce.cdevento = ce.cdevento)
+        AND (ce.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+        AND (ce.dtanoage = pr_dtanoage OR pr_dtanoage = 0)
       ORDER BY ce.nmevento;
         
       rw_crapedp_coop_age cr_crapedp_coop_age%ROWTYPE;
