@@ -418,7 +418,7 @@ PROCEDURE lista-titulos-sacado:
             END.
 
         IF  par_cdsittit < 0   OR
-            par_cdsittit > 13  THEN
+            par_cdsittit > 16  THEN
             DO:
                 ASSIGN aux_dscritic = "Situacao invalida.".
                 LEAVE.
