@@ -267,7 +267,7 @@ PROCEDURE process-web-request :
                    '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
                    '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
                    '  <tr>' SKIP                    
-                    '    <td width="100%" align="left" class="linhaform">Pressione ENTER para autenticar</td>' SKIP
+                    '    <td width="100%" align="left" class="linhaform">Pressione ENTER para autenticar o inicio do atendimento.</td>' SKIP
                    ' </tr>' SKIP
                    '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
                    /*'<tr>'
