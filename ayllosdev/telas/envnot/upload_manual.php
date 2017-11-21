@@ -32,7 +32,7 @@
 	
 	// Dados servidor de imagem
 	$user = "conteudo";
-	$pass = "8974e8c1acb";
+	$pass = "c0n10.t3u1d70"; //Senha de homol: "8974e8c1acb";
 		
 	// Captura as informações enviadas via POST
 	//CABECALHO
