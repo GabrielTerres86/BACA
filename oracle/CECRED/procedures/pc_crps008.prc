@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 03/04/2017
+   Data    : Janeiro/92.                     Ultima atualizacao: 05/06/2017
 
    Dados referentes ao programa:
 
@@ -139,10 +139,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                             
                03/04/2017 - Ajuste no calculo do IOF, incluir calculo da taxa adicional do IOF.
                             (Odirlei-AMcom)
-                                                
+
                26/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel.
                             Heitor (Mouts) - Melhoria 440
-                                                
+
+               05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
+                            (Lucas Ranghetti/Thiago Rodrigues)                            
      ............................................................................. */
 
      DECLARE
@@ -1399,7 +1401,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  ELSE
                    CLOSE cr_tbcc_lautom_controle;
                  END IF;
-                     
+                 
+                 --Diminuir o valor do lancamento nos juros
+                 vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld.vljurmes,0);
                ELSE -- Caso contrario segue criando registro na conta corrente  
              
                --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
@@ -2177,7 +2181,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(Nvl(vr_vlbasiof,0) * Nvl(vr_txccdiof,0),2);
                
              END IF;
-             
+
              vr_vltariof_adic := 0;
                    
              --> Calcular valor adicional do IOF apenas da diferença 
@@ -2186,7 +2190,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
              ELSE
                vr_vltariof_adic := vr_vltariof_adic + (vr_vlbasiof * 1 * 0.000041);
              END IF;
-             
+
              -- Incrementar com valor de tarifa de IOF adicional
              --> não deve arredondar 
              rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
