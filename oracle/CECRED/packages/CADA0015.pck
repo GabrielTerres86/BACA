@@ -127,7 +127,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0015 is
                       ,pr_dscritic   OUT VARCHAR2);                 --> Retorno de Erro
                       
   -- Rotina para processar registros pendentes de atualização
-  PROCEDURE pc_processa_pessoa_atlz(pr_dscritic   OUT VARCHAR2);     --> Retorno de Erro                    
+  PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
+                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online 
+                                     pr_dscritic   OUT VARCHAR2);          --> Retorno de Erro                    
 END CADA0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
@@ -3597,7 +3599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     
       -- Efetua loop sobre os registros
       FOR x IN 1..12 LOOP
-        
+        rw_pessoa_fat := NULL;
         -- Inicializa a variavel
         OPEN cr_pessoa_fat (pr_idpessoa  => vr_idpessoa,
                             pr_nrseq_fat => x);
@@ -3617,7 +3619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##1,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##1;
 
@@ -3628,7 +3630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##2,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
 
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##2;
@@ -3640,7 +3642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##3,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##3;
 
@@ -3651,7 +3653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##4,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##4;
 
@@ -3662,7 +3664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##5,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##5;
 
@@ -3673,7 +3675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##6,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##6;
 
@@ -3684,7 +3686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##7,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##7;
 
@@ -3695,7 +3697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##8,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##8;
 
@@ -3706,7 +3708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##9,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##9;
 
@@ -3717,7 +3719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##10,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##10;
 
@@ -3728,7 +3730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##11,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##11;
 
@@ -3739,7 +3741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                                       pr_crapjfn.anoftbru##12,'MMYYYY'); 
           EXCEPTION
             WHEN OTHERS THEN
-              NULL;
+              rw_pessoa_fat.dtmes_referencia := NULL;
           END;
           rw_pessoa_fat.vlfaturamento_bruto := pr_crapjfn.vlrftbru##12;
         END IF;
@@ -4793,7 +4795,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
   END pc_crapass;  
   
   -- Rotina para processar registros pendentes de atualização
-  PROCEDURE pc_processa_pessoa_atlz(pr_dscritic   OUT VARCHAR2) IS     --> Retorno de Erro
+  PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
+                                     pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online 
+                                     pr_dscritic OUT VARCHAR2) IS     --> Retorno de Erro
   /* ..........................................................................
     --
     --  Programa : pc_processa_pessoa_atlz
@@ -4818,7 +4822,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       SELECT atl.*,
              atl.rowid
         FROM tbcadast_pessoa_atualiza atl
-       WHERE atl.insit_atualiza = 1; 
+       WHERE (atl.insit_atualiza = 1 AND --> pendente job
+              nvl(pr_nrdconta,0) = 0  ) 
+          OR (atl.cdcooper = pr_cdcooper AND
+              atl.nrdconta = pr_nrdconta AND
+              atl.insit_atualiza = 4  --> pendente processo online
+              ); 
        
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,

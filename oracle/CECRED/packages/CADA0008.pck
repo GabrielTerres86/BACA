@@ -670,11 +670,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     w_nmtabela VARCHAR2(1000);
 
   BEGIN
-    btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                              ,pr_ind_tipo_log => 1 -- Processo normal
-                              ,pr_nmarqlog => 'CRM' 
-                              ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                 'Cooper: ' || pr_cdcooper || ' conta: '||pr_nrdconta);
 
     FOR r_busca_idpessoa in cr_busca_idpessoa LOOP
 
@@ -684,10 +679,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                 ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
                                    'Entrou');
 
+      
+      --> marcar registro para ser processado apenas 
+      --> pela rotina de replicacao online
+      --> para nao gerar lock qnd executado via job
+      BEGIN
+        UPDATE tbcadast_pessoa_atualiza a
+           SET a.insit_atualiza = 4 --> processar online 
+         WHERE a.insit_atualiza = 1 --> pendente
+           AND a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta;
+      EXCEPTION 
+        WHEN OTHERS THEN
+          --se deu algum erro deixar para replicacao job
+          NULL;
+      END;
+      
       pr_dscritic := null;
 
       -- Rotina para processar registros pendentes de atualização
-      cada0015.pc_processa_pessoa_atlz(pr_dscritic => w_dscritic);
+      cada0015.pc_processa_pessoa_atlz( pr_cdcooper => pr_cdcooper, --> Codigo da coperativa quando processo de replic. online
+                                        pr_nrdconta => pr_nrdconta, --> Nr. da conta quando processo de replic. online 
+                                        pr_dscritic => w_dscritic);
       IF w_dscritic IS NOT NULL THEN
         pr_dscritic := 'Erro não tratado na pc_marca_replica_ayllos: ' ||
                        w_dscritic;
@@ -799,11 +812,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
 
       END IF;
     END LOOP;
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                      ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'CRM' 
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         'Saiu');
 
     COMMIT;
   EXCEPTION
