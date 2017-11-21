@@ -18,13 +18,15 @@
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
  * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
- * 012: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
+ * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
+ 
+ * 013: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
     							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
- * 013: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
- * 014: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
+ * 014: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  * 015: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
  *										    CH, RE, PP E CT. (PRJ339 - Reinert)
+ * 016: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -187,7 +189,7 @@
 	<input type="image" id="btVoltar"  class="opConsulta" src="<? echo $UrlImagens; ?>botoes/voltar.gif"  onClick="fechaRotina(divRotina)" />
 	<input type="image" id="btAlterar" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="aux_operacao = 'CA'; controlaOperacao('CA')" />
 	<input type="image" id="btIncluir" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/incluir.gif" onClick="aux_operacao = 'CI'; controlaOperacao('CI')" />		
-	<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigdoc(8);return false;"/>
+	<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigidoc();"/>
 
 	<?  if ($flgcadas != 'M')  { ?>
 		<input type="image" id="btCancelarAlt"   class="opAlteracao opAlterar" src="<? echo $UrlImagens; ?>botoes/cancelar.gif"	  onClick="controlaOperacao('AC')" />		

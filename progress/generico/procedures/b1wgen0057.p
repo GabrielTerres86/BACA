@@ -46,6 +46,8 @@
 
 				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
 							  registro da crapttl. (PRJ339 - Reinert)
+                
+				 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -174,7 +176,6 @@ PROCEDURE Busca_Dados:
                     INPUT par_cddopcao,
                    OUTPUT aux_cdcritic,
                    OUTPUT aux_dscritic ). 
-
         ELSE
             DO:
                 ASSIGN aux_dscritic = "Registro de conjuge nao encontrado. " + 
@@ -1111,7 +1112,9 @@ PROCEDURE Grava_Dados:
 
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
-    DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
+    DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
+    DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcpfcjg AS DECIMAL                                 NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -1207,7 +1210,11 @@ PROCEDURE Grava_Dados:
                        END.
                 END.
             ELSE
+                DO:
+                    ASSIGN aux_nmconjug = crapcje.nmconjug
+                           aux_nrcpfcjg = crapcje.nrcpfcjg.
                 LEAVE ContadorCje.
+                END.
 
         END.
 
@@ -1245,6 +1252,68 @@ PROCEDURE Grava_Dados:
                 END.
             ELSE 
                 LEAVE ContadorTtl.
+            
+        END.
+
+        IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+            UNDO Grava, LEAVE Grava.  
+        
+        IF aux_nmconjug = ? THEN
+            ASSIGN aux_nmconjug = "".
+        IF aux_nrcpfcjg = ? THEN
+            ASSIGN aux_nrcpfcjg = 0.
+            
+        IF par_cddopcao = "I"                  OR 
+           aux_nmconjug <> UPPER(par_nmconjug) OR 
+           aux_nrcpfcjg <> par_nrcpfcjg        THEN 
+            DO:
+              
+              ContadorDoc22: DO aux_contador = 1 TO 10:
+          
+                  FIND FIRST crapdoc WHERE 
+                                     crapdoc.cdcooper = par_cdcooper AND
+                                     crapdoc.nrdconta = par_nrdconta AND
+                                     crapdoc.tpdocmto = 22            AND
+                                     crapdoc.dtmvtolt = par_dtmvtolt AND
+                                     crapdoc.idseqttl = par_idseqttl AND
+                                     crapdoc.nrcpfcgc = crapttl.nrcpfcgc
+                                     EXCLUSIVE NO-ERROR.
+
+                  IF NOT AVAILABLE crapdoc THEN
+                      DO:
+                          IF LOCKED(crapdoc) THEN
+                              DO:
+                                  IF aux_contador = 10 THEN
+                                      DO:
+                                          ASSIGN aux_cdcritic = 341.
+                                          LEAVE ContadorDoc22.
+                                      END.
+                                  ELSE 
+                                      DO: 
+                                          PAUSE 1 NO-MESSAGE.
+                                          NEXT ContadorDoc22.
+                                      END.
+                              END.
+                          ELSE        
+                              DO:
+                                  CREATE crapdoc.
+                                  ASSIGN crapdoc.cdcooper = par_cdcooper
+                                         crapdoc.nrdconta = par_nrdconta
+                                         crapdoc.flgdigit = FALSE
+                                         crapdoc.dtmvtolt = par_dtmvtolt
+                                         crapdoc.tpdocmto = 22
+                                         crapdoc.idseqttl = par_idseqttl
+                                         crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
+                                  VALIDATE crapdoc.
+                              END.
+                      END.
+                  ELSE
+                      DO:
+                          ASSIGN crapdoc.flgdigit = FALSE.
+          
+                          LEAVE ContadorDoc22.
+                      END.
+              END.
             
         END.
 

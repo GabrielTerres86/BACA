@@ -769,6 +769,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 
   --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
   --
+  --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
+  --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
   --                          esteja cadastrado na cooperativa. (Kelvin)  
   --
@@ -2678,14 +2681,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              flgdigit,
              dtmvtolt,
              tpdocmto,
-             idseqttl)
+             idseqttl,
+             nrcpfcgc)
            VALUES
             (pr_cdcooper,
              pr_nrdconta_dst,
              0,
              rw_crapdat.dtmvtolt,
              x,
-             1);
+             1,
+             rw_crapass.nrcpfcgc);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
@@ -2894,6 +2899,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
 
+        BEGIN
+          INSERT INTO crapdoc
+            (cdcooper,
+             nrdconta,
+             flgdigit,
+             dtmvtolt,
+             tpdocmto,
+             idseqttl,
+             nrcpfcgc)
+           VALUES
+            (pr_cdcooper,
+             pr_nrdconta_dst,
+             0,
+             rw_crapdat.dtmvtolt,
+             22,
+             1,
+             rw_crapass.nrcpfcgc);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN

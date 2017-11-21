@@ -155,12 +155,14 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 										
-
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)  
                 			
+				11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)			
+
                              
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
@@ -1066,6 +1068,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT par_nrdddtfc,
                       INPUT par_nrtelefo,
                       INPUT par_nrlicamb,
+                      INPUT par_nrcpfcgc,
                      OUTPUT par_cdcritic,
                      OUTPUT par_dscritic ) NO-ERROR.
 
@@ -2656,6 +2659,7 @@ PROCEDURE Altera_Jur PRIVATE :
     DEF  INPUT PARAM par_nrdddtfc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrtelefo AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -2730,7 +2734,8 @@ PROCEDURE Altera_Jur PRIVATE :
         					   crapdoc.nrdconta = crabjur.nrdconta AND
         					   crapdoc.tpdocmto = 10               AND
         					   crapdoc.dtmvtolt = par_dtmvtolt     AND
-        					   crapdoc.idseqttl = aux_idseqttl     
+        					   crapdoc.idseqttl = aux_idseqttl     AND
+                               crapdoc.nrcpfcgc = par_nrcpfcgc
         					   EXCLUSIVE NO-ERROR.
         
         			IF  NOT AVAILABLE crapdoc THEN
@@ -2756,8 +2761,8 @@ PROCEDURE Altera_Jur PRIVATE :
         								   crapdoc.flgdigit = FALSE
         								   crapdoc.dtmvtolt = par_dtmvtolt
         								   crapdoc.tpdocmto = 10
-        								   crapdoc.idseqttl = aux_idseqttl.
-                           
+        								   crapdoc.idseqttl = aux_idseqttl
+                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
         							VALIDATE crapdoc.
         						END.
         				END.
@@ -4332,6 +4337,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.nrdconta = par_nrdconta
                        crabass.dtmvtolt = par_dtmvtolt
                        crabass.inpessoa = par_inpessoa
+                       crabass.nrcpfcgc = par_nrcpfcgc
                        crabass.inmatric = 1
                        crabass.tpavsdeb = 0
                        crabass.qtfoltal = 10 
@@ -5161,6 +5167,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.dthabmen = par_dthabmen
                               crabttl.flgimpri = TRUE 
                               crabttl.inpolexp = 0
+                              crabttl.nrcpfcgc = par_nrcpfcgc 
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN
