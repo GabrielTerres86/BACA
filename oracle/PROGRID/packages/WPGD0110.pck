@@ -21,13 +21,11 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --                           carregar eventos apenas por Cooperativa e Ano.
   --                           (Carlos Rafael Tanholi).  
   --
-  --              31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA               
-                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -39,7 +37,6 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_evento_dtsugest(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                     ,pr_cdagenci IN VARCHAR2            	--> Codigo da Agencia (PA)    
                                     ,pr_dtanoage IN crapeap.dtanoage%TYPE --> Ano do filtro
-                                    ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -73,13 +70,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --
   --              05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
   --
-  --              31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA             	
-                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Programa
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -108,7 +103,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
 
     Alteracoes: 05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
                            
-                31/08/2017 - Inclusão do parâmetro pr_nrseqpgm, Prj. 322 (Jean Michel).
     ..............................................................................*/   
                 
     DECLARE
@@ -162,7 +156,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND ce.tpevento NOT IN(7,8,10,11,12,13,14,15,16)
         AND c.dtanoage = pr_dtanoage        
         AND c.flgevsel = 1        
-        AND (ce.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)      
         AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0 OR pr_cdcooper = '0')
         AND (INSTR(','||pr_cdevento||',', ','||c.cdevento||',') > 0 OR pr_cdevento = '0')
         AND (INSTR(','||pr_cdagenci||',', ','||TO_CHAR(c.cdcooper||'|'||c.cdagenci)||',') > 0 OR pr_cdagenci = '0')
