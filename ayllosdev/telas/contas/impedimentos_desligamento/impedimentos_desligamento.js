@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 14/11/2017 - Ajsute para inclusão de novo item para impedimento (Jonata - RKAM P364).
  * --------------
+                  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
  */
 
 // Função para acessar opções da rotina
@@ -304,11 +305,14 @@ function efetuaCancelamentoManual(){
 				//ATENDA -> SEGUROS
 				case "10":
 
+				    var seguroVida = $('#flsegauto', '#frmCancManl').val();
+				    var seguroAuto = $('#flsegvida', '#frmCancManl').val();
+
 					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ATENDA ...\'); ' + 
 										   'setaParametros(\'ATENDA\',\'\',nrdconta,flgcadas); ' +
 										   'setaImped();' +
 										   'direcionaTela(\'ATENDA\',\'no\');';
-					produtosCancMAtenda[index] = "impedSeguros();";
+					produtosCancMAtenda[index] = "impedSeguros(\'" + seguroVida + "\',\'" + seguroAuto + "\');";
 					produtosCancMContas[index] = '';
 					produtosCancMCheque[index] = '';
 					index++;
