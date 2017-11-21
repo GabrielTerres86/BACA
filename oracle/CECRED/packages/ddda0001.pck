@@ -70,6 +70,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
    ,valor NUMBER
    ,codigobarras VARCHAR2(100)
    ,motivo tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE
+   ,quantidade INTEGER
   );
   
  MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 10; 
@@ -1330,7 +1331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                             ,pr_dscritic => vr_dscritic);
             
           -- Se houve retorno de erro
-          IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+          IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN    
             RAISE vr_exc_erro;       
           END IF; 
        
@@ -2629,8 +2630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                   ,pr_nmdcampo OUT VARCHAR2             -- Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2) IS         -- Erros do processo
 
-   BEGIN															 
-	 /* .............................................................................
+   BEGIN                               
+   /* .............................................................................
 
      Programa: pc_verifica_sacado_web
      Sistema : Cobrança
@@ -2647,17 +2648,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
      Observacao: -----
 
      Alteracoes: -----
-    ..............................................................................*/												
-		
-		DECLARE
-	
+    ..............................................................................*/                        
+    
+    DECLARE
+  
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-	
+  
       -- Variaveis de log
       vr_cdcooper crapcop.cdcooper%TYPE;
       vr_cdoperad VARCHAR2(100);
@@ -2668,7 +2669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_idorigem VARCHAR2(100);
 
       vr_flgsacad INTEGER := 0;
-	  BEGIN
+    BEGIN
             
       -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2700,14 +2701,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><flgsacad>' || TO_CHAR(vr_flgsacad) || '</flgsacad></Root>');
 
                 
-		EXCEPTION
-			WHEN vr_exc_saida THEN
-				
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
-					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-				END IF;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
 
-			  pr_cdcritic := vr_cdcritic;
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
@@ -2725,9 +2726,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         -- Existe para satisfazer exigência da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-		END;
+    END;
 
-	END pc_verifica_sacado_web;
+  END pc_verifica_sacado_web;
 
   /* Envio de mensagens atraves do site de chegada de novos titulos DDA */
   PROCEDURE pc_chegada_titulos_DDA(pr_cdcooper IN INTEGER -- Codigo cooperativa
@@ -2800,8 +2801,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             ,tit."Valor"                Valor
             ,tit."CodBarras"            CodigoBarras
             ,tit."NomRzSocPagdr"        Pagador
+            ,LPAD(ban.cdbccxlt,3,'0') || ' - ' || rtrim(ban.nmresbcc) Banco
         FROM tbjdnpcrcb_pag_agconta@Jdnpcsql pag
             ,tbjdnpcrcb_tit_dados@jdnpcsql   tit
+            ,crapban ban
        WHERE tit."ISPBPartDestinatario" = pr_nrispbif
          AND tit."NumIdentcTit" >= to_char(pr_dtemiini, 'yyyymmdd')||'00000000000'
          AND tit."NumIdentcTit" <  to_char(pr_dtemifim, 'yyyymmdd')||'99999999999'         
@@ -2809,6 +2812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
          AND pag."AgCliPagdr" = pr_cdagectl
          AND pag."ISPBPrincipal" = tit."ISPBPartDestinatario"
          AND pag."CPFCNPJPagdr" = tit."CNPJCPFPagdr"
+         AND ban.cdbccxlt = tit."CodPartDestinatario"
        ORDER BY 1
                ,2;
     rw_dadostitulo cr_dadostitulo%ROWTYPE;
@@ -2882,30 +2886,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                        '----------------------------------------' ||
                        ' --------------' || ' ---------- --------------' || '\n';
                        
+       -- Notificação / Push Mobile
+        
+        IF(rw_dadostitulo.qttotreg > 1) THEN
+           vr_notifi_dda.motivo := MOTIVO_NOVOS_TITULOS_DDA;
+        ELSE
+           vr_notifi_dda.bancobeneficiario := rw_dadostitulo.banco;  
+           vr_notifi_dda.beneficiario := rw_dadostitulo.NomRzSocBenfcrioOr;                    
+           vr_notifi_dda.datavencimento := to_date(rw_dadostitulo.dtvenctit,'yyyymmdd');
+           vr_notifi_dda.situacao := 'Em aberto';
+           vr_notifi_dda.valor := rw_dadostitulo.valor;
+           vr_notifi_dda.codigobarras := rw_dadostitulo.codigobarras;        
+           vr_notifi_dda.motivo := MOTIVO_NOVO_TITULO_DDA;
+        END IF;
+            
+         vr_notifi_dda.quantidade := rw_dadostitulo.qttotreg;
+         vr_notifi_dda.nomecooperado := rw_dadostitulo.pagador;
+         pc_notif_novo_dda(pr_cdcooper  => pr_cdcooper
+                          ,pr_nrdconta  => rw_dadostitulo.ctclipagdr
+                          ,pr_notif_dda => vr_notifi_dda);                       
       END IF;
 
-      -- Notificação / Push Mobile
-      
-      IF(rw_dadostitulo.qttotreg > 1) THEN
-         vr_notifi_dda.motivo := MOTIVO_NOVOS_TITULOS_DDA;
-      ELSE
-         vr_notifi_dda.bancobeneficiario := '';  
-         vr_notifi_dda.beneficiario := rw_dadostitulo.NomRzSocBenfcrioFinl;                    
-         vr_notifi_dda.datavencimento := to_date(rw_dadostitulo.dtvenctit,'yyyymmdd');
-         vr_notifi_dda.situacao := 'Em aberto';
-         vr_notifi_dda.valor := rw_dadostitulo.valor;
-         vr_notifi_dda.codigobarras := rw_dadostitulo.codigobarras;        
-         vr_notifi_dda.motivo := MOTIVO_NOVO_TITULO_DDA;
-      
-      END IF;
-
-       vr_notifi_dda.nomecooperado := rw_dadostitulo.pagador;
-      
-       pc_notif_novo_dda(pr_cdcooper  => pr_cdcooper
-                  ,pr_nrdconta  => rw_dadostitulo.ctclipagdr
-                  ,pr_notif_dda => vr_notifi_dda);
-      
-    
+     
       -- Busca o nome do cedente
       IF rw_dadostitulo.NomRzSocBenfcrioOr IS NOT NULL THEN
         vr_dscedent := rpad(substr(rw_dadostitulo.NomRzSocBenfcrioOr, 1, 40)
@@ -6056,8 +6058,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     BEGIN
 
       vr_variaveis_notif('#nomecooperado') := pr_notif_dda.nomecooperado;
+      vr_variaveis_notif('#quantidade') := pr_notif_dda.quantidade;
 
       IF(pr_notif_dda.motivo = MOTIVO_NOVO_TITULO_DDA) THEN
+        vr_variaveis_notif('#bancobeneficiario') := pr_notif_dda.bancobeneficiario;
         vr_variaveis_notif('#beneficiario') := pr_notif_dda.beneficiario;
         vr_variaveis_notif('#datavencimento') := to_char(pr_notif_dda.datavencimento,'DD/MM/RRRR');
         vr_variaveis_notif('#situacao') := pr_notif_dda.situacao;      
