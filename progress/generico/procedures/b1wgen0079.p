@@ -99,8 +99,8 @@
     29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                         
 
     20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
-                 PRJ340 - NPC (Odirlei-AMcom)                         
-
+                 PRJ340 - NPC (Odirlei-AMcom)      
+                   									
 	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
 				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
 
@@ -421,7 +421,7 @@ PROCEDURE lista-titulos-sacado:
             END.
 
         IF  par_cdsittit < 0   OR
-            par_cdsittit > 13  THEN
+            par_cdsittit > 16  THEN
             DO:
                 ASSIGN aux_dscritic = "Situacao invalida.".
                 LEAVE.
