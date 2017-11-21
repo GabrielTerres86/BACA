@@ -159,7 +159,7 @@
 	$dtnasct1 = (isset($_POST['dtnasct1'])) ? $_POST['dtnasct1'] : '' ;
 	$inpesso2 = (isset($_POST['inpesso2'])) ? $_POST['inpesso2'] : '' ;
 	$dtnasct2 = (isset($_POST['dtnasct2'])) ? $_POST['dtnasct2'] : '' ;
-
+	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
