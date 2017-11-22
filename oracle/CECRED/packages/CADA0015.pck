@@ -4258,30 +4258,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     
   BEGIN
   
-    -- Se nao for informado o IDPESSOA, deve-se buscar
-    IF pr_idpessoa IS NULL THEN
-      -- Busca o ID PESSOA do email
-      vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapttl.cdcooper,
-                                     pr_nrdconta => pr_crapttl.nrdconta,
-                                     pr_idseqttl => pr_crapttl.idseqttl);
-      IF vr_idpessoa IS NULL THEN
-        vr_dscritic := 'Nao encontrado PESSOA para alteracao de dados do titular';
-        RAISE vr_exc_saida;
-      END IF;    
-    ELSE
-      vr_idpessoa := pr_idpessoa;                           
-    END IF;
-
-    -- Buscar dados pessoa fisica
-    OPEN cr_pessoa_fis(pr_idpessoa => vr_idpessoa);
-    FETCH cr_pessoa_fis INTO rw_pessoa_fis;
-    CLOSE cr_pessoa_fis;
     
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
       --> Tabela nao permite exclusão, nao é necessario tratar
       NULL;
     ELSE -- Se for alteracao ou inclusao
+    
+      -- Se nao for informado o IDPESSOA, deve-se buscar
+      IF pr_idpessoa IS NULL THEN
+        -- Busca o ID PESSOA do email
+        vr_idpessoa := fn_busca_pessoa(pr_cdcooper => pr_crapttl.cdcooper,
+                                       pr_nrdconta => pr_crapttl.nrdconta,
+                                       pr_idseqttl => pr_crapttl.idseqttl);
+        --> Caso não encontre irá criar    
+      ELSE
+        vr_idpessoa := pr_idpessoa;                           
+      END IF;
+
+      -- Buscar dados pessoa fisica
+      OPEN cr_pessoa_fis(pr_idpessoa => vr_idpessoa);
+      FETCH cr_pessoa_fis INTO rw_pessoa_fis;
+      CLOSE cr_pessoa_fis;
+    
       --> Caso ainda nao exista cadastro de pessoa 
       IF nvl(vr_idpessoa,0) = 0 THEN
         -- Efetua a inclusao de pessoa
@@ -4827,7 +4826,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
           OR (atl.cdcooper = pr_cdcooper AND
               atl.nrdconta = pr_nrdconta AND
               atl.insit_atualiza = 4  --> pendente processo online
-              ); 
+              )
+       ORDER BY trunc(atl.dhatualiza,'MI'),
+                --> Ordenacao priorizando as tabelas ass e ttl 
+                decode(atl.nmtabela,'CRAPASS',0,'CRAPTTL',1,2); 
        
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
