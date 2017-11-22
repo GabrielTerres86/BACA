@@ -52,7 +52,7 @@
 		
 		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 				 
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','controlaVoltar();',false);		
+		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#frmSaqueParcial\').removeClass(\'campoErro\');$(\'#'.$nmdcampo.'\',\'#frmSaqueParcial\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 							
 	}   	
 	

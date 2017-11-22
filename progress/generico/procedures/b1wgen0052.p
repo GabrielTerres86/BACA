@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 14/11/2017
   
     Dados referentes ao programa:
   
@@ -126,8 +126,6 @@
 			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
 						     para pesquisa e retornar valor total da pesquisa
 							 (Jonata - RKAM P364). 
-
-			   16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
 
 ............................................................................*/
 
@@ -3223,29 +3221,30 @@ PROCEDURE busca_contas_demitidas:
            aux_returnvl = "NOK"
 		   aux_nrregist = par_nrregist.
 
-	IF par_nrdconta <> 0  THEN
+    FIND craptab WHERE craptab.cdcooper = par_cdcooper        AND
+                       craptab.nmsistem = "CRED"              AND
+                       craptab.tptabela = "GENERI"            AND
+                       craptab.cdempres = 0                   AND
+                       craptab.cdacesso = "PRAZODESLIGAMENTO" AND
+                       craptab.tpregist = 1
+                       NO-LOCK NO-ERROR.  
+
+	IF NOT AVAIL craptab THEN
 	   DO:
-	      FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-				 			 crapass.nrdconta = par_nrdconta
-							 NO-LOCK NO-ERROR.                       
-                       
-	 	  IF  NOT AVAIL crapass THEN
-			  DO: 
-				  ASSIGN aux_cdcritic = 9.
+	      ASSIGN aux_dscritic = "Prazo para desligamento nao cadastrado.".
                       
-				  RUN gera_erro (INPUT par_cdcooper,
-					 			 INPUT par_cdagenci,
-							 	 INPUT par_nrdcaixa,
-						 		 INPUT 1, /*sequencia*/
-					 			 INPUT aux_cdcritic,
-								 INPUT-OUTPUT aux_dscritic).
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1, /*sequencia*/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
 
-				  RETURN "NOK".
-			 END.
-			 
+          RETURN "NOK".
+
 	   END.
-
-    FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
+	       							 
+	FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
 					 WHERE  crapass.cdcooper = par_cdcooper  AND				           
 					       (par_nrdconta = 0                 OR
 						    crapass.nrdconta = par_nrdconta) AND
@@ -3308,8 +3307,16 @@ PROCEDURE busca_contas_demitidas:
 					   tt-contas_demitidas.dtdemiss = crapass.dtdemiss
 					   tt-contas_demitidas.mtdemiss = crapass.cdmotdem
 					   tt-contas_demitidas.qtdparce = 1
-					   tt-contas_demitidas.formadev = 1 /*No ato*/													  
-					   tt-contas_demitidas.datadevo = TODAY.
+					   tt-contas_demitidas.formadev = (IF INT(ENTRY(1, craptab.dstextab, ";")) = 1 THEN
+														  1 /*No ato*/
+													   ELSE
+														  2 /*Agendamento*/
+													   )
+					   tt-contas_demitidas.datadevo = (IF INT(ENTRY(1, craptab.dstextab, ";")) = 1 THEN
+														  TODAY
+													   ELSE
+														  TODAY + INT(ENTRY(2, craptab.dstextab, ";"))
+													   ).
 
 				
 		   END. 
