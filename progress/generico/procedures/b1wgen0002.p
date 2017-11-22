@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 29/09/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -717,8 +717,12 @@
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
 
-              06/10/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts)
+        06/10/2017 - Projeto 410 - Incluir campo Indicador de 
+                     financiamento do IOF (Diogo - Mouts)
+
+			  21/11/2017 - Inclusão do campo flpreapv na procedure altera-valor-proposta,
+						         Prj. 402 (Jean Michel)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -7159,7 +7163,8 @@ PROCEDURE altera-valor-proposta:
                             crawepr.cdopeapr = par_cdoperad
                             crawepr.dtaprova = par_dtmvtolt
                             crawepr.hraprova = TIME
-                            crawepr.insitest = 3.
+                            crawepr.insitest = 3
+                            crawepr.flpreapv = 1.
     
                      CREATE tt-msg-confirma.
                      ASSIGN tt-msg-confirma.inconfir = 1

@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   :  17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
  *
+ *				   21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
+ *
  */
 ?>
 
@@ -151,6 +153,8 @@
     $qtdiaenl = (isset($_POST["qtdiaenl"])) ? $_POST["qtdiaenl"] : 0;
     $cdsinfmg = (isset($_POST["cdsinfmg"])) ? $_POST["cdsinfmg"] : 0;
     $taamaxer = (isset($_POST["taamaxer"])) ? $_POST["taamaxer"] : 0;
+		$flintcdc = (isset($_POST["flintcdc"])) ? $_POST["flintcdc"] : 0;
+		$tpcdccop = (isset($_POST["tpcdccop"])) ? $_POST["tpcdccop"] : 0;
     $vllimapv = (isset($_POST["vllimapv"])) ? $_POST["vllimapv"] : 0;
 
     validaDados();
@@ -284,7 +288,9 @@
     $xml     .="       <qtdiaenl>".$qtdiaenl."</qtdiaenl>";
     $xml     .="       <cdsinfmg>".$cdsinfmg."</cdsinfmg>";
     $xml     .="       <taamaxer>".$taamaxer."</taamaxer>";
-    $xml     .="       <vllimapv>".$vllimapv."</vllimapv>";
+    $xml     .="       <vllimapv>".$vllimapv."</vllimapv>";		
+		$xml     .="       <flintcdc>".$flintcdc."</flintcdc>";
+    $xml     .="       <tpcdccop>".$tpcdccop."</tpcdccop>";
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

@@ -9,6 +9,8 @@
 
   Alterações: 17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
 
+			  21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
+
  * ********************************************************************* */
 
     require_once('../../includes/config.php');
@@ -321,6 +323,19 @@
         <label for="taamaxer"><?php echo utf8ToHtml("Max.Tentativas TAA:"); ?></label>
         <input type="text" id="taamaxer" name="taamaxer" value="<?php echo getByTagName($cooperativa->tags,'taamaxer');?>" >
 
+				<br />
+
+        <label for="flintcdc"><?php echo utf8ToHtml("Conv&ecirc;nio CDC:"); ?></label>
+        <select  id="flintcdc" name="flintcdc" value="<?php echo getByTagName($cooperativa->tags,'cdsinfmg'); ?>">
+            <option value="0" <?php if (getByTagName($cooperativa->tags,'flintcdc') == "0") { ?> selected <?php } ?> >N&atilde;o</option>
+            <option value="1" <?php if (getByTagName($cooperativa->tags,'flintcdc') == "1") { ?> selected <?php } ?> >Sim</option>
+        </select>
+				
+        <label for="tpcdccop"><?php echo utf8ToHtml("Tipo CDC:"); ?></label>
+        <select  id="tpcdccop" name="tpcdccop" value="<?php echo getByTagName($cooperativa->tags,'cdsinfmg'); ?>">
+            <option value="1" <?php if (getByTagName($cooperativa->tags,'tpcdccop') == "1") { ?> selected <?php } ?> >Simples</option>
+            <option value="2" <?php if (getByTagName($cooperativa->tags,'tpcdccop') == "2") { ?> selected <?php } ?> >Compartilhado</option>
+        </select>
 
     </fieldset>
 
@@ -583,7 +598,7 @@
 
         <br />
 
-        <label for="vlrtrfib"><?php echo utf8ToHtml("Tarifa GPS Internet Banking:"); ?></label>
+        <label for="vlrtrfib"><?php echo utf8ToHtml("Tarifa GPS Internet Banking/Mobile:"); ?></label>
         <input type="text" id="vlrtrfib" name="vlrtrfib" value="<?php echo getByTagName($cooperativa->tags,'vlrtrfib');?>" >
 
         <label for="hrinigps"><?php echo utf8ToHtml("Hor&aacute;rio Pagamento GPS:"); ?></label>

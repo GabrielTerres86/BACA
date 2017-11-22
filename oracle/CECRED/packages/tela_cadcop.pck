@@ -170,6 +170,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
+                                  ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -632,6 +634,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flrecpct
           ,crapcop.dsdempst
           ,crapcop.qtmeatel
+          ,crapcop.flintcdc
+          ,crapcop.tpcdccop
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -870,6 +874,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdsinfmg', pr_tag_cont => rw_crapcop.cdsinfmg, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'dssinfmg', pr_tag_cont => rw_crapcop.dssinfmg, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'taamaxer', pr_tag_cont => rw_crapcop.taamaxer, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'flintcdc', pr_tag_cont => rw_crapcop.flintcdc, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'tpcdccop', pr_tag_cont => rw_crapcop.tpcdccop, pr_des_erro => vr_dscritic);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hhvrbfim', pr_tag_cont => vr_hrvrbfim, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hhvrbini', pr_tag_cont => vr_hrvrbini, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'flgvrbol', pr_tag_cont => vr_flgvrbol, pr_des_erro => vr_dscritic);
@@ -1125,6 +1132,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_taamaxer IN crapcop.taamaxer%TYPE --> Qtd. Max. de tentivas da senha no TAA
                                   ,pr_vllimapv IN crapcop.vllimapv%TYPE --> Limite necessita de aprovacao
                                   ,pr_qtmeatel IN crapcop.qtmeatel%TYPE --> Quantidade de Meses para atualizacao Telefone
+                                  ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
+                                  ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -1220,6 +1229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.flgargps
           ,crapcop.qtdiaenl
           ,crapcop.qtmeatel
+          ,crapcop.flintcdc
+          ,crapcop.tpcdccop
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -2602,6 +2613,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.hriniouv = to_number(to_char(to_date(pr_hriniouv,'hh24:mi'),'sssss'))
             ,crapcop.hrfimouv = to_number(to_char(to_date(pr_hrfimouv,'hh24:mi'),'sssss'))
             ,crapcop.flgargps = pr_flgargps
+            ,crapcop.flintcdc = pr_flintcdc
+            ,crapcop.tpcdccop = pr_tpcdccop
        WHERE crapcop.cdcooper = vr_cdcooper;
 
     EXCEPTION

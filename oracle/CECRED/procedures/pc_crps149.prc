@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 01/04/2017
+   Data    : Marco/96.                       Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -230,6 +230,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                
                07/04/2017 - Ajuste no calculo do IOF para empréstimos do tipo TR ( Renato Darosci )
                
+               21/11/2017 - Remover o lançamento da tarifa de alienação nas propostas de CDC,
+                            Prj. 402 (Jean Michel)
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -415,6 +417,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.vlpreemp
           ,epr.dtdpagto
           ,epr.ROWID
+          , fn_tipo_finalidade( epr.inlcrdc
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper
         AND epr.nrdconta = pr_nrdconta
@@ -1479,9 +1482,10 @@ BEGIN
                                        ,pr_nrdconta => rw_crabepr.nrdconta
                                        ,pr_nrctremp => rw_crabepr.nrctremp) LOOP
             -- Se for carro, moto ou caminhao
-            IF rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%'
+            IF (rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%'
             OR rw_crapbpr.dscatbem LIKE '%MOTO%'
-            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%' THEN 
+            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%')
+            AND rw_crabepr.inlcrcdc = 0 THEN 
               -- Criar Lançamento automatico tarifa
               TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
                                               ,pr_nrdconta      => rw_crabepr.nrdconta

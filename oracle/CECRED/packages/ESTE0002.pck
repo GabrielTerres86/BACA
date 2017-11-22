@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -744,7 +744,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 
+        Data     : Maio/2017.                    Ultima atualizacao: 21/11/2017
       
         Dados referentes ao programa:
       
@@ -752,7 +752,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
                     e das operações da conta parametrizada.
       
-        Alteração : 
+        Alteração : Incluído no json de retorno o campo vllimdis retornado no 
+                    cursor cr_crapcpa, Prj. 402 (Jean Michel) 
           
     ..........................................................................*/
     DECLARE
@@ -837,7 +838,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       vr_dtiniest DATE;
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
-      
+      vr_vllimdis crapcpa.vllimdis%TYPE := 0;
+
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
 			--PlTables auxiliares
@@ -1890,12 +1892,15 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
           END IF;
           CLOSE cr_preapv;
         ELSE
+          vr_vllimdis := rw_crapcpa.vllimdis;
           CLOSE cr_crapcpa;
         END IF; 
       END IF;
     
       vr_obj_generic2.put('liberaPreAprovad'
                          ,(nvl(vr_flglibera_pre_aprv,0)=1));
+
+      vr_obj_generic2.put('valorPreAprovad',nvl(vr_vllimdis,0));
     
       -- Data Ultima Revisão Cadastral      
       OPEN cr_revisa;

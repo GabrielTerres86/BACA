@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 15/09/2017
+ Data : Agosto/2016                Última Alteração: 17/10/2017
 
  Objetivo  : Cadastro de servicos ofertados na tela CADCOP
 
@@ -13,6 +13,10 @@
              26/01/2016 - Correcao na forma de recuperação do campo flgofatr do form de tela. (SD 601029 Carlos R. Tanholi)
 
              15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
+			 17/10/2017 - Adicionar flgofatr para o form frmConsulta5 (Lucas Ranghetti #772863)
+
+             21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
 
 ************************************************************************/
 var cddepart;
@@ -270,6 +274,8 @@ function formataFormularioConsulta() {
     $('label[for="qtdiaenl"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="cdsinfmg"]', "#frmConsulta2").addClass("rotulo").css({ "width": "150px" });
     $('label[for="taamaxer"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "160px" });
+		$('label[for="flintcdc"]', "#frmConsulta2").addClass("rotulo").css({ "width": "150px" });
+    $('label[for="tpcdccop"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
 
     $('label[for="flgcmtlc"]', "#frmConsulta3").addClass("rotulo").css({ "width": "180px" });
     $('label[for="vllimapv"]', "#frmConsulta3").addClass("rotulo-linha").css({ "width": "180px" });
@@ -427,7 +433,9 @@ function formataFormularioConsulta() {
     $('#qtdiaenl', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
     $('#cdsinfmg', '#frmConsulta2').css({ 'width': '120px', 'text-align': 'left' }).desabilitaCampo();
     $('#taamaxer', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
-
+		$('#flintcdc', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
+		$('#tpcdccop', '#frmConsulta2').css({ 'width': '120px', 'text-align': 'left' }).desabilitaCampo();
+		
     $('#flgcmtlc', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#vllimapv', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
     $('#cdcrdarr', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '8').desabilitaCampo();
@@ -1394,6 +1402,8 @@ function formataFormularioConsulta() {
                 $("#qtdiaenl", "#frmConsulta2").habilitaCampo();
                 $("#cdsinfmg", '#frmConsulta2').habilitaCampo();
                 $("#taamaxer", "#frmConsulta2").habilitaCampo();
+								$("#flintcdc", "#frmConsulta2").habilitaCampo();
+								$("#tpcdccop", "#frmConsulta2").habilitaCampo();
                 $("#cdagedbb", "#frmConsulta2").habilitaCampo().focus();
                 $("#cdcnvitg", "#frmConsulta2").habilitaCampo();
                 $("#nrctabbd", "#frmConsulta2").habilitaCampo();
@@ -1413,7 +1423,8 @@ function formataFormularioConsulta() {
                 $("#qtdiaenl", "#frmConsulta2").val('0').desabilitaCampo();
                 $("#cdsinfmg option[value='0']", '#frmConsulta2').prop('selected', true).desabilitaCampo();
                 $("#taamaxer", "#frmConsulta2").val('0 - Não emite').desabilitaCampo();
-
+								$("#flintcdc", "#frmConsulta2").val('0').desabilitaCampo();								
+								$("#tpcdccop", "#frmConsulta2").val('0').desabilitaCampo();
                 $("#cdagedbb", "#frmConsulta2").habilitaCampo().focus();
                 $("#cdcnvitg", "#frmConsulta2").habilitaCampo();
                 $("#nrctabbd", "#frmConsulta2").habilitaCampo();
@@ -1633,13 +1644,16 @@ function formataFormularioConsulta() {
                 $("#qtdiaenl", "#frmConsulta2").habilitaCampo().focus();
                 $("#cdsinfmg", "#frmConsulta2").habilitaCampo();
                 $("#taamaxer", '#frmConsulta2').habilitaCampo();
+								$("#flintcdc", '#frmConsulta2').habilitaCampo();
+								$("#tpcdccop", '#frmConsulta2').habilitaCampo();
 
             } else {
 
                 $("#qtdiaenl", "#frmConsulta2").val('0').desabilitaCampo();
-                $("#cdsinfmg option[value='0']", '#frmConsulta2').prop('selected', true).desabilitaCampo();
+								$("#cdsinfmg option[value='0']", '#frmConsulta2').prop('selected', true).desabilitaCampo();
                 $("#taamaxer", "#frmConsulta2").val('0 - Não emite').desabilitaCampo();
-
+								$("#flintcdc", "#frmConsulta2").val('0').desabilitaCampo();
+								$("#tpcdccop", "#frmConsulta2").val('0').desabilitaCampo();
             }
 
             return false;
@@ -1692,13 +1706,47 @@ function formataFormularioConsulta() {
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
-            $('#btProsseguir', '#divBotoesConsulta').click();
+            $(this).nextAll('.campo:first').focus();
 
             return false;
         }
 
     });
 
+		//Define ação para o campo flintcdc
+    $("#flintcdc", "#frmConsulta2").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+           $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+		
+		//Define ação para o campo tpcdccop
+    $("#tpcdccop", "#frmConsulta2").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $('#btProsseguir', '#divBotoesConsulta').click();
+
+            return false;
+        }
+
+    });
+	
     //Define ação para o campo flgcmtlc
     $("#flgcmtlc", "#frmConsulta3").unbind('keypress').bind('keypress', function (e) {
 
@@ -3323,7 +3371,9 @@ function alterarCooperativa() {
     var qtdiaenl = $("#qtdiaenl", "#frmConsulta2").val();
     var cdsinfmg = $("#cdsinfmg", "#frmConsulta2").val();
     var taamaxer = $("#taamaxer", "#frmConsulta2").val();
-
+		var flintcdc = $("#flintcdc", "#frmConsulta2").val();
+		var tpcdccop = $("#tpcdccop", "#frmConsulta2").val();		
+		
     var cdcrdarr = $("#cdcrdarr", "#frmConsulta3").val();
     var cdagsede = $("#cdagsede", "#frmConsulta3").val();
     var nrctabol = normalizaNumero($("#nrctabol", "#frmConsulta3").val());
@@ -3377,7 +3427,7 @@ function alterarCooperativa() {
     var qtmeatel = $("#qtmeatel", "#frmConsulta5").val();
     var permaxde = isNaN(parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var cdloggrv = $("#cdloggrv", "#frmConsulta5").val();
-    var flgofatr = $("#flgofatr", "#frmConsulta").val();
+    var flgofatr = $("#flgofatr", "#frmConsulta5").val();
     var qtdiasus = $("#qtdiasus", "#frmConsulta5").val();
     var cdcliser = $("#cdcliser", "#frmConsulta5").val();
     var vlmiplco = isNaN(parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
@@ -3529,6 +3579,8 @@ function alterarCooperativa() {
             qtdiaenl: qtdiaenl,
             cdsinfmg: cdsinfmg,
             taamaxer: taamaxer,
+						flintcdc: flintcdc,
+						tpcdccop: tpcdccop,
             vllimapv: vllimapv,
             redirect: "script_ajax"
         },
