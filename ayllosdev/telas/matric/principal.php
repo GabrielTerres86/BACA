@@ -19,7 +19,6 @@
  * 008: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 009: [26/06/2017] Jonata     (RKAM): Ajustes para inclusão da nova opção "G" (P364).
  * 010: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
- * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  */ 
 
 	session_start();	
@@ -35,7 +34,7 @@
 	setVarSession("rotinasTela",$rotinasTela);
 	$glbvars['opcoesTela' ] = $opcoesTela;
 	
-	// Carregas as opções da Rotina de Bens		
+	// Carregas as opções da Rotina de Bens	
 	$flgConsultar	= (in_array('C', $glbvars['opcoesTela']));	
 	$flgIncluir		= (in_array('I', $glbvars['opcoesTela']));
 	$flgRelatorio	= (in_array('R', $glbvars['opcoesTela']));
@@ -289,7 +288,7 @@
 			sincronizaArray();
 			
 		</script>
-	
+			
 		<?php
 	
 	include('form_fisico.php'); 
@@ -332,8 +331,9 @@
   
 	<?}?>
 	
+	<a href="#" class="botao" id="btGerarTedCapital" onClick="abrirRotina('TED_CAPITAL', 'Conta Destino Para Envio De TED Capital', 'contas_ted_capital', 'contas_ted_capital', 'TED_CAPITAL'); return false;" >Gerar TED Capital</a>
 	
-
+	
 	<a href="#" class="opConsultar botao" id="btProsseguirCns" >Prosseguir</a>
 	
 	<a href="#" class="opDesvinc botao" id="btVoltarDesvinc" onclick="controlaOperacao('DC'); return false;">Cancelar</a>
@@ -386,7 +386,7 @@
 	nrdeanos = '<?php echo getByTagName($registro,'nrdeanos'); ?>';
 	dtmvtolt = '<?php echo $glbvars["dtmvtolt"] ?>';
 	
-	// Alimenta opções que o operador tem acesso	
+	// Alimenta opções que o operador tem acesso
 	flgConsultar	= '<?php echo $flgConsultar; 	?>';
 	flgIncluir		= '<?php echo $flgIncluir; 	?>';
 	flgRelatorio	= '<?php echo $flgRelatorio; 	?>';

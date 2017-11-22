@@ -11,10 +11,7 @@
 							   alteração pela opção "X", conforme solicitado no 
 							   chamado 321572 (Kelvin).
 				  18/02/2016 - Incluido operacao LCC e LCD para mostrar titulo para pedir senha do coordenador. (Jorge/Thiago) - SD 394596			   
-
-				  14/11/2017 - Ajuste devido a inclusão da nova opção H (Jonata - RKAM P364).
-				  
-*/				   	 
+ */	 
 ?>
 
 <?
@@ -25,7 +22,7 @@
 	require_once("../../includes/funcoes.php");
 	
 	$operacao = $_POST['operacao'];
-	if($operacao == 'VX' || $operacao == 'VJ' || $operacao == 'LCD' || $operacao == 'LCC' || $operacao == 'LCH'){
+	if($operacao == 'VX' || $operacao == 'VJ' || $operacao == 'LCD' || $operacao == 'LCC'){
 		$titulo = 'PARA CONTINUAR, PEÇA LIBERAÇÃO AO COORDENADOR';
 	}
 	else{

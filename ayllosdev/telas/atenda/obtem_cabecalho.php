@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 14/11/2017
+	 Data : Julho/2007                   Última Alteração: 08/08/2017
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -107,8 +107,6 @@
 							  ( Jonata - RKAM P364).	
 
 				 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
-
-				 14/11/2014 - Ajuste para controlar acesso as rotinas quando cooperado desligado (Jonata - P364)
 
  * ********************************************************************************** */
 
@@ -418,7 +416,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Capital";
                 $urlRotina = "capital";
                 $strValue = ( isset($valores[0]->cdata) ) ? number_format(str_replace(",", ".", $valores[0]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 1;
+				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "CARTAO CRED": {
@@ -495,7 +493,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Lan&ccedil;amentos Futuros"; 
                 $urlRotina = "lancamentos_futuros";
                 $strValue = ( isset($valores[11]->cdata) ) ? number_format(str_replace(",", ".", $valores[11]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 1;
+				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "LIMITE CRED": {
@@ -682,34 +680,26 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			  solicitado pela equipe de negócio. Qualquer alteração na lógica abaixo ou com a inclusão de novo produtos
 			  na tela ATENDA, deverá ser verificado junto a área de negócio.
 			*/
-			if(($cdsitdct == '7' || 
-				 $cdsitdct == '8') && 
-				 $telaPermitadaAcessoBacen == 0 ){
+			if(($cdsitdct == '2' || 
+			    $cdsitdct == '3' || 
+				$cdsitdct == '4' || 
+				$cdsitdct == '5' || 
+				$cdsitdct == '7' || 
+				$cdsitdct == '8' || 
+				$cdsitdct == '9') && 
+				$telaPermitadaAcessoBacen == 0 ){
 				
 			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
 				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
 				
-			}else if(($cdsitdct == '2' || 
-			          $cdsitdct == '3' || 
-				        $cdsitdct == '4' || 
-				        $cdsitdct == '5' ||
-				        $cdsitdct == '9') && 
-				        $telaPermitadaAcessoBacen == 0 ){
-				
-			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
-				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';
-				echo '$("#valueRot'.$contRotina.'").unbind("click");';
-				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';	
-				
-      
-      }else{
+			}else{
 			
 				echo '$("#labelRot'.$contRotina.'").unbind("click");';
-			  echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
-		  	echo '$("#valueRot'.$contRotina.'").unbind("click");';
-		  	echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
+			echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
+			echo '$("#valueRot'.$contRotina.'").unbind("click");';
+			echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
 				
 			}
 

@@ -19,7 +19,6 @@
 
 				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
 
-				  14/11/2017 - Inclusão da opção H (Jonata - RKAM P364).
  * --------------
  */ 
 
@@ -56,7 +55,6 @@ if(in_array($servidor, $servidores)){
 		<option value="CX"> X - Alterar somente o Nome do cooperado.</option>
 		<option value="CJ"> J - Alterar somente o CPF/CNPJ do cooperado.</option>
 		<option value="CG"> G - Devolu&ccedil;&atilde;o de capital ap&oacute;s AGO.</option>
-		<option value="CH"> H - Sobra de cotas e dep&oacute;sitos de cooperados demitidos</option>
 	</select>
 		
 	<a href="#" class="botao" id="btOK"  style="text-align: right;">OK</a>

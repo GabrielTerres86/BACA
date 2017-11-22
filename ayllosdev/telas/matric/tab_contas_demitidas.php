@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Junho/2017
  * OBJETIVO     : Tabela que apresenta as contas demitidas da opção "G" da tela MATRIC
  * --------------
- * ALTERAÇÕES   :  14/11/2017 - Ajuste para remoção do botão de concluir (Jonata - RKAM P364).
+ * ALTERAÇÕES   :  
                     
  * --------------
  */ 
@@ -29,7 +29,7 @@
 				<thead>
 					<tr>
 					    <th style="display:none;"><?php echo utf8ToHtml('Sequencia'); ?></th> <!-- campo hidden, utilizado para ordenacao -->
-						<th><input type="checkbox" name="marcaTodos" id="marcaTodos" checked onClick="marcaDesmarcaTodos(<?php echo $qtdContas; ?>,'1');"></th>
+						<th><input type="checkbox" name="marcaTodos" id="marcaTodos" checked onClick="marcaDesmarcaTodos(<?php echo $qtdContas; ?>);"></th>
 						<th>Conta</th>
 						<th>Nome</th>
 						<th>Valor</th>
@@ -54,7 +54,7 @@
 						
 						<tr>	
 							<td style="display:none;"><span><?php echo $i; ?></span><?php echo $i; ?></td>
-							<td><input type="checkbox" name="conta<?php echo $i;?>" id="conta<?php echo $i;?>" onchange="selecionaContas('<?php echo $i;?>','1');" ></td>
+							<td><input type="checkbox" name="conta<?php echo $i;?>" id="conta<?php echo $i;?>" onchange="selecionaContas('<?php echo $i;?>','<?php echo getByTagName($registros[$i]->tags,'cdcooper');?>','<?php echo getByTagName($registros[$i]->tags,'nrdconta');?>');" ></td>
 							<td><span><? echo formataContaDV(getByTagName($registros[$i]->tags,'nrdconta')); ?></span><? echo formataContaDV(getByTagName($registros[$i]->tags,'nrdconta')); ?>
 							<td><span><? echo getByTagName($registros[$i]->tags,'nmprimtl'); ?></span> <? echo getByTagName($registros[$i]->tags,'nmprimtl'); ?> </td>
 							<td><span><?php echo str_replace(",",".",getByTagName($registros[$i]->tags,'vldcotas')); ?></span><?php echo number_format(str_replace(",",".",getByTagName($registros[$i]->tags,'vldcotas')),2,",","."); ?>
@@ -77,7 +77,7 @@
 					</td>
 					<td>
 						<? if (isset($nriniseq)) { ?>
-							   Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?> / Total: <? echo number_format(str_replace(",",".",$vlrtotal),2,",","."); ?>
+							   Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?>
 							<? } ?>
 					</td>
 					<td>
@@ -97,7 +97,7 @@
 <div id="divBotoesContasDemitidas" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:block;'>
 																			
 	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('1'); return false;">Voltar</a>																																							
-	 
+	<a href="#" class="botao" id="btConcluir">Concluir</a>	
 		   																			
 </div>
 
@@ -120,8 +120,21 @@
 	
 	$('#marcaTodos','#frmContasDemitidas').click();	
 	
+	//Define ação para CLICK no botão de Concluir
+    $("#btConcluir", "#divBotoesContasDemitidas").unbind('click').bind('click', function () {
+		
+		if (lstContasDemitidas.length > 0) {
+			
+			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reverterSituacaoContasDemitidas();', '$(\'#btVoltar\',\'#divBotoesContasDemitidas\').focus();', 'sim.gif', 'nao.gif');
+		
+		}else{
+			showError("inform", "Nenhuma conta desmarcada para realizar revers&atilde;o.", "Alerta - Ayllos", "$(\'#btVoltar\',\'#divBotoesContasDemitidas\').focus();");
+		}
+		
+        return false;
+
+    });
 	
-	$('#divBotoesFiltroContasDemitidas').css('display', 'none');
 	formataTabelaContasDemitidas();	
 	
 				

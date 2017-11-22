@@ -3,11 +3,11 @@
 	/**************************************************************************************
 	  Fonte: efetuar_devolucao_cotas.php                                               
 	  Autor: Mateus Zimmermann - MoutS                                                  
-	  Data : Julho/2017                      		 	Última Alteração: 14/11/2017
+	  Data : Julho/2017                      		 	Última Alteração:  
 	                                                                   
 	  Objetivo  : Efetuar o saque parcial de cotas
 	                                                                 
-	  Alterações:  14/11/2017 - Ajuste decorrente a remoção de informações de parcelamento (Jonata - RKAM P364).
+	  Alterações:  
 	                                                                  
 	**************************************************************************************/
 
@@ -36,6 +36,9 @@
 	
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
 	$vldcotas = (isset($_POST["vldcotas"])) ? $_POST["vldcotas"] : 0;
+	$formadev = (isset($_POST["formadev"])) ? $_POST["formadev"] : 0;
+	$qtdparce = (isset($_POST["qtdparce"])) ? $_POST["qtdparce"] : 0;
+	$datadevo = (isset($_POST["datadevo"])) ? $_POST["datadevo"] : 0;
 	$mtdemiss = (isset($_POST["mtdemiss"])) ? $_POST["mtdemiss"] : 0;
 	$dtdemiss = (isset($_POST["dtdemiss"])) ? $_POST["dtdemiss"] : '';
 	
@@ -46,9 +49,9 @@
 	$xml .= "   <Dados>";
 	$xml .= "	 <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "	 <vldcotas>".$vldcotas."</vldcotas>";
-	$xml .= "    <formadev>1</formadev>";
-	$xml .= "    <qtdparce>0</qtdparce>";
-	$xml .= "    <datadevo>".$dtdemiss."</datadevo>";
+	$xml .= "    <formadev>".$formadev."</formadev>";
+	$xml .= "    <qtdparce>".$qtdparce."</qtdparce>";
+	$xml .= "    <datadevo>".$datadevo."</datadevo>";
 	$xml .= "    <mtdemiss>".$mtdemiss."</mtdemiss>";
 	$xml .= "    <dtdemiss>".$dtdemiss."</dtdemiss>";
 	$xml .= "   </Dados>";
