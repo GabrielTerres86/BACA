@@ -51,8 +51,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
           ,mtdemiss   crapass.cdmotdem%TYPE
           ,dtdemiss   VARCHAR2(10)
           ,vldcotas   crapcot.vldcotas%TYPE
-          ,tpoperac   INTEGER
-          ,tpdevolucao INTEGER);
+          ,tpoperac   INTEGER);
 
   TYPE typ_tab_contas_demitidas IS
     TABLE OF typ_reg_contas_demitidas
@@ -665,24 +664,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                          ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica   
                                          ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo                 
                                          ,pr_des_erro  OUT VARCHAR2);             --> Descrição do erro
-                                         
-  -- Rotina para retornar as contas antigas que estão demitidas
-  PROCEDURE pc_contas_antiga_demitida(pr_nriniseq  IN INTEGER              --> Número do registro
-                                     ,pr_nrregist  IN INTEGER              --> Quantidade de registros   
-                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE   --> Número da conta
-                                     ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);          --> Erros do processo       
-                                     
-  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-                                         ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
-                                         ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
-                                         ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo                                                                       
                                                                                                            
 END CADA0003;
 /
@@ -693,7 +674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 14/11/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 18/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -777,9 +758,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
   --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
-  -
-  --             14/11/2017 - Inclusao de novas rotinas e corrigido lancamentos decorrente a deoluvcao
-  --                         capital (JOnata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -9086,8 +9064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     SELECT tbcd.vlcapital
       FROM TBCOTAS_DEVOLUCAO tbcd
      WHERE tbcd.cdcooper = pr_cdcooper
-       AND tbcd.nrdconta = pr_nrdconta
-       AND tbcd.tpdevolucao IN (1,2);
+       AND tbcd.nrdconta = pr_nrdconta;
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
        
     --Variaveis locais
@@ -9404,7 +9381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Jonata - RKAM
-     Data    : Agosto/2017.                  Ultima atualizacao: 14/11/2017
+     Data    : Agosto/2017.                  Ultima atualizacao: 
 
      Dados referentes ao programa:
 
@@ -9413,7 +9390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Objetivo  : Rotina para gerar a devolução de cotas capital do cooperado
      Observacao: -----
 
-     Alteracoes: 14/11/2017 - Correcao na geracao dos lancamentos (Joanta - RKAM P364).                
+     Alteracoes:                 
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -9446,8 +9423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            tbcd.vlcapital
       FROM TBCOTAS_DEVOLUCAO tbcd
      WHERE tbcd.cdcooper = pr_cdcooper
-       AND tbcd.nrdconta = pr_nrdconta
-       AND tbcd.tpdevolucao IN (1,2);
+       AND tbcd.nrdconta = pr_nrdconta;
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
        
     -- Cursor sobre a tabela de datas
@@ -9467,7 +9443,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     vr_dtdemiss DATE;
     vr_dstextab craptab.dstextab%TYPE;
     vr_pos      INTEGER;
-    vr_vlrsaldo crapcot.vldcotas%TYPE;
       
     --Tabelas de memoria
     vr_tab_erro gene0001.typ_tab_erro;    
@@ -9500,24 +9475,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
-
-	  -- Selecionar os tipos de registro da tabela generica
-    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsistem => 'CRED'
-                                            ,pr_tptabela => 'GENERI'
-                                            ,pr_cdempres => 0
-                                            ,pr_cdacesso => 'PRAZODESLIGAMENTO'
-                                            ,pr_tpregist => 1);
-    
-    IF TRIM(vr_dstextab) IS NULL THEN
-    
-      vr_dscritic := 'Não foi possível encontrar o prazo para desligamento.';
-      RAISE vr_exc_saida;
-              
-    END IF;
-                                              
-    vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
-                                             ,pr_delimit => ';');
     
     -- Busca os dados do associado origem
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
@@ -9769,8 +9726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                  ,nrdocmto
                                  ,cdhistor     
                                  ,vllanmto
-                                 ,nrseqdig
-                                 ,hrtransa)
+                                 ,nrseqdig)
                            VALUES(pr_cdcooper
                                  ,rw_crapdat.dtmvtolt
                                  ,rw_crapdat.dtmvtolt
@@ -9783,8 +9739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                  ,vr_nrdocmto
                                  ,2137 --Credita conta
                                  ,pr_vldcotas
-                                 ,vr_nrseqdig
-                                 ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
+                                 ,vr_nrseqdig);
                                          
             EXCEPTION
               WHEN OTHERS THEN
@@ -9793,7 +9748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             END;
             
             
-          ELSE  -- Devolução de capital Apos AGO (Sol030)
+          ELSE
             
             vr_nrdolote := 600040;
             
@@ -9843,14 +9798,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                 RAISE vr_exc_saida;
             END; 
                
-       
+            
+            BEGIN
+                 
+              --Inserir registro de crédito:
+              INSERT INTO craplcm(cdcooper
+                                 ,dtmvtolt
+                                 ,dtrefere
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,nrdconta
+                                 ,nrdctabb
+                                 ,nrdctitg
+                                 ,nrdocmto
+                                 ,cdhistor     
+                                 ,vllanmto
+                                 ,nrseqdig)
+                           VALUES(pr_cdcooper
+                                 ,rw_crapdat.dtmvtolt
+                                 ,rw_crapdat.dtmvtolt
+                                 ,rw_crapass.cdagenci
+                                 ,100
+                                 ,vr_nrdolote 
+                                 ,pr_nrdconta
+                                 ,pr_nrdconta
+                                 ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                                 ,vr_nrdocmto
+                                 ,decode(rw_crapass.inpessoa,1,2081,2082)
+                                 ,rw_crapcot.vldcotas
+                                 ,vr_nrseqdig);
+                                               
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          
           END IF;
           
-      ELSE -- rw_crapass.cdsitdct <> 8
-        
-
-       --Devolução de capital No ato (Sol030)
-       IF  vr_vet_dados(1) = 1 THEN 
+      ELSE
         
         vr_nrdolote := 600038;
             
@@ -9939,8 +9926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,nrdocmto
                              ,cdhistor     
                              ,vllanmto
-                             ,nrseqdig
-                             ,hrtransa)
+                             ,nrseqdig)
                        VALUES(pr_cdcooper
                              ,rw_crapdat.dtmvtolt
                              ,rw_crapdat.dtmvtolt
@@ -9953,73 +9939,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,vr_nrdocmto
                              ,2137 -- CR. COTAS/CAP
                              ,pr_vldcotas
-                             ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
+                             ,vr_nrseqdig);
                                      
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
             RAISE vr_exc_saida;
         END;                  
-             
-       --Jonata 11/11/2017
-       ELSE
-         
-         vr_nrdolote := 600040;
-            
-            vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
-                        TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
-                        TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
-                        '100;' || --cdbccxlt
-                        vr_nrdolote;
-                        
-            vr_nrdocmto := fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);    
-            
-            vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
-                                                                to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
-                                                                rw_crapass.cdagenci||
-                                                                ';100;'|| --cdbccxlt
-                                                                vr_nrdolote);
-                                                                
-            BEGIN
-                   
-              --Inserir registro de débito
-              INSERT INTO craplct(cdcooper
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,dtmvtolt
-                                 ,cdhistor
-                                 ,nrctrpla
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,nrseqdig
-                                 ,vllanmto)
-                          VALUES (pr_cdcooper
-                                 ,rw_crapass.cdagenci
-                                 ,100
-                                 ,vr_nrdolote   
-                                 ,rw_crapdat.dtmvtolt
-                                 ,decode(rw_crapass.inpessoa,1,2079,2080)
-                                 ,0
-                                 ,pr_nrdconta
-                                 ,vr_nrdocmto
-                                 ,vr_nrseqdig
-                                 ,rw_crapcot.vldcotas);
-                                           
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir na tabela craplct.' ||SQLERRM;
-                RAISE vr_exc_saida;
-            END;   
-       
-                   
-       END IF;            
-       
-       
+                         
       END IF;             
                              
-    ELSE  -- Devolução parcial
+    ELSE
         
       aux_datadevo := vr_datadevo;    
               
@@ -10098,7 +10028,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                         
     END IF;
          
+    -- Selecionar os tipos de registro da tabela generica
+    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsistem => 'CRED'
+                                            ,pr_tptabela => 'GENERI'
+                                            ,pr_cdempres => 0
+                                            ,pr_cdacesso => 'PRAZODESLIGAMENTO'
+                                            ,pr_tpregist => 1);
     
+    IF TRIM(vr_dstextab) IS NULL THEN
+    
+      vr_dscritic := 'Não foi possível encontrar o prazo para desligamento.';
+      RAISE vr_exc_saida;
+              
+    END IF;
+                                              
+    vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
+                                             ,pr_delimit => ';');
      
     IF (pr_oporigem = 1        AND  --Botao Desligar da tela MATRIC
         vr_vet_dados(1) = 2 )  OR   --Após AGO
@@ -10136,68 +10082,114 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         RAISE vr_exc_saida;
         
       END IF;
-                                        
+                                          
+      IF vr_tab_saldos.COUNT > 0 THEN
+           
+         --Buscar Saldo Deposito a vista
+         vr_index:= vr_tab_saldos.FIRST;
+        
+      END IF;
       
-      IF vr_tab_saldos.exists(vr_tab_saldos.first)       AND 
-         vr_tab_saldos(vr_tab_saldos.first).vlsddisp > 0 THEN
+      vr_nrdolote := 600041;
         
-        vr_vlrsaldo:= vr_tab_saldos(vr_tab_saldos.first).vlsddisp;
-        
-        vr_nrdolote := 600041;
-          
-        vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
-                    TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
-                    TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
-                    '100;' || --cdbccxlt
-                    vr_nrdolote;
-                       
-        vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', vr_busca);    
-              
-        vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
-                                                        to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
-                                                        rw_crapass.cdagenci||
-                                                        ';100;'|| --cdbccxlt
-                                                        vr_nrdolote);   
-                                                          
-        BEGIN    
-          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor     
-                             ,vllanmto
-                             ,nrseqdig
-                             ,hrtransa)
-                       VALUES(pr_cdcooper
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapass.cdagenci
-                             ,100
-                             ,vr_nrdolote
-                             ,pr_nrdconta
-                             ,pr_nrdconta
-                             ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                             ,vr_nrdocmto
-                             ,decode(rw_crapass.inpessoa,1,2061,2062)
-                             ,NVL(TO_CHAR(vr_vlrsaldo),'0')
-                             ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));  
-                             
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
-            RAISE vr_exc_saida;
-        END; 
-        
-      end if;
+      vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
+                  TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
+                  TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
+                  '100;' || --cdbccxlt
+                  vr_nrdolote;
+                     
+      vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', vr_busca);    
+            
+      vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                                                      to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
+                                                      rw_crapass.cdagenci||
+                                                      ';100;'|| --cdbccxlt
+                                                      vr_nrdolote);   
+                                                        
+      BEGIN    
+        INSERT INTO craplcm(cdcooper
+                           ,dtmvtolt
+                           ,dtrefere
+                           ,cdagenci
+                           ,cdbccxlt
+                           ,nrdolote
+                           ,nrdconta
+                           ,nrdctabb
+                           ,nrdctitg
+                           ,nrdocmto
+                           ,cdhistor     
+                           ,vllanmto
+                           ,nrseqdig)
+                     VALUES(pr_cdcooper
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapass.cdagenci
+                           ,100
+                           ,vr_nrdolote
+                           ,pr_nrdconta
+                           ,pr_nrdconta
+                           ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                           ,vr_nrdocmto
+                           ,decode(rw_crapass.inpessoa,1,2061,2062)
+                           ,NVL(TO_CHAR(vr_tab_saldos(vr_index).vlsddisp),'0')
+                           ,vr_nrseqdig);  
+                           
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
+          RAISE vr_exc_saida;
+      END; 
       
-   
+      vr_nrdolote := 600042;
+        
+      vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
+                  TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
+                  TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
+                  '100;' || --cdbccxlt
+                  vr_nrdolote;
+                     
+      vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', vr_busca);    
+            
+      vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                                                      to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
+                                                      rw_crapass.cdagenci||
+                                                      ';100;'|| --cdbccxlt
+                                                      vr_nrdolote);   
+                                                        
+      BEGIN    
+        INSERT INTO craplcm(cdcooper
+                           ,dtmvtolt
+                           ,dtrefere
+                           ,cdagenci
+                           ,cdbccxlt
+                           ,nrdolote
+                           ,nrdconta
+                           ,nrdctabb
+                           ,nrdctitg
+                           ,nrdocmto
+                           ,cdhistor     
+                           ,vllanmto
+                           ,nrseqdig)
+                     VALUES(pr_cdcooper
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapass.cdagenci
+                           ,100
+                           ,vr_nrdolote
+                           ,pr_nrdconta
+                           ,pr_nrdconta
+                           ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                           ,vr_nrdocmto
+                           ,decode(rw_crapass.inpessoa,1,2063,2064)
+                           ,NVL(TO_CHAR(vr_tab_saldos(vr_index).vlsddisp),'0')
+                           ,vr_nrseqdig);  
+                           
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
+          RAISE vr_exc_saida;
+      END; 
+        
     ELSIF (pr_oporigem = 1        AND  --Botao Desligar da tela MATRIC
            vr_vet_dados(1) = 1 )  THEN   --Devolução de capital no ato
     
@@ -10251,52 +10243,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         
       END IF;
                                           
-      IF vr_tab_saldos.exists(vr_tab_saldos.first)       AND 
-         vr_tab_saldos(vr_tab_saldos.first).vlsddisp > 0 THEN
-        
-        vr_vlrsaldo:= vr_tab_saldos(vr_tab_saldos.first).vlsddisp;
-      
-        
-              
-        BEGIN
-                     
-          --Inserir registro de crédito:
-          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor     
-                             ,vllanmto
-                             ,nrseqdig
-                             ,hrtransa)
-                       VALUES(pr_cdcooper
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapass.cdagenci
-                             ,100
-                             ,vr_nrdolote  
-                             ,pr_nrdconta
-                             ,pr_nrdconta
-                             ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                             ,vr_nrdocmto
-                             ,2137 --Credita conta
-                             ,NVL(TO_CHAR(vr_vlrsaldo),'0')
-                             ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
-                                           
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+      IF vr_tab_saldos.COUNT > 0 THEN
+           
+         --Buscar Saldo Deposito a vista
+         vr_index:= vr_tab_saldos.FIRST;
         
       END IF;
+      
+      BEGIN    
+              
+        --Inserir registro de débito
+        INSERT INTO craplct(cdcooper
+                           ,cdagenci
+                           ,cdbccxlt
+                           ,nrdolote
+                           ,dtmvtolt
+                           ,cdhistor
+                           ,nrctrpla
+                           ,nrdconta
+                           ,nrdocmto
+                           ,nrseqdig
+                           ,vllanmto)
+                    VALUES (pr_cdcooper
+                           ,rw_crapass.cdagenci
+                           ,100
+                           ,vr_nrdolote  
+                           ,rw_crapdat.dtmvtolt
+                           ,2136 -- Debita capital
+                           ,0
+                           ,pr_nrdconta
+                           ,vr_nrdocmto
+                           ,vr_nrseqdig
+                           ,pr_vldcotas);
+                                       
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na tabela craplct.' ||SQLERRM;
+          RAISE vr_exc_saida;
+      END;  
+            
+      BEGIN
+                   
+        --Inserir registro de crédito:
+        INSERT INTO craplcm(cdcooper
+                           ,dtmvtolt
+                           ,dtrefere
+                           ,cdagenci
+                           ,cdbccxlt
+                           ,nrdolote
+                           ,nrdconta
+                           ,nrdctabb
+                           ,nrdctitg
+                           ,nrdocmto
+                           ,cdhistor     
+                           ,vllanmto
+                           ,nrseqdig)
+                     VALUES(pr_cdcooper
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapdat.dtmvtolt
+                           ,rw_crapass.cdagenci
+                           ,100
+                           ,vr_nrdolote  
+                           ,pr_nrdconta
+                           ,pr_nrdconta
+                           ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                           ,vr_nrdocmto
+                           ,2137 --Credita conta
+                           ,pr_vldcotas
+                           ,vr_nrseqdig);
+                                         
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
                       
     END IF;
        
@@ -10385,7 +10405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Jonata - RKAM
-     Data    : Outubro/2017.                  Ultima atualizacao: 14/11/2017
+     Data    : Outubro/2017.                  Ultima atualizacao: 
 
      Dados referentes ao programa:
 
@@ -10394,7 +10414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Objetivo  : Rotina para gerar a devolução de cotas capital ao efetuar desligamento BACEN através da tela CONTAS
      Observacao: -----
 
-     Alteracoes:  14/11/2017 - Considerar tipo de devolucao ao consultar cotas ( Jonata - RKAM P364).               
+     Alteracoes:                 
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -10426,8 +10446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            tbcd.qtparcelas
       FROM TBCOTAS_DEVOLUCAO tbcd
      WHERE tbcd.cdcooper = pr_cdcooper
-       AND tbcd.nrdconta = pr_nrdconta
-       AND tbcd.tpdevolucao IN (1,2);
+       AND tbcd.nrdconta = pr_nrdconta;
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
        
     -- Cursor sobre a tabela de datas
@@ -12575,404 +12594,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_manter_ctadest_ted_capital;
-  
-  -- Rotina para retornar as contas antigas que estão demitidas
-  PROCEDURE pc_contas_antiga_demitida(pr_nriniseq  IN INTEGER              --> Número do registro
-                                     ,pr_nrregist  IN INTEGER              --> Quantidade de registros  
-                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --Número da conta
-                                     ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
-
-    
-    -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
-    CURSOR cr_contas(pr_cdcooper tbcotas_devolucao.cdcooper%TYPE
-                    ,pr_nrdconta tbcotas_devolucao.nrdconta%TYPE) IS
-    SELECT tb.nrdconta
-          ,tb.vlcapital
-          ,tb.cdcooper
-          ,decode(tb.tpdevolucao,3,'COTAS',4,'DEPOSITO') dscdevolucao
-          ,tb.tpdevolucao
-          ,ass.nmprimtl
-      FROM tbcotas_devolucao tb
-          ,crapass ass
-     WHERE tb.cdcooper = pr_cdcooper
-       AND tb.dtinicio_credito IS NULL
-       AND (nvl(pr_nrdconta,0) = 0  
-        OR tb.nrdconta = pr_nrdconta)
-       AND tb.tpdevolucao IN (3,4)
-       AND ass.cdcooper = tb.cdcooper
-       AND ass.nrdconta = tb.nrdconta
-       ORDER BY tb.nrdconta;
-
-    -- Variável de críticas
-    vr_cdcritic      crapcri.cdcritic%TYPE;
-    vr_dscritic      VARCHAR2(10000);
-
-    -- Variaveis de log
-    vr_cdoperad      VARCHAR2(100);
-    vr_cdcooper      NUMBER;
-    vr_nmdatela      VARCHAR2(100);
-    vr_nmeacao       VARCHAR2(100);
-    vr_cdagenci      VARCHAR2(100);
-    vr_nrdcaixa      VARCHAR2(100);
-    vr_idorigem      VARCHAR2(100);
-    vr_vlrtotal      NUMBER(25,2) := 0;
-    
-    --Variaveis de controle
-    vr_nrregist INTEGER := nvl(pr_nrregist,9999);
-    vr_qtregist INTEGER := 0;
-      
-    -- Variaveis gerais
-    vr_contador PLS_INTEGER := 0;
-
-    -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
-    
-  BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'MATRIC'
-                              ,pr_action => null);
-
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);
-
-    -- Se retornou alguma crítica
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Levanta exceção
-      RAISE vr_exc_saida;
-    END IF;
-    
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-      
-    -- Loop 
-    FOR rw_contas IN cr_contas(pr_cdcooper => vr_cdcooper
-                              ,pr_nrdconta => pr_nrdconta) LOOP
-
-      --Incrementar Quantidade Registros do Parametro
-      vr_qtregist:= nvl(vr_qtregist,0) + 1;
-      vr_vlrtotal := vr_vlrtotal + rw_contas.vlcapital;
-      
-      /* controles da paginacao */
-      IF (vr_qtregist < pr_nriniseq) OR
-         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
-         --Proximo Titular
-        CONTINUE;
-      END IF; 
-            
-      --Numero Registros
-      IF vr_nrregist > 0 THEN 
-          
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados' , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_contas.cdcooper, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_contas.nrdconta, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlcapital', pr_tag_cont => to_char(rw_contas.vlcapital,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_contas.nmprimtl, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscdevolucao', pr_tag_cont => rw_contas.dscdevolucao, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'tpdevolucao', pr_tag_cont => rw_contas.tpdevolucao, pr_des_erro => vr_dscritic);
-
-        vr_contador := vr_contador + 1;
-           
-      END IF;
-      
-      --Diminuir registros
-      vr_nrregist:= nvl(vr_nrregist,0) - 1; 
-       
-    END LOOP;
-      
-    -- Insere atributo na tag Dados com a quantidade de registros
-    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
-                             ,pr_tag   => 'Dados'              --> Nome da TAG XML
-                             ,pr_atrib => 'vlrtotal'          --> Nome do atributo
-                             ,pr_atval => to_char(vr_vlrtotal,'fm999g999g999g990d00')         --> Valor do atributo
-                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
-                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
-                                 
-    --Se ocorreu erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-    
-    -- Insere atributo na tag Dados com a quantidade de registros
-    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
-                             ,pr_tag   => 'Dados'              --> Nome da TAG XML
-                             ,pr_atrib => 'qtregist'          --> Nome do atributo
-                             ,pr_atval => vr_qtregist         --> Valor do atributo
-                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
-                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
-                                 
-    --Se ocorreu erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-      
-    pr_des_erro := 'OK';
-      
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-
-    WHEN OTHERS THEN
-
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral em pc_contas_antiga_demitida: ' || SQLERRM;
-
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-
-  END pc_contas_antiga_demitida;
-
-  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-                                         ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
-                                         ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
-                                         ,pr_des_erro  OUT VARCHAR2) IS         --> Erros do processo
-
-    /* .............................................................................
-
-     Programa: pc_atualiza_cta_ant_demitidas
-     Sistema : Rotinas acessadas pelas telas de cadastros Web
-     Sigla   : CADA
-     Autor   : Jonata - RKAM
-     Data    : Agosto/2017.                  Ultima atualizacao: 
-
-     Dados referentes ao programa:
-
-     Frequencia: Sempre que for chamado
-
-     Objetivo  : Rotina responsável por atualizar contas antigas demitidas que houve a devolução de sobras de capital ( "H" - MATRIC).
-     Observacao: -----
-
-     Alteracoes:                 
-    ..............................................................................*/ 
-                  
-    --Variaveis locais
-    vr_cdoperad VARCHAR2(100);
-    vr_cdcooper NUMBER;
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);    
-    
-    vr_id_acesso   PLS_INTEGER := 0;
-    vr_des_reto VARCHAR2(3); 
-    
-    -- Variável de críticas
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic VARCHAR2(4000);
-
-    vr_exc_saida EXCEPTION;
-    
-    -- Variáveis para tratamento do XML
-    vr_node_list xmldom.DOMNodeList;
-    vr_parser    xmlparser.Parser;
-    vr_doc       xmldom.DOMDocument;
-    vr_lenght    NUMBER;
-    vr_node_name VARCHAR2(100);
-    vr_item_node xmldom.DOMNode;  
-    vr_regseleci BOOLEAN :=FALSE;  
-    
-    -- Arq XML
-    vr_xmltype sys.xmltype;
-  
-    vr_tab_contas_demitidas typ_tab_contas_demitidas;    
-    
-    -- Retornar o valor do nodo tratando casos nulos
-    FUNCTION fn_extract(pr_nodo  VARCHAR2) RETURN VARCHAR2 IS
-      
-    BEGIN
-      -- Extrai e retorna o valor... retornando null em caso de erro ao ler
-      RETURN pr_retxml.extract(pr_nodo).getstringval();
-    EXCEPTION
-      WHEN OTHERS THEN
-        RETURN NULL;
-    END;
-    
-  BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'MATRIC'
-                              ,pr_action => null);
-
-    -- extrair informações padrão do xml - parametros
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml 
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao 
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);  
-    
-    -- Se retornou alguma crítica
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Levanta exceção
-      RAISE vr_exc_saida;
-    END IF;
-    
-    -- Inicioando Varredura do XML.
-    BEGIN
-
-      -- Inicializa variavel
-      vr_id_acesso := 0;
-      vr_xmltype := pr_retxml;
-
-      -- Faz o parse do XMLTYPE para o XMLDOM e libera o parser ao fim
-      vr_parser := xmlparser.newParser;
-      xmlparser.parseClob(vr_parser,vr_xmltype.getClobVal());
-      vr_doc := xmlparser.getDocument(vr_parser);
-      xmlparser.freeParser(vr_parser);
-
-      -- Faz o get de toda a lista de elementos
-      vr_node_list := xmldom.getElementsByTagName(vr_doc, '*');
-      vr_lenght := xmldom.getLength(vr_node_list);
-          
-      -- Percorrer os elementos
-      FOR i IN 0..vr_lenght LOOP
-         -- Pega o item
-         vr_item_node := xmldom.item(vr_node_list, i);            
-             
-         -- Captura o nome do nodo
-         vr_node_name := xmldom.getNodeName(vr_item_node);
-         -- Verifica qual nodo esta sendo lido
-         IF vr_node_name IN ('Root') THEN
-            CONTINUE; -- Descer para o próximo filho
-         ELSIF vr_node_name IN ('Dados') THEN
-            CONTINUE; -- Descer para o próximo filho
-         ELSIF vr_node_name IN ('Contas') THEN
-            CONTINUE; -- Descer para o próximo filho
-         ELSIF vr_node_name IN ('Info') THEN
-            CONTINUE; -- Descer para o próximo filho
-         ELSIF vr_node_name = 'auxidres' THEN 
-            vr_id_acesso := vr_id_acesso + 1;
-            CONTINUE; 
-         ELSIF vr_node_name = 'nrdconta' THEN 
-            vr_tab_contas_demitidas(vr_id_acesso).nrdconta := TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
-            CONTINUE;  
-         ELSIF vr_node_name = 'cooperativa' THEN
-            vr_tab_contas_demitidas(vr_id_acesso).cdcooper := TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
-            CONTINUE;
-         ELSIF vr_node_name = 'tpoperac' THEN 
-            vr_tab_contas_demitidas(vr_id_acesso).tpoperac := TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
-            
-            IF vr_tab_contas_demitidas(vr_id_acesso).tpoperac = 1 THEN
-              vr_regseleci := TRUE;
-            END IF;
-            
-            CONTINUE;  
-         ELSIF vr_node_name = 'tpdevolucao' THEN 
-            vr_tab_contas_demitidas(vr_id_acesso).tpdevolucao := TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
-            CONTINUE;  
-         ELSE
-            CONTINUE; -- Descer para o próximo filho
-         END IF;                       
-                                          
-      END LOOP;
-    EXCEPTION
-       WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro na leitura do XML. Rotina CADA0003.pc_devol_cotas_contas_sel.' || SQLERRM;
-          RAISE vr_exc_saida;
-    END;      
-     
-    IF NOT vr_regseleci THEN
-      
-      vr_cdcritic := 0;
-      vr_dscritic := 'Nenhum registro selecionado.';
-      RAISE vr_exc_saida;
-          
-    END IF;
-    
-    -- Posiciona no primeiro registro
-    vr_id_acesso := vr_tab_contas_demitidas.FIRST(); 
-
-    WHILE vr_id_acesso IS NOT NULL LOOP
-    
-       IF vr_tab_contas_demitidas(vr_id_acesso).tpoperac = 1 THEN
-         BEGIN    
-                
-          --Atualiza dados da devolução de capital
-          UPDATE tbcotas_devolucao
-             SET tbcotas_devolucao.dtinicio_credito = trunc(SYSDATE)
-           WHERE tbcotas_devolucao.cdcooper = vr_cdcooper
-             AND tbcotas_devolucao.nrdconta =  vr_tab_contas_demitidas(vr_id_acesso).nrdconta
-             AND tbcotas_devolucao.tpdevolucao = vr_tab_contas_demitidas(vr_id_acesso).tpdevolucao;
-                                                 
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela tbcotas_devolucao.' ||SQLERRM;
-            RAISE vr_exc_saida;
-        END; 
-      
-      END IF;
-      
-      -- Proximo registro
-      vr_id_acesso:= vr_tab_contas_demitidas.NEXT(vr_id_acesso); 
-        
-    END LOOP;
-       
-    --Efetua o commit das informções     
-    COMMIT; 
-       
-    pr_des_erro := 'OK';
-                                 
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-
-      ROLLBACK;
-      
-      IF vr_cdcritic <> 0 THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      ELSE
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      END IF;
-
-      pr_des_erro := 'NOK';
-
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    WHEN OTHERS THEN
-
-      ROLLBACK;
-      cecred.pc_internal_exception(3);
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral em CADA0003.pc_atualiza_cta_ant_demitidas.';
-      pr_des_erro := 'NOK';
-
-      pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                       
-                                                                      
-  END pc_atualiza_cta_ant_demitidas; 
-   
-  
   
 END CADA0003;
 /

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 25/07/2017
  * OBJETIVO     : Formulario desligamento
  * --------------
- * ALTERAÇÕES   : 14/11/2017 - Retirado informções de parcelamento (Jonata - RKAM P364).
+ * ALTERAÇÕES   :
  * --------------
  */ 
 ?>
@@ -83,7 +83,22 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 
 											<label for="nrdconta" ><?php echo utf8ToHtml('Conta para crédito:') ?></label>
 											<input name="nrdconta" id="nrdconta" type="text" />
-											<br style="clear:both">										
+											<br style="clear:both">
+
+											<label for="forma" ><?php echo utf8ToHtml('Forma de devolução:') ?></label>
+											<input name="formadev" id="formaTot" type="radio" class="radio" onclick="alteraFormaDevolucao(1)" value="1" style="margin-left:10px;margin-top:5px;" />
+											<label for="formaTot" class="radio"><? echo utf8ToHtml('Total') ?></label>
+											<input name="formadev" id="formaPar" type="radio" class="radio" onclick="alteraFormaDevolucao(2)" value="2" style="margin-left:10px;margin-top:5px;" />
+											<label for="formaPar" class="radio"><? echo utf8ToHtml('Parcelada') ?></label>
+											<br style="clear:both">
+
+											<label for="qtdparce" style="display: none"><?php echo utf8ToHtml('Quantidade de parcelas:') ?></label>
+											<input name="qtdparce" id="qtdparce" type="text" class="campo" />
+											<br style="clear:both">					
+
+											<label for="datadevo" ><?php echo utf8ToHtml('Data da devolução:') ?></label>
+											<input name="datadevo" id="datadevo" type="text"/>
+											<br style="clear:both">
 
 										  </fieldset>
 

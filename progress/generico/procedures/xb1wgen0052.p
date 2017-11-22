@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0052.p
     Autor   : Jose Luis Marchezoni
-    Data    : Junho/2010                   Ultima atualizacao: 14/11/2017
+    Data    : Junho/2010                   Ultima atualizacao: 26/06/2017
 
     Objetivo  : BO de Comunicacao XML x BO - Tela MATRIC
 
@@ -27,11 +27,7 @@
 							 
 		        26/06/2017 - Incluido rotina para buscar contas demitidas a serem listadas
 				             na opcao "G" da tela MATRIC
-							 (Jonata - RKAM P364).		
-							 
-				14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
-						     para pesquisa e retornar valor total da pesquisa
-							 (Jonata - RKAM P364). 		
+							 (Jonata - RKAM P364).				
 .............................................................................*/
 
                                                                              
@@ -133,7 +129,6 @@ DEF VAR aux_nrregist AS INT                                            NO-UNDO.
 DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
 DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
-DEF VAR aux_vlrtotal AS DEC											   NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -1363,11 +1358,9 @@ PROCEDURE busca_contas_demitidas:
 									   INPUT aux_nmdatela,
 									   INPUT aux_idorigem,
 									   INPUT aux_cddopcao,
-									   INPUT aux_nrdconta,
 									   INPUT aux_nriniseq,
 									   INPUT aux_nrregist,
 									   OUTPUT aux_qtregist,
-									   OUTPUT aux_vlrtotal,
                                        OUTPUT TABLE tt-contas_demitidas,
 									   OUTPUT TABLE tt-erro) NO-ERROR .
 
@@ -1401,7 +1394,6 @@ PROCEDURE busca_contas_demitidas:
            RUN piXmlExport (INPUT TEMP-TABLE tt-contas_demitidas:HANDLE,
                             INPUT "ContasDemitidas").
 		   RUN piXmlAtributo (INPUT "qtregist", INPUT STRING(aux_qtregist)).
-		   RUN piXmlAtributo (INPUT "vlrtotal", INPUT aux_vlrtotal).
            RUN piXmlSave.
         END.
 

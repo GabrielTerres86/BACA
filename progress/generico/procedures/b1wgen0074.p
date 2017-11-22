@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 14/11/2017
+    Data    : Maio/2010                   Ultima atualizacao: 19/06/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -195,11 +195,7 @@
 
                 19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				             "Desligamento por determinação do BACEN" 
-							( Jonata - RKAM P364).	
-							
-				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
-				             ja estiver com situacao = 4
-							( Jonata - RKAM P364).		
+							( Jonata - RKAM P364).			
 
 .............................................................................*/
 
@@ -1098,16 +1094,7 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 				   
-				   END.  
-				ELSE IF crapass.cdsitdct = 4 THEN
-				   DO:
-				      ASSIGN par_dscritic = "Conta ja encerrada por demissao."
-					         par_nmdcampo = "cdsitdct".
-
-                      LEAVE ValidaAltera.
-
-				   END.
-
+				   END.   
             END.
 
         /*  Mudou o tipo de conta  */

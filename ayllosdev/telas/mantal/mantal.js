@@ -9,7 +9,6 @@
  * 001: [06/06/2016] Lucas Ranghetti  (CECRED): Incluir validação para o campo cAgencia e validar agencia ( #462172)
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
  * 003: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
- * 004: [14/11/2017] Jonata           (RKAM)  : Ajuste nas rotinas de controle para sequencia dos impedimetnos (P364)
                                
  * --------------
  */
@@ -793,23 +792,20 @@ function continuarCheque( opcao ) {
 }
 
 
-function sequenciaImpedimentos() {
-    if (executandoImpedimentos) {
-        eval(produtosCancM[posicao - 1]);
-        posicao++;
-        return false;
-    }
-}
-
 // botoes
 function btnVoltar() {
 	
-    if (executandoImpedimentos) {
-        sequenciaImpedimentos();
-        return false;
-    } else {
-        estadoInicial();
-    }
+		if (executandoImpedimentos){
+			posicao++;
+			showMsgAguardo('Aguarde, carregando tela DCTROR ...');
+			setaParametrosImped('DCTROR','',nrdconta,flgcadas, 'MANTAL');
+			setaImped();
+			direcionaTela('DCTROR','no');
+		}else{
+
+			estadoInicial();	
+		}
+	
 	
 	return false;
 }

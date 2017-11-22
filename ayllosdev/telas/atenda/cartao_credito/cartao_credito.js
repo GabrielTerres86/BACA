@@ -58,7 +58,6 @@
  * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
  * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
  * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
- * 042: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -204,11 +203,11 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 			
             $("#btnreno").prop("disabled", true);
             $("#btnreno").css('cursor', 'default');
-
+			
             $("#btncanc").prop("disabled", true);
             $("#btncanc").css('cursor', 'default');
 			
-		    $("#btnence").prop("disabled", true);
+            $("#btnence").prop("disabled", true);
             $("#btnence").css('cursor', 'default');
 			
             if (situacao != "APROV.") {
@@ -227,22 +226,6 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 $("#btnupdo").css('cursor', 'default');
 			}
 		}
-
-        //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
-        //informando que o cartão deve ser cancelado através do SIPAGNET.
-		if (executandoImpedimentos &&
-            (cdadmcrd == 3  || 
-             cdadmcrd == 11 || 
-             cdadmcrd == 12 ||
-             cdadmcrd == 13 ||
-             cdadmcrd == 14 ||
-             cdadmcrd == 15 ||
-             cdadmcrd == 16 ||
-             cdadmcrd == 17)) {
-		    $("#btncanc").prop("disabled", false);
-		    $("#btncanc").css('cursor', 'default');
-
-        }
 		
 		return true;
 	}
@@ -3389,12 +3372,6 @@ function encerramentoCartao(indposic) {
 function opcaoCancBloq() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
-
-    if (executandoImpedimentos){
-        hideMsgAguardo();
-        showError("error", "O cancelamento do cart&atilde;o deve ser efetuado via SIPAGNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        return false;
-    }
 
 	if (nrctrcrd == 0) {
 		hideMsgAguardo();

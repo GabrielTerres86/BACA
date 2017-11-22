@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : buscar_contas_demitidas.php                    √öltima altera√ß√£o:
- * CRIA√á√ÉO      : Jonata (RKAM)
- * DATA CRIA√á√ÉO : Junho/2017
- * OBJETIVO     : Rotina respons√°vel por buscar as contas demitidas  - Op√ß√£o "G" da tela Matric
+ * FONTE        : buscar_contas_demitidas.php                    ⁄ltima alteraÁ„o:
+ * CRIA«√O      : Jonata (RKAM)
+ * DATA CRIA«√O : Junho/2017
+ * OBJETIVO     : Rotina respons·vel por buscar as contas demitidas  - OpÁ„o "G" da tela Matric
  * --------------
- * ALTERA√á√ïES   :  14/11/2017 - Ajsute para enviar conta na pesquisa (Joanta - RKAM P364).
+ * ALTERA«’ES   :  
  *
  */
 ?>
@@ -19,7 +19,7 @@
     require_once('../../class/xmlfile.php');
     isPostMethod();
 
-    // Carrega permiss√µes do operador
+    // Carrega permissıes do operador
     require_once('../../includes/carrega_permissoes.php');
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"G")) <> '') {
@@ -29,7 +29,6 @@
 	
 	$nriniseq = isset($_POST["nriniseq"]) ? $_POST["nriniseq"] : 0;
 	$nrregist = isset($_POST["nrregist"]) ? $_POST["nrregist"] : 0;
-  $nrdconta = isset($_POST["numeroConta"]) ? $_POST["numeroConta"] : 0;
 	  
 	$xmlMatric  = '';
 	$xmlMatric .= '<Root>';
@@ -47,7 +46,6 @@
 	$xmlMatric .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xmlMatric .= "     <nrregist>".$nrregist."</nrregist>";	
 	$xmlMatric .= "     <nriniseq>".$nriniseq."</nriniseq>";
-  $xmlMatric .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xmlMatric .= '	</Dados>';
 	$xmlMatric .= '</Root>';
 		
@@ -55,7 +53,7 @@
 	$xmlResult 	= getDataXML($xmlMatric);
 	$xmlObjeto 	= getObjectXML($xmlResult);		
 	
-	// Se ocorrer um erro, mostra cr√≠tica
+	// Se ocorrer um erro, mostra crÌtica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -66,8 +64,7 @@
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;
 	$qtregist  = $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];
-	$vlrtotal  = $xmlObjeto->roottag->tags[0]->attributes["VLRTOTAL"];
-  
+	
 	$qtdContas = count($registros);	
 		
 	include('tab_contas_demitidas.php');	
