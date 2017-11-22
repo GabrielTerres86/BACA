@@ -348,8 +348,7 @@ PROCEDURE process-web-request :
 					  INPUT 'b1crap00.p',   /* Programa/job */ 
 					  INPUT 3,              /* Execucao via BATCH */ 
 					  INPUT 0,              /* Criticidade BAIXA */  
-					  INPUT 1,              /* Processo executado com sucesso */ 
-					  INPUT 0).
+					  INPUT 1).             /* Processo executado com sucesso */ 
 																			   
 			CLOSE STORED-PROC pc_gera_log_batch 
 				 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
