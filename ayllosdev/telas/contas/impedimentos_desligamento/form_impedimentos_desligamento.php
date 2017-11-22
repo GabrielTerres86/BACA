@@ -8,7 +8,6 @@
  * --------------
  * ALTERAÇÕES   : 14/11/2017 - Ajsute para inclusão de novo item para impedimento (Jonata - RKAM P364).
  * --------------
-                  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
  */
  function formataFlag($valor){
 	 if ($valor == 1) return 'Sim'; else return 'N&atilde;o';
@@ -200,8 +199,6 @@
 								</td>
 								<td>
 									<label><? echo formataFlag(getByTagName($regServicos2->tags,'flseguro')); ?></label>
-									<input id="flsegauto" name="flsegauto" type="hidden" value="<?echo getByTagName($regServicos2->tags,'flsegauto');?>"></input>
-									<input id="flsegvida" name="flsegvida" type="hidden" value="<?echo getByTagName($regServicos2->tags,'flsegvida');?>"></input>
 								</td>
 								<td style="vertical-align: middle">
 								<?if (getByTagName($regServicos2->tags,'flseguro') == 1){?>														

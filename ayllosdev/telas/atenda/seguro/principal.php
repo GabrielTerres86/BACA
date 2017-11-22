@@ -11,8 +11,6 @@
  *                             Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
  *
  *                29/08/2016 - Proj 187.2 - Sicredi Seguros (Guilherme/SUPERO)
-
-				  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
  */
 session_start();
 
@@ -47,7 +45,6 @@ $nrctrseg = (isset($_POST['nrctrseg'])?$_POST['nrctrseg']:'');
 $cdsegura = (isset($_POST['cdsegura'])?$_POST['cdsegura']:'');
 $tpseguro = (isset($_POST['tpseguro'])?$_POST['tpseguro']:'');
 $cdsitpsg = (isset($_POST['cdsitpsg'])?$_POST['cdsitpsg']:'');
-$executandoImpedimentos = (isset($_POST['executandoImpedimentos'])?$_POST['executandoImpedimentos']:'');
 
 $nrctrseg = ( $nrctrseg == 'null' ) ? '' : $nrctrseg ;
 $cdsegura = ( $cdsegura == 'null' ) ? '' : $cdsegura ;

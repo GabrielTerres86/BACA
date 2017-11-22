@@ -1081,7 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 21/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 19/11/2017
 
    Dados referentes ao programa:
 
@@ -1284,8 +1284,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 			    14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
 
 			    19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
-
-				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -9353,7 +9351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   --
   -- Programa: pc_obtem_saldo_cotas - Antiga b1wgen0021.p/obtem-saldo-cotas
   -- Autor   : ---
-  -- Data    : ---                        Ultima atualizacao: 21/11/2017
+  -- Data    : ---                        Ultima atualizacao: 19/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -9364,8 +9362,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   --             14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).			
   --       
   --             19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
-  --
-  --             21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
   -- .......................................................................................
                                      
     -- Selecionar Valor das Cotas
@@ -9384,12 +9380,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       WHERE lct.cdcooper = pr_cdcooper
       AND   lct.nrdconta = pr_nrdconta
       AND   lct.cdhistor IN (2079,2080,2136)
-	    AND   lct.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')
+	    AND   lct.dtmvtolt >= '27/11/2017' 
       AND NOT EXISTS (SELECT 1 FROM craplcm lcm
                               WHERE lcm.cdcooper = lct.cdcooper
                                 AND lcm.nrdconta = lct.nrdconta
                                 AND lcm.cdhistor IN (2081,2082,2063,2064,2137)
-								AND lcm.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')) --- fixo por causa de performance
+								AND lcm.dtmvtolt >= '27/11/2017') --- fixo por causa de performance
      UNION
      SELECT D.VLCAPITAL - D.VLPAGO
        FROM TBCOTAS_DEVOLUCAO D

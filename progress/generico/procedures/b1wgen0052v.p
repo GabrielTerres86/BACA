@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 14/11/2017
   
     Dados referentes ao programa:
   
@@ -160,8 +160,6 @@
 							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).
 
                14/11/2017 - Corrigido consulta do produtos impeditivos para desligamento (Jonata - RKAM P364).
-
-			   21/11/2017 - Retirado validacao de convenio CDC (Jonata - RKAM P364).
 ........................................................................*/
 
 
@@ -1645,6 +1643,18 @@ PROCEDURE Produtos_Servicos_Ativos:
         
            END.
 
+		/*************************  CONVENIO CDC  *****************************/
+		IF CAN-FIND(FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper AND
+										crapcdr.nrdconta = par_nrdconta AND
+										crapcdr.flgconve = TRUE /*ativo*/ 
+                                        NO-LOCK) THEN
+            DO:
+               ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+               CREATE tt-prod_serv_ativos.
+               ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+				 tt-prod_serv_ativos.nmproser = "Convenio CDC ativo.".
+
+           END.
 		
 		/* Verificar se conta possui conta ITG ativa */
 		FOR FIRST crapass WHERE crapass.cdcooper = par_cdcooper
