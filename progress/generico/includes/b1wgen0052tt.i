@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0052tt.i
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 11/06/2017
+    Data    : Junho/2010                      Ultima atualizacao: 04/01/2016
   
     Dados referentes ao programa:
   
@@ -60,12 +60,6 @@
                 28/01/2016 - Incluidos campos referentes a origem do endereco
                              e licenca ambiental na tt-crapass
                              Melhoria 147 (Heitor - RKAM)
-
-			    11/06/2017 - Ajustes realizados:
-						     - Criados novos campos na tabela tt-crapass para 
-							   verificar se o termo de cancelamento foi digitalizado ou nao;
-							 - Criado a tt-contas_demitidas para atender a nova opcao da tela MATRIC;
-							 Jonata - RKAM (P364).
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -121,9 +115,7 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD nrtelcel AS DEC
     FIELD cdopetfn AS INTE
     FIELD idorigee AS INTE
-    FIELD nrlicamb AS DECI
-	FIELD flgtermo AS INTE
-	FIELD flgdigit AS INT.
+    FIELD nrlicamb AS DECI.
     
 DEFINE TEMP-TABLE tt-crapavt NO-UNDO 
     FIELD cdcooper LIKE crapavt.cdcooper
@@ -378,21 +370,6 @@ DEF TEMP-TABLE tt-crapcrl  NO-UNDO
     FIELD dsestcvl AS CHAR
     FIELD dtmvtolt AS DATE.
   */
-  
-  
-DEF TEMP-TABLE tt-contas_demitidas
-    FIELD cdcooper LIKE crapass.cdcooper
-    FIELD nrdconta LIKE crapass.nrdconta
-    FIELD inpessoa LIKE crapass.inpessoa
-    FIELD nmprimtl LIKE crapass.nmprimtl
-	FIELD vldcotas LIKE crapcot.vldcotas
-	FIELD dtdemiss LIKE crapass.dtdemiss
-	FIELD qtdparce AS INT
-	FIELD formadev AS INT
-	FIELD datadevo AS DATE
-	FIELD mtdemiss LIKE crapass.cdmotdem.
-	
-	
 /*...........................................................................*/
 
 

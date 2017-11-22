@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 10/06/2011
  * OBJETIVO     : Mostrar tela DCTROR
  * --------------
- * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
+ * ALTERAÇÕES   :
  * --------------
  */
 ?>
@@ -31,9 +31,9 @@
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="dctror.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="dctror.js"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -112,25 +112,3 @@
 </table>
 </body>
 </html>
-<script>
-	var nrdconta           	   = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
-	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
-	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
-	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
-	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
-	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
-	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
-	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
-
-	if (executandoImpedimentos){
-		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
-		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
-		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
-		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
-		var posicao = '<? echo $_POST['posicao']; ?>';
-		produtosCancM = produtos.split("|");		
-		produtosCancMAtenda = produtosAtenda.split("|");
-		produtosCancMContas = produtosContas.split("|");
-		produtosCancMCheque = produtosCheque.split("|");
-	}	
-</script>

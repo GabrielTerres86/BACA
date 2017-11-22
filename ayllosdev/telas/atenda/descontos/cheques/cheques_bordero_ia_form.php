@@ -3,14 +3,12 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_ia_form.php
 	 Autor: Lucas Reinert
-	 Data : Outubro/2016                Última Alteração: 26/06/2017 
+	 Data : Outubro/2016                Última Alteração: 
 	                                                                  
 	 Objetivo  : Apresentar form para inclusão/alteração de borderô de desconto 
 				 de cheque
 	                                                                  	 
-	 Alterações: 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-
-
+	 Alterações: 
 	************************************************************************/
 	
 	session_start();
@@ -29,8 +27,6 @@
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;	
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : 0;	
-	$executandoProdutos = $_POST['executandoProdutos'];
-	
 	$qtcompln = 0;
 	$vlcompcr = 0;
 	
@@ -147,17 +143,7 @@
 	</form>
 </div>
 <div id="divBotoes">
-
-	<?if($executandoProdutos == 'true'){?>
-		
-		<a href="#" class="botao" id="btVoltar" onclick="encerraRotina(true);return false;">Voltar</a>
-		
-	<?}else{?>
-		
 	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(3,2,4,'DESCONTO DE CHEQUES - BORDERÔS'); carregaBorderosCheques(); return false;">Voltar</a>
-	
-	<?}?>
-	
 	<a href="#" class="botao" id="btProsseguir" onclick="verificarEmitentes(); return false;" >Prosseguir</a>
 </div>
 

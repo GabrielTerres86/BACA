@@ -35,7 +35,6 @@
  * 039: [11/07/2016] Evandro            (RKAM): Adicionado função controlafoco.
  * 040: [06/02/2017] Lucas Ranghetti  (CECRED): Alterado funcao buscaCEP apra keydown e adicionado a funcao do tab.  #562253
  * 041: [06/06/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
- * 042: [13/08/2017] Jonata            (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
  
  */
 
@@ -56,9 +55,8 @@ var mtSelecaoEndereco;
  *              campoRetorno     -> Nome do campo que retorna da pesquisa, onde seu valor será pego e retornado para o campoDescrição
  *              filtros          -> [Opcional] Representa um campo que eu queira inserir junto no xml de pesquisa, para filtrar os resultados
  *              nomeFormulario   -> [Opcional] Nome do formulário ao qual os campos estão inseridos
-                executaMetodo    -> [Opcional] Funções a serem executadas após a busca da descrição
  */
-function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodigo, campoDescricao, codigoAtual, campoRetorno, filtros, nomeFormulario,executaMetodo) {
+function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodigo, campoDescricao, codigoAtual, campoRetorno, filtros, nomeFormulario) {
 
 	// Ação utilizada para arrumar a pesquisa utilizando o evento change
 	if ( $('#'+campoCodigo).attr('aux') == $('#'+campoCodigo, '#'+nomeFormulario).val() ) { return false; }
@@ -141,7 +139,6 @@ function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodi
 				campoRetorno   : campoRetorno,
 				filtros        : filtroParametro,
 				nomeFormulario : nomeFormulario,
-				executaMetodo  : executaMetodo,
 				redirect       : "script_ajax" // Tipo de retorno do ajax
 			}, 
 			error: function(objAjax,responseError,objExcept) {

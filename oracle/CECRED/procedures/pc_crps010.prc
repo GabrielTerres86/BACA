@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 19/06/2017
+ Data    : Janeiro/92.                         Ultima atualizacao: 28/09/2016
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -150,10 +150,6 @@ BEGIN
 
    		  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                        P308 (Ricardo Linhares).                            
-
-          19/06/2017 - Ajuste devido a inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
-							        ( Jonata - RKAM P364).                              
 
    ............................................................................. */
    DECLARE
@@ -960,7 +956,7 @@ BEGIN
        vr_tab_tot_qtassemp(pr_cdagenci):= 0;
 
        -- Inicializar totalizador de motivos para relatorio 421
-       FOR idx IN 1..vr_tab_rel_qttotmot.count() LOOP
+       FOR idx IN 1..11 LOOP
          vr_tab_rel_qttotmot(idx):= 0;
        END LOOP;
 
@@ -1530,7 +1526,7 @@ BEGIN
         pc_escreve_xml('</motivos><total_motivos ref="'||vr_rel_nmmesref||'"
                        dup="'||To_Char(nvl(vr_rel_qttotdup,0),'fm999g999g990')||'">');
         -- Percorrer todos os motivos
-        FOR idx IN 1..vr_tab_rel_qttotmot.count() LOOP
+        FOR idx IN 1..11 LOOP
            -- Verificar se existe o motivo da demissao
            IF vr_tab_craptab_motivo.EXISTS(idx) THEN
               -- Atribuir a descricao do motivo

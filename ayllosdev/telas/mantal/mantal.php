@@ -5,8 +5,7 @@
  * DATA CRIAÇÃO : 21/06/2011
  * OBJETIVO     : Mostrar tela MANTAL
  * --------------
- * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS
-                               (Jonata - RKAM P364).
+ * ALTERAÇÕES   :
  * --------------
  */
 ?>
@@ -27,14 +26,14 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
-		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+		<link href="../../css/estilo.css" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="mantal.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="mantal.js"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -89,9 +88,7 @@
 																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
-																			<div id="divFiltro">
 																			<? include('form_mantal.php'); ?>
-																		</div>
 																		</div>
 																		
 																		
@@ -115,16 +112,3 @@
 </table>
 </body>
 </html>
-<script type="text/javascript">
-	var nrdconta           	   = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
-	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
-	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
-	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
-	var produtosCancM 		   = "<? echo $_POST['produtosCancM']; ?>";
-	var produtosCancMAtenda    = "<? echo $_POST['produtosCancMAtenda']; ?>";
-	var produtosCancMContas    = "<? echo $_POST['produtosCancMContas']; ?>";
-	var produtosCancMCheque    = "<? echo $_POST['produtosCancMCheque']; ?>";
-	var posicao = '<? echo $_POST['posicao']; ?>';
-	
-	
-</script>

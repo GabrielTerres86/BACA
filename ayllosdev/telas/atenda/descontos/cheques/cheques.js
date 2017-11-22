@@ -31,8 +31,7 @@
  * 016: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero.
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
- * 018: [26/06/2017] Jonata     (RKAM)  : Ajuste para rotina ser chamada através da tela ATENDA > Produtos - P364. 
- * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
+ * 017: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -89,7 +88,6 @@ function carregaBorderosCheques() {
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
-			executandoProdutos: executandoProdutos,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -396,7 +394,6 @@ function carregaLimitesCheques() {
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
-			executandoProdutos: executandoProdutos,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -1511,7 +1508,6 @@ function mostraFormIABordero(cddopcao){
 			cddopcao: cddopcao,
 			nrdconta: nrdconta,
 			nrborder: nrbordero,
-			executandoProdutos: executandoProdutos,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -2638,7 +2634,6 @@ function manterBordero(){
 			cddopcao: cddopcao,
 			dscheque: dscheque,
 			dscheque_exc: dscheque_exc,
-			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
             },
         error: function(objAjax,responseError,objExcept) {

@@ -2,13 +2,13 @@
 /*************************************************************************
 *  Fonte: cancelar_seguro.php                                               
 *  Autor: Rogério Giacomini de Almeida                                                  
-*  Data : 21/09/2011                       Última Alteração: 11/06/2017		   
+*  Data : 21/09/2011                       Última Alteração: 28/06/2012		   
 *                                                                   
 *  Objetivo : Cancelar um seguro (Tela ATENDA / SEGURO).
 *                                                                 
 *  Alterações: 28/06/2012 - Alterado funcao de confirmacao de cancelamento (Jorge)								   			  
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
-               11/06/2017 - Ajuste para gravar log ao cancelar o seguro - Jonata RKAM (P364).
+
 *                                                                  
 ***********************************************************************/
 
@@ -51,7 +51,7 @@
 	$xml .= "	<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "	<idorigem>".$glbvars['idorigem']."</idorigem>";
-	$xml .= "	<flgerlog>TRUE</flgerlog>";
+	$xml .= "	<flgerlog>FALSE</flgerlog>";
 	$xml .= "	<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "	<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "	<tpseguro>".$tpseguro."</tpseguro>";

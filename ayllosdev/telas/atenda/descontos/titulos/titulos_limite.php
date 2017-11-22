@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 26/06/2017
+	 Data : Novembro/2008                Última Alteração: 21/05/2015
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -21,8 +21,6 @@
  							  menores nao emancipados (Reinert).
 
 				 17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
-
-				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
 	************************************************************************/
 	
@@ -153,13 +151,13 @@
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoesTitulosLimite">
+<div id="divBotoes">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" id="btnIncluirLimite" name="btnIncluirLimite" src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
 </div>
 
@@ -176,12 +174,4 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-		
-		$("#btnIncluirLimite", "#divBotoesTitulosLimite").click();
-		
-	}
-	
 </script>

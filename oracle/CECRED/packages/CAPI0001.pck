@@ -422,20 +422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                 ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2) IS -- Descrição da crítica
 
-    CURSOR cr_crapass(pr_cdcooper      IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
-    SELECT crapass.cdcooper
-          ,crapass.nrdconta
-          ,decode(crapass.inpessoa,1,1,2) inpessoa
-          ,crapass.cdtipcta
-      FROM crapass 
-          ,craptip
-     WHERE crapass.cdcooper = pr_cdcooper
-       AND crapass.nrdconta = pr_nrdconta
-       AND craptip.cdcooper = crapass.cdcooper
-       AND craptip.cdtipcta = crapass.cdtipcta;
-    rw_crapass cr_crapass%ROWTYPE;
-    
     -- Erros do processo
 
     -- variáveis para consulta de valores
@@ -447,7 +433,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(1000);
     vr_tab_erro gene0001.typ_tab_erro;
-    vr_des_reto VARCHAR2(3); 
 
     -- variáves referentes ao Lote (craplot)
     vr_qtinfoln craplot.qtinfoln%TYPE;
@@ -459,18 +444,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     vr_craplcm_cdhist craplcm.cdhistor%TYPE;
     
     vr_cdpesqbb craplcm.cdpesqbb%TYPE;
-    vr_vlminimo NUMBER(25,2);
-    vr_nmdcampo VARCHAR2(100);
 
     -- variaveis para log
     vr_dstransa VARCHAR2(150);
     vr_dsorigem VARCHAR2(40);
     vr_nrdrowid ROWID;
 
-
   BEGIN
 
     -- verifica o saldo disponível para intgegralização
+
     IF pr_flgnegat = TRUE THEN -- Pelo Ayllos pode forçar a integralização mesmo que a negative.
 
         pc_buscar_saldo_disp_integra(pr_cdcooper => pr_cdcooper
@@ -507,65 +490,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     ELSE
       vr_craplct_cdhist := cd_craplct_cdhist;
       vr_craplcm_cdhist := cd_craplcm_cdhist;
-      
-      -- Abre o cursor de associados
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta);
-                     
-      FETCH cr_crapass INTO rw_crapass;
-      
-      IF cr_crapass%NOTFOUND THEN
-        
-        CLOSE cr_crapass;
-        
-        pr_dscritic := 'Associado nao encontrado!';
-        RAISE vr_exc_erro;
-        
-      END IF;
-      
-      CLOSE cr_crapass;    
-
-      CADA0003.pc_busca_valor_minimo_capital(pr_cdcooper  => pr_cdcooper
-                                            ,pr_cdagenci  => pr_cdagenci
-                                            ,pr_nrdcaixa  => pr_nrdcaixa
-                                            ,pr_idorigem  => pr_idorigem
-                                            ,pr_nmdatela  => pr_nmdatela
-                                            ,pr_cdoperad  => pr_cdoperad
-                                            ,pr_cddopcao  => 'C'
-                                            ,pr_cdcopsel  => pr_cdcooper
-                                            ,pr_tppessoa  => rw_crapass.inpessoa
-                                            ,pr_cdtipcta  => rw_crapass.cdtipcta
-                                            ,pr_vlminimo  => vr_vlminimo
-                                            ,pr_nmdcampo  => vr_nmdcampo  --Nome do Campo
-                                            ,pr_des_erro  => vr_des_reto  --Saida OK/NOK
-                                            ,pr_tab_erro  => vr_tab_erro); --Tabela Erros                                       
-            
-      --Se Ocorreu erro
-      IF vr_des_reto = 'NOK' THEN
-          
-        --Se possuir dados na tabela
-        IF vr_tab_erro.COUNT > 0 THEN
-          --Mensagem erro
-          pr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          --Mensagem erro
-          pr_dscritic:= 'Erro ao executar a CADA0003.pc_busca_valor_minimo_capital.';
-        END IF;    
-          
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-          
-      END IF;
-      
-      IF NOT pr_vlintegr >= vr_vlminimo THEN
-        
-        vr_cdcritic := 0;
-        vr_dscritic := 'O valor mínimo deve ser R$ ' || to_char(vr_vlminimo,'fm999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') || '.';
-        RAISE vr_exc_erro;
-            
-      END IF;
-      
     END IF;
 
     -- Buscar lote para lançamento de cotas

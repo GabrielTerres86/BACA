@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: titulos.php
 	 Autor: Guilherme
-	 Data : Novembro/2008                 Última Alteração: 26/06/2017
+	 Data : Novembro/2008                 Última Alteração: 09/07/2012
 
 	 Objetivo  : Mostrar opção Títulos da Rotina de Desconto de Títulos
 
@@ -14,9 +14,6 @@
 				 09/07/2012 - Inclusão de campos no form para listagem de 
                               informações de títulos descontados com e sem
                               registro (Lucas).
-
-                 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-
 	***************************************************************************/
 	
 	session_start();
@@ -44,8 +41,6 @@
 	}
 
 	$nrdconta = $_POST["nrdconta"];
-	$executandoProdutos = $_POST['executandoProdutos'];
-	$cdproduto = $_POST['cdproduto'];
 	
 	// Monta o xml de requisição
 	$xmlDesctoTit  = "";
@@ -126,14 +121,12 @@
 	</fieldset>
 </form>
 <div id="divBotoes" >
-
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" />
 	<input type="image" name="btnbordero" id="btnbordero" src="<?php echo $UrlImagens; ?>botoes/borderos.gif" <?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> />
 	<input type="image" name="btnlimite" id="btnlimite" src="<?php echo $UrlImagens; ?>botoes/limite.gif" <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> />
 </div>
 
 <script type="text/javascript">
-
 dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
 // Muda o título da tela
@@ -146,18 +139,4 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-	
-       //Bordero	
-	  if (cdproduto == 35 ) {
-		$('#btnbordero','#divBotoes').click();
-		
-	  //Limite
-	  }else if (cdproduto == 37 ) {
-		$('#btnlimite','#divBotoes').click();
-	  }
-	}
-	
 </script>

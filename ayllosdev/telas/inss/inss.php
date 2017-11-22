@@ -3,11 +3,11 @@
 	/********************************************************************************************
 	 Fonte: inss.php                                                
 	 Autor: Adriano                                                   
-	 Data : Maio/2013              					Última Alteração: 26/06/2017
+	 Data : Maio/2013              					Última Alteração: 
 	                                                                  
 	 Objetivo  : Mostrar tela INSS.                                 
 	                                                                  
-	Alterações: 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
+	Alterações: 
 	                                                                  
 	********************************************************************************************/
 	
@@ -126,18 +126,3 @@
   </body>
   
 </html>
-
-<script type="text/javascript">
-	
-	var executandoProdutos              = "<? echo $_POST["executandoProdutos"]             ; ?>";
-	var produtosTelasServicos           = "<? echo $_POST["produtosTelasServicos"]          ; ?>";
-	var produtosTelasServicosAdicionais = "<? echo $_POST["produtosTelasServicosAdicionais"]; ?>";
-	var atualizarServicos               = "<? echo $_POST["atualizarServicos"]              ; ?>";
-	var posicao					        = "<? echo $_POST['posicao']                        ; ?>";
-	var nrdconta 		                = "<? echo $_POST['nrdconta']                       ; ?>";
-	var flgcadas 		                = "<? echo $_POST['flgcadas']                       ; ?>";
-
-	
-	nrdconta = (nrdconta == '') ? 0 : nrdconta;
-	
-</script>

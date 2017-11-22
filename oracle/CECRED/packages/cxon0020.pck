@@ -281,8 +281,6 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
                           ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM      
-                          ,pr_cdcritic OUT INTEGER  --> Codigo do erro
-                          ,pr_dscritic OUT VARCHAR2 --> Descrição da critica      
                           ,pr_des_erro OUT VARCHAR2 );
 
   /******************************************************************************/
@@ -323,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 13/08/2017 
+    Data     : Junho/2013.                   Ultima atualizacao: 08/06/2017 
   
     Dados referentes ao programa:
   
@@ -359,12 +357,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                             
                 08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
-
-				13/08/2017 - Ajustes realizados:
-						     > Pegar o erro corretamente;
-							 > Devolver critica através de parâmetros 
-							  (Jonata - RKAM / P364).
-
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1259,8 +1251,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
                           ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM      
-                          ,pr_cdcritic OUT INTEGER  --> Codigo do erro
-                          ,pr_dscritic OUT VARCHAR2 --> Descrição da critica
                           ,pr_des_erro OUT VARCHAR2 )IS  --> Indicador se retornou com erro (OK ou NOK)
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -1269,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 15/08/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 26/04/2017
   
       Dados referentes ao programa:
   
@@ -1307,9 +1297,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                
                   26/04/2017 - Ajustado para nao realizar analise de fraude para efetivações
                                de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)               
-
-				  15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
-
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2493,20 +2480,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       -- rollback do ted      
       ROLLBACK;
       
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      
+      --Criar Erro
+      CXON0000.pc_cria_erro( pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => pr_cdageope
+                            ,pr_nrdcaixa => vr_nrcxaope
+                            ,pr_cod_erro => vr_cdcritic
+                            ,pr_dsc_erro => vr_dscritic
+                            ,pr_flg_erro => TRUE
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
       pr_des_erro := 'NOK'; 
     WHEN OTHERS THEN
 
       -- rollback do ted      
       ROLLBACK;
       
-      pr_cdcritic := 'Erro ao efetuar o envio da TED. Tente Novamente.:'||SQLERRM;
-      pr_dscritic := vr_dscritic;
-      
+      vr_dscritic := 'Erro ao efetuar o envio da TED. Tente Novamente.:'||SQLERRM;
+      CXON0000.pc_cria_erro( pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => pr_cdageope
+                            ,pr_nrdcaixa => vr_nrcxaope
+                            ,pr_cod_erro => 0
+                            ,pr_dsc_erro => vr_dscritic
+                            ,pr_flg_erro => TRUE
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
       pr_des_erro := 'NOK'; 
-      
   END pc_enviar_ted;
 
 
@@ -2551,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 13/08/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
   
       Dados referentes ao programa:
   
@@ -2564,9 +2562,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                conforme progress SD341797 (Odirlei-Amcom)
                                
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
-
-				  13/08/2017 - Ajuste para pegar o erro corretamente (Jonata - RKAM / P364).
-
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2995,16 +2990,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED        
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL      
                   ,pr_nrreclcm => vr_nrreclcm --> Autenticacao LCM      
-                  ,pr_cdcritic => vr_cdcritic --> Código da critica
-                  ,pr_dscritic => vr_dscritic --> Descrição da critica   
                   ,pr_des_erro => vr_des_erro);
                   
     IF vr_des_erro <> 'OK' THEN
+      -- buscar erro
+      vr_dscritic := NULL;
+      OPEN cr_craperr(pr_cdcooper => pr_cdcooper,
+                      pr_cdagenci => pr_cdagenci,
+                      pr_nrdcaixa => pr_nrdconta||pr_idseqttl);
+      FETCH cr_craperr INTO vr_dscritic;
+      CLOSE cr_craperr;
       
-      IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
-        vr_dscritic := 'TED invalida.';
-      END IF;
-      
+      -- se nao encontrou a critica ou esta em branco, define mensagem
+      vr_dscritic := nvl(vr_dscritic,'TED invalida.');
       RAISE vr_exc_erro;  
     END IF;              
     

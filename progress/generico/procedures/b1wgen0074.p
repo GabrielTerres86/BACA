@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 19/06/2017
+    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -192,10 +192,6 @@
                              (Carlos)
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
-
-                19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
-							( Jonata - RKAM P364).			
 
 .............................................................................*/
 
@@ -1079,22 +1075,7 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 
-                   END.				   
-				   
-				/*Se for demissao BACEN, deve informar que nao ha reversao ao prosseguir 
-				  com a alteracao da situacao para 8 (Processo demissa BACEN)*/
-				IF par_cdsitdct = 8 THEN 
-				   ASSIGN par_tipconfi = 3 
-                          par_msgconfi = "Esta alteração será irreversível.".
-				
-				IF crapass.cdsitdct = 8 THEN
-				   DO:
-				      ASSIGN par_dscritic = "Conta em processo de demissao BACEN."
-					         par_nmdcampo = "cdsitdct".
-
-                      LEAVE ValidaAltera.
-				   
-				   END.   
+                   END.
             END.
 
         /*  Mudou o tipo de conta  */
@@ -1989,9 +1970,6 @@ PROCEDURE Grava_Dados:
                       INPUT par_cdagenci,
                       INPUT par_cdoperad,
                       INPUT par_dtmvtolt,  
-                      INPUT par_idorigem,
-                      INPUT par_nrdcaixa,
-                      INPUT par_nmdatela,					  
                       INPUT 2, /*tpaltera*/
                       INPUT par_cdtipcta,  
                       INPUT par_cdsitdct,  
@@ -2606,9 +2584,6 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nmdatela AS CHAR							NO-UNDO.
     DEF  INPUT PARAM par_tpaltera AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitdct AS INTE                           NO-UNDO.
@@ -3013,49 +2988,6 @@ PROCEDURE Grava_Dados_Altera:
 
         IF par_cdsitdct <> crabass.cdsitdct THEN
            DO:
-		   
-		      IF par_cdsitdct = 8 THEN
-			     DO:
-				    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl}}
-                               
-				   /* Efetuar a chamada da rotina Oracle */ 
-				   RUN STORED-PROCEDURE pc_efetuar_desligamento_bacen 
-							 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-																  INPUT par_nrdconta,
-																  INPUT par_idorigem,
-																  INPUT par_cdoperad,
-																  INPUT par_nrdcaixa,
-																  INPUT par_nmdatela,
-																  INPUT par_cdagenci,
-																  OUTPUT 0, /*Código da crítica*/
-																  OUTPUT "", /*Descrição da crítica*/
-																  OUTPUT "", /*Nome do Campo*/
-																  OUTPUT ""). /*Saida OK/NOK*/
-				   				   
-				   /* Fechar o procedimento para buscarmos o resultado */ 
-				   CLOSE STORED-PROC pc_efetuar_desligamento_bacen
-						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-				   
-				   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-				   
-				   /* Busca possíveis erros */ 
-				   ASSIGN par_cdcritic = 0
-						  par_dscritic = ""
-						  par_cdcritic = pc_efetuar_desligamento_bacen.pr_cdcritic 
-										 WHEN pc_efetuar_desligamento_bacen.pr_cdcritic <> ?
-						  par_dscritic = pc_efetuar_desligamento_bacen.pr_dscritic 
-										 WHEN pc_efetuar_desligamento_bacen.pr_dscritic <> ?.
-				   
-				   IF par_cdcritic <> 0  OR
-					  par_dscritic <> "" THEN
-					  DO:	 
-					
-						 UNDO GravaAltera, LEAVE GravaAltera.
-					
-					  END.
-				 
-				 END.
-			  
               ASSIGN crabass.dtasitct = par_dtmvtolt.
 
               ContadorNeg: DO aux_contador = 1 TO 10:
@@ -3726,7 +3658,7 @@ PROCEDURE Grava_Dados_Altera:
                crabass.cdtipcta = par_cdtipcta
                crabass.cdbcochq = par_cdbcochq
                crabass.cdsitdct = par_cdsitdct
-			   crabass.flgiddep = par_flgiddep
+               crabass.flgiddep = par_flgiddep
                crabass.tpavsdeb = par_tpavsdeb
                crabass.tpextcta = par_tpextcta
                crabass.cdsecext = par_cdsecext
