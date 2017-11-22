@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : Maio/2017.                       Ultima atualizacao: 14/11/2017
+   Data    : Maio/2017.                       Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -12,6 +12,8 @@
    Objetivo  : BO referente a Desligamento de Cooperados
 
    Alteracoes: 14/11/2017 - Auste para consulta dos produtos impeditivos (Jonata - RKAM P364).
+
+               22/11/2017 - Corrigido consulta de seguros para encontrar somente os ativos (Jonata - RKAM p364).
    
 ............................................................................ */
 
@@ -316,8 +318,10 @@ PROCEDURE busca_inf_produtos:
                                           OUTPUT TABLE tt-dados-rpp).
                                           
     DELETE PROCEDURE h-b1wgen0006.
+
+	ASSIGN tt-inf-produto.vlsrdrpp = aux_vlsrdrpp.
     
-    ASSIGN tt-inf-produto.vlsrdrpp = aux_vlsrdrpp.
+   
 
     RUN sistema/generico/procedures/b1wgen0082.p PERSISTENT SET h-b1wgen0082.
     
@@ -348,7 +352,8 @@ PROCEDURE busca_inf_produtos:
     /* Verificar se conta possui seguro */
     FOR EACH crapseg WHERE crapseg.cdcooper = par_cdcooper
                        AND crapseg.nrdconta = par_nrdconta
-                       AND crapseg.dtcancel = ? NO-LOCK:
+                       AND (crapseg.cdsitseg = 1 
+					    OR  crapseg.cdsitseg = 3) NO-LOCK:
 
         ASSIGN tt-inf-produto.flseguro = 1.
 
