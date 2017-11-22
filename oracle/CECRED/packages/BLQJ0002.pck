@@ -450,6 +450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         vr_dsinfdes := 'Desbloqueio/Transferência BACENJUD';
       END IF;
 
+      vr_vlbloqueio := pr_vlbloque; --thiago rodrigues
+
       -- Efetua o desbloqueio judicial
       blqj0001.pc_efetua_desbloqueio_jud(pr_cdcooper  => pr_cdcooper
                                         ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
