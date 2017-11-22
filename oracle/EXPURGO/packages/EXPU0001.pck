@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE EXPURGO.EXPU0001 AUTHID CURRENT_USER  is
         IS RECORD (dscomand VARCHAR2(32000),
                    idcontrole tbhst_controle.idcontrole%TYPE,
                    nmtabela VARCHAR2(300),
+                   nmowner  VARCHAR2(300),
                    qtdregis INTEGER);
   TYPE typ_tab_comand IS TABLE OF typ_rec_comand
        INDEX BY PLS_INTEGER;
@@ -148,7 +149,10 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para realizar processamento do expurgo
-      Alteração : 
+      
+      Alteração : 22/11/2017 - Inclusão de geração da estatitistica da tabela 
+                               apos exclusao dos dados.
+                               SD755804 (Odirlei-AMcom)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -335,6 +339,25 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
               RAISE vr_exc_prox;
             END IF;
             
+            -->> GERAR ESTATISTICA DE BANCO DAS TABELAS QUE SOFRERAM EXCLUSAO <<--
+            vr_tempoini := DBMS_UTILITY.get_time;
+            cecreddba.proc_gather_table_stats(schema_user => upper(vr_tab_comand(vr_idx).nmowner),
+                                              table_user  => upper(vr_tab_comand(vr_idx).nmtabela));
+            vr_qtdtempo := (DBMS_UTILITY.get_time - vr_tempoini)/100;   
+                   
+            --> Gerar log da operacao
+            pc_log_expurgo (pr_idcontrole  => vr_tab_comand(vr_idx).idcontrole,   --> Id de controle de expurgo
+                            pr_tpoperacao  => 4,                           --> tipo de operacao realizada (1-copia/ 3-exclusao) 
+                            pr_qtdregis    => 0,                           --> Qtd de registros excluidos
+                            pr_qtdtempo    => vr_qtdtempo,                 --> Tempo de processamento
+                            pr_dslogexp    => NULL,                        --> Descrição de critica/log do expurgo     
+                            pr_dscritic    => vr_dscritic);                --> Retorna critica
+          
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              --ignorar caso apresente falha na geracao deste log
+              NULL;
+            END IF;
+            
           
           END LOOP;
         END IF;
@@ -487,7 +510,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
+    --vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_dscritic_aux VARCHAR2(4000);
     vr_exc_erro EXCEPTION;  
@@ -650,7 +673,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
-    vr_cdcritic NUMBER;
+    --vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;   
     
@@ -661,7 +684,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     
     
     vr_qtregcop INTEGER;
-    vr_qtregexc INTEGER;
+    --vr_qtregexc INTEGER;
     vr_idx      PLS_INTEGER;
     
     
@@ -738,6 +761,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
       pr_tab_comand(vr_idx).idcontrole := pr_idcontrole;
       pr_tab_comand(vr_idx).dscomand   := vr_dscmdsql;
       pr_tab_comand(vr_idx).nmtabela   := pr_nmtabela;
+      pr_tab_comand(vr_idx).nmowner    := pr_nmowner;      
       pr_tab_comand(vr_idx).qtdregis   := vr_qtregcop;   
       
     END IF;
