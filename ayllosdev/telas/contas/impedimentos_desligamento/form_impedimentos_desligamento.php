@@ -398,7 +398,7 @@
 						</div>
 
 	<div id="divBotoes" style="margin-top:5px; margin-bottom :10px">
-		<a href="#" class="botao" id="btVoltar"  onClick="finalizarRotina(); return false;">Voltar</a>
+		<a href="#" class="botao" id="btVoltar"  onClick="fechaRotina(divRotina); return false;">Voltar</a>
 	</div>
 	</div>
 
