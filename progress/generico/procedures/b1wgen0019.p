@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 07/02/2017
+   Data    : 21/06/2007                        Ultima atualizacao: 27/07/2017
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -287,6 +287,24 @@
 				07/02/2017 - Alterardo a forma de pegar o cdagenci na hora de 
 				             confirmar o limite de credito na procedure
 							 confirmar-novo-limite (Tiago/Ademir SD590361).
+
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+
+                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                              PRJ339 - CRM (Odirlei-AMcom) 
+
+				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+         
+                 28/09/2017 - Ajuste leitura IDORGEXP.
+                              PRJ339 - CRM (Odirlei-AMcom)
+ 				 
+                 22/11/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                              Projeto 339 - CRM. (Lombardi)
+         
 ..............................................................................*/
 
 
@@ -3459,6 +3477,8 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
+    DEF VAR aux_mensagens    AS CHAR                                NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -3659,6 +3679,7 @@ PROCEDURE cadastrar-novo-limite:
             FIND FIRST crapdoc WHERE 
                        crapdoc.cdcooper = par_cdcooper AND
                        crapdoc.nrdconta = par_nrdconta AND
+                       crapdoc.nrcpfcgc = crapass.nrcpfcgc AND
                        crapdoc.tpdocmto = 19           AND
                        crapdoc.dtmvtolt = par_dtmvtolt AND
                        crapdoc.idseqttl = par_idseqttl 
@@ -3687,6 +3708,7 @@ PROCEDURE cadastrar-novo-limite:
                                    crapdoc.flgdigit = FALSE
                                    crapdoc.dtmvtolt = par_dtmvtolt
                                    crapdoc.tpdocmto = 19
+                                   crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                    crapdoc.idseqttl = par_idseqttl.
                             VALIDATE crapdoc.    
                             
@@ -3823,7 +3845,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
@@ -3848,7 +3870,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
@@ -3938,6 +3960,60 @@ PROCEDURE cadastrar-novo-limite:
 
         IF   RETURN-VALUE <> "OK"   THEN
              LEAVE.
+
+        IF par_idorigem = 5 THEN
+           DO:
+              /* Verificar se a conta pertence ao grupo economico novo */	
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,""
+                                                    ,0
+                                                    ,"").
+
+              CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
+                     aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+                     aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+                     aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
+                              
+              IF aux_cdcritic > 0 THEN
+                 DO:
+                     RUN gera_erro (INPUT par_cdcooper,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT 1,            /** Sequencia **/
+                                    INPUT aux_cdcritic,
+                                    INPUT-OUTPUT aux_dscritic).
+                               
+                     UNDO TRANSACAO, LEAVE TRANSACAO.
+                 END.
+              ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+                DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                    
+                    UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+                
+              IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
+                 DO:
+                     CREATE tt-msg-confirma.                        
+                     ASSIGN tt-msg-confirma.inconfir = 4
+                            tt-msg-confirma.dsmensag = aux_mensagens.
+                 END.
+           END.
 
         ASSIGN aux_flgtrans = TRUE.
         
@@ -6540,8 +6616,10 @@ PROCEDURE obtem-dados-contrato:
 
     DEF VAR aux_txcetano AS DECI                                    NO-UNDO.
     DEF VAR aux_txcetmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.
 
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0052b AS HANDLE                                 NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     
@@ -7043,8 +7121,36 @@ PROCEDURE obtem-dados-contrato:
                        tt-repres-ctr.nrcpfrep = STRING(STRING(crapavt.nrcpfcgc,
                                                        "99999999999"),
                                                        "xxx.xxx.xxx-xx")
-                       tt-repres-ctr.dsdocrep = crapavt.nrdocava
-                       tt-repres-ctr.cdoedrep = crapavt.cdoeddoc.
+                       tt-repres-ctr.dsdocrep = crapavt.nrdocava.
+                           
+                ASSIGN tt-repres-ctr.cdoedrep = "".  
+                IF crapavt.idorgexp <> 0 THEN 
+                DO:
+                  /* Retornar orgao expedidor */
+                  IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                  RUN busca_org_expedidor IN h-b1wgen0052b 
+                                   (INPUT crapavt.idorgexp,
+                                    OUTPUT tt-repres-ctr.cdoedrep,
+                                    OUTPUT aux_cdcritic, 
+                                    OUTPUT aux_dscritic).
+
+                  DELETE PROCEDURE h-b1wgen0052b. 
+                
+                  IF  RETURN-VALUE = "NOK" THEN
+                  DO:
+                      RUN gera_erro (INPUT par_cdcooper,
+                                     INPUT par_cdagenci,
+                                     INPUT par_nrdcaixa,
+                                     INPUT 1,            /** Sequencia **/
+                                     INPUT aux_cdcritic,
+                                     INPUT-OUTPUT aux_dscritic).
+
+                      RETURN "NOK".
+                  END.
+                END.
                            
                 IF  crapavt.nrdctato <> 0  THEN
                     DO:
@@ -7059,14 +7165,73 @@ PROCEDURE obtem-dados-contrato:
                                                             crabass.nrcpfcgc,
                                                             "99999999999"),
                                                             "xxx.xxx.xxx-xx")
-                                   tt-repres-ctr.dsdocrep = crabass.nrdocptl
-                                   tt-repres-ctr.cdoedrep = crabass.cdoedptl.
+                                   tt-repres-ctr.dsdocrep = crabass.nrdocptl.
+                                   
+							ASSIGN tt-repres-ctr.cdoedrep = "".       
+                            IF crabass.idorgexp <> 0 THEN
+                            DO:
+                              /* Retornar orgao expedidor */
+                              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                                      PERSISTENT SET h-b1wgen0052b.
+
+                              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                                 (INPUT crabass.idorgexp,
+                                                  OUTPUT tt-repres-ctr.cdoedrep,
+                                                  OUTPUT aux_cdcritic, 
+                                                  OUTPUT aux_dscritic).
+
+                              DELETE PROCEDURE h-b1wgen0052b. 
+                            
+                              IF  RETURN-VALUE = "NOK" THEN
+                              DO:
+                                  RUN gera_erro (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT 1,            /** Sequencia **/
+                                                 INPUT aux_cdcritic,
+                                                 INPUT-OUTPUT aux_dscritic).
+
+                                  RETURN "NOK".
+                              END.       
+                      END.
                     END.
                 
             END. /** Fim do FOR EACH crapavt **/
         END.
     ELSE
         DO:
+        
+            ASSIGN aux_cdorgexp = "".
+            IF crapass.idorgexp <> 0 THEN 
+            DO:
+            
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                     PERSISTENT SET h-b1wgen0052b.
+
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 (INPUT crapass.idorgexp,
+                                  OUTPUT aux_cdorgexp,
+                                  OUTPUT aux_cdcritic, 
+                                  OUTPUT aux_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b. 
+            
+              IF  RETURN-VALUE = "NOK" THEN
+              DO:
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,            /** Sequencia **/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+
+                  RETURN "NOK".
+              END.    
+            END.
+        
             ASSIGN tt-dados-ctr.nrcpfcgc = "CPF: " +
                                            STRING(STRING(crapass.nrcpfcgc,
                                                   "99999999999"),
@@ -7075,7 +7240,7 @@ PROCEDURE obtem-dados-contrato:
                                                        "xx")) + " " + 
                                            TRIM(STRING(crapass.nrdocptl,
                                                        "x(15)")) + " - " +
-                                           TRIM(STRING(crapass.cdoedptl,
+                                           TRIM(STRING(aux_cdorgexp,
                                                        "xxxxx")) + "/" +   
                                            TRIM(STRING(crapass.cdufdptl,"xx")).
         END.   
@@ -7360,7 +7525,6 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_nmexcop2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_nmresage AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsempres AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nmdsecao AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcgc AS CHAR                                    NO-UNDO.
     DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
     DEF VAR aux_dssitdct AS CHAR                                    NO-UNDO.
@@ -7386,6 +7550,7 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_flpropos AS LOGI                                    NO-UNDO.
     DEF VAR aux_nrcpfcjg AS DECI                                    NO-UNDO.
     DEF VAR aux_nrctacje AS INTE                                    NO-UNDO.
+	DEF VAR aux_nmsegntl AS CHAR								    NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
@@ -7921,10 +8086,20 @@ PROCEDURE obtem-dados-proposta:
                                crapttl.idseqttl = 1            NO-LOCK NO-ERROR.
         
             IF   AVAILABLE crapttl  THEN
-                 ASSIGN aux_nmdsecao = crapttl.nmdsecao
-                        aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
+                 ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                        "99999999999"),"xxx.xxx.xxx-xx")
                         aux_cdempres = crapttl.cdempres.
+
+			FOR FIRST crapttl FIELDS(nmextttl) 
+			                  WHERE crapttl.cdcooper = par_cdcooper AND
+                                    crapttl.nrdconta = par_nrdconta AND
+                                    crapttl.idseqttl = 2
+							        NO-LOCK:
+
+			  ASSIGN aux_nmsegntl = crapttl.nmextttl.
+
+        END.
+        
         END.
     ELSE
         DO:
@@ -7935,8 +8110,7 @@ PROCEDURE obtem-dados-proposta:
             IF   AVAIL crapjur  THEN
                  ASSIGN aux_cdempres = crapjur.cdempres.
                  
-            ASSIGN aux_nmdsecao = ""
-                   aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
+            ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
         END.
         
@@ -7986,7 +8160,7 @@ PROCEDURE obtem-dados-proposta:
            tt-dados-prp.nrmatric = crapass.nrmatric
            tt-dados-prp.nrcpfcgc = aux_nrcpfcgc
            tt-dados-prp.nmprimtl = crapass.nmprimtl  
-           tt-dados-prp.nmsegntl = crapass.nmsegntl
+           tt-dados-prp.nmsegntl = aux_nmsegntl
            tt-dados-prp.dtadmiss = crapass.dtadmiss
            tt-dados-prp.nmresage = aux_nmresage
            tt-dados-prp.dsempres = aux_dsempres      
@@ -9544,7 +9718,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
@@ -9569,7 +9743,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
