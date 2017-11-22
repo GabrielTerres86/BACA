@@ -693,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 18/11/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 16/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -782,8 +782,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                         capital (JOnata - RKAM P364).
   --
   --             16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
-  --
-  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -9404,7 +9402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Jonata - RKAM
-     Data    : Agosto/2017.                  Ultima atualizacao: 18/11/2017
+     Data    : Agosto/2017.                  Ultima atualizacao: 14/11/2017
 
      Dados referentes ao programa:
 
@@ -9413,9 +9411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Objetivo  : Rotina para gerar a devolução de cotas capital do cooperado
      Observacao: -----
 
-     Alteracoes: 14/11/2017 - Correcao na geracao dos lancamentos (Joanta - RKAM P364). 
-	 
-				 18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).               
+     Alteracoes: 14/11/2017 - Correcao na geracao dos lancamentos (Joanta - RKAM P364).                
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -10198,7 +10194,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         END; 
         
       end if;
-
+      
+   
+    ELSIF (pr_oporigem = 1        AND  --Botao Desligar da tela MATRIC
+           vr_vet_dados(1) = 1 )  THEN   --Devolução de capital no ato
+    
+      vr_nrdolote := 600038;
+            
+      vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
+                  TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
+                  TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
+                  '100;' || --cdbccxlt
+                  vr_nrdolote;
+                        
+      vr_nrdocmto := fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);    
+            
+      vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                                                          to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
+                                                          rw_crapass.cdagenci||
+                                                          ';100;'|| --cdbccxlt
+                                                          vr_nrdolote);
+                                                                
+      
+      --Consultar Saldo de Deposito a vista
+      extr0001.pc_carrega_dep_vista(pr_cdcooper       => pr_cdcooper --> Cooperativa
+                                   ,pr_cdagenci       => pr_cdagenci --> Agencia
+                                   ,pr_nrdcaixa       => pr_nrdcaixa --> Caixa
+                                   ,pr_cdoperad       => pr_cdoperad --> Operador
+                                   ,pr_nrdconta       => pr_nrdconta --> Conta
+                                   ,pr_dtmvtolt       => rw_crapdat.dtmvtolt --> Data do movimento
+                                   ,pr_idorigem       => pr_idorigem --> Origem
+                                   ,pr_idseqttl       => 1 --> Seq. do Titular
+                                   ,pr_nmdatela       => pr_nmdatela --> Nome da Tela
+                                   ,pr_flgerlog       => 'S' --> Gerar Log ?                                    
+                                   ,pr_tab_saldos  	  => vr_tab_saldos --> Tabela de Extrato da Conta
+                                   ,pr_tab_libera_epr => vr_tab_libera_epr --> Tabela de Extrato da Conta
+                                   ,pr_des_reto       => pr_des_erro --> Tabela de Extrato da Conta
+                                   ,pr_tab_erro       => vr_tab_erro); --> Tabela de Erros
+                                     
+      --Se Ocorreu erro
+      IF pr_des_erro = 'NOK' THEN
+        --Se possuir dados na tabela
+        IF vr_tab_erro.COUNT > 0 THEN
+          --Mensagem erro
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          --Mensagem erro
+          vr_dscritic:= 'Erro ao executar a extr0001.pc_carrega_dep_vista.';
+        END IF;    
+        
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+        
+      END IF;
+                                          
+      IF vr_tab_saldos.exists(vr_tab_saldos.first)       AND 
+         vr_tab_saldos(vr_tab_saldos.first).vlsddisp > 0 THEN
+        
+        vr_vlrsaldo:= vr_tab_saldos(vr_tab_saldos.first).vlsddisp;
+      
+        
+              
+        BEGIN
+                     
+          --Inserir registro de crédito:
+          INSERT INTO craplcm(cdcooper
+                             ,dtmvtolt
+                             ,dtrefere
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,nrdolote
+                             ,nrdconta
+                             ,nrdctabb
+                             ,nrdctitg
+                             ,nrdocmto
+                             ,cdhistor     
+                             ,vllanmto
+                             ,nrseqdig
+                             ,hrtransa)
+                       VALUES(pr_cdcooper
+                             ,rw_crapdat.dtmvtolt
+                             ,rw_crapdat.dtmvtolt
+                             ,rw_crapass.cdagenci
+                             ,100
+                             ,vr_nrdolote  
+                             ,pr_nrdconta
+                             ,pr_nrdconta
+                             ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                             ,vr_nrdocmto
+                             ,2137 --Credita conta
+                             ,NVL(TO_CHAR(vr_vlrsaldo),'0')
+                             ,vr_nrseqdig
+                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
+                                           
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        
+      END IF;
+                      
     END IF;
        
     BEGIN 

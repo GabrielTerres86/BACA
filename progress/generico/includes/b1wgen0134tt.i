@@ -3,7 +3,7 @@
    Programa: Includes/var_hisopcr.i
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2012.                   Ultima atualizacao: 19/11/2017
+   Data    : Fevereiro/2012.                   Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
   
@@ -15,10 +15,8 @@
                
                11/08/2015 - Adicionado novos historicos. (Reinert)
                 
-                           06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
-                                                        Prj. 302. (Jean Michel)
-                
-			   19/11/2017 - Incusao do historico 354 (Jonata - RKAM P364).
+			   06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
+							Prj. 302. (Jean Michel)
                 
 ............................................................................*/
 DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
@@ -82,59 +80,10 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1734, /* MULTA TR.PREJ */
                                           1735, /* JUR.MORA PREJ */
                                           1736, /* JUR.MORA PREJ */ 
-                                          2193, /* DB.BLOQ.ACORD */
-                                          2194, /* CR.DESB.ACORD */
-                                          2180, /* CRED.COB.ACOR */
-                                          2181, /* ABAT.CONC.ACO */
-                                          2182,  /* PAG.DESP.ACOR */                                                                 
-                                          /* 25072017 - Jean - Historicos que nao podem ser utilizados melhoria 324 */
-                                           349,  /* TRF. PREJUIZO */
-                                            350,  /* TRF. PREJUIZO */
-                                            391,  /* Pagamento lote 200 */
-                                            382,  /* pagamento lote 200 */
-                                            384,  /* pagamento lote 100 */
-                                            383,  /* abono do prejuizo */
-                                          775, /* EST LIQ PREJ */
-                                          1586, /*CR PREJ FRAUD */
-                                          1587, /*CR PREJ FRAUD*/
-                                          1839, /*BAIXA PREJ*/
-                                          2288, /*ABONO CT PREJ*/
-                                          2381, /* TRF. PREJUIZO */
-                                          2382, /* TRF. PREJ JUR */
-                                          2383, /* EST.PREJUIZO */
-                                          2384, /* EST. PREJ JUR */
-                                          2385, /* TRF.PREJ.FRAU */
-                                          2386, /* REC. PREJUIZO */
-                                          2387, /* EST.REC.PREJ */
-                                          2388, /* PAG.PREJ.PRIN */
-                                          2389, /* PAG.JUR.PREJ */
-                                          2390, /* PAG.ENCA.PREJ */
-                                          2391, /* ABONO PREJUIZO */
-                                          2392, /* EST.PAG.PREJ */
-                                          2393, /* EST.JUR.PREJ */
-                                          2394, /* EST.ENCA.PREJ */
-                                          2395, /* EST.ABON PREJ */
-                                          2396, /* TRF. PREJUIZO */
-                                          2397, /* TRF. PREJ JUR */
-                                          2398, /* EST.PREJUIZO */
-                                          2399, /* EST. PREJ JUR */
-                                          2400, /* TRF.PREJ.FRAU */
-                                          2401, /* TRF. PREJUIZO */
-                                          2402, /* TRF. PREJ JUR */
-                                          2403, /* EST.PREJUIZO */
-                                          2404, /* EST. PREJ JUR */
-                                          2405, /* TRF.PREJ.FRAU */
-                                          2406, /* TRF. PREJ JUR */
-                                          2407, /* EST. PREJ JUR */
-                                          2408, /* TRF. PREJUIZO */
-                                          2409, /* JUROS PREJUIZO */
-                                          2410, /* EST. TRANSF P */
-                                          2411, /* ENCARG.PREJ */
-                                          2412, /* TRF.PREJ.FRAU */
-                                          2421, /* DESP REC CRED */
-                                          2422, /* ESTJUROS PREJ */
-                                          2423, /* EST.ENCA.PREJ */
-                                          2424, /* EST.DESP.PREJ */
-										  354  /* credito cotas */] NO-UNDO.
+										  2193, /* DB.BLOQ.ACORD */
+										  2194, /* CR.DESB.ACORD */
+										  2180, /* CRED.COB.ACOR */
+										  2181, /* ABAT.CONC.ACO */
+										  2182  /* PAG.DESP.ACOR */ ] NO-UNDO. 
                         
                                             
