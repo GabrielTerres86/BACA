@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 18/11/2017.
+    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
     
     Dados referentes ao programa:
 
@@ -263,8 +263,6 @@
                             (Lucas Ranghetti #340156)
                             
                26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
-
-			   18/11/2017 - Inclusao dos lotes refernte a devolucao de capital (Jonata - RKAM P364).
                             
 .............................................................................*/
 
@@ -4836,9 +4834,7 @@ PROCEDURE critica_numero_lote:
 		 par_nrdolote = 650002 OR    /* Acordos do CYBER */
 		 par_nrdolote = 10119  OR    /* Lote devolução - Melhoria 69 */
 		(par_nrdolote >= 8482   AND  /* TEDS Sicredi */
-         par_nrdolote <= 8486)  OR
-		(par_nrdolote >= 600038 AND     /*Devolucao de capital*/      
-         par_nrdolote <= 600043)  THEN  
+         par_nrdolote <= 8486)  THEN  
 		 
          DO:
              ASSIGN aux_cdcritic = 261

@@ -19,7 +19,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Julho/2004.                     Ultima atualizacao: 19/11/2017
+   Data    : Julho/2004.                     Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -164,9 +164,6 @@
 			  13/04/2017 - Validacao do arquivo de log na pasta destino evitando assim a 
 						   perda de informacoes com a solicitacao manual do processo. 
 						   (Carlos Rafael Tanholi - SD 650409)
-
-			  19/11/2017 - Alterado a geracao da solicitacao 52 para diaria (Jonata - RKAM P364).
-
 ............................................................................ */
 
 DEF    VAR aux_dtref072   AS DATE                              NO-UNDO.
@@ -346,17 +343,6 @@ ASSIGN crapsol.nrsolici = 032
        crapsol.insitsol = 1
        crapsol.nrdevias = 1
        crapsol.cdcooper = glb_cdcooper.
-
-/* Cria sol. de baixa de valores */
-CREATE crapsol.
-ASSIGN crapsol.nrsolici = 052
-        crapsol.dtrefere = glb_dtmvtolt
-        crapsol.nrseqsol = 01
-        crapsol.cdempres = 11
-        crapsol.dsparame = ""
-        crapsol.insitsol = 1
-        crapsol.nrdevias = 1
-        crapsol.cdcooper = glb_cdcooper.
 
 CREATE crapsol.
 ASSIGN crapsol.nrsolici = 061
@@ -856,6 +842,20 @@ IF   MONTH(glb_dtmvtolt) <> MONTH(glb_dtmvtopr)   THEN
                          crapsol.insitsol = 1
                          crapsol.nrdevias = 1
                          crapsol.cdcooper = glb_cdcooper.        
+              END.
+
+         /* Cria sol. de baixa de valores */
+         IF   CAN-DO("6,12",STRING(MONTH(glb_dtmvtolt)))   THEN
+              DO:
+                  CREATE crapsol.
+                  ASSIGN crapsol.nrsolici = 052
+                         crapsol.dtrefere = glb_dtmvtolt
+                         crapsol.nrseqsol = 01
+                         crapsol.cdempres = 11
+                         crapsol.dsparame = ""
+                         crapsol.insitsol = 1
+                         crapsol.nrdevias = 1
+                         crapsol.cdcooper = glb_cdcooper.
               END.
 
          /* Verif. se deve solicitar calculo juros sobre o capital sol.26 */

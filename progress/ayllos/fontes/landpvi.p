@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 19/11/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 12/06/2017
 
    Dados referentes ao programa:
 
@@ -501,9 +501,6 @@
 
               11/07/2017 - Ajustes historico 354
                            (Demetrius Wolff MOUTS - Prj 364)
-						   
-			  19/11/2017 - Ajustes para retirar o uso do historico 354
-                           (Jonata RKAM - P364)
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -4220,7 +4217,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            END.
   
       /*** Magui incluido em 21/01/2002 ***/
-      IF   tel_cdhistor = 451   OR    /* credito de estorno de capital  */
+      IF   tel_cdhistor = 354   OR    /* credito cotas */
+           tel_cdhistor = 451   OR    /* credito de estorno de capital  */
            tel_cdhistor = 275   OR    /* pagto emprestimo */
            tel_cdhistor = 394   OR    /* pagto emprestimo pelo aval  */
            tel_cdhistor = 428   OR    /* pagto empr. c/cap */
@@ -4233,6 +4231,11 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            tel_cdhistor = 1806  OR    /* PAGAMENTO PARCELA FINAME  */ 
            tel_cdhistor = 931 THEN    /*credito cotas proc*/
            DO:
+               IF   tel_cdhistor = 354   THEN
+                    ASSIGN his_cdhistor = 2136
+                           his_nrdolote = 600038
+                           his_tplotmov = 2.
+               ELSE
                IF   tel_cdhistor = 451   THEN
                     ASSIGN his_cdhistor = 402
                            his_nrdolote = 10002
@@ -4401,10 +4404,47 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
                     END.
                ELSE   
-               IF   tel_cdhistor = 451   OR
+               IF   tel_cdhistor = 354   OR
+                    tel_cdhistor = 451   OR
                     tel_cdhistor = 127   THEN
                     DO: 
-						FIND craplct WHERE craplct.cdcooper = glb_cdcooper AND
+						IF  tel_cdhistor = 354 THEN
+							DO: 
+								FIND craplcm WHERE craplcm.cdcooper = glb_cdcooper AND
+												   craplcm.dtmvtolt = tel_dtmvtolt AND
+												   craplcm.cdagenci = 1            AND
+												   craplcm.cdbccxlt = 100          AND
+												   craplcm.nrdolote = his_nrdolote AND
+												   craplcm.nrdctabb = tel_nrdctabb AND
+												   craplcm.nrdocmto = tel_nrdocmto
+												   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
+								IF   AVAILABLE craplcm   THEN
+									 DO:
+										 glb_cdcritic = 92.
+										 NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
+										 UNDO, NEXT INICIO.
+									 END.
+
+								CREATE craplcm.
+								ASSIGN craplcm.cdcooper = glb_cdcooper
+									   craplcm.cdoperad = glb_cdoperad
+									   craplcm.dtmvtolt = tel_dtmvtolt
+									   craplcm.cdagenci = 1
+									   craplcm.cdbccxlt = 100
+									   craplcm.nrdolote = his_nrdolote
+									   craplcm.nrdconta = tel_nrdctabb
+									   craplcm.nrdctabb = tel_nrdctabb
+									   craplcm.nrdctitg = STRING(tel_nrdctabb,
+																	 "99999999")
+									   craplcm.nrdocmto = tel_nrdocmto
+									   craplcm.cdhistor = 2137
+									   craplcm.nrseqdig = crablot.nrseqdig + 1
+									   craplcm.vllanmto = tel_vllanmto
+									   craplcm.cdpesqbb = STRING(tel_nrdctabb).
+								VALIDATE craplcm.
+							END.
+							
+                        FIND craplct WHERE craplct.cdcooper = glb_cdcooper AND
                                            craplct.dtmvtolt = tel_dtmvtolt AND
                                            craplct.cdagenci = 1            AND
                                            craplct.cdbccxlt = 100          AND
