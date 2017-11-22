@@ -50,8 +50,6 @@
                   29/08/2016  - PROJ 187.2 - Sicredi Seguros (Guilherme/SUPERO)
 
                   21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
-
-                  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
  * */
 
 //**************************************************
@@ -461,7 +459,6 @@ function controlaOperacao(operacao) {
             idcontrato: idcontrato,
             nmsegura: nmsegura, nmdsegur: nmdsegur,
             executandoImpedimentos: executandoImpedimentos,
-            sitaucaoDaContaCrm: sitaucaoDaContaCrm,
             tipo: tpseguro, redirect: 'script_ajax'
         },
 			error: function(objAjax,responseError,objExcept) {
