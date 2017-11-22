@@ -8,7 +8,8 @@
     Objetivo  : Enviar para a Selbetti os documentos liberados e nao 
                 digitalizados via WebService "JSON".
 
-    Alteracoes: 
+    Alteracoes: Utilizado a include b1wgen0137tt para nao ter que criar a 
+                tt-documentos-liberados novamente. (Lombardi #799181)
    
 .............................................................................*/
 
@@ -62,24 +63,7 @@ DEFINE VARIABLE aux_temerro    AS LOG         NO-UNDO.
 
 DEFINE VARIABLE h-b1wgen0137    AS HANDLE     NO-UNDO.
 
-DEF TEMP-TABLE tt-documentos-liberados NO-UNDO
-    FIELD cdcooper AS INTE
-    FIELD cdagenci AS INTE
-    FIELD tpdocmto AS INTE
-    FIELD nrdconta AS INTE
-    FIELD nrctrato AS INTE
-    FIELD nrborder AS INTE
-    FIELD dtpublic AS DATE
-    FIELD nraditiv AS INT
-    FIELD dtmvtolt AS DATE
-    FIELD dtlibera AS DATE
-    FIELD vllanmto AS DECI
-    FIELD nrdolote AS INTE
-    FIELD cdbccxlt AS INTE
-    INDEX tt-documento-digitalizado1
-          AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
-    INDEX tt-documento-digitalizado3 cdcooper nrdconta.
-
+{ sistema/generico/includes/b1wgen0137tt.i }
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
