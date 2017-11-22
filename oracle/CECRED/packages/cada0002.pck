@@ -198,6 +198,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);
                                                                           
+  PROCEDURE pc_bloqueia_operadores(pr_dscritic OUT crapcri.dscritic%TYPE);
+
 END CADA0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
@@ -4005,6 +4007,121 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         ROLLBACK;
 
   END pc_val_inclui_conta_transf; 
+  
+  PROCEDURE pc_bloqueia_operadores(pr_dscritic OUT crapcri.dscritic%TYPE) IS  
+  /* .............................................................................
 
+     Programa: pc_bloqueia_operadores
+     Sistema : Rotina acessada através de job
+     Autor   : Kelvin Ott       
+     Data    : Novembro/2017.                  Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina chamada por job para bloquiar os operadores na tabela crapope que nao 
+                 constam na tabela tbcadast_colaborador
+
+     Alteracoes:                 
+    ..............................................................................*/ 
+    CURSOR cr_crapope IS 
+      SELECT cdoperad
+            ,cdcooper
+        FROM crapope ope
+       WHERE ope.cdsitope = 1;
+    
+    CURSOR cr_tbcadast_colaborador(pr_cdcooper crapcop.cdcooper%TYPE
+                                  ,pr_cdoperad crapope.cdoperad%TYPE) IS
+      SELECT *
+        FROM tbcadast_colaborador col
+       WHERE col.cdcooper = pr_cdcooper
+         AND UPPER(col.cdusured) = UPPER(pr_cdoperad)
+         AND col.flgativo = 'A'; --Ativo
+    rw_tbcadast_colaborador cr_tbcadast_colaborador%ROWTYPE;
+    
+    --Variaveis auxiliares
+    vr_idprglog NUMBER;
+    
+    --Variaveis de excecoes
+    vr_exc_error EXCEPTION;
+    
+  BEGIN
+    
+    CECRED.pc_log_programa(pr_dstiplog => 'I'
+                         , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
+                         , pr_idprglog => vr_idprglog);
+  
+    --Busca todos os operadores ativos
+    FOR rw_crapope IN cr_crapope LOOP
+        
+      --Verifica se o operador esta na tbcadast_colaborador
+      OPEN cr_tbcadast_colaborador(pr_cdcooper => rw_crapope.cdcooper
+                                  ,pr_cdoperad => rw_crapope.cdoperad);
+        FETCH cr_tbcadast_colaborador
+          INTO rw_tbcadast_colaborador;
+            
+        --Se não retornar nada inativa o operador
+        IF cr_tbcadast_colaborador%NOTFOUND THEN
+          CLOSE cr_tbcadast_colaborador;
+          
+          --Inativa todos os operadores da lista
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 2
+             WHERE ope.cdcooper = rw_crapope.cdcooper
+               AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+          
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);
+                      
+        ELSE
+          CLOSE cr_tbcadast_colaborador;  
+        END IF;
+     
+                
+      
+    END LOOP;
+    
+    CECRED.pc_log_programa(pr_dstiplog => 'F'
+                         , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
+                         , pr_idprglog => vr_idprglog);
+    
+    COMMIT;
+    
+  EXCEPTION
+    WHEN vr_exc_error THEN
+      
+      pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
+
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                           , pr_cdcooper => 0
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 2
+                           , pr_dsmensagem => pr_dscritic                                                
+                           , pr_idprglog => vr_idprglog);  
+                           
+      ROLLBACK;
+    WHEN OTHERS THEN      
+      --Gera log
+      cecred.pc_internal_exception(pr_cdcooper => 0);
+      
+      pr_dscritic := 'Erro nao tratado na CADA0002.pc_bloqueia_operadores: ' || SQLERRM;
+          
+      ROLLBACK;
+  END pc_bloqueia_operadores;
 END CADA0002;
 /
