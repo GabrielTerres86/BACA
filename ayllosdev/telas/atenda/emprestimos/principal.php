@@ -35,11 +35,8 @@
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
  * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
- * 027: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
- * 028: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
- * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
- * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
-
+ * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
+ * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 
 	session_start();
@@ -82,7 +79,6 @@
 	$qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : 0;
 	$qtdialib = (isset($_POST['qtdialib'])) ? $_POST['qtdialib'] : 0;
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : 0;
-	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	$dateArray = explode("/", $glbvars["dtmvtolt"]);
 	
@@ -880,14 +876,6 @@
 	else if( operacao == 'E_COMITE_APROV' ){ controlaOperacao('EV'); }
 	else if( flgImp == '1' ){ validaImpressao(); }
 	else if( operacao == 'D_EFETIVA'){ controlaOperacao('E_EFETIVA'); }
-
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-    if (executandoProdutos && operacao == '' ) {
-	  
-		controlaOperacao('I');
-		
-    }
-	  
 
 </script>
 

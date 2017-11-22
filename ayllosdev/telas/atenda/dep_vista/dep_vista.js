@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 04/11/2017
+   Data : Fevereiro/2007                  Última Alteração: 14/10/2015
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -19,8 +19,6 @@
 							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
 							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
 							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
-                             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
-                                          (Jonata - RKAM P364).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -29,19 +27,6 @@ var dtfimper = "";
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
-	
-	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
-	if(sitaucaoDaContaCrm == '2' || 
-	   sitaucaoDaContaCrm == '3' || 
-	   sitaucaoDaContaCrm == '4' || 
-	   sitaucaoDaContaCrm == '5' || 
-	   sitaucaoDaContaCrm == '7' || 
-	   sitaucaoDaContaCrm == '8' || 
-	   sitaucaoDaContaCrm == '9'){ 
-	   opcao ="1";
-	   id="1";
-	}
-	
 	if (opcao == "0") {	// Opção Principal
 		var msg = "dep&oacute;sitos &agrave; vista";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/principal.php";
@@ -383,59 +368,59 @@ function controlaLayout( nomeForm ){
 	var altura = '253px';
 
 	if (nomeForm == 'frmDadosDepVista') {
-	  
-	  //Seleção dos Labels e Inputs
+
+        //Seleção dos Labels e Inputs
         if ($.browser.msie) {
             $('fieldset').css({ 'padding-top': '6px' });
-	  } else {
+        } else {
             $('fieldset').css({ 'padding': '4px 4px' });
-	  }
+        }
 
         cTodos = $('input', '#' + nomeForm);
-	  
+
         var Lvlsddisp = $('label[for="vlsddisp"]', '#' + nomeForm);
         var Cvlsddisp = $('#vlsddisp', '#' + nomeForm);
-	  
+
         var Lvlsaqmax = $('label[for="vlsaqmax"]', '#' + nomeForm);
         var Cvlsaqmax = $('#vlsaqmax', '#' + nomeForm);
-	  
+
         var Lvlsdbloq = $('label[for="vlsdbloq"]', '#' + nomeForm);
         var Cvlsdbloq = $('#vlsdbloq', '#' + nomeForm);
-	  
+
         var Lvlacerto = $('label[for="vlacerto"]', '#' + nomeForm);
         var Cvlacerto = $('#vlacerto', '#' + nomeForm);
-	  
+
         var Lvlsdblpr = $('label[for="vlsdblpr"]', '#' + nomeForm);
         var Cvlsdblpr = $('#vlsdblpr', '#' + nomeForm);
-	  
+
         var Lvlsdblfp = $('label[for="vlsdblfp"]', '#' + nomeForm);
-	  var Cvlsdblfp = $('#vlsdblfp', '#' + nomeForm);
+        var Cvlsdblfp = $('#vlsdblfp', '#' + nomeForm);
 
         var Lvlipmfpg = $('label[for="vlipmfpg"]', '#' + nomeForm);
         var Cvlipmfpg = $('#vlipmfpg', '#' + nomeForm);
-	  
+
         var Lvlsdchsl = $('label[for="vlsdchsl"]', '#' + nomeForm);
         var Cvlsdchsl = $('#vlsdchsl', '#' + nomeForm);
-	  
+
         var Lvlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
         var Cvlblqjud = $('#vlblqjud', '#' + nomeForm);
-	  
+
         var Lvlstotal = $('label[for="vlstotal"]', '#' + nomeForm);
         var Cvlstotal = $('#vlstotal', '#' + nomeForm);
-	  
+
         var Lvllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
         var Cvllimcre = $('#vllimcre', '#' + nomeForm);
-	  
+
         var Ldtultlcr = $('label[for="dtultlcr"]', '#' + nomeForm);
         var Cdtultlcr = $('#dtultlcr', '#' + nomeForm);
-	  
+
         var Lvllimdis = $('label[for="vllimdis"]', '#' + nomeForm);
         var Cvllimdis = $('#vllimdis', '#' + nomeForm);
-	  
+
         var Ldtliberacao = $('label[for="dtliberacao"]', '#' + nomeForm);
         var Cdtliberacao = $('#dtliberacao', '#' + nomeForm);
 
-	  //Formatação dos Labels
+        //Formatação dos Labels
         Lvlsddisp.addClass('rotulo').css('width', '110px');
         Lvlsaqmax.css('width', '180px');
         Lvlsdbloq.addClass('rotulo').css('width', '110px');
@@ -450,8 +435,8 @@ function controlaLayout( nomeForm ){
         Ldtultlcr.css('width', '180px');
         Lvllimdis.css('width', '180px');
         Ldtliberacao.css('width', '180px');
-	  
-	  //Formatação dos campos
+
+        //Formatação dos campos
         Cvlsddisp.css('width', '87px').addClass('monetario');
         Cvlsaqmax.css('width', '93px').addClass('monetario');
         Cvlsdbloq.css('width', '87px').addClass('monetario');
@@ -466,10 +451,10 @@ function controlaLayout( nomeForm ){
         Cdtultlcr.css('width', '93px').addClass('data');
         Cvllimdis.css('width', '93px').addClass('monetario');
         Cdtliberacao.css('width', '93px').addClass('data');
-	  
-	  cTodos.desabilitaCampo();
-	  	
-	}else if( nomeForm == 'frmExtDepVista' ){
+
+        cTodos.desabilitaCampo();
+
+    }else if( nomeForm == 'frmExtDepVista' ){
 	
 		altura = '245px';
 	
@@ -647,9 +632,9 @@ function controlaLayout( nomeForm ){
 	
 	} else if (nomeForm == 'frmSaldoAnt') {
 
-		var altura = '257px';
-	
-		// rotulos
+        var altura = '257px';
+
+        // rotulos
         rDtrefere = $('label[for="dtrefere"]', '#' + nomeForm);
         rVlsddisp = $('label[for="vlsddisp"]', '#' + nomeForm);
         rVlsdbloq = $('label[for="vlsdbloq"]', '#' + nomeForm);
@@ -662,7 +647,7 @@ function controlaLayout( nomeForm ){
         rVlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
         rVllimcpa = $('label[for="vllimcpa"]', '#' + nomeForm);
         
-		
+
         rDtrefere.addClass('rotulo').css({ 'width': '200px' });
         rVlsddisp.addClass('rotulo').css({ 'width': '200px' });
         rVlsdbloq.addClass('rotulo').css({ 'width': '200px' });
@@ -675,7 +660,7 @@ function controlaLayout( nomeForm ){
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
         rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
 
-		// campos
+        // campos
         cDtrefere = $('#dtrefere', '#' + nomeForm);
         cVlsddisp = $('#vlsddisp', '#' + nomeForm);
         cVlsdbloq = $('#vlsdbloq', '#' + nomeForm);
@@ -687,7 +672,7 @@ function controlaLayout( nomeForm ){
         cVllimcre = $('#vllimcre', '#' + nomeForm);
         cVlblqjud = $('#vlblqjud', '#' + nomeForm);
         cVllimcpa = $('#vllimcpa', '#' + nomeForm);
-		
+
         cDtrefere.css({ 'width': '75px' });
         cVlsddisp.css({ 'width': '75px', 'text-align': 'right' });
         cVlsdbloq.css({ 'width': '75px', 'text-align': 'right' });
@@ -699,11 +684,11 @@ function controlaLayout( nomeForm ){
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
-		
-        $('input, select', '#' + nomeForm).desabilitaCampo();
-		cDtrefere.habilitaCampo();
 
-	} else if ( nomeForm == 'frmExtCash' ) {
+        $('input, select', '#' + nomeForm).desabilitaCampo();
+        cDtrefere.habilitaCampo();
+
+    } else if ( nomeForm == 'frmExtCash' ) {
 
 		var altura = '210px';
 

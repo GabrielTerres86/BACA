@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: lancamentos_futuros.js
       Autor: Guilherme
-      Data : Fevereiro/2007                Ultima Alteracao: 04/11/2017
+      Data : Fevereiro/2007                Ultima Alteracao: 27/05/2016
 
       Objetivo  : Biblioteca de funcoes da rotina OCORRENCIAS da tela
                   ATENDA
@@ -13,10 +13,7 @@
 
             27/05/2016 - Inclusao de selecao dos debitos. (Jaison/James)
 
-			25/07/2016 - Adicionado função controlaFoco  (Evandro - RKAM)
-            
-             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
-                           (Jonata - RKAM P364).
+			25/07/2016 - Adicionado função controlaFoco  (Evandro - RKAM)	
  ***********************************************************************/
 
 var glb_gen_dstabela, glb_gen_cdhistor, glb_gen_recid; 
@@ -52,7 +49,6 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		url: UrlSite + "telas/atenda/lancamentos_futuros/principal.php",
 		data: {
 			nrdconta: nrdconta,
-			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
 			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {

@@ -62,13 +62,7 @@
                              Melhoria 147 (Heitor - RKAM)
 
                 13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
-              
-			   11/06/2017 - Ajustes realizados:
-						     - Criados novos campos na tabela tt-crapass para 
-							   verificar se o termo de cancelamento foi digitalizado ou nao;
-							 - Criado a tt-contas_demitidas para atender a nova opcao da tela MATRIC;
-							 Jonata - RKAM (P364).
-							  
+               
                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                             PRJ339 - CRM (Odirlei-AMcom)  
 
@@ -399,21 +393,6 @@ DEF TEMP-TABLE tt-crapcrl  NO-UNDO
     FIELD dsestcvl AS CHAR
     FIELD dtmvtolt AS DATE.
   */
-  
-  
-DEF TEMP-TABLE tt-contas_demitidas
-    FIELD cdcooper LIKE crapass.cdcooper
-    FIELD nrdconta LIKE crapass.nrdconta
-    FIELD inpessoa LIKE crapass.inpessoa
-    FIELD nmprimtl LIKE crapass.nmprimtl
-	FIELD vldcotas LIKE crapcot.vldcotas
-	FIELD dtdemiss LIKE crapass.dtdemiss
-	FIELD qtdparce AS INT
-	FIELD formadev AS INT
-	FIELD datadevo AS DATE
-	FIELD mtdemiss LIKE crapass.cdmotdem.
-	
-	
 /*...........................................................................*/
 
 

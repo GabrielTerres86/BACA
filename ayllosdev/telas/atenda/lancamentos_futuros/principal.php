@@ -3,7 +3,7 @@
 	/************************************************************************
 	    Fonte: principal.php
 	    Autor: Guilherme
-	    Data : Fevereiro/2008               Ultima Alteracao: 04/11/2017
+	    Data : Fevereiro/2008               Ultima Alteracao: 27/05/2016
 
 	    Objetivo  : Listar os Lancamentos Futuros
 
@@ -13,9 +13,6 @@
 			  21/07/2015 - Exclusao de lancamentos futuros (Tiago)
 		
 			  27/05/2015 - Inclusao do fldebito. (Jaison/James)
-
-			   04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
-                           (Jonata - RKAM P364).
 
 	  ************************************************************************/
 	
@@ -42,7 +39,6 @@
 	}	
 	
 	$nrdconta = $_POST["nrdconta"];
-	$sitaucaoDaContaCrm = $_POST["sitaucaoDaContaCrm"];
 
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -171,29 +167,15 @@
 </table>
 <div id="divBotoes">	
 	<a href="#" class="botao" id="btVoltar">Voltar</a>
-	
-	<?php
-	   //Projeto CRM: Para a situações de conta abaixo, a tela deve ser apresentada apenas para consulta.
-		if(!($sitaucaoDaContaCrm == '2' || 
-			 $sitaucaoDaContaCrm == '3' || 
-			 $sitaucaoDaContaCrm == '4' || 
-			 $sitaucaoDaContaCrm == '5' || 
-			 $sitaucaoDaContaCrm == '7' || 
-			 $sitaucaoDaContaCrm == '8' || 
-			 $sitaucaoDaContaCrm == '9')){ 
-	?>			
 	<a href="#" class="botao" id="btDebitar">Debitar</a>
     <?php
         // Verifica se o usuario tem opcao de exclusao de lancamentos
         if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"E",false)) == "") {
             ?>
-            <a href="#" class="botao" id="btExcluir">Excluir</a>
+	<a href="#" class="botao" id="btExcluir">Excluir</a>
             <?php
         }
     ?>
-	<?php }
-			 ?>
-	
 	<br />	
 </div>
 <script type="text/javascript">

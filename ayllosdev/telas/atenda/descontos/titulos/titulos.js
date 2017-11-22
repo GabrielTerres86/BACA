@@ -26,7 +26,6 @@
  * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
  * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
- * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -74,7 +73,6 @@ function carregaBorderosTitulos() {
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
-			executandoProdutos: executandoProdutos,
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {

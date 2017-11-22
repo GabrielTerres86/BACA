@@ -26,9 +26,7 @@
 						  de desconto de cheque. Projeto 300. (Lombardi)
 			
              16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
-			 
-             26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-			 
+
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
 			 
 ************************************************************************/
@@ -132,8 +130,6 @@ function carregaTitulos() {
 			dataType: "html",
 			data: {
 				nrdconta: nrdconta,
-				cdproduto: cdproduto,
-				executandoProdutos: executandoProdutos,
 				redirect: "html_ajax"
 			},		
 			error: function(objAjax,responseError,objExcept) {
@@ -162,8 +158,6 @@ function carregaCheques() {
 			dataType: "html",
 			data: {
 				nrdconta: nrdconta,
-				cdproduto: cdproduto,
-				executandoProdutos: executandoProdutos,
 				redirect: "html_ajax"
 			},		
 			error: function(objAjax,responseError,objExcept) {

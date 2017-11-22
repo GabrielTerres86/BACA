@@ -11,14 +11,15 @@
 				  
 				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
-					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
-					
-				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
+				 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
+				
+				 18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
 
-					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+				 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
 				 
-                 26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).					 				 
-				 	 
+				 28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
+                              esteja cadastrado na cooperativa. (Kelvin)
+					 
                  23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
                               replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)                    
                               
@@ -96,7 +97,6 @@
 	// Controle remoção da classe erro dos campos
 	//----------------------------------------------------------------------------------------------------------------------------------		
 	echo '$("input,select","#frmCabMatric").removeClass("campoErro");';
-	echo '$("input,select","#frmFiltro").removeClass("campoErro");';
 	echo '$("input,select","#frmJuridico").removeClass("campoErro");';		
 	echo '$("input,select","#frmFisico").removeClass("campoErro");';		
 		
@@ -114,7 +114,7 @@
 		
 		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';
 				
-		echo '$("#nrdconta","#frmFiltro").val(' . $nrctanov . ');';
+		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
 		
         //Removido, pois tela será aberta apos salvar os dados, devido a replicação de dados da pessoa.
 		//echo "verificaResponsavelLegal();";
@@ -125,7 +125,7 @@
     // Se for opcao AR, para apenas validar o preenchimento do responsavel legal,
     //  deve chamar rotina pra continuar fluxo da tela
     if ($operacao == 'AR'){
-
+    
       //echo 'impressao_inclusao();';
 		die();	
 		
@@ -195,15 +195,25 @@
             $metodo = ($inpessoa == 1) ? "verificaResponsavelLegal();" : "abrirProcuradores();";
 		}
 		else {
+			$metodo = "estadoInicial();";	
+		}
 				
-			$metodo = "controlaVoltar();";	
+		$metodoMsg = "exibirMensagens('" . $stringArrayMsg . "','" . $metodo . "')";		
 				
+		if ( $msgRecad != '' ){
+			if ($msgAtCad != '') {
+				$metRecad = 'showConfirmacao(\''.$msgAtCad.'\',\'1Confirma&ccedil;&atilde;o - MATRIC\',\'revisaoCadastral(\"'.$chaveAlt.'\",\"'.$tpAtlCad.'\",\"b1wgen0052.p\",\"'.$stringArrayMsg.'\",\"estadoInicial();\")\',\'revisaoCadastral(\"'.$chaveAlt.'\",\"0\",\"b1wgen0052.p\",\"'.$stringArrayMsg.'\",\"estadoInicial();\")\' ,\'sim.gif\',\'nao.gif\');';
+			} else {
+				$metRecad = 'revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0052.p\',\''.$stringArrayMsg.'\',\'estadoInicial();\');';	
 			}
 						
-		$metodoMsg = "exibirMensagens('" . $stringArrayMsg . "','" . $metodo . "')";		
+			exibirConfirmacao($msgRecad,'Confirmação - MATRIC',$metRecad,$metodoMsg,false); 
 						
+		}else if ( $msgAtCad != '' ) {
+			exibirConfirmacao($msgAtCad,'Confirmação - MATRIC','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0052.p\',\''.$stringArrayMsg.'\',\'estadoInicial();\');',$metodoMsg,false); 
+		}else{
 			echo $metodoMsg;
-			
+		}	
 		}	
 	
 	if ($operacao == 'LCD') { // Verificar se este CPF/CNPJ ja tem conta
@@ -224,33 +234,33 @@
 		}
 		//Devera solicitar a duplicacao da conta
 		else if($flgdpcnt == 2) {
-		// Se ja poussui uma conta, perguntar se deseja duplicar 
-		if ( count ($xmlObjeto->inf) == 1) {
-			$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
-			echo "outconta = '".$nrdconta_org."';";
-			$metodoSim = "mostrarRotina('$operacao');";
-			exibirConfirmacao('CPF/CNPJ já possui a conta ' . $nrdconta_org . 
-							  ' na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
-		}
-		else 
-		if ( count ($xmlObjeto->inf) > 1) { // Se possui mais de uma conta, perguntar se deseja duplicar
+			// Se ja poussui uma conta, perguntar se deseja duplicar 
+			if ( count ($xmlObjeto->inf) == 1) {
+				$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
+				echo "outconta = '".$nrdconta_org."';";
+				$metodoSim = "mostrarRotina('$operacao');";
+				exibirConfirmacao('CPF/CNPJ já possui a conta ' . $nrdconta_org . 
+								  ' na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
+			}
+			else 
+			if ( count ($xmlObjeto->inf) > 1) { // Se possui mais de uma conta, perguntar se deseja duplicar
 
-			
-			$XMLContas = '';
-			
-			// Juntar todas as contas que o cooperado ja possui
-			for ($i=0; $i < count ($xmlObjeto->inf); $i++) {
 				
-				$XMLContas  = ($XMLContas != '') ? $XMLContas . '|' : '';			
-				$XMLContas .=  $xmlObjeto->inf[$i]->nrdconta . ';' . $xmlObjeto->inf[$i]->dtadmiss ;
+				$XMLContas = '';
 				
+				// Juntar todas as contas que o cooperado ja possui
+				for ($i=0; $i < count ($xmlObjeto->inf); $i++) {
+					
+					$XMLContas  = ($XMLContas != '') ? $XMLContas . '|' : '';			
+					$XMLContas .=  $xmlObjeto->inf[$i]->nrdconta . ';' . $xmlObjeto->inf[$i]->dtadmiss ;
+					
+				}
+				
+				echo "XMLContas = '$XMLContas';";
+				$metodoSim = "mostrarRotina('LCC');"; 
+				exibirConfirmacao('CPF/CNPJ já possui a conta na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);			
 			}
-			
-			echo "XMLContas = '$XMLContas';";
-			$metodoSim = "mostrarRotina('LCC');"; 
-			exibirConfirmacao('CPF/CNPJ já possui a conta na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);			
 		}
-			}
 		//devera carregar as informacoes nos campos da matric
 		else if($flgdpcnt == 3) {
 			$dtconsultarfb = $xmlObjeto->infcadastro[0]->dtconsultarfb;
@@ -350,7 +360,7 @@
 		
 		$nomeForm = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 			
-		echo "$('#nrdconta','#frmFiltro').val($nrctanov);";
+		echo "$('#nrdconta','#frmCabMatric').val($nrctanov);";
 		echo "nrdconta = '$nrctanov';";
 		echo "operacao = 'DCC';";
 		echo "manterOutros('$nomeForm');";

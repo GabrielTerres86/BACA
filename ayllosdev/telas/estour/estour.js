@@ -6,7 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 02/09/2015 - Ajuste para correção da conversão realizada pela DB1
 					     	   (Adriano).
- *				  21/07/2017 - Alterações referentes ao cancelamento manual de produtos do projeto 364.(Reinert)
+ *
  * --------------
  */
  //Formulários e Tabela
@@ -108,26 +108,16 @@ function formataCabecalho() {
 	
 	cNrdconta.focus();	
 		
-	if (nrdconta != '') {
-		$("#nrdconta","#frmCab").val(nrdconta);
-		$("#btnOK","#frmCab").click();		
-	}else{
-		nrdconta = 0;
-	}
-		
 	return false;	
 }
 
 //botoes
 function btnVoltar() {
 
-	if (executandoImpedimentos){
-		sequenciaImpedimentos();
-	}else{
 	$('#frmCab').limpaFormulario();
 	
 	estadoInicial();
-	}
+		
 	return false;
 }
 
@@ -280,12 +270,4 @@ function selecionaEstouro(tr){
 			
 	
 	return false;
-}
-
-function sequenciaImpedimentos() {
-    if (executandoImpedimentos) {	
-		eval(produtosCancM[posicao - 1]);
-		posicao++;
-		return false;
-    }
 }

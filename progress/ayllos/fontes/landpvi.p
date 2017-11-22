@@ -498,10 +498,6 @@
 
                12/06/2017 - Nao deixar realizar lancamento do historico 1668 - Estorno de débito indevido               
                             na viacredi (Tiago/Fabricio #661260)
-
-              11/07/2017 - Ajustes historico 354
-                           (Demetrius Wolff MOUTS - Prj 364)
-
                             
                10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
                             cartao do titular nao for de um operador isso na leitura da crapcrm 
@@ -4237,8 +4233,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            tel_cdhistor = 931 THEN    /*credito cotas proc*/
            DO:
                IF   tel_cdhistor = 354   THEN
-                    ASSIGN his_cdhistor = 2136
-                           his_nrdolote = 600038
+                    ASSIGN his_cdhistor = 81
+                           his_nrdolote = 10002
                            his_tplotmov = 2.
                ELSE
                IF   tel_cdhistor = 451   THEN
@@ -4370,6 +4366,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
                     END.
                
+     
                IF   tel_cdhistor = 104   OR
                     tel_cdhistor = 302   OR 
                     tel_cdhistor = 1806  THEN
@@ -4413,42 +4410,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                     tel_cdhistor = 451   OR
                     tel_cdhistor = 127   THEN
                     DO: 
-						IF  tel_cdhistor = 354 THEN
-							DO: 
-								FIND craplcm WHERE craplcm.cdcooper = glb_cdcooper AND
-												   craplcm.dtmvtolt = tel_dtmvtolt AND
-												   craplcm.cdagenci = 1            AND
-												   craplcm.cdbccxlt = 100          AND
-												   craplcm.nrdolote = his_nrdolote AND
-												   craplcm.nrdctabb = tel_nrdctabb AND
-												   craplcm.nrdocmto = tel_nrdocmto
-												   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-								IF   AVAILABLE craplcm   THEN
-									 DO:
-										 glb_cdcritic = 92.
-										 NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
-										 UNDO, NEXT INICIO.
-									 END.
-
-								CREATE craplcm.
-								ASSIGN craplcm.cdcooper = glb_cdcooper
-									   craplcm.cdoperad = glb_cdoperad
-									   craplcm.dtmvtolt = tel_dtmvtolt
-									   craplcm.cdagenci = 1
-									   craplcm.cdbccxlt = 100
-									   craplcm.nrdolote = his_nrdolote
-									   craplcm.nrdconta = tel_nrdctabb
-									   craplcm.nrdctabb = tel_nrdctabb
-									   craplcm.nrdctitg = STRING(tel_nrdctabb,
-																	 "99999999")
-									   craplcm.nrdocmto = tel_nrdocmto
-									   craplcm.cdhistor = 2137
-									   craplcm.nrseqdig = crablot.nrseqdig + 1
-									   craplcm.vllanmto = tel_vllanmto
-									   craplcm.cdpesqbb = STRING(tel_nrdctabb).
-								VALIDATE craplcm.
-							END.
-							
                         FIND craplct WHERE craplct.cdcooper = glb_cdcooper AND
                                            craplct.dtmvtolt = tel_dtmvtolt AND
                                            craplct.cdagenci = 1            AND
@@ -4606,8 +4567,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                              
                              crapcot.vldcotas = crapcot.vldcotas - tel_vllanmto.
                         END.
-							
-                    END. /*FIM DO */
+                    END.
                ELSE
                    IF  tel_cdhistor = 931 THEN 
                        DO:

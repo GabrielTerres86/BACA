@@ -111,10 +111,8 @@
  * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
- * 091: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
- * 092: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 093: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
- * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
+ * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -361,7 +359,6 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             idseqttl: idseqttl,
             operacao: operacao,
             inconfir: 1,
-			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1253,7 +1250,6 @@ function controlaOperacao(operacao) {
             nrcpfcgc_busca: nrcpfcgc_busca,
             inconfir: 1,
             nomeAcaoCall: nomeAcaoCall,
-			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1603,7 +1599,6 @@ function manterRotina(operacao) {
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta,
-            executandoProdutos: executandoProdutos,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

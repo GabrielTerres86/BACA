@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Março/2009                Última Alteração: 26/06/2017
+	 Data : Março/2009                Última Alteração: 12/09/2016
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos de cheques da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -21,8 +21,6 @@
 			      17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
 
 				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC". PRJ300 (Lombardi)
-
-				  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
 	************************************************************************/
 	
@@ -153,7 +151,7 @@
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoesChequesLimite">
+<div id="divBotoes">
 	<a href="#" class="botao" name="btnVoltar" id="btnVoltar" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" >Voltar</a>
 	<a href="#" class="botao" name="btnAlterar" id="btnAlterar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> >Alterar</a>
 	<a href="#" class="botao" name="btnCancelar" id="btnCancelar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> >Cancelar</a>
@@ -178,12 +176,4 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-		
-		$("#btnIncluir", "#divBotoesChequesLimite").click();
-		
-	}
-	
 </script>

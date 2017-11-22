@@ -312,7 +312,7 @@
                             
                29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
                             (Lucas Ranghetti #681579)
-
+                            
                17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                             conta e referencia no mesmo dia(dtmvtolt) porem com valores
                             diferentes (Lucas Ranghetti #684123)    

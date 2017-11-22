@@ -39,9 +39,6 @@
  *
  *                05/06/2017 - Alteração nas chamadas AJAX da revisão cadastral e no processo de salvar (CONTA-CORRENTE).
  *                             (Andrey Formigari - Mouts. SD 678767)
-
-                 19/06/2017 - Ajuste para inclusão do novo tipo de situação da conta "Desligamento por determinação do BACEN" ( Jonata - RKAM P364).
-
  */
     session_start();
 	require_once('../../../includes/config.php');
@@ -226,9 +223,9 @@
 			$nmdcampo = ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
 
 			if ( $nmdcampo == "" ) {
-				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 			} else {
-				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','bloqueiaFundo(divRotina,\''.$nmdcampo.'\',\'frmContaCorrente\')',false);
+				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina,\''.$nmdcampo.'\',\'frmContaCorrente\')',false);
 			}
 		}
 		
@@ -275,9 +272,7 @@
 				} else if ( $tipconfi == 2 ) {
 					echo 'hideMsgAguardo();';
 					echo "showConfirmacao('Deseja visualizar as cr&iacute;ticas?','Confirma&ccedil;&atilde;o - Ayllos','imprimeCritica(\'\');','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
-				} else if ( $tipconfi == 3 ) {		
-					exibirConfirmacao(utf8_encode($msgconfi),'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\''.$opeconfi.'\')','bloqueiaFundo(divRotina)',false);
-				}
+				}		
 			}
 		
 		

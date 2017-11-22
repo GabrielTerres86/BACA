@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: cheques.php
 	 Autor: Guilherme
- 	 Data : Março/2009                 Última Alteração: 26/06/2017
+	 Data : Março/2009                 Última Alteração: 18/11/2011
 
 	 Objetivo  : Mostrar opção cheques da Rotina de Desconto de Cheques
 
@@ -16,8 +16,6 @@
 			
 				 09/09/2016 - Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear
 							  inclusao de desconto de cheque. Projeto 300. (Lombardi)
-				
-                 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 				
 	***************************************************************************/
 	
@@ -46,8 +44,6 @@
 	}
 
 	$nrdconta = $_POST["nrdconta"];
-	$executandoProdutos = $_POST['executandoProdutos'];
-	$cdproduto = $_POST['cdproduto'];
 	
 	// Monta o xml de requisição
 	$xmlDesctoChq  = "";
@@ -131,7 +127,6 @@
 	</fieldset>
 </form>
 <div id="divBotoes" >
-	
 	<a href="#" class="botao" id="btnvoltar" name="btnvoltar" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;">Voltar</a>
 	<a href="#" class="botao" id="btnbordero" name="btnbordero"  <?php if (!in_array("DSC CHQS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosCheques();return false;"'; } ?>>Border&ocirc;s</a>
 	<a href="#" class="botao" id="btnlimite" name="btnlimite" <?php if (!in_array("DSC CHQS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesCheques();return false;"'; } ?>>Limite</a>
@@ -141,7 +136,6 @@
 </div>
 
 <script type="text/javascript">
-
 dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
 // Muda o título da tela
@@ -154,18 +148,4 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-	
-       //Bordero	
-	  if (cdproduto == 34 ) {
-		$('#btnbordero','#divBotoes').click();
-		
-	  //Limite
-	  }else if (cdproduto == 36 ) {
-		$('#btnlimite','#divBotoes').click();
-	  }
-	}
-
 </script>

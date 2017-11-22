@@ -692,24 +692,6 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
   /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
   PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                        ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
-                                      
-  PROCEDURE pc_obtem_agendamentos(pr_cdcooper               IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
-                                 ,pr_cdagenci               IN crapage.cdagenci%TYPE              --> Código do PA
-                                 ,pr_nrdcaixa               IN craplot.nrdcaixa%TYPE              --> Numero do Caixa
-                                 ,pr_nrdconta               IN crapass.nrdconta%TYPE              --> Numero da Conta
-                                 ,pr_dsorigem               IN VARCHAR2                           --> Descricao da Origem
-                                 ,pr_dtmvtolt               IN crapdat.dtmvtolt%TYPE              --> Data de Movimentacao Atual
-                                 ,pr_dtageini               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Inicial
-                                 ,pr_dtagefim               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Final
-                                 ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
-                                 ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
-                                 ,pr_nrregist               IN INTEGER                            --> Numero da Registros
-                                 ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
-                                 ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
-                                 ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
-                                 ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
-                                 ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
-                                                                       
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
