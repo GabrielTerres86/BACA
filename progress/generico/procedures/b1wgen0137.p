@@ -1433,29 +1433,27 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         NEXT.
                  
                         
-                     IF tt-documento-digitalizado.nrdconta > 0 THEN
-                        DO:
-                    /* Verifica os documentos de cpf e rg  se foram digitalizados*/
-                    IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
-                        FIND FIRST tt-documento-digitalizado WHERE
-                                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
-                                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
-                                   CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
-                                   tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
-                                   tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
-                                   USE-INDEX tt-documento-digitalizado3
-                                   NO-LOCK NO-ERROR NO-WAIT.
-                    ELSE /* Verifica se o contrato foi digitalizado */                                    
-                        FIND FIRST tt-documento-digitalizado WHERE
-                                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
-                                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
-                                   tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
-                                   tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
-                                   USE-INDEX tt-documento-digitalizado3 
-                                   NO-LOCK NO-ERROR NO-WAIT.
-                         END
-                      ELSE
+                          /* Verifica os documentos de cpf e rg  se foram digitalizados*/
+                          IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
+                              FIND FIRST tt-documento-digitalizado WHERE
+                                         tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
+                                         CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
+                                         tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
+                                         tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                         USE-INDEX tt-documento-digitalizado3
+                                         NO-LOCK NO-ERROR NO-WAIT.
+                          ELSE /* Verifica se o contrato foi digitalizado */                                    
+                              FIND FIRST tt-documento-digitalizado WHERE
+                                         tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                                         tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                                         tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
+                                         tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                         USE-INDEX tt-documento-digitalizado3 
+                                         NO-LOCK NO-ERROR NO-WAIT.
+                  
+                  IF  NOT AVAIL tt-documento-digitalizado  THEN
                          DO:           
                             IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
                                 FIND FIRST tt-documento-digitalizado WHERE
@@ -1475,6 +1473,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                            USE-INDEX tt-documento-digitalizado3 
                                            NO-LOCK NO-ERROR NO-WAIT.               
                          END.
+
 
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
@@ -3279,19 +3278,16 @@ PROCEDURE efetua_batimento_ged_termos:
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
 
-        IF tt-documento-digitalizado.nrdconta > 0 THEN
-           DO:
-        /* Verifica se a declaracao de pep foi digitalizada */
-        FIND FIRST tt-documento-digitalizado WHERE
-                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+            /* Verifica se a declaracao de pep foi digitalizada */
+            FIND FIRST tt-documento-digitalizado WHERE
+                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                       tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND		
                        tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc AND
                        tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
                        NO-LOCK NO-ERROR NO-WAIT.
 					        
-           END.
-        ELSE 
+       IF NOT AVAIL tt-documento-digitalizado  THEN
           DO:
             /* Verifica se a declaracao de pep foi digitalizada */
             FIND FIRST tt-documento-digitalizado WHERE
@@ -3299,7 +3295,7 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc AND
                        tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
-                   NO-LOCK NO-ERROR NO-WAIT.
+                       NO-LOCK NO-ERROR NO-WAIT.
           END.
 
         /*Verifica se registro existe*/
