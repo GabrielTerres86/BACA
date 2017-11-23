@@ -114,6 +114,7 @@
  * 091: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
  * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 091: [23/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -6036,9 +6037,6 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
-
-	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
-	return false;
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
