@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 12/06/2017
+ * FONTE        : emprestimos.js                            Última alteração: 23/10/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -112,6 +112,8 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
  * 091: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
+ * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -4415,8 +4417,8 @@ function insereHipoteca(operacao, opContinua) {
 
     eval('var arrayHipoteca' + i + ' = new Object();');
     eval('arrayHipoteca' + i + '["dscatbem"] = $("#dscatbem","#frmHipoteca").val();');
-    eval('arrayHipoteca' + i + '["dsbemfin"] = $("#dsbemfin","#frmHipoteca").val();');
-    eval('arrayHipoteca' + i + '["dscorbem"] = $("#dscorbem","#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["dsbemfin"] = removeCaracteresInvalidos($("#dsbemfin","#frmHipoteca").val(), true);');
+    eval('arrayHipoteca' + i + '["dscorbem"] = removeCaracteresInvalidos($("#dscorbem","#frmHipoteca").val(), true);');
     eval('arrayHipoteca' + i + '["idseqhip"] = $("#idseqhip","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["vlmerbem"] = $("#vlmerbem","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["lsbemfin"] = "";');
@@ -6034,6 +6036,9 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
+
+	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+	return false;
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
