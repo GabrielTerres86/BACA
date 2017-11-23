@@ -1321,10 +1321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     cr_situacao_mensagem_found BOOLEAN := FALSE;
     
     --Variáveis
-    vr_cdmensagem_insert tbgen_notif_msg_cadastro.cdorigem_mensagem%TYPE;
-    vr_dhenvio_mensagem tbgen_notif_manual_prm.dhenvio_mensagem%TYPE;
-    vr_dsfiltro_cooperativas tbgen_notif_manual_prm.dsfiltro_cooperativas%TYPE;
-    vr_validacao NUMBER:= 0;
     ex_erro EXCEPTION;
     
     -- Variavel de criticas
@@ -1378,6 +1374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     UPDATE tbgen_notif_manual_prm man
        SET man.cdsituacao_mensagem = 3 -- CANCELADO
      WHERE man.cdmensagem = pr_cdmensagem;
+     
+    --Se for filtro por CSV, apaga os pushes e notificações já geradas no momento do carregamento do CSV
+    --(quando o usuário importou um CSV, e depois importou outro CSV para substitur o anterior)
+    DELETE FROM tbgen_notif_push push WHERE push.cdnotificacao IN (SELECT noti.cdnotificacao FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem);
+    DELETE FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem;
 
   EXCEPTION
     WHEN OTHERS THEN
