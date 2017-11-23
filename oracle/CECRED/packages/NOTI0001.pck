@@ -75,7 +75,7 @@ END NOTI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
 
-  qtdmaxlotepush CONSTANT NUMBER(10) := 1000;
+  qtdmaxlotepush CONSTANT NUMBER(10) := 500;
 
   -- Obtém as variáveis universais da conta (nome da cooperativa, nome do cooperado, etc..)
   FUNCTION fn_obtem_variaveis_universais(pr_cdcooper IN tbgen_notificacao.cdcooper%TYPE
@@ -273,9 +273,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
   
     -- Variáveis do envio de PUSH
     vr_dhenvio_push    DATE;
-    vr_idx_lote_inicio PLS_INTEGER;
-    vr_idx_lote_fim    PLS_INTEGER;
-    vr_cdlote_push     tbgen_notif_lote_push.cdlote_push%TYPE;
   
   BEGIN
    
@@ -339,49 +336,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
       FETCH cr_dispositivos BULK COLLECT
         INTO vr_tab_dispositivos;
       CLOSE cr_dispositivos;
-    
-      -- GERA OS LOTES DE PUSH, DE 1000 EM 1000 REGISTROS (Quantidade que estiver na constante QTDMAXLOTEPUSH)
-      vr_idx_lote_inicio := 1;
-      vr_idx_lote_fim := 0;
-      WHILE vr_idx_lote_inicio <= vr_tab_dispositivos.count LOOP
       
-        BEGIN
+      -- Insere os itens
+      FORALL idx IN 1 .. vr_tab_dispositivos.count
+        INSERT INTO tbgen_notif_push
+          (cdnotificacao
+          ,iddispositivo_mobile
+          ,insituacao
+          ,dhenvio)
+        VALUES
+          (vr_tab_dispositivos(idx).cdnotificacao
+          ,vr_tab_dispositivos(idx).dispositivomobileid
+          ,push_pendente
+          ,vr_dhenvio_push);
         
-          -- Insere o lote 
-          INSERT INTO tbgen_notif_lote_push (dhagendamento)
-          VALUES (vr_dhenvio_push)
-          RETURNING cdlote_push INTO vr_cdlote_push;
-        
-          -- Calcula quantos registro inserir (1000 registros, a nao ser que na última iteração do LOOP restaram menos de 1000)
-          vr_idx_lote_fim := vr_idx_lote_fim + qtdmaxlotepush;
-          IF (vr_idx_lote_fim > vr_tab_dispositivos.count) THEN
-            vr_idx_lote_fim := vr_tab_dispositivos.count;
-          END IF;
-        
-          -- Insere os itens
-          FORALL idx IN vr_idx_lote_inicio .. vr_idx_lote_fim
-            INSERT INTO tbgen_notif_push
-              (cdnotificacao
-              ,iddispositivo_mobile
-              ,cdlote_push
-              ,insituacao)
-            VALUES
-              (vr_tab_dispositivos(idx).cdnotificacao
-              ,vr_tab_dispositivos(idx).dispositivomobileid
-              ,vr_cdlote_push
-              ,push_pendente);
-        
-          COMMIT; -- COMMIT A CADA LOTE
-        
-          -- A próxima iteração do loop deve começar onde esta acabou
-          vr_idx_lote_inicio := vr_idx_lote_fim + 1;
-        
-        EXCEPTION
-          WHEN OTHERS THEN
-            EXIT; -- Se ocorrer erro no envio do push, ignora e segue a vida... não precisamos parar o programa pcausa de erro no envio de PUSH
-        END;
-      
-      END LOOP;
+      COMMIT; -- COMMIT A CADA LOTE
     
     END IF; -- IF rw_params.inenviar_push = 1
   
@@ -586,7 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
   
     CURSOR cr_mensagens IS
       SELECT man.cdmensagem
-            ,man.tpfiltro -- Só gera as notif se for Filtro Manual (= 1) (As mensagens que importam CSV já geraram as notificações na hora)
+            ,man.tpfiltro
             ,man.dhenvio_mensagem
             ,man.dsfiltro_cooperativas
             ,man.dsfiltro_tipos_conta
@@ -676,16 +645,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     FOR idx IN 1 .. vr_mensagens.count LOOP
     
       BEGIN
-        vr_destinatarios := fn_obtem_destinatarios(pr_dsfiltro_cooperativas => vr_mensagens(idx).dsfiltro_cooperativas
-                                                  ,pr_dsfiltro_tipos_conta  => vr_mensagens(idx).dsfiltro_tipos_conta
-                                                  ,pr_tpfiltro_mobile       => vr_mensagens(idx).tpfiltro_mobile);
-      
-        noti0001.pc_cria_notificacoes(pr_cdmensagem    => vr_mensagens(idx).cdmensagem
-                                     ,pr_dhenvio       => vr_mensagens(idx).dhenvio_mensagem
-                                     ,pr_destinatarios => vr_destinatarios);
-      
-        -- Comita para garantir que outro job não execute a mesma mensagem em paralelo
-        COMMIT;
+        IF vr_mensagens(idx).tpfiltro = 1 THEN-- Só gera as notificações se for Filtro Manual (As mensagens que importam CSV já geraram as notificações na hora)
+          vr_destinatarios := fn_obtem_destinatarios(pr_dsfiltro_cooperativas => vr_mensagens(idx).dsfiltro_cooperativas
+                                                    ,pr_dsfiltro_tipos_conta  => vr_mensagens(idx).dsfiltro_tipos_conta
+                                                    ,pr_tpfiltro_mobile       => vr_mensagens(idx).tpfiltro_mobile);
+        
+          noti0001.pc_cria_notificacoes(pr_cdmensagem    => vr_mensagens(idx).cdmensagem
+                                       ,pr_dhenvio       => vr_mensagens(idx).dhenvio_mensagem
+                                       ,pr_destinatarios => vr_destinatarios);
+        
+          -- Comita para garantir que outro job não execute a mesma mensagem em paralelo
+          COMMIT;
+        END IF;
       EXCEPTION
         WHEN OTHERS THEN
           -- Se ocorreu erro, cancela o envio
@@ -702,84 +673,118 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
 
   PROCEDURE pc_job_dispara_push_mobile(pr_dhexecucao IN DATE) IS
   
-    CURSOR cr_lotes IS
-      SELECT lot.cdlote_push
-        FROM tbgen_notif_lote_push lot
-       WHERE lot.dhexecucao IS NULL
-         AND dhagendamento <= pr_dhexecucao
-         AND dhagendamento > pr_dhexecucao - 1 -- Só considera até 1 dia atrás
-         FOR UPDATE;
-    TYPE typ_cr_lotes IS TABLE OF cr_lotes%ROWTYPE INDEX BY BINARY_INTEGER;
-    vr_lotes typ_cr_lotes; -- Cria uma tabela temporária baseada no cursor
-  
+    -- Cursor para verificar se existem pushes pendentes
+    CURSOR cr_pushes_pendentes IS
+    SELECT 1 x
+      FROM tbgen_notif_push p
+     WHERE p.insituacao = 0 -- PENDENTE
+       AND p.dhenvio <= pr_dhexecucao
+       AND p.dhenvio >= pr_dhexecucao - 1; -- Só considera até 1 dia atrás
+    rw_pushes_pendentes cr_pushes_pendentes%ROWTYPE;
+    vr_cr_pushes_pendentes_found BOOLEAN := FALSE;
+    
 		-- Variáveis para utilizar o Aymaru
 		vr_resposta AYMA0001.typ_http_response_aymaru;
 		vr_parametros WRES0001.typ_tab_http_parametros;
     vr_conteudo json := json();
     
+    vr_cdlote_push tbgen_notif_lote_push.cdlote_push%TYPE;
+    vr_exit BOOLEAN;
+    vr_qtd_itens_lote NUMBER(10);
+    vr_qtd_lotes NUMBER(10);
     vr_cdcritic PLS_INTEGER;
     vr_dscritic VARCHAR2(10000);
     
     ex_erro EXCEPTION;
     
   BEGIN
-  
-    -- Gera uma temp table com os dados do cursor (Para não deixar o cursor aberto muito tempo)
-    OPEN cr_lotes;
-    FETCH cr_lotes BULK COLLECT
-      INTO vr_lotes;
-  
-    -- Atualiza a data da execução (para que outra instância do job não capture este registro e envie o push novamente)
-    FORALL idx IN 1 .. vr_lotes.count
-      UPDATE tbgen_notif_lote_push lot
-         SET lot.dhexecucao = SYSDATE
-       WHERE lot.cdlote_push = vr_lotes(idx).cdlote_push;
-  
-    FORALL idx IN 1 .. vr_lotes.count
+    
+    -- Verifica se existem pushes pendentes
+    OPEN cr_pushes_pendentes;
+    FETCH cr_pushes_pendentes
+    INTO rw_pushes_pendentes;
+    vr_cr_pushes_pendentes_found := cr_pushes_pendentes%FOUND;
+    CLOSE cr_pushes_pendentes;
+    
+    -- Se não existem pushes pendentes, retorna
+    IF NOT vr_cr_pushes_pendentes_found THEN
+      RETURN;
+    END IF;
+    
+    vr_exit := FALSE;
+    vr_qtd_itens_lote := 0;
+    vr_qtd_lotes := 0;
+    WHILE NOT vr_exit LOOP
+      
+      -- Insere o lote ([TODO] Remover a data do agendamento, não é mais utilizada)
+      INSERT INTO tbgen_notif_lote_push (dhexecucao)
+      VALUES (SYSDATE)
+      RETURNING cdlote_push INTO vr_cdlote_push;
+      
       UPDATE tbgen_notif_push psh
          SET psh.dhenvio      = SYSDATE
+            ,psh.cdlote_push = vr_cdlote_push
             ,psh.nrtentativas = psh.nrtentativas + 1
             ,psh.insituacao   = 1 -- Processando no Aymaru
-       WHERE psh.cdlote_push = vr_lotes(idx).cdlote_push
-         AND psh.insituacao = 0; --PENDENTE
-  
-    CLOSE cr_lotes;
-    COMMIT;
-  
-    -- Percorre todos os lotes e avisa o Aymaru para processá-los
-    FOR idx IN 1 .. vr_lotes.count LOOP
-      BEGIN
-        
-      vr_conteudo.put('Lote', vr_lotes(idx).cdlote_push ); -- Codigo do lote de push
-			-- Consumir rest do AYMARU
-			AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Mobile/Push/Enviar'
-																				 ,pr_verbo => WRES0001.POST
-																				 ,pr_servico => 'PUSH.MOBILE'
-																				 ,pr_parametros => vr_parametros
-																				 ,pr_conteudo => vr_conteudo
-																				 ,pr_resposta => vr_resposta
-																				 ,pr_dscritic => vr_dscritic
-																				 ,pr_cdcritic => vr_cdcritic);
-                                         
-        -- Se retornou alguma crítica														 
-        IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          -- Gerar crítica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao tentar enviar o push.';
-          RAISE ex_erro;
-        END IF;
+       WHERE psh.insituacao = 0 -- PENDENTE
+         AND psh.dhenvio <= pr_dhexecucao
+         AND psh.dhenvio >= pr_dhexecucao - 1 -- Só considera até 1 dia atrás
+         AND rownum <= qtdmaxlotepush; -- Apenas 500 por lote
       
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Se ocorreu erro, seta todos os pushes do lote para ERRO
-          UPDATE tbgen_notif_push psh
-             SET psh.insituacao = 3 -- ERRO
-           WHERE psh.cdlote_push = vr_lotes(idx).cdlote_push
-             AND psh.insituacao = 1; -- Processando no Aymaru
-          COMMIT;
-          -- [TODO] Colocar log aqui
-          -- (Utilizar vr_cdcritic e vr_dscritic)
-      END;
+      vr_qtd_itens_lote := SQL%ROWCOUNT;
+      vr_qtd_lotes := vr_qtd_lotes+1;
+      
+      IF vr_qtd_itens_lote > 0 THEN
+        COMMIT; -- Comita o lote e os registros para chamar o Aymaru
+        
+        BEGIN
+        
+        vr_conteudo := json();
+        vr_conteudo.put('Lote', vr_cdlote_push ); -- Codigo do lote de push
+        -- Consumir rest do AYMARU
+        AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Mobile/Push/Enviar'
+                                           ,pr_verbo => WRES0001.POST
+                                           ,pr_servico => 'PUSH.MOBILE'
+                                           ,pr_parametros => vr_parametros
+                                           ,pr_conteudo => vr_conteudo
+                                           ,pr_resposta => vr_resposta
+                                           ,pr_dscritic => vr_dscritic
+                                           ,pr_cdcritic => vr_cdcritic);
+                                           
+          -- Se retornou alguma crítica														 
+          IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Gerar crítica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao tentar enviar o push.';
+            RAISE ex_erro;
+          END IF;
+        
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Se ocorreu erro, seta todos os pushes do lote para ERRO
+            UPDATE tbgen_notif_push psh
+               SET psh.insituacao = 3 -- ERRO
+             WHERE psh.cdlote_push = vr_cdlote_push
+               AND psh.insituacao = 1; -- Processando no Aymaru
+            COMMIT;
+        END;
+        
+        -- Se atualizou menos de 500 registros pode sair do loop, pq nao tem mais nada pra atualizar
+        IF vr_qtd_itens_lote < QTDMAXLOTEPUSH THEN
+           vr_exit := TRUE;
+        END IF;
+    
+      -- Se não atualizou nenhum registro, cancela o lote e sai do loop
+      ELSE
+         ROLLBACK;
+         vr_exit := TRUE;
+      END IF;
+      
+      -- A cada 20 lotes, espera 30s para não gargalar o Aymaru
+      IF MOD(vr_qtd_lotes,20) = 0 THEN
+        DBMS_LOCK.SLEEP(30);
+      END IF;
+      
     END LOOP;
   
   END pc_job_dispara_push_mobile;

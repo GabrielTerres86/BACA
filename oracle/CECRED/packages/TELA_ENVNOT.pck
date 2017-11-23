@@ -1052,11 +1052,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
         RAISE vr_exc_erro;
     END IF;
     
-    vr_cdmensagem := pr_cdmensagem;
+    vr_cdmensagem := NVL(pr_cdmensagem,0);
     
     -- Se for INSERT de uma nova mensagem
     IF vr_cdmensagem = 0 THEN
-    
+      BEGIN 
       INSERT INTO tbgen_notif_msg_cadastro msg
                  (msg.cdmensagem
                  ,msg.cdorigem_mensagem
@@ -1088,53 +1088,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
                  ,DECODE(pr_idacao_botao_acao_mobile,2,pr_cdmenu_acao_mobile,NULL) --cdmenu_acao_mobile
                  ,pr_dsmensagem_acao_mobile)
          RETURNING msg.cdmensagem INTO vr_cdmensagem;
-                  
-      INSERT INTO tbgen_notif_manual_prm man
-                  (man.cdmensagem
-                  ,man.cdcooper
-                  ,man.cdoperad
-                  ,man.dhcadastro_mensagem
-                  ,man.dhenvio_mensagem
-                  ,man.cdsituacao_mensagem
-                  ,man.tpfiltro
-                  ,man.dsfiltro_cooperativas
-                  ,man.dsfiltro_tipos_conta
-                  ,man.tpfiltro_mobile
-                  ,man.nmarquivo_csv
-                  ) VALUES
-                  (vr_cdmensagem
-                  ,vr_cdcooper
-                  ,vr_cdoperad
-                  ,SYSDATE --dhcadastro_mensagem
-                  ,vr_dhenvio_mensagem
-                  ,1 -- Situação Ativa
-                  ,pr_tpfiltro
-                  ,vr_dsfiltro_cooperativas
-                  ,pr_dsfiltro_tipos_conta
-                  ,pr_tpfiltro_mobile
-                  ,pr_nmarquivo_csv
-                  );
-    
+       EXCEPTION
+         WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao inserir registro(TBGEN_NOTIF_MSG_CADASTRO) - ' || vr_cdmensagem || '. Erro: ' || SQLERRM;
+           RAISE;
+       END;   
+
+      BEGIN       
+        INSERT INTO tbgen_notif_manual_prm man
+                    (man.cdmensagem
+                    ,man.cdcooper
+                    ,man.cdoperad
+                    ,man.dhcadastro_mensagem
+                    ,man.dhenvio_mensagem
+                    ,man.cdsituacao_mensagem
+                    ,man.tpfiltro
+                    ,man.dsfiltro_cooperativas
+                    ,man.dsfiltro_tipos_conta
+                    ,man.tpfiltro_mobile
+                    ,man.nmarquivo_csv
+                    ) VALUES
+                    (vr_cdmensagem
+                    ,vr_cdcooper
+                    ,vr_cdoperad
+                    ,SYSDATE --dhcadastro_mensagem
+                    ,vr_dhenvio_mensagem
+                    ,1 -- Situação Ativa
+                    ,pr_tpfiltro
+                    ,vr_dsfiltro_cooperativas
+                    ,pr_dsfiltro_tipos_conta
+                    ,pr_tpfiltro_mobile
+                    ,pr_nmarquivo_csv
+                    );
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir registro(TBGEN_NOTIF_MANUAL_PRM). Erro: ' || SQLERRM;
+          RAISE;
+      END;
     ELSE  -- Se for UPDATE de registro existente
       
-      --Atualiza o registro de Mensagem
-      UPDATE tbgen_notif_msg_cadastro msg
-         SET msg.dstitulo_mensagem 		     = pr_dstitulo_mensagem
-            ,msg.cdicone 				           = pr_cdicone
-            ,msg.inenviar_push 		         = pr_inenviar_push
-            ,msg.dstexto_mensagem 		     = pr_dstexto_mensagem
-            ,msg.inexibir_banner 		       = pr_inexibir_banner
-            ,msg.nmimagem_banner 		       = pr_nmimagem_banner
-            ,msg.dshtml_mensagem		       = vr_dshtml_mensagem
-            ,msg.inexibe_botao_acao_mobile = pr_inexibe_botao_acao_mobile
-            ,msg.dstexto_botao_acao_mobile = pr_dstexto_botao_acao_mobile
-            ,msg.dslink_acao_mobile 	     = DECODE(pr_idacao_botao_acao_mobile,1,pr_dslink_acao_mobile,NULL) --dslink_acao_mobile
-            ,msg.cdmenu_acao_mobile 	     = DECODE(pr_idacao_botao_acao_mobile,2,pr_cdmenu_acao_mobile,NULL) --cdmenu_acao_mobile
-            ,msg.dsmensagem_acao_mobile	   = pr_dsmensagem_acao_mobile
-       WHERE msg.cdmensagem = vr_cdmensagem;
-       
-      --Atualiza o registro de Mensagem manual
-       UPDATE tbgen_notif_manual_prm man
+      BEGIN
+        --Atualiza o registro de Mensagem
+        UPDATE tbgen_notif_msg_cadastro msg
+           SET msg.dstitulo_mensagem 		     = pr_dstitulo_mensagem
+              ,msg.cdicone 				           = pr_cdicone
+              ,msg.inenviar_push 		         = pr_inenviar_push
+              ,msg.dstexto_mensagem 		     = pr_dstexto_mensagem
+              ,msg.inexibir_banner 		       = pr_inexibir_banner
+              ,msg.nmimagem_banner 		       = pr_nmimagem_banner
+              ,msg.dshtml_mensagem		       = vr_dshtml_mensagem
+              ,msg.inexibe_botao_acao_mobile = pr_inexibe_botao_acao_mobile
+              ,msg.dstexto_botao_acao_mobile = pr_dstexto_botao_acao_mobile
+              ,msg.dslink_acao_mobile 	     = DECODE(pr_idacao_botao_acao_mobile,1,pr_dslink_acao_mobile,NULL) --dslink_acao_mobile
+              ,msg.cdmenu_acao_mobile 	     = DECODE(pr_idacao_botao_acao_mobile,2,pr_cdmenu_acao_mobile,NULL) --cdmenu_acao_mobile
+              ,msg.dsmensagem_acao_mobile	   = pr_dsmensagem_acao_mobile
+         WHERE msg.cdmensagem = vr_cdmensagem;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar registro(TBGEN_NOTIF_MSG_CADASTRO). Erro: ' || SQLERRM;
+          RAISE;
+      END;
+      
+      BEGIN
+        --Atualiza o registro de Mensagem manual
+        UPDATE tbgen_notif_manual_prm man
           SET man.cdcooper                = vr_cdcooper
              ,man.cdoperad                = vr_cdoperad
              ,man.dhenvio_mensagem        = vr_dhenvio_mensagem
@@ -1144,7 +1161,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
              ,man.tpfiltro_mobile         = pr_tpfiltro_mobile
              ,man.nmarquivo_csv		        = pr_nmarquivo_csv
         WHERE man.cdmensagem = vr_cdmensagem;
-        
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar registro(TBGEN_NOTIF_MANUAL_PRM). Erro: ' || SQLERRM;
+          RAISE;
+      END;
     END IF;
     
     -- Se foi importação de CSV, então cria/altera os agendamentos das notificações
@@ -1167,7 +1188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
         pr_dscritic := vr_dscritic;
       ELSE  -- Senão, Dispara a EXCEPTION padrão
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela '|| NMDATELA ||': ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela '|| NMDATELA ||' (Manual): ' || SQLERRM;
       END IF;
 
       -- Carregar XML padrão para variável de retorno não utilizada.
@@ -1300,10 +1321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     cr_situacao_mensagem_found BOOLEAN := FALSE;
     
     --Variáveis
-    vr_cdmensagem_insert tbgen_notif_msg_cadastro.cdorigem_mensagem%TYPE;
-    vr_dhenvio_mensagem tbgen_notif_manual_prm.dhenvio_mensagem%TYPE;
-    vr_dsfiltro_cooperativas tbgen_notif_manual_prm.dsfiltro_cooperativas%TYPE;
-    vr_validacao NUMBER:= 0;
     ex_erro EXCEPTION;
     
     -- Variavel de criticas
@@ -1357,6 +1374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     UPDATE tbgen_notif_manual_prm man
        SET man.cdsituacao_mensagem = 3 -- CANCELADO
      WHERE man.cdmensagem = pr_cdmensagem;
+     
+    --Se for filtro por CSV, apaga os pushes e notificações já geradas no momento do carregamento do CSV
+    --(quando o usuário importou um CSV, e depois importou outro CSV para substitur o anterior)
+    DELETE FROM tbgen_notif_push push WHERE push.cdnotificacao IN (SELECT noti.cdnotificacao FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem);
+    DELETE FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem;
 
   EXCEPTION
     WHEN OTHERS THEN
