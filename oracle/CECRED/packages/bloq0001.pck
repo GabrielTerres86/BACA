@@ -94,6 +94,15 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
                                          ,pr_vlbloque_poupa OUT NUMBER
                                          ,pr_vlbloque_ambos OUT NUMBER
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE);  --> Retorno de erro
+  
+  PROCEDURE pc_retorna_saldos_conta (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                    ,pr_tpctrato IN NUMBER
+                                    ,pr_nrctaliq IN VARCHAR2 -- Conta em que o contrato está em liquidação
+                                    ,pr_dsctrliq IN VARCHAR2 -- Lista de contratos separados por “;” a liquidar com a contratação deste;
+                                    ,pr_vlsaldo_aplica OUT NUMBER 
+                                    ,pr_vlsaldo_poupa  OUT NUMBER
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Retorno de erro
                                          
   PROCEDURE pc_bloq_desbloq_cob_operacao (pr_idcobertura           IN NUMBER
                                          ,pr_inbloq_desbloq        IN VARCHAR2 --> B - Bloquear / D - Desbloquear;
@@ -103,6 +112,24 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
                                          ,pr_flgerar_log           IN VARCHAR2
                                          ,pr_dscritic             OUT crapcri.dscritic%TYPE); --> Retorno de erro   
                                          
+  PROCEDURE pc_bloqueio_garantia_atualizad (pr_idcobert             IN NUMBER
+                                           ,pr_vlroriginal         OUT NUMBER
+                                           ,pr_vlratualizado       OUT NUMBER
+                                           ,pr_nrcpfcnpj_cobertura OUT NUMBER
+                                           ,pr_dscritic            OUT crapcri.dscritic%TYPE);
+  
+  PROCEDURE pc_calc_bloqueio_garantia (pr_cdcooper        IN  NUMBER
+                                      ,pr_nrdconta        IN  NUMBER
+                                      ,pr_tpctrato        IN  NUMBER DEFAULT 0
+                                      ,pr_nrctaliq        IN  VARCHAR2 DEFAULT 0 -- Conta em que o contrato está em liquidação;
+                                      ,pr_dsctrliq        IN  VARCHAR2 DEFAULT 0 -- Lista de contratos separados por ";" a liquidar com a contratação deste;
+                                      ,pr_vlsldapl        IN  NUMBER DEFAULT 0   -- Somente repassar saldo de aplicação se já foi descontado bloqueios antigos (BLQRGT);
+                                      ,pr_vlblqapl        IN  NUMBER DEFAULT 0
+                                      ,pr_vlsldpou        IN  NUMBER DEFAULT 0   -- Somente repassar saldo de aplicação se já foi descontado bloqueios antigos (BLQRGT);
+                                      ,pr_vlblqpou        IN  NUMBER DEFAULT 0
+                                      ,pr_vlbloque_aplica OUT NUMBER
+                                      ,pr_vlbloque_poupa  OUT NUMBER
+                                      ,pr_dscritic        OUT VARCHAR2);
 END BLOQ0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
@@ -1141,9 +1168,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                                                                ,pr_cdacesso => 'PERCIRAPLI'
                                                                                ,pr_tpregist => 0));
           
-          
-          
-       
           -- Executar rotina consulta poupanca
           APLI0001.pc_consulta_poupanca(pr_cdcooper => pr_cdcooper
                                        ,pr_cdagenci => pr_cdagenci
@@ -1964,7 +1988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       TABE0001.pc_carrega_ctablq(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_tab_cta_bloq => vr_tab_conta_bloq);
-      /*                          
+      
       -- Buscar informações e Saldos das Poupanças Programadas:
       apli0001.pc_consulta_poupanca(pr_cdcooper => pr_cdcooper --> Cooperativa
                                    ,pr_cdagenci => 1 --> Codigo da Agencia
@@ -1973,7 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                    ,pr_idorigem => 5 --> Identificador da Origem
                                    ,pr_nrdconta => pr_nrdconta --> Nro da conta associado
                                    ,pr_idseqttl => 1 --> Identificador Sequencial
-                                   ,pr_nrctrrpp => rw_craprpp.nrctrrpp --> Contrato Poupanca Programada
+                                   ,pr_nrctrrpp => 0 --> Contrato Poupanca Programada
                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento atual
                                    ,pr_dtmvtopr => rw_crapdat.dtmvtopr --> Data do proximo movimento
                                    ,pr_inproces => rw_crapdat.inproces --> Indicador de processo
@@ -1988,7 +2012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                    ,pr_retorno => vr_des_reto --> Descricao erro/sucesso OK/NOK
                                    ,pr_tab_dados_rpp => vr_tab_dados_rpp --> Poupancas Programadas
                                    ,pr_tab_erro => vr_tab_erro); --> Saida com erros;
-      */
+      
       --Se retornou erro
       IF vr_des_reto = 'NOK' THEN
         IF vr_tab_erro.COUNT() > 0 THEN
@@ -2438,6 +2462,643 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
     END;
     
   END pc_bloq_desbloq_cob_operacao;
-                           
+  
+  PROCEDURE pc_bloqueio_garantia_atualizad (pr_idcobert             IN NUMBER
+                                           ,pr_vlroriginal         OUT NUMBER
+                                           ,pr_vlratualizado       OUT NUMBER
+                                           ,pr_nrcpfcnpj_cobertura OUT NUMBER
+                                           ,pr_dscritic            OUT crapcri.dscritic%TYPE) IS  --> Retorno de erro   
+  /*.............................................................................
+
+    Programa: pc_bloqueio_garantia_atualizad
+    Autor   : Lombardi
+    Data    : Outubro/2017                    Ultima Atualizacao: --/--/----.
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Retornar o valor do bloqueio original, o valor atualizado, e qual é o CPF do Garantidor
+                (Contratante da Operação ou Terceiro) para a cobertura da operação repassada.
+                 
+    Alteracoes: 
+  .............................................................................*/
+  
+  BEGIN                          
+    DECLARE
+      CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT cdcooper
+              ,nrdconta
+              ,tpcontrato
+              ,nrcontrato
+              ,perminimo
+              ,inaplicacao_propria
+              ,inpoupanca_propria
+              ,nrconta_terceiro
+              ,inaplicacao_terceiro
+              ,inpoupanca_terceiro
+              ,vldesbloq
+          FROM tbgar_cobertura_operacao
+         WHERE idcobertura = pr_idcobert
+           AND insituacao = 1 /*Bloqueado*/;
+      rw_cobertura cr_cobertura%ROWTYPE;
+      
+      CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crawepr.nrdconta%TYPE
+                       ,pr_nrcontrato IN crawepr.nrctremp%TYPE) IS
+        SELECT wpr.vlemprst
+          FROM crawepr wpr
+         WHERE wpr.cdcooper = pr_cdcooper
+           AND wpr.nrdconta = pr_nrdconta
+           AND wpr.nrctremp = pr_nrcontrato;
+      
+      CURSOR cr_craplim(pr_cdcooper   IN craplim.cdcooper%TYPE
+                       ,pr_nrdconta   IN craplim.nrdconta%TYPE
+                       ,pr_nrcontrato IN craplim.nrctrlim%TYPE
+                       ,pr_tpcontrato IN craplim.tpctrlim%TYPE) IS
+        SELECT lim.vllimite
+          FROM craplim lim
+         WHERE lim.cdcooper = pr_cdcooper
+           AND lim.nrdconta = pr_nrdconta
+           AND lim.nrctrlim = pr_nrcontrato
+           AND lim.tpctrlim = pr_tpcontrato;
+      rw_craplim cr_craplim%ROWTYPE;
+      
+      CURSOR cr_crapass (pr_cdcooper         IN crapass.cdcooper%TYPE
+                        ,pr_nrdconta         IN crapass.nrdconta%TYPE
+                        ,pr_nrconta_terceiro IN crapass.nrdconta%TYPE) IS
+        SELECT nrcpfcgc
+          FROM crapass
+         WHERE cdcooper = pr_cdcooper
+           AND ((pr_nrconta_terceiro > 0
+           AND nrdconta = pr_nrconta_terceiro)
+            OR (pr_nrconta_terceiro = 0
+            OR nrdconta = pr_nrdconta));
+      rw_crapass cr_crapass%ROWTYPE;
+      
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+      -- Descrição e código da critica
+      vr_cdcritic crapcri.cdcritic%TYPE := NULL;
+      vr_dscritic crapcri.dscritic%TYPE := NULL;
+      vr_des_reto VARCHAR2(3)           := '';
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      -- Variavel exceção
+      vr_exc_erro EXCEPTION;
+      
+      -- Variaveis locais
+      vr_cdcooper                        NUMBER := 0;
+      vr_nrdconta                        NUMBER := 0;
+      vr_tpcontrato                      NUMBER := 0;
+      vr_nrcontrato                      NUMBER := 0;
+      vr_perminimo                       NUMBER := 0;
+      vr_inaplicacao_propria             NUMBER := 0;
+      vr_inpoupanca_propria              NUMBER := 0;
+      vr_nrconta_terceiro                NUMBER := 0;
+      vr_inaplicacao_terceiro            NUMBER := 0;
+      vr_inpoupanca_terceiro             NUMBER := 0;
+      vr_vldesbloq                       NUMBER := 0;
+      vr_valopera_original               NUMBER := 0;
+      vr_valopera_atualizada             NUMBER := 0;
+      vr_vlcobert_original               NUMBER := 0;
+      vr_vlcobert_atualizada             NUMBER := 0;
+      vr_nrcpfcnpj_cobertura             NUMBER := 0;
+      vr_dstextab                        craptab.dstextab%TYPE;
+      vr_inusatab                        BOOLEAN;
+      vr_vltotpre                        NUMBER(25,2) := 0;
+      vr_qtprecal                        NUMBER(10) := 0;
+                 
+    BEGIN      
+      
+      OPEN cr_cobertura(pr_idcobert);
+      FETCH cr_cobertura INTO rw_cobertura;
+      IF cr_cobertura%NOTFOUND THEN
+        vr_dscritic := 'Erro ao buscar cobertura. ' || SQLERRM;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      vr_cdcooper             := rw_cobertura.cdcooper;
+      vr_nrdconta             := rw_cobertura.nrdconta;
+      vr_tpcontrato           := rw_cobertura.tpcontrato;
+      vr_nrcontrato           := rw_cobertura.nrcontrato;
+      vr_perminimo            := rw_cobertura.perminimo;
+      vr_nrconta_terceiro     := rw_cobertura.inaplicacao_propria;
+      vr_inaplicacao_propria  := rw_cobertura.inpoupanca_propria;
+      vr_inpoupanca_propria   := rw_cobertura.nrconta_terceiro;
+      vr_inaplicacao_terceiro := rw_cobertura.inaplicacao_terceiro;
+      vr_inpoupanca_terceiro  := rw_cobertura.inpoupanca_terceiro;
+      vr_vldesbloq            := rw_cobertura.vldesbloq;
+      
+      --Verificar se a data existe
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Montar mensagem de critica
+        vr_cdcritic:= 1;
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      IF (vr_inaplicacao_propria + vr_inpoupanca_propria + vr_inaplicacao_terceiro + vr_inpoupanca_terceiro) > 0 THEN
+        -- Buscaremos as informações da operação conforme o tipo do contrato
+        IF vr_tpcontrato = 90 THEN
+          -- Buscar configurações necessárias para busca de saldo de empréstimo
+          -- Verificar se usa tabela juros
+          vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                  ,pr_nmsistem => 'CRED'
+                                                  ,pr_tptabela => 'USUARI'
+                                                  ,pr_cdempres => 11
+                                                  ,pr_cdacesso => 'TAXATABELA'
+                                                  ,pr_tpregist => 0);
+          -- Se a primeira posição do campo dstextab for diferente de zero
+          vr_inusatab := SUBSTR(vr_dstextab,1,1) != '0';
+          -- Buscar valor do contrato de empréstimo
+          OPEN cr_crawepr (pr_cdcooper   => vr_cdcooper
+                          ,pr_nrdconta   => vr_nrdconta
+                          ,pr_nrcontrato => vr_nrcontrato);
+          FETCH cr_crawepr INTO vr_valopera_original;
+          IF cr_crawepr%NOTFOUND THEN
+            vr_dscritic := 'Erro ao buscar valor do contrato de empréstimo. ' || SQLERRM;
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Buscar o saldo devedor atualizado do contrato
+          EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => vr_cdcooper            --> Cooperativa conectada
+                                        ,pr_cdagenci => 1                      --> Codigo da agencia
+                                        ,pr_nrdcaixa => 0                      --> Numero do caixa
+                                        ,pr_cdoperad => '1'                    --> Codigo do operador
+                                        ,pr_nmdatela => 'ATENDA'               --> Nome datela conectada
+                                        ,pr_idorigem => 1 /*Ayllos*/           --> Indicador da origem da chamada
+                                        ,pr_nrdconta => vr_nrdconta            --> Conta do associado
+                                        ,pr_idseqttl => 1                      --> Sequencia de titularidade da conta
+                                        ,pr_rw_crapdat => rw_crapdat           --> Vetor com dados de parametro (CRAPDAT)
+                                        ,pr_nrctremp => 0                      --> Numero contrato emprestimo
+                                        ,pr_cdprogra => 'B1WGEN0001'           --> Programa conectado
+                                        ,pr_inusatab => vr_inusatab            --> Indicador de utilizacão da tabela
+                                        ,pr_flgerlog => 'N'                    --> Gerar log S/N
+                                        ,pr_vlsdeved => vr_valopera_atualizada --> Saldo devedor calculado
+                                        ,pr_vltotpre => vr_vltotpre            --> Valor total das prestacães
+                                        ,pr_qtprecal => vr_qtprecal            --> Parcelas calculadas
+                                        ,pr_des_reto => vr_des_reto            --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro);          --> Tabela com possives erros
+          -- Se houve retorno de erro
+          IF vr_des_reto = 'NOK' THEN
+            -- Extrair o codigo e critica de erro da tabela de erro
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+            -- Limpar tabela de erros
+            vr_tab_erro.DELETE;
+            RAISE vr_exc_erro;
+          END IF;
+
+        ELSE
+          -- Buscar limite
+          OPEN cr_craplim(pr_cdcooper   => vr_cdcooper
+                         ,pr_nrdconta   => vr_nrdconta
+                         ,pr_nrcontrato => vr_nrcontrato
+                         ,pr_tpcontrato => vr_tpcontrato);
+          FETCH cr_craplim INTO rw_craplim;
+          IF cr_craplim%NOTFOUND THEN
+            vr_dscritic := 'Erro ao buscar valor do contrato de empréstimo. ' || SQLERRM;
+            RAISE vr_exc_erro;
+          END IF;
+          vr_valopera_original := rw_craplim.vllimite;
+          vr_valopera_atualizada := rw_craplim.vllimite;
+        END IF;
+        
+        -- Calcular o valor necessário para cobertura do empréstimo ou do limite
+        vr_vlcobert_original := vr_vlcobert_original * (vr_perminimo / 100);
+        vr_vlcobert_atualizada := (vr_vlcobert_atualizada * (vr_perminimo / 100)) - vr_vldesbloq;
+        
+        -- Buscar no cadastro de associados o CPF/CNPJ do garantidor
+        OPEN cr_crapass (pr_cdcooper         => vr_cdcooper
+                        ,pr_nrdconta         => vr_nrdconta
+                        ,pr_nrconta_terceiro => vr_nrconta_terceiro);
+        FETCH cr_crapass INTO rw_crapass;
+        
+        IF cr_crapass%NOTFOUND THEN
+          vr_cdcritic := 9;
+          RAISE vr_exc_erro;
+        END IF;
+        
+        vr_nrcpfcnpj_cobertura := rw_crapass.nrcpfcgc;
+        
+      END IF;
+      
+      -- Retornar as variaveis calculadas/retornadas:
+      pr_vlroriginal := vr_vlcobert_original;
+      pr_vlratualizado := vr_vlcobert_atualizada;
+      pr_nrcpfcnpj_cobertura := vr_nrcpfcnpj_cobertura;
+      
+    EXCEPTION 
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        -- Monta mensagem de erro
+        pr_dscritic := vr_dscritic;
+        
+      WHEN OTHERS THEN
+        -- Monta mensagem de erro       
+        pr_dscritic := 'Erro na BLOQ0001.PC_BLOQ_DESBLOQ_COB_OPERACAO --> '|| SQLERRM;
+        
+    END;
+    
+  END pc_bloqueio_garantia_atualizad;
+  
+  PROCEDURE pc_calc_bloqueio_garantia (pr_cdcooper        IN  NUMBER
+                                      ,pr_nrdconta        IN  NUMBER
+                                      ,pr_tpctrato        IN  NUMBER DEFAULT 0
+                                      ,pr_nrctaliq        IN  VARCHAR2 DEFAULT 0 -- Conta em que o contrato está em liquidação;
+                                      ,pr_dsctrliq        IN  VARCHAR2 DEFAULT 0 -- Lista de contratos separados por ";" a liquidar com a contratação deste;
+                                      ,pr_vlsldapl        IN  NUMBER DEFAULT 0   -- Somente repassar saldo de aplicação se já foi descontado bloqueios antigos (BLQRGT);
+                                      ,pr_vlblqapl        IN  NUMBER DEFAULT 0
+                                      ,pr_vlsldpou        IN  NUMBER DEFAULT 0   -- Somente repassar saldo de aplicação se já foi descontado bloqueios antigos (BLQRGT);
+                                      ,pr_vlblqpou        IN  NUMBER DEFAULT 0
+                                      ,pr_vlbloque_aplica OUT NUMBER
+                                      ,pr_vlbloque_poupa  OUT NUMBER
+                                      ,pr_dscritic        OUT VARCHAR2) IS    --> Retorno de erro   
+  /*.............................................................................
+
+    Programa: pc_calc_bloqueio_garantia
+    Autor   : Lombardi
+    Data    : Outubro/2017                    Ultima Atualizacao: --/--/----.
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Verificar se a conta repassada possui algum bloqueio de cobertura de garantia, e existindo
+                trazer o valor total a bloquear em aplicações e em poupanças. Pode ser repassado para esta rotina o
+                Saldo de Aplicações ou de Poupanças, caso a rotina chamada já tenha calculado, se não houve o cálculo
+                ao passar zero a rotina irá buscar os saldos.
+                 
+    Alteracoes: 
+  .............................................................................*/
+  
+  BEGIN                          
+    DECLARE
+      CURSOR cr_craprac(pr_cdcooper IN crawepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crawepr.nrdconta%TYPE) IS
+        SELECT rac.cdoperad
+              ,rac.nrdconta
+              ,rac.nraplica
+              ,rac.cdprodut
+              ,rac.idblqrgt
+          FROM craprac rac
+         WHERE rac.cdcooper = pr_cdcooper
+           AND rac.nrdconta = pr_nrdconta
+           AND rac.idsaqtot = 0;
+      
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+      -- Descrição e código da critica
+      vr_cdcritic crapcri.cdcritic%TYPE := NULL;
+      vr_dscritic crapcri.dscritic%TYPE := NULL;
+      vr_des_reto VARCHAR2(3)           := '';
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      -- Variavel exceção
+      vr_exc_erro EXCEPTION;
+      
+      -- Variaveis locais
+      vr_tab_conta_bloq     APLI0001.typ_tab_ctablq;
+      vr_tab_craplpp        APLI0001.typ_tab_craplpp;
+      vr_tab_craplrg        APLI0001.typ_tab_craplpp;
+      vr_tab_resgate        APLI0001.typ_tab_resgate;
+      vr_tab_dados_rpp      APLI0001.typ_tab_dados_rpp;
+      vr_saldo_rdca         APLI0001.typ_tab_saldo_rdca;
+      vr_index_dados_rpp    PLS_INTEGER;
+      vr_vlblqjud_apli      NUMBER := 0;
+      vr_vlresblq_apli      NUMBER := 0;
+      vr_vlblqjud_poup      NUMBER := 0;
+      vr_vlresblq_poup      NUMBER := 0;
+      vr_vlbloque_aplica    NUMBER := 0;
+      vr_vlbloque_poupa     NUMBER := 0;
+      vr_vlbloque_ambos     NUMBER := 0;
+      vr_vlsaldo_aplica     NUMBER := 0;
+      vr_vlsaldo_poup       NUMBER := 0;
+      vr_vlsaldo_aplica_aux NUMBER := 0;
+      vr_vlsaldo_poup_aux   NUMBER := 0;
+      vr_vlsldtot           NUMBER := 0;
+      vr_vlsldrgt           NUMBER := 0;
+      vr_percenir           NUMBER := 0;
+      
+    BEGIN      
+      
+      --Verificar se a data existe
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Montar mensagem de critica
+        vr_cdcritic:= 1;
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      -- Se já recebemos o Saldo das Aplicações
+      IF pr_vlsldapl > 0 THEN
+        vr_vlsaldo_aplica := pr_vlsldapl;
+      ELSE
+        -- Consulta o saldo RDCA
+        APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper         --> Cooperativa
+                                       ,pr_cdagenci   => 1                   --> Codigo da agencia
+                                       ,pr_nrdcaixa   => 1                   --> Numero do caixa
+                                       ,pr_nrdconta   => pr_nrdconta         --> Conta do associado
+                                       ,pr_nraplica   => 0                   --> Numero da aplicacao
+                                       ,pr_tpaplica   => 0                   --> Tipo de aplicacao (Todas)
+                                       ,pr_dtinicio   => rw_crapdat.dtmvtolt --> Data de inicio da aplicacao
+                                       ,pr_dtfim      => rw_crapdat.dtmvtolt --> Data final da aplicacao
+                                       ,pr_cdprogra   => 'GAROPC'            --> Codigo do programa chamador da rotina
+                                       ,pr_nrorigem   => 1                   --> Origem da chamada da rotina
+                                       ,pr_saldo_rdca => vr_saldo_rdca       --> Tipo de tabela com o saldo RDCA
+                                       ,pr_des_reto   => vr_des_reto         --> OK ou NOK
+                                       ,pr_tab_erro   => vr_tab_erro);       --> Tabela com erros
+        
+        -- Verifica se deu erro
+        IF vr_des_reto = 'NOK' THEN
+          -- Tenta buscar o erro no vetor de erro
+          IF vr_tab_erro.COUNT > 0 THEN
+            pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            pr_dscritic := 'Retorno "NOK" na BLOQ0001.pc_consulta_aplicacoes e sem ' ||
+                           'informação na pr_vet_erro, Conta:' || pr_nrdconta;
+          END IF;
+        END IF;
+        
+        -- Iterar sob cada um dos registros retornados para remover bloqueadas BLQRGT
+        FOR vr_index IN 1..vr_saldo_rdca.COUNT LOOP
+          IF vr_saldo_rdca(vr_index).dssitapl <> 'BLOQUEADA' THEN
+            vr_vlsaldo_aplica := vr_vlsaldo_aplica + vr_saldo_rdca(vr_index).sldresga;
+          END IF;
+        END LOOP;
+        
+        -- Buscar cadastro de aplicações de captação
+        FOR rw_craprac IN cr_craprac (pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta) LOOP
+          
+          -- Chama procedure para buscar o saldo total de resgate
+          apli0005.pc_busca_saldo_aplicacoes(pr_cdcooper => pr_cdcooper
+                                            ,pr_cdoperad => '1'
+                                            ,pr_nmdatela => 'crps128'
+                                            ,pr_idorigem => 1
+                                            ,pr_nrdconta => rw_craprac.nrdconta
+                                            ,pr_idseqttl => 1
+                                            ,pr_nraplica => rw_craprac.nraplica
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            ,pr_cdprodut => rw_craprac.cdprodut
+                                            ,pr_idblqrgt => 1
+                                            ,pr_idgerlog => 0
+                                            ,pr_vlsldtot => vr_vlsldtot
+                                            ,pr_vlsldrgt => vr_vlsldrgt
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+          -- Se retornou algum erro
+          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levanta exceção
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Soma valor do saldo de resgate retornado
+          vr_vlsaldo_aplica := vr_vlsaldo_aplica + vr_vlsldrgt;
+          
+        END LOOP;
+        
+      END IF;
+      
+      -- Se recebemos o saldo de Poupança Programada
+      IF pr_vlsldpou > 0 THEN
+        vr_vlsaldo_poup := pr_vlsldpou;
+      ELSE
+        -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
+        vr_percenir:= GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                                             ,pr_nmsistem => 'CRED'
+                                                                             ,pr_tptabela => 'CONFIG'
+                                                                             ,pr_cdempres => 0
+                                                                             ,pr_cdacesso => 'PERCIRAPLI'
+                                                                             ,pr_tpregist => 0));
+        
+        -- Carregar tabela de memoria de contas bloqueadas
+        TABE0001.pc_carrega_ctablq(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_tab_cta_bloq => vr_tab_conta_bloq);
+        
+        -- Buscar informações e Saldos das Poupanças Programadas:
+        apli0001.pc_consulta_poupanca(pr_cdcooper      => pr_cdcooper         --> Cooperativa
+                                     ,pr_cdagenci      => 1                   --> Codigo da Agencia
+                                     ,pr_nrdcaixa      => 1                   --> Numero do caixa
+                                     ,pr_cdoperad      => 1                   --> Codigo do Operador
+                                     ,pr_idorigem      => 5                   --> Identificador da Origem
+                                     ,pr_nrdconta      => pr_nrdconta         --> Nro da conta associado
+                                     ,pr_idseqttl      => 1                   --> Identificador Sequencial
+                                     ,pr_nrctrrpp      => 0                   --> Contrato Poupanca Programada
+                                     ,pr_dtmvtolt      => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                     ,pr_dtmvtopr      => rw_crapdat.dtmvtopr --> Data do proximo movimento
+                                     ,pr_inproces      => rw_crapdat.inproces --> Indicador de processo
+                                     ,pr_cdprogra      => 'GAROPC'            --> Nome do programa chamador
+                                     ,pr_flgerlog      => FALSE               --> Flag erro log
+                                     ,pr_percenir      => vr_percenir         --> % IR para Calculo Poupanca
+                                     ,pr_tab_craptab   => vr_tab_conta_bloq   --> Tipo de tabela de Conta Bloqu
+                                     ,pr_tab_craplpp   => vr_tab_craplpp      --> Tipo de tabela com lcto poup
+                                     ,pr_tab_craplrg   => vr_tab_craplrg      --> Tipo de tabela com resgates
+                                     ,pr_tab_resgate   => vr_tab_resgate      --> Tabela com valores dos resgates
+                                     ,pr_vlsldrpp      => vr_vlsaldo_poup     --> Valor saldo poup progr
+                                     ,pr_retorno       => vr_des_reto         --> Descricao erro/sucesso OK/NOK
+                                     ,pr_tab_dados_rpp => vr_tab_dados_rpp    --> Poupancas Programadas
+                                     ,pr_tab_erro      => vr_tab_erro);       --> Saida com erros;
+        --Se retornou erro
+        IF vr_des_reto = 'NOK' THEN
+          IF vr_tab_erro.COUNT() > 0 THEN
+            -- Retornar a descrição da Critica
+            vr_dscritic := 'Erro ao verificar saldo de Poupança da Conta Terceira: ' || vr_tab_erro(vr_tab_erro.first).dscritic;
+          ELSE
+            vr_dscritic := 'Erro ao verificar saldo de Poupança da Conta Terceira: ' || vr_dscritic;
+          END IF;
+        END IF;
+        
+        -- Desconsiderar aqueles que já estão bloqueados na BLQRGT
+        vr_index_dados_rpp:= vr_tab_dados_rpp.FIRST;
+        WHILE vr_index_dados_rpp IS NOT NULL LOOP
+          -- Se aplicação bloqueada
+          IF vr_tab_dados_rpp(vr_index_dados_rpp).dsblqrpp = 'Sim' THEN
+            -- Decrementar do saldo
+            vr_vlsaldo_poup := vr_vlsaldo_poup - vr_tab_dados_rpp(vr_index_dados_rpp).vlsdrdpp;
+          END IF;
+          
+          -- Proximo Registro
+          vr_index_dados_rpp := vr_tab_dados_rpp.NEXT(vr_index_dados_rpp);
+        END LOOP; --dados_rpp
+      END IF;
+      
+      -- Verificar se já não existe bloqueio de garantia Poupança ou Aplicações desconsiderando
+      -- o bloqueio atual caso tenhamos recebido via parâmetro:
+      BLOQ0001.pc_retorna_bloqueio_garantia (pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_tpctrato => pr_tpctrato
+                                            ,pr_nrctaliq => pr_nrctaliq /* Conta da liquidação */
+                                            ,pr_dsctrliq => pr_dsctrliq /* Contratos em liquidação */
+                                            ,pr_vlbloque_aplica => vr_vlbloque_aplica
+                                            ,pr_vlbloque_poupa => vr_vlbloque_poupa
+                                            ,pr_vlbloque_ambos => vr_vlbloque_ambos
+                                            ,pr_dscritic => vr_dscritic);
+      -- Se retornou critica
+      IF vr_dscritic IS NOT NULL THEN
+        -- Retornar com a critica
+        vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta ' || pr_nrdconta || '-->'||vr_dscritic;
+      END IF;
+      
+      -- Se já recebemos o valor de bloqueio judicial de aplicação
+      IF pr_vlblqapl > 0 THEN
+         vr_vlblqjud_apli := pr_vlblqapl;
+      ELSE
+        -- Verificar se há bloqueio judicial de Aplicações na conta
+        gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper -- Cooperativa
+                                        ,pr_nrdconta => pr_nrdconta -- Conta Corrente
+                                        ,pr_nrcpfcgc => 0 /*fixo*/ -- Cpf/cnpj
+                                        ,pr_cdtipmov => 1 /*bloqueio*/ -- Tipo Movimento
+                                        ,pr_cdmodali => 2 /*Aplicacao*/ -- Modalidade
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Atual
+                                        ,pr_vlbloque => vr_vlblqjud_apli -- Valor Bloqueado
+                                        ,pr_vlresblq => vr_vlresblq_apli -- Valor Residual
+                                        ,pr_dscritic => vr_dscritic); -- Critica
+        -- Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Retornar a critica
+          vr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
+        END IF;
+      END IF;
+      
+      -- Se já recebemos o bloqueio judicial de Poupança
+      IF pr_vlblqpou > 0 THEN
+        vr_vlblqjud_poup := pr_vlblqpou;
+      ELSE
+        -- Verificar se há bloqueio judicial de Poupança na conta
+        gene0005.pc_retorna_valor_blqjud(pr_cdcooper => pr_cdcooper -- Cooperativa
+                                        ,pr_nrdconta => pr_nrdconta -- Conta Corrente
+                                        ,pr_nrcpfcgc => 0 /*fixo*/ -- Cpf/cnpj
+                                        ,pr_cdtipmov => 1 /*bloqueio*/ -- Tipo Movimento
+                                        ,pr_cdmodali => 3 /*Poupança*/ -- Modalidade
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Atual
+                                        ,pr_vlbloque => vr_vlblqjud_poup -- Valor Bloqueado
+                                        ,pr_vlresblq => vr_vlresblq_poup -- Valor Residual
+                                        ,pr_dscritic => vr_dscritic); -- Critica
+        -- Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Retornar a critica
+          vr_dscritic := 'Erro ao verificar bloqueio judicial – Retornando.';
+        END IF;
+      END IF;
+      
+      -- Atualizar o saldo de Poupança Programada removendo bloqueio judicial
+      vr_vlsaldo_poup := GREATEST(0, vr_vlsaldo_poup - vr_vlblqjud_poup);
+      
+      -- Atualizar o saldo de Aplicações removendo bloqueio judicial
+      IF vr_vlblqjud_apli > 0 THEN
+        -- Caso bloqueio superior ao saldo Aplicação
+        IF vr_vlblqjud_apli > vr_vlsaldo_aplica THEN
+          -- Descontar o bloqueio desta e zerar pois o bloqueio é maior que o saldo
+          vr_vlblqjud_apli := vr_vlblqjud_apli - vr_vlsaldo_aplica;
+          vr_vlsaldo_aplica := 0;
+        ELSE
+          -- Descontar do saldo o bloqueio desta e zerar o bloqueio pois o saldo é suficiente
+          vr_vlsaldo_aplica := vr_vlsaldo_aplica - vr_vlblqjud_apli;
+          vr_vlblqjud_apli := 0;
+        END IF;
+      END IF;
+      
+      -- Armazenar valores originais antes do calculo do bloqueio
+      vr_vlsaldo_aplica_aux := vr_vlsaldo_aplica;
+      vr_vlsaldo_poup_aux := vr_vlsaldo_poup;
+      
+      --**** Verificar se há bloqueio de garantia ***--
+      
+      -- Se ha valor a bloquear
+      IF vr_vlbloque_aplica + vr_vlbloque_poupa + vr_vlbloque_ambos > 0 THEN
+        
+        -- Se deve o ocorrer bloqueio apenas de aplicação
+        IF vr_vlbloque_aplica + vr_vlbloque_ambos > 0 THEN
+          -- Se Bloqueio superior a saldo aplicações
+          IF (vr_vlbloque_aplica + vr_vlbloque_ambos) >= vr_vlsaldo_aplica THEN
+            -- Primeiro descontar o bloqueio exclusivo
+            IF vr_vlbloque_aplica >= vr_vlsaldo_aplica THEN
+              vr_vlbloque_aplica := vr_vlbloque_aplica - vr_vlsaldo_aplica;
+            ELSE
+              -- Bloqueio exclusivo totalmente atendido e saldo aplicação descontando o mesmo
+              vr_vlsaldo_aplica := vr_vlsaldo_aplica - vr_vlbloque_aplica;
+              vr_vlbloque_aplica := 0;
+              -- Descontar agora do bloqueio genérico (Aplica + Poupa)
+              IF vr_vlbloque_ambos >= vr_vlsaldo_aplica THEN
+                vr_vlbloque_ambos := vr_vlbloque_ambos - vr_vlsaldo_aplica;
+              ELSE
+                -- Bloqueio genérico totalmente atendido e saldo aplicação descontando o mesmo
+                vr_vlbloque_ambos := 0;
+              END IF;
+            END IF;
+            -- Zerar saldo Aplica
+            vr_vlsaldo_aplica := 0;
+          ELSE
+            -- Descontar do saldo o bloqueio desta e zerar o bloqueio pois o saldo é suficiente
+            vr_vlsaldo_aplica := vr_vlsaldo_aplica - (vr_vlbloque_aplica + vr_vlbloque_ambos);
+            vr_vlbloque_aplica := 0;
+            vr_vlbloque_ambos := 0;
+          END IF;
+        END IF;
+        
+        -- Se deve ocorrer bloqueio de Poupança e ainda houver valor a bloquear
+        IF vr_vlbloque_poupa + vr_vlbloque_ambos > 0 THEN
+          
+          -- Bloquear então a Poupança Programada
+          IF vr_vlbloque_poupa + vr_vlbloque_ambos > vr_vlsaldo_poup THEN
+            -- Primeiro descontar o bloqueio exclusivo
+            IF vr_vlbloque_poupa >= vr_vlsaldo_poup THEN
+              vr_vlbloque_poupa := vr_vlbloque_poupa - vr_vlsaldo_poup;
+            ELSE
+              -- Bloqueio exclusivo totalmente atendido e saldo aplicação descontando o mesmo
+              vr_vlsaldo_poup := vr_vlsaldo_poup - vr_vlbloque_poupa;
+              vr_vlbloque_poupa := 0;
+              -- Descontar agora do bloqueio genérico (Aplica + Poupa)
+              IF vr_vlbloque_ambos >= vr_vlsaldo_poup THEN
+                vr_vlbloque_ambos := vr_vlbloque_ambos - vr_vlsaldo_poup;
+              ELSE
+                -- Bloqueio genérico totalmente atendido e saldo aplicação descontando o mesmo
+                vr_vlbloque_ambos := 0;
+              END IF;
+            END IF;
+            -- Zerar saldo Poupa
+            vr_vlsaldo_poup := 0;
+          ELSE
+            -- Descontar do saldo o bloqueio desta e zerar o bloqueio pois o saldo é suficiente
+            vr_vlsaldo_poup := vr_vlsaldo_poup - (vr_vlbloque_poupa + vr_vlbloque_ambos);
+            vr_vlbloque_poupa := 0;
+            vr_vlbloque_ambos := 0;
+          END IF;
+          
+        END IF;
+        
+      END IF;
+      
+      -- Retornar a diferença entre o saldo antes e depois do bloqueio de Garantia,
+      -- desta forma temos exatamente os valores a Bloquear apenas de Garantia:
+      pr_vlbloque_aplica := vr_vlsaldo_aplica_aux - vr_vlsaldo_aplica;
+      pr_vlbloque_poupa := vr_vlsaldo_poup_aux - vr_vlsaldo_poup;
+      
+    EXCEPTION 
+      WHEN vr_exc_erro THEN
+        -- Monta mensagem de erro
+        pr_dscritic := vr_dscritic;
+        
+      WHEN OTHERS THEN
+        -- Monta mensagem de erro       
+        pr_dscritic := 'Erro na BLOQ0001.PC_BLOQ_DESBLOQ_COB_OPERACAO --> '|| SQLERRM;
+        
+    END;
+    
+  END pc_calc_bloqueio_garantia;
+                
 END BLOQ0001;
 /

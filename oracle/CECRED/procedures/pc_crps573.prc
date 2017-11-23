@@ -314,6 +314,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  pelo cr_tbepr_bens_hst que chama a tabela tbepr_bens_hst
                                  (Lucas Ranghetti #734912)
                                  
+                    21/11/2017 - Criada procedure pc_garantia_cobertura_opera. 
+                                 Projeto 404 -  Automatização da Garantia de Aplicação nas Operações de Crédito (Lombardi)
+                                 
 .............................................................................................................................*/
 
     DECLARE
@@ -2672,6 +2675,98 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         END IF;
       END pc_garantia_alienacao_fid;
 
+      -- Incluir informações do garantia
+      PROCEDURE pc_garantia_cobertura_opera(pr_dscritic OUT crapcri.dscritic%TYPE) IS
+        vr_tpcontrato    NUMBER := 0;
+        vr_vlroriginal   NUMBER := 0;
+        vr_vlratualizado NUMBER := 0;
+        vr_nrcpfcnpj     VARCHAR2(20);
+        vr_inpessoa      NUMBER := 0;
+        vr_stsnrcal      BOOLEAN := FALSE;
+        vr_idcobertura   NUMBER := 0;
+        vr_dscritic      crapcri.dscritic%TYPE;
+        vr_exc_saida     EXCEPTION;
+        
+        CURSOR cr_cobertura (pr_cdcooper   IN tbgar_cobertura_operacao.cdcooper%TYPE
+                            ,pr_nrdconta   IN tbgar_cobertura_operacao.nrdconta%TYPE
+                            ,pr_tpcontrato IN tbgar_cobertura_operacao.tpcontrato%TYPE
+                            ,pr_nrcontrato IN tbgar_cobertura_operacao.nrcontrato%TYPE) IS
+          SELECT nvl(idcobertura, 0) idcobertura
+            FROM tbgar_cobertura_operacao
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND tpcontrato = pr_tpcontrato
+             AND nrcontrato = pr_nrcontrato;
+           
+        BEGIN
+          IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+            vr_tpcontrato := 90;
+          ELSIF vr_tab_individ(vr_idx_individ).cdmodali = 0201 THEN
+            vr_tpcontrato := 1;
+          ELSIF vr_tab_individ(vr_idx_individ).cdmodali = 0301 THEN
+            vr_tpcontrato := 2;
+          ELSIF vr_tab_individ(vr_idx_individ).cdmodali = 0302 THEN
+            vr_tpcontrato := 3;
+          ELSE
+            RETURN; -- Sair da rotina
+          END IF;
+          
+         OPEN cr_cobertura(pr_cdcooper   => pr_cdcooper
+                          ,pr_nrdconta   => vr_tab_individ(vr_idx_individ).nrdconta
+                          ,pr_tpcontrato => vr_tpcontrato
+                          ,pr_nrcontrato => vr_tab_individ(vr_idx_individ).nrctremp);
+         FETCH cr_cobertura INTO vr_idcobertura;
+         
+         IF vr_idcobertura > 0 THEN
+           bloq0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobertura
+                                                  ,pr_vlroriginal         => vr_vlroriginal
+                                                  ,pr_vlratualizado       => vr_vlratualizado
+                                                  ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
+                                                  ,pr_dscritic            => vr_dscritic);
+           IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+           IF vr_vlratualizado > 0 THEN
+             --Validar o cpf/cnpj
+             gene0005.pc_valida_cpf_cnpj (pr_nrcalcul => vr_nrcpfcnpj
+                                         ,pr_stsnrcal => vr_stsnrcal
+                                         ,pr_inpessoa => vr_inpessoa);
+             IF vr_inpessoa = 1 THEN
+               vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000');
+             ELSE
+               vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000000');
+             END IF;
+             
+             -- Enviar dados da garantia operação
+             gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                    ,pr_texto_completo => vr_xml_3040_temp
+                                    ,pr_texto_novo     => '<Gar'
+                                                       || ' Tp="0104"' 
+                                                       || ' Ident="' || vr_nrcpfcnpj || '"' 
+                                                       || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"' 
+                                                       || ' VlrData="' || replace(to_char(vr_vlratualizado ,'fm99999999999990D00'),',','.') || '"'
+                                                       || ' DtReav="' || to_char(vr_dtrefere,'YYYY-MM-DD') || '"' 
+                                                       || ' />');
+             
+             IF vr_vlroriginal <> vr_vlratualizado THEN
+               gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                      ,pr_texto_completo => vr_xml_3040_temp
+                                      ,pr_texto_novo     => ' VlrData="' || replace(to_char(vr_vlratualizado ,'fm99999999999990D00'),',','.') || '"'
+                                                         || ' DtReav="' || to_char(vr_dtrefere,'YYYY-MM-DD') || '"');
+             END IF;
+             
+             gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                    ,pr_texto_completo => vr_xml_3040_temp
+                                    ,pr_texto_novo     => ' />');
+             
+           END IF;
+         END IF;
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro na procedure pc_garantia_cobertura_opera. ' || SQLERRM;
+      END pc_garantia_cobertura_opera;
 
       -- Imprime o tipo informando que eh aplicacao regulatoria, quando o emprestimo possuir linhas de credito
       PROCEDURE pc_inf_aplicacao_regulatoria(pr_nrdconta crapris.nrdconta%TYPE,
@@ -4414,6 +4509,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         END IF;  
         -- Bens Alienados 
         pc_garantia_alienacao_fid;
+        
+        -- Incluir garantias
+        pc_garantia_cobertura_opera(pr_dscritic => vr_dscritic);
+        
+        -- Condicao para verificar se houve erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+             
+        
         -- Imprime o tipo informando que eh aplicacao regulatoria, quando o emprestimo possuir linhas de credito
         pc_inf_aplicacao_regulatoria(vr_tab_individ(vr_idx_individ).nrdconta,
                                      vr_tab_individ(vr_idx_individ).nrctremp,
