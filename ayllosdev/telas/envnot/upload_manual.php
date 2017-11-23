@@ -79,6 +79,12 @@
 	$glbvars["idorigem"] = (isset($_POST['idorigem'])) ? $_POST['idorigem'] : 1;
 	$glbvars["cdoperad"] = (isset($_POST['cdoperad'])) ? $_POST['cdoperad'] : "0";
 		
+	if($tpfiltro == 2){
+		if(!isset($_FILES['arq_upload']['name'][1]) || trim($_FILES['arq_upload']['name'][1]) == ""){
+			gerarErro("Selecione um arquivo para upload.");
+		}
+	}
+		
 	// UPLOAD DE BANNERS	
 	if(isset($_FILES['arq_upload']['name'][0]) && trim($_FILES['arq_upload']['name'][0] != "")){
 		
@@ -144,8 +150,9 @@
 	
 	//UPLOAD ARQUIVO CSV/TXT	
 	if($tpfiltro == 2){
-		if(!isset($_FILES['arq_upload']['name'][1]) && trim($_FILES['arq_upload']['name'][1] == "")){
-			exibeErro("Selecione um arquivo para upload!");
+		
+		if(!isset($_FILES['arq_upload']['name'][1]) || trim($_FILES['arq_upload']['name'][1]) == ""){
+			gerarErro(utf8_decode("Selecione um arquivo para upload!"));
 		}
 		
 		$nmarquiv = retiraAcentos(strtolower(str_replace(" ","_",$_FILES['arq_upload']['name'][1])));

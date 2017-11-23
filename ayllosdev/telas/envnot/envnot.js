@@ -681,5 +681,7 @@ function reenviarMsg(){
 	$("#dtenvio_mensagem").val("");
 	$("#hrenvio_mensagem").val("");
 	$("#btnReenviarMsg").hide();
+	carregaEnviar($("#tpfiltro").val());
 	$("#btnSalvar").show();
+	
 }
