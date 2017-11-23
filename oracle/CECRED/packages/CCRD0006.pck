@@ -117,9 +117,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   -- Rotina para gerar o arquivo ASLC023 no diretorio
   PROCEDURE gera_arquivo_xml_23(pr_dscritic IN OUT VARCHAR2) ;
 
-
-   PROCEDURE teste ;
-
   -- Rotina para PROCESSAR o arquivo ASLC023RET do diretorio
   PROCEDURE processa_arquivo_23ret(pr_table_of IN GENE0002.typ_tab_tabela --> Tabela com os dados do arquivo XML
                                   ,pr_dscritic OUT VARCHAR2);             --> Descricao do erro
@@ -332,30 +329,30 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                                     ,pr_dscritic      OUT VARCHAR2);
 /*
   PROCEDURE pc_insere_msg_ltr_str (pr_VlrLanc        IN NUMBER
-													        ,pr_CodMsg			   IN VARCHAR2
-											  		      ,pr_NumCtrlLTR	   IN VARCHAR2
-													        ,pr_NumCtrlSTR	   IN VARCHAR2
-													        ,pr_ISPBLTR        IN VARCHAR2
-													        ,pr_ISPBIFDebtd    IN VARCHAR2
-													        ,pr_ISPBIFCredtd   IN VARCHAR2
-													        ,pr_CNPJNLiqdant   IN VARCHAR2
-													        ,pr_IdentdPartCamr IN VARCHAR2
-													        ,pr_AgCredtd       IN VARCHAR2
-													        ,pr_CtCredtd       IN VARCHAR2
-													        ,pr_AgDebtd        IN VARCHAR2
-													        ,pr_Hist           IN VARCHAR2
-													        ,pr_FinlddIF       IN VARCHAR2
-													        ,pr_TpPessoaDebtd_Remet IN VARCHAR2
-													        ,pr_CNPJ_CPFDeb    IN VARCHAR2
-													        ,pr_NomCliDebtd    IN VARCHAR2
-													        ,pr_FinlddCli      IN VARCHAR2
-													        ,pr_DtHrBC         IN VARCHAR2
+                                  ,pr_CodMsg         IN VARCHAR2
+                                  ,pr_NumCtrlLTR     IN VARCHAR2
+                                  ,pr_NumCtrlSTR     IN VARCHAR2
+                                  ,pr_ISPBLTR        IN VARCHAR2
+                                  ,pr_ISPBIFDebtd    IN VARCHAR2
+                                  ,pr_ISPBIFCredtd   IN VARCHAR2
+                                  ,pr_CNPJNLiqdant   IN VARCHAR2
+                                  ,pr_IdentdPartCamr IN VARCHAR2
+                                  ,pr_AgCredtd       IN VARCHAR2
+                                  ,pr_CtCredtd       IN VARCHAR2
+                                  ,pr_AgDebtd        IN VARCHAR2
+                                  ,pr_Hist           IN VARCHAR2
+                                  ,pr_FinlddIF       IN VARCHAR2
+                                  ,pr_TpPessoaDebtd_Remet IN VARCHAR2
+                                  ,pr_CNPJ_CPFDeb    IN VARCHAR2
+                                  ,pr_NomCliDebtd    IN VARCHAR2
+                                  ,pr_FinlddCli      IN VARCHAR2
+                                  ,pr_DtHrBC         IN VARCHAR2
                                   ,pr_DtMovto        IN VARCHAR2
                                   ,pr_dscritic       OUT VARCHAR2);
                                   
   PROCEDURE pc_insere_msg_slc (pr_VlrLanc            IN NUMBER
-                              ,pr_CodMsg			       IN VARCHAR2
-                              ,pr_NumCtrlSLC    	   IN VARCHAR2
+                              ,pr_CodMsg             IN VARCHAR2
+                              ,pr_NumCtrlSLC         IN VARCHAR2
                               ,pr_ISPBIF             IN VARCHAR2
                               ,pr_DtLiquid           IN VARCHAR2
                               ,pr_NumSeqCicloLiquid  IN VARCHAR2
@@ -387,8 +384,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 
   PROCEDURE gera_arquivo_xml_33_cancel (pr_dscritic IN OUT VARCHAR2);
 
-  PROCEDURE teste2 (pr_cmd    IN VARCHAR2);
-  
+
 END CCRD0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
@@ -7454,9 +7450,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               NULL;
           END;
 
-          vr_nrdolote := 1;  -- fixa 1 no número do lote
+          vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
 
-          --2444	Cielo	01.027.058/0001-91 
+          --2444  Cielo  01.027.058/0001-91 
           -- Atualiza os historicos de lancamento
           IF rw_lancamento.tparquivo = 1 THEN    -- crédito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
@@ -7492,7 +7488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
-          --2448	Cielo	01.027.058/0001-91 
+          --2448  Cielo  01.027.058/0001-91 
           ELSIF rw_lancamento.tparquivo = 2 THEN -- débito
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2448;
@@ -7530,7 +7526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2449;
              END IF;
           ELSE                                 -- antecipação
---2456	Cielo	01.027.058/0001-91 
+--2456  Cielo  01.027.058/0001-91 
              IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
                vr_cdhistor := 2456;
              ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
@@ -8015,7 +8011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
 
     -- o lançamento será a soma de crédito + débito + antecipações
-    vr_nrdolote := 1;
+    vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
     vr_cdhistor := 2441;
 
     pc_procura_ultseq_craplcm (pr_cdcooper    => pr_cdcooper
@@ -8931,62 +8927,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
    END processa_arquivo_erro;
 
-
-   PROCEDURE teste IS
-       CURSOR c2 (pr_nomarq IN VARCHAR2) IS
-      SELECT tll.nrcnpjbase_principal
-            ,tll.nrcnpjbase_administrado
-            ,tll.nrcnpj_credenciador
-            ,tll.nrispb_devedor
-            ,tlp.nrliquidacao
-            ,tlp.cdocorrencia
-            ,tlp.dsocorrencia_retorno
-       FROM tbdomic_liqtrans_lancto tll
-           ,tbdomic_liqtrans_centraliza tlc
-           ,tbdomic_liqtrans_pdv tlp
-           ,tbdomic_liqtrans_arquivo tla
-      WHERE tll.idlancto = tlc.idlancto
-        AND tla.nmarquivo_origem = 'ASLC022_05463212_20170815_00007'
-        AND tlc.idcentraliza = tlp.idcentraliza
-        AND ROWNUM <25;
-
-   vr_para                    VARCHAR2(1000);
-    vr_assunto                 VARCHAR2(1000);
-    vr_mensagem                LONG;
-  vr_nomarq VARCHAR2(100) := 'ASLC022_05463212_20170815_00007';
-  vr_dscritic  VARCHAR2(32000);
-  BEGIN
-
-      BEGIN
-
-      --vr_para     := 'roberto.holz@mouts.info';
-      vr_para     := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                            ,pr_cdacesso => 'EMAIL_DIVERGENCIAS_RET23');
-      vr_assunto  := 'Domicilio Bancario - Divergencias de retorno do arquivo '||vr_nomarq;
-      vr_mensagem := 'Abaixo a lista de registros com divergência após a execução do arquivo '||vr_nomarq||
-                     ':<br /><br />';
---      vr_mensagem := vr_mensagem||' CNPJ Cred              Num Liquidacao            Ocorrencia     Erro <br />';
---      vr_mensagem := vr_mensagem||' ----------------    ---------------------   ----------   ----------- ';
-
-      -- monta o e-mail de envio das divergencias (rejeitados).
-      FOR r2 IN c2 (vr_nomarq) LOOP
-         vr_mensagem := vr_mensagem ||'<br />'||
-                    'Liquidação - '||lpad(r2.nrliquidacao,25,' ')||'<br /> '||
-                    'Ocorrência - '||lpad(r2.cdocorrencia,11,' ')||'<br />'||
-                    'Erro - '||lpad(r2.dsocorrencia_retorno,11,' ');
-      END LOOP;
-
-      pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => vr_para
-                    ,pr_dsassunto  => vr_assunto
-                    ,pr_dstexto    => vr_mensagem
-                    ,pr_dscritic   => vr_dscritic);
-
-      END ;
-
-
-   END;
-
    -- Retorna o valor da TAG do XML
    FUNCTION fn_busca_valor(pr_dslinha  IN VARCHAR2
                           ,pr_dscampo  IN VARCHAR2
@@ -9112,24 +9052,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   END;
 /*
   PROCEDURE pc_insere_msg_ltr_str(pr_VlrLanc        IN NUMBER
-													       ,pr_CodMsg			    IN VARCHAR2
-											  		     ,pr_NumCtrlLTR	    IN VARCHAR2
-													       ,pr_NumCtrlSTR	    IN VARCHAR2
-													       ,pr_ISPBLTR        IN VARCHAR2
-													       ,pr_ISPBIFDebtd    IN VARCHAR2
-													       ,pr_ISPBIFCredtd   IN VARCHAR2
-													       ,pr_CNPJNLiqdant   IN VARCHAR2
-													       ,pr_IdentdPartCamr IN VARCHAR2
-													       ,pr_AgCredtd       IN VARCHAR2
-													       ,pr_CtCredtd       IN VARCHAR2
-													       ,pr_AgDebtd        IN VARCHAR2
-													       ,pr_Hist           IN VARCHAR2
-													       ,pr_FinlddIF       IN VARCHAR2
-													       ,pr_TpPessoaDebtd_Remet IN VARCHAR2
-													       ,pr_CNPJ_CPFDeb    IN VARCHAR2
-													       ,pr_NomCliDebtd    IN VARCHAR2
-													       ,pr_FinlddCli      IN VARCHAR2
-													       ,pr_DtHrBC         IN VARCHAR2
+                                 ,pr_CodMsg          IN VARCHAR2
+                                 ,pr_NumCtrlLTR      IN VARCHAR2
+                                 ,pr_NumCtrlSTR      IN VARCHAR2
+                                 ,pr_ISPBLTR        IN VARCHAR2
+                                 ,pr_ISPBIFDebtd    IN VARCHAR2
+                                 ,pr_ISPBIFCredtd   IN VARCHAR2
+                                 ,pr_CNPJNLiqdant   IN VARCHAR2
+                                 ,pr_IdentdPartCamr IN VARCHAR2
+                                 ,pr_AgCredtd       IN VARCHAR2
+                                 ,pr_CtCredtd       IN VARCHAR2
+                                 ,pr_AgDebtd        IN VARCHAR2
+                                 ,pr_Hist           IN VARCHAR2
+                                 ,pr_FinlddIF       IN VARCHAR2
+                                 ,pr_TpPessoaDebtd_Remet IN VARCHAR2
+                                 ,pr_CNPJ_CPFDeb    IN VARCHAR2
+                                 ,pr_NomCliDebtd    IN VARCHAR2
+                                 ,pr_FinlddCli      IN VARCHAR2
+                                 ,pr_DtHrBC         IN VARCHAR2
                                  ,pr_DtMovto        IN VARCHAR2
                                  ,pr_dscritic       OUT VARCHAR2) IS
   BEGIN
@@ -9187,8 +9127,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   END;
 
   PROCEDURE pc_insere_msg_slc (pr_VlrLanc            IN NUMBER
-                              ,pr_CodMsg			       IN VARCHAR2
-                              ,pr_NumCtrlSLC    	   IN VARCHAR2
+                              ,pr_CodMsg             IN VARCHAR2
+                              ,pr_NumCtrlSLC         IN VARCHAR2
                               ,pr_ISPBIF             IN VARCHAR2
                               ,pr_DtLiquid           IN VARCHAR2
                               ,pr_NumSeqCicloLiquid  IN VARCHAR2
@@ -9303,14 +9243,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     RETURN(rw_msg.id_existe_liquid);
   END fn_valida_liquid_antecipacao;
 
-  PROCEDURE teste2 (pr_cmd    IN VARCHAR2) IS
-
-  BEGIN
-    EXECUTE IMMEDIATE pr_cmd;
-    commit;
-
-  END;
-  
   PROCEDURE pc_verif_arq_antecip_nproc (pr_cdcritic OUT crapcri.cdcritic%TYPE
                                        ,pr_dscritic OUT VARCHAR2)  IS
     
@@ -9763,7 +9695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               NULL;
           END;
 
-          vr_nrdolote := 1;  -- fixa 1 no número do lote
+          vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
 
           -- Atualiza os historicos de lancamento
           IF rw_lancamento.tparquivo = 1 THEN    -- crédito
