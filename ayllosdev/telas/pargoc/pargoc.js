@@ -12,7 +12,6 @@
 var glb_cdcooper = 0; $("#hdnCooper", "#divTela").val();
  
 $(document).ready(function() {
-	carregarListaCooperativas();
 	estadoInicial();
 	return false;
 });
@@ -54,6 +53,7 @@ function carregarListaCooperativas() {
  */
 function estadoInicial() {
 	
+	carregarListaCooperativas();
 	$('#divTela').css({'display':'inline'}).fadeTo(0,0.1);
 	
 	// Formatar o layout da tela
@@ -217,7 +217,7 @@ function controlaCamposCadastro() {
 	
 	//Define ação para ENTER e TAB no campo HORARIO INICIAL DE PAGAMENTO SICREDI
 	$("#peminimo_cobertura","#frmParametros").unbind('keydown').bind('keydown', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
+		if (e.keyCode == 13) {
 			prosseguir();
 			return false;
 		}
@@ -253,7 +253,7 @@ function prosseguir() {
 		
 		case "A": // Alterar
 			// Solicitar a confirmacao para alterar os parametros
-			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina();','','sim.gif','nao.gif');
 		break;
 		
 	}

@@ -49,7 +49,7 @@
 			<table width="100%">
 				<tr>
 					<td>
-						<label for="peminimo_cobertura"><? echo utf8ToHtml('% M&iacute;n Cobertura p/ Garantia:') ?></label>
+						<label for="peminimo_cobertura"><? echo utf8ToHtml('% M&iacute;n. Cobertura p/ Garantia:') ?></label>
 						<input id="peminimo_cobertura" name="peminimo_cobertura" type="text"/> <label><? echo utf8ToHtml('&nbsp;%') ?></label>
 					</td>
 				</tr>
