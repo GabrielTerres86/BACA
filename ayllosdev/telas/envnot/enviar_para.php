@@ -14,12 +14,14 @@
 	<fieldset>
 		<legend><b><? echo utf8ToHtml('Enviar para')?></b></legend>		
 			<select id="tpfiltro" name="tpfiltro" class="campo" style="width:300px;" onChange="carregaEnviar(this.value);">
-				<option value="1" >Escolher os Filtros</option>
-				<option value="2" >Importar arquivo CSV</option>
+				<option value="1" <?php if($tpfiltro == 1){ echo " selected"; } ?> >Escolher os Filtros</option>
+				<option value="2" <?php if($tpfiltro == 2){ echo " selected"; } ?>>Importar arquivo CSV</option>
 			</select>
 		
 		<div id="divFile" name="divFile" style="padding-top: 20px; width: 100%; clear:both;">
-			<input name="arq_upload[]" id="nmarquivo_csv" type="file" class="campo" style="width:49%; height: 100%;" alt="<? echo utf8ToHtml('Informe o caminho do arquivo.'); ?>" />
+			<div>
+				<input name="arq_upload[]" id="nmarquivo_csv" type="file" class="campo" style="width:49%; height: 100%;" alt="<? echo utf8ToHtml('Informe o caminho do arquivo.'); ?>" />
+			</div>	
 			<div id="divCSVObs" name="divCSVObs" style="width:50%; float: right;">
 				<b>Observa&ccedil;&otilde;es:</b>
 				</br>

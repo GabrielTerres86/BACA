@@ -21,6 +21,8 @@ SELECT psh.cdlote_push
    AND psh.cdnotificacao = ntf.cdnotificacao
    AND ntf.cdmensagem = msg.cdmensagem
    
+   AND ntf.dhvisualizacao IS NULL -- Ignora se o usuário já viu na central de notificações
+   
    AND psh.insituacao = 1 -- Processando no Aymaru
    
    -- Valida se o dispositivo pode receber o push
