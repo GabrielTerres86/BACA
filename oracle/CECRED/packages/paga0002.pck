@@ -4134,12 +4134,17 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 16/11/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 03 - Entrada Rejeitada
+    --
+    --   Alteracoes: 16/11/2017 - Ajustado para que a situação do boleto seja alterada para
+    --                            BAIXADO, ao invés de REJEITADO. Também foi afdicionado a lista
+    --                            de motivos o código '46' Tipo/Numero de Inscricao do Sacado Invalidos
+    --                            (Douglas - Chamado 760923)
     -- ..........................................................................*/
     
     ---------------> VARIAVEIS <-----------------
@@ -4151,7 +4156,7 @@ create or replace package body cecred.PAGA0002 is
     
     vr_cdposini INTEGER := 1;
     vr_cdmotivo VARCHAR2(10);
-    vr_rejeitar BOOLEAN := FALSE;
+    vr_baixar   BOOLEAN := FALSE;
     
   BEGIN
 
@@ -4183,7 +4188,7 @@ create or replace package body cecred.PAGA0002 is
     --Fechar Cursor
     CLOSE cr_crapcob;
     
-    /*  Rejeitar título quando motivo for
+    /*  Baixar título quando motivo for
         '48' = CEP Inválido    
         '52' = Unidade da Federação Inválida
         '16' = Data de Vencimento Inválida 
@@ -4191,6 +4196,7 @@ create or replace package body cecred.PAGA0002 is
         '24' = Data da Emissão Inválida 
         '25' = Data da Emissão Posterior a Data de Entrada 
         '51' = CEP incompatível com a Unidade da Federação 
+        '46' = Tipo/Numero de Inscricao do Sacado Invalidos
     */    
     FOR vr_contador in 1..5 LOOP
       vr_cdmotivo := TRIM(SUBSTR(pr_dsmotivo,vr_cdposini, 2));
@@ -4200,16 +4206,17 @@ create or replace package body cecred.PAGA0002 is
         continue;
       END IF;
       
-      IF vr_cdmotivo in ('48','52','16','17','24','25','51') THEN
-        vr_rejeitar := TRUE;
+      IF vr_cdmotivo in ('48','52','16','17','24','25','51','46') THEN
+        vr_baixar := TRUE;
       END IF;          
     END LOOP;  
     
-    IF vr_rejeitar THEN
+    IF vr_baixar THEN
       /** Atualiza crapcob */
       BEGIN
         UPDATE CRAPCOB
-           SET crapcob.incobran = 4 /* rejeitado */
+           SET crapcob.incobran = 3 /* Baixado */
+              ,crapcob.dtdbaixa = pr_crapdat.dtmvtolt
          WHERE crapcob.rowid  = pr_idtabcob
         RETURNING crapcob.incobran
              INTO rw_crapcob.incobran;
