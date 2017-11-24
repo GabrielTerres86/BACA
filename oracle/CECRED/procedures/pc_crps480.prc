@@ -145,7 +145,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                               TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
                             
                  20/03/2017 - Remover linhas de reversão das contas de resultado e incluir
-                              lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)                            
+                              lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)
+
+                 13/11/2017 - Ao buscar na tabela craptab o acesso MXRENDIPOS, a validacao correta deveria ser
+                              is null ao inves de is not null como estava antes. Como estava, nao considerava o parametro
+                              de data de inicio da aplicacao da regra de poupanca, ocasionando provisoes incorretas.
+                              Heitor (Mouts) - Chamado 781104
 
   ..............................................................................*/
 
@@ -950,7 +955,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                      ,pr_tpregist => 1);
                                                
       -- Se não encontrar
-      IF TRIM(vr_dstextab) IS NOT NULL THEN
+      IF TRIM(vr_dstextab) IS NULL THEN
         -- Utilizar datas padrão
         vr_dtinitax := to_date('01/01/9999','dd/mm/yyyy');
         vr_dtfimtax := to_date('01/01/9999','dd/mm/yyyy');

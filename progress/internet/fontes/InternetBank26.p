@@ -52,6 +52,9 @@
 
 			   07/02/2017 - Incluir código de controle de consulta CIP como 
 			                parametro. (Odirlei)
+
+			   01/11/2017 -  Ajustes diversos para projeto de DDA Mobile
+							 PRJ356.4 - DDA (Ricardo Linhares)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -107,6 +110,7 @@ DEF  INPUT PARAM par_dscedent AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope LIKE crapopi.nrcpfope                    NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdctrlcs AS CHAR                                  NO-UNDO. 
+DEF  INPUT PARAM par_vlapagar AS DECI                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -170,6 +174,7 @@ ASSIGN aux_dstransa = "Valida " +
       ,INPUT par_nrcpfope    /* --> CPF do operador juridico      */
       ,INPUT INTE(par_flmobile) /* Indicador que origem é Mobile */
       ,INPUT par_cdctrlcs    /* --> Numero de controle da consulta no NPC */
+	  ,INPUT par_vlapagar	 /* --> Valor Total a pagar (soma de vários boletos) */
       ,OUTPUT ""             /* --> Retorno XML de critica        */
       ,OUTPUT ""             /* --> Retorno XML da operaçao 26    */
       ,OUTPUT ""       ).    /* --> Retorno de critica (OK ou NOK)*/ 

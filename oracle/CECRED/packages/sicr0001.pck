@@ -316,6 +316,14 @@ create or replace package body cecred.SICR0001 is
                               diferentes (Lucas Ranghetti #684123)                      
   ..............................................................................*/
 
+  -- Objetos para armazenar as variáveis da notificação
+  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+  
+  /* CONSTANTES */
+  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
+  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
+  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 9;
+
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
                                          ,pr_nmrescop  IN crapcop.nmrescop%TYPE        --> Nome resumido da cooperativa
@@ -1046,6 +1054,8 @@ create or replace package body cecred.SICR0001 is
     vr_dsdplchv               crapmsg.dsdplchv%TYPE;
     vr_idmotivo               tbconv_motivo_msg.idmotivo%TYPE;
     vr_valores_dinamicos      VARCHAR2(500);
+    
+    vr_motivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
 
 
   BEGIN
@@ -1058,6 +1068,7 @@ create or replace package body cecred.SICR0001 is
         vr_dsdassun := 'Transação não efetivada';
         vr_dsdplchv := 'Sem Saldo para Pagamento';
         vr_idmotivo := 30;
+        vr_motivo_mensagem := MOTIVO_SALDO_INSUFICIENTE;
 
       WHEN 967 THEN -- excede limite
         vr_cdtipo_mensagem_IB  := 4;
@@ -1065,6 +1076,7 @@ create or replace package body cecred.SICR0001 is
         vr_dsdassun := 'Fatura excede limite débito automático';
         vr_dsdplchv := 'Débito Automático';
         vr_idmotivo := 31;
+        vr_motivo_mensagem := MOTIVO_LIMITE_EXCEDIDO;
 
       ELSE RETURN;
     END CASE;
@@ -1079,9 +1091,23 @@ create or replace package body cecred.SICR0001 is
                             '#Data#='    || to_char(pr_dtmvtopg,'DD/MM/RRRR') ||';'||
                             '#Valor#='   || to_char(pr_vllanaut,'fm999G999G990D00') ||';'||
                             '#Limite#='  || to_char(pr_vlrmaxdb,'fm999G999G990D00');
-
+    
     --> Se for todos ou Msg Ibank
     IF pr_tpdnotif IN (0,1) THEN
+      
+      vr_variaveis_notif('#datadebito') := to_char(pr_dtmvtopg,'DD/MM/RRRR');
+      vr_variaveis_notif('#convenio') := vr_nmconven;
+      vr_variaveis_notif('#valor') := to_char(pr_vllanaut,'fm999G999G990D00');
+      vr_variaveis_notif('#limite') := to_char(pr_vlrmaxdb,'fm999G999G990D00');  
+      
+      -- Cria uma notificação
+      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+                                  ,pr_cdmotivo_mensagem => vr_motivo_mensagem
+                                  --,pr_dhenvio => SYSDATE
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_variaveis => vr_variaveis_notif);
+      
       --> Buscar pessoas que possuem acesso a conta
       FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
                                    ,pr_nrdconta  => pr_nrdconta

@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 24/01/2017
+   Data    : 03/10/2006                        Ultima atualizacao: 07/08/2017
 
    Dados referentes ao programa:
 
@@ -159,6 +159,12 @@
                             opcao Desconto de Cheques quando possuir contrato de limite de
                             desconto de cheque. Projeto 300 (Lombardi)
                
+
+               07/08/2017 - Ajuste na procedure "permissoes-menu" para somente mostrar a 
+                            opcao de Pagamento por arquivo, quando possuir convenio homologado
+                            ou arquivo de remessa enviado 
+                            (Douglas - M271.3 Upload de Arquivo de Pagamento)
+
 ..............................................................................*/
 
 
@@ -855,6 +861,9 @@ PROCEDURE gerenciar-operador.
            aux_cdcritic = 0
            aux_dscritic = "".
 
+    FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
+                             crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.           
+
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
    
     IF  NOT AVAILABLE crapcop  THEN
@@ -1132,7 +1141,7 @@ PROCEDURE gerenciar-operador.
                    crapopi.nmoperad = par_nmoperad
                    crapopi.dsdemail = par_dsdemail
                    crapopi.dsdcargo = par_dsdcargo
-				   crapopi.flgsitop = IF par_desdacao = "CADASTRAR" THEN
+				   crapopi.flgsitop = IF par_desdacao = "CADASTRAR" AND crapass.idastcjt = 1 THEN
 										            FALSE
 									            ELSE
 										            par_flgsitop.
@@ -1254,7 +1263,6 @@ PROCEDURE gerenciar-operador.
         
     END. /** Fim do DO TRANSACTION - TRANSACAO **/
     
-
 	TRANSACAO:
     DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
 	
@@ -2970,6 +2978,10 @@ PROCEDURE permissoes-menu:
     DEF VAR aux_flgblque AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgdesct AS LOGI                                    NO-UNDO.
+    /* Identificar se o cooperado possui convenio para upload do arquivo de 
+       pagamento, ou se possui remessa ja enviada */
+    DEF VAR aux_flguppgt AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgrepgt AS LOGI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0016 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
@@ -3280,6 +3292,44 @@ PROCEDURE permissoes-menu:
     ASSIGN aux_qtdiauso = INTEGER(ENTRY(17,craptab.dstextab,";"))
            aux_qtdiaalt = INTEGER(ENTRY(18,craptab.dstextab,";")).
 
+    /* Verificar se o cooperado possui convenio homologado e enviou algum arquivo */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_verifica_conv_pgto
+        aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT par_cdcooper, /* Codigo da Cooperativa */
+                       INPUT par_nrdconta, /* Numero da Conta */
+                      OUTPUT 0,            /* Numero do Convenio */
+                      OUTPUT 0,            /* Convenio esta homologado */
+                      OUTPUT 0,            /* Retorno para o Cooperado (1-Internet/2-FTP) */
+                      OUTPUT 0,            /* Flag convenio homologado */
+                      OUTPUT 0,            /* Flag enviou arquivo remessa */
+                      OUTPUT 0,            /* Cód. da crítica */
+                      OUTPUT "").          /* Descricao da critica */
+    
+    
+    CLOSE STORED-PROC pc_verifica_conv_pgto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+    ASSIGN aux_flguppgt = FALSE
+           aux_flgrepgt = FALSE
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flguppgt = (IF pc_verifica_conv_pgto.pr_fluppgto = 1 THEN
+                               TRUE
+                           ELSE
+                               FALSE)
+           aux_flgrepgt = (IF pc_verifica_conv_pgto.pr_flrempgt = 1 THEN
+                               TRUE
+                           ELSE
+                               FALSE)
+           aux_cdcritic = pc_verifica_conv_pgto.pr_cdcritic
+                          WHEN pc_verifica_conv_pgto.pr_cdcritic <> ?
+           aux_dscritic = pc_verifica_conv_pgto.pr_dscritic
+                          WHEN pc_verifica_conv_pgto.pr_dscritic <> ?.
+      
     IF  par_nrcpfope = 0  THEN  
         DO: 
             FIND crapsnh WHERE crapsnh.cdcooper = par_cdcooper AND
@@ -3380,6 +3430,13 @@ PROCEDURE permissoes-menu:
                     NOT aux_flgprepo)                          THEN
                     NEXT.
  
+                /* Verificar se eh o menu 20 (Upload de Pagamento)
+                   e se possui algum item ativo */
+                IF crapmni.cditemmn = 20 AND 
+                   NOT aux_flguppgt      AND 
+                   NOT aux_flgrepgt      THEN
+                    NEXT.
+ 
                 CREATE tt-itens-menu.
                 ASSIGN tt-itens-menu.cditemmn = crapmni.cditemmn
                        tt-itens-menu.cdsubitm = crapmni.cdsubitm
@@ -3421,6 +3478,24 @@ PROCEDURE permissoes-menu:
                     /* Verifica permissao para custodia de cheque */
                     IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 5 AND
                        NOT aux_flgdesct THEN
+                       NEXT.
+                    
+                    /* Verifica se eh o item de upload de arquivo e se 
+                       possui permissao para acessar o envio do arquivo 
+                       de agendamento dos pagamentos */
+                    IF crabmni.cditemmn = 20 AND 
+                       crabmni.cdsubitm = 1  AND 
+                       NOT aux_flguppgt      THEN
+                        NEXT.
+
+                    /* Verifica se eh o item de upload de arquivo e se 
+                       possui permissao para acessar arquivo de retorno (2),
+                       consulta das remessas (3) e relatório (4) */
+                    IF crabmni.cditemmn = 20 AND 
+                      (crabmni.cdsubitm = 2  OR
+                       crabmni.cdsubitm = 3  OR
+                       crabmni.cdsubitm = 4) AND 
+                       NOT aux_flgrepgt      THEN
                        NEXT.
                     
                     CREATE tt-itens-menu.
@@ -4438,7 +4513,3 @@ PROCEDURE cadastrar-senha-hsh:
     RETURN "OK".
 
 END.
-
-
-
-

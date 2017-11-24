@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autora  : Mirtes
-       Data    : Marco/2004.                        Ultima atualizacao: 25/05/2017
+       Data    : Marco/2004.                        Ultima atualizacao: 25/10/2017
 
        Dados referentes ao programa:
 
@@ -162,6 +162,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  
                     25/05/2017 - Ajustar as informações de log de operações (Rodrigo)
                                  
+                    25/10/2017 - Enviar o cdagectl para todos os convenios no arquivo ao invés de 
+                                 mandar a cooperativa mais o PA (Lucas Ranghetti #767689)
     ............................................................................ */
 
     DECLARE
@@ -971,12 +973,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                       '</lancamento>'||chr(13));
             END IF;
 
-            --verifica se utiliza convenio unico
-            IF rw_gnconve.flgcvuni= 1 THEN
-              vr_cdcoppac := LPAD(rw_crapcop.cdcooper,2,'0')||LPAD(rw_craplft.cdagenci,3,'0');
-            ELSE
+            -- gravar agencia para mandar no arquivo
               vr_cdcoppac := LPAD(rw_crapcop.cdagectl,5,'0');
-            END IF;
 
             --gera o numero da autorizacao
             vr_nrautdoc := LPAD(rw_crapcop.cdcooper, 2, '0')||

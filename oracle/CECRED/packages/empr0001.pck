@@ -36,6 +36,10 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
   --
+  --             17/10/2017 - No processo noturno, considerar tambem os valores bloqueados e que foram liberados
+  --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
+  --                          Heitor (Mouts) - Chamado 718395
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -802,6 +806,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
+
+  /* Calcular a quantidade de dias que o emprestimo está em atraso */
+  FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
+                                   ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
+                                   ,pr_nrctremp IN crappep.nrctremp%TYPE --> Numero do Contrato de empréstimo
+                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
+                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
+   RETURN INTEGER;
                                                                    
 END empr0001;
 /
@@ -813,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 12/09/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -875,6 +887,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
   --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
 
+  --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
+  --                          "Valor informado para pagamento maior que valor da parcela" informar
+  --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -7899,6 +7914,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
     
+	  CURSOR cr_crapdpb IS
+        select nvl(sum(c.vllanmto),0)
+          from craphis x
+             , crapdpb c
+         where c.cdcooper = pr_cdcooper
+           and c.nrdconta = pr_nrdconta
+           and x.cdcooper = c.cdcooper
+           and x.cdhistor = c.cdhistor
+           and x.inhistor in (3,4,5)
+           and c.dtliblan = pr_dtrefere
+           and c.inlibera = 1;
+           
+      vr_vllibera number(25,2);
+    
       --Registro tipo Data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
@@ -8009,9 +8038,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
           -- Quando eh BATCH mantem o padrao TRUE
           vr_flgcrass := TRUE;
+
+		  open cr_crapdpb;
+          fetch cr_crapdpb into vr_vllibera;
+          close cr_crapdpb;
         ELSE 
           -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
           vr_flgcrass := FALSE;
+		  vr_vllibera := 0;
         END IF;
         
         --Limpar tabela saldos
@@ -8041,7 +8075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0) +
+                                vr_vllibera,2); --Valor liberado no dia
         END IF;
       
         --Valor a Pagar Maior Soma total
@@ -8326,7 +8361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            (nvl(apli0001.fn_round(pr_vlatupar, 2), 0) +
             nvl(apli0001.fn_round(pr_vlmtapar, 2), 0) +
             nvl(apli0001.fn_round(pr_vlmrapar, 2), 0)) THEN
-          vr_cdcritic := 0;
+          vr_cdcritic := 1033; -- Retorna 1033 para o job não logar a mensagem.
           vr_dscritic := 'Valor informado para pagamento maior que valor da parcela';
           --Sair
           RAISE vr_exc_saida;

@@ -46,6 +46,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATURAT AS
                02/05/2016 - Conversão Progress >> Oracle (Andrei - RKAM). 
 
 			   11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+
+			   07/11/2017 - Alteracao em relatorio impresso para Rating Proposta
+                            com layout mais organizado e parecido com o Rating Atual
+                            Heitor (Mouts) - Melhoria 442
    */               
    
   PROCEDURE pc_verifica_rating_ativo(pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
@@ -1446,9 +1450,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                               ,pr_tab_impress_risco_tl IN rati0001.typ_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                               ,pr_tab_impress_assina   IN rati0001.typ_tab_impress_assina   --> Assinatura na impressao do Rating
                               ,pr_tab_efetivacao       IN rati0001.typ_tab_efetivacao       --> Registro dos itens da efetivação
-                              ,pr_nmarquiv             OUT VARCHAR2  --> Nome do arquivo gerado
-                              ,pr_tab_erro             OUT GENE0001.typ_tab_erro             --> Tabela de retorno de erro                             
-                              ,pr_des_reto             OUT VARCHAR2)IS                       --> Ind. de retorno OK/NOK
+							  ,pr_nmrelato             IN VARCHAR2                          --> Nome do relatorio
+                              ,pr_nmarquiv             OUT VARCHAR2                         --> Nome do arquivo gerado
+                              ,pr_tab_erro             OUT GENE0001.typ_tab_erro            --> Tabela de retorno de erro                             
+                              ,pr_des_reto             OUT VARCHAR2)IS                      --> Ind. de retorno OK/NOK
                           
     /* .............................................................................
     Programa: pc_imprimir_rating                                     Antigo: fontes/imprimir_rating.p
@@ -1703,7 +1708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento atual
                                    ,pr_dsxml     => vr_clobxml          --> Arquivo XML de dados
                                    ,pr_dsxmlnode => 'crrl367/topico/subtopico/item'          --> Nó base do XML para leitura dos dados                                  
-                                   ,pr_dsjasper  => 'aturat_risco.jasper'    --> Arquivo de layout do iReport
+                                   ,pr_dsjasper  => pr_nmrelato         --> Arquivo de layout do iReport
                                    ,pr_dsparams  => NULL                --> Sem parâmetros
                                    ,pr_dsarqsaid => vr_nmarqpdf         --> Arquivo final com o path
                                    ,pr_qtcoluna  => 132                  --> Colunas do relatorio
@@ -2036,6 +2041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                       ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                       ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do Rating
                       ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetivação
+					  ,pr_nmrelato             => 'aturat_risco.jasper'   --> Nome do relatorio
                       ,pr_nmarquiv             => vr_nmarquiv             --> Nome do arquivo gerado
                       ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro                             
                       ,pr_des_reto             => pr_des_erro);           --> Ind. de retorno OK/NOK
@@ -3051,6 +3057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                       ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                       ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do Rating
                       ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetivação
+					  ,pr_nmrelato             => 'aturat_risco_pro.jasper'   --> Nome do relatorio
                       ,pr_nmarquiv             => vr_nmarquiv             --> Nome do arquivo gerado
                       ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro                             
                       ,pr_des_reto             => pr_des_erro);           --> Ind. de retorno OK/NOK

@@ -99,10 +99,17 @@
     29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                         
 
     20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
-                 PRJ340 - NPC (Odirlei-AMcom)                         
-
+                 PRJ340 - NPC (Odirlei-AMcom)      
+                   									
 	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
 				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
+
+    06/09/2017 - Removido tag JDNPCSitTitulo por orientação da JD. (Rafael)
+
+
+    25/10/2017 - Ajuste para criar arquivo de chamada web com chaves para tratamento
+				 de concorrência.
+                 PRJ356.4 - DDA (Ricardo Linhares)  
 .............................................................................*/
 
 
@@ -233,6 +240,21 @@ ASSIGN aux_dsdmoeda[1]  = "RESERVADO PARA USO FUTURO"
 
 /*................................. FUNCTIONS ...............................*/
 
+FUNCTION GetSalt RETURNS RAW ():
+    SECURITY-POLICY:SYMMETRIC-ENCRYPTION-ALGORITHM = "AES_CBC_256".
+    RETURN GENERATE-RANDOM-KEY.
+END FUNCTION.
+
+FUNCTION gerar-chave RETURNS CHARACTER():
+
+  DEFINE VARIABLE rSalt AS RAW NO-UNDO.
+  DEFINE VARIABLE cSalt AS CHARACTER NO-UNDO.
+
+  cSalt = STRING(HEX-ENCODE(GetSalt())).
+
+  RETURN cSalt.
+
+END.
 
 FUNCTION cria-tag RETURNS LOGICAL (INPUT par_dsnomtag AS CHAR,
                                    INPUT par_dsvaltag AS CHAR,
@@ -399,7 +421,7 @@ PROCEDURE lista-titulos-sacado:
             END.
 
         IF  par_cdsittit < 0   OR
-            par_cdsittit > 13  THEN
+            par_cdsittit > 16  THEN
             DO:
                 ASSIGN aux_dscritic = "Situacao invalida.".
                 LEAVE.
@@ -1611,12 +1633,14 @@ PROCEDURE obtem-dados-legado PRIVATE:
                           "SOAP.MESSAGE.ENVIO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
            aux_msgreceb = "/usr/coop/" + crapcop.dsdircop + "/arq/" +
                           "SOAP.MESSAGE.RECEBIMENTO." + 
                           STRING(aux_datdodia,"99999999") + 
                           STRING(TIME,"99999") + 
+                          gerar-chave() +
                           STRING(par_nrdconta,"99999999") + 
                           STRING(par_idseqttl).
 

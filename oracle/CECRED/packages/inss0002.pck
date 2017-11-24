@@ -207,7 +207,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 						     ,pr_flmobile   IN INTEGER DEFAULT 0
                              ,pr_dshistor   IN VARCHAR2 DEFAULT NULL
                              ,pr_dsprotoc  OUT VARCHAR2                             
-							 ,pr_dslitera  OUT CLOB
+                             ,pr_dslitera  OUT CLOB
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
 
@@ -348,12 +348,12 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-                               
+                                   
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
   ---------------------------------------------------------------------------------------------------------------*/                                        
-                               
+
       PROCEDURE pc_gps_validar(pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE
                               ,pr_cdagenci IN NUMBER        
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 17/07/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 26/10/2017
 
    Dados referentes ao programa:
 
@@ -441,9 +441,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
+                            
+               29/09/2017 - Corrigido caracter invalida na procedure pc_gps_arrecadar_sicredi (Tiago/Adriano).             
 
                08/09/2017 - Implementação GPS para Mobile.
 				    		(P 356.2 - Ricardo Linhares)
+                            
+               26/10/2017 - Alterado na pc_gps_pagamento a ordem como era usada a tabela bcx pois
+                            qdo ele estava lockada dava a impressao pro operador que o pagamento
+                            não havia sido concluido qdo na verdade ja tinha sido processado no SICREDI
+                            fazendo com que o operador fizesse o pagamento em duplicidade
+                            (Tiago #716275)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1268,7 +1276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
 								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
-									,pr_dstransa => vr_dstransa          --Descricao da transacao
+                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro
@@ -1925,7 +1933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   BEGIN
     pr_des_reto := 'NOK';
-    
+
     IF TRIM(pr_dshistor) IS NULL THEN
       vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
     ELSE
@@ -2795,7 +2803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_nrdrowid => vr_nrdrowid);
 
   END pc_gps_agmto_consulta;
-  
+
 
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
@@ -2860,7 +2868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_cdoperad   IN crapope.cdoperad%TYPE
                                   ,pr_nmdatela   IN craptel.nmdatela%TYPE
                                   ,pr_dsdrowid   IN VARCHAR2
-								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397  								  
+								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397
 								  ,pr_flmobile   IN INTEGER DEFAULT 0
                                   ,pr_dscritic  OUT VARCHAR2) IS
     
@@ -4813,6 +4821,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
      -- Sempre passa a data que já está no CX-online
      vr_dtmvtolt := rw_crapdat.dtmvtocd;
+
+     IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
+       
+       --Selecionar informacoes dos boletins dos caixas
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1 .. 100 LOOP
+          BEGIN
+            OPEN cr_existe_bcx(pr_cdcooper
+                              ,rw_crapdat.dtmvtocd
+                              ,pr_cdagenci
+                              ,pr_nrdcaixa
+                              ,pr_cdoperad);
+            --Posicionar no proximo registro
+            FETCH cr_existe_bcx INTO rw_existe_bcx;
+            --Se nao encontrar
+            IF cr_existe_bcx%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
+              vr_cdcritic:= 698;
+              pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;              
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            ELSE  
+              vr_cdcritic := NULL;
+              --Fechar Cursor
+              CLOSE cr_existe_bcx;
+              EXIT;
+            END IF;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            IF cr_existe_bcx%ISOPEN THEN
+              CLOSE cr_existe_bcx;
+            END IF;
+
+            -- setar critica caso for o ultimo
+            IF i = 100 THEN
+              pr_dscritic := pr_dscritic || 'Registro de banco caixa ' ||
+                             pr_nrdcaixa || ' em uso. Tente novamente!';
+            END IF;
+            -- aguardar 0,5 seg. antes de tentar novamente
+            sys.dbms_lock.sleep(0.1);
+        END;
+      END LOOP;
+
+      -- se encontrou erro ao buscar lote, abortar programa
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      ELSE  
+        --Atualizar tabela crapbcx
+        BEGIN
+         UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
+         WHERE crapbcx.ROWID = rw_existe_bcx.ROWID;
+        EXCEPTION
+         WHEN Others THEN
+           vr_cdcritic := 0;
+           vr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
+           --Levantar Excecao
+           RAISE vr_exc_saida;
+        END;        
+      END IF;
+       
+     END IF;
      
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
@@ -4883,73 +4956,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      END IF;
      END IF;
 
-
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        -- Retornar valores
        pr_dslitera := vr_literal;
        pr_cdultseq := vr_nrseqaut;
-       
-       --Selecionar informacoes dos boletins dos caixas
-        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-        FOR i IN 1 .. 100 LOOP
-          BEGIN
-            OPEN cr_existe_bcx(pr_cdcooper
-                              ,rw_crapdat.dtmvtocd
-                              ,pr_cdagenci
-                              ,pr_nrdcaixa
-                              ,pr_cdoperad);
-            --Posicionar no proximo registro
-            FETCH cr_existe_bcx INTO rw_existe_bcx;
-            --Se nao encontrar
-            IF cr_existe_bcx%NOTFOUND THEN
-              --Fechar Cursor
-              CLOSE cr_existe_bcx;
-              vr_cdcritic:= 698;
-              pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-              --Fechar Cursor
-              CLOSE cr_existe_bcx;              
-              --Levantar Excecao
-              RAISE vr_exc_saida;
-            ELSE  
-              vr_cdcritic := NULL;
-              --Fechar Cursor
-              CLOSE cr_existe_bcx;
-              EXIT;
-            END IF;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            IF cr_existe_bcx%ISOPEN THEN
-              CLOSE cr_existe_bcx;
-            END IF;
-
-            -- setar critica caso for o ultimo
-            IF i = 100 THEN
-              pr_dscritic := pr_dscritic || 'Registro de banco caixa ' ||
-                             pr_nrdcaixa || ' em uso. Tente novamente!';
-            END IF;
-            -- aguardar 0,5 seg. antes de tentar novamente
-            sys.dbms_lock.sleep(0.1);
-        END;
-      END LOOP;
-
-      -- se encontrou erro ao buscar lote, abortar programa
-      IF pr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      ELSE  
-        --Atualizar tabela crapbcx
-        BEGIN
-         UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
-         WHERE crapbcx.ROWID = rw_existe_bcx.ROWID;
-        EXCEPTION
-         WHEN Others THEN
-           vr_cdcritic := 0;
-           vr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
-           --Levantar Excecao
-           RAISE vr_exc_saida;
-        END;        
-      END IF;
-       
      END IF;
 
      IF NVL(pr_nrdconta,0) > 0 THEN

@@ -194,7 +194,7 @@ PROCEDURE inclui-registro:
         BUFFER-COPY crapbem TO tt-crapbem-atl.
         
        /* Realiza a replicacao dos dados p/as contas relacionadas ao coop. */
-        IF  par_idseqttl = 1 AND par_nmdatela = "CONTAS" THEN 
+/*        IF  par_idseqttl = 1 AND par_nmdatela = "CONTAS" THEN 
             DO:
                IF  NOT VALID-HANDLE(h-b1wgen0077) THEN
                    RUN sistema/generico/procedures/b1wgen0077.p 
@@ -244,7 +244,7 @@ PROCEDURE inclui-registro:
                    
                END.
 
-            END.
+            END.*/
 
         ASSIGN aux_retorno = "OK" .
 

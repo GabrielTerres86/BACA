@@ -24,6 +24,10 @@
 							 
 				11/07/2017 - Melhoria 150 - adicionado campos na estrutura
                              tt-atribdet
+
+                07/11/2017 - Adicionados campos para comportar o cadastro de 
+                             tarifas por porcentual na ALTTAR.
+                             Everton (Mouts) - Melhoria 150.
 .............................................................................*/
 
 DEF TEMP-TABLE tt-grupos NO-UNDO
@@ -65,7 +69,11 @@ DEF TEMP-TABLE tt-faixavalores NO-UNDO
     FIELD vltarifa AS DECI
     FIELD cdocorre AS INTE
     FIELD nrconven AS INTE
-    FIELD cdlcremp AS INTE.
+    FIELD cdlcremp AS INTE
+	FIELD tpcobtar AS INTE
+	FIELD vlpertar AS DECI
+	FIELD vlmintar AS DECI
+	FIELD vlmaxtar AS DECI.
 
 DEF TEMP-TABLE tt-historicos NO-UNDO
     FIELD cdhistor AS INTE

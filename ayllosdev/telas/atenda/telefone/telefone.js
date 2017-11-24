@@ -1,19 +1,21 @@
 /*******************************************************************
     Fonte: telefone.js
     Autor: Gabriel
-    Data : Janeiro/2011                Ultima atualizacao : 13/07/2011
+    Data : Janeiro/2011                Ultima atualizacao : 16/10/2017
 
     Objetivo  : Biblioteca de funcoes da rotina TELEFONE tela ATENDA.
 
     Alteracoes: 13/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
 
+	            16/10/2017 - Alterado para poder copiar numero telefone
+				             da grid (Tiago #725346)
 *******************************************************************/
 
 
 // Acessar tela principal da rotina
 function acessaOpcaoAba() {
 
-    $("#linkAba0").addClass('FirstInputModal')
+    $("#linkAba0").addClass('FirstInputModal');
     $("#linkAba0").addClass('LastInputModal').focus();
     $("#linkAba0:focus").css({ 'border': 'none', 'outline': 'none' });
     $(".LastInputModal").bind('keydown', function (e) {
@@ -42,6 +44,7 @@ function acessaOpcaoAba() {
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
+			$("#nrfonres").css("display","none");
         }
     });
 
@@ -58,9 +61,9 @@ function controlaLayout() {
     var ordemInicial = new Array();
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '75px';
+    arrayLargura[0] = '60px';
     arrayLargura[1] = '40px';
-    arrayLargura[2] = '60px';
+    arrayLargura[2] = '75px';
     arrayLargura[3] = '45px';
     arrayLargura[4] = '80px';
 
@@ -74,5 +77,13 @@ function controlaLayout() {
 
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
-
 }
+
+function copier(valor){	
+    $("#nrfonres").css("display","block"); 
+	$("#nrfonres").val(valor);	
+	document.getElementById('nrfonres').select();
+	document.execCommand('copy');
+	$("#nrfonres").css("display","none");
+}
+ 

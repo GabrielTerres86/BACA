@@ -26,6 +26,8 @@
 											 
 					27/06/2018 - Ajustes para RF05/RF06, inclusao de novas ABAS,
                                  PRJ229 - Melhorias OQS (Jean Michel).						 
+                       
+          20/10/2016 - Inclusao do campo idvalloc, Prj. 229 (Jean Michel).             
 	-->
 	<html>
 			<head>
@@ -60,7 +62,7 @@
 					</script>
 					<form action="#." method="POST" name="form" id="form">
             <input name="aux_cdevento"    type="hidden" value="">
-            <input name="aux_idevento"    type="hidden" value="">
+            <input name="aux_idevento" id="aux_idevento" type="hidden" value="">
             <input name="aux_cdorigem"    type="hidden" value="">
             <input name="cdagenci"        type="hidden" value="">
             <input name="aux_nmpagina"    type="hidden" value="">      
@@ -99,7 +101,7 @@
 													<table width="760px" height="335" border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
 															<tr>
 																	<td valign="top" bgcolor="#FFFFFF">
-																			<table width="760px" height="337" border="0" cellpadding="0" cellspacing="0">
+																			<table width="850px" height="337" border="0" cellpadding="0" cellspacing="0">
 																					<tr valign="bottom">
 																							<td rowspan="2" align="left">&nbsp;</td>
 																							<td align="left"><br>
@@ -133,7 +135,7 @@
 																															</table>
 																													</td>
 																													<td width="108" height="15" style="cursor:hand">
-																															<table id="AbaPublicoAlvo" border="0" cellpadding="0" cellspacing="0">
+																															<table id="AbaPublicoAlvo" name="AbaPublicoAlvo" border="0" cellpadding="0" cellspacing="0">
 																																	<tr>
 																																			<td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
 																																			<td width="100" align="center" class="txtTituloHid" onclick="mostraDiv('divPublicoAlvo');document.form.submit();">P&uacute;blico-Alvo</td>
@@ -142,7 +144,7 @@
 																															</table>
 																													</td>
 																													<td width="128" height="15" style="cursor:hand">
-																															<table id="AbaProdutoSugerido" border="0" cellpadding="0" cellspacing="0">
+																															<table id="AbaProdutoSugerido" name="AbaProdutoSugerido" border="0" cellpadding="0" cellspacing="0">
 																																	<tr>
 																																			<td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
 																																			<td width="120" align="center" class="txtTituloHid" onclick="mostraDiv('divProdutoSugerido');document.form.submit();">Produto Sugerido</td>
@@ -172,22 +174,21 @@
 																															<td align="right" class="NomeCampo">
 																																	<div align="right">Evento:</div></td>
 																															<td colspan="3">
-																																	<input name="nmevento" type="text" class="Campo" size="40" maxlength="50" value=""> 
-																																	<div align="right">
-																																			<div class="NomeCampo">
-																																					<div align="left"></div>
-																																			</div>
-																																	</div></td>
-																															<td nowrap class="NomeCampo"><div id="Progrid" align="right">Ativo
-																																			<input type="checkbox" value="on" name="flgativo" onFocus="window.status = 'Permite Incluir.'">
-																																	</div></td>
+																																	<textarea name="nmevento" id="nmevento" tabindex="1" class="Campo" style="width:300px;" maxlength="50" rows="1" onkeypress="if(event.keyCode == 13){$('#flgativo').focus();};" maximoCaracteres('nmevento',50);"> </textarea> 
+																															</td>
+																															<td nowrap class="NomeCampo">
+                                                                <!--<div id="Progrid" align="right">-->
+                                                                  Ativo
+                                                                  <input type="checkbox" value="on" tabindex="2" onkeypress="if(event.keyCode == 13){$('#aux_tpevento').focus();};" name="flgativo" id="flgativo" onFocus="window.status = 'Permite Incluir.'">
+                                                                <!--</div>-->
+                                                              </td>
 																													</tr>
 																													<tr>
 																															<td align="right" class="NomeCampo">
 																																	<div align="right">Tipo de evento: </div>
 																															</td>
 																															<td colspan="2">                  
-																																	<select name="aux_tpevento" class="Campo" style="width:190px;">
+																																	<select name="aux_tpevento" id="aux_tpevento" class="Campo" tabindex="3" onkeypress="if(event.keyCode == 13){$('#aux_nrseqtem').focus();};" style="width:250px;">
 																																	</select>             
 																															</td>
 																															<td class="NomeCampo">
@@ -195,7 +196,7 @@
 																															</td>
 																															<td colspan="2">
 																																	<div id="Progrid">  
-																																			<select name="aux_nrseqtem" class="Campo" style="width:350px" onchange="selecionaEixo();
+																																			<select name="aux_nrseqtem" id="aux_nrseqtem" class="Campo" tabindex="4" onkeypress="if(event.keyCode == 13){$('#aux_nrseqpri').focus();};" style="width:350px" onchange="selecionaEixo();
 																																							this.blur();">
 																																			</select>
 
@@ -209,7 +210,7 @@
 																																	<div align="right">Parceria institucional: </div>
 																															</td>
 																															<td colspan="2">                  
-																																	<select name="aux_nrseqpri" class="Campo" style="width:190px;">
+																																	<select name="aux_nrseqpri" id="aux_nrseqpri" class="Campo" tabindex="5" onkeypress="if(event.keyCode == 13){$('#aux_dseixtem').focus();}" style="width:190px;">
 																																	</select>             
 																															</td>
 
@@ -219,24 +220,24 @@
 																															<td colspan="2">
 																																	<div id="Progrid">                            
 																																			<input name="aux_cdeixtem" id="aux_cdeixtem" type="hidden" class="Campo" value="" />
-																																			<input name="aux_dseixtem" type="text" class="Campo" style="width:350px" value="" disabled="disabled" >
+																																			<input name="aux_dseixtem" id="aux_dseixtem" type="text" class="Campo" style="width:350px" tabindex="6" onkeypress="if(event.keyCode == 13){$('#qtmaxtur').focus();};" value="" disabled="disabled" >
 																																	</div>
 																															</td>
 
 																													</tr>	  
 																													<tr>
 																															<td class="NomeCampo" nowrap>
-																																	<div id="Progrid" align="right">Participantes por turma:</div></td>
+																																	<div id="Progrid" align="right">Meta do PA:</div></td>
 																															<td width="97">
 																																	<div id="Progrid">
-																																			<input name="qtmaxtur" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+																																			<input name="qtmaxtur" id="qtmaxtur" type="text" class="Campo" size="5" tabindex="7" onkeypress="if(event.keyCode == 13){$('#qtmintur').focus();}" maxlength="5" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																																	</div></td>
 																															<td width="2">&nbsp;</td>
 																															<td class="NomeCampo" nowrap>
-																																	<div id="Progrid" align="right">Minimo por turma:</div></td>
+																																	<div id="Progrid" align="right">Capacidade M&aacute;xima:</div></td>
 																															<td colspan="2" class="NomeCampo">
 																																	<div id="Progrid">
-																																			<input name="qtmintur" id="qtmintur" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+																																			<input name="qtmintur" id="qtmintur" type="text" class="Campo" tabindex="8" onkeypress="if(event.keyCode == 13){$('#aux_tppartic').focus();}" size="5" maxlength="5" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																																	</div></td>
 																													</tr>
 																													<tr>
@@ -244,48 +245,69 @@
 																																	<div id="Progrid" align="right">Participa&ccedil;&atilde;o permitida:</div></td>
 																															<td>
 																																	<div id="Progrid">
-																																			<select name="aux_tppartic" class="Campo" onChange="AlteraLimite();" style="width:190px;">
-																																			</select>
-																																	</div></td>
-																															<td>&nbsp;</td>
+																																			<select id="aux_tppartic" name="aux_tppartic" class="Campo" onChange="AlteraLimite();" tabindex="9" onkeypress="if(event.keyCode == 13){$('#aux_nrseqpgm').focus();}" style="width:190px;"></select>
+																																	</div>
+                                                              </td>
+                                                              <td width="2">&nbsp;</td>
 																															<td class="NomeCampo" nowrap>
+																																<div id="Progrid" align="right">
+																																	<div id="Programa" name="Programa" align="right">Programa:</div>
+																																</div>
+                                                              </td>
+																															<td class="NomeCampo" nowrap colspan="2">
+																																<div id="Progrid" align="left">
+																																	<div id="ProgramaCampo" name="ProgramaCampo">
+																																		<select id="aux_nrseqpgm" name="aux_nrseqpgm" class="Campo" tabindex="10" onkeypress="if(event.keyCode == 13){$('#qtparcta').focus();}" style="width:350px;"></select>
+																																	</div>
+																																</div>
+                                                              </td>
+                                                            </tr>
+                                                            <tr>
 																															<td class="NomeCampo" nowrap>
-																																	<div id="divqtpar" align="right">Limite por conta:</div></td>
+                                                                <div id="divqtpar" align="right">Limite por conta:</div>
+                                                              </td>
 																															<td colspan="2" class="NomeCampo">
 																																	<div>
-																																			<input name="qtparcta" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)">
-																																	</div></td>
+                                                                  <input name="qtparcta" id="qtparcta" type="text" class="Campo" size="3" tabindex="11" onkeypress="if(event.keyCode == 13){$('#prfreque').focus();}" maxlength="2" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
+                                                                </div>
+                                                              </td>
 																													</tr>
 																													<tr>
 																															<td class="NomeCampo">
 																																	<div id="Progrid" align="right">Frequ&ecirc;ncia exigida(%):</div></td>
 																															<td>
 																																	<div id="Progrid">
-																																			<input name="prfreque" type="text" class="Campo" size="3" maxlength="3" onKeyUp="formataNum(this, event, '.,')" value="">
+																																			<input name="prfreque" id="prfreque" type="text" class="Campo" size="3" tabindex="12" onkeypress="if(event.keyCode == 13){$('#nridamin').focus();}" maxlength="3" onKeyUp="if(event.keyCode != 13){formataNum(this, event, '.,')};" value="">
 																																	</div></td>
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo">
 																																	<div id="Progrid" align="right" >Idade minima:</div></td>
 																															<td class="NomeCampo" style="width:10px;">
 																																	<div id="Progrid"   style="width:10px;">
-																																			<input name="nridamin" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)">
+																																			<input name="nridamin" id="nridamin" type="text" class="Campo" tabindex="13" onkeypress="if(event.keyCode == 13){$('#qtdiaeve').focus();}" size="3" maxlength="3" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																																	</div>
 																															</td>
 																															<td class="NomeCampo">
 																																	<div id="Progrid" align="left" style=" float:left;margin-top:3px;"> Qt.Dias Evento:</div>
 																																	<div id="Progrid" align="right" style="width:10px;">
-																																			<input name="qtdiaeve" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+																																			<input name="qtdiaeve" id="qtdiaeve" type="text" class="Campo" tabindex="14" onkeypress="if(event.keyCode == 13){$('#aux_idrespub').focus();}" size="5" maxlength="5" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																																	</div>
 																															</td>
 																													</tr>
 																													<tr>
-																														<td colspan="1" class="NomeCampo">
+																															<td class="NomeCampo">
 																															<div id="Progrid" align="right" >Restri&ccedil;&atilde;o Publicação:</div>
-																														</td>
 																														<td>
 																															<div id="Progrid">
-																																<select name="aux_idrespub" class="NomeCampo" >
-																																</select>
+																																			<select name="aux_idrespub" id="aux_idrespub" class="NomeCampo" tabindex="15" onkeypress="if(event.keyCode == 13){$('#aux_idvalloc').focus();}" ></select>
+																																	</div></td>
+																															<td>&nbsp;</td>
+																															<td class="NomeCampo">&nbsp;</td>
+																															<td class="NomeCampo" style="width:10px;">&nbsp;</td>
+																															<td class="NomeCampo">
+																																	<div id="Progrid" align="left" style=" float:left;margin-top:3px;">Cobrar Local?&nbsp;&nbsp;</div>
+																																	<div id="Progrid" align="right" style="width:10px;">
+																																			<select name="aux_idvalloc" id="aux_idvalloc" class="NomeCampo" tabindex="16" onkeypress="if(event.keyCode == 13){$('#flgtdpac').focus();}" ></select>
 																															</div>
 																														</td>
 																													</tr>
@@ -293,44 +315,56 @@
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo" colspan="5">
 																																	<div id="Progrid">
-																																			<input type="checkbox" value="on" name="flgtdpac" checked onFocus="window.status = 'Permite Alterar.'">
+																																			<input type="checkbox" value="on" tabindex="17" name="flgtdpac" id="flgtdpac" onkeypress="if(event.keyCode == 13){$('#flgrestr').focus();};" checked onFocus="window.status = 'Permite Alterar.'">
 																																			Obrigat&oacute;rio a todos os PAs </div></td>
 																													</tr>
 																													<tr>
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo" colspan="5">
 																																	<div id="Progrid">
-																																			<input type="checkbox" value="on" name="flgrestr" checked onFocus="window.status = 'Permite Excluir.'">
+																																			<input type="checkbox" value="on" tabindex="18" name="flgrestr" id="flgrestr" onkeypress="if(event.keyCode == 13){$('#flgcompr').focus();};" checked onFocus="window.status = 'Permite Excluir.'">
 																																			Pr&eacute;-inscri&ccedil;&atilde;o somente para associados do PA </div></td>
 																													</tr>
 																													<tr>
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo" colspan="5">
 																																	<div id="Progrid">
-																																			<input type="checkbox" value="on" name="flgcompr" checked onFocus="window.status = 'Permite Excluir.'">
+																																			<input type="checkbox" value="on" tabindex="19" name="flgcompr" id="flgcompr" onkeypress="if(event.keyCode == 13){$('#flgcerti').focus();};" checked onFocus="window.status = 'Permite Excluir.'">
 																																			Termo de compromisso </div></td>
 																													</tr>
 																													<tr>
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo" colspan="5">
 																																	<div id="Progrid">
-																																			<input type="checkbox" value="on" name="flgcerti" checked onFocus="window.status = 'Permite Incluir.'">
+																																			<input type="checkbox" value="on" tabindex="20" name="flgcerti" id="flgcerti" onkeypress="if(event.keyCode == 13){$('#flgsorte').focus();};" checked onFocus="window.status = 'Permite Incluir.'">
 																																			Certifica </div></td>
 																													</tr>
 																													<tr>
 																															<td>&nbsp;</td>
 																															<td class="NomeCampo" colspan="5">
 																																	<div id="Progrid">
-																																			<input type="checkbox" value="on" name="flgsorte" checked onFocus="window.status = 'Permite Incluir.'">
-																																			Sorteio de brindes </div></td>
+                                                                <input type="checkbox" value="on" tabindex="21" name="flgsorte" id="flgsorte" onkeypress="if(event.keyCode == 13){$('#idperint').focus();};" checked onFocus="window.status = 'Permite Incluir.'">
+                                                                Sorteio de brindes
+                                                              </div>
+                                                            </td>
 																													</tr>
 																													
+                                                          <tr>
+                                                            <td>&nbsp;</td>
+																														<td class="NomeCampo" colspan="5">
+                                                              <div id="Progrid">
+                                                                <input type="checkbox" value="on" tabindex="22" name="idperint" id="idperint" onkeypress="if(event.keyCode == 13){$('#aux_dsjustif').focus();};" checked onFocus="window.status = 'Permite Incluir.'">
+                                                                Permite Integra&ccedil;&atildeo Com Evento Assemblear?
+                                                              </div>
+                                                            </td>
+																													</tr>
+                                                          
 																													<tr id="Progrid">
 																															<td align="right" class="NomeCampo">
 																																	<div align="right">Justificativa:</div>
 																															</td>
 																															<td colspan="3">
-																																	<textarea name="aux_dsjustif" class="NomeCampo" style="width:300px;" rows="4"> </textarea>               
+																																	<textarea name="aux_dsjustif" id="aux_dsjustif" tabindex="23" class="NomeCampo" style="width:300px;" onkeypress="if(event.keyCode == 13){$('#imgLimpar').focus();};" rows="4"> </textarea>               
 																															</td>
 																													</tr>  
 
@@ -342,18 +376,16 @@
 																																	<input name="tel_cdoperad" type="text" class="Campo" style="width:300px;" disabled readonly>
 
 																															</td>
-
 																													</tr>
-
 
 																													<tr style="height:100px">
 																															<td colspan="6" align="center">
 																																	<table border="0" align="center" cellpadding="1" cellspacing="1">
 																																			<tr>
-																																					<th scope="col"><div class="style2" id="Incluir"><img style="cursor:hand" src="/cecred/images/botoes/btn_limpar.gif" onClick="return top.frcod.Incluir()"></div></th>
-																																			<th scope="col"><div class="style2" id="Salvar"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" onClick="return Salvar()"></div></th>
-																																			<th scope="col"><div class="style2" id="Excluir"><img style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir();"></div></th>
-																																			<th scope="col"><div class="style2" id="Pesquisar"><img style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom, parent.mainFrame.NomeDoProgramaPrincipal, '', 'P', document.form.aux_idevento.value,'','CEventos','','','','580','390')"></div></th>
+                                                                  <th scope="col"><div class="style2" id="Incluir"><img id="imgLimpar" tabindex="24" style="cursor:hand" src="/cecred/images/botoes/btn_limpar.gif" onClick="return top.frcod.Incluir()"></div></th>
+                                                                  <th scope="col"><div class="style2" id="Salvar"><img tabindex="25" style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" onClick="return Salvar()"></div></th>
+                                                                  <th scope="col"><div class="style2" id="Excluir"><img tabindex="26" style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir();"></div></th>
+                                                                  <th scope="col"><div class="style2" id="Pesquisar"><img tabindex="27" style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom, parent.mainFrame.NomeDoProgramaPrincipal, '', 'P', document.form.aux_idevento.value,'','CEventos','','','','580','390')"></div></th>
 																													</tr>
 																											</table>
 																							</td>                          
@@ -390,31 +422,31 @@
 																					<tr>
 																						<td align="right" class="NomeCampo"> Cooperativa: </td>
 																						<td>
-																							<select name="aux_cdcooper" class="Campo" id="aux_cdcooper" onChange="document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();"></select>
+																							<select name="aux_cdcooper" class="Campo" id="aux_cdcooper" onChange="document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();" onkeypress="if(event.keyCode == 13){$('#aux_cdagenci').focus();}" ></select>
 																						</td>
 																					</TR> 
 																					<tr>
 																						<td align="right" class="NomeCampo">PA:</td>
 																						<td>
-																							<select name="aux_cdagenci" class="Campo" id="aux_cdagenci" onChange="document.form.aux_cddopcao.value=''; document.form.cdagenci.value = document.form.aux_cdagenci.value; document.form.submit();"></select>
+																							<select name="aux_cdagenci" class="Campo" id="aux_cdagenci" onChange="document.form.aux_cddopcao.value=''; document.form.cdagenci.value = document.form.aux_cdagenci.value; document.form.submit();" onkeypress="if(event.keyCode == 13){$('#nrseqdig').focus();}"></select>
 																						</td>
 																					</tr>
 																					<tr>
 																						<td align="right" class="NomeCampo">Recurso:</td>
 																						<td align="left">
-																							<select name="nrseqdig" id="nrseqdig" class="Campo" onChange="document.form.submit();"></select>
+																							<select name="nrseqdig" id="nrseqdig" class="Campo" onChange="document.form.submit();" onkeypress="if(event.keyCode == 13){$('#aux_qtrecage').focus();}" ></select>
 																						</td>
 																					</tr>
-																					<tr id="Progrid">
+																					<tr>
 																						<td align="right" class="NomeCampo QtdPorEvento">Quantidade:</td>
 																						<td>
 																							<div class="QtdPorEvento" style="width:10px; float: left;">
-																									<input name="aux_qtrecage" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+																									<input name="aux_qtrecage" id="aux_qtrecage" value="1" type="text" class="Campo" size="5" maxlength="5" onkeypress="if(event.keyCode == 13){$('#aux_qtgrppar').focus();}" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																							</div>
 																							<div class="QtdPorGrupo">
 																								<label class="NomeCampo" style="float: left;">&nbsp;&nbsp;&nbsp;A Cada:&nbsp;&nbsp;&nbsp;</label>
 																								<div style="width:10px; float: left;">
-																										<input name="aux_qtgrppar" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+																										<input name="aux_qtgrppar" id="aux_qtgrppar" type="text" class="Campo" size="5" maxlength="5" onKeyDown="if(event.keyCode != 13){validaInteiro(event);}">
 																								</div>
 																								<label class="NomeCampo" style="float: left;">&nbsp;&nbsp;&nbsp;Participantes</label>
 																							</div>
@@ -435,7 +467,7 @@
 																				<table id="tbpublicoalvo" border="0" style="width:100%;" class="dataTable">
 																						<tr>
 																								<td id="separador1pa" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
-																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">P&uacute;blico-Alvo</td>
+																								<td id="tbpublicoalvo_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Público-Alvo</td>
 																								<td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																								<td id="tbpublicoalvo_col2" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
 																						</tr>
@@ -464,6 +496,7 @@
 				</tr>
 			</table>
 		</form>
+	</body>
 		<script language="JavaScript">
 			NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal + ' ?idevento=' + document.form.aux_idevento.value;
 			document.form.action = NomeDoProgramaPrincipal;
@@ -477,23 +510,24 @@
 				{
 
 						// esconde todos os botões menos o de salvar
-						document.all.Incluir.style.visibility = "hidden";
-						document.all.Excluir.style.visibility = "hidden";
-						document.all.Pesquisar.style.visibility = "hidden";
+						document.getElementById("Incluir").style.visibility = "hidden";
+            document.getElementById("Excluir").style.visibility = "hidden";
+            document.getElementById("Pesquisar").style.visibility = "hidden";
 
 						// se for 'Seleção de Sugetões' esconde e desabilita alguns campos
 						if (document.form.aux_cdorigem.value == "3") {
-								document.all.AbaRecurso.style.visibility = "hidden";
-								//document.form.nmevento.disabled=true;
+            
+								document.getElementById("AbaRecurso").style.display = "none";
+                document.getElementById("AbaRecursoPA").style.display = "none";
+                document.getElementById("AbaPublicoAlvo").style.display = "none";
+                document.getElementById("AbaProdutoSugerido").style.display = "none";
 								document.form.flgativo.disabled = true;
-								//document.form.aux_cdeixtem.disabled=true;
-								//document.form.aux_tpevento.disabled=true;
 						}
 				}
 
 		// Se for 'Agenda do Ano', nem salvar pode
 				if (document.form.aux_cdorigem.value == "4")
-						document.all.Salvar.style.visibility = "hidden";
+						document.getElementById("Salvar").style.visibility = "hidden";
 
 				/* Agnaldo - 25/11 - Desabilita campos e links, forçando a tela somente para consulta
 				 somente quando vem da 'Agenda do Ano (wpgd0026)' */
@@ -511,27 +545,27 @@
 				AlteraLimite();
 
 		// Exibe os campos de acordo com a participação permitida
-				function AlteraLimite()
-				{
+				function AlteraLimite(){
 						// Se a participação permitida não for "Limitado por conta", esconde os campos de 
 						// limite de participantes
-						if (document.form.aux_tppartic.value != "3")
-						{
-								document.form.qtparcta.style.visibility = "hidden";
-								document.all.divqtpar.style.visibility = "hidden";
+            
+						if (document.form.aux_tppartic.value != "3"){
+                document.getElementById("qtparcta").style.display = "none";
+                document.getElementById("divqtpar").style.display = "none";
 								document.form.qtparcta.value = "";
+                $('#prfreque').focus();
 						}
 						// Se a participação permitida for "Limitado por conta", mostra os campos de 
 						// limite de participantes
-						else
-						{
-								document.form.qtparcta.style.visibility = "visible";
-								document.all.divqtpar.style.visibility = "visible";
+						else{
+						    document.getElementById("qtparcta").style.display = "block";
+                document.getElementById("divqtpar").style.display = "block";
+                $('#qtparcta').focus();
 						}
 				}
 
-				function ValidaDados(form)
-				{
+				function ValidaDados(form){
+        
 						var msg = "";
 
 						//Se for Tipo de Evento = Progrid
@@ -539,7 +573,7 @@
 						{
 
 								msg = msg + VE("ca", form.nmevento, "O nome do evento", "nao");
-								msg = msg + VE("in", form.qtmaxtur, "A quantidade de participantes", "nao", parseInt(document.form.qtmintur.value), 999999);
+								//msg = msg + VE("in", form.qtmaxtur, "A quantidade de participantes", "nao", parseInt(document.form.qtmintur.value), 999999);
 								
 								if (document.form.prfreque.value > 100)
 										msg = msg + " A frequência exigida não pode ser maior que 100. ";
@@ -554,7 +588,7 @@
 								 msg = msg + " Eixo Temático deve ser selecionado. ";*/
 
 								if (document.form.qtmintur.value <= 0)
-										msg = msg + " O Mínimo por Turma deve ser maior que 0.";
+										msg = msg + " A Capacidade Máxima deve ser maior que 0.";
 
 								if (document.form.flgcerti.checked == true &&
 												document.form.prfreque.value == 0)
@@ -582,10 +616,8 @@
 						}
 				}
 
-				function LimparCampos()
-				{
-				 if (document.form.aux_nmpagina.value == 'divEvento' || document.form.aux_nmpagina.value == '')
-						{
+				function LimparCampos(){
+				 if (document.form.aux_nmpagina.value == 'divEvento' || document.form.aux_nmpagina.value == ''){
 							document.form.aux_cdevento.value = '';
 							document.form.nmevento.value = '';
 							document.form.qtmaxtur.value = '';
@@ -599,6 +631,7 @@
 							document.form.flgcompr.checked = false;
 							document.form.flgrestr.checked = false;
 							document.form.flgsorte.checked = false;
+              document.form.idperint.checked = false;
 							document.form.flgtdpac.checked = false;
 							document.form.aux_tpevento.value = "";
 							document.form.aux_tppartic.value = "";
@@ -607,6 +640,7 @@
 							document.form.aux_dsjustif.value = "";
 							document.form.aux_nrseqtem.value = "";
 							document.form.aux_nrseqpri.value = "";
+              document.form.aux_nrseqpgm.value = "";
 							document.form.nmevento.focus();
 							document.form.nmevento.select();
 
@@ -614,13 +648,11 @@
 							/*for (var i = document.all.tbrecurso.rows.length; i > 0; i--){
 									document.all.tbrecurso.deleteRow(i - 1);
 							}*/
-						}
-						else
-						{          
+						}else{          
 							document.form.aux_cdtiprec.value = "";
 							document.form.nrseqdig.value = "";
 							document.form.aux_cdagenci.value = "";
-							document.form.aux_qtrecage.value = "";
+							document.form.aux_qtrecage.value = 1;
 							document.form.aux_qtgrppar.value = "";
 							document.form.aux_nrdrowid_rp.value = "";
 							// chamar rotina para ocultar os campos caso necessario
@@ -642,29 +674,22 @@
 						document.form.submit();
 				}
 
-				function Incluir()
-				{
+				function Incluir(){
 						ZeraModoExclusao();
 				
 						var vaux = document.form.aux_lspermis.value;
-						if (vaux.substring(0, 1) == 'I')
-						{
-								if (document.form.aux_stdopcao.value == 'i')
-								{
+          if (vaux.substring(0, 1) == 'I'){
+            if (document.form.aux_stdopcao.value == 'i'){
 										MostraResultado('1', 'Você já esta no modo de inclusão');
-										return false
-								}
-								else
-								{
+              return false;
+            }else{
 										document.form.aux_cddopcao.value = 'in';
 										document.form.aux_stdopcao.value = 'i'
 										document.form.submit();
 										LimparCampos();
 										return true
 								}
-						}
-						else
-						{
+          }else{
 								MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
 								return false
 						}
@@ -682,7 +707,7 @@
 
 							if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
 
-									if (document.form.aux_nrseqtem.value == 0 && document.form.aux_idevento.value == 1){
+									if (document.form.aux_nrseqtem.value == 0 && $("#aux_idevento").val() == "1"){
 											alert("O campo Tema é obrigatório.");
 											return false;
 									}
@@ -701,9 +726,10 @@
 
 									}
 
-
 									if (document.form.aux_cddopcao.value != 'sa') {
+
 											if (ValidaDados(document.forms[0])) {
+
 													document.form.aux_cddopcao.value = 'sa';
 													status = 'Salvando. Por favor, aguarde ...';
 
@@ -727,6 +753,7 @@
 									MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
 									return false;
 							}
+							
 					 }
 					 else if (document.form.aux_nmpagina.value == 'divRecursoPA')
 					 {
@@ -738,39 +765,39 @@
 										alert("Campo 'Recurso' deve ser preenchido.");
 										return false;
 							 }
-							 if ((document.form.aux_qtrecage.value == '' || document.form.aux_qtrecage.value < 1) && (document.form.aux_idrecpor.value == 1 || document.form.aux_idrecpor.value == 3) && document.form.aux_cdtiprec.value != 2) {
+							 if ((document.form.aux_qtrecage.value == '' || document.form.aux_qtrecage.value < 1) && (document.form.aux_idrecpor.value == 1 || document.form.aux_idrecpor.value == 3) && (document.form.aux_cdtiprec.value != 2 && document.form.aux_cdtiprec.value != 5)) {
 										alert("Campo 'Quantidade' deve ser preenchido.");
 										return false;
 							 }
-							 if ((document.form.aux_qtgrppar.value == '' || document.form.aux_qtgrppar.value < 1) && document.form.aux_idrecpor.value == 3 && document.form.aux_cdtiprec.value != 2) {
+							 if ((document.form.aux_qtgrppar.value == '' || document.form.aux_qtgrppar.value < 1) && document.form.aux_idrecpor.value == 3 && (document.form.aux_cdtiprec.value != 2 && document.form.aux_cdtiprec.value != 5)) {
 										alert("Número de participantes deve ser preenchido.");
 										return false;
 							 }
 							 document.form.aux_cddopcao.value = 'sa';
 							 document.form.aux_stdopcao.value = 'i';
 							 document.form.aux_abaopcao.value = 'p';
+							 
 							 document.form.submit();
 					 }
 				}
 
 		// Se vier do menu de Assembléia, esconde os campos que não se aplicam
-				function CamposdoEvento()
-				{
-						if (document.form.aux_idevento.value == "2")
-						{
-								for (i = 0; i < document.all.Progrid.length; i++)
+				function CamposdoEvento(){
+						
+            if (document.form.aux_idevento.value == "2"){
+            		for (i = 0; i < document.all.Progrid.length; i++){
 										document.all.Progrid[i].style.visibility = "hidden";
+						}
 						}
 						
 						if ((document.form.aux_idrecpor.value != 1 && document.form.aux_idrecpor.value != 3) || 
-								 document.form.aux_cdtiprec.value == 2 || document.form.aux_cdtiprec.value == "")
-						{
+								 (document.form.aux_cdtiprec.value == 2 || document.form.aux_cdtiprec.value == 5) || document.form.aux_cdtiprec.value == ""){
 							$('.QtdPorEvento').css('visibility','hidden');
-							document.form.aux_qtrecage.value = '';
+							document.form.aux_qtrecage.value = 1;
 						}
-						if (document.form.aux_idrecpor.value != 3 || document.form.aux_cdtiprec.value == 2 ||
-								document.form.aux_cdtiprec.value == "")
-						{
+            
+						if (document.form.aux_idrecpor.value != 3 || (document.form.aux_cdtiprec.value == 5 || document.form.aux_cdtiprec.value == 2) ||
+								document.form.aux_cdtiprec.value == ""){
 							$('.QtdPorGrupo').css('visibility','hidden');
 							document.form.aux_qtgrppar.value = '';
 						}
@@ -793,10 +820,9 @@
 						}
 				}
 
-				function mostraDiv(nomediv)
-				{ 
-						if (nomediv != '' && nomediv != 'divEvento' && document.form.aux_cdevento.value == "")
-						{
+				function mostraDiv(nomediv){ 
+        
+          if (nomediv != '' && nomediv != 'divEvento' && document.form.aux_cdevento.value == ""){
 							alert('Selecione um evento!');
 							return false;
 						}
@@ -809,6 +835,7 @@
 						if (nomediv == 'divEvento') {
 								nomeaba = 'AbaEvento';
 						}
+          
 						if (nomediv == 'divRecurso') {
 								nomeaba = 'AbaRecurso';
 						}
@@ -825,6 +852,12 @@
 								nomeaba = 'AbaProdutoSugerido';
 						}
 
+          if(document.form.aux_idevento.value == 2 && (nomediv == 'divPublicoAlvo' || nomediv == 'divProdutoSugerido')){
+            alert("Aba desabilitada para eventos assembleares!");
+            nomediv = 'divEvento';
+            nomeaba = 'AbaEvento';
+          }
+            
 						// guarda a página atual
 						document.form.aux_nmpagina.value = nomediv;
 
@@ -861,27 +894,27 @@
 						document.all[nomeaba].rows[0].cells[1].className = "txtTituloVis";
 
 						// apaga todas as DIV 
-						document.all.divEvento.style.display = 'none';
-						document.all.divRecurso.style.display = 'none';
-						document.all.divRecursoPA.style.display = 'none';
-						document.all.divPublicoAlvo.style.display = 'none';
-						document.all.divProdutoSugerido.style.display = 'none';
-						document.all.adicionar.style.visibility = 'hidden';
+          document.getElementById("divEvento").style.display = "none";
+          document.getElementById("divRecurso").style.display = "none";
+          document.getElementById("divRecursoPA").style.display = "none";
+          document.getElementById("divPublicoAlvo").style.display = "none";
+          document.getElementById("divProdutoSugerido").style.display = "none";
 
-						if (nomeaba == 'AbaRecurso' || nomeaba == 'AbaPublicoAlvo' || nomeaba == 'AbaProdutoSugerido')
-								document.all.adicionar.style.visibility = 'visible';
+          document.getElementById("adicionar").style.display = "none";
 
+          if (nomeaba == 'AbaRecurso' || nomeaba == 'AbaPublicoAlvo' || nomeaba == 'AbaProdutoSugerido'){
+              document.getElementById("adicionar").style.display = "block";
+          }
 
 						// ativa a DIV escolhida
 						if (nomediv == 'divRecurso' || nomediv == 'divEvento' || nomediv == 'divRecursoPA' || nomediv == 'divPublicoAlvo' || nomediv == 'divProdutoSugerido') {
-								document.all[nomediv].style.display = 'block';
-						} else {
-								document.all[nomediv].style.visibility = 'visible';
+            document.getElementById(nomediv).style.display = "block";
+          }else {
+            document.getElementById(nomediv).style.display = "none";
 						}
 				}
 
-				function mostraRecursos()
-				{
+				function mostraRecursos(){
 						var row;
 						var cell;
 
@@ -946,7 +979,7 @@
 					var cell;
 					var cor = '#F7F7F7';
 						
-					// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
+					// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
 					for (var i=document.all.tbpublicoalvo.rows.length; i > 1; i--){
 						document.all.tbpublicoalvo.deleteRow(i-1); 
 					}
@@ -974,7 +1007,7 @@
 								cell.height = 20;
 								cell.align = 'left';
 								cell.width = document.all.tbpublicoalvo_col1.width;
-								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico-alvo)
+								cell.innerText = mpublico[i].dspubalv; // fim primeira celula (descricao do publico alvo)
 
 								cell = row.insertCell();   // Separador
 								cell.className = 'txtNormal';
@@ -1004,7 +1037,7 @@
 						var row;
 						var cell;
 						var cor;
-						// limpa a tabela de Publico-Alvo, menos a 1ª linha - linha do cabecalho
+						// limpa a tabela de Publico Alvo, menos a 1ª linha - linha do cabecalho
 						for (var i=document.all.tbprodutosugerido.rows.length; i > 1; i--){
 							document.all.tbprodutosugerido.deleteRow(i-1); 
 						}
@@ -1088,6 +1121,7 @@
         }
         
 				function Adicionar(){			
+        
 					if(document.all.divPublicoAlvo.style.display == 'block'){
 						AdPublicoAlvo();
 					}else if(document.all.divProdutoSugerido.style.display == 'block'){
@@ -1118,12 +1152,12 @@
 				
 				function AdPublicoAlvo(){
 					VarURL = document.form.aux_dsendurl.value + '/wpgd0008b.htm' + '?aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_cdevento=' + document.form.aux_cdevento.value + '&aux_idevento=' + document.form.aux_idevento.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_idevento=' + document.form.aux_idevento.value;
-          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=740,height=150,top=10,left=10');
+          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=150,top=10,left=10');
 				}
 				
 				function AdProdutoSugerido(){
           VarURL = document.form.aux_dsendurl.value + '/wpgd0008c.htm' + '?aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_cdevento=' + document.form.aux_cdevento.value + '&aux_idevento=' + document.form.aux_idevento.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value  + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_idevento=' + document.form.aux_idevento.value;
-          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=550,height=150,top=10,left=10');
+          window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=150,top=10,left=10');
 				}
 			
 				function AlRecurso(rowid)
@@ -1213,8 +1247,7 @@
 
 				}
 				
-			function limpaCamposZero() 
-			{
+			function limpaCamposZero(){
 				vr_qtmaxtur = document.form.qtmaxtur.value;
 				vr_qtmintur = document.form.qtmintur.value;
 				vr_prfreque = document.form.prfreque.value;
@@ -1231,6 +1264,15 @@
 				}
 				
 			}
+				
+      function maximoCaracteres(dsc,qtd){
+        var str = document.getElementById(dsc).value;
+        
+        if(str.length > qtd){
+          document.getElementById(dsc).value = str.substr(0,qtd-1);
+          return false;
+        };
+			}
 			
 			limpaCamposZero();
 			mostraDiv(document.form.aux_nmpagina.value);
@@ -1239,6 +1281,24 @@
 			mostraProdutoSugerido();
 			selecionaEixo();
 			document.getElementById("aux_cdeixtem").disabled = false;	
+         
+      if ($("#aux_idevento").val() == 1){
+        $("#Programa").show();
+        $("#ProgramaCampo").show();
+        $("#AbaProdutoSugerido").show();
+        $("#AbaPublicoAlvo").show();        
+      }else{
+        $("#Programa").hide();
+        $("#ProgramaCampo").hide();
+        $("#AbaProdutoSugerido").hide();
+        $("#AbaPublicoAlvo").hide();
+      }
+      
+      if(document.form.aux_cdorigem.value == 3){
+        document.getElementById("AbaRecurso").style.display = "none";
+        document.getElementById("AbaRecursoPA").style.display = "none";
+        document.getElementById("AbaPublicoAlvo").style.display = "none";
+        document.getElementById("AbaProdutoSugerido").style.display = "none";
+      }
 		</script>
-	</body>
 	</html>

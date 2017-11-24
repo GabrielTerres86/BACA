@@ -238,7 +238,7 @@ BEGIN
     
     --> FLGAGEITA_SMS
     IF nvl(:new.FLGACEITA_SMS,0) <> nvl(:OLD.FLGACEITA_SMS,0) THEN
-      Insere_Historico(pr_nmdcampo => 'FLGAGEITA_SMS',
+      Insere_Historico(pr_nmdcampo => 'FLGACEITA_SMS',
                        pr_dsvalant => (:old.FLGACEITA_SMS),
                        pr_dsvalnov => (:new.FLGACEITA_SMS));
     END IF;

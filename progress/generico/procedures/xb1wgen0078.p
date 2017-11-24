@@ -10,6 +10,9 @@
 
     Alteracoes: 
     
+				25/10/2017 -  Ajustado para especificar adesão de DDA pelo Mobile
+							  PRJ356.4 - DDA (Ricardo Linhares)
+    
 .............................................................................*/
                                                                             
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -190,6 +193,7 @@ PROCEDURE aderir-sacado:
                               INPUT aux_idseqttl,
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
+                              INPUT 0,
                              OUTPUT TABLE tt-erro).
 
     IF   RETURN-VALUE <> "OK"   THEN

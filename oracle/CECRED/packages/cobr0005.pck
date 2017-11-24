@@ -881,7 +881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
 						 	  para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
 						 	 (Andrei - RKAM).
-               
+
                  28/08/2017 - Ajuste para possibilitar envio do boleto à CIP (Rafael)
 
   ............................................................................ */      
@@ -6494,18 +6494,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_dsdemail  VARCHAR2(500);
     vr_dsdcorpo  VARCHAR2(1000);
-    vr_nmarqlog     VARCHAR2(50);
-    
-    
+    vr_nmarqlog  VARCHAR2(50);
+    vr_cdprodut  tbgen_sms_lote.cdproduto%TYPE;
+    vr_dsassunt  VARCHAR2(100);
+        
   BEGIN
     
     --> Atualizar registro
     UPDATE tbgen_sms_lote lote
        SET lote.idsituacao = pr_idsituacao,
            lote.dhretorno  = SYSDATE
-     WHERE lote.cdproduto = 19
+     WHERE /*lote.cdproduto = 19
        AND lote.idtpreme = 'SMSCOBRAN'
-       AND idlote_sms = pr_idlotsms;         
+       AND */idlote_sms = pr_idlotsms
+     RETURNING lote.cdproduto INTO vr_cdprodut;         
+    
+    -- Ajustar mensagem de alerta conforme produto
+    IF vr_cdprodut = 19 THEN
+      vr_dsassunt := 'SMS COBRANÇA - ERRO AO ENVIAR LOTE';
+    ELSIF vr_cdprodut = 21 THEN
+      vr_dsassunt := 'SMS LIMITE CRÉDITO - ERRO AO ENVIAR LOTE';
+    ELSE -- Seta mensagem padrão 
+      vr_dsassunt := 'SMS - ERRO AO ENVIAR LOTE';
+    END IF;
     
     --> Diferente de processado
     IF pr_idsituacao <> 'P' THEN
@@ -6521,7 +6532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       gene0003.pc_solicita_email(pr_cdcooper => 3 
                                 ,pr_cdprogra => 'COBR0005'
                                 ,pr_des_destino => vr_dsdemail
-                                ,pr_des_assunto => 'SMS COBRANÇA - ERRO AO ENVIAR LOTE'
+                                ,pr_des_assunto => vr_dsassunt
                                 ,pr_des_corpo => vr_dsdcorpo 
                                 ,pr_des_anexo => '' --> Não tem anexo.
                                 ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
@@ -6679,14 +6690,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         vr_sucess := vr_tab_campos(vr_idx)('Success');  
         vr_Detail := vr_tab_campos(vr_idx)('Detail');  
         
-        IF upper(vr_sucess) = 'TRUE' THEN
-          vr_cdretorn := 00;
-        ELSIF upper(vr_sucess) = 'FALSE' THEN 
-          vr_cdretorn := 10;
-        ELSE
-          vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
-          RAISE vr_exc_erro;
-        END IF;
+          IF upper(vr_sucess) = 'TRUE' THEN
+            vr_cdretorn := 00;
+          ELSIF upper(vr_sucess) = 'FALSE' THEN 
+            vr_cdretorn := 10;
+          ELSE
+            vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
+            RAISE vr_exc_erro;
+          END IF;
         
         pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
                                ,pr_idsms      => vr_idsms     --> Identificador do SMS

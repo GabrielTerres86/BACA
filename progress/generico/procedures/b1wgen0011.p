@@ -137,13 +137,18 @@
                   
 				  03/03/2016 - Ajustado rotina devido a agrupar anexo quando possuia mais
 				               de um destinatario(Odirlei-AMcom)
-                       
-          21/09/2017 - #756235 Criada a funcao f_validar_email para nao ter 
-                       problemas na geracao dos arquivos de spool (Carlos)
+
+									15/09/2017 - Inclusao de acentuaçao na msg relativa a tela wpgd0020
+                               do Progrid (Jean Michel).
+	    
+                  21/09/2017 - #756235 Criada a funcao f_validar_email para nao ter 
+                               problemas na geracao dos arquivos de spool (Carlos)
 
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i } 
+
+
 DEF STREAM str_email.
 DEF STREAM str_spool.
 
@@ -224,23 +229,27 @@ PROCEDURE solicita_email_oracle.
 
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     
-    aux_des_corpo = replace(par_des_corpo,"\n","<br>").
+    ASSIGN aux_des_corpo = replace(par_des_corpo,"\n","<br>").
    
-    RUN STORED-PROCEDURE pc_solicita_email_prog aux_handproc = PROC-HANDLE NO-ERROR
+    RUN STORED-PROCEDURE pc_solicita_email_prog
+			aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,       
+																				  INPUT par_cdprogra,       
+																				  INPUT par_des_destino,    
+																				  INPUT par_des_assunto,    
+																				  INPUT aux_des_corpo ,     
+																				  INPUT par_des_anexo,      
+																				  INPUT par_flg_remove_anex,
+																				  INPUT par_flg_remete_coop,
+																				  INPUT par_des_nome_reply,
+																				  INPUT par_des_email_reply,
+																				  INPUT par_flg_log_batch,  
+																				  INPUT par_flg_enviar,            
+																				 OUTPUT "" ).
+   
+		CLOSE STORED-PROCEDURE pc_solicita_email_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
        
-       (INPUT  par_cdcooper       
-       ,INPUT  par_cdprogra       
-       ,INPUT  par_des_destino    
-       ,INPUT  par_des_assunto    
-       ,INPUT  aux_des_corpo      
-       ,INPUT  par_des_anexo      
-       ,INPUT  par_flg_remove_anex
-       ,INPUT  par_flg_remete_coop
-       ,INPUT  par_des_nome_reply 
-       ,INPUT  par_des_email_reply
-       ,INPUT  par_flg_log_batch  
-       ,INPUT  par_flg_enviar            
-       ,OUTPUT "" ).
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
     IF  ERROR-STATUS:ERROR  THEN DO:
         DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
@@ -252,9 +261,6 @@ PROCEDURE solicita_email_oracle.
         RETURN "NOK".
     END.
     
-    CLOSE STORED-PROCEDURE pc_solicita_email_prog WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
     IF  pc_solicita_email_prog.pr_des_erro <> ? THEN
         DO:
             ASSIGN par_des_erro = pc_solicita_email_prog.pr_des_erro.
@@ -321,7 +327,7 @@ PROCEDURE enviar_email.
         
         IF NOT f_validar_email(INPUT aux_dsdemail) THEN
             NEXT.
-
+        
         ASSIGN aux_dsarquiv = ""
                aux_dsanexos = ""
                aux_dsarqlog = ""
@@ -364,9 +370,9 @@ PROCEDURE enviar_email.
                                "pa, atraves da tela de SELECAO DOS EVENTOS.".
         
             WHEN "wpgd0020" THEN
-                aux_msgremet = "A lista de selecao dos eventos ja foi "       +
+                aux_msgremet = "A lista de selecão dos eventos já foi "       +
                                "concluida pelo PA. \nVerifique e confirme "   +
-                               "atraves da tela de Confirmacao dos Eventos.".
+                               "através da tela de Confirmacão dos Eventos.".
         
             WHEN "wpgd0026b" THEN
                  aux_msgremet =  "O local para a realizacao do evento ja "    +

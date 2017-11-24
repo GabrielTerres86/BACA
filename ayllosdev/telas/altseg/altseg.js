@@ -5,6 +5,9 @@
 //*** Alterações: 09/03/2016 - Ajuste feito para que operadores do departamento COORD.PRODUTOS ***//
 //***    					   tenham permições para alterar e incluir conforme solicitado no  ***//
 //***					       chamado 399940 (Kelvin).			    				           ***//	 
+//***					                                                                       ***//	 
+//***			  19/10/2017 - Correcao na exibicao do campo Prosseguir na opcao de Alteracao  ***//	 
+//***			               SD 770963 (Carlos Rafael Tanholi).                              ***//	 
 //*********************************************************************************************//
 
 // Definição de algumas variáveis globais 
@@ -884,6 +887,7 @@ function consultaPlano() {
                             $('#btSalvar', '#divBotoes').focus();
                         } else {
                             cDsmoradaC.focus();
+                            $('#btSalvar', '#divBotoes').show();
                         }
 
                     } else if (cTpseguro.val() != "11" && cTpplaseg.val() != "" && cTpplaseg.val() != "0")

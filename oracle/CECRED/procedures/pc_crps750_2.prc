@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 08/08/2017
+  Data    : Abril/2017.                    Ultima atualizacao: 31/10/2017
 
   Dados referentes ao programa:
 
@@ -27,6 +27,8 @@ BEGIN
   Alteracoes: 10/04/2017 - Criação da rotina (Jean / Mout´S)
 
               08/08/2017 - #728202 Não logar críticas 995 (Carlos)
+              
+              31/10/2017 - #778578 Não logar críticas 1033 (Carlos)
     ............................................................................. */
 
   DECLARE
@@ -940,7 +942,7 @@ BEGIN
 		  --Desfazer transacao
           ROLLBACK TO SAVEPOINT sav_trans_750;
           IF vr_tab_erro.count > 0 AND
-             vr_tab_erro(vr_tab_erro.FIRST).cdcritic <> 995 THEN
+             vr_tab_erro(vr_tab_erro.FIRST).cdcritic NOT IN (995, 1033) THEN
             vr_cdcritic := 0;            
             vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
                            ' nrdconta ' || rw_crappep.nrdconta ||

@@ -19,6 +19,9 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 			             Ok qdo for a segunda parte GPS2, para que seja possível
 						 fechar a janela de autenticação com o comando ESC
 						 (Tiago/Elton SD585615).
+						 
+			16/11/2017 - Ajuste feito para adptar a rotina na impressao da rotina 97. (SD 788441 - Kelvin).
+						
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -249,9 +252,44 @@ PROCEDURE process-web-request :
     '<form name=action method=post>' SKIP
     '<input type=hidden name=aut>' SKIP.
    
+   IF get-value("v_rotina") = "crap097" THEN 
+      DO:
    {&OUT}
     '<div align="center">' SKIP
      '<center>' SKIP
+             '<table width=90% cellspacing = 0 cellpadding = 0>' SKIP
+              '<tr>' SKIP
+               '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
+               '  <td width="101%" valign="middle" align="center">' SKIP
+                '  <div align="center">' SKIP
+                 '  <center>' SKIP
+                  '  <table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>' SKIP
+                   '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
+                   '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
+                   '  <tr>' SKIP                    
+                    '    <td width="100%" align="left" class="linhaform">Pressione ENTER para autenticar o inicio do atendimento.</td>' SKIP
+                   ' </tr>' SKIP
+                   '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
+                   /*'<tr>'
+                    '<td align="center" class="linhaform" colspan=2>'
+                     '<input type="submit" value="Autenticar" name="autentica" class="button">&nbsp;'
+                     '<input type="submit" value="Retornar" name="retorna" class="button"></td>'
+                   '</tr>'*/
+                   '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>' SKIP 
+                  '</table>'
+                 '</center>'
+                '</div>'
+               '</td>'
+              '</tr>' 
+             '</table>'
+            '</center>'
+           '</div>' SKIP.    	  
+	  END.
+   ELSE
+      DO:
+	     {&OUT}
+			'<div align="center">' SKIP
+			 '<center>' SKIP
       '<table width=70% cellspacing = 0 cellpadding = 0>' SKIP
        '<tr>' SKIP
         '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
@@ -280,7 +318,7 @@ PROCEDURE process-web-request :
       '</table>'
      '</center>'
     '</div>' SKIP.
-       
+			  END.	 
  {&OUT}
    "</form>":U SKIP
    '<OBJECT  classid="clsid:7F8735B1-EC41-4134-9083-E059B3F56262" codebase="edimpbmp20ci.ocx#version=2,1,3,1" width=0 height=0 align=CENTER hspace=0 vspace=0 id=bematech>'
@@ -290,6 +328,35 @@ PROCEDURE process-web-request :
 
  IF REQUEST_METHOD = "POST":U THEN DO:
          
+     
+	 IF get-value("v_rotina") = "crap097" THEN 
+	    DO:
+		   /* Autenticação */
+		   {&OUT} '<script> bematech.Imprimir("LPT1","' trim(get-value("v_plit")) '",2,1,0,0,0,0)                   </script>'.
+		   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+	 
+			RUN STORED-PROCEDURE pc_gera_log_batch 
+					aux_handproc = PROC-HANDLE NO-ERROR 
+					 (INPUT crapcop.cdcooper,   /* Cooperativa */  
+					  INPUT 2,               /* Nivel criticidade do log "Erro tratato" */ 			 
+					  INPUT trim(get-value("v_plit")),   /* Descriçao do log em si */ 
+					  INPUT "rot097",       /* Nome para gravaçao de log  */ 
+					  INPUT "N",            /* Flag S/N para criar um arquivo novo */  
+					  INPUT "N",            /* Flag S/N  para informaR [PL/SQL] */ 
+					  INPUT ?,              /* Diretorio onde será gerado o log */ 
+					  INPUT "F",            /* Tipo do log  */ 
+					  INPUT 'b1crap00.p',   /* Programa/job */ 
+					  INPUT 3,              /* Execucao via BATCH */ 
+					  INPUT 0,              /* Criticidade BAIXA */  
+					  INPUT 1).             /* Processo executado com sucesso */ 
+																			   
+			CLOSE STORED-PROC pc_gera_log_batch 
+				 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+								 
+			 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+		END.
+	 ELSE
+	    DO:
      /*Para a rotina 85 - Realiza a impressao da Comprovacao de Vida*/
      IF get-value("v_plit") = "crap085" THEN
         DO:
@@ -303,7 +370,6 @@ PROCEDURE process-web-request :
 
             IF AVAIL craptab THEN
                {&OUT} '<script> bematech.ImpAjust("LPT1", "' craptab.dstextab '" ,48,1,2,0,0,0,0)                   </script>'.
-
         END.
      ELSE
         IF  get-value("v_plit") = " " THEN 
@@ -390,6 +456,8 @@ PROCEDURE process-web-request :
               END CASE.
         
            END.
+		 END.
+
  END.
  
 

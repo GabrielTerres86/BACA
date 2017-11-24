@@ -1,6 +1,7 @@
 CREATE OR REPLACE PACKAGE cecred.tela_parmda IS
 
   PROCEDURE pc_busca_parmda(pr_cdcooperalt IN crapcop.cdcooper%TYPE
+                           ,pr_cdprodut    IN NUMBER
                             
                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -10,6 +11,7 @@ CREATE OR REPLACE PACKAGE cecred.tela_parmda IS
                            ,pr_des_erro OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_mantem_parmda(pr_cdcooperalt     IN crapcop.cdcooper%TYPE
+                            ,pr_cdprodut    IN NUMBER
                             ,pr_flgenvia_sms    IN VARCHAR2
                             ,pr_flgcobra_tarifa IN VARCHAR2
                             ,pr_hrenvio_sms_fmt IN VARCHAR2
@@ -25,6 +27,7 @@ CREATE OR REPLACE PACKAGE cecred.tela_parmda IS
                             ,pr_des_erro OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_exclui_parmda(pr_cdcooperalt IN crapcop.cdcooper%TYPE
+                            ,pr_cdprodut    IN NUMBER
                              
                             ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -43,6 +46,13 @@ CREATE OR REPLACE PACKAGE cecred.tela_parmda IS
                                  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);
 
+  PROCEDURE pc_lista_produtos(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro
+
 END tela_parmda;
 /
 CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
@@ -60,6 +70,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   -- Alteracoes: 20/01/2017 - Incluir replace dos caractered de enter e quebra de linha por
   --                          nada, pois estava afetando na consulta das informações
   --                          (Lucas Ranghetti #581389)
+  --
+  --             31/08/2017 - Alterações para incluir a rotina para listar os produtos e
+  --                          alterações para tornar a tela dinamica (Renato - Prj360)
   ---------------------------------------------------------------------------
 
   vr_nmdatela VARCHAR(6) := 'PARMDA';
@@ -73,7 +86,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
            );
   TYPE typ_tab_campo_mensagem IS
     TABLE OF typ_campo_mensagem
-    INDEX BY VARCHAR2(8);
+    INDEX BY VARCHAR2(10);
   
   FUNCTION fn_obtem_valor_tarifa(pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_cdtarifa IN craptar.cdtarifa%TYPE) RETURN NUMBER IS
@@ -165,13 +178,16 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
           ,tip.dstipo_mensagem
           ,msg.idmensagem
           ,REPLACE(REPLACE(msg.dsmensagem,chr(10),''),chr(13),'') dsmensagem
-          ,DECODE(tip.cdtipo_mensagem
+          /*,DECODE(tip.cdtipo_mensagem
                  ,3, 'Os campos #Cooperativa#, #Convenio#, #Data# e #Valor# são preenchidos automaticamente pelo sistema.'
                  ,5, 'Os campos #Cooperativa#, #Convenio#, #Data# e #Valor# são preenchidos automaticamente pelo sistema.'
                  ,4, 'Os campos #Cooperativa#, #Convenio#, #Data#, #Valor# e #Limite# são preenchidos automaticamente pelo sistema.'
                  ,6, 'Os campos #Cooperativa#, #Convenio#, #Data#, #Valor# e #Limite# são preenchidos automaticamente pelo sistema.'
-                 ) dsobservacao
-          ,CASE WHEN UPPER(tip.dstipo_mensagem) LIKE '%SMS%'
+                 ) dsobservacao*/
+          ,tip.dsobservacao
+          ,tip.dsagrupador   dsareatela
+          --,rownum   nrordemtela
+          /*,CASE WHEN UPPER(tip.dstipo_mensagem) LIKE '%SMS%'
                 THEN 'SMS'
                 WHEN UPPER(tip.dstipo_mensagem) LIKE '%MINHAS MENSAGENS%'
                 THEN 'Minhas Mensagens'
@@ -182,25 +198,29 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
                 WHEN UPPER(tip.dstipo_mensagem) LIKE '%MINHAS MENSAGENS%'
                 THEN 2
                 ELSE 0
-            END nrordemtela
+            END nrordemtela*/
       FROM tbgen_tipo_mensagem tip
           ,tbgen_mensagem      msg
-     WHERE tip.cdtipo_mensagem = msg.cdtipo_mensagem(+)
-       AND msg.cdcooper(+) = pr_cdcooper
-       AND msg.cdproduto(+) = pr_cdproduto
-       AND (pr_cdproduto = 10 AND tip.cdtipo_mensagem IN (1, 2, 3, 4, 5, 6))
-     ORDER BY nrordemtela, cdtipo_mensagem;
+     WHERE msg.cdtipo_mensagem(+) = tip.cdtipo_mensagem
+       AND msg.cdproduto(+)       = tip.cdproduto
+       AND msg.cdcooper(+)        = pr_cdcooper
+       AND tip.cdproduto          = pr_cdproduto
+       --AND (pr_cdproduto = 10 AND tip.cdtipo_mensagem IN (1, 2, 3, 4, 5, 6))
+     ORDER BY DECODE(tip.dsagrupador,NULL,0,1),tip.dsagrupador, cdtipo_mensagem;
     rw_msg cr_msg%ROWTYPE;
     
-    vr_idx_mensagem VARCHAR2(8);
-    
+    vr_idx_mensagem VARCHAR2(10);
+    vr_idx_ordem    NUMBER := 0;
   BEGIN
     
     FOR rw_msg IN cr_msg(pr_cdcooper => pr_cdcooper 
                         ,pr_cdproduto => pr_cdproduto)
     LOOP
       
-      vr_idx_mensagem := lpad(rw_msg.nrordemtela,3,'0')||lpad(rw_msg.cdtipo_mensagem,5,'0');
+      -- Incrementar o índice de ordenação
+      vr_idx_ordem := NVL(vr_idx_ordem,0) + 1;
+    
+      vr_idx_mensagem := lpad(vr_idx_ordem,5,'0')||lpad(rw_msg.cdtipo_mensagem,5,'0');
       pr_tab_mensagens(vr_idx_mensagem).cdtipo_mensagem := rw_msg.cdtipo_mensagem;
       pr_tab_mensagens(vr_idx_mensagem).dstipo_mensagem := rw_msg.dstipo_mensagem;
       pr_tab_mensagens(vr_idx_mensagem).dsmensagem      := rw_msg.dsmensagem;
@@ -212,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   END;
 
   PROCEDURE pc_busca_parmda(pr_cdcooperalt IN crapcop.cdcooper%TYPE
-                            
+                           ,pr_cdprodut    IN NUMBER
                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                            ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -237,20 +257,30 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     ..............................................................................*/
   
     -- Selecionar os dados de indexadores pelo nome
-    CURSOR cr_parmda(pr_cdcooper IN tbgen_sms_param.cdcooper%TYPE) IS
+    CURSOR cr_parmda(pr_cdcooper IN tbgen_sms_param.cdcooper%TYPE
+                    ,pr_cdprodut IN tbgen_sms_param.cdproduto%TYPE) IS
       SELECT parmda.*
             ,to_char(to_date(parmda.hrenvio_sms, 'SSSSS'), 'hh24:mi') hrenvio_sms_fmt
         FROM tbgen_sms_param parmda
-       WHERE parmda.cdcooper = pr_cdcooper;
+       WHERE parmda.cdcooper  = pr_cdcooper
+         AND parmda.cdproduto = pr_cdprodut;
     rw_parmda cr_parmda%ROWTYPE;
+    
+    -- Buscar informações relacionadas ao produto selecionado
+    CURSOR cr_produt IS
+      SELECT DECODE(prd.flgenvia_sms, 1, 'S', 'N')    flgenvia_sms
+           , DECODE(prd.flgcobra_tarifa, 1, 'S', 'N') flgcobra_tarifa
+        FROM tbcc_produto  prd
+       WHERE prd.cdproduto = pr_cdprodut;
+    rw_produt  cr_produt%ROWTYPE;
     
     -- Variaveis auxiliares
     vr_cdcooperalt crapcop.cdcooper%TYPE;
     vr_tab_mensagens typ_tab_campo_mensagem;
     vr_vltarifapf crapfco.vltarifa%TYPE;
     vr_vltarifapj crapfco.vltarifa%TYPE;
-    vr_idx_mensagem VARCHAR(8);
-    vr_retxml VARCHAR2(4000);
+    vr_idx_mensagem VARCHAR(10);
+    vr_retxml VARCHAR2(32000);
   
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -283,14 +313,20 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- Se for cooperativa 0 (Todas as cooperativas), busca os dados da cooperativa 1
     vr_cdcooperalt := CASE pr_cdcooperalt WHEN 0 THEN 1 ELSE pr_cdcooperalt END;
     
-    OPEN cr_parmda(pr_cdcooper => vr_cdcooperalt);
+    OPEN cr_parmda(pr_cdcooper => vr_cdcooperalt
+                  ,pr_cdprodut => pr_cdprodut);
     FETCH cr_parmda
       INTO rw_parmda;
     CLOSE cr_parmda;
     
+    -- Buscar detalhes do produto
+    OPEN  cr_produt;
+    FETCH cr_produt INTO rw_produt;
+    CLOSE cr_produt;
+    
     -- Busca as mensagens para exibir em tela
     pc_busca_mensagens_produto(pr_cdcooper  => vr_cdcooperalt
-                              ,pr_cdproduto => 10 -- Débito automático
+                              ,pr_cdproduto => pr_cdprodut -- 10 -- Débito automático
                               ,pr_tab_mensagens => vr_tab_mensagens);
     
     -- Busca os valores das tarifas
@@ -311,6 +347,18 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     vr_retxml := vr_retxml || '<vltarifa_pf>' || vr_vltarifapf || '</vltarifa_pf>';
     vr_retxml := vr_retxml || '<cdtarifa_pj>' || rw_parmda.cdtarifa_pj || '</cdtarifa_pj>';
     vr_retxml := vr_retxml || '<vltarifa_pj>' || vr_vltarifapj || '</vltarifa_pj>';
+    
+    -- Novos campos de controle - Prj360
+    vr_retxml := vr_retxml || '<prod_enviasms>' || rw_produt.flgenvia_sms || '</prod_enviasms>';
+    vr_retxml := vr_retxml || '<prod_flcbrtar>' || rw_produt.flgcobra_tarifa || '</prod_flcbrtar>';
+    -- Somente o débito automático tem configuração de horário, pois integra com a zenvia através de FTP
+    -- A integração via Aymaru não está preparada para essa configuração.
+    IF pr_cdprodut = 10 THEN -- Déb. Automático
+      vr_retxml := vr_retxml || '<flghrenviosms>1</flghrenviosms>';
+    ELSE
+      vr_retxml := vr_retxml || '<flghrenviosms>0</flghrenviosms>';
+    END IF;
+    
     vr_retxml := vr_retxml || '<mensagens>';
     
     -- Percorre todas as mensagens
@@ -373,6 +421,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   END pc_busca_parmda;
 
   PROCEDURE pc_mantem_parmda(pr_cdcooperalt     IN crapcop.cdcooper%TYPE
+                            ,pr_cdprodut        IN NUMBER
                             ,pr_flgenvia_sms    IN VARCHAR2
                             ,pr_flgcobra_tarifa IN VARCHAR2
                             ,pr_hrenvio_sms_fmt IN VARCHAR2
@@ -449,7 +498,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- VALIDAÇÕES
     -- Valida os campos obrigatórios caso envia SMS
     IF pr_flgenvia_sms = 1 THEN
-        IF pr_hrenvio_sms_fmt IS NULL THEN
+        IF pr_hrenvio_sms_fmt IS NULL AND 
+           pr_cdprodut = 10 THEN -- Somente produto débito automático possui horário de envio
           vr_dscritic := 'Horario de envio e obrigatorio.';
           pr_nmdcampo := 'hrenvio_sms';
           RAISE vr_exc_saida;
@@ -489,7 +539,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- Apaga os registros antigos, pois sempre insere novos registros devido à opção 0 (Todas as cooperativas)
     BEGIN
       DELETE tbgen_sms_param parmda
-       WHERE parmda.cdcooper = pr_cdcooperalt OR pr_cdcooperalt = 0;
+       WHERE parmda.cdproduto = pr_cdprodut
+         AND (parmda.cdcooper = pr_cdcooperalt 
+          OR pr_cdcooperalt = 0);
     
     EXCEPTION
       WHEN OTHERS THEN
@@ -515,7 +567,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
                ,vr_hrenvio_sms
                ,vr_cdoperad
                ,SYSDATE
-               ,10 -- Débito Automático
+               ,pr_cdprodut
                ,DECODE(pr_flgcobra_tarifa,1,pr_cdtarifa_pf,NULL)
                ,DECODE(pr_flgcobra_tarifa,1,pr_cdtarifa_pj,NULL)
            FROM crapcop cop
@@ -545,7 +597,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
     -- Exclui as mensagens atuais
     DELETE FROM tbgen_mensagem msg
      WHERE (msg.cdcooper = pr_cdcooperalt OR pr_cdcooperalt = 0)
-       AND msg.cdproduto = 10; -- Débito Automático
+       AND msg.cdproduto = pr_cdprodut; -- Débito Automático
     
     -- Percorre as mensagens no JSON e insere os registros
     vr_json_mensagens := json_list(REPLACE(pr_json_mensagens,'&quot;','"'));
@@ -567,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
           ,dsmensagem
           )
           (SELECT cop.cdcooper
-                 ,10 -- Débito Automático
+                 ,pr_cdprodut
                  ,vr_cdtipo_mensagem
                  ,vr_dsmensagem
              FROM crapcop cop
@@ -628,6 +680,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   END pc_mantem_parmda;
 
   PROCEDURE pc_exclui_parmda(pr_cdcooperalt IN crapcop.cdcooper%TYPE
+                            ,pr_cdprodut    IN NUMBER
                              
                             ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -686,12 +739,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
   
     BEGIN
       DELETE tbgen_sms_param parmda
-       WHERE (parmda.cdcooper = pr_cdcooperalt OR pr_cdcooperalt = 0);
+       WHERE (parmda.cdcooper = pr_cdcooperalt OR pr_cdcooperalt = 0)
+         AND parmda.cdproduto = pr_cdprodut;
     
       vr_auxconta := SQL%ROWCOUNT;
       
       DELETE tbgen_mensagem msg
-       WHERE msg.cdproduto = 10 -- Débito Automático
+       WHERE msg.cdproduto = pr_cdprodut
          AND (msg.cdcooper = pr_cdcooperalt OR pr_cdcooperalt = 0);
       
     EXCEPTION
@@ -845,6 +899,94 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_parmda IS
                                      '</Erro></Root>');
       ROLLBACK;
   END pc_busca_valor_tarifa;
+  
+  
+  PROCEDURE pc_lista_produtos(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2) IS         --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_lista_produtos
+    --  Sistema  : Rotinas para listar os produtos na tela de parametros
+    --  Sigla    : GENE
+    --  Autor    : Renato Darosci
+    --  Data     : Agosto/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Retornar a lista de produtos a serem exibidos na tela de parametros
+    --
+    --  Alteracoes: 
+    -- 
+    -- .............................................................................
+    
+    -- Cursores
+    CURSOR cr_produtos IS
+      SELECT prd.cdproduto
+           , prd.dsproduto
+        FROM tbcc_produto   prd
+       WHERE prd.flgutiliza_interface_padrao = 1 
+       ORDER BY prd.dsproduto;
+    
+    -- Variaveis locais
+    vr_contador INTEGER := 0;
+    
+    -- Variaveis de critica
+    vr_dscritic crapcri.dscritic%TYPE;
+  
+  BEGIN
+    
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    -- Insere a tag pai
+   /* GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+  */
+    -- Percorre todos os produtos a serem exibidos na tela
+    FOR rw_produto IN cr_produtos LOOP
+      
+      -- Inserir a tag agrupadora
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'inf'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      -- Inserir o código do produto
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'inf'
+                            ,pr_posicao  => vr_contador
+                            ,pr_tag_nova => 'cdproduto'
+                            ,pr_tag_cont => rw_produto.cdproduto
+                            ,pr_des_erro => vr_dscritic);
+      -- Inserir a descrição do produto
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'inf'
+                            ,pr_posicao  => vr_contador
+                            ,pr_tag_nova => 'dsproduto'
+                            ,pr_tag_cont => rw_produto.dsproduto
+                            ,pr_des_erro => vr_dscritic);
+
+      -- Incrementar o contador
+      vr_contador := vr_contador + 1;
+      
+    END LOOP;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_des_erro := 'Erro geral em pc_lista_cooperativas_web: ' || SQLERRM;
+      pr_dscritic := 'Erro geral em pc_lista_cooperativas_web: ' || SQLERRM;
+  END pc_lista_produtos;
   
 END tela_parmda;
 /

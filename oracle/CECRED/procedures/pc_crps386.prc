@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 26/06/2017
+   Data    : Abril/2004                    Ultima atualizacao: 08/11/2017
 
    Dados referentes ao programa:
 
@@ -187,7 +187,11 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                25/05/2017 - Ajuste na geração de mensagens no log (Rodrigo)
                
                26/06/2017 - Incluir tratamento para SANEPAR qto a identificaçao
-                            do cliente no arquivo (Tiago/Fabricio #673343)                            
+                            do cliente no arquivo (Tiago/Fabricio #673343)      
+                            
+                           
+              08/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo
+                           (Lucas Ranghetti #789879)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -213,6 +217,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
            gnconve.dsenddeb,
            gnconve.tpdenvio,
            gnconve.cdagedeb,
+           gnconve.nrlayout,
            crapcop.nmrescop,
            gnconve.rowid row_id
       from craphis,
@@ -557,7 +562,8 @@ begin
                    rpad(rw_gnconve.nmrescop, 20, ' ')||
                    to_char(rw_crapdat.dtmvtolt, 'yyyymmdd')||
                    to_char(vr_nrseqarq, 'fm000000')||
-                   '04DEBITO AUTOMATICO'||
+                   LPAD(rw_gnconve.nrlayout,2,'0')||
+                   'DEBITO AUTOMATICO'||
                    '                                                    '||
                    chr(10));
     -- Variáveis de controle
@@ -615,7 +621,7 @@ begin
             end if; 
          end if;     
       end if;
-            
+           
       --
       if rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');

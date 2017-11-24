@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 16/10/2017
+    Data    : Marco/2010                   Ultima atualizacao: 03/11/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -184,15 +184,17 @@
 				             (Adriano - SD 761431)
  
 				16/10/2017 - Ajuste para validar a porcentagem de societário também na tela matric. (PRJ339 - Kelvin).
- 
-                19/10/2017 - Ajustado rotina Busca_Dados_Cto, para carregar ass por cpf
+                
+				19/10/2017 - Ajustado rotina Busca_Dados_Cto, para carregar ass por cpf
                              mesmo que conta ja esteja demitida.
                              PRJ339 - CRM (Odirlei-AMcom) 
-
+              
  
                 31/10/2017 - Ajustado rotina Grava_Dados, gravar crapdoc com tipo 47 e 50
                              quando for pessoa fisica. PRJ339 - CRM (Lombardi)
-              
+                              
+                03/11/2017 - Correcao no carregamento de bens para procurador na tela CONTAS.
+							 Busca_Dados_Ass SD 778432. (Carlos Rafael Tanholi).
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -984,7 +986,8 @@ PROCEDURE Busca_Dados_Ass:
             ASSIGN aux_contador = 1.
 
             FOR EACH crapbem WHERE crapbem.cdcooper = tt-crapavt.cdcooper AND
-                                   crapbem.nrdconta = tt-crapavt.nrdctato 
+                                   crapbem.nrdconta = tt-crapavt.nrdctato AND
+								   crapbem.idseqttl = 1 
                                    NO-LOCK:
                 ASSIGN tt-crapavt.dsrelbem[aux_contador] = crapbem.dsrelbem
                        tt-crapavt.dsrelbem[aux_contador] = crapbem.dsrelbem

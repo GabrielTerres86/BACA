@@ -2776,7 +2776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                 ,pr_inpessoa
                                                 ,pr_cdrisco) LOOP
         pr_lslcremp := pr_lslcremp || rw_linha_pre_aprv.cdlcremp || ';';
-      END LOOP;      
+      END LOOP;
       
     EXCEPTION
       WHEN OTHERS THEN
@@ -4531,5 +4531,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               
   END pc_executar_crps682;
 
+  -- Function para buscar os cooperados com crédito pré-aprovado ativo - Utilizada para envio de Notificações/Push
+  FUNCTION fn_sql_contas_com_preaprovado RETURN CLOB IS
+  BEGIN
+    RETURN 'SELECT usu.cdcooper
+                  ,usu.nrdconta
+                  ,usu.idseqttl
+                  ,''#valorcalculado='' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valorcontratado='' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '','' ||
+                   ''#valordisponivel='' || to_char(val.vllimdis, ''fm99g999g990d00'') dsvariaveis
+              FROM (SELECT *
+                      FROM (SELECT cpa.cdcooper
+                                  ,cpa.nrdconta
+                                  ,cpa.vlcalpre -- Valor Total Calculado
+                                  ,cpa.vlctrpre -- Valor Contratado
+                                  ,cpa.vllimdis -- Valor Disponível
+                                  ,row_number() OVER(PARTITION BY cpa.cdcooper, cpa.nrdconta ORDER BY car.tpcarga ASC, car.dtcalculo DESC) prioridade -- Prioriza as Manuais e mais recentes
+                              FROM crapcpa              cpa
+                                  ,tbepr_carga_pre_aprv car
+                                  ,tbepr_param_conta    par
+                             WHERE cpa.iddcarga = car.idcarga
+                               AND cpa.cdcooper = par.cdcooper(+)
+                               AND cpa.nrdconta = par.nrdconta(+)
+                               AND car.indsituacao_carga = 1 -- Gerada
+                               AND car.flgcarga_bloqueada = 0 -- Liberada
+                               AND (car.dtfinal_vigencia IS NULL OR
+                                   car.dtfinal_vigencia >= TRUNC(SYSDATE)) -- Vigente
+                               AND NVL(par.flglibera_pre_aprv, 1) = 1 -- Valida se Pré-Aprovado está liberado para a conta específica
+                            )
+                     WHERE prioridade = 1) val
+                  ,vw_usuarios_internet usu
+             WHERE val.cdcooper = usu.cdcooper
+               AND val.nrdconta = usu.nrdconta
+               AND val.vllimdis > 0';
+  END fn_sql_contas_com_preaprovado;
+  
 END EMPR0002;
 /

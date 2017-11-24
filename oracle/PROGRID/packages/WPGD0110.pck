@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -20,6 +20,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --              31/05/2016 - Alteracao da procedure pc_lista_evento_dtsugest para 
   --                           carregar eventos apenas por Cooperativa e Ano.
   --                           (Carlos Rafael Tanholi).  
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
@@ -51,7 +52,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -68,6 +69,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --                           (Carlos Rafael Tanholi).	            
   --
   --              05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
@@ -100,6 +102,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     Observacao: -----
 
     Alteracoes: 05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+                           
     ..............................................................................*/   
                 
     DECLARE
@@ -150,8 +153,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND ce.cdcooper = c.cdcooper
         AND ce.dtanoage = c.dtanoage
         AND ce.cdevento = c.cdevento
-        AND ce.tpevento <> 10
-        AND ce.tpevento <> 11 
+        AND ce.tpevento NOT IN(7,8,10,11,12,13,14,15,16)
         AND c.dtanoage = pr_dtanoage        
         AND c.flgevsel = 1        
         AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0 OR pr_cdcooper = '0')
@@ -284,16 +286,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   BEGIN
     DECLARE
 
-      -- Cursor sobre o cadastro de eventos
-      CURSOR cr_crapedp IS
-      SELECT cdevento, nmevento
-        FROM crapedp
-       WHERE (cdcooper = 0)
-       ORDER BY nmevento;
-        
-      rw_crapedp cr_crapedp%ROWTYPE;
-
-
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_age IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -309,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
       rw_crapedp_age cr_crapedp_age%ROWTYPE;      
       
       -- Cursor sobre os eventos da agenda 
-      CURSOR cr_crapedp_coop_age(pr_cdcoop_agenci IN VARCHAR2) IS
+      CURSOR cr_crapedp_coop_age(pr_cdagenci IN VARCHAR2) IS
       SELECT DISTINCT ce.cdevento, ce.nmevento       
       FROM crapeap c, 
            crapsde cs,
@@ -328,12 +320,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND ce.cdcooper = c.cdcooper
         AND ce.dtanoage = c.dtanoage
         AND ce.cdevento = c.cdevento         
-        AND ce.tpevento <> 10
-        AND ce.tpevento <> 11 
+        AND ce.tpevento NOT IN(7,8,10,11,12,13,14,15,16)
         AND c.flgevsel = 1  
         AND cs.hrsugini IS NOT NULL                 
         AND (c.dtanoage = pr_dtanoage OR pr_dtanoage = 0)         
-        AND (ce.cdcooper|| '|' ||c.cdagenci = pr_cdcoop_agenci OR (pr_cdcoop_agenci = '0' AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0) ) )
+        AND (ce.cdcooper|| '|' ||c.cdagenci = pr_cdagenci OR (pr_cdagenci = '0' AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0) ) )
+        AND (ce.cdcooper = c.cdcooper)
+        AND (ce.cdevento = ce.cdevento)
+        AND (ce.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+        AND (ce.dtanoage = pr_dtanoage OR pr_dtanoage = 0)
       ORDER BY ce.nmevento;
         
       rw_crapedp_coop_age cr_crapedp_coop_age%ROWTYPE;

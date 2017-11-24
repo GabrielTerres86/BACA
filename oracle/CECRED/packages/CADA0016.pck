@@ -702,7 +702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  SET avt.nrcepend     = pr_endereco_new.nrcep,
                      avt.dsendres##1  = pr_endereco_new.nmlogradouro,
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
-                     avt.complend     = pr_endereco_new.dscomplemento,
+                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,47),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
                      avt.nmcidade     = vr_dscidade,
                      avt.cdufresd     = vr_cdestado
@@ -753,7 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  SET avt.nrcepend     = pr_endereco_new.nrcep,
                      avt.dsendres##1  = pr_endereco_new.nmlogradouro,
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
-                     avt.complend     = pr_endereco_new.dscomplemento,
+                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,57),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
                      avt.nmcidade     = vr_dscidade,
                      avt.cdufresd     = vr_cdestado
@@ -807,7 +807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  SET crl.cdcepres =  pr_endereco_new.nrcep,
                      crl.dsendres =  pr_endereco_new.nmlogradouro,
                      crl.nrendres =  pr_endereco_new.nrlogradouro,
-                     crl.dscomres =  pr_endereco_new.dscomplemento,
+                     crl.dscomres =  substr(pr_endereco_new.dscomplemento,1,40),
                      crl.dsbaires =  pr_endereco_new.nmbairro,
                      crl.dscidres =  vr_dscidade,
                      crl.dsdufres =  vr_cdestado
@@ -963,7 +963,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.idseqttl   = vr_tab_contas(idx).idseqttl
                  AND tfc.tptelefo   = pr_telefone_old.tptelefone
                  --> validar pelo numero do telefone
-                 AND tfc.nrtelefo = pr_telefone_old.nrtelefone;
+                 AND tfc.nrtelefo = pr_telefone_old.nrtelefone
+                 AND tfc.nrdramal = pr_telefone_old.nrramal;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao deletar telefone: '||SQLERRM; 
@@ -990,7 +991,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.nrdconta = vr_tab_contas(idx).nrdconta
                  AND tfc.idseqttl = vr_tab_contas(idx).idseqttl
                  --> validar pelo numero do telefone, caso for insert, apenas terá o new
-                 AND tfc.nrtelefo = nvl(pr_telefone_old.nrtelefone,pr_telefone_new.nrtelefone);
+                 AND tfc.nrtelefo = nvl(pr_telefone_old.nrtelefone,pr_telefone_new.nrtelefone)
+                 AND tfc.nrdramal = nvl(pr_telefone_old.nrramal,pr_telefone_new.nrramal);
             EXCEPTION
               WHEN dup_val_on_index THEN
                 --> Irá atualizar no update abaixo
@@ -1022,7 +1024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    --> validar pelo numero do telefone, caso for insert, apenas terá o new
                    AND --testar o numero novo, pois ocorre qnd a alteração partiu dessa propria 
                        -- tabela e numero da esta atualizado
-                       tfc.nrtelefo = pr_telefone_new.nrtelefone;
+                       tfc.nrtelefo = pr_telefone_new.nrtelefone
+                   AND tfc.nrdramal = pr_telefone_new.nrramal;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar telefone:'||SQLERRM; 
@@ -1299,6 +1302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND upper(cem.dsdemail)   = UPPER(nvl(pr_email_old.dsemail,pr_email_new.dsemail));
                  
             EXCEPTION
+              WHEN dup_val_on_index THEN
+                NULL;
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar email:'||SQLERRM; 
                 RAISE vr_exc_erro;          
@@ -1552,11 +1557,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                               pr_polexp_new.dtinicio,           --> dtinicio
                               pr_polexp_new.dttermino,          --> dttermino
                               rw_pessoa_emp.nmpessoa,           --> nmempresa
-                              rw_pessoa_emp.nrcpfcgc,           --> nrcnpj_empresa                             
+                              nvl(rw_pessoa_emp.nrcpfcgc,0),           --> nrcnpj_empresa                             
                               rw_pessoa_pol.nmpessoa,           --> nmpolitico
                               pr_polexp_new.cdocupacao,         --> cdocupacao
                               pr_polexp_new.tprelacao_polexp,          --> cdrelacionamento
-                              rw_pessoa_pol.nrcpfcgc);          --> nrcpf_politico
+                              nvl(rw_pessoa_pol.nrcpfcgc,0));          --> nrcpf_politico
                                                             
               EXCEPTION
                 WHEN OTHERS THEN
@@ -6655,7 +6660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      avt.cdestcvl = pr_pessoa_fis_new.cdestado_civil,
                      avt.inhabmen = pr_pessoa_fis_new.inhabilitacao_menor,
                      avt.dthabmen = pr_pessoa_fis_new.dthabilitacao_menor,
-                     avt.cdnacion = pr_pessoa_fis_new.cdnacionalidade,
+                     avt.cdnacion = nvl(pr_pessoa_fis_new.cdnacionalidade,0),
                      avt.dsnatura = nvl(vr_dsnatura,avt.dsnatura)
                WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                  AND avt.nrdconta = vr_tab_contas(idx).nrdconta

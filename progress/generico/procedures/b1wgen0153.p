@@ -144,7 +144,11 @@
                             (Lucas Ranghetti #633002)
 
 				11/07/2017 - Melhoria 150 - Tarifação de operações de crédito por percentual
-                           
+
+                07/11/2017 - Adicionados campos para comportar o cadastro de 
+                             tarifas por porcentual na ALTTAR.
+                             Everton (Mouts) - Melhoria 150.
+
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -6615,7 +6619,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     DEF VAR aux_cdlcremp        LIKE craplcr.cdlcremp       NO-UNDO.
     DEF VAR aux_dslcremp        LIKE craplcr.dslcremp       NO-UNDO.
     DEF VAR aux_nmoperad        LIKE crapope.nmoperad       NO-UNDO.
-    
+
     DEF VAR aux_nrseqatu AS INTE                            NO-UNDO.
     DEF VAR aux_nrseqini AS INTE                            NO-UNDO.
     DEF VAR aux_nrseqfim AS INTE                            NO-UNDO.
@@ -6623,7 +6627,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     EMPTY TEMP-TABLE tt-atribdet.
 
     ASSIGN aux_nrregist = 0.
-    
+
     ASSIGN aux_nrseqatu = 0
            aux_nrseqini = par_nriniseq
            aux_nrseqfim = par_nriniseq + par_nrregist.
@@ -6690,9 +6694,9 @@ PROCEDURE carrega-atribuicao-detalhamento:
                 FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK.
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad.
                 END.  
-                
+
                 ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
-                
+
                 IF aux_nrseqatu < aux_nrseqini  OR
                        aux_nrseqatu >= aux_nrseqfim THEN
                         DO:
@@ -6764,7 +6768,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
                 FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK:
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad. 
                 END.
-                
+
                 ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
                 
                 IF aux_nrseqatu < aux_nrseqini  OR
@@ -6794,7 +6798,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
             END.
         END.
     END.
-    
+
 	ASSIGN par_qtregist = aux_nrseqatu.
 
     RETURN "OK".
@@ -8467,7 +8471,18 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
         END.
 
     IF  craplcr.flgtarif = TRUE THEN
-        ASSIGN par_cdlcremp = 0.
+        DO:
+          ASSIGN par_cdlcremp = 0.
+        END.
+    ELSE
+        DO:
+          ASSIGN par_cdhistor = crapfvl.cdhistor
+                 par_cdhisest = crapfvl.cdhisest
+                 par_vltarifa = 0.
+                 
+          RETURN "OK".
+          
+        END.
         
     ASSIGN aux_contador = 0.
 
@@ -8560,9 +8575,32 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
             RETURN "OK".
         END.
 
+      /*Retornar valores*/
+      /* TARIFA POR PERCENTUAL*/
+      IF crapfco.tpcobtar = 2 THEN
+        DO:
+		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
+ 
+          /*VERIFICA LIMITE MÍNIMO*/
+          IF par_vltarifa < crapfco.vlmintar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmintar.
+			END.
+          /*VERIFICA LIMITE MÁXIMO*/
+          IF par_vltarifa > crapfco.vlmaxtar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
+			END.
+		END.
+        /* TARIFA FIXA*/
+      ELSE
+	    DO:
+          ASSIGN par_vltarifa = crapfco.vltarifa.
+		END.	
+
+
     ASSIGN par_cdhistor = crapfvl.cdhistor
            par_cdhisest = crapfvl.cdhisest
-           par_vltarifa = crapfco.vltarifa
            par_dtdivulg = crapfco.dtdivulg
            par_dtvigenc = crapfco.dtvigenc
            par_cdfvlcop = crapfco.cdfvlcop.
@@ -13987,6 +14025,10 @@ PROCEDURE lista-fvl-tarifa:
                tt-faixavalores.cdlcremp = crapfco.cdlcremp
                tt-faixavalores.nrconven = crapfco.nrconven
                tt-faixavalores.cdocorre = aux_cdocorre
+               tt-faixavalores.tpcobtar = crapfco.tpcobtar
+               tt-faixavalores.vlpertar = crapfco.vlpertar
+               tt-faixavalores.vlmintar = crapfco.vlmintar
+               tt-faixavalores.vlmaxtar = crapfco.vlmaxtar
                aux_nrregist = aux_nrregist + 1.
     END.
       
@@ -14014,6 +14056,10 @@ PROCEDURE incluir-lista-cadfco:
     DEF INPUT PARAM par_lstocorr AS CHAR                    NO-UNDO.
     DEF INPUT PARAM par_lstlcrem AS CHAR                    NO-UNDO.
     DEF INPUT PARAM par_cdinctar AS INTE                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlper AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmin AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmax AS CHAR                    NO-UNDO.	
+	DEF INPUT PARAM par_lsttptar AS CHAR                    NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -14049,6 +14095,10 @@ PROCEDURE incluir-lista-cadfco:
                            INPUT INTE(ENTRY(aux_cont,par_lstocorr,';')),
                            INPUT INTE(ENTRY(aux_cont,par_lstlcrem,';')),
                            INPUT par_cdinctar,
+						   INPUT INTE(ENTRY(aux_cont,par_lsttptar,';')),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlper,';'), ".", ",")),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlmin,';'), ".", ",")),
+						   INPUT DECI(REPLACE(ENTRY(aux_cont,par_lstvlmax,';'), ".", ",")),					   
                            OUTPUT TABLE tt-erro).
 
         FIND FIRST tt-erro NO-LOCK NO-ERROR.

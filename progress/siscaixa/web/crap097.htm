@@ -1,0 +1,110 @@
+<!--
+
+Autor..........: Kelvin
+Programa.......: crap097.htm
+Data de criação: 07/11/2017
+
+Objetivo.......: Tela para autenticar o atendimento.
+
+Alteracoes.....:
+
+
+-->
+<html>
+    <head>
+        <meta name="generator"
+        content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39" />
+        <meta http-equiv="Content-Language" content="pt-br" />
+        <meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
+        <meta name="GENERATOR" content="Microsoft FrontPage 4.0" />
+        <meta name="ProgId" content="FrontPage.Editor.Document" />
+        <meta http-equiv="cache-control" content="no-cache" />
+        <meta http-equiv="Pragma" content="No-Cache" />
+        <meta http-equiv="Expires" content="0" />
+        <script language="JavaScript" src="/script/formatadadosie.js"></script>
+        <script language=JavaScript src="/script/jquery.js"></script>
+        <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
+        <link rel="StyleSheet" type="text/css" href="/script/viacredi.css" />
+        <title>Autentição Atendimento</title>		
+    </head>
+    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();">
+		<form id="frmPost"  method=post>
+        <input type="hidden" name="vh_foco"     id="vh_foco"     value="" >
+        <input type="hidden" name="vh_nome"     id="vh_nome"     value="" >
+        <input type="hidden" name="v_msg"       id="v_msg"       value="" >
+        <input type="hidden" name="proximo"     id="proximo"     value="" >
+        <input type="hidden" name="v_cntanter"  id="v_cntanter"  value="" >
+        <input type="hidden" name="h_inpesgps"  id="h_inpesgps"  value="0">
+        <input type="hidden" name="h_tpdpagto"  id="h_tpdpagto"  value="0">
+        <input type="hidden" name="h_idleitor"  id="h_idleitor"  value="0">
+		<input type="hidden" name="v_dtatendi"  id="v_dtatendi"  value="">
+		<input type="hidden" name="v_hratendi"  id="v_hratendi"  value="">		
+		<input type="hidden" name="v_flagpost"  id="v_flagpost"  value="0">
+        <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+        <div align="center">
+            <center>
+                <table width="100%" class="cabtab">
+                    <tr>
+                        <td width="15%" align="center">
+                            <input type="text" name="v_coop" id="v_coop" size="11" class="transp" readonly="readonly" />
+                        </td>
+                        <td width="20%" align="center">PA
+                        <input type="text" name="v_pac" size="1" class="transp" readonly="readonly" /></td>
+                        <td width="20%" align="center">CAIXA
+                        <input type="text" name="v_caixa" size="1" class="transp" readonly="readonly" /></td>
+                        <td width="30%" align="center">OPERADOR
+                        <input type="text" name="v_operador" size="7" class="transp" readonly="readonly" /></td>
+                        <td width="15%" align="center">
+                            <input type="text" name="v_data" id="v_data" size="10" class="transp" readonly="readonly" />
+                        </td>
+                    </tr>
+                </table>
+            </center>
+        </div>
+        <div align="center">
+            <center>
+                <table width="100%" class="cabtab">
+                    <tr>
+                        <td class="titulo">Autentição Atendimento</td>
+                        <td width="21%" class="programa" align="right">P.089 V.1.00</td>
+                    </tr>
+                </table>
+            </center>
+        </div>
+	</body>	
+	
+<script language="JavaScript">
+  /*Função que busca a data e hora atual para entao no servidor realizar a impressão 
+  da autenticação*/  
+  $(document).ready(function(){    
+	
+    if($("#v_flagpost").val() != 1){
+    
+    var time = new Date();
+    var hour = time.getHours();
+    var minute = time.getMinutes();
+  
+    var day = time.getDate();
+    var mon = time.getMonth();
+    var year = time.getFullYear();
+    
+    if (hour < 10)
+  	 hour = "0" + hour;
+    
+    if (minute < 10) 
+     minute = "0" + minute;
+    
+    var data = day + "/" + (mon + 1) + "/" + year;
+		var hora = hour + ":" + minute; 
+    
+	$("#v_dtatendi").val(data);
+    
+    $("#v_hratendi").val(hora);	
+		
+	    $("#frmPost").submit();	
+	}
+  
+  });
+	
+</script>
+	

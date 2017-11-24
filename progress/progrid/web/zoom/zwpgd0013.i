@@ -87,7 +87,7 @@ ASSIGN pesquisa         = GET-VALUE("pesquisa")
        OpcaoNavegacao   = GET-VALUE("btnopcao")
 
        /* Agnaldo 24/11 - Assume idevento para local sempre como 1 afim de servir tanto para PROGRID quanto para ASSEMBLÉIA */
-       aux_idevento     = 1 /* INT(get-value("ValorCampo")) */
+       aux_idevento     = INT(get-value("ValorCampo"))
 
        valorcampo       = get-value("ValorCampo")
 	   ValorCampo2      = GET-VALUE("ValorCampo2")

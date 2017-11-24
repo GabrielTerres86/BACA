@@ -742,7 +742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 12/05/2017
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 03/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -776,6 +776,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --                          16 e 17. PRJ319 - SMS Cobrança (Odirlei-AMcom) 
   --
   --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+	--
+	--             03/11/2017 - Ajuste para tratar agendamentos de recarga de celular duplicados. (Reinert)	
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -5263,7 +5265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos para obter horario limite de aprovacao das transacoes pendentes
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi
-  --  Data     : Dezembro/2015.                   Ultima atualizacao: 
+  --  Data     : Dezembro/2015.                   Ultima atualizacao: 10/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -5285,8 +5287,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --            16 - Contrato SMS Cobrança
   --            17 - Cancelamento de Contrato SMS Cobrança
   --            18 - Desconto de Cheque
+  --            19 - Folha Pagamento (Cooperativa)
   --
-  -- Alteração : 
+  -- Alteração : 10/10/2017 - Adicionar o horario Folha Pagamento (Coop) - 19
+  --                          (Douglas - Chamado 707072)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -5296,6 +5300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_hrlimage VARCHAR2(5); --horario folha agendamento
     vr_hrlimptb VARCHAR2(5); --horario folha portabilidade
     vr_hrlimsol VARCHAR2(5); --horario folha solicitacao Estouro
+    vr_hrlimcop VARCHAR2(5); --horario folha cooperativa
     vr_index_limite INTEGER;
     vr_index_limite_pend INTEGER;
     vr_dstextab craptab.dstextab%TYPE;
@@ -5423,6 +5428,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
       pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
       pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimsol;
+
+      --Criar registro para tabela limite horarios
+      vr_hrlimcop := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_cdacesso => 'FOLHAIB_HOR_LIM_PAG_COOP');
+      vr_index_limite_pend:= 19; --Folha Pagamento Cooperativa
+      pr_tab_limite_pend(vr_index_limite_pend).tipodtra:= 9; --Tipo de transacao
+      pr_tab_limite_pend(vr_index_limite_pend).hrinipag:= '0';
+      pr_tab_limite_pend(vr_index_limite_pend).hrfimpag:= vr_hrlimcop;
 
     END IF;
   EXCEPTION
@@ -9374,6 +9388,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas
       vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
 			
+			-- Operação agendada duplicada
+			CURSOR cr_operacao_duplicada(pr_cdcooper IN tbrecarga_operacao.cdcooper%TYPE
+			                            ,pr_nrdconta IN tbrecarga_operacao.nrdconta%TYPE
+																	,pr_dtrecarg IN tbrecarga_operacao.dtrecarga%TYPE
+																	,pr_nrdddtel IN tbrecarga_operacao.nrddd%TYPE
+																	,pr_nrtelefo IN tbrecarga_operacao.nrcelular%TYPE
+																	,pr_vlrecarg IN tbrecarga_operacao.vlrecarga%TYPE) IS
+				SELECT 1
+				  FROM tbrecarga_operacao ope
+				 WHERE ope.cdcooper  = pr_cdcooper
+				   AND ope.nrdconta  = pr_nrdconta
+					 AND ope.dtrecarga = pr_dtrecarg
+					 AND ope.nrddd     = pr_nrdddtel
+					 AND ope.nrcelular = pr_nrtelefo
+					 AND ope.vlrecarga = pr_vlrecarg
+					 AND ope.insit_operacao IN (1,3); -- Agendada / Transação Pendente
+			rw_operacao_duplicada cr_operacao_duplicada%ROWTYPE;				 						
+			
 			-- Subrotinas
 			PROCEDURE pc_cria_operacao_pendente(pr_cdtranpe IN tbrecarga_trans_pend.cdtransacao_pendente%TYPE
 				                                 ,pr_tprecarga IN tbrecarga_trans_pend.tprecarga%TYPE
@@ -9475,6 +9507,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           
 				END LOOP;
 			ELSE
+				 -- Verificar agendamento duplicado
+         OPEN cr_operacao_duplicada(pr_cdcooper => pr_cdcooper
+			                             ,pr_nrdconta => pr_nrdconta
+																	 ,pr_dtrecarg => pr_dtrecarga
+																	 ,pr_nrdddtel => pr_nrdddtel
+																	 ,pr_nrtelefo => pr_nrtelefo
+																	 ,pr_vlrecarg => pr_vlrecarga);
+				 FETCH cr_operacao_duplicada INTO rw_operacao_duplicada;
+				 
+				 -- Se encontrou agendamento já existe
+				 IF cr_operacao_duplicada%FOUND THEN
+					 -- Fechar cursor
+					 CLOSE cr_operacao_duplicada;
+					 -- Gerar crítica
+           vr_cdcritic := 0;
+					 vr_dscritic := '<![CDATA[Você já possui uma transação pendente de aprovação com os mesmos dados informados. </br>'
+											 || '<center>Consulte suas transações pendentes.</center>]]>';
+					-- Levantar exceção
+					RAISE vr_exc_erro;					 
+				 END IF;
+				 -- Fechar cursor
+				 CLOSE cr_operacao_duplicada;
+			
 				 -- Cria transação operador
 				 pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
 																	 ,pr_nrdcaixa => pr_nrdcaixa

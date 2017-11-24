@@ -29,6 +29,10 @@
 
 			   25/01/2017 - Adicionadas variaveis aux_cdhiscop e aux_cdhiscnt
 							(PRJ321 - Reinert).
+
+               07/11/2017 - Adicionados campos para comportar o cadastro de 
+                            tarifas por porcentual na ALTTAR.
+                            Everton (Mouts) - Melhoria 150.
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                       NO-UNDO.
@@ -5381,6 +5385,10 @@ PROCEDURE incluir-lista-cadfco:
                                     INPUT aux_lstocorr,
                                     INPUT aux_lstlcrem,
                                     INPUT aux_cdinctar,
+                                    INPUT aux_lstvlper,
+                                    INPUT aux_lstvlmin,
+                                    INPUT aux_lstvlmax,
+							        INPUT aux_lsttptar,
                                     OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
