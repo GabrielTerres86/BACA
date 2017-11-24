@@ -300,7 +300,10 @@
 				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
          
          28/09/2017 - Ajuste leitura IDORGEXP.
-                      PRJ339 - CRM (Odirlei-AMcom) 
+                      PRJ339 - CRM (Odirlei-AMcom) 	
+ 				 
+                 22/11/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                              Projeto 339 - CRM. (Lombardi)
          
 ..............................................................................*/
 
@@ -3678,6 +3681,7 @@ PROCEDURE cadastrar-novo-limite:
             FIND FIRST crapdoc WHERE 
                        crapdoc.cdcooper = par_cdcooper AND
                        crapdoc.nrdconta = par_nrdconta AND
+                       crapdoc.nrcpfcgc = crapass.nrcpfcgc AND
                        crapdoc.tpdocmto = 19           AND
                        crapdoc.dtmvtolt = par_dtmvtolt AND
                        crapdoc.idseqttl = par_idseqttl 
@@ -3706,6 +3710,7 @@ PROCEDURE cadastrar-novo-limite:
                                    crapdoc.flgdigit = FALSE
                                    crapdoc.dtmvtolt = par_dtmvtolt
                                    crapdoc.tpdocmto = 19
+                                   crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                    crapdoc.idseqttl = par_idseqttl.
                             VALIDATE crapdoc.    
                             
