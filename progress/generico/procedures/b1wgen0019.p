@@ -9543,6 +9543,7 @@ PROCEDURE alterar-novo-limite:
                        crapdoc.nrdconta = par_nrdconta AND
                        crapdoc.tpdocmto = 19           AND
                        crapdoc.dtmvtolt = par_dtmvtolt AND
+                       crapdoc.nrcpfcgc = crapass.nrcpfcgc AND
                        crapdoc.idseqttl = par_idseqttl 
                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
@@ -9569,6 +9570,7 @@ PROCEDURE alterar-novo-limite:
                                    crapdoc.flgdigit = FALSE
                                    crapdoc.dtmvtolt = par_dtmvtolt
                                    crapdoc.tpdocmto = 19
+                                   crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                    crapdoc.idseqttl = par_idseqttl.
                             VALIDATE crapdoc.    
                             
