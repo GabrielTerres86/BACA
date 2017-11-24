@@ -1,5 +1,6 @@
 /*
- * Programa wpgd0042a.p - Pré-Inscritos (chamado a partir dos dados de wpgd0042)
+ * Programa wpgd0042a.p - Pré-Inscritos (chamado a partir dos dados de wpgd0042) 
+ 
 */
 /*****************************************************************************
 
@@ -30,6 +31,14 @@
                           
              03/01/2014 - Incluir telefone celular se for inscricao de 
                           cooperado (Carlos)
+                          
+             27/06/2016 - Alterado o nome do relatorio de Pre-Inscritos para Inscrições e 
+                          inclusao da opcao faltantes.
+                          PRJ229 - Melhorias OQS(Odirlei-AMcom)
+             
+             05/06/2017 - Alterado as colunas de exibiçao conforme tipo de evento,
+                          Prj. 322 (Jean Michel).             
+                          
  ****************************************************************************/
  
  create widget-pool.
@@ -50,6 +59,7 @@ DEFINE VARIABLE dtAnoAge                     AS INTEGER.
 DEFINE VARIABLE cdEvento                     AS INTEGER.
 DEFINE VARIABLE nrSeqEve                     AS INTEGER.
 DEFINE VARIABLE tipoDeRelatorio              AS INTEGER.
+DEFINE VARIABLE aux_tptitrel                 AS CHARACTER. 
 DEFINE VARIABLE nomeDoRelatorio              AS CHARACTER.
 DEFINE VARIABLE nmresage                     AS CHARACTER.
 DEFINE VARIABLE dtinieve                     AS CHARACTER  FORMAT "x(10)".
@@ -105,27 +115,33 @@ FUNCTION Relatorio RETURNS LOGICAL ():
     ASSIGN primeiroRegistro = TRUE
            aux_cor          = ""
            aux_contador     = 4. /* 4, por causa do cabeçalho */
-
-    FOR EACH crapidp WHERE crapidp.idevento = crapadp.idevento        AND
+   FOR EACH crapidp WHERE crapidp.idevento = crapadp.idevento        AND
                            crapidp.cdcooper = crapadp.cdcooper        AND
                           (crapidp.cdageins = cdagenci                OR
                            cdagenci         = 0) /*Assembleia*/       AND
                            crapidp.dtanoage = crapadp.dtanoage        AND
                            crapidp.nrseqeve = crapadp.nrseqdig        AND 
                           (crapidp.idstains = tipoDeRelatorio         OR
-                          (tipoDeRelatorio  = 6                       AND
+                          ((tipoDeRelatorio = 6 OR tipoDeRelatorio = 7 )AND
                            crapidp.idstains = 2)                      OR
                            tipoDeRelatorio  = 0) /*TODOS*/            AND
                           (crapidp.flginsin = flginter                OR
                            flginter         = FALSE) /*INTERNET*/     NO-LOCK
-                           BY crapidp.nrdconta BY crapidp.nminseve:
+                           BY crapidp.nminseve BY crapidp.nrdconta :
 
         IF  tipoDeRelatorio   = 6 AND 
             crapidp.qtfaleve  > 0 AND 
             crapadp.idstaeve <> 2 AND
           ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque) THEN
             NEXT.
-                                                                                                           
+            
+        /* Regra faltantes é inversa a de participantes*/    
+        IF  tipoDeRelatorio   = 7 AND 
+            NOT (crapidp.qtfaleve  > 0 AND 
+                 crapadp.idstaeve <> 2 AND
+               ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque)) THEN
+            NEXT.                                                                                                   
+        
         IF   primeiroRegistro   THEN
         DO:
             ASSIGN primeiroRegistro = FALSE.
@@ -133,13 +149,19 @@ FUNCTION Relatorio RETURNS LOGICAL ():
             {&out}  '<table class="tab2" border="1" width="100%">' SKIP
                     '  <tr bgColor="#DBDBDB">' SKIP
                     '    <td>Nome</td>' SKIP
-                    '    <td>Conta</td>' SKIP
-                    '    <td style="width:77px;padding-left:2px">Telefone</td>' SKIP
-                    '    <td style="width:77px;padding-left:2px">Celular</td>' SKIP
-                    IF tipoDeRelatorio <> 6 THEN '    <td>E-mail</td>' ELSE '' SKIP
-                    '    <td align="center">Vínc./Inscr.</td>' SKIP
+                    '    <td>Conta</td>' SKIP.
+                    IF crapadp.idevento = 1 THEN
+                      DO:
+                        {&out}  '    <td style="width:77px;padding-left:2px">Telefone</td>' SKIP
+                        '    <td style="width:77px;padding-left:2px">Celular</td>' SKIP
+                        IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
+                      END.
+                    Else
+                      {&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+                      
+            {&out}  '    <td align="center">Vínc./Inscr.</td>' SKIP
                     '    <td>Observação</td>' SKIP
-                    IF tipoDeRelatorio <> 6 THEN '    <td>Uso manual</td>' ELSE '' SKIP
+                    IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>Uso manual</td>' ELSE '' SKIP
                     '  </tr>' SKIP.                        
         END.             
 
@@ -152,30 +174,45 @@ FUNCTION Relatorio RETURNS LOGICAL ():
 
         {&out} '  <tr bgColor=' aux_cor ' height="42">' SKIP
                '    <td width="260">' crapidp.nminseve '</td>' SKIP
-               '    <td class="tab2" align="right" width="60">' IF crapidp.nrdconta <> 0 THEN STRING(crapidp.nrdconta,"zzzz,zzz,9") ELSE '&nbsp;' '</td>' SKIP
-               '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
-               '    <td class="tab2" align="left" >'.
-        
-        /* Incluir telefone celular se for inscricao de cooperado */
-        IF  crapidp.nrdconta <> 0 THEN 
+               '    <td class="tab2" align="right" width="60">' IF crapidp.nrdconta <> 0 THEN STRING(crapidp.nrdconta,"zzzz,zzz,9") ELSE '&nbsp;' '</td>' SKIP.
+       
+       IF crapadp.idevento = 1 THEN
         DO:
-            FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
-                                     craptfc.nrdconta = crapidp.nrdconta AND
-                                     craptfc.idseqttl = crapidp.idseqttl AND
-                                     craptfc.tptelefo = 2
-                                     NO-LOCK NO-ERROR.
-            IF AVAIL craptfc THEN
-            {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
-        END.
+          {&out} '    <td class="tab2" align="left" >(' crapidp.nrdddins ') ' crapidp.nrtelins '</td>' SKIP
+                 '    <td class="tab2" align="left" >'.
+        
+          /* Incluir telefone celular se for inscricao de cooperado */
+          IF  crapidp.nrdconta <> 0 THEN 
+            DO:
+                FIND FIRST craptfc WHERE craptfc.cdcooper = crapidp.cdcooper AND
+                                         craptfc.nrdconta = crapidp.nrdconta AND
+                                         craptfc.idseqttl = crapidp.idseqttl AND
+                                         craptfc.tptelefo = 2
+                                         NO-LOCK NO-ERROR.
+                
+                IF AVAIL craptfc THEN
+                {&out} '(' craptfc.nrdddtfc ') ' craptfc.nrtelefo.
+            END.
 
-        {&out} '</td>' SKIP
-               IF tipoDeRelatorio <> 6 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP
+          {&out} '</td>' SKIP
+          IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="160">' + crapidp.dsdemail + '</td>' ELSE '' SKIP.
+        END.
+        Else
+          DO:
+            FIND FIRST crapage WHERE crapage.cdcooper = crapidp.cdcooper
+                                 AND crapage.cdagenci = crapidp.cdageins NO-LOCK NO-ERROR NO-WAIT.
+            IF AVAILABLE crapage THEN                     
+              {&out} '<td class="tab2" width="160">' + crapage.nmresage + '</td>' SKIP.
+            ELSE
+              {&out} '<td class="tab2" width="160">SEM PA</td>' SKIP.
+          END.
+         {&out}       
                '    <td class="tab2" align="center" width="70">' 
                       IF crapidp.tpinseve = 1 THEN 'PRÓPRIA' ELSE ENTRY(LOOKUP(STRING(crapidp.cdgraupr), crabtab.dstextab) - 1, crabtab.dstextab) 
                       IF tipoDeRelatorio = 0 THEN '<br>(' + ENTRY(crapidp.idstains * 2 - 1,craptab.dstextab) + ')' ELSE '' 
                '    </td>' SKIP
-               '    <td class="tab2">' IF tipoDeRelatorio <> 6 THEN crapidp.dsobsins ELSE '&nbsp;' '</td>' SKIP
-               IF tipoDeRelatorio <> 6 THEN '    <td class="tab2" width="150">_________________________<br>_________________________<br>_________________________</td>' ELSE '' SKIP
+               '    <td class="tab2">' IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN crapidp.dsobsins ELSE '&nbsp;' '</td>' SKIP
+               IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td class="tab2" width="150">_________________________<br>_________________________<br>_________________________</td>' ELSE '' SKIP
                '  </tr>' SKIP.
 
         /* Faz a quebra de página */
@@ -186,14 +223,21 @@ FUNCTION Relatorio RETURNS LOGICAL ():
                    '<table class="tab2" border="1" width="100%">' SKIP
                    '  <tr bgColor="#DBDBDB">' SKIP
                    '    <td>Nome</td>' SKIP
-                   '    <td>Conta</td>' SKIP
-                   '    <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
-                   '    <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP
-                   IF tipoDeRelatorio <> 6 THEN '    <td>E-mail</td>' ELSE '' SKIP
-                   '    <td align="center">Vínc./Inscr.</td>' SKIP
-                   '    <td>Observação</td>' SKIP
-                   IF tipoDeRelatorio <> 6 THEN '    <td>Uso manual</td>' ELSE '' SKIP
-                   '  </tr>' SKIP.
+                   '    <td>Conta</td>' SKIP.
+				   
+				   IF crapadp.idevento = 1 THEN
+				     DO:
+							{&out}  ' <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
+                      ' <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP
+								  	 IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
+				     END.
+				   ELSE
+						{&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+
+					{&out} '    <td align="center">Vínc./Inscr.</td>' SKIP
+						   '    <td>Observação</td>' SKIP
+						   IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>Uso manual</td>' ELSE '' SKIP
+						   '  </tr>' SKIP.
 
             aux_contador = 0.
         END.
@@ -201,9 +245,14 @@ FUNCTION Relatorio RETURNS LOGICAL ():
            
     IF   primeiroRegistro   THEN
     DO:
-        msgsDeErro = "Não há registros de" + 
-        (IF tipoDeRelatorio = 6 THEN " participantes " ELSE " inscritos ") + 
-                                            "para o filtro informado.".
+       IF tipoDeRelatorio = 6 THEN 
+          aux_tptitrel = "participantes".
+       ELSE IF tipoDeRelatorio = 7 THEN    
+          aux_tptitrel = "faltantes".
+       ELSE 
+          aux_tptitrel = "inscritos".
+    
+        msgsDeErro = "Não há registros de " + aux_tptitrel + " para o filtro informado.".
 
         RETURN FALSE.
     END.
@@ -213,9 +262,16 @@ END.
 
 FUNCTION montaTela RETURNS LOGICAL ():
 
+    IF tipoDeRelatorio = 6 THEN 
+        aux_tptitrel = "Participantes".
+    ELSE IF tipoDeRelatorio = 7 THEN    
+        aux_tptitrel = "Faltantes".
+    ELSE 
+        aux_tptitrel = "Inscrições".
+        
     {&out} '<html>' SKIP
            '<head>' SKIP
-           '<title>Progrid - ' IF tipoDeRelatorio = 6 THEN 'Participantes' ELSE 'Pré-Inscritos' '</title>' SKIP.
+           '<title>Progrid - ' aux_tptitrel '</title>' SKIP.
 
     {&out} '<style>' SKIP
            '   body         ~{ background-color: #FFFFFF; }' SKIP
@@ -256,7 +312,7 @@ FUNCTION montaTela RETURNS LOGICAL ():
     {&out} '   <table border="0" cellspacing="0" cellpadding="0" width="100%" class="tab1">' SKIP
            '      <tr>' SKIP
            '         <td align="center"><img src="' imagemDoProgrid '" border="0"></td>' SKIP
-           '         <td class="tdTitulo1" colspan="4" align="center">' nomeDaCooperativa ' - ' IF tipoDeRelatorio =  6 THEN 'Participantes - ' ELSE 'Pré-Inscritos - ' dtAnoAge '</td>' SKIP
+           '         <td class="tdTitulo1" colspan="4" align="center">' nomeDaCooperativa ' - ' aux_tptitrel ' - ' dtAnoAge '</td>' SKIP
            '         <td align="center"><img src="' imagemDaCooperativa '" border="0"></td>' SKIP
            '      </tr>' SKIP
            '      <tr>' SKIP 
@@ -270,7 +326,10 @@ FUNCTION montaTela RETURNS LOGICAL ():
            '      </tr>' SKIP
            '      <tr>' SKIP
            '         <td align="left" class="tdTitulo2" colspan="4">&nbsp;&nbsp;PA: ' nmresage '</td>' SKIP
-           '         <td align="right" class="tdTitulo2" colspan="2">STATUS: ' IF tipoDeRelatorio = 0 THEN "TODOS" ELSE IF tipoDeRelatorio = 6 THEN "Participantes" ELSE ENTRY(tipoDeRelatorio * 2 - 1,craptab.dstextab) '&nbsp;&nbsp;</td>' SKIP
+           '         <td align="right" class="tdTitulo2" colspan="2">STATUS: ' IF tipoDeRelatorio = 0 THEN "TODOS" 
+                                                                               ELSE IF tipoDeRelatorio = 6 THEN "Participantes" 
+                                                                               ELSE IF tipoDeRelatorio = 7 THEN "Faltantes" 
+                                                                               ELSE ENTRY(tipoDeRelatorio * 2 - 1,craptab.dstextab) '&nbsp;&nbsp;</td>' SKIP
            '      </tr>' SKIP.
 
     IF   flginter   THEN
@@ -282,8 +341,7 @@ FUNCTION montaTela RETURNS LOGICAL ():
     {&OUT} '   </table>' SKIP
            '   <br>' SKIP.
 
-    IF   tipoDeRelatorio >= 0   AND
-         tipoDeRelatorio <= 6   THEN
+    IF   tipoDeRelatorio >= 0   AND  tipoDeRelatorio <= 7   THEN
          Relatorio().
     ELSE
          msgsDeErro = msgsDeErro + "-> Tipo de relatório ainda não implementado.<br>".
