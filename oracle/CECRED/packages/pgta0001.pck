@@ -577,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 10/10/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 27/10/2017
 --
 -- Dados referentes ao programa:
 --
@@ -608,8 +608,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             12/09/2017 - Ajuste contigencia NPC. PRJ340 (Odirlei-AMcom)   
 --
+--             03/10/2017 - #766774 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
+--                          para proc_message (Carlos)
+--
 --             10/10/2017 - Ajuste na geração da linha do SEGMENTO J99 para gerar com 
 --                          240 posições (Douglas - Chamado 751271)
+--
+--             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
+--                          para proc_message (Carlos)
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -5636,7 +5642,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       WHEN vr_exc_erro THEN
         pr_cdcritic := 0;
         pr_dscritic := vr_dscritic;
-      
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_dscritic := 'Erro PGTA0001.pc_gerar_arq_log_pgto: ' || SQLERRM;
@@ -6330,7 +6335,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         -- Atualiza campo de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
-
       WHEN vr_exc_critico THEN
         -- Atualiza campo de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
