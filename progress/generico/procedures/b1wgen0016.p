@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 26/09/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 24/11/2017
     
     Dados referentes ao programa:
 
@@ -515,6 +515,10 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 
               26/09/2017 - Alterar as rotinas verifica_convenio e paga_convenio para que chamem as 
                            respectivas rotinas convertidas em Oracle (Lucas Ranghetti #759781)
+                           
+              24/11/2017 - Forcar que o tipo de operacao seja 2 na chamada da pc_verifica_operacao_prog
+                           quando for aprovar transacao pendente de GPS (David).
+                           
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -7079,7 +7083,7 @@ PROCEDURE aprova_trans_pend:
                               ,INPUT  0 /* par_nrctatrf */
                               ,INPUT  0 /* par_cdtiptra */
                               ,INPUT  par_cdoperad /* par_cdoperad */
-                              ,INPUT  IF tt-tbpagto_trans_pend.vlpagamento >= 250000 THEN 
+                              ,INPUT  IF tt-tbpagto_trans_pend.vlpagamento >= 250000 AND tt-tbpagto_trans_pend.tppagamento <> 3 THEN 
                                         6  /* VR-Boleto */
                                       ELSE
                                         2  /* PAGAMENTO     */ /* par_tpoperac */
