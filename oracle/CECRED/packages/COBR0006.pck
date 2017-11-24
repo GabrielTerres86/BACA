@@ -9971,7 +9971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                             
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_1');
     
     pr_des_reto := 'OK';
     
@@ -10003,7 +10003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_2');
       
     WHEN vr_exc_erro THEN
       
@@ -10034,7 +10034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_3');
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -10059,7 +10059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_4');
       
   END pc_intarq_remes_cnab240_001;
   
@@ -10970,7 +10970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                         
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_5');
     
     pr_des_reto := 'OK';
     
@@ -11002,7 +11002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_6');
       
     WHEN vr_exc_erro THEN
       
@@ -11033,7 +11033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_7');
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -11058,7 +11058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_8');
   END pc_intarq_remes_cnab240_085;
   
   --> Integrar/processar arquivo de remessa CNAB400
@@ -11880,7 +11880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF; 
                         
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_9');
     
     pr_des_reto := 'OK';
     
@@ -11912,7 +11912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_10');
       
     WHEN vr_exc_erro THEN
       
@@ -11943,7 +11943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_11');
       
     WHEN OTHERS THEN
     
@@ -11969,7 +11969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_12');
       
   END pc_intarq_remes_cnab400_085;
   

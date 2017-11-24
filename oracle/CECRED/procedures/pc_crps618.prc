@@ -107,10 +107,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              quanto pela carga on-line. Incluída verificação do IDTITLEG para
                              evitar envio de título já registrado. (SD#777146 - AJFink)
 
+                09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                             (SD#791193 - AJFink)
+
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
-  vr_dsarqlog     CONSTANT VARCHAR2(12) := 'crps618.log'; -- Nome do arquivo de log
   vr_vllimcab     CONSTANT NUMBER       := 99999999.99;    -- Define o valor limite da cabine
   vr_cdoperad     CONSTANT VARCHAR2(10) := '1';           -- Código do operador - verificar se será fixo ou parametro
 
@@ -306,7 +308,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
   vr_tb_remessa_dda     DDDA0001.typ_tab_remessa_dda;
   vr_tb_retorno_dda     DDDA0001.typ_tab_retorno_dda;
   
-  vr_inauxtab           NUMBER;
   vr_tppessoa           VARCHAR2(1);
   vr_flgsacad           NUMBER;
   vr_flgrollout         INTEGER;
@@ -318,8 +319,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
   vr_tpdenvio           INTEGER;
   vr_flgerlog           BOOLEAN;
   vr_cdcooper           crapcop.cdcooper%TYPE;
-  vr_idx_lat            VARCHAR2(60);
-  vr_tab_lat_consolidada PAGA0001.typ_tab_lat_consolidada;
   
   -- EXCEPTIONS
   vr_exc_saida          EXCEPTION;     
@@ -832,6 +831,7 @@ BEGIN
     --> Gravar dados a cada cooperativa (batch)
     IF nvl(pr_nrdconta,0) = 0 THEN
       COMMIT;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_1');
     END IF;
     
   END LOOP; -- Fim loop cooperativas    
@@ -862,6 +862,7 @@ EXCEPTION
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_2');
     END IF;
     
   WHEN OTHERS THEN
@@ -882,6 +883,7 @@ EXCEPTION
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_3');
     END IF;
 END pc_crps618;
 /

@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
       Objetivo  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos 
   ---------------------------------------------------------------------------------------------------------------*/
               
+  --> Procedure para liberar sessoes apos fim do processamento
+  procedure pc_libera_sessao_sqlserver_npc(pr_cdprogra_org in varchar2 default 'vazio');
+
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_consultar_valor_titulo(pr_cdcooper       IN NUMBER       -- Cooperativa
                                      ,pr_nrdconta       IN NUMBER       -- Número da conta
@@ -102,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 17/07/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 09/11/2017
 
       Dados referentes ao programa:
 
@@ -112,11 +115,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Alteracoes: 17/07/2017 - Ajustes na pc_consultar_valor_titulo para retornar o nome do beneficiario
                                sem caracteres especiais que geram erro no xml(Odirlei-AMcom)
 
+                  09/11/2017 - Inclusão de chamada da procedure pc_libera_sessao_sqlserver_npc.
+                               (SD#791193 - AJFink)
+
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
   --> Declaração geral de exception
   vr_exc_erro        EXCEPTION;
                          
+  procedure pc_libera_sessao_sqlserver_npc(pr_cdprogra_org in varchar2 default 'vazio') is
+    /******************************************************************************
+      Programa: pc_libera_sessao_sqlserver_npc
+      Sistema : Cobranca - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : AJFink SD#791193
+      Data    : Novembro/2017.                     Ultima atualizacao: --/--/----
+      Objetivo: Libera a sessao aberta no SQLSERVER. Implementada devido ao comando
+                select da funcao fn_datamov manter a sessao presa apos o fim
+                do processamento. Deve ser incluída após um commit/rollback.
+                Chamada na cobr0006, npcb0002 e pc_crps618.
+
+      Alteracoes: 
+
+    ******************************************************************************/
+    --
+  begin
+    --
+    execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
+    --
+  exception
+    when others then
+      begin
+        npcb0001.pc_gera_log_npc( pr_cdcooper => 3,
+                                  pr_nmrotina => 'npcb0002.plssn('||pr_cdprogra_org||')',
+                                  pr_dsdolog  => sqlerrm);
+      exception
+        when others then
+          null;
+      end; 
+  end pc_libera_sessao_sqlserver_npc;
+
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_consultar_valor_titulo(pr_cdcooper       IN NUMBER       -- Cooperativa
                                      ,pr_nrdconta       IN NUMBER       -- Número da conta
@@ -631,18 +669,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
          AND t.cdagenci = pr_cdagenci 
          AND t.cdcooper = pr_cdcooper;
     
-    -- Buscar a cidade do cooperado
-    CURSOR cr_crapenc IS 
-      SELECT c.cdcidade
-        FROM crapcaf c
-           , crapenc t
-       WHERE TRIM(c.nmcidade) = TRIM(t.nmcidade)
-         AND t.nmcidade IS NOT NULL
-         AND t.tpendass IN (9,10) -- Comercial / Residencial
-         AND t.nrdconta = pr_nrdconta
-         AND t.cdcooper = pr_cdcooper
-       ORDER BY t.tpendass DESC;
-    
     --> Buscar codigo do municipio
     CURSOR cr_crapcop IS 
       SELECT a.cdcidade
@@ -1134,15 +1160,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     
     
     vr_jobname := 'JB618_'||pr_nrdconta||'$';
-    vr_dsplsql := 'DECLARE
-                     vr_cdcritic integer; 
-                     vr_dscritic varchar2(400);
-                   BEGIN
-                   pc_crps618(pr_cdcooper   => '||pr_cdcooper||
-                             ',pr_nrdconta  => '||pr_nrdconta||
-                             ',pr_cdcritic  => vr_cdcritic '||
-                             ',pr_dscritic  => vr_dscritic );
-                   end;';
+    vr_dsplsql := 
+'declare
+  vr_cdcritic integer; 
+  vr_dscritic varchar2(400);
+begin
+  pc_crps618(pr_cdcooper   => '||pr_cdcooper||
+           ',pr_nrdconta  => '||pr_nrdconta||
+           ',pr_cdcritic  => vr_cdcritic '||
+           ',pr_dscritic  => vr_dscritic );
+  commit;
+  npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => ''NPCB0002_JB618'');
+exception
+  when others then
+    rollback;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => ''NPCB0002_JB618'');
+    raise;
+end;';
     
     gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper, 
                            pr_cdprogra => 'NPCB0002', 
@@ -1225,7 +1259,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_vlrjuros        NUMBER;
     vr_vlrmulta        NUMBER;
     vr_vlrdescto       NUMBER;
-    vr_vlrabatim       NUMBER;     
     vr_fltitven        NUMBER;
     vr_cdctrlcs        VARCHAR2(50);   
     vr_flblq_valor     NUMBER;
@@ -1233,8 +1266,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_nridetit        NUMBER;
     vr_tpdbaixa        INTEGER;
     vr_cdsittit        INTEGER;
-    
-        
     
   BEGIN   
    
