@@ -35,6 +35,7 @@
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
  * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 022:	[14/11/2017] Mateus Z    (MOUTS) : Adicionado a coluna Operador na tabela Ultimas Alterações. Chamado 791852.
  */
  
 var callafterLimiteCred = '';
@@ -669,7 +670,7 @@ function formataUltimasAlteracoes() {
     var tabela = $('table', divRegistro);
     var linha = $('table > tbody > tr', divRegistro);
 			
-    divRegistro.css({ 'height': '200px', 'width': '100%' });
+    divRegistro.css({ 'height': '200px', 'width': '600px' });
 	
 	var ordemInicial = new Array();
     ordemInicial = [[1, 1]];
@@ -678,8 +679,9 @@ function formataUltimasAlteracoes() {
 	arrayLargura[0] = '60px';
 	arrayLargura[1] = '60px';
 	arrayLargura[2] = '60px';
-	arrayLargura[3] = '75px';
+	arrayLargura[3] = '60px';
 	arrayLargura[4] = '75px';
+	arrayLargura[5] = '75px';
 	
 		
 	var arrayAlinha = new Array();
@@ -689,6 +691,7 @@ function formataUltimasAlteracoes() {
 	arrayAlinha[3] = 'right';
 	arrayAlinha[4] = 'left';
 	arrayAlinha[5] = 'left';
+	arrayAlinha[6] = 'left';
 	
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 	return false;
