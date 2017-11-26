@@ -196,10 +196,6 @@
 			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
 							(Jonata RKAM M311)
 
-              11/07/2017 - Ajustes historico 354
-                           (Demetrius Wolff MOUTS - Prj 364)
-
-
 ............................................................................. */
 
 { includes/var_online.i }
@@ -462,8 +458,8 @@ DO WHILE TRUE:
             craplcm.cdhistor = 931   THEN  /* credito cotas proc */
             DO:
                 IF   craplcm.cdhistor = 354   THEN
-                     ASSIGN his_cdhistor = 2136
-                            his_nrdolote = 600038.
+                     ASSIGN his_cdhistor = 81
+                            his_nrdolote = 10002.
                 ELSE
                 IF   craplcm.cdhistor = 451   THEN
                      ASSIGN his_cdhistor = 402
@@ -597,50 +593,6 @@ DO WHILE TRUE:
                      craplcm.cdhistor = 451   OR
                      craplcm.cdhistor = 127   THEN
                      DO:   
-						IF craplcm.cdhistor = 354  THEN  
-						    DO: 
-								FIND crablcm WHERE
-									 crablcm.cdcooper = glb_cdcooper            AND
-									 crablcm.dtmvtolt = glb_dtmvtolt            AND
-									 crablcm.cdagenci = 1                       AND
-									 crablcm.cdbccxlt = 100                     AND
-									 crablcm.nrdolote = his_nrdolote            AND
-									 crablcm.nrdctabb = INT(craplcm.cdpesqbb)   AND
-									 crablcm.nrdocmto = craplcm.nrdocmto  
-									 USE-INDEX craplcm1 EXCLUSIVE-LOCK NO-ERROR.
-
-								IF   NOT AVAILABLE crablcm   THEN
-									 DO:
-										 glb_cdcritic = 81.
-										 par_situacao = FALSE.
-										 LEAVE.
-									 END.
-
-								UNIX SILENT VALUE("echo " + 
-												  STRING(glb_dtmvtolt, "99/99/9999") +
-												  " - "   +
-												  STRING(TIME,"HH:MM:SS") +
-												  " - EXCLUSAO TRF. VAL." + "' --> '" +
-												  " Operador: " + glb_cdoperad +
-												  " Hst: " +
-												  STRING(craplcm.cdhistor,"zzz9") +
-												  " De: " + 
-												  STRING(craplcm.nrdconta,
-														 "zzzz,zzz,9") +
-												  " Para: " + 
-												  STRING(crablcm.nrdconta,
-														 "zzzz,zzz,9") +
-												  " Docmto: " + 
-												  STRING(craplcm.nrdocmto,
-														 "zzz,zzz,zz9") +
-												  " Valor: " + 
-												  STRING(craplcm.vllanmto,
-														 "zzz,zzz,zzz,zz9.99") +
-												  " >> log/landpv.log").
-
-								DELETE crablcm.
-						    END.
-
                          FIND  craplct WHERE
                                craplct.cdcooper =glb_cdcooper      AND
                                craplct.dtmvtolt = glb_dtmvtolt     AND
@@ -679,8 +631,7 @@ DO WHILE TRUE:
                                                          craplcm.vllanmto.
  
                          DELETE craplct. 
-					
-                     END. /*DO FIM  */
+                     END.
                 ELSE 
                     IF  craplcm.cdhistor = 931 THEN 
                         DO: 
