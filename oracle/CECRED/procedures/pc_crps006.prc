@@ -508,7 +508,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
         FROM DUAL
         UNION
         SELECT pr_dtmvtolt          
-              ,1                    
+              ,NULL                    
               ,100                  
               ,600041               
               ,0

@@ -12,6 +12,8 @@
 				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
 
 				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   							   
+				  
+				  21/11/2017 - Bloquear botões quando vindo da tela de impedimentos (Jonata - RKAM P364).						   							   
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -69,13 +71,13 @@
                         <input type="hidden" id="dsgraupr_3" name="dsgraupr_3" value="<?php echo getByTagName($seguro->tags,'dsgraupr_3'); ?>" />
                         <input type="hidden" id="dsgraupr_4" name="dsgraupr_4" value="<?php echo getByTagName($seguro->tags,'dsgraupr_4'); ?>" />
                         <input type="hidden" id="dsgraupr_5" name="dsgraupr_5" value="<?php echo getByTagName($seguro->tags,'dsgraupr_5'); ?>" />
-
+						
                         <?php $txpartic1 = getByTagName($seguro->tags,'txpartic_1'); ?>
                         <?php $txpartic2 = getByTagName($seguro->tags,'txpartic_2'); ?>
                         <?php $txpartic3 = getByTagName($seguro->tags,'txpartic_3'); ?>
                         <?php $txpartic4 = getByTagName($seguro->tags,'txpartic_4'); ?>
                         <?php $txpartic5 = getByTagName($seguro->tags,'txpartic_5'); ?>
-
+						
 						<input type="hidden" id="txpartic_1" name="txpartic_1" value="<?php echo $txpartic1; ?>" />						
 						<input type="hidden" id="txpartic_2" name="txpartic_2" value="<?php echo $txpartic2; ?>" />
 						<input type="hidden" id="txpartic_3" name="txpartic_3" value="<?php echo $txpartic3; ?>" />
@@ -95,10 +97,21 @@
 </div>
 
 <div id="divBotoes">
+
+	<?php if (!$executandoImpedimentos){?>
+
 	<input type="image" id="btIncluir"   src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'I\');"'; } ?> />
 	<input type="image" id="btAlterar"   src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'ALTERAR\');"'; } ?>  />
 	<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
     <input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
 	<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 	<input type="image" id="btImprimir"  src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'IMP\');"'; } ?>  />
+	
+	<?}else{?>
+		
+		<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
+		<input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+		
+	<?}?>
 </div>

@@ -346,11 +346,31 @@ PROCEDURE busca_inf_produtos:
 	/* Projeto 364 - Andrey - FIM */
     
     /* Verificar se conta possui seguro */
-    FOR FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper
-                        AND crapseg.nrdconta = par_nrdconta
-                        AND crapseg.dtinsexc = ? NO-LOCK:
+    FOR EACH crapseg WHERE crapseg.cdcooper = par_cdcooper
+                       AND crapseg.nrdconta = par_nrdconta
+                       AND crapseg.dtinsexc = ? NO-LOCK:
+
         ASSIGN tt-inf-produto.flseguro = 1.
-    END.                            
+
+		IF crapseg.tpseguro = 2 THEN
+		  ASSIGN tt-inf-produto.flsegauto = 1.
+
+    END.     
+
+	/*Seguro de vida previsul */
+	FOR EACH craphis FIELDS(cdhistor)
+	                 WHERE craphis.cdcooper = par_cdcooper
+	                   AND craphis.dsexthst matches '*PREVISUL*'
+					       NO-LOCK,
+						    		
+		FIRST craplcm WHERE craplcm.cdcooper = par_cdcooper
+						AND craplcm.nrdconta = par_nrdconta
+						AND craplcm.cdhistor = craphis.cdhistor NO-LOCK:
+
+			ASSIGN tt-inf-produto.flsegvida = 1.
+
+			LEAVE.
+    END.	                       
         
     /* Verificar se conta possui consorcio ativo */
     FOR FIRST crapcns WHERE crapcns.cdcooper = par_cdcooper 
