@@ -1,4 +1,4 @@
-<?php
+<? 
 /*!
 * FONTE        : formulario_conta_corrente.php
 * CRIAÇÃO      : Rodolpho Telmo (DB1)
@@ -31,7 +31,10 @@
 *
 *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
 *
-*				 19/07/2016 - Correcao do erro no campo conta consorcio. SD 479874. (Carlos R.)
+*                19/07/2016 - Correcao do erro no campo conta consorcio. SD 479874. (Carlos R.)
+*
+*
+*			     15/07/2016 - Incluir flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
 */	
 
 //recupera tag com a conta consorcio
@@ -138,6 +141,13 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
             <label for="indsermaOp1" class="radio">Sim</label>		
 		<input name="indserma" id="indsermaOp2" type="radio" class="radio" value="no" <?php if (getByTagName($registro,'indserma') == 'no') { echo ' checked'; } ?> />
 		<label for="indsermaOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
+		
+		<label for="flgdevolu_autom"><? echo utf8ToHtml('Dev. Aut. Cheques:') ?></label>
+            <input name="flgdevolu_autom" id="flgdevolu_automOp1" type="radio" class="radio" value="1" <? if ($flgdevolu_autom == 1) { echo ' checked'; } ?> />
+            <label for="flgdevolu_automOp1" class="radio">Sim</label>		
+		<input name="flgdevolu_autom" id="flgdevolu_automOp2" type="radio" class="radio" value="0" <?php if ($flgdevolu_autom == 0) { echo ' checked'; } ?> />
+		<label for="flgdevolu_automOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
+		
 		<br />
 		<?php if(getByTagName($registro,'inpessoa') > 1){ ?>
 			<label class="rotulo" for="idastcjt"><?php echo utf8ToHtml('Exige Assinatura Conjunta em Autoatendimento:') ?></label>

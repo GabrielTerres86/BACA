@@ -6,14 +6,17 @@
  * OBJETIVO     : Capturar dados para tela MATRIC
  * --------------
  * ALTERAÇÕES   :
- * 001: [14/02/2011] David   (CECRED): Não acionar BO quando operação for limpeza da tela ($operacao = '')
- * 002: [09/06/2012] Adriano (CECRED): Ajustes referente ao projeto GP - Sócios Menores
- * 003: [28/01/2015] Carlos  (CECRED): #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
- * 004: [09/07/2015] Gabriel (RKAM)  : Projeto Reformulacao Cadastral.
- * 005: [01/10/2015] Kelvin  (CECRED): Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido 
- *									   a possibilidade de alteração pela opção "X", conforme solicitado no 
- *							           chamado 321572.
- * 006: [27/07/2016] Carlos R.(CECRED):Corrigi a forma de utilizacao de indices de informacoes do XML. SD 479874
+ * 001: [14/02/2011] David   (CECRED) : Não acionar BO quando operação for limpeza da tela ($operacao = '')
+ * 002: [09/06/2012] Adriano (CECRED) : Ajustes referente ao projeto GP - Sócios Menores
+ * 003: [28/01/2015] Carlos  (CECRED) : #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
+ * 004: [09/07/2015] Gabriel (RKAM)   : Projeto Reformulacao Cadastral.
+ * 005: [01/10/2015] Kelvin  (CECRED) : Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido 
+ *									    a possibilidade de alteração pela opção "X", conforme solicitado no 
+ *							            chamado 321572.
+ * 006: [27/07/2016] Carlos R.(CECRED): Corrigi a forma de utilizacao de indices de informacoes do XML. SD 479874
+ * 007: [05/12/2016] Renato D.(Supero): P341-Automatização BACENJUD - Removido passagem do departamento 
+ *                                      como parametros pois a BO não utiliza o mesmo.
+ * 008: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */ 
 
 	session_start();	
@@ -50,9 +53,9 @@
 		case 'CR': $cddopcao = 'R'; break;
 		case 'CX': $cddopcao = 'X'; break;
 		case 'CJ': $cddopcao = 'J'; break;
-		default  : $cddopcao = 'C'; break;	
+		default  : $cddopcao = 'C'; break;
 	}
-	
+
 	// Se conta informada não for um número inteiro válido
 	if (!validaInteiro($nrdconta) && $operacao != 'CI') exibirErro('error','Conta/dv inválida.','Alerta - Matric','',false);
 	
@@ -71,7 +74,6 @@
 		$xmlMatric .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xmlMatric .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 		$xmlMatric .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-		$xmlMatric .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 		$xmlMatric .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xmlMatric .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 		$xmlMatric .= '		<idseqttl>1</idseqttl>';
@@ -141,6 +143,7 @@
 				regFilhoavt<?php echo $i; ?>['cdestcvl'] = '<?php echo getByTagName($regFilhos[$i]->tags,'cdestcvl'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsestcvl'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsestcvl'); ?>';
 				regFilhoavt<?php echo $i; ?>['nrdeanos'] = '<?php echo getByTagName($regFilhos[$i]->tags,'nrdeanos'); ?>';
+				regFilhoavt<?php echo $i; ?>['cdnacion'] = '<?php echo getByTagName($regFilhos[$i]->tags,'cdnacion'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsnacion'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsnacion'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsnatura'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsnatura'); ?>';				
 				regFilhoavt<?php echo $i; ?>['nmmaecto'] = '<?php echo getByTagName($regFilhos[$i]->tags,'nmmaecto'); ?>';
@@ -256,6 +259,7 @@
 				regResp<?php echo $i; ?>['dtnascin'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dtnascin'); ?>';				
 				regResp<?php echo $i; ?>['cddosexo'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cddosexo'); ?>';			
 				regResp<?php echo $i; ?>['cdestciv'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdestciv'); ?>';
+				regResp<?php echo $i; ?>['cdnacion'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdnacion'); ?>';
 				regResp<?php echo $i; ?>['dsnacion'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dsnacion'); ?>';
 				regResp<?php echo $i; ?>['dsnatura'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dsnatura'); ?>';
 				regResp<?php echo $i; ?>['cdcepres'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdcepres'); ?>';				

@@ -20,7 +20,8 @@
  * [30/01/2015] Andre Santos(SUPERO): Incluir o item Convenio CDC
  * [03/08/2015] Reformulacao cadastral (Gabriel-RKAM)
  * [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
-
+ * [11/07/2017] Mauro (MOUTS) Desenvolvimento da melhoria 364 - Grupo Economico
+ * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  */
  
 	session_start();
@@ -275,6 +276,10 @@
 																							<td>&nbsp;</td>
 																							<td onMouseOver="focoRotina(22,true);"  onMouseOut="focoRotina(22,false);"  width="50%" height="22" align="center" id="labelRot22" class="txtNormalBold">&nbsp;</td>
 																						</tr>
+																						<tr>
+																							<td>&nbsp;</td>
+																							<td onMouseOver="focoRotina(23,true);"  onMouseOut="focoRotina(23,false);"  width="50%" height="22" align="center" id="labelRot23" class="txtNormalBold">&nbsp;</td>
+																						</tr>
 																					</table>																
 																				</td>
 																			</tr>																			
@@ -306,7 +311,7 @@
 	var nmrotina = '<? echo $_POST['nmrotina']; ?>';
 	var nrdconta = '<? echo $_POST['nrdconta']; ?>';
 	var flgcadas = '<? echo ($nmtelant == 'MATRIC') ? 'M' : 'C'; ?>';
-		
+	
 	if (nrdconta != '') {
 		 $("#nrdconta","#frmCabContas").val(nrdconta);
 		 $("#idseqttl","#frmCabContas").val(1);

@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 07/06/2016  
+	 Data : Julho/2007                   Última Alteração: 18/08/2016  
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -73,20 +73,39 @@
                               para utilização da rotina convertida para oracle
                               CADA0004.pc_carrega_dados_atenda
                               SD318820 (Odirlei/Busana)
-
+							  
                  24/11/2015 - Inclusao CDCLCNAE para o PRJ Negativacao Serasa.
                               (Jaison/Andrino)
 
-         07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+					  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+	
+				 09/08/2016 - Adicionado format na data das anotações conforme solicitado
+							  no chamado 490482. (Kelvin)
 	
          23/06/2016 - Alterado a formatação da opção SEGUROS para SIM/NÂO (Marcos-Supero)
-		 
-		 28/06/2016  - Incluido Case Cartao Assinatura - (Evandro)
+
+         28/06/2016  - Incluido Case Cartao Assinatura - (Evandro)
 
          07/07/2016 - Correcao do erro apresentado no LOG sobre a utilizacao
 			                da variavel $opeProdutos.SD 479874 (Carlos Rafael Tanholi)
+
+					  11/07/2016 - Correcao do erro de indice indefinido para FLCONVEN e DSCRITIC. SD 479874 (Carlos Rafael Tanholi)
+
+					  13/07/2016 - Correcao geral nos erros levantados no LOG do PHP .SD 479874 (Carlos Rafael Tanholi)
+
+					  14/07/2016 - Correcao na forma de recuperacao de dados do XML. SD 479874 (Carlos Rafael Tanholi)
+
+                      09/08/2016 - Adicionado format na data das anotações conforme solicitado
+							  no chamado 490482. (Kelvin)
+
+				18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
+
+                 26/04/2017 - Incluido a tag textarea para mostrar o conteudo da mensagem de alerta (Rafael Monteiro).
+				 
+				 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+
  * ********************************************************************************** */
-	
+
 	session_start();	
 	
 	// Parâmetro utilizado na monitoração de performance e disponibilidade
@@ -124,10 +143,15 @@ if (($msgError = validaPermissao($glbvars["nmdatela"], "", "@")) <> "") {
 	
 $nrdconta = $_POST["nrdconta"] == "" ? 0 : $_POST["nrdconta"];
 $nrdctitg = $_POST["nrdctitg"];
-	$flgProdutos = $_POST["flgProdutos"];
+$flgProdutos = ( isset($_POST["flgProdutos"]) ) ? $_POST["flgProdutos"]: '';
+	
 //declara variavel
 $opeProdutos = 0;
-	
+$vlemprst = 0;
+$vlempbnd = 0;
+$vlpresta = 0;
+$vlrbndes = 0;
+
 if ($nrdconta != "") {
 		$nrdctitg = "";		
 	}
@@ -181,15 +205,15 @@ if ($flgerlog) {
 		exit();	
 	}
 
-$cabecalho = $xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags;
-	$compCabecalho = $xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags;
-$valores = $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags;
-$mensagens = $xmlObjDadosAtenda->roottag->tags[3]->tags;
-$anotacoes = $xmlObjDadosAtenda->roottag->tags[4]->tags;
+$cabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags : '';
+$compCabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags : '';
+$valores = ( isset($xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags : null;
+$mensagens = ( isset($xmlObjDadosAtenda->roottag->tags[3]->tags) )  ? $xmlObjDadosAtenda->roottag->tags[3]->tags : array();
+$anotacoes = ( isset($xmlObjDadosAtenda->roottag->tags[4]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[4]->tags : array();
 	
 	// Carrega variavel para verificar se existe Pagto de Titulos por Arquivo
-    $flconven = $xmlObjDadosAtenda->roottag->tags[4]->attributes["FLCONVEN"];
-	$dscritic = $xmlObjDadosAtenda->roottag->tags[4]->attributes["DSCRITIC"];
+$flconven = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'] : null;
+$dscritic = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'] : null;
 	
 	// Adicionar quantidade de titulares
 	$html = "<input type='hidden' id='qttitula' name='qttitula'/>"; 
@@ -197,39 +221,99 @@ $anotacoes = $xmlObjDadosAtenda->roottag->tags[4]->tags;
 echo '$("#frmCabAtenda").append("' . $html . '");';
 	
 	// Dados da Conta
-echo '$("#nrmatric","#frmCabAtenda").val("' . $cabecalho[0]->cdata . '").formataDado("INTEGER","zzz.zzz","",false);';
-echo '$("#cdagenci","#frmCabAtenda").val("' . $cabecalho[1]->cdata . '");';
-echo '$("#dtadmiss","#frmCabAtenda").val("' . $cabecalho[2]->cdata . '");';
-echo '$("#nrdctitg","#frmCabAtenda").val("' . $cabecalho[3]->cdata . '").formataDado("STRING","9.999.999-9",".-",false);';
-echo '$("#nrctainv","#frmCabAtenda").val("' . $cabecalho[4]->cdata . '").formataDado("INTEGER","zz.zzz.zzz-z","",false);';
-echo '$("#dtadmemp","#frmCabAtenda").val("' . $cabecalho[5]->cdata . '");';
-echo '$("#nmprimtl","#frmCabAtenda").val("' . $cabecalho[6]->cdata . (trim($cabecalho[7]->cdata) == "" ? "" : " " . $cabecalho[7]->cdata) . '");';
-echo '$("#dtaltera","#frmCabAtenda").val("' . $cabecalho[8]->cdata . '");';
-echo '$("#dsnatopc","#frmCabAtenda").val("' . $cabecalho[9]->cdata . '");';
-echo '$("#nrramfon","#frmCabAtenda").val("' . $cabecalho[10]->cdata . '");';
-echo '$("#dtdemiss","#frmCabAtenda").val("' . $cabecalho[11]->cdata . '");';
-echo '$("#dsnatura","#frmCabAtenda").val("' . $cabecalho[12]->cdata . '");';
-echo '$("#nrcpfcgc","#frmCabAtenda").val("' . $cabecalho[13]->cdata . '");';
-echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
-echo '$("#indnivel","#frmCabAtenda").val("' . $cabecalho[15]->cdata . '");';
-echo '$("#dstipcta","#frmCabAtenda").val("' . $cabecalho[16]->cdata . '");';
-echo '$("#dssitdct","#frmCabAtenda").val("' . $cabecalho[17]->cdata . '");';
-echo '$("#cdempres","#frmCabAtenda").val("' . $cabecalho[18]->cdata . '");';
-echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
-echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
-echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';
-echo '$("#dssititg","#frmCabAtenda").val("' . $cabecalho[24]->cdata . '");';
-echo '$("#qttitula","#frmCabAtenda").val("' . $cabecalho[25]->cdata . '");';
+if ( isset($cabecalho[0]->cdata) ) {
+	echo '$("#nrmatric","#frmCabAtenda").val("' . $cabecalho[0]->cdata . '").formataDado("INTEGER","zzz.zzz","",false);';
+}
+if ( isset($cabecalho[1]->cdata) ) {
+	echo '$("#cdagenci","#frmCabAtenda").val("' . $cabecalho[1]->cdata . '");';
+}
+if ( isset($cabecalho[2]->cdata) ) {
+	echo '$("#dtadmiss","#frmCabAtenda").val("' . $cabecalho[2]->cdata . '");';
+}
+if ( isset($cabecalho[3]->cdata) ) {
+	echo '$("#nrdctitg","#frmCabAtenda").val("' . $cabecalho[3]->cdata . '").formataDado("STRING","9.999.999-9",".-",false);';
+}
+if ( isset($cabecalho[4]->cdata) ) {
+	echo '$("#nrctainv","#frmCabAtenda").val("' . $cabecalho[4]->cdata . '").formataDado("INTEGER","zz.zzz.zzz-z","",false);';
+}
+if ( isset($cabecalho[5]->cdata) ) {
+	echo '$("#dtadmemp","#frmCabAtenda").val("' . $cabecalho[5]->cdata . '");';
+}
+if ( isset($cabecalho[6]->cdata) && isset($cabecalho[7]->cdata) ) {
+	echo '$("#nmprimtl","#frmCabAtenda").val("' . $cabecalho[6]->cdata . (trim($cabecalho[7]->cdata) == "" ? "" : " " . $cabecalho[7]->cdata) . '");';
+}
+if ( isset($cabecalho[8]->cdata) ) {
+	echo '$("#dtaltera","#frmCabAtenda").val("' . $cabecalho[8]->cdata . '");';
+}
+if ( isset($cabecalho[9]->cdata) ) {
+	echo '$("#dsnatopc","#frmCabAtenda").val("' . $cabecalho[9]->cdata . '");';
+}
+if ( isset($cabecalho[10]->cdata) ) {
+	echo '$("#nrramfon","#frmCabAtenda").val("' . $cabecalho[10]->cdata . '");';
+}
+if ( isset($cabecalho[11]->cdata) ) {
+	echo '$("#dtdemiss","#frmCabAtenda").val("' . $cabecalho[11]->cdata . '");';
+}
+if ( isset($cabecalho[12]->cdata) ) {
+	echo '$("#dsnatura","#frmCabAtenda").val("' . $cabecalho[12]->cdata . '");';
+}
+if ( isset($cabecalho[13]->cdata) ) {
+	echo '$("#nrcpfcgc","#frmCabAtenda").val("' . $cabecalho[13]->cdata . '");';
+}
+if ( isset($cabecalho[14]->cdata) ) {
+	echo '$("#cdsecext","#frmCabAtenda").val("' . $cabecalho[14]->cdata . '");';
+}
+if ( isset($cabecalho[15]->cdata) ) {
+	echo '$("#indnivel","#frmCabAtenda").val("' . $cabecalho[15]->cdata . '");';
+}
+if ( isset($cabecalho[16]->cdata) ) {
+	echo '$("#dstipcta","#frmCabAtenda").val("' . $cabecalho[16]->cdata . '");';
+}
+if ( isset($cabecalho[17]->cdata) ) {
+	echo '$("#dssitdct","#frmCabAtenda").val("' . $cabecalho[17]->cdata . '");';
+}
+if ( isset($cabecalho[18]->cdata) ) {
+	echo '$("#cdempres","#frmCabAtenda").val("' . $cabecalho[18]->cdata . '");';
+}
+if ( isset($cabecalho[19]->cdata) ) {
+	echo '$("#cdturnos","#frmCabAtenda").val("' . $cabecalho[19]->cdata . '");';
+}
+if ( isset($cabecalho[20]->cdata) ) {
+	echo '$("#cdtipsfx","#frmCabAtenda").val("' . $cabecalho[20]->cdata . '");';
+}
+if ( isset($cabecalho[21]->cdata) ) {
+	echo '$("#nrdconta","#frmCabAtenda").val("' . $cabecalho[21]->cdata . '").formataDado("INTEGER","zzzz.zzz-z","",false);';
+}
+if ( isset($cabecalho[24]->cdata) ) {
+	echo '$("#dssititg","#frmCabAtenda").val("' . $cabecalho[24]->cdata . '");';
+}
+if ( isset($cabecalho[25]->cdata) ) {
+	echo '$("#qttitula","#frmCabAtenda").val("' . $cabecalho[25]->cdata . '");';
+}
 
 	
 	// Dados complementares da conta/dv	
-echo '$("#qtdevolu","#frmCabAtenda").val("' . $compCabecalho[0]->cdata . '");';
-echo '$("#qtdddeve","#frmCabAtenda").val("' . $compCabecalho[1]->cdata . '/' . $compCabecalho[2]->cdata . ' dias");';
-echo '$("#dtabtcct","#frmCabAtenda").val("' . $compCabecalho[3]->cdata . '");';
-echo '$("#ftsalari","#frmCabAtenda").val("' . trim($compCabecalho[4]->cdata) . '");';
-echo '$("#vlprepla","#frmCabAtenda").val("' . number_format(str_replace(",", ".", $compCabecalho[5]->cdata), 2, ",", ".") . '");';
-echo '$("#qttalret","#frmCabAtenda").val("' . $compCabecalho[6]->cdata . '");';
-echo '$("#hdnFlgdig","#frmCabAtenda").val("' . $compCabecalho[7]->cdata . '");';
+if ( isset($compCabecalho[0]->cdata) ) {
+	echo '$("#qtdevolu","#frmCabAtenda").val("' . $compCabecalho[0]->cdata . '");';
+}
+if ( isset($compCabecalho[1]->cdata) && isset( $compCabecalho[2]->cdata) ) {
+	echo '$("#qtdddeve","#frmCabAtenda").val("' . $compCabecalho[1]->cdata . '/' . $compCabecalho[2]->cdata . ' dias");';
+}
+if ( isset($compCabecalho[3]->cdata) ) {
+	echo '$("#dtabtcct","#frmCabAtenda").val("' . $compCabecalho[3]->cdata . '");';
+}
+if ( isset($compCabecalho[4]->cdata) ) {
+	echo '$("#ftsalari","#frmCabAtenda").val("' . trim($compCabecalho[4]->cdata) . '");';
+}
+if ( isset($compCabecalho[5]->cdata) ) {
+	echo '$("#vlprepla","#frmCabAtenda").val("' . number_format(str_replace(",", ".", $compCabecalho[5]->cdata), 2, ",", ".") . '");';
+}
+if ( isset($compCabecalho[6]->cdata) ) {
+	echo '$("#qttalret","#frmCabAtenda").val("' . $compCabecalho[6]->cdata . '");';
+}
+if ( isset($compCabecalho[7]->cdata) ) {
+	echo '$("#hdnFlgdig","#frmCabAtenda").val("' . $compCabecalho[7]->cdata . '");';
+}
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
 $xml = "";
@@ -251,13 +335,21 @@ $xml .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
 	$xmlGetBnd = getObjectXML($xmlResult);
 	
 	// soma valor do saldo de emprestimo com o valor do saldo BNDES
-$vlemprst = str_replace(",", ".", str_replace(".", "", $valores[1]->cdata));
-$vlempbnd = str_replace(",", ".", str_replace(".", "", $xmlGetBnd->roottag->tags[0]->attributes['VLSALDOD']));
+if ( isset($valores[1]->cdata) ) {
+	$vlemprst = str_replace(",", ".", str_replace(".", "", $valores[1]->cdata));
+}
+if ( isset($xmlGetBnd->roottag->tags[0]->attributes['VLSALDOD'] ) ) {
+	$vlempbnd = str_replace(",", ".", str_replace(".", "", $xmlGetBnd->roottag->tags[0]->attributes['VLSALDOD']));
+}
 	$vlemprst = $vlemprst + $vlempbnd;
 	
 	// soma valor da parcela de emprestimo com a parcela do BNDES
-$vlpresta = str_replace(",", ".", str_replace(".", "", $valores[13]->cdata));
-$vlrbndes = str_replace(",", ".", str_replace(".", "", $xmlGetBnd->roottag->tags[0]->attributes['VLPAREPR']));
+if ( isset($valores[13]->cdata) ) {
+	$vlpresta = str_replace(",", ".", str_replace(".", "", $valores[13]->cdata));
+}
+if ( isset($xmlGetBnd->roottag->tags[0]->attributes['VLPAREPR']) ) {
+	$vlrbndes = str_replace(",", ".", str_replace(".", "", $xmlGetBnd->roottag->tags[0]->attributes['VLPAREPR']));
+}
 $vlpresta = $vlpresta + $vlrbndes;
 	
 	
@@ -282,18 +374,23 @@ $xmlConsorcio .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
 	
 	$flgativo = $xmlGetConsorcio->roottag->tags[0]->attributes['FLGATIVO'];
 		
-if ($cabecalho[23]->cdata == "1") {
-	// Monta o xml de requisição
+if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
+    // Monta o xml de requisição
     $xmlFolha = "";
-	$xmlFolha .= "<Root>";	
-  $xmlFolha .= "	<Dados>";  
+    $xmlFolha .= "<Root>";
+    $xmlFolha .= "	<Dados>";
     $xmlFolha .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
-	$xmlFolha .= "	</Dados>";
-	$xmlFolha .= "</Root>";
+    $xmlFolha .= "	</Dados>";
+    $xmlFolha .= "</Root>";
+
+    // Executa script para envio do XML
+    $xmlResult = mensageria($xmlFolha, "ATENDA", "RECEBE_SALARIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+    // Cria objeto para classe de tratamento de XML
+    $xmlGetFolha = getObjectXML($xmlResult);
+    $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
+}
 		
-	// Executa script para envio do XML
-  $xmlResult = mensageria($xmlFolha, "ATENDA", "RECEBE_SALARIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");     
-    
 	// Cria objeto para classe de tratamento de XML
 	$xmlGetFolha = getObjectXML($xmlResult);
   $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
@@ -308,43 +405,43 @@ if ($cabecalho[23]->cdata == "1") {
 			case "APLICACOES": {
 				$nomeRotina = "Aplica&ccedil;&otilde;es"; 
                 $urlRotina = "aplicacoes";
-                $strValue = number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[2]->cdata) ) ? number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "CAPITAL": {
 				$nomeRotina = "Capital";
                 $urlRotina = "capital";
-                $strValue = number_format(str_replace(",", ".", $valores[0]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[0]->cdata) ) ? number_format(str_replace(",", ".", $valores[0]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "CARTAO CRED": {
 				$nomeRotina = "Cart&otilde;es de Cr&eacute;dito";  
                 $urlRotina = "cartao_credito";
-                $strValue = number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[14]->cdata) ) ? number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "CONTA INV": {
 				$nomeRotina = "Conta Investimento";  
                 $urlRotina = "conta_investimento";
-                $strValue = number_format(str_replace(",", ".", $valores[3]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[3]->cdata) ) ? number_format(str_replace(",", ".", $valores[3]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "CONVENIOS": {
 				$nomeRotina = "Conv&ecirc;nios";           
                 $urlRotina = "convenios";
-                $strValue = formataNumericos("zzz.zzz", $valores[8]->cdata, ".");
+                $strValue = ( isset($valores[8]->cdata) ) ? formataNumericos("zzz.zzz", $valores[8]->cdata, ".") : '';
 				break;
 			}
 			case "DEP. VISTA": {
 				$nomeRotina = "Dep&oacute;sitos &agrave; Vista";   
                 $urlRotina = "dep_vista";
-                $strValue = number_format(str_replace(",", ".", $valores[5]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[5]->cdata) ) ? number_format(str_replace(",", ".", $valores[5]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "DESCONTOS": {
 				$nomeRotina = "Descontos"; 
                 $urlRotina = "descontos";
-                $strValue = number_format(str_replace(",", ".", $valores[17]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[17]->cdata) ) ? number_format(str_replace(",", ".", $valores[17]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "EMPRESTIMOS": {
@@ -357,9 +454,15 @@ if ($cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Ficha Cadastral";
                 $urlRotina = "ficha_cadastral";
                 $strValue = "";
-				break;
-			}			
+                break;
+            }
      case "CARTAO ASSINATURA": {
+				$nomeRotina = "Cart&atilde;o Assinatura"; 
+				$urlRotina  = "cartao_assinaturas";
+        $strValue   = "";
+				break;
+				}
+            case "CARTAO ASSINATURA": {
 				$nomeRotina = "Cart&atilde;o Assinatura"; 
 				$urlRotina  = "cartao_assinaturas";
 				$strValue   = "";	
@@ -368,43 +471,43 @@ if ($cabecalho[23]->cdata == "1") {
 			case "FOLHAS CHEQ": {
 				$nomeRotina = "Folhas de Cheque";    
                 $urlRotina = "folhas_cheque";
-                $strValue = formataNumericos("zzz.zzz", $valores[7]->cdata, ".");
+                $strValue = ( isset($valores[7]->cdata) ) ? formataNumericos("zzz.zzz", $valores[7]->cdata, ".") : '';
 				break;
 			}
 			case "INTERNET": {
 				$nomeRotina = "Internet";            
                 $urlRotina = "internet";
-                $strValue = $valores[12]->cdata;
+                $strValue = ( isset($valores[12]->cdata) ) ? $valores[12]->cdata : '';
 				break;
 			}
 			case "LAUTOM": {
 				$nomeRotina = "Lan&ccedil;amentos Futuros"; 
                 $urlRotina = "lancamentos_futuros";
-                $strValue = number_format(str_replace(",", ".", $valores[11]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[11]->cdata) ) ? number_format(str_replace(",", ".", $valores[11]->cdata), 2, ",", ".") : '';
 				break;
 			}
 			case "LIMITE CRED": {
-				$nomeRotina = $cabecalho[23]->cdata == 1 ? "Limite de Cr&eacute;dito" : "Limite Empresarial";   
+                $nomeRotina = ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == 1 ) ? "Limite de Cr&eacute;dito" : "Limite Empresarial";
                 $urlRotina = "limite_credito";
-                $strValue = number_format(str_replace(",", ".", $valores[6]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[6]->cdata) ) ? number_format(str_replace(",", ".", $valores[6]->cdata), 2, ",", ".") : '';
 				break;		
 			}	
 			case "MAGNETICO": {
 				$nomeRotina = "Cart&otilde;es Magn&eacute;ticos";  
                 $urlRotina = "magneticos";
-                $strValue = $valores[15]->cdata;
+                $strValue = ( isset($valores[15]->cdata) ) ? $valores[15]->cdata : '';
 				break;	
 			}
 			case "OCORRENCIAS": {
 				$nomeRotina = "Ocorr&ecirc;ncias";         
                 $urlRotina = "ocorrencias";
-                $strValue = strtolower($valores[9]->cdata) == "yes" ? "SIM" : "NAO";
+                $strValue = ( isset($valores[9]->cdata) ) ? strtolower($valores[9]->cdata) == "yes" ? "SIM" : "NAO" : '';
 				break;	
 			}
 			case "POUP. PROG": {
 				$nomeRotina = "Poupan&ccedil;a Programada"; 
                 $urlRotina = "poupanca_programada";
-                $strValue = number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".");
+                $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
 				break;	
 			}
 			case "PRESTACOES": {
@@ -440,10 +543,11 @@ if ($cabecalho[23]->cdata == "1") {
 			case "TELE ATEN": {
 				$nomeRotina = "Tele Atendimento";    
                 $urlRotina = "tele_atendimento";
-                if ($valores[10]->cdata == "") {
-                    $strValue = "INATIVA";
-                } else {
-                    $strValue = $valores[10]->cdata;
+
+				$strValue = 'INATIVA';
+
+				if ( isset($valores[10]->cdata) ) {
+					$strValue = $valores[10]->cdata;
                 }
 				break;	
 			}
@@ -461,8 +565,14 @@ if ($cabecalho[23]->cdata == "1") {
 			}
 			case "LIMITE SAQUE TAA": {
 				$nomeRotina = "Limite Saque TAA";
-				$urlRotina  = "limite_saque_taa";
-				$strValue   = number_format(str_replace(",",".",$valores[19]->cdata),2,",",".");
+                $urlRotina = "limite_saque_taa";
+                $strValue = ( isset($valores[19]->cdata) ) ? number_format(str_replace(",", ".", $valores[19]->cdata), 2, ",", ".") : '';
+                break;
+            }
+			case "SERVICOS COOPERATIVOS": {
+				$nomeRotina = "Servi&ccedil;os Cooperativos";
+				$urlRotina  = "pacote_tarifas";
+				$strValue   = ( isset($valores[20]->cdata) ) ? strtolower($valores[20]->cdata) == 'yes' ? 'SIM' : 'NAO' : 'NAO'; 
 				break;
 			}
 			case "SERVICOS COOPERATIVOS": {
@@ -499,19 +609,26 @@ if ($cabecalho[23]->cdata == "1") {
 				$opeProdutos = 1;				
 				break;
 			}
-      case "RECEBE SALARIO": {        
-                if ($cabecalho[23]->cdata == "1") {
-				$nomeRotina = "Recebe Salario";
+        case "RECEBE SALARIO": {
+                if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
+                    $nomeRotina = "Recebe Salario";
                     $urlRotina = "";
                     $strValue = $flgfolha;
-        } else {
-				  $nomeRotina = " ";    
+                } else {
+                    $nomeRotina = " ";
                     $urlRotina = "";
                     $strValue = "";
-        }
-        
-				break;           
-      } 
+                }
+
+                break;
+            }
+			case "DESABILITAR OPERACOES": {
+			
+				$nomeRotina = "Desabilitar Operacoes";
+                $urlRotina = "liberar_bloquear";
+                $strValue = "";
+				break;
+			}	
 			default: {
 				$nomeRotina = "";    
                 $urlRotina = "";
@@ -530,24 +647,31 @@ if ($cabecalho[23]->cdata == "1") {
 		
 		if (trim($urlRotina) <> "") {
 			
-        echo '$("#labelRot' . $contRotina . '").unbind("click");';
-        echo '$("#labelRot' . $contRotina . '").bind("click",function() { acessaRotina("' . $rotinasTela[$i] . '","' . $nomeRotina . '","' . $urlRotina . '","' . $opeProdutos . '"); nmrotina = "' . $nomeRotina . '"; });';
-        echo '$("#valueRot' . $contRotina . '").unbind("click");';
-        echo '$("#valueRot' . $contRotina . '").bind("click",function() { acessaRotina("' . $rotinasTela[$i] . '","' . $nomeRotina . '","' . $urlRotina . '","' . $opeProdutos . '"); nmrotina = "' . $nomeRotina . '"; });';
+			echo '$("#labelRot'.$contRotina.'").unbind("click");';
+			echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
+			echo '$("#valueRot'.$contRotina.'").unbind("click");';
+			echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
 		}
 		
 		$contRotina++;
 	}	
 	
-  
+
 	// Flag para acesso a rotinas
 	echo 'flgAcessoRotina = true;';
 	
 	// Variáveis globais
-echo 'nrdconta = "' . $cabecalho[21]->cdata . '";';
-echo 'nrdctitg = "' . $cabecalho[3]->cdata . '";';
-echo 'inpessoa = "' . $cabecalho[23]->cdata . '";';
-echo 'cdclcnae = "' . $cabecalho[26]->cdata . '";';
+$vr_nrdconta = ( isset($cabecalho[21]->cdata) ) ? $cabecalho[21]->cdata : 0;
+echo 'nrdconta = "' . $vr_nrdconta . '";';
+
+$vr_nrdctitg = ( isset($cabecalho[3]->cdata)   ) ? $cabecalho[3]->cdata : 0;
+echo 'nrdctitg =	"' . $vr_nrdctitg . '";';
+
+$vr_inpessoa =  ( isset($cabecalho[23]->cdata) ) ? $cabecalho[23]->cdata : 0;
+echo 'inpessoa = "' . $vr_inpessoa . '";';
+
+$vr_cdclcnae = ( isset($cabecalho[26]->cdata) ) ? $cabecalho[26]->cdata : 0;
+echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 	
 	// Variável que indica se deve mostrado div de mensagens ou anotações
 	$flgMsgAnota = false;
@@ -569,7 +693,8 @@ echo 'cdclcnae = "' . $cabecalho[26]->cdata . '";';
 				}	
 																																			
             echo 'strHTML += \'<tr' . $style . '>\';';
-            echo 'strHTML += \'<td class="txtNormal">' . addslashes($mensagens[$i]->tags[1]->cdata) . '</td>\';';
+			$vr_txtmsg = ( isset($mensagens[$i]->tags[1]->cdata) ) ? addslashes($mensagens[$i]->tags[1]->cdata) : '';
+            echo 'strHTML += \'<td class="txtNormal"><textarea style="width: 455px; height: 40px; resize: none" readonly>' . removeCaracteresInvalidos(retiraAcentos($vr_txtmsg)) . '</textarea></td>\';';
 				echo 'strHTML += \'</tr>\';';															
 			}
 		
@@ -590,9 +715,13 @@ echo 'cdclcnae = "' . $cabecalho[26]->cdata . '";';
 		
 		// Mostra anotações da conta
 		if (count($anotacoes) > 0 && $flgProdutos != 'true') { 
+        // valida a existencia do node
+		$vr_nrdanot = ( isset($cabecalho[21]->cdata) ) ? formataNumericos("zzz.zzz.zz9-9", $cabecalho[21]->cdata, ".-")  : '';
 			// Aqui mostrar conteúdo das anotações
-        echo '$("#nroconta","#frmAnotacoes").val("' . formataNumericos("zzz.zzz.zz9-9", $cabecalho[21]->cdata, ".-") . '");';
-        echo '$("#nmprimtl","#frmAnotacoes").val("' . $cabecalho[6]->cdata . '");';
+        echo '$("#nroconta","#frmAnotacoes").val("' . $vr_nrdanot . '");';
+		//valida a existencia do node
+		$vr_nmprim = ( isset($cabecalho[6]->cdata)   ) ? $cabecalho[6]->cdata : '';
+        echo '$("#nmprimtl","#frmAnotacoes").val("' . $vr_nmprim . '");';
 			
 			// Monta HTML para mostrar mensagens de alerta
 			echo 'var strHTML = "";';			
@@ -611,22 +740,26 @@ echo 'cdclcnae = "' . $cabecalho[26]->cdata . '";';
 					echo 'strHTML += \'	</tr>\';';
 				} 
 				
+			$vr_dtmvtolt = ( isset($anotacoes[$i]->tags[1]->cdata) )   ? $anotacoes[$i]->tags[1]->cdata : '';
+			$vr_hrtransa = ( isset($anotacoes[$i]->tags[10]->cdata) ) ? $anotacoes[$i]->tags[10]->cdata : '';
+			$vr_dsopera = ( isset($anotacoes[$i]->tags[11]->cdata) ) ? $anotacoes[$i]->tags[11]->cdata : '';
+
 				echo 'strHTML += \'	<tr>\';';
 				echo 'strHTML += \'		<td>\';';
 				echo 'strHTML += \'			<table cellpadding="0" cellspacing="0" border="0">\';';
 				echo 'strHTML += \'				<tr>\';';
 				echo 'strHTML += \'					<td width="25" height="25" class="txtNormalBold">Em&nbsp;</td>\';';
-            echo 'strHTML += \'					<td width="67"><input name="dtmvtolt" type="text" class="campoTelaSemBorda classDisabled" id="dtmvtolt" value="' . $anotacoes[$i]->tags[1]->cdata . '" style="width: 67px; text-align: center;"></td>\';';
+				echo 'strHTML += \'					<td width="67"><input name="dtmvtolt" type="text" class="campoTelaSemBorda classDisabled" id="dtmvtolt" value="'.date_format(date_create($anotacoes[$i]->tags[1]->cdata),'d/m/Y').'" style="width: 67px; text-align: center;"></td>\';';
 				echo 'strHTML += \'					<td width="30" align="center" class="txtNormalBold">&agrave;s&nbsp;</td>\';';
-            echo 'strHTML += \'					<td width="67"><input name="hrtransa" type="text" class="campoTelaSemBorda classDisabled" id="hrtransa" value="' . $anotacoes[$i]->tags[10]->cdata . '" style="width: 67px; text-align: center"></td>\';';
+            echo 'strHTML += \'					<td width="67"><input name="hrtransa" type="text" class="campoTelaSemBorda classDisabled" id="hrtransa" value="' . $vr_hrtransa . '" style="width: 67px; text-align: center"></td>\';';
 				echo 'strHTML += \'					<td width="35" align="center" class="txtNormalBold">por&nbsp;</td>\';';
-            echo 'strHTML += \'					<td><input name="dsoperad" type="text" class="campoTelaSemBorda classDisabled" id="dsoperad" value="' . $anotacoes[$i]->tags[11]->cdata . '" style="width: 230px;"></td>\';';
+            echo 'strHTML += \'					<td><input name="dsoperad" type="text" class="campoTelaSemBorda classDisabled" id="dsoperad" value="' . $vr_dsopera . '" style="width: 230px;"></td>\';';
 				echo 'strHTML += \'				</tr>\';';
 				echo 'strHTML += \'			</table>\';';
 				echo 'strHTML += \'		</td>\';';
 				echo 'strHTML += \'</tr>\';';
 				
-            if ($anotacoes[$i]->tags[5]->cdata == "yes") {
+            if ( isset($anotacoes[$i]->tags[5]->cdata) && $anotacoes[$i]->tags[5]->cdata == "yes")  {
 					echo 'strHTML += \'	<tr>\';';
 					echo 'strHTML += \'		<td>\';';
 					echo 'strHTML += \'			<table cellpadding="0" cellspacing="0" border="0">\';';
@@ -638,11 +771,13 @@ echo 'cdclcnae = "' . $cabecalho[26]->cdata . '";';
 					echo 'strHTML += \'	</tr>\';';
 				}
 				
+			$vr_dsanotas = ( isset($anotacoes[$i]->tags[6]->cdata) ) ? str_replace("\n", "\\n", addslashes($anotacoes[$i]->tags[6]->cdata)) : '';
+
 				echo 'strHTML += \'	<tr>\';';
 				echo 'strHTML += \'		<td>\';';
 				echo 'strHTML += \'			<table cellpadding="0" cellspacing="0" border="0">\';';		
 				echo 'strHTML += \'				<tr>\';';
-            echo 'strHTML += \'					<td><textarea name="dsanotas" style="width: 455px; height: 152px;" readonly>' . str_replace("\n", "\\n", addslashes($anotacoes[$i]->tags[6]->cdata)) . '</textarea></td>\';';
+            echo 'strHTML += \'					<td><textarea name="dsanotas" style="width: 455px; height: 152px;" readonly>' . $vr_dsanotas . '</textarea></td>\';';
 				echo 'strHTML += \'				</tr>\';';
 				echo 'strHTML += \'			</table>\';';
 				echo 'strHTML += \'		</td>\';';

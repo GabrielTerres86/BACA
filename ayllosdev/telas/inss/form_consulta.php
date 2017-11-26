@@ -1,22 +1,22 @@
 <?php
-	/*****************************************************************
+/*****************************************************************
 	Fonte        : form_consulta.php					Última alteração: 03/08/2016
-	Criação      : Adriano
-	Data criação : Maio/2013
-	Objetivo     : Mostra o form de consulta da tela INSS
-	--------------
-	Alterações   : 10/03/2015 - Ajuste referente ao Histórico cadastral
-								(Adriano - Softdesk 261226).
+  Criação      : Adriano
+  Data criação : Maio/2013
+  Objetivo     : Mostra o form de consulta da tela INSS
+  --------------
+  Alterações   : 10/03/2015 - Ajuste referente ao Histórico cadastral
+                              (Adriano - Softdesk 261226).
 							  
-					01/09/2015 - Mudança no layout:
-								Aumento do tamanho da tela para inclusao de novos campos.
-								Inseridos campos "Data de nascimento", "Descrição do benefício".
-								Projeto 255 - INSS (Lombardi)
+				 01/09/2015 - Mudança no layout:
+						      Aumento do tamanho da tela para inclusao de novos campos.
+							  Inseridos campos "Data de nascimento", "Descrição do benefício".
+							  Projeto 255 - INSS (Lombardi)
 
 					03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
-	--------------
-	****************************************************************/ 
-
+  --------------
+ ****************************************************************/ 
+ 
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	

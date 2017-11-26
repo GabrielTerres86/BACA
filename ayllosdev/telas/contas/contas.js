@@ -22,6 +22,9 @@
  * 015: [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
  * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declaração de pessoa exposta politicamente.
  * 017: [14/09/2016] Kelvin (CECRED) 		 : Ajuste feito para resolver o problema relatado no chamado 506554.
+ * 018: [27/03/2017] Reinert			  	 : Incluido function "dossieDigidoc". (Projeto 357)
+ * 019: [11/07/2017] Andrino (MOUTS) 		 : Desenvolvimento da melhoria 364 - Grupo Economico
+ * 020: [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
@@ -368,7 +371,7 @@ function limparDadosCampos() {
     }
 
     // Limpa campos com saldos da conta
-    for (i = 0; i < 23; i++) {
+    for (i = 0; i < 24; i++) {
         $("#labelRot" + i).html("&nbsp;").unbind("click");
 
     }
@@ -621,4 +624,50 @@ function trataCadastramento() {
         acessaRotina('IDENTIFICACAO', 'Identificação', 'identificacao_juridica');
     }
 
+}
+
+function dossieDigdoc(cdproduto){
+	
+	var mensagem = 'Aguarde, acessando dossie...';
+	showMsgAguardo( mensagem );
+
+	// Carrega dados da conta através de ajax
+	$.ajax({
+		type	: 'POST',
+		dataType: 'html',
+		url		: UrlSite + 'telas/digdoc.php',
+		data    :
+				{
+					nrdconta	: nrdconta,
+					cdproduto   : cdproduto, // Codigo do produto
+                    nmdatela    : 'CONTAS',
+ 					redirect	: 'script_ajax'
+				},
+		error   : function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				},
+		success : function(response) {
+					hideMsgAguardo();
+					blockBackground(parseInt($('#divRotina').css('z-index')));
+					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+						try {
+							eval( response );
+							return false;
+						} catch(error) {
+							hideMsgAguardo();							
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					} else {
+						try {
+							eval( response );							
+						} catch(error) {
+							hideMsgAguardo();
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					}
+				}
+	});
+
+	return false;
 }

@@ -1,17 +1,17 @@
 <?php
-	/*****************************************************************
+/*****************************************************************
 	Fonte        : form_opcoes.php						Última Alteração: 03/08/2016
-	Criação      : Adriano
-	Data criação : Maio/2013
-	Objetivo     : Mostrar as rotinas da opção "R" e solicitar cpf/nit para as demais opções.
-	--------------
+  Criação      : Adriano
+  Data criação : Maio/2013
+  Objetivo     : Mostrar as rotinas da opção "R" e solicitar cpf/nit para as demais opções.
+  --------------
 	Alterações   : 10/03/2015 - Ajuste referente ao Histórico cadastral (Adriano - Softdesk 261226).
 				 
 				   20/10/2015 - Adicionada opção de geração de log Projeto 255 (Lombardi).
-
+                              
 				   03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
-	--------------
-	****************************************************************/ 
+  --------------
+ ****************************************************************/ 
  
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');

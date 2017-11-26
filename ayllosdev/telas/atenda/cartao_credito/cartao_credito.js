@@ -53,8 +53,12 @@
  * 035: [29/06/2016] Kelvin		   (CECRED)	: Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461 
  * 036: [08/08/2016] Fabricio      (CECRED) : Alterado id do form utilizado na function ImprimeExtratoCartao2 (chamado 477696).
  * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
-										      conforme solicitado no chamado 508426. (Kelvin)
-   038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ *                                            conforme solicitado no chamado 508426. (Kelvin)
+ * 038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
+ * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
+ * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
+ * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualização do histórico de alteração de limites (P360)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1141,6 +1145,36 @@ function controlaLayout(nomeForm) {
         cDssencon.addClass('campo').css({ 'width': '50px' });
 	
 		cDssennov.focus();	
+		
+	} else if (nomeForm == 'divConteudoHistorico') {
+	
+        var divRegistro = $('div.divRegistros', '#' + nomeForm);
+        var tabela = $('table', divRegistro);
+						
+        divRegistro.css('height', '150px');
+		
+		var ordemInicial = new Array();
+				
+		var arrayLargura = new Array();
+		var arrayAlinha = new Array();
+		
+        arrayLargura[0] = '120px';
+		arrayLargura[1] = '100px';
+		arrayLargura[2] = '120px';
+					
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+						
+        tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+        $('tbody > tr', tabela).each(function () {
+            if ($(this).hasClass('corSelecao')) {
+				$(this).focus();		
+			}
+		});
+		
     } else if (nomeForm == 'fieldsetTAA') {
         $('#fieldsetTAA').css({ 'border': '1px solid #bbb', 'margin': '3px', 'padding': '0px 3px 5px 3px' });
         $('legend:first', '#fieldsetTAA').css({ 'font-size': '11px', 'color': '#333', 'margin-left': '5px', 'padding': '0px 2px' });
@@ -1464,22 +1498,40 @@ function validarNovoCartao() {
 		return false;
     }
     
+	if (inpessoa == 1 && nrdoccrd.length > 15) {
+        hideMsgAguardo();
+        showError("error", "Identidade nao pode ter mais de 15 caracteres.", "Alerta - Ayllos", "$('#nrdoccrd','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
+    
+	
 	if (dtnasccr == "") {
         hideMsgAguardo();
         showError("error", "013 - Data errada.", "Alerta - Ayllos", "$('#dtnasccr','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
     }
 	
-	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) && nmempres.trim() == "") {
+	// Validações para cartão PJ
+	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) ) {
+		// Nome da Empresa deve estar preenchido
+		if (nmempres.trim() == "") {
 		hideMsgAguardo();
 		showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
-	
-	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) && nmempres.length > 23) {
+		// Nome da Empresa não pode conter mais de 23 caracteres
+		if (nmempres.length > 23) {
 		hideMsgAguardo();
         showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
+	}
+	
+		// Nome da Empresa não pode conter numeros
+		if ( /[0-9]/gm.test(nmempres) ){
+			hideMsgAguardo();
+			showError("error", "Empresa do Plastico n&atilde;o pode conter n&uacute;meros.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
 	}
 	
 	if (tpdpagto == 0) {
@@ -4278,18 +4330,62 @@ function lerCartaoChip() {
 				oPinpad.LCD_Clear();
                 oPinpad.LCD_DisplayString(2, 18, 1, "Processando...");
                 oPinpad.SMC_ReadTracks(0, "", "");
-				// Dados do Chip
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", "");
+				
+				// Buscar AIDGet
+				oRetornoJson = oPinpad.SMC_EMV_AIDGet(0); 				
+				eval("oRetornoJson = " + oRetornoJson);
+				szAIDList = oRetornoJson.szAIDList.split(";");					
+				
+				// Busca nome no cartao
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[0]);
+				eval("oRetornoJson = " + oRetornoJson);
+				sTagPortador = oRetornoJson.szTagsData;												
+				
+				if (sTagPortador == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[1]);
+					eval("oRetornoJson = " + oRetornoJson);					
+					sTagPortador = oRetornoJson.szTagsData;		
+				}
+				
+				if (sTagPortador == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[2]);
 				eval("oRetornoJson = " + oRetornoJson);
 				sTagPortador = oRetornoJson.szTagsData;
+				}
 				
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", "");
+				// Busca Numero do cartao
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[0]);
 				eval("oRetornoJson = " + oRetornoJson);
 				sTagNumeroCartao = oRetornoJson.szTagsData;
 				
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", "");
+				if (sTagNumeroCartao == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[1]);
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagNumeroCartao = oRetornoJson.szTagsData;
+				}
+				
+				if (sTagNumeroCartao == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[2]);
+				eval("oRetornoJson = " + oRetornoJson);
+				sTagNumeroCartao = oRetornoJson.szTagsData;
+				}
+				
+				// Buscar Validade do cartao                
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[0]);				
 				eval("oRetornoJson = " + oRetornoJson);
 				sTagDataValidade = oRetornoJson.szTagsData;
+				
+				if (sTagDataValidade == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[1]);				
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagDataValidade = oRetornoJson.szTagsData;
+				}
+				
+				if (sTagDataValidade == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[2]);				
+				eval("oRetornoJson = " + oRetornoJson);
+				sTagDataValidade = oRetornoJson.szTagsData;
+				}
 				
 				// Carrega conteúdo da opção através de ajax
 				$.ajax({
@@ -5191,3 +5287,33 @@ function controlaLayoutRepresentantes() {
 	bloqueiaFundo($('#divUsoGenerico'));
 	return false;	
 }	
+
+// Função para mostrar o histórico de alteração de limite de crédito
+function mostraHisLimite() {
+
+    // ALTERAÇÃO
+    var nomeForm = 'frmHistoricoLimite';
+	var nrcctitg = $('#nrcctitg', '#frmDadosCartao').val();
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando hist&oacute;rico de limite de cr&eacute;dito ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/consultar_historico_limite.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrcctitg: nrcctitg,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao2").html(response);
+        }
+    });
+}

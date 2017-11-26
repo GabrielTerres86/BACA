@@ -11,10 +11,10 @@
  * 002: [11/07/2011] Gabriel Capoia  (DB1) : Alterado para layout padrão
  * 003: [18/11/2011] Jorge I. Hamaguchi (CECRED) : Ajustes em critica quando nao houver permissao de acesso 
  * 004: [23/01/2014] Carlos (CECRED) : Retirada a include de titulos/msg_grupo_economico.php
+ * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  */	
 ?>
 
-<?
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -26,6 +26,8 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');	
 	}	
+
+    $labelRot = $_POST['labelRot'];	
 
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');	
@@ -50,7 +52,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td id="tdTitRotina" class="txtBrancoBold ponteiroDrag" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">DESCONTOS</td>
+								<td id="<?php echo $labelRot; ?>" id="tdTitRotina" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">DESCONTOS</td>
 								<td width="12" id="tdTitTela" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
@@ -91,4 +93,5 @@
 	mostraRotina();	
 	hideMsgAguardo();	
 	bloqueiaFundo(divRotina);
+	controlaFoco();
 </script>

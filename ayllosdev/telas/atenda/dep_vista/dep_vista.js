@@ -10,14 +10,15 @@
                02/09/2010 - Ajuste na função obtemSaldos (David).		
                29/06/2011 - Imprimir Extrato - Alterado para layout padrão (Rogerius - DB1).
                29/08/2011 - Imprimir Extrato - Nova coluna: Parcela (Marcelo L. Pereira - GATI).
-			   01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
-			   26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
-			   31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
-			   04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
-			   27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos"
-						   (Gabriel - RKAM -> Projeto 127).	
-               14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos.
-							SD 320300 (Kelvin).
+							 01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
+							 26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
+							 31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
+							 04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
+							 27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos" (Gabriel - RKAM -> Projeto 127).	
+							 14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos. SD 320300 (Kelvin).
+							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
+							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
+							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -50,12 +51,13 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	}else if (opcao == "7") {	// Opção Créditos Recebidos
 		var msg = "creditos recebidos";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/creditos_recebidos.php";
-	}
-	
+}
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
-	
+
 	// Atribui cor de destaque para aba da opção
+	nrOpcoes = nrOpcoes + 1;
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da opção
 			$("#linkAba" + id).attr("class","txtBrancoBold");
@@ -89,6 +91,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	}else if (opcao == "5") {	// Opção saldos anteriores		
@@ -107,6 +110,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	}else if (opcao == "6") {	// Opção Cash		
@@ -125,6 +129,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	} else { // Demais Opções
@@ -143,9 +148,101 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 		
 	}
+}
+
+//controle de foco de navegação
+function controlaFoco(opcao) {
+    var IdForm = '';
+    var formid;
+
+    if (opcao == "0") { //Principal
+        $('.FirstInput:first ').focus();
+			}				
+    if (opcao == "1") { //Extrato 
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtDepVista") {
+                $(this).find("#frmExtDepVista > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtDepVista > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+		}); 		
+                });
+
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+	}
+    if (opcao == "4") { //Imprimir extrato
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtrato") {
+                $(this).find("#frmExtrato > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtrato > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+}
+                    });
+                });
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+    }
+    if (opcao == "5") { //Saldos anteriores
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmSaldoAnt") {
+                $(this).find("#frmSaldoAnt > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmSaldoAnt > :input[type=image]").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+    }
+    if (opcao == "6") { //Cash
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtCash") {
+                $(this).find("#frmExtCash > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtCash > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+            };
+        });
+    }
+    $('.FirstInputModal:first ').focus();
 }
 
 // Função para confirmar saque na conta investimento
@@ -203,7 +300,7 @@ function validarImpressao() {
 		$("#dtiniper","#frmExtrato").val("");
 		return false;
 	}
-	
+
 	// Valida data final
 	if ($.trim(dtfimper) == "" || !validaData(dtfimper)) {
 		hideMsgAguardo();
@@ -211,7 +308,7 @@ function validarImpressao() {
 		$("#dtfimper","#frmExtrato").val("");
 		return false;
 	}
-	
+
 	// Executa script através de ajax
 	$.ajax({
 		type: "POST",
@@ -268,86 +365,96 @@ function navega(iniregis) {
 // Função que formata o layout
 function controlaLayout( nomeForm ){
 
-	var altura = '233px';
+	var altura = '253px';
 
-	if( nomeForm == 'frmDadosDepVista' ){
-	  
-	  //Seleção dos Labels e Inputs
-	  if ( $.browser.msie ) { 
-		$('fieldset').css({'padding-top':'6px'});
-	  } else {
-		$('fieldset').css({'padding':'4px 4px'});
-	  }
+	if (nomeForm == 'frmDadosDepVista') {
 
-	  cTodos = $('input','#'+nomeForm);
-	  
-	  var Lvlsddisp = $('label[for="vlsddisp"]','#'+nomeForm);
-	  var Cvlsddisp = $('#vlsddisp','#'+nomeForm);
-	  
-	  var Lvlsaqmax = $('label[for="vlsaqmax"]','#'+nomeForm);
-	  var Cvlsaqmax = $('#vlsaqmax','#'+nomeForm);
-	  
-	  var Lvlsdbloq = $('label[for="vlsdbloq"]','#'+nomeForm);
-	  var Cvlsdbloq = $('#vlsdbloq','#'+nomeForm);
-	  
-	  var Lvlacerto = $('label[for="vlacerto"]','#'+nomeForm);
-	  var Cvlacerto = $('#vlacerto','#'+nomeForm);
-	  
-	  var Lvlsdblpr = $('label[for="vlsdblpr"]','#'+nomeForm);
-	  var Cvlsdblpr = $('#vlsdblpr','#'+nomeForm);
-	  
-	  var Lvlsdblfp = $('label[for="vlsdblfp"]','#'+nomeForm);
-	  var Cvlsdblfp = $('#vlsdblfp','#'+nomeForm);
-	  
-	  var Lvlipmfpg = $('label[for="vlipmfpg"]','#'+nomeForm);
-	  var Cvlipmfpg = $('#vlipmfpg','#'+nomeForm);
-	  
-	  var Lvlsdchsl = $('label[for="vlsdchsl"]','#'+nomeForm);
-	  var Cvlsdchsl = $('#vlsdchsl','#'+nomeForm);
-	  
-	  var Lvlblqjud = $('label[for="vlblqjud"]','#'+nomeForm);
-	  var Cvlblqjud = $('#vlblqjud','#'+nomeForm);
-	  
-	  var Lvlstotal = $('label[for="vlstotal"]','#'+nomeForm);
-	  var Cvlstotal = $('#vlstotal','#'+nomeForm);
-	  
-	  var Lvllimcre = $('label[for="vllimcre"]','#'+nomeForm);
-	  var Cvllimcre = $('#vllimcre','#'+nomeForm);
-	  
-	  var Ldtultlcr = $('label[for="dtultlcr"]','#'+nomeForm);
-	  var Cdtultlcr = $('#dtultlcr','#'+nomeForm);
-	  
-	  //Formatação dos Labels
-	  Lvlsddisp.addClass('rotulo').css('width','110px');
-	  Lvlsaqmax.css('width','120px');
-	  Lvlsdbloq.addClass('rotulo').css('width','110px');
-	  Lvlacerto.css('width','120px');
-	  Lvlsdblpr.addClass('rotulo').css('width','110px');
-	  Lvlsdblfp.addClass('rotulo').css('width','110px');
-	  Lvlipmfpg.css('width','120px');
-	  Lvlsdchsl.addClass('rotulo').css('width','110px');
-	  Lvlblqjud.addClass('rotulo').css('width','110px');
-	  Lvlstotal.addClass('rotulo').css('width','110px');
-	  Lvllimcre.addClass('rotulo').css('width','110px');
-	  Ldtultlcr.css('width','120px');
-	  
-	  //Formatação dos campos
-	  Cvlsddisp.css('width','87px').addClass('monetario');
-	  Cvlsaqmax.css('width','87px').addClass('monetario');
-	  Cvlsdbloq.css('width','87px').addClass('monetario');
-	  Cvlacerto.css('width','87px').addClass('monetario');
-	  Cvlsdblpr.css('width','87px').addClass('monetario');
-	  Cvlsdblfp.css('width','87px').addClass('monetario');
-	  Cvlipmfpg.css('width','87px').addClass('monetario');
-	  Cvlsdchsl.css('width','87px').addClass('monetario');
-	  Cvlblqjud.css('width','87px').addClass('monetario');
-	  Cvlstotal.css('width','87px').addClass('monetario');
-	  Cvllimcre.css('width','87px').addClass('monetario');
-	  Cdtultlcr.css('width','87px').addClass('data');
-	  
-	  cTodos.desabilitaCampo();
-	  	
-	}else if( nomeForm == 'frmExtDepVista' ){
+        //Seleção dos Labels e Inputs
+        if ($.browser.msie) {
+            $('fieldset').css({ 'padding-top': '6px' });
+        } else {
+            $('fieldset').css({ 'padding': '4px 4px' });
+        }
+
+        cTodos = $('input', '#' + nomeForm);
+
+        var Lvlsddisp = $('label[for="vlsddisp"]', '#' + nomeForm);
+        var Cvlsddisp = $('#vlsddisp', '#' + nomeForm);
+
+        var Lvlsaqmax = $('label[for="vlsaqmax"]', '#' + nomeForm);
+        var Cvlsaqmax = $('#vlsaqmax', '#' + nomeForm);
+
+        var Lvlsdbloq = $('label[for="vlsdbloq"]', '#' + nomeForm);
+        var Cvlsdbloq = $('#vlsdbloq', '#' + nomeForm);
+
+        var Lvlacerto = $('label[for="vlacerto"]', '#' + nomeForm);
+        var Cvlacerto = $('#vlacerto', '#' + nomeForm);
+
+        var Lvlsdblpr = $('label[for="vlsdblpr"]', '#' + nomeForm);
+        var Cvlsdblpr = $('#vlsdblpr', '#' + nomeForm);
+
+        var Lvlsdblfp = $('label[for="vlsdblfp"]', '#' + nomeForm);
+        var Cvlsdblfp = $('#vlsdblfp', '#' + nomeForm);
+
+        var Lvlipmfpg = $('label[for="vlipmfpg"]', '#' + nomeForm);
+        var Cvlipmfpg = $('#vlipmfpg', '#' + nomeForm);
+	
+        var Lvlsdchsl = $('label[for="vlsdchsl"]', '#' + nomeForm);
+        var Cvlsdchsl = $('#vlsdchsl', '#' + nomeForm);
+
+        var Lvlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
+        var Cvlblqjud = $('#vlblqjud', '#' + nomeForm);
+
+        var Lvlstotal = $('label[for="vlstotal"]', '#' + nomeForm);
+        var Cvlstotal = $('#vlstotal', '#' + nomeForm);
+
+        var Lvllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
+        var Cvllimcre = $('#vllimcre', '#' + nomeForm);
+
+        var Ldtultlcr = $('label[for="dtultlcr"]', '#' + nomeForm);
+        var Cdtultlcr = $('#dtultlcr', '#' + nomeForm);
+
+        var Lvllimdis = $('label[for="vllimdis"]', '#' + nomeForm);
+        var Cvllimdis = $('#vllimdis', '#' + nomeForm);
+
+        var Ldtliberacao = $('label[for="dtliberacao"]', '#' + nomeForm);
+        var Cdtliberacao = $('#dtliberacao', '#' + nomeForm);
+
+        //Formatação dos Labels
+        Lvlsddisp.addClass('rotulo').css('width', '110px');
+        Lvlsaqmax.css('width', '180px');
+        Lvlsdbloq.addClass('rotulo').css('width', '110px');
+        Lvlacerto.css('width', '180px');
+        Lvlsdblpr.addClass('rotulo').css('width', '110px');
+        Lvlsdblfp.addClass('rotulo').css('width', '110px');
+        Lvlipmfpg.css('width', '180px');
+        Lvlsdchsl.addClass('rotulo').css('width', '110px');
+        Lvlblqjud.addClass('rotulo').css('width', '110px');
+        Lvlstotal.addClass('rotulo').css('width', '110px');
+        Lvllimcre.addClass('rotulo').css('width', '110px');
+        Ldtultlcr.css('width', '180px');
+        Lvllimdis.css('width', '180px');
+        Ldtliberacao.css('width', '180px');
+
+        //Formatação dos campos
+        Cvlsddisp.css('width', '87px').addClass('monetario');
+        Cvlsaqmax.css('width', '93px').addClass('monetario');
+        Cvlsdbloq.css('width', '87px').addClass('monetario');
+        Cvlacerto.css('width', '93px').addClass('monetario');
+        Cvlsdblpr.css('width', '87px').addClass('monetario');
+        Cvlsdblfp.css('width', '87px').addClass('monetario');
+        Cvlipmfpg.css('width', '93px').addClass('monetario');
+        Cvlsdchsl.css('width', '87px').addClass('monetario');
+        Cvlblqjud.css('width', '87px').addClass('monetario');
+        Cvlstotal.css('width', '87px').addClass('monetario');
+        Cvllimcre.css('width', '87px').addClass('monetario');
+        Cdtultlcr.css('width', '93px').addClass('data');
+        Cvllimdis.css('width', '93px').addClass('monetario');
+        Cdtliberacao.css('width', '93px').addClass('data');
+
+        cTodos.desabilitaCampo();
+
+    }else if( nomeForm == 'frmExtDepVista' ){
 	
 		altura = '245px';
 	
@@ -360,10 +467,10 @@ function controlaLayout( nomeForm ){
 		
 		var Ldtiniper = $('label[for="dtiniper"]','#'+nomeForm);
 		var Cdtiniper = $('#dtiniper','#'+nomeForm);
-		
+
 		var Ldtfimper = $('label[for="dtfimper"]','#'+nomeForm);
 		var Cdtfimper = $('#dtfimper','#'+nomeForm);
-		
+
 		Ldtiniper.addClass('rotulo').css('width','55px');
 		Ldtfimper.addClass('rotulo-linha');
 		
@@ -377,19 +484,19 @@ function controlaLayout( nomeForm ){
 		$("#dtiniper,#dtfimper","#frmExtDepVista").setMask("DATE","","","divRotina");
 
 		$("#dtiniper","#frmExtDepVista").focus();
-			
+
 		//Formatação da tabela
 		$('#divPesquisaRodape','#divConteudoOpcao').formataRodapePesquisa();
-		
+
 		var divRegistro = $('div.divRegistros','#divConteudoOpcao');		
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
-				
+
 		divRegistro.css('height','150px');
-		
+
 		var ordemInicial = new Array();
 		ordemInicial = [[0,0]];
-		
+
 		var arrayLargura = new Array();
 		arrayLargura[0] = '55px';
 		arrayLargura[1] = '144px';
@@ -406,30 +513,30 @@ function controlaLayout( nomeForm ){
 		arrayAlinha[4] = 'center';
 		arrayAlinha[5] = 'right';
 		arrayAlinha[6] = 'right';
-		
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
-		
+
 	}else if( nomeForm == 'frmMedias' ){
-	
+
 		var altura = '237px';
-		
+
 		var cTodos  = $('input','#'+nomeForm);
-		
+
 		var Lperiodo  = $('label[for="period0"], label[for="period1"], label[for="period2"], label[for="period3"], label[for="period4"], label[for="period5"], label[for="period6"]','#'+nomeForm); 
 		var Cperiodo  = $('#period0, #period1, #period2, #period3, #period4, #period5, #period6','#'+nomeForm);
-		
+
 		var Lvlsmnmes = $('label[for="vlsmnmes"]','#'+nomeForm);
 		var Cvlsmnmes = $('#vlsmnmes','#'+nomeForm);
-		
+
 		var Lvlsmnesp = $('label[for="vlsmnesp"]','#'+nomeForm);
 		var Cvlsmnesp = $('#vlsmnesp','#'+nomeForm);
-		
+
 		var Lvlsaqmax = $('label[for="vlsaqmax"]','#'+nomeForm);
 		var Cvlsaqmax = $('#vlsaqmax','#'+nomeForm);
-		
+
 		var Lqtdiaute = $('label[for="qtdiaute"]','#'+nomeForm);
 		var Cqtdiaute = $('#qtdiaute','#'+nomeForm);
-		
+
 		var Lvltsddis = $('label[for="vltsddis"]','#'+nomeForm);
 		var Cvltsddis = $('#vltsddis','#'+nomeForm);
 		
@@ -523,32 +630,65 @@ function controlaLayout( nomeForm ){
 		$('input', '#'+nomeForm).desabilitaCampo();
 	
 	
-	} else if ( nomeForm == 'frmSaldoAnt' ) {
+	} else if (nomeForm == 'frmSaldoAnt') {
 
-		var altura = '257px';
+        var altura = '257px';
+
+        // rotulos
+        rDtrefere = $('label[for="dtrefere"]', '#' + nomeForm);
+        rVlsddisp = $('label[for="vlsddisp"]', '#' + nomeForm);
+        rVlsdbloq = $('label[for="vlsdbloq"]', '#' + nomeForm);
+        rVlsdblpr = $('label[for="vlsdblpr"]', '#' + nomeForm);
+        rVlsdblfp = $('label[for="vlsdblfp"]', '#' + nomeForm);
+        rVlsdchsl = $('label[for="vlsdchsl"]', '#' + nomeForm);
+        rVlsdindi = $('label[for="vlsdindi"]', '#' + nomeForm);
+        rVlstotal = $('label[for="vlstotal"]', '#' + nomeForm);
+        rVllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
+        rVlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
+        rVllimcpa = $('label[for="vllimcpa"]', '#' + nomeForm);
+        
+
+        rDtrefere.addClass('rotulo').css({ 'width': '200px' });
+        rVlsddisp.addClass('rotulo').css({ 'width': '200px' });
+        rVlsdbloq.addClass('rotulo').css({ 'width': '200px' });
+        rVlsdblpr.addClass('rotulo').css({ 'width': '200px' });
+        rVlsdblfp.addClass('rotulo').css({ 'width': '200px' });
+        rVlsdchsl.addClass('rotulo').css({ 'width': '200px' });
+        rVlsdindi.addClass('rotulo').css({ 'width': '200px' });
+        rVlstotal.addClass('rotulo').css({ 'width': '200px' });
+        rVllimcre.addClass('rotulo').css({ 'width': '200px' });
+        rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
+        rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
 	
-		// rotulos
-		rDtrefere = $('label[for="dtrefere"]', '#'+nomeForm);
-		rVlsddisp = $('label[for="vlsddisp"]', '#'+nomeForm);
-		rVlsdbloq = $('label[for="vlsdbloq"]', '#'+nomeForm);
-		rVlsdblpr = $('label[for="vlsdblpr"]', '#'+nomeForm);
-		rVlsdblfp = $('label[for="vlsdblfp"]', '#'+nomeForm);
-		rVlsdchsl = $('label[for="vlsdchsl"]', '#'+nomeForm);
-		rVlsdindi = $('label[for="vlsdindi"]', '#'+nomeForm);
-		rVlstotal = $('label[for="vlstotal"]', '#'+nomeForm);
-		rVllimcre = $('label[for="vllimcre"]', '#'+nomeForm);
-		rVlblqjud = $('label[for="vlblqjud"]', '#'+nomeForm);
-		
-		rDtrefere.addClass('rotulo').css({'width':'200px'});
-		rVlsddisp.addClass('rotulo').css({'width':'200px'});
-		rVlsdbloq.addClass('rotulo').css({'width':'200px'});
-		rVlsdblpr.addClass('rotulo').css({'width':'200px'});
-		rVlsdblfp.addClass('rotulo').css({'width':'200px'});
-		rVlsdchsl.addClass('rotulo').css({'width':'200px'});
-		rVlsdindi.addClass('rotulo').css({'width':'200px'});
-		rVlstotal.addClass('rotulo').css({'width':'200px'});
-		rVllimcre.addClass('rotulo').css({'width':'200px'});
-		rVlblqjud.addClass('rotulo').css({'width':'200px'});
+        // campos
+        cDtrefere = $('#dtrefere', '#' + nomeForm);
+        cVlsddisp = $('#vlsddisp', '#' + nomeForm);
+        cVlsdbloq = $('#vlsdbloq', '#' + nomeForm);
+        cVlsdblpr = $('#vlsdblpr', '#' + nomeForm);
+        cVlsdblfp = $('#vlsdblfp', '#' + nomeForm);
+        cVlsdchsl = $('#vlsdchsl', '#' + nomeForm);
+        cVlsdindi = $('#vlsdindi', '#' + nomeForm);
+        cVlstotal = $('#vlstotal', '#' + nomeForm);
+        cVllimcre = $('#vllimcre', '#' + nomeForm);
+        cVlblqjud = $('#vlblqjud', '#' + nomeForm);
+        cVllimcpa = $('#vllimcpa', '#' + nomeForm);
+
+        cDtrefere.css({ 'width': '75px' });
+        cVlsddisp.css({ 'width': '75px', 'text-align': 'right' });
+        cVlsdbloq.css({ 'width': '75px', 'text-align': 'right' });
+        cVlsdblpr.css({ 'width': '75px', 'text-align': 'right' });
+        cVlsdblfp.css({ 'width': '75px', 'text-align': 'right' });
+        cVlsdchsl.css({ 'width': '75px', 'text-align': 'right' });
+        cVlsdindi.css({ 'width': '75px', 'text-align': 'right' });
+        cVlstotal.css({ 'width': '75px', 'text-align': 'right' });
+        cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
+        cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
+        cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
+
+        $('input, select', '#' + nomeForm).desabilitaCampo();
+        cDtrefere.habilitaCampo();
+
+    } else if ( nomeForm == 'frmExtCash' ) {
 
 		// campos
 		cDtrefere = $('#dtrefere', '#'+nomeForm);
@@ -654,7 +794,7 @@ function selecionaExtrato(dshistor,dtlibera) {
 
 	$("#dshistor","#complemento").html(dshistor);
 	$("#dtlibera","#complemento").html(dtlibera);
-	
+
 }
 
 

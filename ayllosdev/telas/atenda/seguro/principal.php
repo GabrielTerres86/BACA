@@ -1,31 +1,33 @@
-<? 
+<?php
 /*!
  * FONTE        : pricipal.php
  * CRIAÇÃO      : Marcelo Leandro Pereira
  * DATA CRIAÇÃO : 31/09/2011
  * OBJETIVO     : Mostrar opcao Principal da rotina de Seguro da tela ATENDA
- 
- * ALTERAÇÕES   : 25/07/2013 - Incluído o campo Complemento no endereço. (James).	
-				  
-				  22/06/2016 - Trazer os novos contratos de seguro adicionados a base de dados pela integração com o PROWEB.
-				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
+ *
+ * ALTERAÇÕES   : 25/07/2013 - Incluído o campo Complemento no endereço. (James).
+ *
+ *                22/06/2016 - Trazer os novos contratos de seguro adicionados a base de dados pela integração com o PROWEB.
+ *                             Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
+ *
+ *                29/08/2016 - Proj 187.2 - Sicredi Seguros (Guilherme/SUPERO)
  */
 session_start();
-	
-// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+
+// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 require_once("../../../includes/config.php");
-require_once("../../../includes/funcoes.php");		
+require_once("../../../includes/funcoes.php");
 require_once("../../../includes/controla_secao.php");
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");
-	
+
 // Verifica se tela foi chamada pelo método POST
-isPostMethod();	
-	
+isPostMethod();
+
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
-	exibeErro($msgError);		
+	exibeErro($msgError);
 }
-	
+
 // Verifica se número da conta foi informado
 if (!isset($_POST["nrdconta"])) {
     exibeErro("Par&acirc;metros incorretos.[Conta/DV]");
@@ -81,49 +83,101 @@ if($operacao == 'C_AUTO'){
 }
 
 if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Cabecalho>";
-	$xml .= "		<Bo>b1wgen0033.p</Bo>";
-	$xml .= "		<Proc>".$procedure."</Proc>";
-	$xml .= "	</Cabecalho>";
-	$xml .= "	<Dados>";
-	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<nrctrseg>".$nrctrseg."</nrctrseg>";
-	$xml .= "		<idseqttl>1</idseqttl>";
-	$xml .= "		<idorigem>".$glbvars['idorigem']."</idorigem>";
-	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xml .= "		<cdsegura>".$cdsegura."</cdsegura>";
-	$xml .= "		<tpseguro>".$tpseguro."</tpseguro>";
-	$xml .= "		<cdsitpsg>".$cdsitpsg."</cdsitpsg>";
-	$xml .= "		<flgerlog>FALSE</flgerlog>";	
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
+    // Monta o xml de requisição
+    $xml  = "";
+    $xml .= "<Root>";
+        $xml .= "   <Cabecalho>";
+        $xml .= "       <Bo>b1wgen0033.p</Bo>";
+        $xml .= "       <Proc>".$procedure."</Proc>";
+        $xml .= "   </Cabecalho>";
+        $xml .= "   <Dados>";
+        $xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+        $xml .= "       <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+        $xml .= "       <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+        $xml .= "       <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+        $xml .= "       <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+        $xml .= "       <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "       <nrctrseg>".$nrctrseg."</nrctrseg>";
+        $xml .= "       <idseqttl>1</idseqttl>";
+        $xml .= "       <idorigem>".$glbvars['idorigem']."</idorigem>";
+        $xml .= "       <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+        $xml .= "       <cdsegura>".$cdsegura."</cdsegura>";
+        $xml .= "       <tpseguro>".$tpseguro."</tpseguro>";
+        $xml .= "       <cdsitpsg>".$cdsitpsg."</cdsitpsg>";
+        $xml .= "       <flgerlog>FALSE</flgerlog>";
+        $xml .= "   </Dados>";
+        $xml .= "</Root>";
 
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);
+    // Executa script para envio do XML
+    $xmlResult = getDataXML($xml);
 
-// Cria objeto para classe de tratamento de XML
-$xmlObjeto = getObjectXML($xmlResult);
+    // Cria objeto para classe de tratamento de XML
+    $xmlObjeto = getObjectXML($xmlResult);
 
-// Se ocorrer um erro, mostra crítica
-if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-	exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
-} 
+    // Se ocorrer um erro, mostra crítica
+    if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+        exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+    }
 
-if(in_array($operacao,array('C_AUTO'))){
-	$seguro_auto = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
+    if(in_array($operacao,array('C_AUTO'))){
+        $seguro_auto = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 
-?><script type="text/javascript">
-	    
-		var arraySeguroAuto = new Object();
-		
+        ?><script type="text/javascript">
+
+            var arraySeguroAuto = new Object();
+
+            arraySeguroAuto['nmresseg'] = '<?php echo getByTagName($seguro_auto,'nmdsegur'); ?>';
+            arraySeguroAuto['dsmarvei'] = '<?php echo getByTagName($seguro_auto,'dsmarvei'); ?>';
+            arraySeguroAuto['dstipvei'] = '<?php echo getByTagName($seguro_auto,'dstipvei'); ?>';
+            arraySeguroAuto['nranovei'] = '<?php echo getByTagName($seguro_auto,'nranovei'); ?>';
+            arraySeguroAuto['nrmodvei'] = '<?php echo getByTagName($seguro_auto,'nrmodvei'); ?>';
+            arraySeguroAuto['nrdplaca'] = '<?php echo getByTagName($seguro_auto,'nrdplaca'); ?>';
+            arraySeguroAuto['dtinivig'] = '<?php echo getByTagName($seguro_auto,'dtinivig'); ?>';
+            arraySeguroAuto['dtfimvig'] = '<?php echo getByTagName($seguro_auto,'dtfimvig'); ?>';
+            arraySeguroAuto['qtparcel'] = '<?php echo getByTagName($seguro_auto,'qtparcel'); ?>';
+            arraySeguroAuto['vlpreseg'] = '<?php echo getByTagName($seguro_auto,'vlpreseg'); ?>';
+            arraySeguroAuto['vlpremio'] = '<?php echo getByTagName($seguro_auto,'vlpremio'); ?>';
+            arraySeguroAuto['dtdebito'] = '<?php echo getByTagName($seguro_auto,'dtdebito'); ?>';
+
+        </script><?php
+    }else if(in_array($operacao,array('C_CASA'))){
+        $seguros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
+
+        ?>
+
+        <script type="text/javascript">
+
+            var arraySeguroCasa = new Object();
+
+            arraySeguroCasa['nmresseg'] = '<?php echo getByTagName($seguros,'nmresseg'); ?>';
+            arraySeguroCasa['nrctrseg'] = '<?php echo getByTagName($seguros,'nrctrseg'); ?>';
+            arraySeguroCasa['tpplaseg'] = '<?php echo getByTagName($seguros,'tpplaseg'); ?>';
+            arraySeguroCasa['ddpripag'] = '<?php echo getByTagName($seguros,'dtprideb'); ?>';
+            arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'].split("/");
+            arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'][0];
+
+            arraySeguroCasa['ddvencto'] = '<?php echo getByTagName($seguros,'dtdebito'); ?>';
+            arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'].split("/");
+            arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'][0];
+
+            arraySeguroCasa['vlpreseg'] = '<?php echo getByTagName($seguros,'vlpreseg'); ?>';
+            arraySeguroCasa['dtinivig'] = '<?php echo getByTagName($seguros,'dtinivig'); ?>';
+            arraySeguroCasa['dtfimvig'] = '<?php echo getByTagName($seguros,'dtfimvig'); ?>';
+            arraySeguroCasa['flgclabe'] = '<?php echo getByTagName($seguros,'flgclabe'); ?>';
+            arraySeguroCasa['nmbenvid'] = '<?php echo $seguros[28]->tags[0]->cdata; ?>';
+            arraySeguroCasa['dtcancel'] = '<?php echo getByTagName($seguros,'dtcancel'); ?>';
+            arraySeguroCasa['dsmotcan'] = '<?php echo getByTagName($seguros,'dsmotcan'); ?>';
+
+            arraySeguroCasa['nrcepend'] = '<?php echo getByTagName($seguros,'nrcepend'); ?>';
+            arraySeguroCasa['dsendres'] = '<?php echo getByTagName($seguros,'dsendres'); ?>';
+            arraySeguroCasa['nrendere'] = '<?php echo getByTagName($seguros,'nrendres'); ?>';
+            arraySeguroCasa['complend'] = '<?php echo getByTagName($seguros,'complend'); ?>';
+            arraySeguroCasa['nmbairro'] = '<?php echo getByTagName($seguros,'nmbairro'); ?>';
+            arraySeguroCasa['nmcidade'] = '<?php echo getByTagName($seguros,'nmcidade'); ?>';
+            arraySeguroCasa['cdufresd'] = '<?php echo getByTagName($seguros,'cdufresd'); ?>';
+
+            arraySeguroCasa['tpendcor'] = '<?php echo getByTagName($seguros,'tpendcor'); ?>';
+
 		arraySeguroAuto['nmresseg'] = '<? echo getByTagName($seguro_auto,'nmdsegur'); ?>';
 		arraySeguroAuto['dsmarvei'] = '<? echo getByTagName($seguro_auto,'dsmarvei'); ?>';
 		arraySeguroAuto['dstipvei'] = '<? echo getByTagName($seguro_auto,'dstipvei'); ?>';
@@ -177,9 +231,9 @@ if(in_array($operacao,array('C_AUTO'))){
 		arraySeguroCasa['tpendcor'] = '<? echo getByTagName($seguros,'tpendcor'); ?>';
 		
 	</script><?
-}else if($operacao == 'SEGUR'){
-	$seguradoras  = $xmlObjeto->roottag->tags[0]->tags;
-}else if($operacao == ''){
+    }else if($operacao == 'SEGUR'){
+        $seguradoras  = $xmlObjeto->roottag->tags[0]->tags;
+    }else if($operacao == ''){
         $seguros = $xmlObjeto->roottag->tags[0]->tags;
     }
 } else { // $flgNovo == true // SEGUROS NOVOS
@@ -254,10 +308,10 @@ if(in_array($operacao,array('C_AUTO'))){
         }
         //$seguro_auto = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
         $seguro_auto = $xmlObjeto->roottag->tags;
-		
+
         $nmSegurado	     = getByTagName($seguro_auto,'nmSegurado');
 		$dsTpSeguro	     = getByTagName($seguro_auto,'dsTpSeguro');
-		$nmSeguradora	 = getByTagName($seguro_auto,'nmSeguradora');  
+		$nmSeguradora	 = getByTagName($seguro_auto,'nmSeguradora');
 		$dtIniVigen	     = getByTagName($seguro_auto,'dtIniVigen');
 		$dtFimVigen	     = getByTagName($seguro_auto,'dtFimVigen');
 		$nrProposta	     = getByTagName($seguro_auto,'nrProposta');
@@ -265,16 +319,16 @@ if(in_array($operacao,array('C_AUTO'))){
 		$nrEndosso	     = getByTagName($seguro_auto,'nrEndosso');
 		$dsPlano	     = getByTagName($seguro_auto,'dsPlano');
 		$vlCapital	     = getByTagName($seguro_auto,'vlCapital');
-		$nrApoliceRenova = getByTagName($seguro_auto,'nrApoliceRenova');  
-		$vlPremioLiquido = getByTagName($seguro_auto,'vlPremioLiquido');  
+		$nrApoliceRenova = getByTagName($seguro_auto,'nrApoliceRenova');
+		$vlPremioLiquido = getByTagName($seguro_auto,'vlPremioLiquido');
 		$qtParcelas	     = getByTagName($seguro_auto,'qtParcelas');
-		$vlPremioTotal	 = getByTagName($seguro_auto,'vlPremioTotal');  
+		$vlPremioTotal	 = getByTagName($seguro_auto,'vlPremioTotal');
 		$vlParcela	     = getByTagName($seguro_auto,'vlParcela');
 		$ddMelhorDia	 = getByTagName($seguro_auto,'ddMelhorDia');
 		$perComissao	 = getByTagName($seguro_auto,'perComissao');
 		$dsObservacoes   = getByTagName($seguro_auto,'dsObservacoes');
 		$registros = $xmlObjeto->roottag->tags[17]->tags;
-    
+
 	}
     else if($operacao == ''){ // TELA PRINCIPAL DE SEGUROS
 
@@ -298,24 +352,20 @@ if(in_array($operacao,array('C_AUTO'))){
 
         }
         //$seguro_auto = $xmlObjeto->roottag->tags;
-
         //$seguros = $xmlObjeto->roottag->tags[0]->tags;
-	$seguros = $xmlObjeto->roottag->tags;
-}
-
-
-
+        $seguros = $xmlObjeto->roottag->tags;
+    }
 } // FIM - SEGUROS NOVOS
 
 // Procura indíce da opção "@"
 $idPrincipal = array_search("@",$glbvars["opcoesTela"]);
-	
+
 if ($idPrincipal === false) {
 	$idPrincipal = 0;
 }
 
 // Função para exibir erros na tela através de javascript
-function exibeErro($msgErro) { 
+function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
 	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
@@ -346,12 +396,12 @@ if(in_array($operacao,array(''))) {
 	include('form_seguro_casa.php');
 }
 ?>
-<script type="text/javascript"> 
- 
+<script type="text/javascript">
+
 controlaLayout('<?php echo $operacao;?>');
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 // Bloqueia conteúdo que está atras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-<? if($operacao == 'C_CASA'){ ?> formataCep(); <? } ?>
+<?php if($operacao == 'C_CASA'){ ?> formataCep(); <?php } ?>
 </script>

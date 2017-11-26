@@ -1,29 +1,38 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: plano_de_capital.php                                      ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2007                 Ultima Alteracao: 26/02/2014 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Mostrar opcao Plano de Capital o da rotina de        ***//
-	//***             Capital da tela ATENDA                               ***//
-	//***                                                                  ***//	 
-	//*** Alteracoes: 04/09/2009 - Tratar tamanho do div (David).          ***//
-	//***                                                                  ***//	 
-	//*** 			  18/05/2012 - Retirado attr. target="_blank" de form  ***//
-	//***						   frmTermoCancela.      				   ***//
-	//***			  09/07/2012 - Retirado campo "redirect" popup.(Jorge) ***//
-	//***             10/09/2013 - Alterado para sempre mostrar os botoes  ***//
-	//***                          'Imprimir Plano', 'Cancelar Plano Atual'***//
-	//***                          e 'Cadastrar Novo Plano'. (Fabricio)    ***//
-	//***             26/02/2014 - Adicionado campo                        ***//
-	//***                          'Atualizacao Automatica' e tratado para ***//
-	//***                          adicionar botao 'Alterar Plano' quando  ***//
-	//***                          da existencia de um plano ativo.        ***//
-	//***                          (Fabricio)                              ***//
-	/*                17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM)             */
-	//************************************************************************//
+	/************************************************************************
+	 Fonte: plano_de_capital.php                                      
+	 Autor: David                                                     
+	 Data : Outubro/2007                 Ultima Alteracao: 23/03/2017 
+	                                                                  
+	 Objetivo  : Mostrar opcao Plano de Capital o da rotina de        
+	             Capital da tela ATENDA                               
+	                                                                   
+	 Alteracoes: 04/09/2009 - Tratar tamanho do div (David).          
+	                                                                   
+	 			       18/05/2012 - Retirado attr. target="_blank" de form  
+							              frmTermoCancela.      				   
+                            
+			     	  09/07/2012 - Retirado campo "redirect" popup.(Jorge) 
+              
+	            10/09/2013 - Alterado para sempre mostrar os botoes  
+	                          'Imprimir Plano', 'Cancelar Plano Atual'
+	                          e 'Cadastrar Novo Plano'. (Fabricio)    
+                            
+	            26/02/2014 - Adicionado campo                        
+	                          'Atualizacao Automatica' e tratado para 
+	                          adicionar botao 'Alterar Plano' quando  
+	                          da existencia de um plano ativo.        
+	                          (Fabricio)            
+                            
+	            17/06/2016 - M181 - Alterar o CDAGENCI para          
+                           passar o CDPACTRA (Rafael Maciel - RKAM) 
+                           
+                22/03/2017 - Ajuste para solicitar a senha do cooperado e não gerar o termo
+                             para coleta da assinatura 
+                            (Jonata - RKAM / M294).   
+                          
+	***********************************************************************/
 	
 	session_start();
 	
@@ -146,20 +155,32 @@
 	<label for="dtproatu"><? echo utf8ToHtml('Data da Próxima Atualização:') ?></label>
 	<input type="text" name="dtproatu" id="dtproatu" value="<?php echo $plano[10]->cdata; ?>" autocomplete="no" echo class="campo"></td>
 		
+  <label for="tpautori"><? echo utf8ToHtml('Tipo de Autorização:') ?></label>														
+	<input type="radio" name="tpautori" onClick="controlaBotoes('1');" id="senha" checked value="1" class="radio" /> 
+	<label for="senha" class="radio">Senha</label> 														
+	<input type="radio" name="tpautori" onClick="controlaBotoes('2');" id="autorizacao" value="2" class="radio" /> 
+	<label for="autorizacao" class="radio">Assinatura</label>	
+    
 </form>
 
-<div id="divBotoes">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao('Deseja cancelar o plano de capital atual?','Confirma&ccedil;&atilde;o - Ayllos','cancelarPlanoAtual()',metodoBlock,'sim.gif','nao.gif');return false;">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false);return false;">
+<div id="divBotoesAutorizacao" style="display:none;">
+	
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao('Deseja cancelar o plano de capital atual?','Confirma&ccedil;&atilde;o - Ayllos','excluirPlano()',metodoBlock,'sim.gif','nao.gif');return false;">
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,false);return false;">
 	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
 </div>
 					
+
+<div id="divBotoesSenha" style="display:none;">
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
+  <input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,true);return false;">
+	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
+</div>				
 					
 <form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_cancelamento.php" name="frmTermoCancela" id="frmTermoCancela" method="post">
 <input type="hidden" name="nrdconta" id="nrdconta" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
-
 <form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_autorizacao.php" name="frmTermoAutoriza" id="frmTermoAutoriza" method="post">
 <input type="hidden" name="nrdconta" id="nrdconta" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
@@ -205,25 +226,37 @@ var aux_flcancel = "<?php echo $plano[4]->cdata; ?>";
 
 var cTodos       = $('select,input','#frmNovoPlano');
 
-$('#divBotoes','#divConteudoOpcao').html("");
-$('#divBotoes','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelarPlanoAtual()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+$('#divBotoesSenha','#divConteudoOpcao').html("");
+$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
+
+$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaSenhaMagnetico(\\\'cancelarPlanoAtual()\\\',\\\'<?php echo $nrdconta ?>\\\')\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirPlano()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
 
 if (aux_flcancel == "yes") {
-	$('#divBotoes','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true);return false;">');
+    $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,true);return false;">');
+	  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,false);return false;">');
 	
 	cTodos.desabilitaCampo();
 	
 	$('#vlprepla','#frmNovoPlano').habilitaCampo();
 	$('#cdtipcor','#frmNovoPlano').habilitaCampo();
 	$('#vlcorfix','#frmNovoPlano').habilitaCampo();
+    $('#senha','#frmNovoPlano').habilitaCampo();
+    $('#autorizacao','#frmNovoPlano').habilitaCampo();
+    
 } else {
-	$('#divBotoes','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false);return false;">');
+	  $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,true);return false;">');
+	  $('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(false,false);return false;">');
+	
 	
 	$('#dtultatu','#frmNovoPlano').desabilitaCampo();
 	$('#dtproatu','#frmNovoPlano').desabilitaCampo();
+    $('#senha','#frmNovoPlano').habilitaCampo();
+    $('#autorizacao','#frmNovoPlano').habilitaCampo();
 }
 		
-$('#divBotoes','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
+$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
+$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" style="margin-left:5px;" onClick="imprimeNovoPlano();return false;">');
 
 habilitaValor();
 

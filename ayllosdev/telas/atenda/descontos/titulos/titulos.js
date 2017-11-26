@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de Títulos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 22/11/2016
  * --------------
  * 000: [08/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [22/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -23,6 +23,9 @@
  *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
+ * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
+ * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
+ * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -257,6 +260,11 @@ function liberaAnalisaBorderoDscTit(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
     var cdopcoan = 0;
     var cdopcolb = 0;
 			
+    // Reinicializa somente quando pede a senha
+    if (idconfi6 == 51) {
+        glb_codigoOperadorLiberacao = 0;
+    }
+			
 	// Mostra mensagem de aguardo
 	if (opcao == "N") {
 		mensagem = "analisando";
@@ -265,8 +273,6 @@ function liberaAnalisaBorderoDscTit(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
 		mensagem = "liberando";
         cdopcolb = glb_codigoOperadorLiberacao;
 	}
-
-	glb_codigoOperadorLiberacao = 0;
 
 	showMsgAguardo("Aguarde, "+mensagem+" o border&ocirc; ...");
 
@@ -944,8 +950,6 @@ function controlaLupas(nrdconta) {
 	
 	return false;
 }
-
-
 // Função para fechar div com mensagens de alerta
 function encerraMsgsGrupoEconomico(){
 	
@@ -989,7 +993,6 @@ function mostraMsgsGrupoEconomico(){
 	return false;
 	
 }
-
 function formataGrupoEconomico(){
 
 	var divRegistro = $('div.divRegistros','#divMsgsGrupoEconomico');		
@@ -1111,4 +1114,79 @@ function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idco
 			$("#divOpcoesDaOpcao2").html(response);
 		}				
 	});		
+}
+
+//Funcao para formatar a tabela com inconsistências encontradas
+function tabela(){
+
+	var divRegistro = $('div.divRegistros', '#divMsgsGenericas');
+	var tabela      = $('table',divRegistro );	
+	var linha		= $('table > tbody > tr', divRegistro );
+			
+	$('#divMsgsGenericas').css('width', '400px');
+    divRegistro.css({ 'height': '230px', 'width' : '100%'});
+
+	var ordemInicial = new Array();
+		ordemInicial = [[1,0]];		
+			
+	var arrayLargura = new Array(); 
+		arrayLargura[0] = '25%';
+
+    var arrayAlinha = new Array();
+        arrayAlinha[0] = 'center';
+		
+	var metodoTabela = '';
+				
+	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,metodoTabela);			
+			
+    
+	$('div.divRegistros', '#divListaMsgsGenericas').css('display', 'block');
+		
+}
+
+    
+// Função para fechar div com mensagens de alerta
+function encerraMsgsGenericas(){
+	
+    // Esconde div
+    $("#divMsgsGenericas").css("visibility", "hidden");
+	
+    $("#divListaMsgsGenericas").html("&nbsp;");
+	
+	// Esconde div de bloqueio
+	unblockBackground();
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+	
+	return false;
+	
+}
+
+function mostraMsgsGenericas(){
+	
+	
+	if(strHTML != ''){
+		
+	    //Coloca o titulo na tela
+	    $("#tituloDaTela", "#divMsgsGenericas").html("Inconsist&ecirc;ncias");
+
+		// Coloca conteúdo HTML no div
+	    $("#divListaMsgsGenericas").html(strHTML);
+		
+		// Mostra div 
+	    $("#divMsgsGenericas").css("visibility", "visible");
+		
+        tabela();
+
+	    exibeRotina($("#divMsgsGenericas"));
+		
+		// Esconde mensagem de aguardo
+		hideMsgAguardo();
+					
+		// Bloqueia conteúdo que está átras do div de mensagens
+		blockBackground(parseInt($("#divMsgsGenericas").css("z-index")));
+				
+	}
+	
+	return false;
+	
 }
