@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 21/06/2016
+ Data    : Janeiro/92.                         Ultima atualizacao: 24/04/2017
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -133,21 +133,28 @@ BEGIN
 
           29/04/2014 - Aumentado o format do campo cdlcremp de 3 para 4
                        posicoes (Tiago/Gielow SD137074).
-                       
+
           01/04/2015 - Projeto de separação contábeis de PF e PJ. Considerar
                        Pessoa Administrativa (inpessoa = 3) como PJ
                        (Andre Santos - SUPERO).
 
-          08/05/2015 - Ajuster a geração do arquivo de capital, utilizando a 
+          08/05/2015 - Ajuster a geração do arquivo de capital, utilizando a
                        data+1 para os dados de reversão e alterando o separador
                        dos valores para vírgula. ( Renato - Supero)
-                       
+
           23/07/2015 - Ajustar a geração do arquivo de capital, para considerar
                        apenas valores ativos ( Renato - Supero )
 
           21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
-                       (Carlos Rafael Tanholi).                            
-                       
+                       (Carlos Rafael Tanholi).
+
+   		  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                       P308 (Ricardo Linhares).                            
+
+		  24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			           crapass, crapttl, crapjur 
+					  (Adriano - P339).                     
+
    ............................................................................. */
    DECLARE
 
@@ -171,7 +178,7 @@ BEGIN
 
      TYPE typ_reg_craptdb IS
      RECORD(tab_craptdb typ_tab_craptdb_det);
-    
+
      TYPE typ_tab_craptdb IS
        TABLE OF typ_reg_craptdb
        INDEX BY PLS_INTEGER; -- Numero da conta
@@ -294,7 +301,7 @@ BEGIN
      TYPE typ_reg_crapass IS
        RECORD (nmprimtl crapass.nmprimtl%type
               ,nrfonres VARCHAR2(20)
-              ,nrfonemp crapass.nrfonemp%type
+              ,nrtelefo craptfc.nrtelefo%type
               ,nrmatric crapass.nrmatric%type);
      --Definicao do tipo de tabela para associados
      TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
@@ -321,20 +328,20 @@ BEGIN
      TYPE typ_tab_total IS
        TABLE OF typ_reg_total
        INDEX BY PLS_INTEGER;
-     
+
      -- Instancia e indexa por agencia os valores de capital subscrito menos o procap de pessoa fisica
      TYPE typ_tab_vlcapage_fis IS
        TABLE OF NUMBER INDEX BY PLS_INTEGER;
-    
+
      -- Instancia e indexa por agencia os valores de capital subscrito menos o procap de pessoa juridica
      TYPE typ_tab_vlcapage_jur IS
        TABLE OF NUMBER
        INDEX BY PLS_INTEGER;
-       
+
      -- Instancia e indexa por agencia os valores de capital a integralizar de pessoa fisica
      TYPE typ_tab_vlcapctz_fis IS
        TABLE OF NUMBER INDEX BY PLS_INTEGER;
-    
+
      -- Instancia e indexa por agencia os valores de capital a integralizar de pessoa juridica
      TYPE typ_tab_vlcapctz_jur IS
        TABLE OF NUMBER
@@ -344,7 +351,7 @@ BEGIN
      TYPE typ_tab_tot_pcap_fis IS
        TABLE OF NUMBER
        INDEX BY PLS_INTEGER;
-     
+
      -- Instancia e indexa por agencia e tipo de pessoas o valor do procapcred
      TYPE typ_tab_tot_pcap_jur IS
        TABLE OF NUMBER
@@ -371,7 +378,7 @@ BEGIN
      vr_tab_crapsdc        typ_reg_tot;
      vr_tab_craptab_motivo typ_reg_craptab_motivo;
      vr_typ_tab_total      typ_tab_total;
-     vr_tab_vlcapage_fis   typ_tab_vlcapage_fis;     
+     vr_tab_vlcapage_fis   typ_tab_vlcapage_fis;
      vr_tab_vlcapage_jur   typ_tab_vlcapage_jur;
      vr_tab_vlcapctz_fis   typ_tab_vlcapctz_fis;
      vr_tab_vlcapctz_jur   typ_tab_vlcapctz_jur;
@@ -400,6 +407,13 @@ BEGIN
      vr_tab_tot_vljurmes     typ_reg_tot;
      vr_tab_tot_qtassemp     typ_reg_tot;
      vr_tab_rel_qttotmot     typ_reg_tot;
+
+     -- variáveis para controle de arquivos
+     vr_dircon VARCHAR2(200);
+     vr_arqcon VARCHAR2(200);
+     vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+     vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+     vc_cdtodascooperativas INTEGER := 0;       
 
      /* Cursores da pc_crps010 */
 
@@ -488,7 +502,6 @@ BEGIN
               crapass.nrdconta
              ,crapass.nmprimtl
              ,TO_CHAR(NULL) NRFONRES  -- Retorna NULL, pois é necssário que o campo exista no select
-             ,crapass.nrfonemp
              ,crapass.nrmatric
          FROM crapass crapass
         WHERE  crapass.cdcooper = pr_cdcooper;
@@ -742,10 +755,10 @@ BEGIN
      vr_fisrtemp     BOOLEAN;
      vr_cdagenci     crapage.cdagenci%TYPE;
      vr_nmresage     crapage.nmresage%TYPE;
-     
+
      -- Variavel para controle de PL-TABLE - PROCAP
      vr_ind_first VARCHAR2(100);
-     vr_ind_last VARCHAR2(100);   
+     vr_ind_last VARCHAR2(100);
      vr_first VARCHAR2(100);
      vr_last  VARCHAR2(100);
 
@@ -828,8 +841,8 @@ BEGIN
      vr_tot_pcapcred_jur NUMBER:= 0;
      vr_tab_craplct      PCAP0001.typ_tab_craplct;
      vr_typ_tab_ativos   PCAP0001.typ_tab_ativos;
-     
-     
+
+
      -- Variaveis de indice para as tabelas de memoria
      vr_index_demitidos  VARCHAR2(20);
      vr_index_duplicados VARCHAR2(15);
@@ -1114,7 +1127,7 @@ BEGIN
         vr_dup_qtcottot_fis:= Nvl(vr_typ_tab_total(1).dup_qtcotist_ati,0) +
                               Nvl(vr_typ_tab_total(1).dup_qtcotist_dem,0) +
                               Nvl(vr_typ_tab_total(1).dup_qtcotist_exc,0);
-        
+
         --Totalizar quantidade cotistas somando ativos, demitidos e excluidos por PJ
         vr_dup_qtcottot_jur:= Nvl(vr_typ_tab_total(2).dup_qtcotist_ati,0) +
                               Nvl(vr_typ_tab_total(2).dup_qtcotist_dem,0) +
@@ -1179,7 +1192,7 @@ BEGIN
            <tcs_at_jur>'||to_char(vr_tcs_vlcapati_jur,'fm9999g999g999g999g990d00')||'</tcs_at_jur>
            <tcs_in_jur>'||to_char(vr_tcs_vlcapdem_jur,'fm9999g999g999g999g990d00')||'</tcs_in_jur>
            <tcs_ex_jur>'||to_char(vr_tcs_vlcapexc_jur,'fm9999g999g999g999g990d00')||'</tcs_ex_jur>
-           <tcs_tot_jur>'||to_char(vr_tcs_vlcaptot_jur,'fm9999g999g999g999g990d00')||'</tcs_tot_jur>           
+           <tcs_tot_jur>'||to_char(vr_tcs_vlcaptot_jur,'fm9999g999g999g999g990d00')||'</tcs_tot_jur>
            <cot_at>'||to_char(vr_res_qtcotist_ati,'fm999g990')||'</cot_at>
            <cot_in>'||to_char(vr_res_qtcotist_dem,'fm999g990')||'</cot_in>
            <cot_ex>'||to_char(vr_res_qtcotist_exc,'fm999g990')||'</cot_ex>
@@ -1226,7 +1239,7 @@ BEGIN
 
         -- Processar todas as agencias
         FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
-           
+
            -- Se existir cotistas para a agencia
            IF vr_tab_age_qtcotist_ati.EXISTS(rw_crapage.cdagenci) AND
               vr_tab_age_qtcotist_dem.EXISTS(rw_crapage.cdagenci) AND
@@ -1275,7 +1288,7 @@ BEGIN
 
         -- Finalizar agrupador recadastro e relatorio
         pc_escreve_xml('</pacs></crrl031>');
- 
+
         -- Efetuar solicitação de geração de relatório --
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
                                    ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
@@ -1328,9 +1341,9 @@ BEGIN
                               contas duplicadas (Diego).
 
                  04/07/2005 - Imprimir o relatorio 421 em duplex (Edson).
- 
+
                  27/07/2005 - Alterado glb_nrcopias para 2 (Diego).
-  
+
                  12/08/2005 - Gerar um arquivo detalhado, com as contas de cada
                               motivo, para Leticia - VIACREDI (Evandro).
 
@@ -1477,7 +1490,7 @@ BEGIN
            IF vr_des_chave = vr_tab_demitidos.LAST OR
               vr_tab_demitidos(vr_des_chave).cdmotdem <> vr_tab_demitidos(vr_tab_demitidos.NEXT(vr_des_chave)).cdmotdem OR
               vr_tab_demitidos(vr_des_chave).cdagenci <> vr_tab_demitidos(vr_tab_demitidos.NEXT(vr_des_chave)).cdagenci THEN
-             
+
               -- Verificar se existe o motivo da demissao
               IF vr_tab_craptab_motivo.EXISTS(vr_cdmotdem) THEN
                  -- Atribuir a descricao do motivo
@@ -1596,7 +1609,7 @@ BEGIN
              RAISE vr_exc_saida;
           END IF;
         END IF;
-        
+
      EXCEPTION
        WHEN vr_exc_saida THEN
          pr_des_erro:= vr_des_erro;
@@ -1683,6 +1696,8 @@ BEGIN
         vr_cdcritic  INTEGER:= 0;
         -- Número do telefone do associado
         vr_nrfonres  VARCHAR2(20);
+		-- Número do telefone do associado
+        vr_nrfonemp  VARCHAR2(20);
         -- Variavel de Exceção
         vr_exc_erro  EXCEPTION;
 
@@ -1729,7 +1744,6 @@ BEGIN
              rw_crapass.nrdconta:= vr_tab_duplicados(vr_des_chave).nrdconta;
              rw_crapass.nmprimtl:= vr_tab_crapass(rw_crapass.nrdconta).nmprimtl;
              rw_crapass.nrmatric:= vr_tab_crapass(rw_crapass.nrdconta).nrmatric;
-             rw_crapass.nrfonemp:= vr_tab_crapass(rw_crapass.nrdconta).nrfonemp;
           END IF;
 
           -- Selecionar informacoes das cotas
@@ -1770,8 +1784,8 @@ BEGIN
           END IF;
 
           vr_nrfonres         := NULL;
-          rw_crabass.nrfonemp := NULL;
-         
+          vr_nrfonemp := NULL;
+
           -- Buscar telefone do associado Residencial
           OPEN cr_craptfc(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => rw_crapass.nrdconta
@@ -1794,7 +1808,7 @@ BEGIN
           IF cr_craptfc%NOTFOUND THEN
              CLOSE cr_craptfc;
           ELSE
-             rw_crabass.nrfonemp := rw_craptfc.nrdddtfc || rw_craptfc.nrtelefo;
+             vr_nrfonemp := rw_craptfc.nrdddtfc || rw_craptfc.nrtelefo;
              CLOSE cr_craptfc;
           END IF;
 
@@ -1812,7 +1826,7 @@ BEGIN
                         <nrdconta>'||LTrim(gene0002.fn_mask_conta(rw_crapass.nrdconta))||'</nrdconta>
                         <nmprimtl><![CDATA['||substr(rw_crapass.nmprimtl,1,21)||']]></nmprimtl>
                         <nrfonres>'||vr_nrfonres||'</nrfonres>
-                        <nrfonemp>'||rw_crabass.nrfonemp||'</nrfonemp>
+                        <nrfonemp>'||vr_nrfonemp||'</nrfonemp>
                         <vldcotas>'||To_Char(rw_crapcot.vldcotas,'fm999g999g990d00')||'</vldcotas>
                         <nrmatric>'||LTrim(gene0002.fn_mask_matric(rw_crabass.nrmatric))||'</nrmatric>
                         <nrdconta_trf>'||LTrim(gene0002.fn_mask_conta(rw_craptrf.nrdconta))||'</nrdconta_trf>
@@ -1869,9 +1883,9 @@ BEGIN
 
      -- Geracao do relatorio 398
      PROCEDURE pc_imprime_crrl398 (pr_des_erro OUT VARCHAR2) IS
-   
+
         /* Cursores internos da procedure */
-        
+
         -- Selecionar informacoes dos saldos
         CURSOR cr_crapsld (pr_cdcooper IN crapsld.cdcooper%TYPE) IS
            SELECT crapsld.nrdconta
@@ -1988,7 +2002,7 @@ BEGIN
            -- Gerar exceção
             RAISE vr_exc_saida;
         END IF;
-       
+
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_des_xml);
         dbms_lob.freetemporary(vr_des_xml);
@@ -2003,9 +2017,9 @@ BEGIN
 
      -- Geração do relatório de resumo geral
      PROCEDURE pc_imprime_crrl014_total (pr_des_erro OUT VARCHAR2) IS
-    
+
         /* Cursores Locais */
-     
+
         CURSOR cr_crapvia (pr_cdcooper IN crapvia.cdcooper%TYPE
                           ,pr_cdrelato IN crapvia.cdrelato%TYPE
                           ,pr_cdagenci IN crapvia.cdagenci%TYPE) IS
@@ -2096,13 +2110,13 @@ BEGIN
                                     <s_mes3>'||to_char(vr_tab_tot_vlsmmes3(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_mes3>
                                     <s_cap>'||to_char(vr_tab_tot_vlcaptal(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_cap>
                                  </s1>');
-              END IF;    
+           END IF;
            END IF;
         END LOOP;
 
         -- Finalizar agrupador de planos e iniciar de abertura
         pc_escreve_xml('</saldos><emprestimos>');
-        
+
         -- Processar todas as agencias
         FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
            -- Se existir associados e planos para a agencia
@@ -2126,7 +2140,7 @@ BEGIN
 
         -- Processar todas as agencias
         FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
-           
+
            -- Se existir associados e planos para a agencia
            IF vr_tab_tot_qtjrecad.EXISTS(rw_crapage.cdagenci) AND
               vr_tab_tot_qtnrecad.EXISTS(rw_crapage.cdagenci) AND
@@ -2194,7 +2208,7 @@ BEGIN
            -- Gerar exceção
            RAISE vr_exc_saida;
         END IF;
-        
+
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_des_xml);
         dbms_lob.freetemporary(vr_des_xml);
@@ -2206,7 +2220,7 @@ BEGIN
          pr_des_erro:= 'Erro ao imprimir relatório crrl014_total. '||sqlerrm;
      END;
 
-     
+
      -- Geracao de arquivo AAMMDD_CAPITAL.txt
      PROCEDURE pc_gera_arq_capital (pr_des_erro OUT VARCHAR2) IS
 
@@ -2214,16 +2228,16 @@ BEGIN
         vr_nmarqtxt   VARCHAR2(100);
         vr_setlinha   VARCHAR2(4000);
         vr_typ_saida  VARCHAR2(4000);
-        
+
         -- Diretório micros
         vr_dir_micros VARCHAR2(100);
         vr_dscomand   VARCHAR2(1000);
-        
-        
+
+
         -- Total geral de capital subscrito por PF e PJ
         vr_tot_capfis NUMBER := 0;
         vr_tot_capjur NUMBER := 0;
-        
+
         -- Variavel de Exceção
         vr_exc_erro EXCEPTION;
 
@@ -2231,17 +2245,17 @@ BEGIN
 
         -- Arquivo gerado somente no processo mensal
         IF TRUNC(rw_crapdat.dtmvtopr,'MM') <> TRUNC(rw_crapdat.dtmvtolt,'MM') THEN
-          
+
            -- Verificar forma de buscar os valores de procap por tipo de pessoa e agencia
            -- Valor Total recebe Valor Total Subscrito - total dos valores ativos(PROCAP)
            vr_tot_capfis := vr_tot_capagefis;
            vr_tot_capjur := vr_tot_capagejur;
-           
+
            -- Busca o caminho padrao do arquivo no unix + /integra
            vr_nom_direto:= GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                                 ,pr_cdcooper => pr_cdcooper
                                                 ,pr_nmsubdir => 'contab');
-                                                
+
            -- Determinar o nome do arquivo baseado no ano, mes e dia da data movimento
            vr_nmarqtxt:=  TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_CAPITAL.txt';
 
@@ -2256,11 +2270,11 @@ BEGIN
               -- Levantar Excecao
               RAISE vr_exc_erro;
            END IF;
-           
+
            -- Se o valor total é maior que zero
            IF NVL(vr_tot_capfis,0) > 0 THEN
-           
-             /*** Montando as informacoes de PESSOA FISICA ***/       
+
+             /*** Montando as informacoes de PESSOA FISICA ***/
              -- Montando o cabecalho das contas do dia atual
              vr_setlinha := '70'||                                                                                   --> Informacao inicial
                             TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                             --> Data AAMMDD do Arquivo
@@ -2274,8 +2288,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapage_fis.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapage_fis.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2311,8 +2325,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapage_fis.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapage_fis.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2334,11 +2348,11 @@ BEGIN
                END LOOP; -- fim repete
              END IF;
            END IF; -- Se maior que zero
-           
+
            -- Se o valor total é maior que zero
            IF NVL(vr_tot_capjur,0) > 0 THEN
-           
-             /*** Montando as informacoes de PESSOA JURIDICA ***/       
+
+             /*** Montando as informacoes de PESSOA JURIDICA ***/
              -- Montando o cabecalho das contas do dia atual
              vr_setlinha := '70'||                                                                                   --> Informacao inicial
                             TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                             --> Data AAMMDD do Arquivo
@@ -2352,8 +2366,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapage_jur.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapage_jur.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2385,12 +2399,12 @@ BEGIN
                             TRIM(TO_CHAR(vr_tot_capjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                             gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                      --> Fixo
                            '"'||vr_dsprefix||'COTAS CAPITAL COOPERADOS PESSOA JURIDICA"';                                             --> Descricao
-                        
+
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapage_jur.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapage_jur.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2412,11 +2426,11 @@ BEGIN
                END LOOP; -- fim repete
              END IF;
            END IF; -- Se maior que zero
-           
+
            -- Se o valor total é maior que zero
            IF NVL(vr_tot_vlcapctz_fis,0) > 0 THEN
-             
-             /*** Montando as informacoes de PESSOA FISICA ***/       
+
+             /*** Montando as informacoes de PESSOA FISICA ***/
              -- Montando o cabecalho das contas do dia atual
              vr_setlinha := '70'||                                                                                         --> Informacao inicial
                             TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                   --> Data AAMMDD do Arquivo
@@ -2430,8 +2444,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapctz_fis.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapctz_fis.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2467,8 +2481,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapctz_fis.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapctz_fis.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2490,11 +2504,11 @@ BEGIN
                END LOOP; -- fim repete
              END IF;
            END IF; -- Se maior que zero
-           
+
            -- Se o valor total é maior que zero
            IF NVL(vr_tot_vlcapctz_jur,0) > 0 THEN
-             
-             /*** Montando as informacoes de PESSOA JURIDICA ***/       
+
+             /*** Montando as informacoes de PESSOA JURIDICA ***/
              -- Montando o cabecalho das contas do dia atual
              vr_setlinha := '70'||                                                                                         --> Informacao inicial
                             TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                   --> Data AAMMDD do Arquivo
@@ -2508,8 +2522,8 @@ BEGIN
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapctz_jur.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapctz_jur.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2541,12 +2555,12 @@ BEGIN
                             TRIM(TO_CHAR(vr_tot_vlcapctz_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
                             gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                            --> Fixo
                            '"'||vr_dsprefix||'COTAS CAPITAL A INTEGRALIZAR DE COOPERADOS PESSOA JURIDICA"';                                 --> Descricao
-                        
+
              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-             -- Verifica se existe valores       
-             IF vr_tab_vlcapctz_jur.COUNT > 0 THEN               
+             -- Verifica se existe valores
+             IF vr_tab_vlcapctz_jur.COUNT > 0 THEN
                -- Repetir os valores para cada conta, ou seja, duplicado
                FOR repete IN 1..2 LOOP
                  -- Gravas as informacoes de valores por agencia
@@ -2585,9 +2599,9 @@ BEGIN
 
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                             ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                            
-              -- Verifica se existe valores       
-              IF vr_tab_tot_pcap_fis.COUNT > 0 THEN               
+
+              -- Verifica se existe valores
+              IF vr_tab_tot_pcap_fis.COUNT > 0 THEN
                 -- Repetir os valores para cada conta, ou seja, duplicado
                 FOR repete IN 1..2 LOOP
                   -- Gravas as informacoes de valores por agencia
@@ -2623,8 +2637,8 @@ BEGIN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                             ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-              -- Verifica se existe valores       
-              IF vr_tab_tot_pcap_fis.COUNT > 0 THEN               
+              -- Verifica se existe valores
+              IF vr_tab_tot_pcap_fis.COUNT > 0 THEN
                 -- Repetir os valores para cada conta, ou seja, duplicado
                 FOR repete IN 1..2 LOOP
                   -- Gravas as informacoes de valores por agencia
@@ -2646,9 +2660,9 @@ BEGIN
                 END LOOP; -- fim repete
               END IF;
 
-           END IF; 
-           
-           
+           END IF;
+
+
            -- Se o valor total é maior que zero
            IF NVL(vr_tot_pcapcred_jur,0) > 0 THEN
 
@@ -2665,9 +2679,9 @@ BEGIN
 
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                             ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                            
-              -- Verifica se existe valores       
-              IF vr_tab_tot_pcap_jur.COUNT > 0 THEN               
+
+              -- Verifica se existe valores
+              IF vr_tab_tot_pcap_jur.COUNT > 0 THEN
                 -- Repetir os valores para cada conta, ou seja, duplicado
                 FOR repete IN 1..2 LOOP
                   -- Gravas as informacoes de valores por agencia
@@ -2702,9 +2716,9 @@ BEGIN
 
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                             ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                            
-              -- Verifica se existe valores       
-              IF vr_tab_tot_pcap_jur.COUNT > 0 THEN               
+
+              -- Verifica se existe valores
+              IF vr_tab_tot_pcap_jur.COUNT > 0 THEN
                 -- Repetir os valores para cada conta, ou seja, duplicado
                 FOR repete IN 1..2 LOOP
                   -- Gravas as informacoes de valores por agencia
@@ -2725,9 +2739,9 @@ BEGIN
                   END LOOP;
                 END LOOP; -- fim repete
               END IF;
-              
+
            END IF;
-             
+
            -- Fechar Arquivo
            BEGIN
               gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
@@ -2737,15 +2751,15 @@ BEGIN
                  vr_des_erro := 'Problema ao fechar o arquivo <'||vr_nom_direto||'/'||vr_nmarqtxt||'>: ' || sqlerrm;
                  RAISE vr_exc_erro;
            END;
-           
-           -- Buscar o diretório Micros
-           vr_dir_micros := GENE0001.fn_diretorio(pr_tpdireto => 'M'
-                                                 ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsubdir => 'contab');
-                                                
-           -- Executa comando UNIX para converter arq para Dos
-           vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
-                                    || vr_dir_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
+
+          -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+          vr_dircon := vr_dircon || vc_dircon;
+          vr_arqcon:=  TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CAPITAL.txt';          
+
+          -- Executa comando UNIX para converter arq para Dos
+           vr_dscomand := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
+                                    vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
            -- Executar o comando no unix
            GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2755,7 +2769,7 @@ BEGIN
            IF vr_typ_saida = 'ERR' THEN
              RAISE vr_exc_erro;
            END IF;
-           
+
         END IF; -- Fim do IF de validacao Mensal
 
      EXCEPTION
@@ -2807,11 +2821,11 @@ BEGIN
       ELSE
          -- Apenas fechar o cursor
          CLOSE btch0001.cr_crapdat;
-         
+
          --Atribuir a data do movimento
          vr_dtmvtolt:= rw_crapdat.dtmvtolt;
       END IF;
-      
+
       -- Validações iniciais do programa
       BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
                                 ,pr_flgbatch => 1
@@ -2949,7 +2963,6 @@ BEGIN
       FOR rw_crapass IN cr_crapass_carga (pr_cdcooper => pr_cdcooper) LOOP
          vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
          vr_tab_crapass(rw_crapass.nrdconta).nrfonres:= NULL;
-         vr_tab_crapass(rw_crapass.nrdconta).nrfonemp:= rw_crapass.nrfonemp;
          vr_tab_crapass(rw_crapass.nrdconta).nrmatric:= rw_crapass.nrmatric;
       END LOOP;
 
@@ -2988,13 +3001,13 @@ BEGIN
          vr_typ_tab_total(idx).sub_vlcapcrz_ati := 0;
          vr_typ_tab_total(idx).sub_vlcapcrz_dem := 0;
          vr_typ_tab_total(idx).sub_vlcapcrz_exc := 0;
-         vr_typ_tab_total(idx).sub_vlcapcrz_tot := 0;        
+         vr_typ_tab_total(idx).sub_vlcapcrz_tot := 0;
          vr_typ_tab_total(idx).res_qtcotist_ati := 0;
          vr_typ_tab_total(idx).res_qtcotist_dem := 0;
          vr_typ_tab_total(idx).res_qtcotist_exc := 0;
          vr_typ_tab_total(idx).res_qtcotist_tot := 0;
       END LOOP;
-      
+
 
 
       -- Determinar a data do movimento voltando 2 meses e pegando o dia 1 desse mes
@@ -3060,10 +3073,10 @@ BEGIN
       vr_desconto:= 0;
       -- Zerar variavel de desconto de titulos
       vr_desctitu:= 0;
-     
+
       --Selecionar e percorrer todas as Agencias da Cooperativa
       FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
-         
+
          -- Atribuir codigo da agencia
          vr_cdagenci:= rw_crapage.cdagenci;
          -- Atribuir nome resumido da agencia
@@ -3093,11 +3106,11 @@ BEGIN
             BEGIN
                -- Se for pessoa fisica
                IF rw_crapass.inpessoa = 1 THEN
-                  
+
                   -- Montar indice para buscar titulares da conta
                   vr_index_crapttl:= LPad(pr_cdcooper,10,'0')||LPad(rw_crapass.nrdconta,10,'0');
                   -- Selecionar informacoes dos titulares da conta
-                  
+
                   IF vr_tab_crapttl.EXISTS(vr_index_crapttl) THEN
                      -- Codigo da empresa recebe o codigo da empresa do titular da conta
                      vr_cdempres:= vr_tab_crapttl(vr_index_crapttl).cdempres;
@@ -3127,7 +3140,7 @@ BEGIN
                   vr_tab_demitidos(vr_index_demitidos).cdagenci:= rw_crapass.cdagenci;
                   vr_tab_demitidos(vr_index_demitidos).nrdconta:= rw_crapass.nrdconta;
                   vr_tab_demitidos(vr_index_demitidos).inmatric:= rw_crapass.inmatric;
-                  
+
                   /* Quem nao possui motivo recebe motivo = 1 na temp-table */
                   IF rw_crapass.cdmotdem = 0 THEN
                      vr_tab_demitidos(vr_index_demitidos).cdmotdem:= 1;
@@ -3145,7 +3158,7 @@ BEGIN
                                           ,pr_nrdmeses => vr_nrdmeses
                                           ,pr_dsdidade => vr_dsdidade
                                           ,pr_des_erro => vr_des_erro);
-                  
+
                   -- Se ocorreu erro
                   IF vr_des_erro IS NOT NULL THEN
                      -- Levantar Excecao
@@ -3318,14 +3331,14 @@ BEGIN
                     vr_tab_tot_vlcaptal(rw_crapass.cdagenci):= Nvl(vr_rel_vlcaptal,0);
                   END IF;
                END IF;
-               
+
                /* Acumula dados para o resumo mensal do capital */
-       
+
                -- Se a data de demissao estiver nula
                IF rw_crapass.dtdemiss IS NULL THEN
                   -- Incrementar Valor capital ativo com o valor do capital
                   vr_res_vlcapcrz_ati:= Nvl(vr_res_vlcapcrz_ati,0) + Nvl(vr_rel_vlcaptal,0);
-                  -- Incrementar Valor capital ativo com o valor do capital por PF e PJ             
+                  -- Incrementar Valor capital ativo com o valor do capital por PF e PJ
                   vr_typ_tab_total(rw_crapass.inpessoa).res_vlcapcrz_ati := vr_typ_tab_total(rw_crapass.inpessoa).res_vlcapcrz_ati  + Nvl(vr_rel_vlcaptal,0);
                   -- Incrementar Valor capital moeda fixa com o qdade cotas
                   vr_res_vlcapmfx_ati:= Nvl(vr_res_vlcapmfx_ati,0) + Nvl(vr_tab_crapcot(rw_crapass.nrdconta).qtcotmfx,0);
@@ -3338,7 +3351,7 @@ BEGIN
                   IF rw_crapass.inmatric = 1 THEN
                      -- Incrementa Quantidade cotistas ativos
                      vr_res_qtcotist_ati:= Nvl(vr_res_qtcotist_ati,0) + 1;
-                     -- Incrementa Quantidade cotistas ativos por PF e PJ             
+                     -- Incrementa Quantidade cotistas ativos por PF e PJ
                      vr_typ_tab_total(rw_crapass.inpessoa).res_qtcotist_ati := vr_typ_tab_total(rw_crapass.inpessoa).res_qtcotist_ati + 1;
                      -- Incrementa a quantidade de cotistas ativos da agencia
                      IF vr_tab_age_qtcotist_ati.EXISTS(rw_crapass.cdagenci) THEN
@@ -3385,7 +3398,7 @@ BEGIN
                ELSE
                   -- Incrementar Valor capital excluido com o valor do capital
                   vr_res_vlcapcrz_exc:= Nvl(vr_res_vlcapcrz_exc,0) + Nvl(vr_rel_vlcaptal,0);
-                  -- Incrementar Valor capital excluido com o valor do capital por PF e PJ             
+                  -- Incrementar Valor capital excluido com o valor do capital por PF e PJ
                   vr_typ_tab_total(rw_crapass.inpessoa).res_vlcapcrz_exc := vr_typ_tab_total(rw_crapass.inpessoa).res_vlcapcrz_exc + Nvl(vr_rel_vlcaptal,0);
                   -- Incrementar Valor capital moeda fixa com o qdade cotas
                   vr_res_vlcapmfx_exc:= Nvl(vr_res_vlcapmfx_exc,0) + Nvl(vr_tab_crapcot(rw_crapass.nrdconta).qtcotmfx,0);
@@ -3398,10 +3411,10 @@ BEGIN
                   IF rw_crapass.inmatric = 1 THEN
                      -- Incrementa Quantidade cotistas demitidos
                      vr_res_qtcotist_exc:= Nvl(vr_res_qtcotist_exc,0) + 1;
-                     -- Incrementa Quantidade cotistas demitidos por PF e PJ             
+                     -- Incrementa Quantidade cotistas demitidos por PF e PJ
                      vr_typ_tab_total(rw_crapass.inpessoa).res_qtcotist_exc := vr_typ_tab_total(rw_crapass.inpessoa).res_qtcotist_exc + 1;
                      -- Incrementa a quantidade de cotistas demitidos da agencia
-                  
+
                      IF vr_tab_age_qtcotist_exc.EXISTS(rw_crapass.cdagenci) THEN
                         vr_tab_age_qtcotist_exc(rw_crapass.cdagenci):= vr_tab_age_qtcotist_exc(rw_crapass.cdagenci)+1;
                      ELSE
@@ -3436,13 +3449,13 @@ BEGIN
                   vr_ind_last  := LPAD(rw_crapass.cdagenci,5,'0')||
                                   LPAD(rw_crapass.nrdconta,10,'0')||
                                   '99999999'||'9999999999';
-                                  
+
                   -- Busca o proximo indice maior a chave inicial montada
                   vr_first := vr_tab_craplct.NEXT(vr_ind_first);
 
                   -- Busca o registro anterior a chave final montada
                   vr_last := vr_tab_craplct.PRIOR(vr_ind_last);
-                  
+
                   IF (vr_first IS NOT NULL AND vr_last IS NULL) OR -- Se o indice inicial esta preenchido e o final null
                      (vr_first IS NULL AND vr_last IS NOT NULL) OR -- Se o indice final esta preenchido e o inicial null
                      (vr_last < vr_first) THEN -- Se ambos os indice estiverem preenchido, verifica se o final eh menor que o inicial
@@ -3464,7 +3477,7 @@ BEGIN
 
                      -- Guarda as informacoes de total capital por agencia. Dados para Contabilidade
                      IF rw_crapass.inpessoa = 1 THEN
-                        
+
                         IF vr_tab_tot_pcap_fis.EXISTS(rw_crapass.cdagenci) THEN
                            vr_tab_tot_pcap_fis(rw_crapass.cdagenci) := vr_tab_tot_pcap_fis(rw_crapass.cdagenci) + vr_rel_vlproctl;
                         ELSE
@@ -3473,7 +3486,7 @@ BEGIN
 
                         vr_tot_pcapcred_fis := vr_tot_pcapcred_fis + vr_rel_vlproctl;
                      ELSE
-                        
+
                         IF vr_tab_tot_pcap_jur.EXISTS(rw_crapass.cdagenci) THEN
                            vr_tab_tot_pcap_jur(rw_crapass.cdagenci) := vr_tab_tot_pcap_jur(rw_crapass.cdagenci) + vr_rel_vlproctl;
                         ELSE
@@ -3485,14 +3498,14 @@ BEGIN
 
                      -- Grava o valor do capital total subscrito - Procap Ativo
                      vr_rel_vlcppctl := Nvl(vr_rel_vlcaptal,0) - Nvl(vr_rel_vlproctl,0);
-                     
+
                   END IF;
 
                ELSE -- Se nao existe procap
                   -- Somente grava o valor do capital total subscrito
                   vr_rel_vlcppctl := Nvl(vr_rel_vlcaptal,0);
                END IF;
-               
+
                -- Se a data de demissao estiver nula
                IF rw_crapass.dtdemiss IS NULL THEN
                  -- Guarda as informacoes de total capital por agencia. Dados para Contabilidade
@@ -3520,7 +3533,7 @@ BEGIN
                     vr_tot_capagejur := vr_tot_capagejur + Nvl(vr_rel_vlcppctl,0);
                  END IF;
                END IF;
-               
+
                -- Acumular valor capital em moeda fixa total
                vr_res_vlcapmfx_tot:= Nvl(vr_res_vlcapmfx_tot,0) + Nvl(vr_tab_crapcot(rw_crapass.nrdconta).qtcotmfx,0);
                -- Acumular valor correcao monetaria a incorporar total
@@ -3565,7 +3578,7 @@ BEGIN
                         vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_ati := vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_ati + Nvl(rw_crapsdc.vllanmto,0);
                         -- Acumular valor capital total subscrito
                         vr_sub_vlcapcrz_tot:= Nvl(vr_sub_vlcapcrz_tot,0) + Nvl(rw_crapsdc.vllanmto,0);
-                        -- Acumular valor capital total subscrito por PF e PJ                 
+                        -- Acumular valor capital total subscrito por PF e PJ
                         vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_tot := vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_tot + Nvl(rw_crapsdc.vllanmto,0);
                      ELSE
                         -- Data de eliminacao for nula
@@ -3581,11 +3594,11 @@ BEGIN
                         ELSE
                            -- Acumular Valor capital subscrito excluido
                            vr_sub_vlcapcrz_exc:= Nvl(vr_sub_vlcapcrz_exc,0) + Nvl(rw_crapsdc.vllanmto,0);
-                           -- Acumular Valor capital subscrito excluido por PF e PJ                   
+                           -- Acumular Valor capital subscrito excluido por PF e PJ
                            vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_exc := vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_exc + Nvl(rw_crapsdc.vllanmto,0);
                            -- Acumular valor capital subscrito total
                            vr_sub_vlcapcrz_tot:= Nvl(vr_sub_vlcapcrz_tot,0) + Nvl(rw_crapsdc.vllanmto,0);
-                           -- Acumular valor capital subscrito total por PF e PJ                   
+                           -- Acumular valor capital subscrito total por PF e PJ
                            vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_tot := vr_typ_tab_total(rw_crapass.inpessoa).sub_vlcapcrz_tot + Nvl(rw_crapsdc.vllanmto,0);
                         END IF;
                      END IF;
@@ -3617,7 +3630,7 @@ BEGIN
                              vr_tab_vlcapctz_fis(rw_crapass.cdagenci) := Nvl(vr_rel_vlcapctz,0);
                           END IF;
                           vr_tot_vlcapctz_fis := vr_tot_vlcapctz_fis + Nvl(vr_rel_vlcapctz,0);
-                                         
+
                        ELSE
                           -- Verifica se existe valor para agencia corrente de pessoa juridica
                           IF vr_tab_vlcapage_jur.EXISTS(rw_crapass.cdagenci) THEN
@@ -3629,7 +3642,7 @@ BEGIN
                           END IF;
                           -- Gravando as informacoe para gerar o valor total capital de pessoa juridica
                           vr_tot_capagejur := vr_tot_capagejur + Nvl(vr_rel_vlcppctl,0);
-                          
+
                           --Dados para contabilidade. Informacao de Capital a Integralizar
                           IF vr_tab_vlcapctz_jur.EXISTS(rw_crapass.cdagenci) THEN
                              vr_tab_vlcapctz_jur(rw_crapass.cdagenci) := vr_tab_vlcapctz_jur(rw_crapass.cdagenci) + Nvl(vr_rel_vlcapctz,0);
@@ -3637,7 +3650,7 @@ BEGIN
                              vr_tab_vlcapctz_jur(rw_crapass.cdagenci) := Nvl(vr_rel_vlcapctz,0);
                           END IF;
                           vr_tot_vlcapctz_jur := vr_tot_vlcapctz_jur + Nvl(vr_rel_vlcapctz,0);
-                          
+
                        END IF;
                      END IF; -- rw_crapass.dtdemiss IS NULL
 
@@ -3645,7 +3658,7 @@ BEGIN
                END IF;
 
                /*  Le registro de planos  */
-               
+
                IF NOT vr_tab_crappla.EXISTS(rw_crapass.nrdconta) THEN
                   -- Valor da prestacao do plano recebe 0
                   vr_rel_vlprepla:= 0;
@@ -3658,7 +3671,7 @@ BEGIN
                   ELSE
                      vr_tab_tot_nrdplaag(rw_crapass.cdagenci):= 1;
                   END IF;
-                  
+
                   -- Acumular o valor dos planos de capitalizacao da agencia
                   IF vr_tab_tot_vlprepla.EXISTS(rw_crapass.cdagenci) THEN
                      vr_tab_tot_vlprepla(rw_crapass.cdagenci):= vr_tab_tot_vlprepla(rw_crapass.cdagenci) + Nvl(vr_rel_vlprepla,0);
@@ -3795,14 +3808,14 @@ BEGIN
 
                      -- Se for o primeiro emprestimo
                      IF vr_fisrtemp THEN
-                        
+
                         -- Inicializar o agrupador de emprestimos
                         pc_escreve_xml('<emprestimos>');
 
                         -- Atribuir false para flag primeiro emprestimo
                         vr_fisrtemp:= FALSE;
                      END IF;
-     
+
                      -- Mudar flag para indicar existe emprestimo
                      vr_regexist:= TRUE;
                      -- Acumular saldo devedor
@@ -3832,14 +3845,14 @@ BEGIN
                      ELSE
                         vr_tab_tot_vlpreemp(rw_crapass.cdagenci):= Nvl(rw_crapepr.vlpreemp,0);
                      END IF;
-                   
+
                      -- Acumular o valor do saldo devedor dos emprestimos da agencia
                      IF vr_tab_tot_vlsdeved.EXISTS(rw_crapass.cdagenci) THEN
                         vr_tab_tot_vlsdeved(rw_crapass.cdagenci):= vr_tab_tot_vlsdeved(rw_crapass.cdagenci) + Nvl(rw_crapepr.vlsdeved,0);
                      ELSE
                         vr_tab_tot_vlsdeved(rw_crapass.cdagenci):= Nvl(rw_crapepr.vlsdeved,0);
                      END IF;
-               
+
                      -- Acumular o valor dos juros dos emprestimos da agencia
                      IF vr_tab_tot_vljurmes.EXISTS(rw_crapass.cdagenci) THEN
                         vr_tab_tot_vljurmes(rw_crapass.cdagenci):= vr_tab_tot_vljurmes(rw_crapass.cdagenci) + Nvl(rw_crapepr.vljurmes,0);
@@ -3874,7 +3887,7 @@ BEGIN
                           <txjuremp>'||To_Char(rw_crapepr.txjuremp,'fm990d0000000')||'</txjuremp>
                           <vlemprst>'||To_Char(rw_crapepr.vlemprst,'fm99999g999g990d00')||'</vlemprst>
                           <vlpreemp>'||To_Char(rw_crapepr.vlpreemp,'fm99g999g999g990d00')||'</vlpreemp>
-                          <vlsdeved>'||rw_crapepr.vlsdeved||'</vlsdeved> 
+                          <vlsdeved>'||rw_crapepr.vlsdeved||'</vlsdeved>
                           <qtpreapg>'||To_Char(vr_rel_qtpreapg,'fm990')||'</qtpreapg>
                           <dtultpagto>'||To_Char(vr_dtultpagto,'DD/MM/YYYY')||'</dtultpagto>
                           <vlultpagto>'||To_Char(vr_vlultpagto,'fm99g999g990d00')||'</vlultpagto>
@@ -3930,7 +3943,7 @@ BEGIN
                   -- Acumular valor desconto
                   vr_desconto:= Nvl(vr_desconto,0) + vr_tab_crapcdb(rw_crapass.nrdconta);
                END IF;
-              
+
                /*-- Desconto de Titulos - rel 398 --*/
 
                IF vr_tab_craptdb.EXISTS(rw_crapass.nrdconta) THEN
@@ -4104,7 +4117,7 @@ BEGIN
                                ,pr_stprogra => pr_stprogra);
 
       -- Salvar informacoes no banco de dados
-      COMMIT;
+   COMMIT;
 
    EXCEPTION
       WHEN vr_exc_fimprg THEN
@@ -4113,7 +4126,7 @@ BEGIN
             -- Buscar a descrição
             vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
          END IF;
-         
+
          -- Envio centralizado de log de erro
          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                    ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -4129,7 +4142,7 @@ BEGIN
          pc_limpa_tabela;
 
          -- Efetuar commit
-         COMMIT;
+        COMMIT;
       WHEN vr_exc_saida THEN
          -- Se foi retornado apenas código
          IF vr_cdcritic > 0 AND vr_des_erro IS NULL THEN

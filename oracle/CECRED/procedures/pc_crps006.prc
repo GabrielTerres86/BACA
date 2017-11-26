@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 07/06/2016
+    Data    : Novembro/91.                      Ultima atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -180,6 +180,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                             para considerar os lotes 10301, 6902 
                             (Adriano - SD 428923).
                             
+               26/09/2016 - Ajuste para incluir lotes da M211 (Jonata - RKAM)
+
+              26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
+                           que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
+                           nula (Daniel)
+              
+              12/09/2016 - SD520894 - Correcao na chamada ao relatorio 011, pois está ocorrendo erro 
+                           na geracao devido a varios relatorios com o mesmo nome (Marcos-Supero)
 
     ............................................................................. */
     DECLARE
@@ -339,6 +347,121 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               ,NULL
               ,100
               ,6902 
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+     UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8482
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8483
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8484
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8485
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8486
               ,0
               ,0
               ,0
@@ -626,6 +749,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
       vr_flgimpri     VARCHAR2(10);
       vr_inddados     BOOLEAN;
 
+	    vr_cdagenci	  VARCHAR2(10);
+
 	    --Procedure que escreve linha no arquivo CLOB
 	    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
       BEGIN
@@ -776,11 +901,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               vr_dsagenci := rw_craplot.cdagenci||
                              ' - '||
                              rw_crapage.nmresage;
+              vr_cdagenci := LPAD(rw_craplot.cdagenci,3,'0');
             -- se não encontrar preenche com "*"
             ELSE
               vr_dsagenci := lpad(rw_craplot.cdagenci,3,'0')||
                              ' - '||
                              '***************';
+              vr_cdagenci := lpad(ROUND(DBMS_RANDOM.VALUE(1,99999999)),8,0);
             END IF;
             CLOSE cr_crapage;
 
@@ -847,7 +974,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                                        ,pr_dsxmlnode => '/crrl011'
                                        ,pr_dsjasper  => 'crrl011.jasper'
                                        ,pr_dsparams  => ''
-                                       ,pr_dsarqsaid => vr_path_arquivo || '/crrl011_'||lpad(rw_craplot.cdagenci,3,'0')||'.lst'
+                                       ,pr_dsarqsaid => vr_path_arquivo || '/crrl011_'|| vr_cdagenci ||'.lst'
                                        ,pr_flg_gerar => 'N'
                                        ,pr_qtcoluna  => 132
                                        ,pr_sqcabrel  => 1

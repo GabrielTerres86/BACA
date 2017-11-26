@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/02/2016
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -51,6 +51,13 @@
                             
                23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
+               05/04/2016 - Incluidos novos parametros na procedure
+                            pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
+                            
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+                            
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -62,6 +69,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 /*{ sistema/generico/includes/var_oracle.i } */
+
 
 DEF VAR i-cod-erro         AS INT                               NO-UNDO.
 DEF VAR c-desc-erro        AS CHAR                              NO-UNDO.
@@ -797,8 +805,7 @@ PROCEDURE atualiza-cheque-avulso:
          
     IF  AVAIL crapass THEN 
         DO:
-            ASSIGN c-nome-titular1 = crapass.nmprimtl
-                   c-nome-titular2 = crapass.nmsegntl.
+            ASSIGN c-nome-titular1 = crapass.nmprimtl.
 
             FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
                                crapttl.nrdconta = crapass.nrdconta AND
@@ -811,7 +818,8 @@ PROCEDURE atualiza-cheque-avulso:
                        
                    IF AVAIL crapttl THEN
                       ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
-                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99"). 
+                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
+							 c-nome-titular2 = crapttl.nmextttl. 
                 END.
             ELSE 
                 ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")
@@ -970,6 +978,9 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT p-nro-conta,      /* Numero da Conta */
                                  INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                  INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
+                                   INPUT 0,                /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
+                                  OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operação */
+                                  OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
                                 OUTPUT 0,                /* Código da crítica */
                                 OUTPUT "").              /* Descrição da crítica */
     
@@ -1008,7 +1019,7 @@ PROCEDURE atualiza-cheque-avulso:
             
      END.                          
     /*FIM VERIFICACAO TARIFAS DE SAQUE*/
-    END.
+    END. 
 	/* GERAÇAO DE LOG */
     IF (p-opcao = "R" )   THEN
         ASSIGN aux_cdhistor = 22

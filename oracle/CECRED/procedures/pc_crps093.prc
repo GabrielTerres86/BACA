@@ -115,6 +115,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                  01/04/2015 - Projeto de separação contábeis de PF e PJ.
                               (Andre Santos - SUPERO)
 
+				 06/01/2017 - Ajustado para não parar o processo em caso de parâmetro
+							  nulo. (Rodrigo - 586601)
       ............................................................................. */
 
     DECLARE
@@ -483,6 +485,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
       -- Variável para retorno de busca na craptab
       vr_dstextab     craptab.dstextab%TYPE;
+      vr_flgfound     BOOLEAN := TRUE;
       -- Variáveis para controle de restart
       vr_nrctares     crapass.nrdconta%TYPE;--> Número da conta de restart
       vr_dsrestar     VARCHAR2(4000);       --> String genérica com informações para restart
@@ -579,15 +582,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       END IF;
 
       -- Carrega o numero de dias para baixa dos valores
-      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+      TABE0001.pc_busca_craptab(pr_cdcooper => pr_cdcooper
 																							 ,pr_nmsistem => 'CRED'
 																							 ,pr_tptabela => 'USUARI'
 																							 ,pr_cdempres => 11
 																							 ,pr_cdacesso => 'DIASBAXVAL'
-																							 ,pr_tpregist => 0);
+							   ,pr_tpregist => 0
+							   ,pr_flgfound => vr_flgfound
+							   ,pr_dstextab => vr_dstextab);
 
 			-- se não encontrar o parâmetro gera exceção e aborta a execução do programa
-      IF 	vr_dstextab IS NULL THEN
+      IF NOT vr_flgfound THEN
         -- Código da crítica
         vr_cdcritic := 408;
         --Descricao do erro recebe mensagam da critica
@@ -736,15 +741,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       -- valor da C.M a incorporar sobre as cotas
       -- valor da correção monetária do mês sobre as cotas
       -- qtde de cotas em moeda fixa
-      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+      TABE0001.pc_busca_craptab(pr_cdcooper => pr_cdcooper
                                                 ,pr_nmsistem => 'CRED'
                                                 ,pr_tptabela => 'GENERI'
                                                 ,pr_cdempres => 0
                                                 ,pr_cdacesso => 'VALORBAIXA'
-                                                ,pr_tpregist => 0);
+                               ,pr_tpregist => 0
+							   ,pr_flgfound => vr_flgfound
+							   ,pr_dstextab => vr_dstextab);
 
       -- se não encontrar o parãmetro gera crítica
-      IF vr_dstextab IS NULL THEN
+      IF NOT vr_flgfound THEN
         vr_cdcritic := 409;
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;

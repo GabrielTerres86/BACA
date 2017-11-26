@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 05/10/2015
+    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -54,6 +54,14 @@
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)							 
 
+				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						     aux_qtminast referente a quantidade minima de assinatura
+						     conjunta, SD 514239 (Jean Michel).
+			 
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)  
 .............................................................................*/
 
 
@@ -63,6 +71,7 @@
 { sistema/generico/includes/b1wgen0070tt.i }
 { sistema/generico/includes/b1wgen0072tt.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wgen0060 AS HANDLE                                      NO-UNDO.
 DEF VAR aux_nmconjug LIKE crapcje.nmconjug                          NO-UNDO.
@@ -113,6 +122,7 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
+	DEF VAR aux_qtminast AS INTE									NO-UNDO.
 
     ASSIGN par_dscritic = ""
            par_cdcritic = 0
@@ -226,6 +236,7 @@ PROCEDURE Busca_Dados:
              INPUT ?,
             OUTPUT TABLE tt-crapavt,
             OUTPUT TABLE tt-bens,
+			OUTPUT aux_qtminast,
             OUTPUT TABLE tt-erro) NO-ERROR.
         
         IF VALID-HANDLE(h-b1wgen0058) THEN
@@ -280,13 +291,13 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.nridenti = crapcrl.nridenti
                           tt-crapcrl.tpdeiden = crapcrl.tpdeiden
                           tt-crapcrl.dsorgemi = crapcrl.dsorgemi
-                                                                
+
                           tt-crapcrl.cdufiden = crapcrl.cdufiden
                           tt-crapcrl.dtemiden = crapcrl.dtemiden
                           tt-crapcrl.dtnascin = crapcrl.dtnascin
                           tt-crapcrl.cddosexo = crapcrl.cddosexo
                           tt-crapcrl.cdestciv = crapcrl.cdestciv
-                          tt-crapcrl.dsnacion = crapcrl.dsnacion
+                          tt-crapcrl.cdnacion = crapcrl.cdnacion
                           tt-crapcrl.dsnatura = crapcrl.dsnatura
                           tt-crapcrl.cdcepres = crapcrl.cdcepres
                           tt-crapcrl.dsendres = crapcrl.dsendres
@@ -298,6 +309,27 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.dsdufres = crapcrl.dsdufres
                           tt-crapcrl.nmpairsp = crapcrl.nmpairsp
                           tt-crapcrl.nmmaersp = crapcrl.nmmaersp.
+                  
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crapcrl.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+                   END.		 
+
+                   /* Retornar orgao expedidor */
+                   ASSIGN tt-crapcrl.dsorgemi = "".
+                   RUN busca_org_expedidor
+                               (INPUT crapcrl.idorgexp,
+                                OUTPUT tt-crapcrl.dsorgemi,
+                                OUTPUT par_cdcritic, 
+                                OUTPUT par_dscritic).
+                   IF  RETURN-VALUE = "NOK" THEN
+                   DO:
+                     UNDO Busca, LEAVE Busca.
+                   END.
                   
                    /* Estado civil */
                    FOR FIRST gnetcvl FIELDS(rsestcvl)
@@ -403,8 +435,8 @@ PROCEDURE Busca_Impressao :
             END.
 
         FOR FIRST crapass FIELDS(inmatric nrmatric cdagenci inpessoa nrcpfcgc 
-                                 nrdconta nmprimtl nrdocptl cdoedptl cdufdptl 
-                                 dtemdptl dtnasctl dsnacion nrcadast 
+                                 nrdconta nmprimtl nrdocptl idorgexp cdufdptl 
+                                 dtemdptl dtnasctl cdnacion nrcadast 
                                  cdsexotl dtadmiss)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
@@ -555,11 +587,10 @@ PROCEDURE Busca_Impressao :
                     tt-relat-fis.nrdconta = aux_nrdconta
                     tt-relat-fis.nmprimtl = crapass.nmprimtl
                     tt-relat-fis.nrdocptl = crapass.nrdocptl
-                    tt-relat-fis.cdoedptl = crapass.cdoedptl
                     tt-relat-fis.cdufdptl = crapass.cdufdptl
                     tt-relat-fis.dtemdptl = crapass.dtemdptl
                     tt-relat-fis.dtnasctl = crapass.dtnasctl
-                    tt-relat-fis.dsnacion = crapass.dsnacion
+                    tt-relat-fis.cdnacion = crapass.cdnacion
                     tt-relat-fis.nrcadast = (IF  crapass.nrcadast = 0 THEN "0"
                                              ELSE TRIM(STRING(
                                                        STRING(crapass.nrcadast,
@@ -572,11 +603,32 @@ PROCEDURE Busca_Impressao :
                     tt-relat-fis.cdsexotl = IF crapass.cdsexotl = 1 
                                             THEN "M" ELSE "F".
 
+                /* Buscar a Nacionalidade */
+                FOR FIRST crapnac FIELDS(dsnacion)
+                                  WHERE crapnac.cdnacion = crapass.cdnacion
+                                        NO-LOCK:
+
+                    ASSIGN tt-relat-fis.dsnacion = crapnac.dsnacion.
+
+                END.
+
                 DO WHILE TRUE:
                     IF  TRIM(tt-relat-fis.nrcadast) BEGINS "." THEN
                         ASSIGN SUBSTR(tt-relat-fis.nrcadast,1,1) = "".
                     ELSE
                         LEAVE.
+                END.
+
+                /* Retornar orgao expedidor */
+                ASSIGN tt-relat-fis.cdoedptl = "".
+                RUN busca_org_expedidor
+                                   (INPUT crapass.idorgexp,
+                                    OUTPUT tt-relat-fis.cdoedptl,
+                                    OUTPUT par_cdcritic, 
+                                    OUTPUT par_dscritic).
+                IF  RETURN-VALUE = "NOK" THEN
+                DO:
+                  ASSIGN tt-relat-fis.cdoedptl = " NAO CADAST.".
                 END.
 
                 FOR FIRST crapttl FIELDS(nmmaettl nmpaittl cdturnos cdestcvl
@@ -875,7 +927,7 @@ PROCEDURE Busca_Procurador :
                    IF  tt-crapavt.nrdctato <> 0 THEN
                        DO:
                           FOR FIRST crabass FIELDS(nmprimtl nrcpfcgc nrdocptl 
-                                                   tpdocptl cdoedptl cdufdptl 
+                                                   tpdocptl idorgexp cdufdptl 
                                                    dtemdptl)
                               WHERE crabass.cdcooper = par_cdcooper  AND
                                     crabass.nrdconta = tt-crapavt.nrdctato 
@@ -886,7 +938,6 @@ PROCEDURE Busca_Procurador :
                                   tt-crapavt.nrcpfcgc = crabass.nrcpfcgc
                                   tt-crapavt.tpdocava = crabass.tpdocptl
                                   tt-crapavt.nrdocava = crabass.nrdocptl
-                                  tt-crapavt.cdoeddoc = crabass.cdoedptl
                                   tt-crapavt.cdufddoc = crabass.cdufdptl
                                   tt-crapavt.dtemddoc = crabass.dtemdptl
                                   tt-crapavt.cdcpfcgc = STRING(
@@ -898,8 +949,20 @@ PROCEDURE Busca_Procurador :
                                      ASSIGN par_dscritic = {&GET-MSG}.
                                      UNDO Procurador, LEAVE Procurador.
                                   END.
+                                  
+                              /* Retornar orgao expedidor */
+                              ASSIGN tt-crapavt.cdoeddoc = "".
+                              RUN busca_org_expedidor
+                                                 (INPUT crabass.idorgexp,
+                                                  OUTPUT tt-crapavt.cdoeddoc,
+                                                  OUTPUT par_cdcritic, 
+                                                  OUTPUT par_dscritic).
+                              IF  RETURN-VALUE = "NOK" THEN
+                              DO:
+                                UNDO Procurador, LEAVE Procurador.
                           END.
                        END.
+               END.
                END.
     
                /* se informou o rowid deve obrigatoriamente retornar 
@@ -917,7 +980,7 @@ PROCEDURE Busca_Procurador :
                IF  par_nrdctato <> 0 THEN
                    DO:
                       FOR FIRST crabass FIELDS(nmprimtl nrcpfcgc nrdocptl 
-                                               tpdocptl cdoedptl cdufdptl 
+                                               tpdocptl idorgexp cdufdptl 
                                                dtemdptl nrdconta inpessoa)
                           WHERE crabass.cdcooper = par_cdcooper AND
                                 crabass.nrdconta = par_nrdctato NO-LOCK:
@@ -941,7 +1004,6 @@ PROCEDURE Busca_Procurador :
                               tt-crapavt.nrcpfcgc = crabass.nrcpfcgc
                               tt-crapavt.tpdocava = crabass.tpdocptl
                               tt-crapavt.nrdocava = crabass.nrdocptl
-                              tt-crapavt.cdoeddoc = crabass.cdoedptl
                               tt-crapavt.cdufddoc = crabass.cdufdptl
                               tt-crapavt.dtemddoc = crabass.dtemdptl
                               tt-crapavt.cdcpfcgc = STRING(STRING
@@ -953,6 +1015,18 @@ PROCEDURE Busca_Procurador :
                           IF  ERROR-STATUS:ERROR THEN
                               DO:
                                  ASSIGN par_dscritic = {&GET-MSG}.
+                                 UNDO Procurador, LEAVE Procurador.
+                              END.
+
+                          /* Retornar orgao expedidor */
+                          ASSIGN tt-crapavt.cdoeddoc = "".
+                          RUN busca_org_expedidor
+                                             (INPUT crabass.idorgexp,
+                                              OUTPUT tt-crapavt.cdoeddoc,
+                                              OUTPUT par_cdcritic, 
+                                              OUTPUT par_dscritic).
+                          IF  RETURN-VALUE = "NOK" THEN
+                          DO:
                                  UNDO Procurador, LEAVE Procurador.
                               END.
     
@@ -977,7 +1051,7 @@ PROCEDURE Busca_Procurador :
                       ASSIGN aux_nrcpfcgc = par_nrcpfcto.
 
                       FOR EACH crabass FIELDS(nmprimtl nrcpfcgc nrdocptl 
-                                              tpdocptl cdoedptl cdufdptl 
+                                              tpdocptl idorgexp cdufdptl 
                                               dtemdptl nrdconta inpessoa)
                           WHERE crabass.cdcooper = par_cdcooper AND
                                 crabass.nrcpfcgc = par_nrcpfcto NO-LOCK,
@@ -1005,7 +1079,6 @@ PROCEDURE Busca_Procurador :
                               tt-crapavt.nrcpfcgc = crabass.nrcpfcgc
                               tt-crapavt.tpdocava = crabass.tpdocptl
                               tt-crapavt.nrdocava = crabass.nrdocptl
-                              tt-crapavt.cdoeddoc = crabass.cdoedptl
                               tt-crapavt.cdufddoc = crabass.cdufdptl
                               tt-crapavt.dtemddoc = crabass.dtemdptl
                               tt-crapavt.cdcpfcgc = STRING(STRING
@@ -1022,6 +1095,18 @@ PROCEDURE Busca_Procurador :
                                  UNDO Procurador, LEAVE Procurador.
                               END.
     
+                          /* Retornar orgao expedidor */
+                          ASSIGN tt-crapavt.cdoeddoc = "".
+                          RUN busca_org_expedidor
+                                             (INPUT crabass.idorgexp,
+                                              OUTPUT tt-crapavt.cdoeddoc,
+                                              OUTPUT par_cdcritic, 
+                                              OUTPUT par_dscritic).
+                          IF  RETURN-VALUE = "NOK" THEN
+                          DO:
+                            UNDO Procurador, LEAVE Procurador.
+                          END.  
+                          
                           DO WHILE TRUE:
                               IF  tt-crapavt.cddctato BEGINS "." THEN
                                   ASSIGN SUBSTR(tt-crapavt.cddctato,1,1) = "".
@@ -1185,6 +1270,20 @@ PROCEDURE Pesquisa_Associado PRIVATE :
 
         END.
 
+        
+        /* Retornar orgao expedidor */        
+        ASSIGN tt-crapass.cdoedptl = "".
+        RUN busca_org_expedidor 
+                           ( INPUT tt-crapass.idorgexp,
+                            OUTPUT tt-crapass.cdoedptl,
+                            OUTPUT par_cdcritic, 
+                            OUTPUT par_dscritic).
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            ASSIGN tt-crapass.cdoedptl = 'NAO CADAST.'.
+        END.
+
         FOR FIRST crapdat FIELDS(dtmvtoan)
                           WHERE crapdat.cdcooper = par_cdcooper 
                                 NO-LOCK:
@@ -1201,6 +1300,16 @@ PROCEDURE Pesquisa_Associado PRIVATE :
            
             ASSIGN tt-crapass.cdufnatu = crapttl.cdufnatu
                    tt-crapass.dsnatura = crapttl.dsnatura.
+        END.
+
+        /* Buscar a Nacionalidade */
+        FOR FIRST crapnac FIELDS(dsnacion)
+                          WHERE crapnac.cdnacion = tt-crapass.cdnacion
+                                NO-LOCK:
+
+            ASSIGN tt-crapass.cdnacion = crapnac.cdnacion
+                   tt-crapass.dsnacion = crapnac.dsnacion.
+
         END.
 
         /* buscar o endereco, 10 = Residencial (PF) 9 = Comercial (PJ) */
@@ -2490,8 +2599,8 @@ PROCEDURE Busca_Dados_Cto:
                tt-crapcrl.cddopcao = par_cddopcao.
 
         /* 1o. Titular */
-        FOR FIRST crabttl FIELDS(nmextttl nrdocttl cdoedttl dtemdttl dtnasttl 
-                                 cdsexotl cdestcvl dsnacion dsnatura nmpaittl 
+        FOR FIRST crabttl FIELDS(nmextttl nrdocttl idorgexp dtemdttl dtnasttl 
+                                 cdsexotl cdestcvl cdnacion dsnatura nmpaittl 
                                  nmmaettl tpdocttl cdufdttl)
                           WHERE crabttl.cdcooper = crabass.cdcooper AND
                                 crabttl.nrdconta = crabass.nrdconta AND
@@ -2500,17 +2609,37 @@ PROCEDURE Busca_Dados_Cto:
 
             ASSIGN tt-crapcrl.nmrespon = crabttl.nmextttl
                    tt-crapcrl.nridenti = crabttl.nrdocttl
-                   tt-crapcrl.dsorgemi = crabttl.cdoedttl
                    tt-crapcrl.cdufiden = crabttl.cdufdttl
                    tt-crapcrl.dtemiden = crabttl.dtemdttl
                    tt-crapcrl.dtnascin = crabttl.dtnasttl
                    tt-crapcrl.cddosexo = crabttl.cdsexotl
                    tt-crapcrl.cdestciv = crabttl.cdestcvl
-                   tt-crapcrl.dsnacion = crabttl.dsnacion
+                   tt-crapcrl.cdnacion = crabttl.cdnacion
                    tt-crapcrl.dsnatura = crabttl.dsnatura
                    tt-crapcrl.nmpairsp = crabttl.nmpaittl
                    tt-crapcrl.nmmaersp = crabttl.nmmaettl
                    tt-crapcrl.tpdeiden = crabttl.tpdocttl.
+
+            /* Buscar a Nacionalidade */
+            FOR FIRST crapnac FIELDS(dsnacion)
+                              WHERE crapnac.cdnacion = crabttl.cdnacion
+                                    NO-LOCK:
+
+                ASSIGN tt-crapcrl.dsnacion = crapnac.dsnacion.
+
+            END.
+					
+            /* Retornar orgao expedidor */
+            ASSIGN tt-crapcrl.dsorgemi = "".
+            RUN busca_org_expedidor
+                               (INPUT crapass.idorgexp,
+                                OUTPUT tt-crapcrl.dsorgemi,
+                                OUTPUT par_cdcritic, 
+                                OUTPUT par_dscritic).
+            IF  RETURN-VALUE = "NOK" THEN
+            DO:
+              UNDO Busca, LEAVE Busca.
+            END.
 
             /* validar a idade */
             IF BuscaIdade (crabttl.dtnasttl,par_dtmvtolt) < 18 THEN
@@ -2618,3 +2747,106 @@ FUNCTION BuscaIdade RETURNS INTEGER
 
 END FUNCTION.
 
+
+/*** Rotina para identificar o orgao expedidor ***/
+PROCEDURE identifica_org_expedidor:
+
+    DEF  INPUT PARAM par_cdorgexp AS CHAR                               NO-UNDO.    
+    DEF OUTPUT PARAM par_idorgexp AS INT                                NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INT                                NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                                NO-UNDO.
+
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE NO-UNDO.    
+
+    EMPTY TEMP-TABLE tt-erro.
+  
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_id_orgao_expedidor 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         ( INPUT par_cdorgexp, /* pr_cdorgao_expedidor */
+                          OUTPUT 0,            /* pr_idorgao_expedidor */
+                          OUTPUT 0,            /* pr_cdcritic          */
+                          OUTPUT "").          /* pr_dscritic          */
+
+    CLOSE STORED-PROC pc_busca_id_orgao_expedidor 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           par_idorgexp = 0
+           par_idorgexp = pc_busca_id_orgao_expedidor.pr_idorgao_expedidor 
+                          WHEN pc_busca_id_orgao_expedidor.pr_idorgao_expedidor <> ?
+           aux_cdcritic = pc_busca_id_orgao_expedidor.pr_cdcritic 
+                          WHEN pc_busca_id_orgao_expedidor.pr_cdcritic <> ?
+           aux_dscritic = pc_busca_id_orgao_expedidor.pr_dscritic 
+                          WHEN pc_busca_id_orgao_expedidor.pr_dscritic <> ?.
+        
+    IF  aux_cdcritic <> 0   OR
+        aux_dscritic <> ""  THEN
+        DO:                                  
+            
+            ASSIGN par_cdcritic = aux_cdcritic
+                   par_dscritic = aux_dscritic.
+
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim identifica_org_expedidor */
+
+/*** Rotina para buscar orgao expedidor ***/
+PROCEDURE busca_org_expedidor:
+
+    DEF  INPUT PARAM par_idorgexp AS INT                                NO-UNDO.    
+    DEF OUTPUT PARAM par_cdorgexp AS CHAR                               NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INT                                NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                               NO-UNDO.
+
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE NO-UNDO.    
+  
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_orgao_expedidor 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         ( INPUT par_idorgexp, /* pr_idorgao_expedidor */
+                          OUTPUT "",           /* pr_cdorgao_expedidor */
+                          OUTPUT "",           /* pr_nmorgao_expedidor */
+                          OUTPUT 0,            /* pr_cdcritic          */
+                          OUTPUT "").          /* pr_dscritic          */
+
+    CLOSE STORED-PROC pc_busca_orgao_expedidor 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           par_cdorgexp = ""
+           par_cdorgexp = pc_busca_orgao_expedidor.pr_cdorgao_expedidor 
+                          WHEN pc_busca_orgao_expedidor.pr_cdorgao_expedidor <> ?
+           aux_cdcritic = pc_busca_orgao_expedidor.pr_cdcritic 
+                          WHEN pc_busca_orgao_expedidor.pr_cdcritic <> ?
+           aux_dscritic = pc_busca_orgao_expedidor.pr_dscritic 
+                          WHEN pc_busca_orgao_expedidor.pr_dscritic <> ?.
+        
+    IF  aux_cdcritic <> 0   OR
+        aux_dscritic <> ""  THEN
+        DO:                                  
+            
+            ASSIGN par_cdcritic = aux_cdcritic
+                   par_dscritic = aux_dscritic.
+
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim busca_org_expedidor */

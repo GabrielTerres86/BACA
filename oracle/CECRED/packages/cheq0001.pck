@@ -233,7 +233,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            fonte progress (Lucas Ranghetti #422753)
 													 
       			  04/07/2016 - Adicionados busca_taloes_car para geração de relatório
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
+                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
                             
               13/10/2016 - #497744 Modificada a consulta de cheque sinistrado na rotina 
                            pc_ver_fraude_chq_extern pois a parte do cmc7 que pertence a
@@ -241,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
-
+                           
               11/10/2017 - Na procedure pc_busca_cheque mudar ordenacao do select pra trazer os 
                            ultimos cheques emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
 
@@ -1638,7 +1638,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         -- Validar indicador do cheque
         IF pr_incheque = 1 OR pr_incheque = 2 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Contra-Ordem';
-        ELSIF pr_incheque = 8 THEN 
+        ELSIF pr_incheque = 8 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Cancelado';
         ELSE
           pr_tab_cheques(vr_index)('dsobserv') := ' ';
@@ -2997,7 +2997,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            /* nr da conta cadastrada LIKE qlqr str terminando no Conta completa do cmc7  */
            AND regexp_like(pr_nrctachq, '.*'||tbchq.nrcontachq||'$');
            
-         rw_tbchq cr_tbchq%ROWTYPE;
+         rw_tbchq cr_tbchq%ROWTYPE;     
        
       vr_cdcritic  NUMBER:= 0;
       vr_dscritic VARCHAR2(100);

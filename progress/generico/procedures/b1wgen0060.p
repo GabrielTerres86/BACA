@@ -2,7 +2,7 @@
 
     Programa: b1wgen0060.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 27/03/2012
+    Data    : Marco/2010                   Ultima atualizacao: 02/08/2016
 
     Objetivo  : Realiza a busca de dados - retorno de descricoes p/ tela de 
                 maneira dinamica
@@ -22,9 +22,10 @@
                             BuscaHabilitacao para quando inhabmen = 0 e 
                             alterado a descrição de Habilitado para Emancipado
                             (Adriano).
-                             
-                                                                                         
-   
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)                                             
+
 .............................................................................*/
 
 
@@ -729,7 +730,8 @@ FUNCTION BuscaPac RETURNS LOGICAL
                  OUTPUT aux_qtregist,
                  OUTPUT aux_insitage ).
         
-            IF  INTEGER(aux_insitage) <> 1 THEN
+            IF  INTEGER(aux_insitage) <> 1   AND   /* Ativo */
+                INTEGER(aux_insitage) <> 3   THEN  /* Temporariamente Indisponivel */
                 ASSIGN par_dscritic = BuscaCritica(856).
         END.
     

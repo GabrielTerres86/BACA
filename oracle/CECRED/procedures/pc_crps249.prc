@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 03/08/2017
+   Data    : Novembro/98                     Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -577,7 +577,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			   03/08/2017 - Ajuste nas consultas de recarga de celular para substituir o cálculo
                             da receita pela totalização do vlrepasse. (Lombardi)
 
-               21/08/2017 - Ajuste leitura crapcst. (Odirlei-AMcom)
+               15/08/2017 - Alterado histórico 1510 Normal.
+                            Incluido histórico 1510 Microcrédito.
+                            Alterado histórico 227 para 277 Microcrédito.
+                            Alterado histórico 1072 PJ Destino 7080 para 7084 Microcrédito.
+                            Ajustado indentacao da procedure pc_gera_arq_op_cred
+                            (Rafael Faria - Supero)		
+
+               01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
+
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -2047,6 +2055,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            end,
            craprej.nraplica,
            craprej.dshistor       
+     HAVING SUM(craprej.vlsdapli)>0
      order by case when craprej.cdhistor = 2094 then
                   2093
                 when craprej.cdhistor = 2091 then
@@ -4848,6 +4857,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      BEGIN
         vr_tab_historico.DELETE;
 
+        -- removido do trecho fixo de código para tabela de memoria
+        vr_tab_historico(0098).nrctaori_fis := 7141;
+        vr_tab_historico(0098).nrctades_fis := 7026;
+        vr_tab_historico(0098).dsrefere_fis := 'JUROS SOBRE FINANCIAMENTOS - PESSOA FISICA';
+        vr_tab_historico(0098).nrctaori_jur := 7141;
+        vr_tab_historico(0098).nrctades_jur := 7027;
+        vr_tab_historico(0098).dsrefere_jur := 'JUROS SOBRE FINANCIAMENTOS - PESSOA JURIDICA';
+
+        -- removido do trecho fixo de código para tabela de memoria
+        vr_tab_historico(0277).nrctaori_fis := 7026;
+        vr_tab_historico(0277).nrctades_fis := 7141;
+        vr_tab_historico(0277).dsrefere_fis := 'ESTORNO DE JUROS S/EMPRESTIMOS - PESSOA FISICA';
+        vr_tab_historico(0277).nrctaori_jur := 7027;
+        vr_tab_historico(0277).nrctades_jur := 7141;
+        vr_tab_historico(0277).dsrefere_jur := 'ESTORNO DE JUROS S/EMPRESTIMOS - PESSOA JURIDICA';
+
         vr_tab_historico(0441).nrctaori_fis := 7116;
         vr_tab_historico(0441).nrctades_fis := 7010;
         vr_tab_historico(0441).dsrefere_fis := 'JUROS SOBRE EMPRESTIMOS EM ATRASO - PESSOA FISICA';
@@ -5121,12 +5146,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(2094).nrctades_jur := 7042;
         vr_tab_historico(2094).dsrefere_jur := 'JURO MORA FINANCIAM. POS-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
         
-        vr_tab_historico(1510).nrctaori_fis := 7032;
-        vr_tab_historico(1510).nrctades_fis := 7138;
-        vr_tab_historico(1510).dsrefere_fis := 'ESTORNO MULTA CONTRATO FINANCIAMENTO TX. PRE-FIXADA - PESSOA FISICA';
-        vr_tab_historico(1510).nrctaori_jur := 7033;
-        vr_tab_historico(1510).nrctades_jur := 7138;
-        vr_tab_historico(1510).dsrefere_jur := 'ESTORNO MULTA CONTRATO FINANCIAMENTO TX. PRE-FIXADA - PESSOA JURIDICA';
+        vr_tab_historico(1510).nrctaori_fis := 7030;
+        vr_tab_historico(1510).nrctades_fis := 7136;
+        vr_tab_historico(1510).dsrefere_fis := 'ESTORNO JUROS DE MORA FINANCIAMENTO TX. PRE-FIXADA - PESSOA FISICA';
+        vr_tab_historico(1510).nrctaori_jur := 7031;
+        vr_tab_historico(1510).nrctades_jur := 7136;
+        vr_tab_historico(1510).dsrefere_jur := 'ESTORNO JUROS DE MORA FINANCIAMENTO TX. PRE-FIXADA - PESSOA JURIDICA';
 
         vr_tab_historico(1719).nrctaori_fis := 7032;
         vr_tab_historico(1719).nrctades_fis := 7138;
@@ -5149,12 +5174,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico_mic(0098).nrctades_jur := 7072;
         vr_tab_historico_mic(0098).dsrefere_jur := 'AJUSTE DE SALDO REF. (CRPS249) JUROS CONTRATO MICROCREDITO PRICE TR (pr_origem) - PESSOA JURIDICA';
                 
-        vr_tab_historico_mic(0227).nrctaori_fis := 7071;
-        vr_tab_historico_mic(0227).nrctades_fis := 7141;
-        vr_tab_historico_mic(0227).dsrefere_fis := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) JUROS CONTRATO MICROCREDITO PRICE TR (pr_origem) - PESSOA FISICA';
-        vr_tab_historico_mic(0227).nrctaori_jur := 7072;
-        vr_tab_historico_mic(0227).nrctades_jur := 7141;
-        vr_tab_historico_mic(0227).dsrefere_jur := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) JUROS CONTRATO MICROCREDITO PRICE TR (pr_origem) - PESSOA JURIDICA';
+        vr_tab_historico_mic(0277).nrctaori_fis := 7071;
+        vr_tab_historico_mic(0277).nrctades_fis := 7141;
+        vr_tab_historico_mic(0277).dsrefere_fis := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) JUROS CONTRATO MICROCREDITO PRICE TR (pr_origem) - PESSOA FISICA';
+        vr_tab_historico_mic(0277).nrctaori_jur := 7072;
+        vr_tab_historico_mic(0277).nrctades_jur := 7141;
+        vr_tab_historico_mic(0277).dsrefere_jur := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) JUROS CONTRATO MICROCREDITO PRICE TR (pr_origem) - PESSOA JURIDICA';
 
         vr_tab_historico_mic(2093).nrctaori_fis := 7043;
         vr_tab_historico_mic(2093).nrctades_fis := 7074;
@@ -5181,7 +5206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico_mic(1072).nrctades_fis := 7083;
         vr_tab_historico_mic(1072).dsrefere_fis := 'AJUSTE DE SALDO REF. (CRPS249) JUROS DE MORA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA FISICA';
         vr_tab_historico_mic(1072).nrctaori_jur := 7136;
-        vr_tab_historico_mic(1072).nrctades_jur := 7080;
+        vr_tab_historico_mic(1072).nrctades_jur := 7084;
         vr_tab_historico_mic(1072).dsrefere_jur := 'AJUSTE DE SALDO REF. (CRPS249) JUROS DE MORA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
 
         vr_tab_historico_mic(1713).nrctaori_fis := 7083;
@@ -5213,6 +5238,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico_mic(1710).nrctades_jur := 7138;
         vr_tab_historico_mic(1710).dsrefere_jur := 'ESTORNO AJUSTE DE SALDO REF. (CRPS249) MULTA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
      
+        vr_tab_historico_mic(1510).nrctaori_fis := 7083;
+        vr_tab_historico_mic(1510).nrctades_fis := 7136;
+        vr_tab_historico_mic(1510).dsrefere_fis := 'AJUSTE DE SALDO REF. (CRPS249) ESTORNO JUROS DE MORA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA FISICA';
+        vr_tab_historico_mic(1510).nrctaori_jur := 7084;
+        vr_tab_historico_mic(1510).nrctades_jur := 7136;
+        vr_tab_historico_mic(1510).dsrefere_jur := 'AJUSTE DE SALDO REF. (CRPS249) ESTORNO JUROS DE MORA CONTRATO MICROCREDITO TX. PRE-FIXADA (pr_origem) - PESSOA JURIDICA';
+     							 
      END;
 
   BEGIN
@@ -6159,7 +6191,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
         -- Verifica se existe o historico na PL-Table
         IF vr_tab_historico.EXISTS(rw_craprej.cdhistor) AND 
-           rw_craprej.cdhistor NOT IN (2093,2094,2090,2091,1038,1072,1544,1713,1722,1070,1542,1710,1510,1719) THEN
+           rw_craprej.cdhistor NOT IN (98,277,2093,2094,2090,2091,1038,1072,1544,1713,1722,1070,1542,1710,1510,1719) THEN
 
            -- Escrever no arquivo somente os registros que o valor for maior que zero
            IF rw_craprej.vlsdapli > 0 THEN
@@ -6242,8 +6274,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      --Separação lançamentos microcredito e operação normal.
      FOR rw_craprej IN cr_craprej4(pr_cdcooper,vr_cdprogra,vr_dtmvtolt,1) LOOP
 
-              -- Escrever no arquivo somente os registros que o valor for maior que zero
-              IF rw_craprej.vlsdapli > 0 THEN
+       -- Escrever no arquivo somente os registros que estao nas tabelas de historico
+       IF vr_tab_historico.exists(rw_craprej.cdhistor) or vr_tab_historico_mic.exists(rw_craprej.cdhistor) THEN
 
           IF rw_craprej.cdagenci = 0 THEN -- Monta o cabecalho da linha
 
@@ -6252,6 +6284,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                       
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
+
                        WHILE vr_index IS NOT NULL LOOP
 
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -6263,34 +6296,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- limpa a table de reveraso
                        vr_tab_valores_ag.DELETE;
 
-                    END IF;
+           END IF; -- fim if count()>0
 
                     IF rw_craprej.nraplica = 1 THEN -- Pessoa Fisica
                    
                IF rw_craprej.dshistor = 'OPERACAO_NORMAL' THEN
-                 
-                 IF rw_craprej.cdhistor = 98 THEN
-                   vr_descricao := 'JUROS SOBRE FINANCIAMENTOS - PESSOA FISICA'; 
-                   vr_nrctaori  := 7141;
-                   vr_nrctades  := 7026;
-                 ELSIF rw_craprej.cdhistor = 227 THEN
-                   vr_descricao := 'ESTORNO DE JUROS S/EMPRESTIMOS - PESSOA FISICA';
-                   vr_nrctaori  := 7026;
-                   vr_nrctades  := 7141;                      
-                 ELSE
-                   vr_descricao := vr_tab_historico(rw_craprej.cdhistor).dsrefere_fis; 
-                   vr_nrctaori  := vr_tab_historico(rw_craprej.cdhistor).nrctaori_fis;
-                   vr_nrctades  := vr_tab_historico(rw_craprej.cdhistor).nrctades_fis;                   
-                 END IF;
-                 
                        -- Linha de Cabecalho
                  vr_setlinha := fn_set_cabecalho('70'
                                                       ,btch0001.rw_crapdat.dtmvtolt
                                                 ,btch0001.rw_crapdat.dtmvtolt
-                                                ,vr_nrctaori
-                                                ,vr_nrctades
+                                                ,vr_tab_historico(rw_craprej.cdhistor).nrctaori_fis
+                                                ,vr_tab_historico(rw_craprej.cdhistor).nrctades_fis
                                                       ,rw_craprej.vlsdapli
-                                                ,'"'||vr_descricao||'"');
+                                                ,'"'||vr_tab_historico(rw_craprej.cdhistor).dsrefere_fis||'"');
                ELSE
                        -- Linha de Cabecalho
                  vr_setlinha := fn_set_cabecalho('70'
@@ -6309,29 +6327,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ELSE -- Pessoa Juridica
                    
                IF rw_craprej.dshistor = 'OPERACAO_NORMAL' THEN
-
-                 IF rw_craprej.cdhistor = 98 THEN
-                   vr_descricao := 'JUROS SOBRE FINANCIAMENTOS - PESSOA FISICA'; 
-                   vr_nrctaori  := 7141;
-                   vr_nrctades  := 7027;
-                 ELSIF rw_craprej.cdhistor = 227 THEN
-                   vr_descricao := 'ESTORNO DE JUROS S/EMPRESTIMOS - PESSOA FISICA';
-                   vr_nrctaori  := 7027;
-                   vr_nrctades  := 7141;                      
-                 ELSE
-                   vr_descricao := vr_tab_historico(rw_craprej.cdhistor).dsrefere_jur; 
-                   vr_nrctaori  := vr_tab_historico(rw_craprej.cdhistor).nrctaori_jur;
-                   vr_nrctades  := vr_tab_historico(rw_craprej.cdhistor).nrctades_jur;                   
-                 END IF;
-                 
-                       -- Linha de Cabecalho
+               --Linha de Cabecalho
                   vr_setlinha := fn_set_cabecalho('70'
                                                       ,btch0001.rw_crapdat.dtmvtolt
                                                  ,btch0001.rw_crapdat.dtmvtolt
-                                                 ,vr_nrctaori
-                                                 ,vr_nrctades
+                                               ,vr_tab_historico(rw_craprej.cdhistor).nrctaori_jur
+                                               ,vr_tab_historico(rw_craprej.cdhistor).nrctades_jur
                                                       ,rw_craprej.vlsdapli
-                                                 ,'"'||vr_descricao||'"');
+                                               ,'"'||vr_tab_historico(rw_craprej.cdhistor).dsrefere_jur||'"');
                ELSE
                        -- Linha de Cabecalho
                   vr_setlinha := fn_set_cabecalho('70'
@@ -6347,7 +6350,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
 
                     
-                    END IF;
+		  END IF; -- fim if tipo pessoa
                     
 
                  ELSE -- Monta as linhas separadas por agencia
@@ -6357,8 +6360,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
-                 END IF;
-              END IF;
+         END IF; -- fim monta cabecalho da linha
+
+       END IF; -- validacao de historico
         
      END LOOP;
      
@@ -8302,11 +8306,11 @@ BEGIN
   for rw_crapcst in cr_crapcst4 (pr_cdcooper,
                                  vr_dtmvtolt) loop
     -- Cheque descontado
-    if rw_crapcst.nrdconta = 85448 then
-      vr_vlcdbcop := vr_vlcdbcop + rw_crapcst.vlcheque;
-    else
-      vr_vlcdbban := vr_vlcdbban + rw_crapcst.vlcheque;
-    end if;
+      if rw_crapcst.nrdconta = 85448 then
+        vr_vlcdbcop := vr_vlcdbcop + rw_crapcst.vlcheque;
+      else
+        vr_vlcdbban := vr_vlcdbban + rw_crapcst.vlcheque;
+      end if;
   end loop;
   
   --

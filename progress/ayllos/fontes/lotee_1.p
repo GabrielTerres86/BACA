@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 14/02/2017
+   Data    : Outubro/91.                         Ultima atualizacao: 29/03/2017
 
    Dados referentes ao programa:
 
@@ -185,13 +185,16 @@
                07/12/2015 - #367740 Criado o tratamento para o historico 1874 
                             assim como eh feito com o historico 1873 (Carlos)
 
-               07/06/2016 - Melhoria 195 folha pagamento (Tiago/Thiago).
+			   07/06/2016 - Melhoria 195 folha pagamento (Tiago/Thiago).
 
                03/10/2016 - Incluido verificacao de acordos de contratos, Prj. 302
                             (Jean Michel).
 
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
+
+			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
+							(Jonata RKAM M311)
 
 ............................................................................. */
 
@@ -253,6 +256,7 @@ DEF VAR h-b1wgen9998          AS HANDLE                                   NO-UND
 
 DEF VAR aux_flgretativo       AS INTEGER                                  NO-UNDO.
 DEF VAR aux_flgretquitado     AS INTEGER                                  NO-UNDO.
+DEF VAR aux_cdrefere          LIKE crapatr.cdrefere                       NO-UNDO.
 
 /*   Leitura da tabela de parametros para indentificar o Nro. da conta do
      tipo de registro 2   */
@@ -720,6 +724,7 @@ DO WHILE TRUE:
                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
                                                               ,INPUT crapepr.nrdconta
                                                               ,INPUT crapepr.nrctremp
+															  ,INPUT 3
                                                               ,0 /* pr_flgretativo */
                                                               ,0 /* pr_flgretquitado */
                                                               ,0 /* pr_flgretcancelado */
@@ -1192,7 +1197,8 @@ DO WHILE TRUE:
             craplcm.cdhistor = 1234) THEN /* historicos de consorcios */
             DO:
                
-               aux_flgerros = FALSE.
+               ASSIGN aux_flgerros = FALSE
+			          aux_cdrefere = 0.
 
                FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper 
                                   NO-LOCK NO-ERROR.
@@ -1241,22 +1247,61 @@ DO WHILE TRUE:
                               ASSIGN aux_flgerros = TRUE
                                      par_situacao = FALSE
                                      glb_cdcritic = 598.
+
+					     ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
+
                     END.
                
                IF  aux_flgerros  THEN
                    LEAVE.
 
                
-               {includes/gerandb.i } 
+               /* Verifica se possui contrato de acordo */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-               IF  aux_cdcooperativa = "8888" AND
-                  (craplcm.cdhistor <> 1230   AND
-                   craplcm.cdhistor <> 1231   AND
-                   craplcm.cdhistor <> 1232   AND
-                   craplcm.cdhistor <> 1233   AND
-                   craplcm.cdhistor <> 1234)  THEN
+                /* Verifica se ha contratos de acordo */
+                RUN STORED-PROCEDURE pc_gerandb
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+			                                        ,INPUT craplau.cdhistor
+                                                    ,INPUT craplcm.nrdconta
+													,INPUT aux_cdrefere
+													,INPUT craplau.vllanaut
+													,INPUT craplau.cdseqtel
+													,INPUT craplau.nrdocmto
+													,INPUT crapcop.cdagesic
+													,INPUT crapass.nrctacns
+													,INPUT crapass.cdagenci
+													,INPUT craplau.cdempres
+													,INPUT craplau.idlancto
+													,INPUT glb_cdcritic
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+
+                CLOSE STORED-PROC pc_gerandb
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+               
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN glb_cdcritic = 0
+                       glb_dscritic = ""
+                       glb_cdcritic = INT(pc_gerandb.pr_cdcritic) WHEN pc_gerandb.pr_cdcritic <> ?
+                       glb_dscritic = TRIM(pc_gerandb.pr_dscritic) WHEN pc_gerandb.pr_dscritic <> ?.
+                      
+                IF glb_cdcritic > 0 THEN
+				   DO:
+						RUN fontes/critic.p.
+						BELL.
+						MESSAGE glb_dscritic.
+						ASSIGN  glb_cdcritic = 0
+						        aux_flgerros = TRUE
+								par_situacao = FALSE.
+						LEAVE.
+				   END.
+				ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
                    DO:
-                        ASSIGN aux_flgerros = TRUE
+					       MESSAGE glb_dscritic.
+					       ASSIGN  glb_cdcritic = 0
+						           aux_flgerros = TRUE
                                par_situacao = FALSE.
                         LEAVE.
                    END.                               

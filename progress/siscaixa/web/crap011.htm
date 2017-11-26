@@ -20,6 +20,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
             04/09/2013 - Nova forma de chamar as agências, de PAC agora 
                          a escrita será PA (André Euzébio - Supero).
 
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 ------------------------------------------------------------------------------->
 
 <html>
@@ -38,7 +39,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);"> 
 <form name="action" onKeyDown="change_page(event)" method=post>
 <input type="hidden" name="vh_foco" value="7">
 <input type="hidden" name="v_msg">
