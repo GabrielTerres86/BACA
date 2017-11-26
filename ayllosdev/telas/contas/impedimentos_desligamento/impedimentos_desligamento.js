@@ -558,3 +558,13 @@ function efetuaCancelamentoManual(){
 
 	}
 }
+
+
+
+function finalizarRotina() {
+
+    executandoImpedimentos = false;
+    flgimped = false;
+    fechaRotina(divRotina);
+
+}

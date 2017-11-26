@@ -751,6 +751,22 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
                                     );
+                                    
+  PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
+																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
+																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
+																	 ,pr_vlcapital        OUT tbcotas_devolucao.vlcapital%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_dtinicio_credito OUT tbcotas_devolucao.dtinicio_credito%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_vlpago           OUT tbcotas_devolucao.vlpago%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_cdcritic         OUT crapcri.cdcritic%TYPE --> Codigo da critica
+																	 ,pr_dscritic         OUT VARCHAR2); --> Descricao da critica
+    
+  PROCEDURE pc_atualizar_tbcota_devol(pr_cdcooper       IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
+																  	 ,pr_nrdconta       IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
+														  			 ,pr_tpdevolucao    IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
+  																	 ,pr_vlpago         IN tbcotas_devolucao.vlpago%TYPE --> Valor Cotas ou Deposito
+	  																 ,pr_cdcritic       OUT crapcri.cdcritic%TYPE --> Codigo da critica
+		  															 ,pr_dscritic       OUT VARCHAR2); --> Descricao da critica                                    
 
 END CADA0004;
 /
@@ -761,7 +777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 16/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -809,6 +825,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --						   (Adriano - P339).
   --
   --               14/11/2017 - Ajuste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).                 
+  --
+  --               16/11/2017 - Criado duas novas rotinas (Jonata - RKAM P364).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -11934,6 +11952,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
                                     
   END pc_ib_verif_atualiz_fone;
+
+  PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
+																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
+																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
+																	 ,pr_vlcapital        OUT tbcotas_devolucao.vlcapital%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_dtinicio_credito OUT tbcotas_devolucao.dtinicio_credito%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_vlpago           OUT tbcotas_devolucao.vlpago%TYPE --> Valor Cotas ou Deposito
+																	 ,pr_cdcritic         OUT crapcri.cdcritic%TYPE --> Codigo da critica
+																	 ,pr_dscritic         OUT VARCHAR2)IS --> Descricao da critica
+
+			CURSOR cr_tbcotas_devolucao IS
+        select VLCAPITAL
+              ,DTINICIO_CREDITO
+              ,VLPAGO
+          from TBCOTAS_DEVOLUCAO
+         where CDCOOPER    = pr_cdcooper
+           and NRDCONTA    = pr_nrdconta
+           and TPDEVOLUCAO = pr_tpdevolucao;
+
+      rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
+
+  BEGIN
+    OPEN cr_tbcotas_devolucao;
+		FETCH cr_tbcotas_devolucao
+     INTO rw_tbcotas_devolucao;
+		CLOSE cr_tbcotas_devolucao;
+
+    IF cr_tbcotas_devolucao%NOTFOUND then
+      pr_cdcritic         := 0;
+      pr_dscritic         := 'NAO EXISTE VALOR PARA DEVOLUCAO';
+    ELSE
+      pr_vlcapital        := rw_tbcotas_devolucao.vlcapital;
+			pr_dtinicio_credito := rw_tbcotas_devolucao.dtinicio_credito;
+		  pr_vlpago           := rw_tbcotas_devolucao.vlpago;
+		  pr_cdcritic         := null;
+			pr_dscritic         := null;
+    END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+		  pr_cdcritic := 0;
+	  	pr_dscritic := SQLERRM;
+	  	ROLLBACK;
+  END pc_buscar_tbcota_devol;
+
+
+  PROCEDURE pc_atualizar_tbcota_devol(pr_cdcooper       IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
+																  	 ,pr_nrdconta       IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
+														  			 ,pr_tpdevolucao    IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
+  																	 ,pr_vlpago         IN tbcotas_devolucao.vlpago%TYPE --> Valor Cotas ou Deposito
+	  																 ,pr_cdcritic       OUT crapcri.cdcritic%TYPE --> Codigo da critica
+		  															 ,pr_dscritic       OUT VARCHAR2) IS --> Descricao da critica
+  BEGIN
+    update TBCOTAS_DEVOLUCAO
+       set VLPAGO      = VLPAGO + nvl(pr_vlpago,0)
+     where CDCOOPER    = pr_cdcooper
+       and NRDCONTA    = pr_nrdconta
+       and TPDEVOLUCAO = pr_tpdevolucao;
+  EXCEPTION
+    WHEN OTHERS THEN
+		  pr_cdcritic := 0;
+	  	pr_dscritic := SQLERRM;
+	  	ROLLBACK;
+  END pc_atualizar_tbcota_devol;
 
   
 END CADA0004;
