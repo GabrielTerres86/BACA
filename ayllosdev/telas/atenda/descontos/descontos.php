@@ -12,6 +12,7 @@
  * 003: [18/11/2011] Jorge I. Hamaguchi (CECRED) : Ajustes em critica quando nao houver permissao de acesso 
  * 004: [23/01/2014] Carlos (CECRED) : Retirada a include de titulos/msg_grupo_economico.php
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
+ * 006: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  */	
 ?>
 
@@ -26,7 +27,8 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');	
 	}	
-
+	
+	$cdproduto = $_POST['cdproduto'];
     $labelRot = $_POST['labelRot'];	
 
 	// Carrega permissões do operador
@@ -90,8 +92,21 @@
 </table>
 
 <script type="text/javascript">
+
+	var cdproduto = <? echo $cdproduto; ?>;
+	
 	mostraRotina();	
 	hideMsgAguardo();	
 	bloqueiaFundo(divRotina);
 	controlaFoco();
+	
+	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+	if (executandoProdutos == true) {
+	  if (cdproduto == 34 || cdproduto == 36) {
+		carregaCheques();
+	  }else if (cdproduto == 35 || cdproduto == 37) {
+		carregaTitulos();
+	  }
+	}
+	  
 </script>

@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 14/10/2015
+   Data : Fevereiro/2007                  Última Alteração: 04/11/2017
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -19,6 +19,8 @@
 							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
 							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
 							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
+                             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
+                                          (Jonata - RKAM P364).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -27,6 +29,19 @@ var dtfimper = "";
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
+	
+	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
+	if(sitaucaoDaContaCrm == '2' || 
+	   sitaucaoDaContaCrm == '3' || 
+	   sitaucaoDaContaCrm == '4' || 
+	   sitaucaoDaContaCrm == '5' || 
+	   sitaucaoDaContaCrm == '7' || 
+	   sitaucaoDaContaCrm == '8' || 
+	   sitaucaoDaContaCrm == '9'){ 
+	   opcao ="1";
+	   id="1";
+	}
+	
 	if (opcao == "0") {	// Opção Principal
 		var msg = "dep&oacute;sitos &agrave; vista";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/principal.php";
@@ -161,7 +176,7 @@ function controlaFoco(opcao) {
 
     if (opcao == "0") { //Principal
         $('.FirstInput:first ').focus();
-			}				
+    }
     if (opcao == "1") { //Extrato 
         $('#divConteudoOpcao').each(function () {
             formid = $('#divConteudoOpcao form');
@@ -176,13 +191,13 @@ function controlaFoco(opcao) {
                         if (e.keyCode == 13) {
                             $(".LastInputModal").click();
                         }
-		}); 		
+                    });
                 });
 
             };
         });
         $('.FirstInputModal:first ').focus();
-	}
+    }
     if (opcao == "4") { //Imprimir extrato
         $('#divConteudoOpcao').each(function () {
             formid = $('#divConteudoOpcao form');
@@ -196,7 +211,7 @@ function controlaFoco(opcao) {
                     $(this).bind('keydown', function (e) {
                         if (e.keyCode == 13) {
                             $(".LastInputModal").click();
-}
+                        }
                     });
                 });
             };
@@ -398,7 +413,7 @@ function controlaLayout( nomeForm ){
 
         var Lvlipmfpg = $('label[for="vlipmfpg"]', '#' + nomeForm);
         var Cvlipmfpg = $('#vlipmfpg', '#' + nomeForm);
-	
+
         var Lvlsdchsl = $('label[for="vlsdchsl"]', '#' + nomeForm);
         var Cvlsdchsl = $('#vlsdchsl', '#' + nomeForm);
 
@@ -659,7 +674,7 @@ function controlaLayout( nomeForm ){
         rVllimcre.addClass('rotulo').css({ 'width': '200px' });
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
         rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
-	
+
         // campos
         cDtrefere = $('#dtrefere', '#' + nomeForm);
         cVlsddisp = $('#vlsddisp', '#' + nomeForm);

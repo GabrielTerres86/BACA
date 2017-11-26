@@ -1,6 +1,6 @@
 <? 
 /*!
-* FONTE        : formulario_conta_corrente.php
+* FONTE        : formulario_conta_corrente.php                            Última alteração: 19/06/2017
 * CRIAÇÃO      : Rodolpho Telmo (DB1)
 * DATA CRIAÇÃO : 13/05/2010 
 * OBJETIVO     : Formulário da rotina CONTA CORRENTE da tela de CONTAS
@@ -35,6 +35,11 @@
 *
 *
 *			     15/07/2016 - Incluir flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
+
+		         19/06/2017 - Ajuste para inclusão do novo tipo de situação da conta "Desligamento por determinação do BACEN" ( Jonata - RKAM P364).
+				 
+*
+*				 26/09/2017 - Correcao no label do campo dtdemis. SD 761666 (Carlos Rafael Tanholi)
 */	
 
 //recupera tag com a conta consorcio
@@ -59,6 +64,8 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 			<option value="4" <? if (getByTagName($registro,'cdsitdct') == '4' ){ echo ' selected'; } ?>><? echo utf8ToHtml('4 - Encerrada pela Dem.')  ?></option>
 			<option value="5" <? if (getByTagName($registro,'cdsitdct') == '5' ){ echo ' selected'; } ?>><? echo utf8ToHtml('5 - Não Aprovada')         ?></option>
 			<option value="6" <? if (getByTagName($registro,'cdsitdct') == '6' ){ echo ' selected'; } ?>><? echo utf8ToHtml('6 - Normal s/ Talão')      ?></option>
+			<option value="7" <? if (getByTagName($registro,'cdsitdct') == '7' ){ echo ' selected'; } ?>><? echo utf8ToHtml('7 - Em Proc. Demiss&atilde;o')  ?></option>
+			<option value="8" <? if (getByTagName($registro,'cdsitdct') == '8' ){ echo ' selected'; } ?>><? echo utf8ToHtml('8 - Em Proc. Dem. BACEN')  ?></option>
 			<option value="9" <? if (getByTagName($registro,'cdsitdct') == '9' ){ echo ' selected'; } ?>><? echo utf8ToHtml('9 - Encerrada por Outro')  ?></option>
 		</select>	
 		<br />

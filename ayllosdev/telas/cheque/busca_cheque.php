@@ -27,6 +27,8 @@
 	$nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;	
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;	
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;	
+	$execimpe = (isset($_POST['execimpe'])) ? $_POST['execimpe'] : 0;	
+	$tppeschq = (isset($_POST['tppeschq'])) ? $_POST['tppeschq'] : 0;	
 	
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Ayllos','',false);
@@ -53,6 +55,8 @@
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<nrtipoop>".$nrtipoop."</nrtipoop>";
 	$xml .= "		<nrcheque>".$nrcheque."</nrcheque>";
+	$xml .= "		<execimpe>".$execimpe."</execimpe>";
+	$xml .= "		<tppeschq>".$tppeschq."</tppeschq>";
 	$xml .= "		<nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "		<nrregist>".$nrregist."</nrregist>";
 	$xml .= "	</Dados>";

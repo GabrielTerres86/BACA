@@ -1,20 +1,21 @@
 /*************************************************************************
  Fonte: produtos.js                                            
  Autor: Gabriel - Rkam                                            
- Data : Setembro/2015                   Última Alteração: 
+ Data : Setembro/2015                   Última Alteração: 26/06/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Produtos da tela  
              ATENDA     
 			
 			01/10/2015 - Projeto 217 Reformulacao Cadastral
 			(Tiago Castro - RKAM).
-
+			
 			11/08/2016 - Adicionado função controlaFoco.
 			(Evandro - RKAM).
                                                                   
 			26/10/2016 - Chamado 536620 - Modificado as chamadas da funcao acessaRotina que passam pela tela Atenda.
             (Gil Furtado - Mouts)
 
+            26/06/2017 - Ajustes para inclusão de novos produtos ( Jonata - RKAM / P364).
 
 ************************************************************************/
 
@@ -65,7 +66,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao, opeProdutos) {
         success: function (response) {
             $("#divConteudoOpcao").html(response);
             controlaFoco();
-}
+        }
     });
 
 }
@@ -644,6 +645,70 @@ function alimtentaTelas(operacao) {
 
                         break;
 
+					// Emprestimo
+                    case "31":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'EMPRESTIMOS\',\'Empr&eacute;stimos\',\'emprestimos\');';
+                        index++;
+
+                        break;
+						
+					// INSS
+                    case "33":
+			
+                        produtosTelasServicos[index] = "setaParametros('INSS','','" + nrdconta + "','" + flgcadas + "'); setaATENDA(); direcionaTela('INSS','no'); ";
+                        index++;
+
+                        break;
+						
+						// Borderô de cheques
+                    case "34":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+						// Borderô de títulos
+                    case "35":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+					// Limite de desconto de cheques
+                    case "36":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+					// Limite de desconto de títulos
+                    case "37":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+						// Folhas de cheque
+                    case "38":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'FOLHAS CHEQ\',\'Folhas de Cheque\',\'folhas_cheque\');';
+                        index++;
+
+                        break;
+						
+						// Pagamento por arquiov
+                    case "39":
+
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'PAGTO POR ARQUIVO\',\'Pagto por Arquivo\',\'pagamento_titulo_arq\');';
+                        index++;
+
+                        break;
+
                 }
 
 
@@ -665,7 +730,6 @@ function alimtentaTelas(operacao) {
         $('#tabelaServicosAdicionais tr:gt(0)').each(function (i) {
 
             if ($('#habilitar', $(this)).prop('checked')) {
-
 
                 switch ($(this).attr('id')) {
 
@@ -772,7 +836,7 @@ function alimtentaTelas(operacao) {
                             produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
                         } else {
                             produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
-}
+                        }
 
                         index++;
 
@@ -865,11 +929,76 @@ function alimtentaTelas(operacao) {
                         index++;
 
                         break;
-}
+						
+					// Emprestimo
+                    case "31":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'EMPRESTIMOS\',\'Empr&eacute;stimos\',\'emprestimos\');';
+                        index++;
+
+                        break;
+						
+					// INSS
+                    case "33":
+
+                        produtosTelasServicosAdicionais[index] = "setaParametros('INSS','','" + nrdconta + "','" + flgcadas + "'); setaATENDA(); direcionaTela('INSS','no'); ";
+                        index++;
+
+                        break;
+						
+						// Borderô de cheques
+                    case "34":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+						// Borderô de títulos
+                    case "35":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+					// Limite de desconto de cheques
+                    case "36":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+					// Limite de desconto de títulos
+                    case "37":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
+                        index++;
+
+                        break;
+						
+						// Folhas de cheque
+                    case "38":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'FOLHAS CHEQ\',\'Folhas de Cheque\',\'folhas_cheque\');';
+                        index++;
+
+                        break;
+						
+						// Pagamento por arquiov
+                    case "39":
+
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'PAGTO POR ARQUIVO\',\'Pagto por Arquivo\',\'pagamento_titulo_arq\');';
+                        index++;
+
+                        break;
+						
+                }
 
                 produtosTelasServicosAdicionais[index - 1] = 'cdproduto = ' + $(this).attr('id') + ";" + produtosTelasServicosAdicionais[index - 1];
 
-}
+            }
 
         });
 

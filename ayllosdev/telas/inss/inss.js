@@ -1,7 +1,7 @@
 /*****************************************************************************************
  Fonte: inss.js                                                   
  Autor: Adriano                                                   
- Data : Maio/2013             					   Última Alteração: 11/04/2017
+ Data : Maio/2013             					   Última Alteração: 26/06/2017
                                                                   
  Objetivo  : Biblioteca de funções da tela INSS                 
                                                                   
@@ -26,9 +26,11 @@
              01/12/2015 - Adicionado alerta nas telas de consulta para 
                           caso a comprovacao de vida esteja vencida.
                           Projeto 255 (Lombardi).
-
+						  
              11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
 
+             26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
+						  
 ******************************************************************************************/
 
 var arrayTitulares        = new Array();
@@ -97,6 +99,11 @@ function estadoInicial() {
 	
 	layoutPadrao();
 				
+	if (executandoProdutos) {
+		$('#cddopcao', '#frmCabInss').val("T");
+		$('#btOK','#frmCabInss').click();
+}
+
 }
 
 function formataCabecalho(){
@@ -128,7 +135,7 @@ function formataOpcoes(opcao){
 		case 'L':
 		
 			formataOpcoesLog();
-
+		
             // Seta os valores caso tenha vindo do CRM
             if ($("#crm_inacesso","#frmCabInss").val() == 1) {
                 $("#nrdconta_log","#frmOpcoes").val($("#crm_nrdconta","#frmCabInss").val());
@@ -139,7 +146,7 @@ function formataOpcoes(opcao){
 		default:
 			
 			formataOpcoesBeneficio();
-
+			
             // Seta os valores caso tenha vindo do CRM
             if ($("#crm_inacesso","#frmCabInss").val() == 1) {
                 $("#nrcpfcgc","#frmOpcoes").val($("#crm_nrcpfcgc","#frmCabInss").val());
@@ -270,6 +277,32 @@ function formataOpcoesBeneficio(){
 			return false;
 												
 		}
+		
+	});
+		
+	//Adiciona o evento click ao botao btVoltar
+	$('#btVoltar','#divBotoesConta').unbind('click').bind('click', function(){
+		
+		if (executandoProdutos){
+			
+			voltarAtenda();		
+			
+		}else{
+			
+			controlaVoltar('V2');
+			
+		}
+		
+	    return false;
+		
+	});
+	
+	//Adiciona o evento click ao botao btProsseguir
+	$('#btProsseguir','#divBotoesConta').unbind('click').bind('click', function(){
+		
+		solicitaConsultaBeneficiario($('#cddopcao','#frmCabInss').val());
+				
+		return false;	
 		
 	});
 		
@@ -1206,6 +1239,9 @@ function controlaVoltar(opcao){
 		
 		case 'V4':
 		
+			if (executandoProdutos) {
+				voltarAtenda();
+			} else {
 			$('input','#divBeneficio').val('');
 			alteraSecaoNmrotina('');
 			$('#divDetalhes').css('display','none').html('');
@@ -1213,6 +1249,7 @@ function controlaVoltar(opcao){
 			$('#divBotoesConta').css('display','block');
 			$('#nrcpfcgc','#divBeneficio').habilitaCampo().focus();
 			$('#nrrecben','#divBeneficio').habilitaCampo();
+			}
 			
 		break;		
 				
@@ -1353,6 +1390,7 @@ function solicitaConsultaBeneficiario(cddopcao){
 			cddopcao: cddopcao,
 			nrcpfcgc: nrcpfcgc,
 			nrrecben: nrrecben,
+			executandoProdutos: executandoProdutos,
 			redirect: 'html_ajax' // Tipo de retorno do ajax
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2888,5 +2926,15 @@ function controlaFoco() {
         return false;
 			}	
 	});
+	
+}
+
+
+
+function voltarAtenda() {
+	
+	setaParametros ('ATENDA', '', nrdconta, flgcadas);
+	setaATENDA();
+	direcionaTela('ATENDA','no');
 	
 }

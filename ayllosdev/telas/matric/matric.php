@@ -6,6 +6,8 @@
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
  * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+
+				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
  * --------------
  */
 ?>
@@ -95,6 +97,12 @@
 																		
 																		<div id="divMatric">
 																			<? include('form_cabecalho.php'); ?>
+																			<? include('form_filtro.php'); ?>
+																			
+																			<div id="divConteudoMatric"></div>												
+																			
+																			<div id="divContasDemitidas"></div>
+																			
 																		</div>
 																		
 																	</td>

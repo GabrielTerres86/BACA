@@ -1,6 +1,6 @@
 <?php
 /*****************************************************************
-	Fonte        : form_opcoes.php						Última Alteração: 03/08/2016
+	Fonte        : form_opcoes.php						Última Alteração: 26/06/2017
   Criação      : Adriano
   Data criação : Maio/2013
   Objetivo     : Mostrar as rotinas da opção "R" e solicitar cpf/nit para as demais opções.
@@ -10,6 +10,8 @@
 				   20/10/2015 - Adicionada opção de geração de log Projeto 255 (Lombardi).
                               
 				   03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+
+				   26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
   --------------
  ****************************************************************/ 
  
@@ -88,8 +90,8 @@
 
 <div id="divBotoesConta" style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;">
 	
-	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('V2');return false;">Voltar</a>
-	<a href="#" class="botao" id="btProsseguir" onClick="solicitaConsultaBeneficiario($('#cddopcao','#frmCabInss').val());return false;" >Prosseguir</a>	
+	<a href="#" class="botao" id="btVoltar" >Voltar</a>
+	<a href="#" class="botao" id="btProsseguir" >Prosseguir</a>	
 	
 </div>
 

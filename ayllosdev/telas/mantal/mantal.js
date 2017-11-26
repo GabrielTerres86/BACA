@@ -9,6 +9,8 @@
  * 001: [06/06/2016] Lucas Ranghetti  (CECRED): Incluir validação para o campo cAgencia e validar agencia ( #462172)
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
  * 003: [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 004: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
+                               
  * --------------
  */
 
@@ -17,7 +19,6 @@ var operacao 		= ''; // Armazena a operação corrente da tela MANTAL
 var controle		= '';	
 
 var cddopcao		= '';
-var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 
 var aux_cdagechq	= '';
 var aux_nriniche	= '';
@@ -56,18 +57,18 @@ function estadoInicial() {
 
 	setGlobais();	
 	
-	 
  	$('input', '#'+ formCab ).limpaFormulario();
 	$('input', '#'+ formDados ).limpaFormulario();
 	$('#divTabMantal').css({'display':'none'});
 	
 	atualizaSeletor();
-	formataCabecalho();
 	controlaLayout();
+	formataCabecalho();
+
 
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
-
+	
     // Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCRM").val() == 1) {
         $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
@@ -135,7 +136,7 @@ function controlaOperacao( novaOp ) {
 					hideMsgAguardo();
 					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 						try {
-							$('#divTela').html(response);
+							$('#divFiltro').html(response);
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
@@ -261,6 +262,7 @@ function controlaPesquisas() {
 // formata
 function controlaLayout() {
 
+	
 	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'10px 3px 5px 3px'});
 	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
 	$('#divBotoes').css({'text-align':'center','padding-top':'5px'});
@@ -369,6 +371,7 @@ function controlaLayout() {
 		return false;			
 		
 	});		
+	
 	
 	if ( operacao == 'B0' || operacao == 'D0' ) {
 		$('input, select', '#'+ formCab ).desabilitaCampo();
@@ -484,7 +487,7 @@ function formataCabecalho() {
 	});		
 			
 	// Se clicar no botao OK
-	cConta.next().next().unbind('click').bind('click', function(e) { 	
+	$('#btnOK','#frmCab').unbind('click').bind('click', function() {
 		
 		if ( divError.css('display') == 'block' ) { return false; }		
 		if ( cConta.hasClass('campoTelaSemBorda')  ) { return false; }		
@@ -525,6 +528,18 @@ function formataCabecalho() {
 }
 	});
 
+	if (executandoImpedimentos){
+		
+		if (nrdconta != '') {
+			$("#nrdconta","#frmCab").val(nrdconta);
+			
+			$("#btnOK",'#frmCab').click();		
+		}else{
+			nrdconta = 0;
+		}
+
+	}	
+	
 	return false;	
 }
 
@@ -786,11 +801,17 @@ function continuarCheque( opcao ) {
 // botoes
 function btnVoltar() {
 	
-	if ( arrayMantal.length > 0 ) {
-		btnConcluir();
-	} else {
+		if (executandoImpedimentos){
+			posicao++;
+			showMsgAguardo('Aguarde, carregando tela DCTROR ...');
+			setaParametrosImped('DCTROR','',nrdconta,flgcadas, 'MANTAL');
+			setaImped();
+			direcionaTela('DCTROR','no');
+		}else{
+
 		estadoInicial();
 	}
+	
 	
 	return false;
 }
@@ -807,6 +828,8 @@ function btnConcluir() {
 		if ( cddopcao == 'B' || imp_criticas != '' ) {
 			showConfirmacao('Imprimir ?','Confirma&ccedil;&atilde;o - Ayllos','Gera_Impressao();','estadoInicial();','sim.gif','nao.gif');
 		} else {
+			$('input', '#'+ formCab ).limpaFormulario();
+			$('input', '#'+ formDados ).limpaFormulario();
 			estadoInicial();
 		}
 	}
@@ -819,10 +842,12 @@ function btnConcluir() {
 // set global
 function setGlobais() {
 
+	if (!executandoImpedimentos){
+		nrdconta 		= 0 ; 	
+	}	
 	operacao 		= ''; 
 	controle		= '';	
 	cddopcao		= '';
-	nrdconta 		= 0 ; 
 	aux_cdagechq	= '';
 	aux_nriniche	= '';
 	aux_nrfinche	= '';
