@@ -76,6 +76,13 @@ DEF VAR c-nome-operador    AS CHAR                              NO-UNDO.
 DEF VAR aux_complemento    AS CHAR                              NO-UNDO.
 DEF VAR c-texto-2-via      AS CHAR                              NO-UNDO.
 
+
+DEF VAR c-cgc-cpf1         AS CHAR   FORMAT "x(19)"             NO-UNDO.
+DEF VAR c-cgc-cpf2         AS CHAR   FORMAT "x(19)"             NO-UNDO.
+DEF VAR c-nome-titular1    AS CHAR   FORMAT "x(40)"             NO-UNDO.
+DEF VAR c-nome-titular2    AS CHAR   FORMAT "x(40)"             NO-UNDO.
+
+
 FUNCTION reabilita-caixa-sangria RETURNS LOGICAL (INPUT p-cod-cooper  AS INTE,
                                                   INPUT p-cod-agencia AS INTE,
                                                   INPUT p-saldo-caixa AS DECI,
@@ -226,11 +233,15 @@ PROCEDURE valida-lancamento-capital:
 	
 	DEF OUTPUT PARAM p-valor-capital AS DEC.
 	DEF OUTPUT PARAM p-origem-devolucao AS INT.
+	DEF OUTPUT PARAM P-nome-titular AS CHAR.
 	 
 	DEF VAR aux_vlcapital AS DEC         NO-UNDO.
 	DEF VAR aux_dtinicio_credito AS DATE NO-UNDO.
 	DEF VAR aux_vlpago AS DEC            NO-UNDO.
 	 
+	DEFINE VARIABLE h-b1crap51 AS HANDLE     NO-UNDO.
+	DEF BUFFER b-craplcm1 FOR craplcm.
+  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
     RUN elimina-erro (INPUT p-cooper,
@@ -240,6 +251,40 @@ PROCEDURE valida-lancamento-capital:
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
                        INPUT p-nro-caixa).
+					   
+	FOR FIRST crapass FIELDS(nmprimtl dtdemiss)
+	                  WHERE crapass.cdcooper = crapcop.cdcooper 
+						AND crapass.nrdconta = p-conta
+							NO-LOCK:
+							
+		ASSIGN p-nome-titular = crapass.nmprimtl.
+							
+	END.
+							
+	IF NOT AVAIL crapass THEN
+	   DO:
+			RUN cria-erro (INPUT p-cooper,
+						   INPUT p-cod-agencia,
+						   INPUT p-nro-caixa,
+						   INPUT 9,
+						   INPUT c-desc-erro,
+						   INPUT YES).
+			RETURN "NOK".
+				
+		END.
+	ELSE IF crapass.dtdemiss = ? THEN
+    DO:   
+       RUN cria-erro (INPUT p-cooper,
+                     INPUT p-cod-agencia,
+                     INPUT p-nro-caixa,
+                     INPUT 0,
+                     INPUT "Conta ativa.",
+                     INPUT YES).
+			  RETURN "NOK".
+    
+    
+    END.
+     
 					   
     IF p-cod-histor = 2083 THEN
        DO:
@@ -259,8 +304,8 @@ PROCEDURE valida-lancamento-capital:
 						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															  INPUT p-conta, /*Conta*/                    
 															  INPUT 3, /*Cotas*/                    															     
-															 OUTPUT "", /*Valor do capital*/                       
-															 OUTPUT "", /*Data de pagemento*/                        
+															 OUTPUT ?, /*Valor do capital*/                       
+															 OUTPUT ?, /*Data de pagemento*/                        
 															 OUTPUT ?, /*Valor pago*/                        
 															 OUTPUT 0, /*Codigo da critica*/                    
 															 OUTPUT ""). /*Descricao da critica*/               
@@ -299,7 +344,7 @@ PROCEDURE valida-lancamento-capital:
 					IF (aux_vlcapital - aux_vlpago) = 0 THEN
 					   DO:
 					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999) + ".".
+								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
 							RUN cria-erro (INPUT p-cooper,
 										   INPUT p-cod-agencia,
 										   INPUT p-nro-caixa,
@@ -334,13 +379,13 @@ PROCEDURE valida-lancamento-capital:
 										   INPUT c-desc-erro,
 										   INPUT YES).
 							RETURN "NOK".
-							
-						END.
 				
 				END.
 				
 				ASSIGN p-valor-capital = craplct.vllanmto.
 			
+	    END.
+				
 	    END.
 	ELSE If p-cod-histor = 2065 THEN
 	   DO:
@@ -359,8 +404,8 @@ PROCEDURE valida-lancamento-capital:
 						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															  INPUT p-conta, /*Conta*/                    
 															  INPUT 4, /*Deposito a vista*/                    															     
-															 OUTPUT "", /*Valor do capital*/                       
-															 OUTPUT "", /*Data de pagemento*/                        
+															 OUTPUT ?, /*Valor do capital*/                       
+															 OUTPUT ?, /*Data de pagemento*/                        
 															 OUTPUT ?, /*Valor pago*/                        
 															 OUTPUT 0, /*Codigo da critica*/                    
 															 OUTPUT ""). /*Descricao da critica*/               
@@ -385,6 +430,7 @@ PROCEDURE valida-lancamento-capital:
 							 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
 											WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
+
 					IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
 						DO:
 							RUN cria-erro (INPUT p-cooper,
@@ -399,7 +445,7 @@ PROCEDURE valida-lancamento-capital:
 					IF (aux_vlcapital - aux_vlpago) = 0 THEN
 					   DO:
 					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999) + ".".
+								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
 							RUN cria-erro (INPUT p-cooper,
 										   INPUT p-cod-agencia,
 										   INPUT p-nro-caixa,
@@ -417,13 +463,13 @@ PROCEDURE valida-lancamento-capital:
 				END.
 			ELSE
 				DO:				
-					FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-											craplcm.nrdconta = p-conta          AND
-										   (craplcm.cdhistor = 2063  			OR
-											craplcm.cdhistor = 2064)
+          FIND LAST b-craplcm1 WHERE b-craplcm1.cdcooper = crapcop.cdcooper AND
+											b-craplcm1.nrdconta = p-conta          AND
+										   (b-craplcm1.cdhistor = 2063  			OR
+											b-craplcm1.cdhistor = 2064)
 											NO-LOCK NO-ERROR. 
 									 
-					IF  AVAIL craplcm  THEN 
+					IF  AVAIL b-craplcm1  THEN 
 						DO:
 							ASSIGN i-cod-erro  = 0
 								   c-desc-erro = "Valor ja pago.".
@@ -434,13 +480,13 @@ PROCEDURE valida-lancamento-capital:
 										   INPUT c-desc-erro,
 										   INPUT YES).
 							RETURN "NOK".
-							
-						END.
-				
 				
 				END.
 				
 				ASSIGN p-valor-capital = craplcm.vllanmto.
+			
+	   END.
+							
 			
 	   END.
 	 ELSE
@@ -457,6 +503,7 @@ PROCEDURE valida-lancamento-capital:
 		
 		END.
 	
+		
     RETURN "OK".
 	
 END PROCEDURE.
@@ -530,6 +577,10 @@ PROCEDURE grava-lancamento-boletim:
 	DEF VAR aux_vlcapital AS DEC         NO-UNDO.
 	DEF VAR aux_dtinicio_credito AS DATE NO-UNDO.
 	DEF VAR aux_vlpago AS DEC            NO-UNDO.
+
+
+
+   
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
@@ -800,6 +851,31 @@ PROCEDURE grava-lancamento-boletim:
         END.
     END.
 
+	RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
+    RUN grava-autenticacao  IN h-b1crap00 (INPUT p-cooper,
+                                           INPUT p-cod-agencia,
+                                           INPUT p-nro-caixa,
+                                           INPUT p-cod-operador,
+                                           INPUT p-vlr-docto,
+                                           INPUT DEC(i-nro-docto),
+                                           INPUT p-pg, /* YES (PG), NO (REC) */
+                                           INPUT "1",  /* On-line           */ 
+                                           INPUT NO,    /* Nao estorno        */
+                                           INPUT p-cod-histor, 
+                                           INPUT ?, /* Data off-line */
+                                           INPUT 0, /* Sequencia off-line */
+                                           INPUT 0, /* Hora off-line */
+                                           INPUT 0, /* Seq.orig.Off-line */
+
+                                           OUTPUT p-literal,
+                                           OUTPUT p-ult-sequencia,
+                                           OUTPUT p-registro).
+    DELETE PROCEDURE h-b1crap00.
+    
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+    
+    
 	/* Busca a proxima sequencia do campo crapmat.nrseqcar */
     RUN STORED-PROCEDURE pc_sequence_progress
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
@@ -816,7 +892,7 @@ PROCEDURE grava-lancamento-boletim:
 
 	IF p-cod-histor = 2065 THEN	   
       DO:
-	     FOR FIRST crapass FIELDS(nrdconta ) 
+         FOR FIRST crapass FIELDS(nrdconta inpessoa) 
 	                  WHERE crapass.cdcooper = crapcop.cdcooper  AND
                             crapass.nrdconta = p-conta 
                             NO-LOCK:
@@ -853,8 +929,8 @@ PROCEDURE grava-lancamento-boletim:
 					aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 														INPUT p-conta, /*Conta*/                    
 														INPUT 4, /*Deposito a vista*/                    															     
-														OUTPUT "", /*Valor do capital*/                       
-														OUTPUT "", /*Data de pagemento*/                        
+                                    OUTPUT ?, /*Valor do capital*/                       
+                                    OUTPUT ?, /*Data de pagemento*/                        
 														OUTPUT ?, /*Valor pago*/                        
 														OUTPUT 0, /*Codigo da critica*/                    
 														OUTPUT ""). /*Descricao da critica*/               
@@ -879,8 +955,14 @@ PROCEDURE grava-lancamento-boletim:
 						aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
 									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-				IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+             END.
+             
+          IF NOT AVAIL craplcm AND (i-cod-erro <> 0  OR c-desc-erro <> "") THEN
 					DO:
+                IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
+                    ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
+                
+                 
 					   RUN cria-erro (INPUT p-cooper,
 									  INPUT p-cod-agencia,
 									  INPUT p-nro-caixa,
@@ -888,7 +970,6 @@ PROCEDURE grava-lancamento-boletim:
 									  INPUT c-desc-erro,
 										INPUT YES).
 					   RETURN "NOK".
-					END.
 					
 			END.
 		ELSE	
@@ -976,7 +1057,8 @@ PROCEDURE grava-lancamento-boletim:
 							craplcm.nrseqdig = aux_nrseqdig
 									   craplcm.nrdctabb = p-conta
 									   craplcm.nrdctitg = STRING(p-conta,"99999999")
-							craplcm.cdpesqbb = "CRAP54," + p-codigo.
+							craplcm.cdpesqbb = "CRAP54," + p-codigo
+							craplcm.nrautdoc = p-ult-sequencia.
                           
 				END.                          
 				ELSE
@@ -995,12 +1077,16 @@ PROCEDURE grava-lancamento-boletim:
 							craplcm.nrseqdig = aux_nrseqdig
 									   craplcm.nrdctabb = p-conta
 									   craplcm.nrdctitg = STRING(p-conta,"99999999")
-							craplcm.cdpesqbb = "CRAP54," + p-codigo.
+							craplcm.cdpesqbb = "CRAP54," + p-codigo
+							craplcm.nrautdoc = p-ult-sequencia.
 								  
 							END.
                           
 				END.
 
+	                END.
+			      END.
+      
 			CREATE craplcx.
 			ASSIGN craplcx.cdcooper = crapcop.cdcooper
 					craplcx.cdagenci = p-cod-agencia
@@ -1011,15 +1097,17 @@ PROCEDURE grava-lancamento-boletim:
 					craplcx.nrdocmto = i-nro-docto
 					craplcx.nrseqdig = aux_nrseqdig
 					craplcx.vldocmto = p-vlr-docto
-					craplcx.nrdmaqui = crapbcx.nrdmaqui.
-	       END.
-			END.
+                craplcx.nrdmaqui = crapbcx.nrdmaqui
+                craplcx.nrdconta = p-conta
+				craplcx.nrautdoc = p-ult-sequencia.
         
 	  END.
 	ELSE 
 	IF p-cod-histor = 2083 THEN
 	    DO:
-			 FOR FIRST crapass FIELDS(nrdconta) 
+      
+      
+			  FOR FIRST crapass FIELDS(nrdconta inpessoa) 
 						  WHERE crapass.cdcooper = crapcop.cdcooper  AND
 								crapass.nrdconta = p-conta 
 								NO-LOCK:
@@ -1041,13 +1129,13 @@ PROCEDURE grava-lancamento-boletim:
 				
 				END.
 
-			 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-								     craplcm.nrdconta = p-conta          AND
-									 (craplcm.cdhistor = 2079             OR
-                                     craplcm.cdhistor = 2080)
+        FIND LAST craplct WHERE craplct.cdcooper = crapcop.cdcooper  AND
+                                craplct.nrdconta = p-conta           AND
+                               (craplct.cdhistor = 2079              OR
+                                craplct.cdhistor = 2080)
 								     NO-LOCK NO-ERROR.
 
-			 IF NOT AVAIL craplcm THEN
+			  IF NOT AVAIL craplct THEN
 				DO:
 				
 					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -1057,8 +1145,8 @@ PROCEDURE grava-lancamento-boletim:
 						aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
 															INPUT p-conta, /*Conta*/                    
 															INPUT 3, /*Capital*/                    															     
-															OUTPUT "", /*Valor do capital*/                       
-															OUTPUT "", /*Data de pagemento*/                        
+                                  OUTPUT ?, /*Valor do capital*/                       
+                                  OUTPUT ?, /*Data de pagemento*/                        
 															OUTPUT ?, /*Valor pago*/                        
 															OUTPUT 0, /*Codigo da critica*/                    
 															OUTPUT ""). /*Descricao da critica*/               
@@ -1083,8 +1171,16 @@ PROCEDURE grava-lancamento-boletim:
 							aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
 										WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-					IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+              
+
+           END.
+           
+       IF NOT AVAIL craplct AND (i-cod-erro <> 0  OR c-desc-erro <> "") THEN
 						DO:
+              IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
+                  ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
+              
+               
 						   RUN cria-erro (INPUT p-cooper,
 										  INPUT p-cod-agencia,
 										  INPUT p-nro-caixa,
@@ -1092,8 +1188,6 @@ PROCEDURE grava-lancamento-boletim:
 										  INPUT c-desc-erro,
 										  INPUT YES).
 						   RETURN "NOK".
-						END.
-						
 						
 				END.
 			ELSE	
@@ -1125,6 +1219,8 @@ PROCEDURE grava-lancamento-boletim:
 					/*Origem da devolucao tbcotas_devolucao*/
 					IF p-origem-devolucao = 1 THEN 
 						DO:
+                          
+                        
 							{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 							/* Efetuar a chamada da rotina Oracle */
@@ -1166,6 +1262,7 @@ PROCEDURE grava-lancamento-boletim:
 						END.
 					ELSE
 						DO:
+                        
 							IF crapass.inpessoa = 1 THEN
 								DO:
 										  
@@ -1182,7 +1279,8 @@ PROCEDURE grava-lancamento-boletim:
 											craplcm.nrseqdig = aux_nrseqdig
 											craplcm.nrdctabb = p-conta
 											craplcm.nrdctitg = STRING(p-conta,"99999999")
-											craplcm.cdpesqbb = "CRAP54," + p-codigo.
+											craplcm.cdpesqbb = "CRAP54," + p-codigo
+											craplcm.nrautdoc = p-ult-sequencia.
 										  
 								END.                          
 							ELSE
@@ -1201,10 +1299,21 @@ PROCEDURE grava-lancamento-boletim:
 											craplcm.nrseqdig = aux_nrseqdig
 											craplcm.nrdctabb = p-conta
 											craplcm.nrdctitg = STRING(p-conta,"99999999")
-											craplcm.cdpesqbb = "CRAP54," + p-codigo.
+											craplcm.cdpesqbb = "CRAP54," + p-codigo
+											craplcm.nrautdoc = p-ult-sequencia.
 										  
 								END.
 
+                          
+
+									
+						          END.
+					
+                 END.
+						
+				   END.
+                  
+        
 							CREATE craplcx.
 							ASSIGN craplcx.cdcooper = crapcop.cdcooper
 									craplcx.cdagenci = p-cod-agencia
@@ -1215,17 +1324,14 @@ PROCEDURE grava-lancamento-boletim:
 									craplcx.nrdocmto = i-nro-docto
 									craplcx.nrseqdig = aux_nrseqdig
 									craplcx.vldocmto = p-vlr-docto
-									craplcx.nrdmaqui = crapbcx.nrdmaqui.
-									
-						END.
-					
-        END.
-						
-				END.
+              craplcx.nrdmaqui = crapbcx.nrdmaqui
+              craplcx.nrdconta = p-conta
+			  craplcx.nrautdoc = p-ult-sequencia.
 				
 	  END.
 	ELSE
 	  DO:	  
+       
 	     CREATE craplcx.
 		 ASSIGN craplcx.cdcooper = crapcop.cdcooper
 	 		    craplcx.dtmvtolt = crapdat.dtmvtolt
@@ -1241,40 +1347,14 @@ PROCEDURE grava-lancamento-boletim:
 								   STRING(CAPS(p-dsc-compl3),"x(26)") 
 			    craplcx.dsdcompl = aux_complemento
 			    crapbcx.qtcompln = crapbcx.qtcompln + 1
-			    craplcx.vldocmto = p-vlr-docto.
+			    craplcx.vldocmto = p-vlr-docto
+				craplcx.nrautdoc = p-ult-sequencia.
 	  
 	  END.  
 
-	
-    RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN grava-autenticacao  IN h-b1crap00 (INPUT p-cooper,
-                                           INPUT p-cod-agencia,
-                                           INPUT p-nro-caixa,
-                                           INPUT p-cod-operador,
-                                           INPUT p-vlr-docto,
-                                           INPUT DEC(i-nro-docto),
-                                           INPUT p-pg, /* YES (PG), NO (REC) */
-                                           INPUT "1",  /* On-line           */ 
-                                           INPUT NO,    /* Nao estorno        */
-                                           INPUT p-cod-histor, 
-                                           INPUT ?, /* Data off-line */
-                                           INPUT 0, /* Sequencia off-line */
-                                           INPUT 0, /* Hora off-line */
-                                           INPUT 0, /* Seq.orig.Off-line */
-
-                                           OUTPUT p-literal,
-                                           OUTPUT p-ult-sequencia,
-                                           OUTPUT p-registro).
-    DELETE PROCEDURE h-b1crap00.
+	ASSIGN p-literal-autentica = p-literal.
+ 
     
-    IF  RETURN-VALUE = "NOK" THEN
-        RETURN "NOK".
-
-    /* Atualiza sequencia Autenticacao */
-    ASSIGN  craplcx.nrautdoc = p-ult-sequencia.
-
-    ASSIGN p-literal-autentica = p-literal.
-
     IF  craphis.indcompl = 1    /*  AND     
         craphis.cdhistor <> 746  */ THEN 
         DO:
@@ -1490,6 +1570,236 @@ PROCEDURE grava-lancamento-boletim:
             END. /* DO  WHILE TRUE */
     
         END.
+
+
+	IF  craphis.cdhistor = 2065 OR
+	    craphis.cdhistor = 2083 THEN 		
+        DO:
+
+  
+    /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/
+   
+    ASSIGN c-nome-titular1 = " "
+           c-nome-titular2 = " "
+           c-cgc-cpf1      = " "
+           c-cgc-cpf2      = " ".
+           
+    FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper AND	                   
+                       crapass.nrdconta = p-conta					   
+                       NO-LOCK NO-ERROR.
+         
+    IF  AVAIL crapass THEN 
+        DO:
+            ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+            FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
+                               crapttl.nrdconta = crapass.nrdconta AND
+                               crapttl.idseqttl = 2 NO-LOCK NO-ERROR.
+                
+            IF  crapass.inpessoa = 1 THEN
+                DO:
+                   ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999")
+                          c-cgc-cpf1 = STRING(c-cgc-cpf1,"999.999.999-99").
+                       
+                   IF AVAIL crapttl THEN
+                      ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
+                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
+							 c-nome-titular2 = crapttl.nmextttl. 
+                END.
+            ELSE 
+                ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")
+                       c-cgc-cpf1 = STRING(c-cgc-cpf1,"99.999.999/9999-99").
+        END.
+		
+		
+    RUN dbo/pcrap12.p (INPUT  p-vlr-docto,
+                       INPUT  47,
+                       INPUT  47,
+                       INPUT  "M",
+                       OUTPUT c-linha1,
+                       OUTPUT c-linha2).
+
+    ASSIGN c-valor =
+     FILL(" ",14 - LENGTH(TRIM(STRING(p-vlr-docto,"zzz,zzz,zz9.99")))) + "*" + 
+                         (TRIM(STRING(p-vlr-docto,"zzz,zzz,zz9.99"))).
+  
+    IF craphis.cdhistor = 2065 THEN
+    DO:
+      ASSIGN c-literal = " ".
+      ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
+      " - " + TRIM(crapcop.nmextcop) 
+           c-literal[2]  = " "
+           c-literal[3]  = string(crapdat.dtmvtolt,"99/99/99") +
+            " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
+                           string(p-cod-agencia,"999") +
+                            "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
+                           substr(p-cod-operador,1,10)  
+           c-literal[4]  = " " 
+           c-literal[5]  = "     ** RECIBO DE SAQUE AVULSO " +
+            string(i-nro-docto,"ZZZ,ZZ9")  + " **" 
+           c-literal[6]  = " " 
+           c-literal[7]  = "CONTA: "    +   
+           trim(string(crapass.nrdconta,"zzzz,zzz,9"))
+           c-literal[8]  = "       "    +   trim(c-nome-titular1)
+           c-literal[9]  = "       "    +   trim(c-nome-titular2)
+           c-literal[10] = " "
+           c-literal[11] = "RECEBI(EMOS) DA " +  
+           STRING(crapcop.nmrescop,"X(11)") + ", O VALOR DE R$    " + c-valor
+           c-literal[12] = "(" + trim(c-linha1)
+           c-literal[13] = trim(c-linha2) + ")"
+           c-literal[14] = "REFERENTE SALDO DE DEPOSITO DISPONIVEL. AUTENTICADO ABAIXO." 
+           c-literal[15] = " " 
+           c-literal[16] = " "
+           c-literal[17] = " "
+           c-literal[18] = " "
+           c-literal[19] = "ASSINATURA: _________________________________" 
+           c-literal[20] = "            " + TRIM(c-nome-titular1)
+           c-literal[21] = "            " + TRIM(c-cgc-cpf1) 
+           c-literal[22] = "            " + TRIM(c-nome-titular2)
+           c-literal[23] = "            " + TRIM(c-cgc-cpf2) 
+           c-literal[24] = " "       
+           c-literal[25] = p-literal
+           c-literal[26] = " "
+           c-literal[27] = " "
+           c-literal[28] = " "
+           c-literal[29] = " "
+           c-literal[30] = " "
+           c-literal[31] = " "
+           c-literal[32] = " "
+           c-literal[33] = " ".
+    END.
+    ELSE
+    DO:
+      ASSIGN c-literal = " ".
+      ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
+      " - " + TRIM(crapcop.nmextcop) 
+           c-literal[2]  = " "
+           c-literal[3]  = string(crapdat.dtmvtolt,"99/99/99") +
+            " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
+                           string(p-cod-agencia,"999") +
+                            "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
+                           substr(p-cod-operador,1,10)  
+           c-literal[4]  = " " 
+           c-literal[5]  = "     ** RECIBO DE SAQUE AVULSO " +
+            string(i-nro-docto,"ZZZ,ZZ9")  + " **" 
+           c-literal[6]  = " " 
+           c-literal[7]  = "CONTA: "    +   
+           trim(string(crapass.nrdconta,"zzzz,zzz,9"))
+           c-literal[8]  = "       "    +   trim(c-nome-titular1)
+           c-literal[9]  = "       "    +   trim(c-nome-titular2)
+           c-literal[10] = " "
+           c-literal[11] = "RECEBI(EMOS) DA " +  
+           STRING(crapcop.nmrescop,"X(11)") + ", O VALOR DE R$    " + c-valor
+           c-literal[12] = "(" + trim(c-linha1)
+           c-literal[13] = trim(c-linha2) + ")"
+           c-literal[14] = "REFERENTE SALDO DE CAPITAL INATIVO. AUTENTICADO ABAIXO." 
+           c-literal[15] = " " 
+           c-literal[16] = " "
+           c-literal[17] = " "
+           c-literal[18] = " "
+           c-literal[19] = "ASSINATURA: _________________________________" 
+           c-literal[20] = "            " + TRIM(c-nome-titular1)
+           c-literal[21] = "            " + TRIM(c-cgc-cpf1) 
+           c-literal[22] = "            " + TRIM(c-nome-titular2)
+           c-literal[23] = "            " + TRIM(c-cgc-cpf2) 
+           c-literal[24] = " "       
+           c-literal[25] = p-literal
+           c-literal[26] = " "
+           c-literal[27] = " "
+           c-literal[28] = " "
+           c-literal[29] = " "
+           c-literal[30] = " "
+           c-literal[31] = " "
+           c-literal[32] = " "
+           c-literal[33] = " ".
+    END.		   
+		   
+    ASSIGN p-literal-autentica = STRING(c-literal[1],"x(48)")   + 
+                                 STRING(c-literal[2],"x(48)")   + 
+                                 STRING(c-literal[3],"x(48)")   + 
+                                 STRING(c-literal[4],"x(48)")   + 
+                                 STRING(c-literal[5],"x(48)")   + 
+                                 STRING(c-literal[6],"x(48)")   + 
+                                 STRING(c-literal[7],"x(48)")   + 
+                                 STRING(c-literal[8],"x(48)")   + 
+                                 STRING(c-literal[9],"x(48)")   + 
+                                 STRING(c-literal[10],"x(48)")  + 
+                                 STRING(c-literal[11],"x(48)")  + 
+                                 STRING(c-literal[12],"x(48)")  +
+                                 STRING(c-literal[13],"x(48)")  + 
+                                 STRING(c-literal[14],"x(48)")  + 
+                                 STRING(c-literal[15],"x(48)")  + 
+                                 STRING(c-literal[16],"x(48)")  + 
+                                 STRING(c-literal[17],"x(48)")  +
+                                 STRING(c-literal[18],"x(48)")  + 
+                                 STRING(c-literal[19],"x(48)")  + 
+                                 STRING(c-literal[20],"x(48)")  + 
+                                 STRING(c-literal[21],"x(48)")  + 
+                                 STRING(c-literal[22],"x(48)")  + 
+                                 STRING(c-literal[23],"x(48)")  + 
+                                 STRING(c-literal[24],"x(48)")  + 
+                                 STRING(c-literal[25],"x(48)")  + 
+                                 STRING(c-literal[26],"x(48)")  +
+                                 STRING(c-literal[27],"x(48)")  + 
+                                 STRING(c-literal[28],"x(48)")  + 
+                                 STRING(c-literal[29],"x(48)")  + 
+                                 STRING(c-literal[30],"x(48)")  + 
+                                 STRING(c-literal[31],"x(48)")  + 
+                                 STRING(c-literal[32],"x(48)")  + 
+                                 STRING(c-literal[33],"x(48)").
+    
+            /*-- 
+            ASSIGN c-texto-2-via = p-literal-autentica.
+    
+            ASSIGN p-literal-autentica = p-literal-autentica + c-texto-2-via.
+            --*/
+
+    ASSIGN in99 = 0. 
+    DO  WHILE TRUE:
+        
+        ASSIGN in99 = in99 + 1.
+        FIND FIRST crapaut WHERE RECID(crapaut) = p-registro 
+                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+        IF  NOT AVAIL   crapaut   THEN  
+            DO:
+                
+                IF LOCKED crapaut   THEN 
+                    DO:
+                
+                            IF  in99 <  100  THEN 
+                                DO:
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT.
+                                END.
+                            ELSE 
+                                DO:
+                                    ASSIGN i-cod-erro  = 0
+                                           c-desc-erro = "Tabela CRAPAUT em uso ".
+                                    RUN cria-erro (INPUT p-cooper,
+                                                   INPUT p-cod-agencia,
+                                                   INPUT p-nro-caixa,
+                                                   INPUT i-cod-erro,
+                                                   INPUT c-desc-erro,
+                                                   INPUT YES).
+                                    RETURN "NOK".
+                                END.
+                    END.
+            END.
+        ELSE 
+            DO:
+            
+                ASSIGN  crapaut.dslitera = p-literal-autentica.
+                RELEASE crapaut.
+                LEAVE.
+            END.
+    END. /* fim do DO  WHILE TRUE */
+
+		
+		
+      END.
+
+
     
     RELEASE crapbcx.
     RELEASE craplcx.
