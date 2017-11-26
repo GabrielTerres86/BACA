@@ -348,7 +348,7 @@ PROCEDURE busca_inf_produtos:
     /* Verificar se conta possui seguro */
     FOR EACH crapseg WHERE crapseg.cdcooper = par_cdcooper
                        AND crapseg.nrdconta = par_nrdconta
-                       AND crapseg.dtinsexc = ? NO-LOCK:
+                       AND crapseg.dtcancel = ? NO-LOCK:
 
         ASSIGN tt-inf-produto.flseguro = 1.
 
