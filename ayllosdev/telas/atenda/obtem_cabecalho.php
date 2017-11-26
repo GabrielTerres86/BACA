@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 14/11/2017
+	 Data : Julho/2007                   Última Alteração: 22/11/2017
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -109,6 +109,8 @@
 				 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
 				 14/11/2014 - Ajuste para controlar acesso as rotinas quando cooperado desligado (Jonata - P364)
+
+				 22/11/2017 - Ajuste para permitir apenas consulta, na rotina seguros, de acordo com a situação da conta (Jonata - RKAM p364).
 
  * ********************************************************************************** */
 
@@ -563,7 +565,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Seguro";    
 				$urlRotina  = "seguro";    
 				$strValue   = strtolower(getByTagName ($valores,"flgsegur")) == "yes" ? "SIM" : "NAO"; 
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}			
 			case "TELE ATEN": {
