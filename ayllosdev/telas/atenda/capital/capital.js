@@ -1,7 +1,7 @@
 /**********************************************************************
   Fonte: capital.js                                                
   Autor: David													   
-  Data : Outubro/2007                 Ultima Alteracao: 04/11/2017
+  Data : Outubro/2007                 Ultima Alteracao: 14/11/2017
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Capital da tela      
               ATENDA                                               
@@ -29,6 +29,9 @@
 
               04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                            (Jonata - RKAM P364).
+
+              14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando
+                           (Jonata - RKAM P364).
  					
 *************************************************************************/
 
@@ -44,15 +47,18 @@ var vintegra = 0;
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		
 	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
-	if(sitaucaoDaContaCrm == '2' || 
-	   sitaucaoDaContaCrm == '3' || 
-	   sitaucaoDaContaCrm == '4' || 
-	   sitaucaoDaContaCrm == '5' || 
-	   sitaucaoDaContaCrm == '7' || 
-	   sitaucaoDaContaCrm == '8' || 
-	   sitaucaoDaContaCrm == '9'){ 
-	   opcao ="E";
-	   id="3";
+	if((sitaucaoDaContaCrm == '2' || 
+	    sitaucaoDaContaCrm == '3' || 
+	    sitaucaoDaContaCrm == '4' || 
+	    sitaucaoDaContaCrm == '5' || 
+	    sitaucaoDaContaCrm == '7' || 
+	    sitaucaoDaContaCrm == '8' || 
+	    sitaucaoDaContaCrm == '9') &&
+        opcao == "I"){ 
+
+	    showError('inform', 'Situa&ccedil;&atilde;o de conta n&atilde;o permite acesso.', 'Alerta - Ayllos', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		return false;
+		
 	}
 	
 	
@@ -143,6 +149,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 			url: UrlOperacao,
 			data: {
 				nrdconta: nrdconta,
+				sitaucaoDaContaCrm: sitaucaoDaContaCrm,
 				redirect: "html_ajax"
 			},
             error: function (objAjax, responseError, objExcept) {

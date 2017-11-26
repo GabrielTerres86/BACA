@@ -4,14 +4,14 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : Maio/2017.                       Ultima atualizacao:  /  /  
+   Data    : Maio/2017.                       Ultima atualizacao: 14/11/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
    Objetivo  : BO referente a Desligamento de Cooperados
 
-   Alteracoes:
+   Alteracoes: 14/11/2017 - Auste para consulta dos produtos impeditivos (Jonata - RKAM P364).
    
 ............................................................................ */
 
@@ -165,31 +165,6 @@ PROCEDURE busca_inf_produtos:
                         INPUT par_nrdconta, /* nrdconta */
                        OUTPUT aux_nrdrowid).
 
-    RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT SET h-b1wgen0002.
-
-    RUN obtem-dados-emprestimos IN h-b1wgen0002 (INPUT par_cdcooper,
-                                                 INPUT par_cdagenci,
-                                                 INPUT par_nrdcaixa,
-                                                 INPUT par_cdoperad,
-                                                 INPUT par_nmdatela,
-                                                 INPUT par_idorigem, /* Ayllos */
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_idseqttl,
-                                                 INPUT par_dtmvtolt,
-                                                 INPUT crapdat.dtmvtopr,
-                                                 INPUT ?,
-                                                 INPUT 0,/*Contrato(todos)*/
-                                                 INPUT "CONTAS",
-                                                 INPUT crapdat.inproces,
-                                                 INPUT FALSE,
-                                                 INPUT FALSE,
-                                                 INPUT 0,
-                                                 INPUT 0,
-                                                 OUTPUT aux_qtregist,
-                                                 OUTPUT TABLE tt-erro,
-                                                 OUTPUT TABLE tt-dados-epr-out).
-    DELETE PROCEDURE h-b1wgen0002.
-
     CREATE tt-inf-produto.
     ASSIGN tt-inf-produto.vlemprst = 0
            tt-inf-produto.vllimpro = 0
@@ -211,11 +186,17 @@ PROCEDURE busca_inf_produtos:
            tt-inf-produto.inarqcbr = 0
            tt-inf-produto.flgbinss = 0
            tt-inf-produto.flpdbrde = 0.
+
+    /************************ Emprestimo *********************************/
+    FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper AND
+                           crapepr.nrdconta = par_nrdconta AND
+                           crapepr.inliquid = 0   
+						   NO-LOCK:
     
-    FOR EACH tt-dados-epr-out NO-LOCK:
-      ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + tt-dados-epr-out.vlsdeved.
-    END.
-        
+        ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + crapepr.vlsdeved.
+
+    END. 
+    
     FOR LAST craplim WHERE craplim.cdcooper = par_cdcooper AND
                            craplim.nrdconta = par_nrdconta AND
                            craplim.tpctrlim = 1            AND
@@ -284,9 +265,11 @@ PROCEDURE busca_inf_produtos:
                      WHERE crawcrd.cdcooper = par_cdcooper
                        AND crawcrd.nrdconta = par_nrdconta
                        AND (crawcrd.insitcrd = 4 
+					    OR  crawcrd.insitcrd = 3
                         OR  crawcrd.insitcrd = 7)
                         NO-LOCK:
-      ASSIGN tt-inf-produto.vllimcar = tt-inf-produto.vllimcar + crawcrd.vllimcrd.
+      ASSIGN tt-inf-produto.vllimcar = tt-inf-produto.vllimcar + crawcrd.vllimcrd
+	         tt-inf-produto.flgcarta = 1.
     END.
     
     RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT SET h-b1wgen0081.
@@ -312,7 +295,7 @@ PROCEDURE busca_inf_produtos:
 
     ASSIGN tt-inf-produto.vlresapl = aux_vlresapl.
     
-    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
+	RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
     
     RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
                                            INPUT par_cdagenci,
@@ -335,7 +318,7 @@ PROCEDURE busca_inf_produtos:
     DELETE PROCEDURE h-b1wgen0006.
     
     ASSIGN tt-inf-produto.vlsrdrpp = aux_vlsrdrpp.
-    
+
     RUN sistema/generico/procedures/b1wgen0082.p PERSISTENT SET h-b1wgen0082.
     
     RUN carrega-convenios-ceb IN h-b1wgen0082 (INPUT par_cdcooper,
@@ -405,22 +388,24 @@ PROCEDURE busca_inf_produtos:
 		ASSIGN tt-inf-produto.flgccbcb = 0.
 		ASSIGN tt-inf-produto.flgccbdb = 0.
 	END.
-
+	
     /* Buscar quantidade de folhas de cheque em uso */
-    FOR EACH crapfdc FIELDS(cdcooper) 
+    FOR EACH crapfdc FIELDS(cdcooper nrdconta cdbanchq cdagechq nrctachq nrcheque) 
 					  WHERE crapfdc.cdcooper = par_cdcooper 
 						AND crapfdc.nrdconta = par_nrdconta
 						AND crapfdc.incheque = 0 
 						AND crapfdc.dtliqchq = ? 
-							NO-LOCK:
+						AND crapfdc.dtemschq <> ? 
+						AND crapfdc.dtretchq <> ?
+						NO-LOCK:
 							
-		FIND FIRST crapneg WHERE crapneg.nrdconta = crapfdc.nrdconta AND
+		FIND FIRST crapneg WHERE crapneg.cdcooper = crapfdc.cdcooper AND
+		                         crapneg.nrdconta = crapfdc.nrdconta AND
 							     crapneg.cdbanchq = crapfdc.cdbanchq AND
 								 crapneg.cdagechq = crapfdc.cdagechq AND
 								 crapneg.nrctachq = crapfdc.nrctachq AND
 								 crapneg.cdhisest = 1 				AND
-								 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque AND
-								 CAN-DO("12,13", STRING(crapneg.cdobserv)) 
+								 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque
 								 NO-LOCK NO-ERROR.
 							
 		IF NOT AVAIL crapneg THEN
@@ -428,6 +413,29 @@ PROCEDURE busca_inf_produtos:
 			
 	END.
     
+	/* Buscar quantidade de folhas de cheque em estoque */
+    FOR EACH crapfdc FIELDS(cdcooper nrdconta cdbanchq cdagechq nrctachq nrcheque) 
+					  WHERE crapfdc.cdcooper = par_cdcooper 
+						AND crapfdc.nrdconta = par_nrdconta
+						AND crapfdc.dtemschq <> ?
+						AND crapfdc.dtretchq = ? 
+							NO-LOCK:
+							
+		FIND FIRST crapneg WHERE crapneg.cdcooper = crapfdc.cdcooper AND
+		                         crapneg.nrdconta = crapfdc.nrdconta AND
+							     crapneg.cdbanchq = crapfdc.cdbanchq AND
+								 crapneg.cdagechq = crapfdc.cdagechq AND
+								 crapneg.nrctachq = crapfdc.nrctachq AND
+								 crapneg.cdhisest = 1 				AND
+								 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque 
+								 NO-LOCK NO-ERROR.
+							
+		IF NOT AVAIL crapneg THEN
+		   ASSIGN tt-inf-produto.qtfdcest = tt-inf-produto.qtfdcest + 1.
+			
+	END.
+
+	
     /* Buscar quantidade de cheques devolvidos */
     FOR EACH crapneg FIELDS(cdcooper)
                       WHERE crapneg.cdcooper = par_cdcooper 
