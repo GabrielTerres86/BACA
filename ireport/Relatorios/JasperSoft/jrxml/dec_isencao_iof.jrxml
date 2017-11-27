@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2017-11-10T14:08:01 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="dec_isencao_iof" pageWidth="442" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DeclaracaoAdapter.xml"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/associado/nmprimtl]]>
+	</queryString>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrdconta]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrcepend" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrcepend]]></fieldDescription>
+	</field>
+	<field name="dsendere" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/dsendere]]></fieldDescription>
+	</field>
+	<field name="complend" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/complend]]></fieldDescription>
+	</field>
+	<field name="nrendere" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrendere]]></fieldDescription>
+	</field>
+	<field name="nmbairro" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nmbairro]]></fieldDescription>
+	</field>
+	<field name="nmcidade" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nmcidade]]></fieldDescription>
+	</field>
+	<field name="cdufende" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/cdufende]]></fieldDescription>
+	</field>
+	<field name="nrcxapst" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrcxapst]]></fieldDescription>
+	</field>
+	<field name="dsproftl" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/dsproftl]]></fieldDescription>
+	</field>
+	<field name="nmextcop" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nmextcop]]></fieldDescription>
+	</field>
+	<field name="nrctremp" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/nrctremp]]></fieldDescription>
+	</field>
+	<field name="dsnacion" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/dsnacion]]></fieldDescription>
+	</field>
+	<field name="dsestcvl" class="java.lang.String">
+		<fieldDescription><![CDATA[/associado/dsestcvl]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="41">
+			<staticText>
+				<reportElement key="" x="-2" y="30" width="442" height="11" isPrintWhenDetailOverflows="true" uuid="a571f8a0-d167-4b1c-aa06-a88b48b02caf"/>
+				<textElement textAlignment="Center" markup="styled">
+					<font fontName="Courier New" size="9" isBold="true" pdfFontName="Courier"/>
+					<paragraph lineSpacing="Double"/>
+				</textElement>
+				<text><![CDATA[DECLARAÇÃO DE UTILIZAÇÃO DE RECURSOS FINANCEIROS]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="447" splitType="Prevent">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="30" y="243" width="380" height="30" isPrintWhenDetailOverflows="true" uuid="b53b92f9-961d-4bfa-829a-2fe0665408f1">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[__________________________, _______de ____________________de ________.
+(Local e Data)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="303" width="380" height="20" isPrintWhenDetailOverflows="true" uuid="86b46b7f-a5e2-49c1-9ba6-f418e4a7e34e">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Assinatura do Cooperado]]></text>
+			</staticText>
+			<line>
+				<reportElement x="30" y="302" width="380" height="1" uuid="37a22f19-333c-4fb7-9ee5-d4039b676ba5"/>
+			</line>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="30" y="30" width="381" height="200" uuid="4e51e543-7608-42cc-ab49-619ad56097d4"/>
+				<textElement textAlignment="Justified" markup="none">
+					<font fontName="Courier New" size="9" pdfFontName="Courier" pdfEncoding=""/>
+					<paragraph lineSpacing="1_1_2" lineSpacingSize="1.0"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Eu, " + $F{nmprimtl} + ", " + $F{dsnacion} + ", " + ($F{dsestcvl} == null ? "" : $F{dsestcvl}.toString() + ",") + ($F{dsproftl} == null ? "" : $F{dsproftl}.toString() + ",") + " inscrito no CPF n. " + $F{nrcpfcgc} + ", residente e domiciliado na rua " + $F{dsendere} + ", " + $F{nrendere} + ",  " + ($F{complend}.equals("") ? "" : $F{complend}.toString() + ",") + ($F{nmbairro}.equals("") ? "" : " bairro " + $F{nmbairro}.toString() + ",") + ", na cidade de " + $F{nmcidade} + " / " + $F{cdufende} + ", declaro, para fins de isenção do Imposto sobre Operações de Crédito, Câmbio e Seguro, e sobre Operações relativas a Títulos e Valores Mobiliários (IOF), que os recursos financeiros oriundos da operação de crédito firmada com a " + $F{nmextcop} + ", contrato/cédula n° " + $F{nrctremp} + ", vinculado(a) à conta corrente n° " + $F{nrdconta} + ", serão utilizados para fins exclusivamente habitacionais, infra-estrutra e/ou saneamento básico, nos termos do Decreto-Lei n° 2.407/88 e Decreto n° 6.306/2007."]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
