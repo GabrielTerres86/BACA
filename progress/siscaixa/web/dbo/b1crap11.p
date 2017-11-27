@@ -50,6 +50,8 @@
 				             na rotina 11 (Jonata - RKAM P364).
 
 				16/11/2017 - Ajuste para chamar rotinas oracle (Jonata - RKAM P364).
+
+				27/11/2017 - Ajuste no layout do compravante para impressao (Jonata - RKAM P364).
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -1644,12 +1646,12 @@ PROCEDURE grava-lancamento-boletim:
            c-literal[9]  = "       "    +   trim(c-nome-titular2)
            c-literal[10] = " "
            c-literal[11] = "RECEBI(EMOS) DA " +  
-           STRING(crapcop.nmrescop,"X(11)") + ", O VALOR DE R$    " + c-valor
-           c-literal[12] = "(" + trim(c-linha1)
-           c-literal[13] = trim(c-linha2) + ")"
-           c-literal[14] = "REFERENTE SALDO DE DEPOSITO DISPONIVEL. AUTENTICADO ABAIXO." 
-           c-literal[15] = " " 
-           c-literal[16] = " "
+           STRING(crapcop.nmrescop,"X(11)") + ",         O VALOR DE "
+           c-literal[12] = "R$  " + c-valor
+           c-literal[13] = "(" + trim(c-linha1)
+           c-literal[14] = trim(c-linha2) + ")"
+           c-literal[15] = " REFERENTE SALDO DE DEPOSITO DISPONIVEL. " 
+           c-literal[16] = "AUTENTICADO ABAIXO. " 
            c-literal[17] = " "
            c-literal[18] = " "
            c-literal[19] = "ASSINATURA: _________________________________" 
@@ -1689,12 +1691,12 @@ PROCEDURE grava-lancamento-boletim:
            c-literal[9]  = "       "    +   trim(c-nome-titular2)
            c-literal[10] = " "
            c-literal[11] = "RECEBI(EMOS) DA " +  
-           STRING(crapcop.nmrescop,"X(11)") + ", O VALOR DE R$    " + c-valor
-           c-literal[12] = "(" + trim(c-linha1)
-           c-literal[13] = trim(c-linha2) + ")"
-           c-literal[14] = "REFERENTE SALDO DE CAPITAL INATIVO. AUTENTICADO ABAIXO." 
-           c-literal[15] = " " 
-           c-literal[16] = " "
+           STRING(crapcop.nmrescop,"X(11)") + ",         O VALOR DE "
+           c-literal[12] = "R$  " + c-valor
+           c-literal[13] = "(" + trim(c-linha1)
+           c-literal[14] = trim(c-linha2) + ")"
+           c-literal[15] = " REFERENTE SALDO DE CAPITAL INATIVO. " 
+           c-literal[16] = "AUTENTICADO ABAIXO. " 
            c-literal[17] = " "
            c-literal[18] = " "
            c-literal[19] = "ASSINATURA: _________________________________" 
