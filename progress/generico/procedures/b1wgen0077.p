@@ -47,6 +47,8 @@
                 19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                              PRJ339 - CRM (Odirlei-AMcom)      
                              
+                24/11/2017 - Corrigida a ordem dos parametros da chamada 
+                             da gerenciar-telefone. PRJ339 - CRM(Odirlei-AMcom)
 .............................................................................*/
 
 
@@ -630,9 +632,9 @@ PROCEDURE Recebe_Dados:
                   INPUT tt-telefone-cooperado.nmpescto,
                   INPUT tt-telefone-cooperado.cdopetfn,
                   INPUT "A",/*prgqfalt*/
+                  INPUT par_flgerlog,
                   INPUT tt-telefone-cooperado.idsittfc,
                   INPUT tt-telefone-cooperado.idorigem, 
-                  INPUT par_flgerlog,
                  OUTPUT aux_tpatlcad,
                  OUTPUT aux_msgatcad,
                  OUTPUT aux_chavealt,
