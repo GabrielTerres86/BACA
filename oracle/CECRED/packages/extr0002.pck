@@ -5400,48 +5400,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(3);          
         END IF;  
         /* caso exista valor iof sera criado registro para debito */
-        IF rw_crapsld.vliofmes > 0 AND
-          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
-          --Verificar Imunidade Tributaria
-          IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper  => pr_cdcooper          --> Codigo Cooperativa
-                                             ,pr_nrdconta  => pr_nrdconta          --> Numero da Conta
-                                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data movimento
-                                             ,pr_flgrvvlr  => FALSE                --> Identificador se deve gravar valor
-                                             ,pr_cdinsenc  => 0                    --> Codigo da isenção
-                                             ,pr_vlinsenc  => 0                    --> Valor insento
-                                             ,pr_inpessoa  => rw_crapass.inpessoa  --> Tipo de pessoa
-                                             ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc  --> CPF/CNPJ
-                                             ,pr_flgimune  => vr_flgimune          --> Identificador se é imune
-                                             ,pr_dsreturn  => vr_des_reto          --> Descricao Critica
-                                             ,pr_tab_erro  => pr_tab_erro);        --> Tabela erros
-          -- Caso retornou com erro, levantar exceção
-          IF vr_des_reto = 'NOK' THEN
-            -- Tenta buscar o erro no vetor de erro
-            IF pr_tab_erro.COUNT > 0 THEN
-              vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-              vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic||' '||gene0002.fn_mask_conta(pr_nrdconta);
-            ELSE
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Retorno "NOK" na IMUT0001.pc_verifica_imunidade_trib e sem informação na pr_tab_erro, Conta: '||gene0002.fn_mask_conta(pr_nrdconta);
-            END IF;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF; 
-          IF NOT vr_flgimune THEN
-            --Resultado 4
-            vr_tab_resulta(4):= rw_crapsld.vliofmes;
-            --Incrementar Conta          
-            vr_contadct:= vr_contadct + 1;
-            --Incrementar contador lancamentos na tabela
-            vr_index:= pr_tab_lancamento_futuro.COUNT+1;
-            --Criar Lancamento Futuro na tabela
-            pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
-            pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
-            pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
-            pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
-            pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-            pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
-          END IF;   
+        IF rw_crapsld.vliofmes > 0 AND (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
+          --Resultado 4
+          vr_tab_resulta(4):= rw_crapsld.vliofmes;
+          --Incrementar Conta          
+          vr_contadct:= vr_contadct + 1;
+          --Incrementar contador lancamentos na tabela
+          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+          --Criar Lancamento Futuro na tabela
+          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+          pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
+          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+          pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+          pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);          
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
       

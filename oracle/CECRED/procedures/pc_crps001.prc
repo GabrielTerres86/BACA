@@ -291,6 +291,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
               ,tpextcta crapass.tpextcta%TYPE
               ,inpessoa crapass.inpessoa%TYPE);
 
+       -- Definicao do tipo de registro de associado juridico
+       TYPE typ_reg_crapjur IS
+       RECORD (natjurid crapjur.natjurid%TYPE
+              ,tpregtrb crapjur.tpregtrb%TYPE);       
+
        -- Definicao do tipo de registro de limites de credito
        TYPE typ_reg_craplim IS
        RECORD (nrdconta craplim.nrdconta%TYPE
@@ -302,6 +307,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        TYPE typ_tab_crapass IS
          TABLE OF typ_reg_crapass
          INDEX BY BINARY_INTEGER;
+
+       -- Definicao do tipo de tabela de associados juridicos
+       TYPE typ_tab_crapjur IS
+         TABLE OF typ_reg_crapjur
+         INDEX BY BINARY_INTEGER;  
 
        -- Definicao do tipo de registro de associados
        TYPE typ_reg_crapsda IS
@@ -336,6 +346,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        -- Definicao do vetor de memoria
        vr_tab_craphis  typ_tab_craphis;
        vr_tab_crapass  typ_tab_crapass;
+       vr_tab_crapjur  typ_tab_crapjur;
        vr_tab_crapsda  typ_tab_crapsda;
        vr_tab_craplcm  typ_tab_craplcm;
        vr_tab_craplim  typ_tab_craplim;
@@ -506,6 +517,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          FROM crapass crapass
          WHERE  crapass.cdcooper = pr_cdcooper;
 
+       --Selecionar informacoes dos associados juridico
+       CURSOR cr_crapjur (pr_cdcooper IN crapjur.cdcooper%TYPE) IS
+         SELECT natjurid
+               ,tpregtrb
+               ,nrdconta
+           FROM crapjur
+          WHERE cdcooper = pr_cdcooper;
+
        --selecionar informacoes dos cheques emitidos
        CURSOR cr_crapfdc (pr_cdcooper IN crapfdc.cdcooper%TYPE
                          ,pr_cdbanchq IN crapfdc.cdbanchq%TYPE
@@ -662,6 +681,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_nrctares  INTEGER:= 0;
        vr_inrestar  INTEGER:= 0;
        vr_dsrestar  crapres.dsrestar%TYPE;
+       vr_natjurid  crapjur.natjurid%TYPE;
+       vr_tpregtrb  crapjur.tpregtrb%TYPE;
 
        --Variaveis de controle de data
        vr_dtfimvig  DATE;
@@ -678,9 +699,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_dtiniabo DATE;
 
        --Variaveis de impostos
-       vr_dtiniiof  DATE;
-       vr_dtfimiof  DATE;
-       vr_txccdiof  NUMBER:= 0;
        vr_vliofant  NUMBER:= 0;
        vr_vliofatu  NUMBER:= 0;
        vr_vldoipmf  NUMBER:= 0;
@@ -688,9 +706,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vlipmfpg  NUMBER:= 0;
        vr_vlbasipm  NUMBER:= 0;
        vr_vlbasiof  NUMBER:= 0;
-       vr_vltariof_adic NUMBER := 0;
+       vr_vliof_principal NUMBER := 0;
        vr_qtdiaiof  INTEGER;
-       vr_flgimune  BOOLEAN;
 
        --Variaveis diversas
        vr_flgestou  BOOLEAN;
@@ -708,8 +725,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
-       vr_vltotiof NUMBER := 0; --> Valor total do IOF (sem considerar atraso)
-       vr_rw_calciof gene0005.rw_calciof%TYPE;
        vr_idlancto NUMBER;
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
@@ -827,19 +842,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          RAISE vr_exc_saida;
        END IF;
 
-       -- Procedimento padrão de busca de informações de IOF
-       gene0005.pc_busca_iof_adic (pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                             ,pr_dtiniiof  => vr_dtiniiof
-                             ,pr_dtfimiof  => vr_dtfimiof
-                             ,pr_txccdiof  => vr_txccdiof
-                             ,pr_cdcritic  => vr_cdcritic
-                             ,pr_dscritic  => vr_dscritic);
-       -- Se retornou erro
-       IF vr_dscritic IS NOT NULL THEN
-         -- Gerar raise
-         RAISE vr_exc_saida;
-       END IF;
-       
        -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
        vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                 pr_cdcooper => pr_cdcooper,
@@ -917,6 +919,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_crapass(rw_crapass.nrdconta).vllimcre:= rw_crapass.vllimcre;
          vr_tab_crapass(rw_crapass.nrdconta).tpextcta:= rw_crapass.tpextcta;
          vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
+       END LOOP;
+
+       --Carregar tabela memoria de associados
+       FOR rw_crapjur IN cr_crapjur (pr_cdcooper => pr_cdcooper) LOOP
+         vr_tab_crapjur(rw_crapjur.nrdconta).natjurid := rw_crapjur.natjurid;
+         vr_tab_crapjur(rw_crapjur.nrdconta).tpregtrb := rw_crapjur.tpregtrb;
        END LOOP;
 
        --Carregar tabela memoria de saldos diarios dos associados
@@ -1007,25 +1015,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              vr_flglimite:= FALSE;
            END IF;
 
+           -- Condicao para verificar se a empresa existe
+           IF vr_tab_crapjur.EXISTS(rw_crapsld.nrdconta) THEN
+             -- Natureza Juridica
+             vr_natjurid := vr_tab_crapjur(rw_crapsld.nrdconta).natjurid;
+             -- Regime de Tributacao
+             vr_tpregtrb := vr_tab_crapjur(rw_crapsld.nrdconta).tpregtrb;
+           ELSE
+             -- Natureza Juridica             
+             vr_natjurid := 0;
+             -- Regime de Tributacao
+             vr_tpregtrb := 0;
+           END IF;
+
            --Se for primeiro dia util e tiver IOF a cobrar
            IF To_Char(vr_dtmvtolt,'MM') <> To_Char(vr_dtmvtoan,'MM') THEN
 
              IF round(rw_crapsld.vliofmes,2) > 0 THEN
 
-               -- Verificar a imunidade tributária
-               IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
-                                                  ,pr_nrdconta => rw_crapsld.nrdconta
-                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                  ,pr_flgrvvlr => TRUE
-                                                  ,pr_cdinsenc => 4
-                                                  ,pr_vlinsenc => round(rw_crapsld.vliofmes,2)
-                                                  ,pr_flgimune => vr_flgimune
-                                                  ,pr_dsreturn => vr_dsreturn
-                                                  ,pr_tab_erro => vr_tab_erro);
-
-               -- Se não possui imunidade tributária
-               IF NOT vr_flgimune THEN
-               
                  --Se o usuario existir na tabela de memoria e for pessoa fisica ou juridica
                  IF vr_tab_crapass.EXISTS(rw_crapsld.nrdconta) AND
                     vr_tab_crapass(rw_crapsld.nrdconta).inpessoa < 3 THEN
@@ -1106,7 +1113,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                   ,vr_dtmvtolt            -- craplau.dtmvtopg
                                   ,1                      -- craplau.cdagenci
                                   ,100                    -- craplau.cdbccxlt
-                                  ,323                    -- craplau.cdhistor
+                                  ,2323                   -- craplau.cdhistor
                                   ,vr_dtmvtolt            -- craplau.dtmvtolt
                                   ,1                      -- craplau.insitlau
                                   ,rw_crapsld.nrdconta    -- craplau.nrdconta
@@ -1158,6 +1165,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        CLOSE cr_tbcc_lautom_controle;
                      END IF;
                      
+                     --------------------------------------------------------------------------------------------------
+                     -- Atualizar os dados do IOF
+                     --------------------------------------------------------------------------------------------------
+                     TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
+                                           ,pr_nrdconta   => rw_crapsld.nrdconta
+                                           ,pr_dtmvtolt   => vr_dtmvtolt
+                                           ,pr_tpproduto  => 5
+                                           ,pr_nrcontrato => 0
+                                           ,pr_idlautom   => vr_idlancto
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+                                
+                     -- Condicao para verificar se houve critica                             
+                     IF vr_dscritic IS NOT NULL THEN
+                       RAISE vr_exc_saida;
+                     END IF;
+             
                      --Zerar valor iof no mes
                      rw_crapsld.vliofmes:= 0;
                      --Zerar valor base iof
@@ -1238,14 +1262,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                          ,rw_crapsld.nrdconta
                                          ,to_char(rw_crapsld.nrdconta,'fm00000000')
                                          ,99999323
-                                         ,323
+                                         ,2323
                                          ,Nvl(rw_craplot.nrseqdig,0) + 1
                                          ,round(rw_crapsld.vliofmes,2)
                                          ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
                                          ,0)
                                  RETURNING vllanmto
+                                          ,nrseqdig
                                           ,ROWID
                                  INTO     rw_craplcm.vllanmto
+                                         ,vr_nrseqdig
                                          ,rw_craplcm.rowid;
 
                      -- Se na carga inicial não haviam lançamentos do dia para a conta
@@ -1275,6 +1301,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        RAISE vr_exc_saida;
                    END;
 
+                   --------------------------------------------------------------------------------------------------
+                   -- Atualizar os dados do IOF
+                   --------------------------------------------------------------------------------------------------
+                   TIOF0001.pc_altera_iof(pr_cdcooper     => pr_cdcooper
+                                         ,pr_nrdconta     => rw_crapsld.nrdconta
+                                         ,pr_dtmvtolt     => rw_craplot.dtmvtolt
+                                         ,pr_tpproduto    => 5
+                                         ,pr_nrcontrato   => 0
+                                         ,pr_cdagenci_lcm => rw_craplot.cdagenci
+                                         ,pr_cdbccxlt_lcm => rw_craplot.cdbccxlt
+                                         ,pr_nrdolote_lcm => rw_craplot.nrdolote
+                                         ,pr_nrseqdig_lcm => vr_nrseqdig
+                                         ,pr_cdcritic     => vr_cdcritic
+                                         ,pr_dscritic     => vr_dscritic);
+                                
+                   -- Condicao para verificar se houve critica                             
+                   IF vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                     
                    --Incrementar a quantidade de lancamentos no mes
                    rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + 1;
                    --Zerar valor iof no mes
@@ -1283,12 +1329,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    rw_crapsld.vlbasiof:= 0;
                  END IF;
                  END IF;
-               ELSE
-                 --Zerar valor iof no mes
-                 rw_crapsld.vliofmes:= 0;
-                 --Zerar valor base iof
-                 rw_crapsld.vlbasiof:= 0;
-               END IF;
 
              END IF;
 
@@ -1674,14 +1714,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            vr_vlbasipm:= 0;  --base de calculo do ipmf
            vr_qtlanmes:= 0;  --quantidade de lancamentos no mes
            vr_vlbasiof:= 0;  --valor base de iof
-           vr_vltariof_adic := 0; --Valor do IOF adicional
+           vr_vliof_principal := 0; --Valor do IOF Principal
 
            --Verificar se a conta possui lancamentos no dia
            IF vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
-
-             OPEN gene0005.cr_calciof(pr_cdcooper => pr_cdcooper
-                                     ,pr_nrdconta => rw_crapsld.nrdconta);
-             FETCH gene0005.cr_calciof INTO vr_rw_calciof;
              --Percorrer vetor de lancamentos
              FOR rw_craplcm IN cr_craplcm (pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_crapsld.nrdconta
@@ -2054,80 +2090,122 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              vr_vliofatu:= 0;
            END IF;
 
-           --Cobranca de IOF    linha(883)
-           
-           --Se a taxa de iof for maior que zero
-           IF vr_txccdiof > 0   THEN
              --Se o valor do iof atual menos valor iof anterior for maior zero
              IF (vr_vliofatu - vr_vliofant) > 0 THEN
                --valor base iof recebe valor iof atual menos valor iof anterior
                vr_vlbasiof:= vr_vliofatu - vr_vliofant;
              END IF;
              
-             vr_vltariof_adic := 0;
-             
+           vr_vliof_principal := 0;             
              --> calcular a quantidade de dias corridos
-             vr_qtdiaiof := vr_dtmvtolt - vr_dtmvtoan;
+           vr_qtdiaiof        := vr_dtmvtolt - vr_dtmvtoan;
                    
              IF vr_qtdiaiof > 1 THEN
                -- Diminuir um dia que será calcularo com o saldo atual
                vr_qtdiaiof := vr_qtdiaiof -1;
-               --> Calcular valor adicional do IOF dos dias não uteis(final de semana e feriado)
-               --> considerando o saldo anterior
-               GENE0005.pc_calcula_valor_iof(pr_cdcooper => pr_cdcooper               --> CÃ³digo da cooperativa
-                                            ,pr_nrdconta => rw_crapsld.nrdconta       --> NÃºmero da conta
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data do movimento para busca na tabela de IOF
-                                            ,pr_qtdiaiof => vr_qtdiaiof               --> Qde dias em atraso (cÃ¡lculo IOF atraso)
-                                            ,pr_vloperacao => round(vr_vliofant,2)    --> Valor total da operaÃ§Ã£o (pode ser negativo tambÃ©m)
-                                            ,pr_flgrvvlr => TRUE                      --> Flag indicando se deve gravar ou nÃ£o a imunidade tributÃ¡ria
-                                            ,pr_rw_calciof => vr_rw_calciof
-                                            ,pr_vliofpri => vr_vliofpri               --> Retorno do valor do IOF principal
-                                            ,pr_vliofadi => vr_vliofadi               --> Retorno do valor do IOF adicional
-                                            ,pr_vliofcpl => vr_vliofcpl               --> Retorno do valor do IOF complementar
-                                            ,pr_vltotiof => vr_vltotiof               --> Retorno do valor tota de IOF (sem considerar atraso)
-                                            ,pr_flgimune => vr_flgimune);             --> Retorno da flag se possui imunidade tributÃ¡ria
-               vr_vltariof_adic := vr_vliofcpl;
-               /*IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
-                 vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000082);
-               ELSE
-                 vr_vltariof_adic := (vr_vliofant * vr_qtdiaiof * 0.000041);
-               END IF;*/
+             -----------------------------------------------------------------------------------------------
+             -- Calcula o Valor do IOF Principal
+             -----------------------------------------------------------------------------------------------
+             TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5                    --> Adiantamento a Depositante
+                                          ,pr_tpoperacao => 1                    --> Calculo de Inclusao/Atraso
+                                          ,pr_cdcooper   => pr_cdcooper
+                                          ,pr_nrdconta   => rw_crapsld.nrdconta
+                                          ,pr_inpessoa   => vr_tab_crapass(rw_crapsld.nrdconta).inpessoa
+                                          ,pr_natjurid   => vr_natjurid
+                                          ,pr_tpregtrb   => vr_tpregtrb
+                                          ,pr_dtmvtolt   => vr_dtmvtolt
+                                          ,pr_qtdiaiof   => vr_qtdiaiof
+                                          ,pr_vloperacao => ROUND(vr_vliofant,2) --> considerando o saldo anterior
+                                          ,pr_vltotalope => vr_vliofant + vr_tab_crapass(rw_crapsld.nrdconta).vllimcre
+                                          ,pr_vliofpri   => vr_vliofpri
+                                          ,pr_vliofadi   => vr_vliofadi
+                                          ,pr_vliofcpl   => vr_vliofcpl
+                                          ,pr_dscritic   => vr_dscritic);
+                                          
+             -- Condicao para verificar se houve critica                             
+             IF vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_saida;
+             END IF;
              
+             -- Valor Principal do IOF
+             vr_vliof_principal := NVL(vr_vliofpri,0);             
              END IF;
                    
              IF vr_vliofatu > 0 THEN               
-               GENE0005.pc_calcula_valor_iof(pr_cdcooper => pr_cdcooper               --> CÃ³digo da cooperativa
-                                            ,pr_nrdconta => rw_crapsld.nrdconta       --> NÃºmero da conta
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data do movimento para busca na tabela de IOF
-                                            ,pr_qtdiaiof => 0                         --> Qde dias em atraso (cÃ¡lculo IOF atraso)
-                                            ,pr_vloperacao => round(vr_vliofatu,2)    --> Valor total da operaÃ§Ã£o (pode ser negativo tambÃ©m)
-                                            ,pr_flgrvvlr => TRUE                      --> Flag indicando se deve gravar ou nÃ£o a imunidade tributÃ¡ria
-                                            ,pr_rw_calciof => vr_rw_calciof
-                                            ,pr_vliofpri => vr_vliofpri               --> Retorno do valor do IOF principal
-                                            ,pr_vliofadi => vr_vliofadi               --> Retorno do valor do IOF adicional
-                                            ,pr_vliofcpl => vr_vliofcpl               --> Retorno do valor do IOF complementar
-                                            ,pr_vltotiof => vr_vltotiof               --> Retorno do valor tota de IOF (sem considerar atraso)
-                                            ,pr_flgimune => vr_flgimune);             --> Retorno da flag se possui imunidade tributÃ¡ria
-               vr_vltariof_adic := vr_vltariof_adic + vr_vliofpri;
-               --> Calcular valor adicional do IOF
-               /*IF vr_tab_crapass(rw_crapsld.nrdconta).inpessoa = 1 THEN
-                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000082);
-               ELSE
-                 vr_vltariof_adic := vr_vltariof_adic + (vr_vliofatu * 1 * 0.000041);
-               END IF;*/
+             -----------------------------------------------------------------------------------------------
+             -- Calcula o Valor do IOF Principal
+             -----------------------------------------------------------------------------------------------             
+             TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5           --> Adiantamento a Depositante
+                                          ,pr_tpoperacao => 1           --> Calculo de Inclusao/Atraso
+                                          ,pr_cdcooper   => pr_cdcooper
+                                          ,pr_nrdconta   => rw_crapsld.nrdconta
+                                          ,pr_inpessoa   => vr_tab_crapass(rw_crapsld.nrdconta).inpessoa
+                                          ,pr_natjurid   => vr_natjurid
+                                          ,pr_tpregtrb   => vr_tpregtrb
+                                          ,pr_dtmvtolt   => vr_dtmvtolt
+                                          ,pr_qtdiaiof   => 1
+                                          ,pr_vloperacao => ROUND(vr_vliofatu,2)
+                                          ,pr_vltotalope => vr_vliofatu + vr_tab_crapass(rw_crapsld.nrdconta).vllimcre
+                                          ,pr_vliofpri   => vr_vliofpri
+                                          ,pr_vliofadi   => vr_vliofadi
+                                          ,pr_vliofcpl   => vr_vliofcpl
+                                          ,pr_dscritic   => vr_dscritic);
+             
+             -- Condicao para verificar se houve critica                             
+             IF vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_saida;
              END IF;
+             
+             -- Valor Principal do IOF
+             vr_vliof_principal := NVL(vr_vliof_principal,0) + NVL(vr_vliofpri,0);
+             END IF;
+           
+           -----------------------------------------------------------------------------------------------
+           -- Calcula o Valor do IOF Adicional
+           -----------------------------------------------------------------------------------------------
+           TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5           --> Adiantamento a Depositante
+                                        ,pr_tpoperacao => 1           --> Calculo de Inclusao/Atraso
+                                        ,pr_cdcooper   => pr_cdcooper
+                                        ,pr_nrdconta   => rw_crapsld.nrdconta
+                                        ,pr_inpessoa   => vr_tab_crapass(rw_crapsld.nrdconta).inpessoa
+                                        ,pr_natjurid   => vr_natjurid
+                                        ,pr_tpregtrb   => vr_tpregtrb
+                                        ,pr_dtmvtolt   => vr_dtmvtolt
+                                        ,pr_qtdiaiof   => 0
+                                        ,pr_vloperacao => ROUND(vr_vlbasiof,2)
+                                        ,pr_vltotalope => vr_vliofatu + vr_tab_crapass(rw_crapsld.nrdconta).vllimcre
+                                        ,pr_vliofpri   => vr_vliofpri
+                                        ,pr_vliofadi   => vr_vliofadi
+                                        ,pr_vliofcpl   => vr_vliofcpl
+                                        ,pr_dscritic   => vr_dscritic);
+             
+           -- Condicao para verificar se houve critica                             
+           IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_saida;
            END IF;
           
-           --Soma o IOF principal + adicional 
-           /*vr_vltariof_adic := vr_vltariof_adic + vr_vliofpri;*/
+           -----------------------------------------------------------------------------------------------
+           -- Efetuar a gravacao do IOF
+           -----------------------------------------------------------------------------------------------
+           TIOF0001.pc_insere_iof(pr_cdcooper   => pr_cdcooper
+                                 ,pr_nrdconta   => rw_crapsld.nrdconta
+                                 ,pr_dtmvtolt   => vr_dtmvtolt
+                                 ,pr_tpproduto  => 5   --> Adiantamento a Depositante
+                                 ,pr_nrcontrato => 0
+                                 ,pr_vliofpri   => vr_vliof_principal
+                                 ,pr_vliofadi   => vr_vliofadi
+                                 ,pr_cdcritic   => vr_cdcritic
+                                 ,pr_dscritic   => vr_dscritic);
+                                
+           -- Condicao para verificar se houve critica                             
+           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
            
            --Valor base iof recebe valor base iof existente + valor base iof calculado
-           rw_crapsld.vlbasiof:= Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
+           rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
-           rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(vr_vlbasiof * vr_txccdiof,2);
-           /*rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(vr_vliofpri,2);*/
-           -- Incrementar com valor de tarifa de IOF adicional
-           rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
+           rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
 
             --Se deve calcular cpmf
            IF vr_flgdcpmf THEN  --linha(905)

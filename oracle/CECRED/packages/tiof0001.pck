@@ -31,7 +31,8 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                 ,pr_tpregtrb      IN  crapjur.tpregtrb%TYPE --> Tipo de Regime Tributario
                                 ,pr_dtmvtolt      IN  crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
                                 ,pr_qtdiaiof      IN  NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
-                                ,pr_vloperacao    IN  NUMBER                --> Valor total da operação (pode ser negativo também)
+                                ,pr_vloperacao    IN  NUMBER                --> Valor da operação
+                                ,pr_vltotalope    IN  NUMBER                --> Valor Total da Operacao
                                 ,pr_vliofpri      OUT NUMBER                --> Retorno do valor do IOF principal
                                 ,pr_vliofadi      OUT NUMBER                --> Retorno do valor do IOF adicional
                                 ,pr_vliofcpl      OUT NUMBER                --> Retorno do valor do IOF complementar
@@ -93,7 +94,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                 ,pr_tpregtrb      IN  crapjur.tpregtrb%TYPE --> Tipo de Regime Tributario
                                 ,pr_dtmvtolt      IN  crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
                                 ,pr_qtdiaiof      IN  NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
-                                ,pr_vloperacao    IN  NUMBER                --> Valor total da operação (pode ser negativo também)
+                                ,pr_vloperacao    IN  NUMBER                --> Valor da operação
+                                ,pr_vltotalope    IN  NUMBER                --> Valor Total da Operacao
                                 ,pr_vliofpri      OUT NUMBER   --> Retorno do valor do IOF principal
                                 ,pr_vliofadi      OUT NUMBER   --> Retorno do valor do IOF adicional
                                 ,pr_vliofcpl      OUT NUMBER   --> Retorno do valor do IOF complementar
@@ -161,7 +163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       -- Pessoa Juridica  
       ELSE
       -- Simples Nacional
-        IF pr_tpregtrb = 1 AND pr_vloperacao <= 30000 THEN
+        IF pr_tpregtrb = 1 AND pr_vltotalope <= 30000 THEN
           vr_vltaxa_iof_principal := vr_tab_taxas_iof(1);
         ELSE
           vr_vltaxa_iof_principal := vr_tab_taxas_iof(3);
@@ -183,10 +185,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
            
       -- Adiantamento a Depositante
       ELSIF pr_tpproduto IN (2,3,4,5) THEN
-        -- Cálculo do IOF principal
-        pr_vliofpri := pr_vloperacao * vr_vltaxa_iof_principal * vr_qtdiaiof;
-        -- Cálculo do IOF adicional
-        pr_vliofadi := pr_vloperacao * vr_vltaxa_iof_adicional;
+        -- Inclusao da Operacao
+        IF pr_tpoperacao = 1 THEN
+          -- Cálculo do IOF principal
+          pr_vliofpri := pr_vloperacao * vr_vltaxa_iof_principal * vr_qtdiaiof;
+          -- Cálculo do IOF adicional
+          pr_vliofadi := pr_vloperacao * vr_vltaxa_iof_adicional;        
+        -- Pagamento em Atraso  
+        ELSIF pr_tpoperacao = 2 THEN
+          pr_vliofcpl := pr_vloperacao * vr_vltaxa_iof_principal * vr_qtdiaiof;
+        END IF;  
       END IF;
          
       -- Condicao para verificar a imunidade tributaria

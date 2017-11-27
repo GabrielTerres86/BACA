@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 05/06/2017
+   Data    : Janeiro/92.                     Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -144,7 +144,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                             Heitor (Mouts) - Melhoria 440
 
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
-                            (Lucas Ranghetti/Thiago Rodrigues)                            
+                            (Lucas Ranghetti/Thiago Rodrigues)
+                            
+               21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)                                     
      ............................................................................. */
 
      DECLARE
@@ -160,6 +162,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
               ,vllanmto craplcm.vllanmto%TYPE
               ,vrrowid  rowid);
 
+       -- Definicao do tipo de registro de associado juridico
+       TYPE typ_reg_crapjur IS
+       RECORD (natjurid crapjur.natjurid%TYPE
+              ,tpregtrb crapjur.tpregtrb%TYPE);    
+             
        -- Definicao do tipo de tabela de linhas credito
        TYPE typ_tab_craplrt IS
          TABLE OF NUMBER
@@ -174,11 +181,17 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        TYPE typ_tab_crapsld IS
          TABLE OF crapsld%ROWTYPE
        INDEX BY PLS_INTEGER;
+       
+       -- Definicao do tipo de tabela de associados juridicos
+       TYPE typ_tab_crapjur IS
+         TABLE OF typ_reg_crapjur
+       INDEX BY BINARY_INTEGER;  
 
        -- Definicao do vetor de memoria
        vr_tab_craplrt  typ_tab_craplrt;
        vr_tab_craplcm  typ_tab_craplcm;
 	     vr_tab_crapsld  typ_tab_crapsld;
+       vr_tab_crapjur  typ_tab_crapjur;
 
        /* Cursores da pc_crps008 */
 
@@ -482,6 +495,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
           FROM tbcc_lautom_controle tbcc
          WHERE tbcc.idlautom = pr_idlancto;
         rw_tbcc_lautom_controle cr_tbcc_lautom_controle%ROWTYPE;
+        
+       --Selecionar informacoes dos associados juridico
+       CURSOR cr_crapjur (pr_cdcooper IN crapjur.cdcooper%TYPE) IS
+         SELECT natjurid
+               ,tpregtrb
+               ,nrdconta
+           FROM crapjur
+          WHERE cdcooper = pr_cdcooper; 
 
        /* Variaveis Locais da pc_crps008 */
 
@@ -494,11 +515,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
 
        --Variaveis do iof
        vr_vlbasiof  NUMBER:= 0;
-       vr_vltariof_adic NUMBER(25,2);
-       vr_qtdiaiof  INTEGER;
-       vr_txccdiof  NUMBER:= 0;
-       vr_dtiniiof  DATE;
-       vr_dtfimiof  DATE;
        vr_dtultdia  DATE;
        vr_dtinifis  DATE;
        vr_dtfimfis  DATE;
@@ -565,6 +581,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_idlancto NUMBER;
        vr_vlsddisp NUMBER;
        vr_qtdiacor NUMBER;
+       vr_vliofpri NUMBER := 0; --> valor do IOF principal
+       vr_vliofadi NUMBER := 0; --> valor do IOF adicional
+       vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
+       vr_natjurid crapjur.natjurid%TYPE;
+       vr_tpregtrb crapjur.tpregtrb%TYPE;
+       
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
        vr_tab_erro  GENE0001.typ_tab_erro;
@@ -783,26 +805,18 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
          RAISE vr_exc_saida;
        END IF;
 
-       -- Procedimento padrão de busca de informações de IOF
-       gene0005.pc_busca_iof (pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => vr_dtmvtolt
-                             ,pr_dtiniiof => vr_dtiniiof
-                             ,pr_dtfimiof => vr_dtfimiof
-                             ,pr_txccdiof => vr_txccdiof
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
-       -- Se retornou erro
-       IF vr_dscritic IS NOT NULL THEN
-         -- Gerar raise
-         RAISE vr_exc_saida;
-       END IF;
-
        --Zerar tabelas de memoria auxiliar
        pc_limpa_tabela;
 
        --Carregar tabela memoria com as linhas de credito
        FOR rw_craplrt IN cr_craplrt (pr_cdcooper => pr_cdcooper) LOOP
          vr_tab_craplrt(rw_craplrt.cddlinha):= rw_craplrt.txmensal;
+       END LOOP;
+       
+       --Carregar tabela memoria de associados
+       FOR rw_crapjur IN cr_crapjur (pr_cdcooper => pr_cdcooper) LOOP
+         vr_tab_crapjur(rw_crapjur.nrdconta).natjurid := rw_crapjur.natjurid;
+         vr_tab_crapjur(rw_crapjur.nrdconta).tpregtrb := rw_crapjur.tpregtrb;
        END LOOP;
 
        --Se a data do movimento estiver entre a data de inicio e fim da cpmf
@@ -1026,10 +1040,21 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            vr_vlajuipm:= 0;
            --Zerar valor base do iof
            vr_vlbasiof:= 0;
-           --Zerar valor base do iof adicional
-           vr_vltariof_adic := 0;
            --Flag ajuste recebe false
            vr_flgajust:= FALSE;
+           
+           -- Condicao para verificar se a empresa existe
+           IF vr_tab_crapjur.EXISTS(rw_crapsld.nrdconta) THEN
+             -- Natureza Juridica
+             vr_natjurid := vr_tab_crapjur(rw_crapsld.nrdconta).natjurid;
+             -- Regime de Tributacao
+             vr_tpregtrb := vr_tab_crapjur(rw_crapsld.nrdconta).tpregtrb;
+           ELSE
+             -- Natureza Juridica             
+             vr_natjurid := 0;
+             -- Regime de Tributacao
+             vr_tpregtrb := 0;
+           END IF;
 
            --Criar savepoint para conseguir desfazer transacoes
            SAVEPOINT vr_savepoint_trans1;
@@ -2121,7 +2146,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
 
            /*--- Calculo do IOF ---*/
            --Se taxa IOF > 0 e valor saldo disponivel < 0
-           IF vr_txccdiof > 0 AND rw_crapsld.vlsddisp < 0  THEN
+           IF rw_crapsld.vlsddisp < 0  THEN
              --Zerar valor base iof
              vr_vlbasiof:= 0;
 
@@ -2172,30 +2197,39 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  END IF;
                END IF;
              END IF;
-
+             
              --Se valor base iof for maior zero
              IF vr_vlbasiof > 0 THEN
                --Atualizar valor base iof na tabela saldo
-               rw_crapsld.vlbasiof:= Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
-               --Atualizar valor do iof no mes na tabela de saldo
-               rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(Nvl(vr_vlbasiof,0) * Nvl(vr_txccdiof,0),2);
+               rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
+               -----------------------------------------------------------------------------------------------
+               -- Calcula o Valor do IOF Adicional
+               -----------------------------------------------------------------------------------------------
+               TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5           --> Adiantamento a Depositante
+                                            ,pr_tpoperacao => 1           --> Calculo de Inclusao/Atraso
+                                            ,pr_cdcooper   => pr_cdcooper
+                                            ,pr_nrdconta   => rw_crapsld.nrdconta
+                                            ,pr_inpessoa   => rw_crapsld.ass_inpessoa
+                                            ,pr_natjurid   => vr_natjurid
+                                            ,pr_tpregtrb   => vr_tpregtrb
+                                            ,pr_dtmvtolt   => rw_crapdat.dtmvtolt
+                                            ,pr_qtdiaiof   => 1
+                                            ,pr_vloperacao => ROUND(vr_vlbasiof,2)
+                                            ,pr_vltotalope => NVL(ABS(rw_crapsld.vlsddisp),0) + NVL(rw_crapsld.ass_vllimcre,0)
+                                            ,pr_vliofpri   => vr_vliofpri
+                                            ,pr_vliofadi   => vr_vliofadi
+                                            ,pr_vliofcpl   => vr_vliofcpl
+                                            ,pr_dscritic   => vr_dscritic);
+                 
+               -- Condicao para verificar se houve critica                             
+               IF vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_saida;
+               END IF;
                
+               --Atualizar valor do iof no mes na tabela de saldo
+               rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
              END IF;
-
-             vr_vltariof_adic := 0;
-                   
-             --> Calcular valor adicional do IOF apenas da diferença 
-             IF rw_crapsld.ass_inpessoa = 1 THEN
-               vr_vltariof_adic := vr_vltariof_adic + (vr_vlbasiof * 1 * 0.000082);
-             ELSE
-               vr_vltariof_adic := vr_vltariof_adic + (vr_vlbasiof * 1 * 0.000041);
-             END IF;
-
-             -- Incrementar com valor de tarifa de IOF adicional
-             --> não deve arredondar 
-             rw_crapsld.vliofmes := rw_crapsld.vliofmes  + vr_vltariof_adic;
              
-
            END IF;
 
            --Atualizar tabela de cotas
