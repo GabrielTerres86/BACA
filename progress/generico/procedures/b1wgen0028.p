@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 16/10/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 27/11/2017
     
     Dados referentes ao programa:
 
@@ -526,6 +526,9 @@
 
                 16/10/2017 - Remocao de Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
+
+				27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
+							 (Chamado 788309) - (Fabricio)
 
 ..............................................................................*/
 
@@ -13900,8 +13903,8 @@ PROCEDURE exclui_cartao:
                   LEAVE.
               END.               
           
-          /* Se for um cartao Bancoob - Deve verificar se existem adicionais 
-             cadastrados - 11/11/2014 - Renato - Supero */
+          /* Para cartoes Cecred (Bancoob) verifica se existem cartoes adicionais
+		     (Fabricio). */
           IF f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
             DO:
                 /* Buscar o CPF do titular da conta */
@@ -13915,11 +13918,12 @@ PROCEDURE exclui_cartao:
                     /* Se estiver tentando excluir o cartao do titular */
                     IF crawcrd.nrcpftit = crapttl.nrcpfcgc THEN
                       DO:
-                          /* Buscar outros registros da operadora */
+                          /* Buscar outros registros da operadora mas de um cartao adicional */
                           FIND FIRST crawbcrd WHERE crawbcrd.cdcooper  = crawcrd.cdcooper  AND
                                                     crawbcrd.nrdconta  = crawcrd.nrdconta  AND
                                                     crawbcrd.nrctrcrd <> crawcrd.nrctrcrd  AND 
-                                                    crawbcrd.cdadmcrd  = crawcrd.cdadmcrd
+                                                    crawbcrd.cdadmcrd  = crawcrd.cdadmcrd  AND
+													crawbcrd.flgprcrd  = 0
                                                     NO-LOCK NO-ERROR.
                                                
                           IF AVAILABLE crawbcrd  THEN
