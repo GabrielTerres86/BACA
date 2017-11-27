@@ -85,7 +85,7 @@
     $xmlObj = getObjectXML($xmlResult);
 	
 	foreach($xmlObj->roottag->tags as $registro){
-		if ($registro->tags[12]->cdata = "BLOQUEADA") {
+		if ($registro->tags[12]->cdata == "BLOQUEADA") {
 			$registros .= 
 					'<bloq>'.
 						'<dstipapl>'.$registro->tags[18]->cdata.'</dstipapl>'.

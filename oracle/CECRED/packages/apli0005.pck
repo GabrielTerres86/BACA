@@ -6966,7 +6966,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Observacao: -----
 
      Alteracoes: 14/04/2015 - Foram adicionados novos campos para retorno 
-                             (DTCARENC) SD 266191 (Kelvin).
+                             (DTCARENC) SD 266191 (Kelvin).			
+                 
+                 27/11/2017 - Foram adicionados novos campos para retorno 
+                             (tpaplica). Projeto 404 (Lombardi).	
     ..............................................................................*/												
 		
 		DECLARE
@@ -7104,6 +7107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
            <dsnomenc>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsnomenc),' ') || '</dsnomenc>
            <idtippro>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtippro),'0') || '</idtippro>
            <dtcarenc>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtcarenc,'dd/mm/RRRR') || '</dtcarenc>
+           <tpaplica>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).tpaplica),'0') || '<tpaplica>
            </inf>');
         END LOOP;
 
