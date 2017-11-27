@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 23/01/2017
+   Data    : 20/11/2006                        Ultima atualizacao: 24/11/2017
 
    Dados referentes ao programa:
 
@@ -206,6 +206,17 @@
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
                
                31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
+               	 
+               17/08/2017 - #738442 Retiradas as mensagens informativas 
+                            "Verificando registros para geracao de arquivo(s)" (Carlos)
+
+			   27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
+			                variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
+
+               24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
+                            se o cheque esta em bordero de desconto efetivado
+                            antes de prosseguir com a custodia
+                            Rotina gerar_digita (Tiago/Adriano #766582)               
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -881,8 +892,6 @@ PROCEDURE gerar_doctos:
    DEF VAR glb_dsdctitg AS CHAR                                       NO-UNDO.
    DEF VAR glb_stsnrcal AS LOGICAL                                    NO-UNDO.
    DEF VAR aux_flgerror AS LOGICAL                                    NO-UNDO.
-   DEF VAR aux_contador AS INTE                                       NO-UNDO.
-
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -900,8 +909,7 @@ PROCEDURE gerar_doctos:
 
    /* Contadores de arquivo e registros */
    ASSIGN ret_qtarquiv = 0
-          ret_totregis = 0
-          aux_contador = 0.
+          ret_totregis = 0.
 
     FOR EACH craptvl WHERE craptvl.cdcooper  = par_cdcooper    AND
                           craptvl.dtmvtolt  = par_dtmvtolt    AND
@@ -915,13 +923,6 @@ PROCEDURE gerar_doctos:
                           BREAK BY craptvl.cdagenci
                                 BY craptvl.cdbccrcb :
 
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
-
-       
        IF   FIRST-OF(craptvl.cdagenci)  THEN
             DO:
                 ASSIGN aux_qtregarq = 0
@@ -1270,7 +1271,6 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_cdfatven AS DEC                                        NO-UNDO.
    DEF VAR aux_cdsituac AS INT                                        NO-UNDO.
    DEF VAR aux_nrdahora AS INT                                        NO-UNDO.
-   DEF VAR aux_contador AS INT                                        NO-UNDO.
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
    
@@ -1279,8 +1279,7 @@ PROCEDURE gerar_titulo:
    ASSIGN aux_qttitcxa = 0
           aux_qttitprg = 0
           aux_vltitcxa = 0
-          aux_vltitprg = 0
-          aux_contador = 0.
+          aux_vltitprg = 0.
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper 
                       NO-LOCK NO-ERROR.
@@ -1320,12 +1319,6 @@ PROCEDURE gerar_titulo:
                           NO-LOCK BREAK BY craptit.cdagenci
                                          BY craptit.cdbccxlt 
                                           BY craptit.nrdolote: 
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF FIRST-OF(craptit.cdagenci) THEN
           DO:
@@ -2554,14 +2547,34 @@ PROCEDURE gerar_digita:
                FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper  AND
                                       crapcst.dtlibera > aux_dtliber1  AND
                                       crapcst.dtlibera <= aux_dtliber2 AND
-                                      crapcst.insitprv = 0             AND
-                                      crapcst.nrborder = 0             AND                                      
+                                      crapcst.insitprv = 0             AND                                      
                                     ((par_cdagenci <> 0                AND
                                       crapcst.cdagenci = par_cdagenci) OR
                                       par_cdagenci = 0)                AND
                                      (crapcst.insitchq = 0             OR
                                       crapcst.insitchq = 2)
                                       NO-LOCK BREAK BY crapcst.cdcooper:
+    
+                    IF crapcst.nrborder <> 0 THEN
+                       DO:
+                          /*Se estiver em um bordero de descto efetivado nao 
+                            considerar para a custodia*/
+                          FIND crapcdb
+                            WHERE crapcdb.cdcooper = crapcst.cdcooper
+                              AND crapcdb.nrdconta = crapcst.nrdconta
+                              AND crapcdb.dtlibera = crapcst.dtlibera
+                              AND crapcdb.dtlibbdc <> ?
+                              AND crapcdb.cdcmpchq = crapcst.cdcmpchq
+                              AND crapcdb.cdbanchq = crapcst.cdbanchq
+                              AND crapcdb.cdagechq = crapcst.cdagechq
+                              AND crapcdb.nrctachq = crapcst.nrctachq
+                              AND crapcdb.nrcheque = crapcst.nrcheque
+                              AND crapcdb.dtdevolu = ?  
+                              AND crapcdb.nrborder = crapcst.nrborder NO-LOCK NO-ERROR.
+                              
+                          IF AVAILABLE(crapcdb) THEN
+                             NEXT.
+                       END.    
     
                     IF   FIRST-OF(crapcst.cdcooper)  THEN
                          DO:
@@ -3980,8 +3993,6 @@ PROCEDURE gerar_compel_prcctl:
             RETURN.
         END.
 
-   ASSIGN aux_contador = 0.
-
    FOR EACH crapchd WHERE crapchd.cdcooper  = par_cdcooper       AND
                           crapchd.dtmvtolt  = par_dtmvtolt       AND
                           crapchd.cdagenci >= par_cdageini       AND
@@ -3991,12 +4002,6 @@ PROCEDURE gerar_compel_prcctl:
                           crapage.cdagenci  = crapchd.cdagenci   AND
                           crapage.cdbanchq  = crapcop.cdbcoctl
                           NO-LOCK BREAK BY crapchd.cdagenci:
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF   FIRST-OF(crapchd.cdagenci)  THEN
             DO:
@@ -4104,6 +4109,8 @@ PROCEDURE gerar_compel_prcctl:
                                        /* Para nao receber arquivo de retorno 
                                        na VIACREDI */ 
                                        ASSIGN aux_dschqctl = "PG_CX ".
+							      ELSE
+								       ASSIGN aux_dschqctl = "      ".
 
                               END.
                          ELSE
