@@ -1333,6 +1333,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         RAISE vr_exc_erro;
       END IF;
       
+      -- Para linha de crédito que não seja específica de aplicação, 
+      -- se foi selecionado pelo menos uma opção, deve haver cobertura da operação também:
+      IF pr_tpctrato <> 4 AND (pr_inaplica_propria + pr_inpoupa_propria+ pr_inaplica_terceiro + pr_inpoupa_terceiro) > 0 AND
+         vr_vlgarnec  > vr_valor_selecionado THEN
+        vr_dscritic := 'Valor da garantia sugerida não é suficiente!';
+        RAISE vr_exc_erro;
+      END IF;
+      
     EXCEPTION 
       WHEN vr_exc_erro THEN
         -- Monta mensagem de erro
