@@ -34,7 +34,12 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
   --             11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+  --
+  --             17/10/2017 - No processo noturno, considerar tambem os valores bloqueados e que foram liberados
+  --                          no dia atual. Como utiliza informacao de saldo da CRAPSDA, esses valores nao estao contemplados.
+  --                          Heitor (Mouts) - Chamado 718395
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -131,7 +136,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,dsorgrec craplcr.dsorgrec%TYPE
     ,dtinictr DATE
     ,dsratpro VARCHAR2(30)
-    ,dsratatu VARCHAR2(30));
+    ,dsratatu VARCHAR2(30)
+	,vliofcpl crapepr.vliofcpl%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -803,6 +809,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
                                                                    
+  /* Calcular a quantidade de dias que o emprestimo está em atraso */
+  FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
+                                   ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
+                                   ,pr_nrctremp IN crappep.nrctremp%TYPE --> Numero do Contrato de empréstimo
+                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
+                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
+   RETURN INTEGER;
+                                                                   
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -874,10 +888,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
   --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
   --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
-  --
+
   --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
   --                          "Valor informado para pagamento maior que valor da parcela" informar
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
+  --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
+  --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -4487,6 +4503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
 
+                    19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4537,6 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vlpgjmpr
               ,cdorigem
               ,qtimpctr
+			  ,vliofcpl
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5243,6 +5261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
         
+          pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
@@ -5970,6 +5989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
                         '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                       '</inf>' );
@@ -7902,6 +7922,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
     
+	  CURSOR cr_crapdpb IS
+        select nvl(sum(c.vllanmto),0)
+          from craphis x
+             , crapdpb c
+         where c.cdcooper = pr_cdcooper
+           and c.nrdconta = pr_nrdconta
+           and x.cdcooper = c.cdcooper
+           and x.cdhistor = c.cdhistor
+           and x.inhistor in (3,4,5)
+           and c.dtliblan = pr_dtrefere
+           and c.inlibera = 1;
+           
+      vr_vllibera number(25,2);
+    
       --Registro tipo Data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
@@ -8012,9 +8046,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
           -- Quando eh BATCH mantem o padrao TRUE
           vr_flgcrass := TRUE;
+
+		  open cr_crapdpb;
+          fetch cr_crapdpb into vr_vllibera;
+          close cr_crapdpb;
         ELSE 
           -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
           vr_flgcrass := FALSE;
+		  vr_vllibera := 0;
         END IF;
         
         --Limpar tabela saldos
@@ -8044,7 +8083,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
-                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0) +
+                                vr_vllibera,2); --Valor liberado no dia
         END IF;
       
         --Valor a Pagar Maior Soma total

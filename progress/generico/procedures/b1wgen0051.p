@@ -313,7 +313,7 @@ PROCEDURE obtem-cabecalho:
 
             END.
             OTHERWISE DO:
-                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia)
+                FOR FIRST crapjur FIELDS(cdcooper nrdconta nmfansia tpregtrb)
                                   WHERE crapjur.cdcooper = crapass.cdcooper AND
                                         crapjur.nrdconta = crapass.nrdconta 
                                         NO-LOCK:
@@ -402,6 +402,10 @@ PROCEDURE obtem-cabecalho:
                                    ?
             tt-cabec.inhabmen = IF AVAIL crapttl THEN 
                                    crapttl.inhabmen 
+                                ELSE 
+                                   0 
+            tt-cabec.tpregtrb = IF AVAIL crapjur THEN 
+                                   crapjur.tpregtrb
                                 ELSE 
                                    0 
             NO-ERROR.

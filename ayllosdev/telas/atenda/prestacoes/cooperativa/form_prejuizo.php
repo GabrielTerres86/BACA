@@ -61,8 +61,14 @@
 		<input name="vlpgjmpr" id="vlpgjmpr" type="text" value="" />
 		<br />
 		
+		<input name="vliofcpl" id="vliofcpl" type="hidden" value="" />
+		<!--
+		<label for="vliofcpl">Valor do IOF:</label>
+		<input name="vliofcpl" id="vliofcpl" type="text" value="" />
+		
 		<label for="vlsdprej">Saldo Atualizado:</label>
 		<input name="vlsdprej" id="vlsdprej" type="text" value="" />
+		<br />-->
 				
 		<label for="tpdrisco"><? echo utf8ToHtml('Classif. de Risco:') ?></label>
 		<input name="tpdrisco" id="tpdrisco" type="text" value=""/>

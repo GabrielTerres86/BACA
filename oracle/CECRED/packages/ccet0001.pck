@@ -67,6 +67,8 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       ,pr_inpessoa  IN INTEGER               -- Tipo de pessoa
                                       ,pr_cdlcremp  IN INTEGER               -- Codigo linha credio
                                       ,pr_tpctrato  IN craplcr.tpctrato%TYPE -- Tipo do contrato
+                                      ,pr_nrdconta  IN crapass.nrdconta%type -- Numero da conta
+                                      ,pr_nrctremp  IN NUMBER                -- Numero do Emprestimo
                                       ,pr_vltottar OUT NUMBER                -- Valor Tarifa
                                       ,pr_cdcritic OUT INTEGER
                                       ,pr_dscritic OUT VARCHAR2);
@@ -199,6 +201,8 @@ create or replace package body cecred.CCET0001 is
   --                           pois estava estourando o format
   --                          (Adriano - SD 582204).
   --
+  --              05/10/2017 - Correcao no calculo realizado para o valor da tarifa do CET, quando a proposta ainda nao esta
+  --                           efetivada. Heitor (Mouts) - Chamado 746478.
   ---------------------------------------------------------------------------------------------------------------
 
   pr_cdcritic NUMBER;
@@ -991,6 +995,8 @@ create or replace package body cecred.CCET0001 is
                                       ,pr_inpessoa  IN INTEGER               -- Tipo de pessoa
                                       ,pr_cdlcremp  IN INTEGER               -- Codigo linha credio
                                       ,pr_tpctrato  IN craplcr.tpctrato%TYPE -- Tipo do contrato
+                                      ,pr_nrdconta  IN crapass.nrdconta%type -- Numero da conta
+                                      ,pr_nrctremp  IN NUMBER                -- Numero do Emprestimo
                                       ,pr_vltottar OUT NUMBER                -- Valor Tarifa
                                       ,pr_cdcritic OUT INTEGER
                                       ,pr_dscritic OUT VARCHAR2) IS
@@ -1011,6 +1017,14 @@ create or replace package body cecred.CCET0001 is
   Alteracoes:                  
   ............................................................................. */
     DECLARE
+      cursor cr_crapbpr is
+        select count(*)
+          from crapbpr
+         where cdcooper = pr_cdcooper
+           and nrdconta = pr_nrdconta
+           and tpctrpro = 90
+           and nrctrpro = pr_nrctremp
+           and flgalien = 1;
     
       vr_cdhistor INTEGER;
       vr_cdhisest INTEGER;
@@ -1021,6 +1035,7 @@ create or replace package body cecred.CCET0001 is
       vr_cdfvlcop INTEGER;
       vr_vltarbem NUMBER;
       vr_cdbattar VARCHAR2(15);      
+      vr_qttarbem NUMBER(3) := 1;    
     
       -- Variaveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1159,6 +1174,16 @@ create or replace package body cecred.CCET0001 is
         END IF;
       END IF;
       
+     if pr_tpctrato = 2 then
+       open cr_crapbpr;
+       fetch cr_crapbpr into vr_qttarbem;
+       close cr_crapbpr;
+       
+       if vr_qttarbem > 1 then
+         vr_vltarbem := nvl(vr_vltarbem,0) * vr_qttarbem;
+       end if;
+     end if;
+
      -- calcular a tarifa de cadastro + a tarifa do bem alienado se tiver
      pr_vltottar := nvl(vr_vlrtarif,0) + nvl(vr_vltarbem,0) + nvl(vr_vltrfesp,0);
           
@@ -1283,7 +1308,7 @@ create or replace package body cecred.CCET0001 is
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro pc_calcula_tarifa_cadastro : ' || SQLERRM;
+        pr_dscritic := 'Erro pc_calc_taxa_juros : ' || SQLERRM;
         
     END;  
   END pc_calc_taxa_juros;
@@ -1386,6 +1411,13 @@ create or replace package body cecred.CCET0001 is
       vr_nmarqimp VARCHAR2(100) := '';
       vr_cdhistor NUMBER; -- historico de lançamento
       
+      vr_vliofpri NUMBER;
+      vr_vliofadi NUMBER;
+      vr_vliofcpl NUMBER;
+      vr_flgimune BOOLEAN;
+      vr_tpproduto NUMBER;
+      vr_natjurid NUMBER := 0;
+      vr_tpregtrb NUMBER := 0;
       -- CURSORES PARA UTILIZAR NA PACKAGE
       CURSOR cr_crapcop IS 
       SELECT cop.nmextcop,
@@ -1405,6 +1437,12 @@ create or replace package body cecred.CCET0001 is
             AND lat.dtmvtolt = pr_dtinivig
             AND lat.cdhistor = pr_cdhistor;
         rw_craplat cr_craplat%ROWTYPE; 
+      CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE
+                          ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
+       SELECT crapjur.natjurid, crapjur.tpregtrb
+       FROM crapjur 
+       WHERE crapjur.natjurid = pr_cdcooper AND crapjur.nrdconta = pr_nrdconta;
+      rw_crapjur cr_crapjur%ROWTYPE;
         
       --Procedure que escreve linha no arquivo CLOB
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
@@ -1461,47 +1499,65 @@ create or replace package body cecred.CCET0001 is
         RAISE vr_exc_erro;        
       END IF;                                                                                                                         
 
-      -- Buscar iof
-      pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                    ,pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_vlemprst => pr_vlemprst
-                    ,pr_cdprogra => pr_cdprogra
-                    ,pr_cdlcremp => pr_cdlcremp
-                    ,pr_inpessoa => pr_inpessoa
-                    ,pr_dtinivig => pr_dtinivig
-                    ,pr_qtdiavig => pr_qtdiavig
-                    ,pr_vllanmto => vr_vlrdoiof
-                    ,pr_txccdiof => vr_txjuriof
-                    ,pr_cdcritic => vr_cdcritic
-                    ,pr_dscritic => vr_dscritic);
-      -- VERIFICA SE OCORREU UMA CRITICA
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;        
-      END IF;                                                          
       
       -- gravar codigo da tarifa e historico de lançamento
       IF pr_inpessoa = 1 THEN -- Fisica
         IF pr_tpctrlim = 1 THEN /* limcre */
           vr_cdbattar := 'COLIMCHQPF';
           vr_cdhistor := 1481;
+          vr_tpproduto := 4;
         ELSIF pr_tpctrlim = 3 THEN /* desctit */
           vr_cdbattar := 'DSTCONTRPF';
           vr_cdhistor := 1429;
+          vr_tpproduto := 2;
         ELSIF pr_tpctrlim = 2 THEN /* DESCCHQ */
           vr_cdbattar := 'DSCCHQCTPF';
           vr_cdhistor := 1423;
+          vr_tpproduto := 3;
         END IF;
       ELSE -- Juridica
         IF pr_tpctrlim = 1 THEN /* limcre */
           vr_cdbattar := 'COLIMCHQPJ';
           vr_cdhistor := 1479;
+          vr_tpproduto := 4;
         ELSIF pr_tpctrlim = 3 THEN /* desctit */
           vr_cdbattar := 'DSTCONTRPJ'; 
           vr_cdhistor := 1453;
+          vr_tpproduto := 2;
         ELSIF pr_tpctrlim = 2 THEN /* DESCCHQ */
           vr_cdbattar := 'DSCCHQCTPJ';
           vr_cdhistor := 1447;
+          vr_tpproduto := 3;
         END IF;           
+      END IF;
+      OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapjur INTO rw_crapjur;
+      IF cr_crapjur%FOUND THEN
+         vr_natjurid := rw_crapjur.natjurid;
+         vr_tpregtrb := rw_crapjur.tpregtrb;
+      END IF;
+      CLOSE cr_crapjur;
+      --Novo cálculo do IOF
+      TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => vr_tpproduto --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                   ,pr_tpoperacao => 1 --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                   ,pr_cdcooper   => pr_cdcooper --> Código da cooperativa
+                                   ,pr_nrdconta   => pr_nrdconta --> Número da conta
+                                   ,pr_inpessoa   => pr_inpessoa --> Tipo de Pessoa
+                                   ,pr_natjurid   => vr_natjurid --> Natureza Juridica
+                                   ,pr_tpregtrb   => vr_tpregtrb --> Tipo de Regime Tributario
+                                   ,pr_dtmvtolt   => pr_dtmvtolt --> Data do movimento para busca na tabela de IOF
+                                   ,pr_qtdiaiof   => pr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
+                                   ,pr_vloperacao => pr_vlemprst --> Valor total da operação (pode ser negativo também)
+                                   ,pr_vltotalope => pr_vlemprst --> Valor total da operação (pode ser negativo também)
+                                   ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
+                                   ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
+                                   ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
+                                   ,pr_dscritic   => vr_dscritic);                                   
+      vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      -- VERIFICA SE OCORREU UMA CRITICA
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;        
       END IF;
       
       -- abre cursor da tabela
@@ -1531,6 +1587,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => 0
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctrlim
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -2008,6 +2066,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => vr_tpctrato
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -2199,6 +2259,13 @@ create or replace package body cecred.CCET0001 is
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_qtdparce NUMBER := 0;                -- Quantidade de parcelas
       
+      vr_vliofpri NUMBER;
+      vr_vliofadi NUMBER;
+      vr_vliofcpl NUMBER;
+      vr_flgimune BOOLEAN;
+      vr_tpproduto NUMBER;
+      vr_natjurid NUMBER := 0;
+      vr_tpregtrb NUMBER := 0;
       -- Variaveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE; 
@@ -2223,50 +2290,70 @@ create or replace package body cecred.CCET0001 is
             AND lat.cdhistor = pr_cdhistor;
         rw_craplat cr_craplat%ROWTYPE; 
   
+     CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE
+                          ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
+       SELECT crapjur.natjurid, crapjur.tpregtrb
+       FROM crapjur 
+       WHERE crapjur.natjurid = pr_cdcooper AND crapjur.nrdconta = pr_nrdconta;
+      rw_crapjur cr_crapjur%ROWTYPE;
     BEGIN
     
-      -- Buscar iof
-      pc_calcula_iof(pr_cdcooper => pr_cdcooper
-                    ,pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_vlemprst => pr_vlemprst
-                    ,pr_vllanmto => vr_vlrdoiof
-                    ,pr_cdprogra => pr_cdprogra
-                    ,pr_cdlcremp => pr_cdlcremp
-                    ,pr_inpessoa => pr_inpessoa
-                    ,pr_dtinivig => pr_dtinivig
-                    ,pr_qtdiavig => pr_qtdiavig
-                    ,pr_txccdiof => vr_txjuriof
-                    ,pr_cdcritic => vr_cdcritic
-                    ,pr_dscritic => vr_dscritic);
-      -- VERIFICA SE OCORREU UMA CRITICA
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;        
-      END IF;                                                          
       
       -- gravar codigo da tarifa e historico de lançamento
       IF pr_inpessoa = 1 THEN -- Fisica
         IF pr_tpctrlim = 1 THEN /* limcre */
           vr_cdbattar := 'COLIMCHQPF';
           vr_cdhistor := 1481;
+          vr_tpproduto := 4;
         ELSIF pr_tpctrlim = 3 THEN /* desctit */
           vr_cdbattar := 'DSTCONTRPF';
           vr_cdhistor := 1429;
+          vr_tpproduto := 2;
         ELSIF pr_tpctrlim = 2 THEN /* DESCCHQ */
           vr_cdbattar := 'DSCCHQCTPF';
           vr_cdhistor := 1423;
+          vr_tpproduto := 3;
         END IF;
       ELSE -- Juridica
         IF pr_tpctrlim = 1 THEN /* limcre */
           vr_cdbattar := 'COLIMCHQPJ';
           vr_cdhistor := 1479;
+          vr_tpproduto := 4;
         ELSIF pr_tpctrlim = 3 THEN /* desctit */
           vr_cdbattar := 'DSTCONTRPJ'; 
           vr_cdhistor := 1453;
+          vr_tpproduto := 2;
         ELSIF pr_tpctrlim = 2 THEN /* DESCCHQ */
           vr_cdbattar := 'DSCCHQCTPJ';
           vr_cdhistor := 1447;
+          vr_tpproduto := 3;
         END IF;           
       END IF;
+      OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapjur INTO rw_crapjur;
+      IF cr_crapjur%FOUND THEN
+         vr_natjurid := rw_crapjur.natjurid;
+         vr_tpregtrb := rw_crapjur.tpregtrb;
+      END IF;
+      CLOSE cr_crapjur;
+      --Novo cálculo do IOF
+      TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => vr_tpproduto --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                   ,pr_tpoperacao => 1 --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                   ,pr_cdcooper   => pr_cdcooper --> Código da cooperativa
+                                   ,pr_nrdconta   => pr_nrdconta --> Número da conta
+                                   ,pr_inpessoa   => pr_inpessoa --> Tipo de Pessoa
+                                   ,pr_natjurid   => vr_natjurid --> Natureza Juridica
+                                   ,pr_tpregtrb   => vr_tpregtrb --> Tipo de Regime Tributario
+                                   ,pr_dtmvtolt   => pr_dtmvtolt --> Data do movimento para busca na tabela de IOF
+                                   ,pr_qtdiaiof   => pr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
+                                   ,pr_vloperacao => pr_vlemprst --> Valor total da operação (pode ser negativo também)
+                                   ,pr_vltotalope => pr_vlemprst
+                                   ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
+                                   ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
+                                   ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
+                                   ,pr_dscritic   => vr_dscritic);                                   
+      vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       
       -- abre cursor da tabela
       OPEN cr_craplat(pr_cdcooper => pr_cdcooper,
@@ -2295,6 +2382,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => 0
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctrlim
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -2576,6 +2665,8 @@ create or replace package body cecred.CCET0001 is
                                            ,pr_inpessoa => pr_inpessoa
                                            ,pr_cdlcremp => pr_cdlcremp
                                            ,pr_tpctrato => vr_tpctrato
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
                                            ,pr_vltottar => vr_vlrtarif
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);

@@ -17,6 +17,7 @@
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
  * 010: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.      
+ * 011: [13/07/2017] Diogo (P410)         	   : Incluido campo Identificador do Regime tributário 'tpregtrb'
  * 012: [12/08/2017] Lombardi                  : Criada a função dossieDigidoc.	PRJ339 CRM
  
  */
@@ -155,8 +156,10 @@ function manterRotina(operacao) {
 	qtfoltal = trim($('#qtfoltal','#frmDadosIdentJuridica').val());
 	dtcadass = trim($('#dtcadass','#frmDadosIdentJuridica').val());
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
-	nrlicamb = $('#nrlicamb', '#frmDadosIdentJuridica').val();
+	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
+	tpregtrb = $('#tpregtrb', '#frmDadosIdentJuridica').val();
+	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -168,7 +171,7 @@ function manterRotina(operacao) {
 			dtiniatv: dtiniatv, cdseteco: cdseteco, cdrmativ: cdrmativ, dsendweb: dsendweb,
 			nmtalttl: nmtalttl, qtfoltal: qtfoltal,	dtcadass: dtcadass, cdcnae  : cdcnae,
 			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb, dtvallic : dtvallic,
-			redirect: 'script_ajax'
+			tpregtrb: tpregtrb, inpessoa: inpessoa,	redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
@@ -178,6 +181,13 @@ function manterRotina(operacao) {
 			try {
 				eval(response);
 				
+				//Projeto 410 - RF 54
+				if (operacao == 'VA'){
+					if (tpregtrb == "1" && tpregtrb != $('#tpregtrb', '#frmCabContas').val()) {
+						imprimeDeclaracaoSimplesNacional(tpregtrb);
+					}
+					$('#tpregtrb', '#frmCabContas').val(tpregtrb);
+				}				
 				// Se esta fazendo o cadastro apos MATRIC, fechar rotina e ir pra proxima
 				if (operacao == 'VA' && (flgcadas == "M" || flgContinuar)) {
 					proximaRotina();
@@ -196,19 +206,20 @@ function controlaLayout(operacao) {
 
 	// Controla a altura da tela
 	divRotina.css('width','552px');	
-	$('#divConteudoOpcao').css('height','322px');
+	$('#divConteudoOpcao').css('height','352px');
 
 	// Razão Social / Tipo Natureza / CNPJ
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
 	
 	// Nome Fantasia / Consulta / Situação / Natureza Jurídica / Qt. Filiais / Qt. Funcionários / Início Atividade / Setor Econômico / Ramo Atividade / Site / Nome Talão / Qt. Folhas Talão
 	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic','#frmDadosIdentJuridica');
-	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"]','#frmDadosIdentJuridica');	
+	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"], select[name="tpregtrb"]','#frmDadosIdentJuridica');	
 	var codigo			= $('#cdnatjur, #cdseteco, #cdrmativ','#frmDadosIdentJuridica');
 
 	// Sempre inicia com tudo bloqueado
 	camposGrupo1.desabilitaCampo();
 	camposGrupo2.desabilitaCampo();
+	selectsGrupo2.desabilitaCampo();
 
 	// Controla largura dos campos
 	$('#nmprimtl','#frmDadosIdentJuridica').css({'width':'424px'});
@@ -234,6 +245,7 @@ function controlaLayout(operacao) {
 	if (operacao == 'CA') {
 		// Habilita os devidos campos
 		camposGrupo2.habilitaCampo();
+		selectsGrupo2.habilitaCampo();
 
 		codigo.unbind('blur').bind('blur', function() {
 			controlaPesquisas();
@@ -440,4 +452,18 @@ function dossieDigidoc() {
       return false;
 		}
 	});
+}
+function imprimeDeclaracaoSimplesNacional(tpregtrb){
+	$('#sidlogin', '#frmCabContas').remove();
+    $('#tpregist', '#frmCabContas').remove();
+	$('#tpregtrb', '#frmCabContas').remove();
+	$('#imprimirsodeclaracaosn', '#frmCabContas').remove();
+    $('#frmCabContas').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+    $('#frmCabContas').append('<input type="hidden" id="tpregist" name="tpregist" value="' + inpessoa + '" />');
+	$('#frmCabContas').append('<input type="hidden" id="tpregtrb" name="tpregtrb" value="' + tpregtrb + '" />');
+	$('#frmCabContas').append('<input type="hidden" id="imprimirsodeclaracaosn" name="imprimirsodeclaracaosn" value="1" />');
+	var action = UrlSite + 'telas/contas/ficha_cadastral/imp_fichacadastral.php';
+    var callafter = "";
+    carregaImpressaoAyllos("frmCabContas", action, callafter);
+	$('#imprimirsodeclaracaosn', '#frmCabContas').remove();
 }

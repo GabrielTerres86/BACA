@@ -5401,19 +5401,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;  
         /* caso exista valor iof sera criado registro para debito */
         IF rw_crapsld.vliofmes > 0 AND (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
-          --Resultado 4
-          vr_tab_resulta(4):= rw_crapsld.vliofmes;
-          --Incrementar Conta          
-          vr_contadct:= vr_contadct + 1;
-          --Incrementar contador lancamentos na tabela
-          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
-          --Criar Lancamento Futuro na tabela
-          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
-          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
-          pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
-          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
-          pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);          
+            --Resultado 4
+            vr_tab_resulta(4):= rw_crapsld.vliofmes;
+            --Incrementar Conta          
+            vr_contadct:= vr_contadct + 1;
+            --Incrementar contador lancamentos na tabela
+            vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+            --Criar Lancamento Futuro na tabela
+            pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+            pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
+            pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+            pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
       
@@ -17402,6 +17402,7 @@ END pc_consulta_ir_pj_trim;
       
         vr_tab_extrato_ope_credito(vr_index).dscricao := 'Limite de Credito';            
         
+        -- Projeto 410 - busca despesa referente IOF sobre limite credito
         --Busca demais despesas referente a limite de crédito
         FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta
@@ -17413,6 +17414,22 @@ END pc_consulta_ir_pj_trim;
           
         END LOOP;
         
+        --Busca demais despesas referente a limite de crédito
+        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtiniext => vr_dtiniext
+                                      ,pr_dtfinext => vr_dtfimext
+                                      ,pr_cdhistor => '2322') LOOP
+          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+        END LOOP;
+        --Busca demais despesas referente a limite de crédito
+        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtiniext => vr_dtiniext
+                                      ,pr_dtfinext => vr_dtfimext
+                                      ,pr_cdhistor => '2322') LOOP
+          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+        END LOOP;
         --Busca juros remuneratórios refente a limite de crédito
         FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
@@ -17458,6 +17475,14 @@ END pc_consulta_ir_pj_trim;
           
         END LOOP;
         
+        --Busca demais despesas referente a desconto de cheques
+        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtiniext => vr_dtiniext
+                                      ,pr_dtfinext => vr_dtfimext
+                                      ,pr_cdhistor => '2318') LOOP
+          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+        END LOOP;
         --Busca juros remuneratórios referente a desconto de cheques
         OPEN cr_crapljd(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
@@ -17529,6 +17554,14 @@ END pc_consulta_ir_pj_trim;
                                       ,pr_dtiniext => vr_dtiniext
                                       ,pr_dtfinext => vr_dtfimext
                                       ,pr_cdhistor => '688') LOOP
+          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+        END LOOP;
+        --Busca demais despesas referente a desconto de títulos
+        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtiniext => vr_dtiniext
+                                      ,pr_dtfinext => vr_dtfimext
+                                      ,pr_cdhistor => '2320') LOOP
                                  
           vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
           

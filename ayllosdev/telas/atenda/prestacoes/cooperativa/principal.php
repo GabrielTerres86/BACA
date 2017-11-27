@@ -40,6 +40,7 @@
  * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  * 031: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
+ * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formulário (Projeto 410 - RF 23)
  */
 ?>
 
@@ -126,7 +127,7 @@
 
             $xml .= "  </Dados>";
             $xml .= "</Root>";
-            
+
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
@@ -250,6 +251,7 @@
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
 			
+			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
 			</script><?
 			
 		} else if (in_array($operacao,array('C_NOVA_PROP'))) {
@@ -344,7 +346,7 @@
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 
-			
+
 			var arrayRendimento = new Object();
 			
 			var contRend = <? echo count($rendimento[0]->tags)?>;

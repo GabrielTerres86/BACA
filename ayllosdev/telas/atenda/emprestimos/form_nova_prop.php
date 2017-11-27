@@ -49,7 +49,7 @@
 			if (date.getMonth() < 9){
 				mes = "0" + (date.getMonth()+1).toString();
 			}else{
-				mes = (date.getMonth()+1).toString();;
+				mes = (date.getMonth()+1).toString();
 			}
 			
 			if (date.getDate() < 10){
@@ -138,7 +138,7 @@
 	<input id="tpfinali" name="tpfinali" type="hidden" value="" />
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Nova Proposta de Empréstimo') ?></legend>
+		<legend>Nova Proposta de <? echo utf8ToHtml('Empréstimo') ?></legend>
 	
 		<label for="nivrisco"><? echo utf8ToHtml('Nível Risco:') ?></label>
 		<select name="nivrisco" id="nivrisco">
@@ -202,19 +202,34 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
+		 <input type=hidden name="idfiniof" id="idfiniof">
+        <!--<label for="idfiniof">Financiar IOF e Tarifa:</label>
+        <select name="idfiniof" id="idfiniof">
+            <option value="1" selected="selected">Sim</option>
+            <option value="0">N&atilde;o</option>
+        </select>-->
 		
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
 		<br />
 		
+        <label for="vliofepr">IOF:</label>
+        <input name="vliofepr" id="vliofepr" type="text" value=""/>
+
                 <label for="dtultpag">Data &uacute;lt. pagto:</label>
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
+        <label for="vlrtarif">Tarifa:</label>
+        <input name="vlrtarif" id="vlrtarif" type="text" value=""/>
+
 		<label for="percetop">CET(%a.a.):</label>
 		<input name="percetop" id="percetop" type="text" value="" />
 		<br />
 		
+        <label for="vlrtotal">Valor Total:</label>
+        <input name="vlrtotal" id="vlrtotal" type="text" value=""/>
+
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>

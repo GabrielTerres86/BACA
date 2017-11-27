@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 04/10/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 20/10/2017
            
     Dados referentes ao programa:
                 
@@ -497,7 +497,13 @@
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
-                            de novo limite. (Chamado 768648) - (Fabricio)
+                            de novo limite. (Chamado 768648) - (Fabricio) 
+
+               20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
+                            (Diogo - MoutS)
+
+               25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
+                            (James)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -528,6 +534,7 @@ DEF VAR aux_cdhistor AS INTE                                           NO-UNDO.
 DEF VAR h-b1wgen0153 AS HANDLE                                         NO-UNDO.
 
 DEF TEMP-TABLE tt-dsctit LIKE tt-dados_dsctit.
+
 
 
 /*****************************************************************************/
@@ -882,12 +889,21 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_flsnhcoo AS LOGICAL INIT "N"                         NO-UNDO.
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
+    DEF VAR aux_cdacesso AS CHAR                                     NO-UNDO.
 
     DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_vliofcal AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
+    DEFINE VARIABLE aux_vltotaliofsn AS DECIMAL NO-UNDO.
+    
+    DEFINE VARIABLE aux_natjurid AS INTEGER NO-UNDO.
+    DEFINE VARIABLE aux_tpregtrb AS INTEGER NO-UNDO.
+    DEFINE VARIABLE aux_vltotiofpri AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltotiofadi AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltotiofcpl AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltotoperac AS DECIMAL NO-UNDO.
 
     DEF VAR h-b1wgen9999 AS HANDLE                                   NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE                                   NO-UNDO.
@@ -1070,6 +1086,9 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
+
+
+                       
                                
     IF VALID-HANDLE(h-b1wgen9999) THEN
        DELETE OBJECT h-b1wgen9999.
@@ -1204,7 +1223,20 @@ PROCEDURE efetua_liber_anali_bordero:
 
     ASSIGN aux_inpessoa = crapass.inpessoa.
 
-
+    /* Busca dados da pessoa jurídica */
+    FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND
+                       crapjur.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+    IF  NOT AVAIL(crapjur)  THEN
+      DO:
+        ASSIGN aux_natjurid = 0.
+        ASSIGN aux_tpregtrb = 0.
+      END.
+    ELSE
+      DO:
+        ASSIGN aux_natjurid = crapjur.natjurid.
+        ASSIGN aux_tpregtrb = crapjur.tpregtrb.
+      END.
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
            PERSISTENT SET h-b1wgen0110.
@@ -1822,7 +1854,7 @@ PROCEDURE efetua_liber_anali_bordero:
               aux_vlborder     = aux_vlborder + craptdb.vlliquid.
 
        /* Daniel */
-       IF par_cddopcao = "L" THEN 
+       /* IF par_cddopcao = "L" THEN 
        DO:
          ASSIGN aux_qtdiaiof = craptdb.dtvencto - par_dtmvtolt.
 
@@ -1842,7 +1874,7 @@ PROCEDURE efetua_liber_anali_bordero:
          /* Acumula Total IOF */
          ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
 
-       END.                          
+       END.  */                         
                           
    END.  /*  Fim do FOR EACH craptdb  */
 
@@ -2054,6 +2086,18 @@ PROCEDURE efetua_liber_anali_bordero:
                 PERSISTENT SET h-b1wgen0088.
 
             /* Liberacao dos titulos */
+            ASSIGN aux_vltotoperac = 0.
+            FOR EACH crabtdb WHERE crabtdb.cdcooper = par_cdcooper       AND
+                                   crabtdb.nrborder = crapbdt.nrborder   AND
+                                   crabtdb.nrdconta = crapbdt.nrdconta
+                                   NO-LOCK:
+              ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
+            END.
+            
+            ASSIGN aux_vltotiof = 0
+                   aux_vltotiofpri = 0
+                   aux_vltotiofadi = 0
+                   aux_vltotiofcpl = 0.
             FOR EACH crabtdb WHERE crabtdb.cdcooper = par_cdcooper       AND
                                    crabtdb.nrborder = crapbdt.nrborder   AND
                                    crabtdb.nrdconta = crapbdt.nrdconta
@@ -2130,8 +2174,51 @@ PROCEDURE efetua_liber_anali_bordero:
                                    STRING(crapbdt.nrborder)).
                    END.
 
-                         
+                /* Projeto 410 - Novo IOF */
+                ASSIGN aux_qtdiaiof = crabtdb.dtvencto - par_dtmvtolt.
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                RUN STORED-PROCEDURE pc_calcula_valor_iof
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                      /* Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante) */
+                                                    ,INPUT 1                      /* Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso) */
+                                                    ,INPUT crabtdb.cdcooper       /* Código da cooperativa */
+                                                    ,INPUT crabtdb.nrdconta       /* Número da conta */
+                                                    ,INPUT aux_inpessoa           /* Tipo de Pessoa */
+                                                    ,INPUT aux_natjurid           /* Natureza Juridica */
+                                                    ,INPUT aux_tpregtrb           /* Tipo de Regime Tributario */
+                                                    ,INPUT par_dtmvtolt           /* Data do movimento para busca na tabela de IOF */
+                                                    ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
+                                                    ,INPUT crabtdb.vlliquid       /* Valor liquido da operaçao */
+                                                    ,INPUT aux_vltotoperac        /* Valor total da operaçao */
+                                                    ,OUTPUT 0                     /* Retorno do valor do IOF principal */
+                                                    ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
+                                                    ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
+                                                    ,OUTPUT "").                  /* Critica */
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_calcula_valor_iof
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                /* Se retornou erro */
+                ASSIGN aux_dscritic = ""
+                       aux_dscritic = pc_calcula_valor_iof.pr_dscritic WHEN pc_calcula_valor_iof.pr_dscritic <> ?.
+                IF aux_dscritic <> "" THEN
+                  UNDO LIBERACAO, LEAVE.
+                /* Soma IOF principal */
+                IF pc_calcula_valor_iof.pr_vliofpri <> ? THEN
+                  DO:
+                    ASSIGN aux_vltotiofpri = aux_vltotiofpri + ROUND(DECI(pc_calcula_valor_iof.pr_vliofpri),2).
+                  END.
+                /* Soma IOF adicional */
+                IF pc_calcula_valor_iof.pr_vliofadi <> ? THEN
+                  DO:
+                    ASSIGN aux_vltotiofadi = aux_vltotiofadi + ROUND(DECI(pc_calcula_valor_iof.pr_vliofadi),2).
+                  END.
+                /* Soma IOF complementar */
+                IF pc_calcula_valor_iof.pr_vliofcpl <> ? THEN
+                  DO:
+                    ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
+                  END.
             END.  /*  Fim do FOR EACH craptdb  */
+            ASSIGN aux_vltotiof = aux_vltotiofpri + aux_vltotiofadi.
 
             IF VALID-HANDLE(h-b1wgen0088) THEN
                DELETE PROCEDURE h-b1wgen0088.
@@ -2328,7 +2415,8 @@ PROCEDURE efetua_liber_anali_bordero:
             VALIDATE craplot.
             VALIDATE craplcm.
 
-            RUN sistema/generico/procedures/b1wgen0159.p
+
+            /* RUN sistema/generico/procedures/b1wgen0159.p
                             PERSISTENT SET h-b1wgen0159.
 
             RUN verifica-imunidade-tributaria IN h-b1wgen0159(
@@ -2340,11 +2428,10 @@ PROCEDURE efetua_liber_anali_bordero:
                                                  INPUT tt-iof.txccdiof,
                                                 OUTPUT aux_flgimune,
                                                 OUTPUT TABLE tt-erro).
-            DELETE PROCEDURE h-b1wgen0159.
+            DELETE PROCEDURE h-b1wgen0159. */
 
             /*  Cobranca do IOF de desconto  */
-            IF   NOT aux_flgimune    AND
-                 tt-iof.txccdiof > 0 THEN         
+            IF  aux_vltotiof > 0 THEN         
                DO:
                    DO aux_contador = 1 TO 10:
                       FIND craplot WHERE
@@ -2397,7 +2484,8 @@ PROCEDURE efetua_liber_anali_bordero:
                           craplcm.nrdctitg = STRING(crapbdt.nrdconta,
                                                     "99999999")
                           craplcm.nrdocmto = craplot.nrseqdig + 1
-                          craplcm.cdhistor = 688
+                          /* craplcm.cdhistor = 688 */
+                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
                           craplcm.nrseqdig = craplot.nrseqdig + 1
                           craplcm.cdpesqbb = "Bordero " +
@@ -2405,7 +2493,8 @@ PROCEDURE efetua_liber_anali_bordero:
                                              + " - " +
                                              STRING(aux_vlborder,
                                                     "999,999,999.99")
-                          craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 )
+                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
+                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
                           craplcm.cdcooper = par_cdcooper
                           craplot.vlinfodb = craplot.vlinfodb + 
                                                      craplcm.vllanmto
@@ -2418,6 +2507,35 @@ PROCEDURE efetua_liber_anali_bordero:
                    VALIDATE craplot.
                    VALIDATE craplcm.
 
+                  /* Projeto 410 - Novo IOF */
+                  ASSIGN aux_dscritic = "".
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                  RUN STORED-PROCEDURE pc_insere_iof                  
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper           /* Codigo da Cooperativa */ 
+                                                      ,INPUT crapbdt.nrdconta       /* Numero da Conta Corrente */
+                                                      ,INPUT par_dtmvtolt           /* Data de Movimento */
+                                                      ,INPUT 2                      /* Tipo de Produto */
+                                                      ,INPUT crapbdt.nrborder       /* Numero do Contrato */
+                                                      ,INPUT ?                   /* Chave: Id dos Lancamentos Futuros */
+                                                      ,INPUT craplot.dtmvtolt       /* Chave: Data de Movimento Lancamento */
+                                                      ,INPUT craplot.cdagenci       /* Chave: Agencia do Lancamento */
+                                                      ,INPUT craplot.cdbccxlt       /* Chave: Caixa do Lancamento */
+                                                      ,INPUT craplot.nrdolote       /* Chave: Lote do Lancamento */
+                                                      ,INPUT craplot.nrseqdig + 1   /* Chave: Sequencia do Lancamento */
+                                                      ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
+                                                      ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
+                                                      ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */
+                                                      ,OUTPUT 0                     /* Código da Crítica */
+                                                      ,OUTPUT "").
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_insere_iof
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                  /* Se retornou erro */
+                  ASSIGN aux_dscritic = ""
+                         aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
+                  IF  aux_dscritic <> "" THEN          
+                    UNDO LIBERACAO, LEAVE.
                    /* Atualiza IOF pago e base de calculo no crapcot */
                    DO aux_contador = 1 TO 10:
      
@@ -12880,10 +12998,18 @@ PROCEDURE efetua_baixa_titulo:
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
     DEF VAR aux_cdfvlcop AS INTE NO-UNDO.
 
+    DEF VAR aux_natjurid LIKE crapjur.natjurid  NO-UNDO.
+    DEF VAR aux_tpregtrb LIKE crapjur.tpregtrb  NO-UNDO.
+    DEF VAR aux_vliofpri AS DECIMAL             NO-UNDO.
+    DEF VAR aux_vliofadi AS DECIMAL             NO-UNDO.
+    DEF VAR aux_vliofcpl AS DECIMAL             NO-UNDO.
+    DEF VAR aux_qtdiaiof AS INTEGER             NO-UNDO.
+    DEF VAR aux_vltotal_liquido AS DECIMAL      NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE  NO-UNDO.
     
     DEF BUFFER crablot FOR craplot.
     DEF BUFFER cra2lot FOR craplot.
+    DEF BUFFER crabtdb FOR craptdb.
     
     DEF VAR aux_flgdsair AS LOGICAL NO-UNDO.
     
@@ -13227,6 +13353,212 @@ PROCEDURE efetua_baixa_titulo:
                  /*   FIND crapdat WHERE crapdat.cdcooper = craptdb.cdcooper
                                        NO-LOCK NO-ERROR. */
                                    
+                    /*  Condicao para verificar se o Titulo estah em Atraso */
+                    IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtmvtolt THEN
+                       DO:
+                           /* Busca o tipo de pessoa */
+                           FOR crapass FIELDS (inpessoa)
+                                       WHERE crapass.cdcooper = par_cdcooper     AND
+                                             crapass.nrdconta = craptdb.nrdconta
+                                             NO-LOCK: END.
+                           IF NOT AVAIL crapass THEN
+                              DO:
+                                  ASSIGN aux_cdcritic = 9.
+                                  RUN gera_erro (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT 1, /** Sequencia **/
+                                                 INPUT aux_cdcritic,
+                                                 INPUT-OUTPUT aux_dscritic).
+                                  UNDO BAIXA, RETURN "NOK".
+                              END.
+                           ASSIGN aux_natjurid = 0
+                                  aux_tpregtrb = 0.
+                           /* Condicao para verificar se eh pessoa juridica */   
+                           IF crapass.inpessoa >= 2 THEN
+                              DO:
+                                  FOR crapjur FIELDS(natjurid tpregtrb)
+                                              WHERE crapjur.cdcooper = par_cdcooper     AND
+                                                    crapjur.nrdconta = craptdb.nrdconta
+                                                    NO-LOCK: END.
+                                  IF AVAIL crapjur THEN
+                                     DO:
+                                         ASSIGN aux_natjurid = crapjur.natjurid
+                                                aux_tpregtrb = crapjur.tpregtrb.
+                                     END.
+                              END.
+                           /*------------------------------------------------------------------------
+                                                    INICIO PARA CALCULAR IOF 
+                             ------------------------------------------------------------------------*/
+                           ASSIGN aux_vltotal_liquido = 0.
+                           FOR EACH crabtdb FIELDS(vlliquid)
+                                            WHERE crabtdb.cdcooper = par_cdcooper     AND
+                                                  crabtdb.nrdconta = craptdb.nrdconta AND
+                                                  crabtdb.nrborder = craptdb.nrborder
+                                                  NO-LOCK:
+                             ASSIGN aux_vltotal_liquido = aux_vltotal_liquido + crabtdb.vlliquid.
+                           END.                        
+                           /* Quantidade de Dias em atraso */
+                           ASSIGN aux_qtdiaiof = par_dtmvtolt - craptdb.dtvencto.
+                           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                           /* Efetuar a chamada a rotina Oracle */
+                           RUN STORED-PROCEDURE pc_calcula_valor_iof
+                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                   /* Desconto de Titulo */
+                                                               ,INPUT 2                   /* Pagamento em Atraso */
+                                                               ,INPUT par_cdcooper        /* Cooperativa    */ 
+                                                               ,INPUT craptdb.nrdconta    /* Numero da conta */
+                                                               ,INPUT crapass.inpessoa    /* Tipo de Pessoa */
+                                                               ,INPUT aux_natjurid        /* Natureza Juridica */
+                                                               ,INPUT aux_tpregtrb        /* Tipo de Regime de Tributacao */
+                                                               ,INPUT par_dtmvtolt        /* Data de Movimento */
+                                                               ,INPUT aux_qtdiaiof        /* Quantidade de dias de atraso. */
+                                                               ,INPUT craptdb.vlliquid    /* Valor do Titulo  */
+                                                               ,INPUT aux_vltotal_liquido /* Total do Bordero */
+                                                               ,OUTPUT 0                  /* IOF Principal */
+                                                               ,OUTPUT 0                  /* IOF Adicinal  */
+                                                               ,OUTPUT 0                  /* IOF Complemenar */
+                                                               ,OUTPUT "").  /* Descrição da crítica */
+                           /* Fechar o procedimento para buscarmos o resultado */ 
+                           CLOSE STORED-PROC pc_calcula_valor_iof
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                           ASSIGN aux_vliofpri = 0
+                                  aux_vliofadi = 0
+                                  aux_vliofcpl = 0
+                                  aux_dscritic = ""
+                                  aux_vliofpri = pc_calcula_valor_iof.pr_vliofpri
+                                                 WHEN pc_calcula_valor_iof.pr_vliofpri <> ?
+                                  aux_vliofadi = pc_calcula_valor_iof.pr_vliofadi
+                                                 WHEN pc_calcula_valor_iof.pr_vliofadi <> ?
+                                  aux_vliofcpl = pc_calcula_valor_iof.pr_vliofcpl
+                                                 WHEN pc_calcula_valor_iof.pr_vliofcpl <> ?
+                                  aux_dscritic = pc_calcula_valor_iof.pr_dscritic
+                                                 WHEN pc_calcula_valor_iof.pr_dscritic <> ?.
+                           /* Se retornou erro */
+                           IF aux_dscritic <> "" THEN 
+                              DO:
+                                  RUN gera_erro (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT 1, /** Sequencia **/
+                                                 INPUT 0,
+                                                 INPUT-OUTPUT aux_dscritic).
+                                  UNDO BAIXA, RETURN "NOK".
+                              END.
+                           /* Condicao para verificar se o valor do complemento eh maior que 0 */    
+                           IF aux_vliofcpl > 0 THEN
+                              DO:
+                                  DO aux_contador = 1 TO 10:
+                                     FIND craplot WHERE 
+                                          craplot.cdcooper = par_cdcooper AND
+                                          craplot.dtmvtolt = par_dtmvtolt AND
+                                          craplot.cdagenci = 1            AND
+                                          craplot.cdbccxlt = 100          AND
+                                          craplot.nrdolote = 10300
+                                          EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                    IF NOT AVAILABLE craplot   THEN
+                                       DO:
+                                           IF   LOCKED craplot   THEN
+                                                DO:                           
+                                                    PAUSE 1 NO-MESSAGE.
+                                                    ASSIGN aux_cdcritic = 341.
+                                                    NEXT.
+                                                END.
+                                           ELSE
+                                                DO:
+                                                    CREATE craplot.
+                                                    ASSIGN craplot.dtmvtolt = par_dtmvtolt
+                                                           craplot.cdagenci = 1
+                                                           craplot.cdbccxlt = 100
+                                                           craplot.nrdolote = 10300
+                                                           craplot.tplotmov = 1
+                                                           craplot.cdoperad = par_cdoperad
+                                                           craplot.cdhistor = 2321                                                        
+                                                           craplot.cdcooper = par_cdcooper.
+                                                END.       
+                                       END.
+                                    ASSIGN aux_cdcritic = 0.
+                                    LEAVE.
+                                 END. /* Fim do DO ... TO */
+                                 IF  aux_cdcritic > 0  THEN
+                                     DO:
+                                         ASSIGN aux_dscritic = "".
+                                         RUN gera_erro (INPUT par_cdcooper,
+                                                        INPUT par_cdagenci,
+                                                        INPUT par_nrdcaixa,
+                                                        INPUT 1, /** Sequencia **/
+                                                        INPUT aux_cdcritic,
+                                                        INPUT-OUTPUT aux_dscritic).
+                                         UNDO BAIXA, RETURN "NOK".
+                                     END.                
+                                 CREATE craplcm.
+                                 ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
+                                        craplcm.cdagenci = craplot.cdagenci
+                                        craplcm.cdbccxlt = craplot.cdbccxlt 
+                                        craplcm.nrdolote = craplot.nrdolote
+                                        craplcm.nrdconta = craptdb.nrdconta
+                                        craplcm.nrdocmto = craplot.nrseqdig + 1
+                                        craplcm.vllanmto = aux_vliofcpl
+                                        craplcm.cdhistor = 2321
+                                        craplcm.nrseqdig = craplot.nrseqdig + 1 
+                                        craplcm.nrdctabb = craptdb.nrdconta 
+                                        craplcm.nrautdoc = 0
+                                        craplcm.cdcooper = par_cdcooper
+                                        craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
+                                        craplot.nrseqdig = craplcm.nrseqdig
+                                        craplot.qtinfoln = craplot.qtinfoln + 1
+                                        craplot.qtcompln = craplot.qtcompln + 1
+                                        craplot.vlinfocr = craplot.vlinfocr +
+                                                           craplcm.vllanmto
+                                        craplot.vlcompcr = craplot.vlcompcr +
+                                                           craplcm.vllanmto.                                        
+                                  VALIDATE craplot.
+                                  VALIDATE craplcm.                           
+                             END.                           
+                           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                           /* Efetuar a chamada a rotina Oracle */
+                           RUN STORED-PROCEDURE pc_insere_iof
+                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper        /* Cooperativa              */ 
+                                                               ,INPUT craptdb.nrdconta    /* Numero da Conta Corrente */
+                                                               ,INPUT par_dtmvtolt        /* Data de Movimento        */
+                                                               ,INPUT 2                   /* Desconto de Titulo       */
+                                                               ,INPUT craptdb.nrborder    /* Numero do Bordero        */
+                                                               ,INPUT ?                   /* ID Lautom                */
+                                                               ,INPUT craplcm.dtmvtolt    /* Data Movimento LCM       */
+                                                               ,INPUT craplcm.cdagenci    /* Numero da Agencia LCM    */
+                                                               ,INPUT craplcm.cdbccxlt    /* Numero do Caixa LCM      */
+                                                               ,INPUT craplcm.nrdolote    /* Numero do Lote LCM       */
+                                                               ,INPUT craplcm.nrseqdig    /* Sequencia LCM            */
+                                                               ,INPUT aux_vliofpri        /* Valor Principal IOF      */
+                                                               ,INPUT aux_vliofadi        /* Valor Adicional IOF      */
+                                                               ,INPUT aux_vliofcpl        /* Valor Complementar IOF   */
+                                                               ,OUTPUT 0                  /* Codigo da Critica */
+                                                               ,OUTPUT "").               /* Descrição da crítica */
+                           /* Fechar o procedimento para buscarmos o resultado */ 
+                           CLOSE STORED-PROC pc_insere_iof
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                           ASSIGN aux_cdcritic = 0
+                                  aux_dscritic = ""
+                                  aux_cdcritic = pc_insere_iof.pr_cdcritic
+                                                 WHEN pc_insere_iof.pr_cdcritic <> ?
+                                  aux_dscritic = pc_insere_iof.pr_dscritic
+                                                 WHEN pc_insere_iof.pr_dscritic <> ?.
+                           /* Se retornou erro */
+                           IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
+                              DO:
+                                  RUN gera_erro (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT 1, /** Sequencia **/
+                                                 INPUT aux_cdcritic,
+                                                 INPUT-OUTPUT aux_dscritic).
+                                  UNDO BAIXA, RETURN "NOK".
+                              END.                           
+                           /*------------------------------------------------------------------------
+                                                    FIM PARA CALCULAR IOF 
+                             ------------------------------------------------------------------------*/                               
+                       END. /* END IF craptdb.dtvencto <  par_dtmvtolt THEN */
                     /* Processado */
                     ASSIGN craptdb.insittit = 2
                            craptdb.dtdpagto = IF par_idorigem = 1 THEN
@@ -16931,10 +17263,8 @@ PROCEDURE valida_titulos_bordero:
 	   RETURN "NOK".
 
     RETURN "OK".
-
 END PROCEDURE.
 
-/* .......................................................................... */
 
 
 

@@ -752,6 +752,23 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_dscritic OUT VARCHAR2
                                     );
                                     
+  PROCEDURE pc_pode_impr_dec_pj_coop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
+                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
+                                    ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2); --> Erros do processo	
+  PROCEDURE pc_impr_dec_pj_coop_xml(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+																	 ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da conta
+																	 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF
+																	 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																	 ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
+																	 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+																	 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	 ,pr_des_erro OUT VARCHAR2);   
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
 																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
@@ -4187,6 +4204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
     --   
+    --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4643,6 +4661,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                  ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
        WHERE rownum <= 1; 
       
+	--> Buscar alerta para impressão da declaração de optante do simples nacional
+		CURSOR cr_impdecsn(pr_cdcooper crapsnh.cdcooper%TYPE
+											,pr_nrdconta crapsnh.nrdconta%TYPE) IS
+				SELECT idimpdsn, tpregtrb
+				FROM crapjur
+				WHERE cdcooper = pr_cdcooper
+							AND nrdconta = pr_nrdconta;
+		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -5804,6 +5830,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
+	-- Verifica se foi impressa a declaração de optante do simples nacional
+	OPEN cr_impdecsn(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+	FETCH cr_impdecsn
+			INTO rw_cr_impdecsn;
+	IF cr_impdecsn%FOUND AND (rw_cr_impdecsn.idimpdsn <> 2) AND
+		 (rw_cr_impdecsn.tpregtrb = 1) THEN
+			vr_dsmensag := 'Imprimir a Declaração de Optante do Simples Nacional';
+			--> Incluir na temptable
+			pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+													 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+	END IF;
+	CLOSE cr_impdecsn;
     pr_des_reto := 'OK';
     
   EXCEPTION    
@@ -11952,7 +11990,279 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
                                     
   END pc_ib_verif_atualiz_fone;
-
+  /* verifica se pode imprimir a declaração de isenção de IOF */
+  PROCEDURE pc_pode_impr_dec_pj_coop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
+                                    ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
+                                    ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo		
+	BEGIN		
+		/* .............................................................................        
+        Programa: pc_pode_impr_dec_pj_coop
+        Sistema : AYLLOS
+        Sigla   : EMPR
+        Autor   : Diogo (MoutS)
+        Data    : Outubro/17.                    Ultima atualizacao: 11/10/2017
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina de verificacao se pode imprimir a DECLARAÇÃO DE PESSOA JURíDICA COOPERATIVA
+        Observacao: -----
+        Alteracoes:
+        ..............................................................................*/
+	DECLARE				
+		--Variaveis
+		vr_des_reto VARCHAR2(1);
+		vr_err_efet INTEGER;
+		-- Variável de críticas
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic VARCHAR2(10000);
+		-- Tratamento de erros
+		vr_exc_saida EXCEPTION;
+		CURSOR cr_pode_imprimir(pr_cdcooper IN crapcop.cdcooper%TYPE
+							   ,pr_nrdconta IN crapcop.nrdconta%TYPE) IS
+			SELECT natjurid
+			FROM crapjur
+			WHERE cdcooper = pr_cdcooper
+				  AND nrdconta = pr_nrdconta
+                  AND natjurid = 2143;
+		rw_pode_imprimir cr_pode_imprimir%ROWTYPE;
+		BEGIN
+			--Consulta
+			OPEN cr_pode_imprimir(pr_cdcooper, pr_nrdconta);				
+			FETCH cr_pode_imprimir INTO rw_pode_imprimir;
+			IF cr_pode_imprimir%FOUND THEN
+				vr_des_reto := 'S';
+			ELSE
+				vr_des_reto := 'N';
+			END IF;
+			CLOSE cr_pode_imprimir;
+			-- Criar cabeçalho do XML
+			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+								   pr_tag_pai  => 'Dados',
+								   pr_posicao  => 0,
+								   pr_tag_nova => 'ConfereDados',
+								   pr_tag_cont => vr_des_reto,
+								   pr_des_erro => vr_dscritic);
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := gene0007.fn_caract_acento(gene0007.fn_convert_web_db(vr_dscritic));
+				pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+			WHEN OTHERS THEN
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := 'Erro Geral em Consulta de Declaração de Isenção de IOF: ' || SQLERRM;
+				pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+		END;
+  END pc_pode_impr_dec_pj_coop;
+  PROCEDURE pc_impr_dec_pj_coop_xml(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+																	 ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da conta
+																	 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF
+																	 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																	 ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
+																	 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+																	 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+																	 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																	 ,pr_des_erro OUT VARCHAR2) IS
+				--> Erros do processo        
+				/* .............................................................................
+           Programa: pc_imprime_declaracao_recursos_isencao_iof_xml
+           Sistema : Conta-Corrente - Cooperativa de Credito
+           Sigla   : CRED
+           Autor   : Diogo (Mouts)
+           Data    : Outubro/2017.                         Ultima atualizacao: 04/10/2017
+           Dados referentes ao programa:
+           Frequencia: Sempre que for chamado.
+           Objetivo  : Efetuar a impressao da Declaração de Utilização de Recursos para Isenção de IOF
+           Alteracoes: 
+        ............................................................................. */
+				-- Cursor com os dados do cooperado
+				CURSOR cr_crapass IS
+						SELECT crapass.nrdconta,
+									 gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) AS nrcpfcgc,
+									 crapass.nmprimtl,
+									 crapenc.nrcepend,
+									 crapenc.dsendere,
+									 crapenc.nrendere,
+									 crapenc.complend,
+									 crapenc.nmbairro,
+									 crapenc.nmcidade,
+									 crapenc.cdufende,
+									 crapenc.nrcxapst,
+                   TO_CHAR(crapjur.dtiniatv, 'yyyy') AS dtiniatv
+						FROM crapass
+            LEFT JOIN crapjur ON crapjur.cdcooper = crapass.cdcooper AND crapjur.nrdconta = crapass.nrdconta
+						LEFT JOIN crapenc
+						ON crapenc.nrdconta = crapass.nrdconta
+							 AND crapenc.idseqttl = 1
+							 AND crapenc.cdseqinc = 1
+							 AND crapenc.cdcooper = pr_cdcooper
+						--               AND crapenc.tpendass = 9
+						WHERE crapass.nrdconta = pr_nrdconta
+									AND crapass.nrcpfcgc = pr_nrcpfcgc;
+				rw_crapass cr_crapass%ROWTYPE;
+				-- Tratamento de erros
+				vr_exc_saida EXCEPTION;
+				vr_cdcritic PLS_INTEGER;
+				vr_dscritic VARCHAR2(4000);
+				-- Variaveis gerais
+				vr_texto_completo VARCHAR2(32600); --> Variável para armazenar os dados do XML antes de incluir no CLOB
+				vr_des_xml        CLOB; --> XML do relatorio
+				vr_cdprogra       VARCHAR2(10) := 'EMPR0003'; --> Nome do programa
+				rw_crapdat        btch0001.cr_crapdat%ROWTYPE; --> Cursor genérico de calendário
+				vr_nom_direto     VARCHAR2(200); --> Diretório para gravação do arquivo
+				vr_nmarqimp       VARCHAR2(50); --> nome do arquivo PDF
+				vr_temp           VARCHAR2(1000); --> Temporária para gravação do texto XML
+				-- variaveis de críticas
+				vr_tab_erro  GENE0001.typ_tab_erro;
+				vr_des_reto  VARCHAR2(10);
+				vr_typ_saida VARCHAR2(3);
+		BEGIN
+				-- Leitura do calendário da cooperativa
+				OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+				FETCH btch0001.cr_crapdat
+						INTO rw_crapdat;
+				CLOSE btch0001.cr_crapdat;
+				--Informações do associado
+				OPEN cr_crapass;
+				FETCH cr_crapass
+						INTO rw_crapass;
+				CLOSE cr_crapass;
+				vr_des_xml := NULL;
+				--XML de envio
+				vr_temp := '<?xml version="1.0" encoding="utf-8"?>' || '<associado>' || '<nrdconta>' ||
+									 rw_crapass.nrdconta || '</nrdconta>' || '<nrcpfcgc>' || rw_crapass.nrcpfcgc ||
+									 '</nrcpfcgc>' || '<nmprimtl>' || rw_crapass.nmprimtl || '</nmprimtl>' ||
+									 '<nrcepend>' || rw_crapass.nrcepend || '</nrcepend>' || '<dsendere>' ||
+									 rw_crapass.dsendere || '</dsendere>' || '<nrendere>' || rw_crapass.nrendere ||
+									 '</nrendere>' || '<complend>' || rw_crapass.complend || '</complend>' ||
+									 '<nmbairro>' || rw_crapass.nmbairro || '</nmbairro>' || '<nmcidade>' ||
+									 rw_crapass.nmcidade || '</nmcidade>' || '<cdufende>' || rw_crapass.cdufende ||
+									 '</cdufende>' || '<nrcxapst>' || rw_crapass.nrcxapst || '</nrcxapst>' ||
+                   '<dtiniatv>' || rw_crapass.dtiniatv || '</dtiniatv>' ||
+									 '</associado>';
+				-- Inicializar o CLOB
+				vr_des_xml := NULL;
+				dbms_lob.createtemporary(vr_des_xml, TRUE);
+				dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+				-- Escreve o XML no CLOB
+				vr_texto_completo := NULL;
+				gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, vr_temp, TRUE);
+				-- Busca diretorio padrao da cooperativa
+				vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+																							,
+																							 pr_cdcooper => pr_cdcooper,
+																							 pr_nmsubdir => 'arquivos');
+        GENE0001.pc_OScommand_Shell(pr_des_comando => 'mkdir -p ' || vr_nom_direto);
+				-- Solicita geracao do PDF
+				vr_nmarqimp := '/dec_pj_coop_' || pr_nrdconta || pr_nrcpfcgc || '.pdf';
+				gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,
+																		pr_cdprogra  => vr_cdprogra,
+																		pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+																		pr_dsxml     => vr_des_xml,
+																		pr_dsxmlnode => '/',
+																		pr_dsjasper  => 'dec_pessoa_juridica_cooperativa.jasper',
+																		pr_dsparams  => NULL,
+																		pr_dsarqsaid => vr_nom_direto || vr_nmarqimp,
+																		pr_flg_gerar => 'S',
+																		pr_qtcoluna  => 234,
+																		pr_sqcabrel  => 1,
+																		pr_flg_impri => 'S',
+																		pr_nmformul  => ' ',
+																		pr_nrcopias  => 1,
+																		pr_nrvergrl  => 1,
+																		pr_parser    => 'R' --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
+																	 ,
+																		pr_des_erro  => vr_dscritic);
+				IF vr_dscritic IS NOT NULL THEN
+						-- verifica retorno se houve erro
+						RAISE vr_exc_saida; -- encerra programa
+				END IF;
+				-- copia o pdf do diretorio da cooperativa para servidor web
+				gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper,
+																		 pr_cdagenci => NULL,
+																		 pr_nrdcaixa => NULL,
+																		 pr_nmarqpdf => vr_nom_direto || vr_nmarqimp,
+																		 pr_des_reto => vr_des_reto,
+																		 pr_tab_erro => vr_tab_erro);
+				-- caso apresente erro na operação
+				IF nvl(vr_des_reto, 'OK') <> 'OK' THEN
+						IF vr_tab_erro.COUNT > 0 THEN
+								-- verifica pl-table se existe erros
+								vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+								vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+								RAISE vr_exc_saida; -- encerra programa
+						END IF;
+				END IF;
+				-- Remover relatorio do diretorio padrao da cooperativa
+				gene0001.pc_OScommand(pr_typ_comando => 'S',
+															pr_des_comando => 'rm ' || vr_nom_direto || vr_nmarqimp,
+															pr_typ_saida   => vr_typ_saida,
+															pr_des_saida   => vr_dscritic);
+				-- Se retornou erro
+				IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+						-- Concatena o erro que veio
+						vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
+						RAISE vr_exc_saida; -- encerra programa
+				END IF;
+				-- Liberando a memória alocada pro CLOB
+				dbms_lob.close(vr_des_xml);
+				dbms_lob.freetemporary(vr_des_xml);
+				vr_nmarqimp := substr(vr_nmarqimp, 2); -- retornar somente o nome do PDF sem a barra"/"
+				-- Criar XML de retorno para uso na Web
+				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
+																			 vr_nmarqimp || '</nmarqpdf>');
+        -- gravar documento na CRAPDOC para controle de digitalização
+        begin
+          insert into crapdoc 
+          (cdcooper, 
+            nrdconta, 
+            flgdigit, 
+            dtmvtolt, 
+            tpdocmto, 
+            idseqttl, 
+            cdoperad)
+           values (pr_cdcooper,
+                   pr_nrdconta,
+                   0,
+                   rw_crapdat.dtmvtolt,
+                   56, -- declaraçao PJ cooperativa
+                   1,
+                   user);
+        exception
+          when others then
+               vr_dscritic := 'Erro ao inserir CRAPDOC: ' || sqlerrm;
+						   RAISE vr_exc_saida; -- encerra programa
+        end;
+				COMMIT;
+		EXCEPTION
+				WHEN vr_exc_saida THEN
+						-- Se foi retornado apenas código
+						IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+								-- Buscar a descrição
+								vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+						END IF;
+						-- Devolvemos código e critica encontradas das variaveis locais
+						pr_cdcritic := NVL(vr_cdcritic, 0);
+						pr_dscritic := vr_dscritic;
+						-- Carregar XML padrão para variável de retorno não utilizada.
+						-- Existe para satisfazer exigência da interface.
+						pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' ||
+																					 upper(pr_dscritic) || '</Erro></Root>');
+						ROLLBACK;
+				WHEN OTHERS THEN
+						-- Efetuar retorno do erro não tratado
+						pr_cdcritic := 0;
+						pr_dscritic := SQLERRM;
+						-- Carregar XML padrão para variável de retorno não utilizada.
+						-- Existe para satisfazer exigência da interface.
+						pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' ||
+																					 upper(pr_dscritic) || '</Erro></Root>');
+						ROLLBACK;
+		END pc_impr_dec_pj_coop_xml;	  
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
 																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)

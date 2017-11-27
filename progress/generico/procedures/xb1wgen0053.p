@@ -49,6 +49,8 @@ DEF VAR aux_cdclcnae AS INTE                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvallic AS DATE										   NO-UNDO.
+DEF VAR aux_tpregtrb AS INTE										   NO-UNDO.
+DEF VAR aux_impdecpjcoop AS CHAR NO-UNDO.
 
 { sistema/generico/includes/b1wgen0053tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -96,6 +98,8 @@ PROCEDURE valores_entrada:
           WHEN "chavealt" THEN aux_chavealt = tt-param.valorCampo.
           WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
 		  WHEN "dtvallic" THEN aux_dtvallic = DATE(tt-param.valorCampo).
+		  WHEN "tpregtrb" THEN aux_tpregtrb = INTE(tt-param.valorCampo).
+          WHEN "impdecpjcoop" THEN aux_impdecpjcoop = tt-param.valorCampo.
 
       END CASE.
 
@@ -219,9 +223,11 @@ PROCEDURE Grava_Dados:
                              INPUT aux_dtmvtolt,
                              INPUT aux_nrlicamb,
 							 INPUT aux_dtvallic,
+							 INPUT aux_tpregtrb,
                             OUTPUT aux_tpatlcad,
                             OUTPUT aux_msgatcad,
                             OUTPUT aux_chavealt,
+                            OUTPUT aux_impdecpjcoop,
                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK" THEN
@@ -244,6 +250,7 @@ PROCEDURE Grava_Dados:
             RUN piXmlAtributo (INPUT "msgatcad", INPUT aux_msgatcad).
             RUN piXmlAtributo (INPUT "tpatlcad", INPUT aux_tpatlcad).
             RUN piXmlAtributo (INPUT "chavealt", INPUT aux_chavealt).
+            RUN piXmlAtributo (INPUT "impdecpjcoop", INPUT aux_impdecpjcoop).
             RUN piXmlSave.
         END.
 
