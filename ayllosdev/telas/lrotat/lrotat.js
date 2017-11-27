@@ -353,6 +353,26 @@ function formataFormularioLrotat(){
 
 	        });
 
+			$("#tpctrato", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+				if (divError.css('display') == 'block') { return false; }
+
+				$('input,select').removeClass('campoErro');
+				
+				// Se é a tecla ENTER, TAB, F1
+				if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+					/*
+					if ($(this).val() == 4) {
+						$("#permingr", "#frmConsulta").focus();
+					} else {
+						$("#dsencfin1", "#frmConsulta").focus();
+					}
+					*/
+	                $(this).nextAll('.campo:first').focus();
+					return false;
+				}
+			});
+			
 	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
@@ -768,6 +788,26 @@ function formataFormularioLrotat(){
 				}
 			});
 
+			$("#tpctrato", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
+
+				if (divError.css('display') == 'block') { return false; }
+
+				$('input,select').removeClass('campoErro');
+				
+				// Se é a tecla ENTER, TAB, F1
+				if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+					/*
+					if ($(this).val() == 4) {
+						$("#permingr", "#frmConsulta").focus();
+					} else {
+						$("#dsencfin1", "#frmConsulta").focus();
+					}
+					*/
+	                $(this).nextAll('.campo:first').focus();
+					return false;
+				}
+			});
+			
 	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
