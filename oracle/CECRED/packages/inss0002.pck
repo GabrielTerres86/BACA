@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 26/10/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 27/11/2017
 
    Dados referentes ao programa:
 
@@ -452,6 +452,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             não havia sido concluido qdo na verdade ja tinha sido processado no SICREDI
                             fazendo com que o operador fizesse o pagamento em duplicidade
                             (Tiago #716275)
+                            
+               27/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
+                            e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -3780,8 +3783,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
     -- que antecede o final de semana ou feriado nacional
-    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
-       rw_crapdat.dtmvtolt = vr_dtdebito THEN
+    IF TRUNC(SYSDATE) > vr_dtdebito  THEN   
+      pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
+      RAISE vr_exc_saida;     
+    ELSIF TRUNC(SYSDATE) = vr_dtdebito AND to_char(SYSDATE,'sssss') >= vr_hriniexe THEN
       pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
       RAISE vr_exc_saida;     
     END IF;
