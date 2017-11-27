@@ -958,15 +958,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           IF nvl(rw_crapsld.vlsddisp,0) > 0 THEN
             -- inserindo na tabela de depósistos a vista craplcm
             BEGIN
-
-              INSERT INTO tbcotas_devolucao (cdcooper,
+              UPDATE tbcotas_devolucao
+                 SET vlcapital = vlcapital + rw_crapsld.vlsddisp
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = rw_crapass.nrdconta
+                 AND tpdevolucao = 4; -- DEPOSITO - EQUIVALE HIST 110
+              IF SQL%ROWCOUNT = 0 THEN
+                INSERT INTO tbcotas_devolucao (cdcooper,
                                              nrdconta, 
                                              tpdevolucao,
                                              vlcapital)
                                      VALUES (pr_cdcooper
-                                            ,rw_crapass.nrdconta
+                     ,rw_crapass.nrdconta
                                             ,4 -- DEPOSITO - EQUIVALE HIST 110
                                             ,rw_crapsld.vlsddisp); 
+              END IF;
               vr_vllanmto:= rw_crapsld.vlsddisp;
 
             EXCEPTION
@@ -1168,16 +1174,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           IF nvl(rw_crapcot.vldcotas,0) > 0 THEN -- valor de cotas do associado
             -- Insere lançamento na tabela de lançamentos de cotas de capital
             BEGIN
-
-              INSERT INTO tbcotas_devolucao (cdcooper,
+              UPDATE tbcotas_devolucao
+                 SET vlcapital = vlcapital + nvl(rw_crapcot.vldcotas,0)
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = rw_crapass.nrdconta
+                 AND tpdevolucao = 3;  -- SOBRAS COTAS - EQUIVALE HIST 112
+              IF SQL%ROWCOUNT = 0 THEN
+                INSERT INTO tbcotas_devolucao (cdcooper,
                                              nrdconta, 
                                              tpdevolucao,
                                              vlcapital)
                                      VALUES (pr_cdcooper
-                                            ,rw_crapass.nrdconta
+                     ,rw_crapass.nrdconta
                                             ,3 -- SOBRAS COTAS - EQUIVALE HIST 112
                                             ,nvl(rw_crapcot.vldcotas,0)); 
-               
+               END IF;              
                vr_vllanmto:= nvl(rw_crapcot.vldcotas,0);
 
             EXCEPTION
