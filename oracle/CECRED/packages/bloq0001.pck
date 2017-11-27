@@ -130,6 +130,11 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
                                       ,pr_vlbloque_aplica OUT NUMBER
                                       ,pr_vlbloque_poupa  OUT NUMBER
                                       ,pr_dscritic        OUT VARCHAR2);
+  
+  PROCEDURE pc_vincula_cobertura_operacao(pr_idcobertura_anterior IN NUMBER DEFAULT 0
+                                         ,pr_idcobertura_nova     IN NUMBER
+                                         ,pr_nrcontrato           IN NUMBER
+                                         ,pr_dscritic            OUT VARCHAR2);
 END BLOQ0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
@@ -3107,6 +3112,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
     END;
     
   END pc_calc_bloqueio_garantia;
+  
+  PROCEDURE pc_vincula_cobertura_operacao(pr_idcobertura_anterior IN NUMBER DEFAULT 0
+                                         ,pr_idcobertura_nova     IN NUMBER
+                                         ,pr_nrcontrato           IN NUMBER
+                                         ,pr_dscritic            OUT VARCHAR2) IS
+  /*.............................................................................
+
+    Programa: pc_vincula_cobertura_operacao
+    Autor   : Jaison Fernando
+    Data    : Novembro/2017                    Ultima Atualizacao: 
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Tratar a vinculacao da garantia nas operacoes sendo contratadas.
+                 
+    Alteracoes: 
+
+  .............................................................................*/
+  
+  BEGIN                          
+    DECLARE
+      -- Variavel de critica
+      vr_dscritic crapcri.dscritic%TYPE := NULL;
+
+      -- Variavel excecao
+      vr_exc_erro EXCEPTION;
+
+    BEGIN      
+      
+      -- Se foi informado cobertura anterior
+      IF pr_idcobertura_anterior > 0 THEN
+        BEGIN
+          DELETE
+            FROM tbgar_cobertura_operacao
+           WHERE idcobertura = pr_idcobertura_anterior;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao remover cobertura de operacao anterior: ' || SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+
+      -- Se foi informado nova cobertura
+      IF pr_idcobertura_nova > 0 THEN
+        BEGIN
+          UPDATE tbgar_cobertura_operacao
+             SET nrcontrato  = pr_nrcontrato
+           WHERE idcobertura = pr_idcobertura_nova;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar cobertura de operacao: ' || SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+
+    EXCEPTION 
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+        
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro na BLOQ0001.PC_VINCULA_COBERTURA_OPERACAO --> '|| SQLERRM;
+        
+    END;
+    
+  END pc_vincula_cobertura_operacao;
                 
 END BLOQ0001;
 /
