@@ -274,7 +274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/09/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -311,6 +311,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --             27/10/2017 - Alterada a função pc_busca_iof para contemplar as alterações do projeto 410.
   --                          Agora as taxas de IOF ficarão na tabela tbgen_taxa_iof e não mais na craptab.
   --                          (Diogo - MoutS)   
+  --
+  --             24/11/2017 - Correção na consulta de bloqueios judiciais pc_retorna_valor_blqjud, para somar todas 
+  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)               
   ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -1775,7 +1778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Marcos(Supero)
-     Data    : 04/06/2013                         Ultima atualizacao: 04/11/2015
+     Data    : 04/06/2013                         Ultima atualizacao: 24/11/2017
 
      Dados referentes ao programa:
 
@@ -1788,12 +1791,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
      Alteracães: 04/11/2015 - Correção de conversão, tratar 0 como todos para cdmodali
                               identificado na conversão carrega_dados_atenda SD318820 (Odirlei-AMcom)
 
+                 24/11/2017 - Correção na consulta de bloqueios judiciais, para somar todas as 
+                              ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi) 
+
     ............................................................................. */
     DECLARE
      -- Buscar das informacães de bloqueio judicial na conta
      CURSOR cr_crapblj IS
-       SELECT vlbloque
-             ,vlresblq
+       SELECT SUM(vlbloque) AS vlbloque
+             ,SUM(vlresblq) AS vlresblq
          FROM crapblj
         WHERE cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
