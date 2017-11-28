@@ -264,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 24/08/2017
+   Data    : Maio/2015                      Ultima atualizacao: 07/11/2017
 
    Dados referentes ao programa:
 
@@ -283,6 +283,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                
                24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto
                             na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)               
+
+               29/09/2017 - Correção para não processar o débito e crédito quando folha
+                            na situação 6 - Transação Pendente. Proj. 397
+                            Rafael (Mouts)
+
+               07/11/2017 - #756218 Na rotina pc_processo_controlador, melhorado o tratamento de
+                            erros, retirando logs que não acrescentavam detalhe algum e cadastro
+                            de mensagem de log (prglog_ocorrencia) em duplicidade (Carlos)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -1138,7 +1146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Lucas Afonso Lombardi Moreira
-  --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
+  --  Data     : Julho/2015.                   Ultima atualizacao: 30/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1152,6 +1160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
   --                          de performance - Marcos(Supero)
+  --
+  --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
+  --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1182,10 +1193,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
 
+  -- Busca empresas que possuem pagamentos com débitos pendentes
+  CURSOR cr_crapemp_debito_pendente(pr_cdcooper IN crapemp.cdcooper%TYPE
+                                   ,pr_cdempres IN crapemp.cdempres%TYPE) IS
+    SELECT SUM(lfp.vllancto) vllancto
+      FROM crappfp pfp
+          ,crapemp emp
+          ,craplfp lfp
+          ,crapass ass
+     WHERE pfp.cdcooper = pr_cdcooper
+       AND pfp.cdcooper = emp.cdcooper
+       AND pfp.cdempres = emp.cdempres
+       AND lfp.cdcooper = pfp.cdcooper
+       AND lfp.cdempres = pfp.cdempres
+       AND lfp.nrseqpag = pfp.nrseqpag
+       AND ass.cdcooper = pfp.cdcooper
+       AND ass.nrdconta = emp.nrdconta
+       AND pfp.idsitapr = 5 --> Aprovados
+       AND pfp.flsitdeb = 0 --> Ainda nao debitado
+       AND pfp.cdempres = pr_cdempres
+     GROUP BY emp.cdempres
+             ,emp.nrdconta
+             ,emp.dsdemail
+             ,trunc(pfp.dtsolest)
+             ,ass.vllimcre;
+  
+  rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
+  
   -- Variaveis
   vr_tab_saldo  EXTR0001.typ_tab_saldos;
   vr_saldo      NUMBER;
   vr_des_erro   VARCHAR2(3);
+  vr_vllancto    NUMBER;
 
   --Variaveis de E-mail
   vr_email_assunto VARCHAR(300);
@@ -1221,10 +1260,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dscritic := ' – ERRO NAO TRATADO AO VERIFICAR SALDO' || ' - ' || vr_tab_erro(0).dscritic;
           RAISE vr_exc_erro;
         END IF;
+        
         vr_saldo := (vr_tab_saldo(0).vlsddisp + vr_tab_saldo(0).vllimcre);
 
+        --Busca também os pagamentos aprovados para somar
+        OPEN cr_crapemp_debito_pendente(pr_cdcooper => pr_cdcooper
+                                       ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_crapemp_debito_pendente 
+           INTO rw_crapemp_debito_pendente;
+        CLOSE cr_crapemp_debito_pendente;          
+        
+        --Soma vllancto dos estourados + vllancto aprovados
+        vr_vllancto := rw_crapemp.vllancto + nvl(rw_crapemp_debito_pendente.vllancto,0);
+        
         -- Se houver saldo
-        IF vr_saldo >= rw_crapemp.vllancto THEN
+        IF vr_saldo >= vr_vllancto THEN
           -- Atualiza os pagamentos para aprovados
           BEGIN
             UPDATE crappfp
@@ -2002,7 +2052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       Sistema : Rotina chamada via job
       Sigla   : CRED
       Autor   : Vanessa Klein
-      Data    : Julho/2015.                  Ultima atualizacao: 07/07/2016
+      Data    : Julho/2015.                  Ultima atualizacao: 10/10/2017
 
       Dados referentes ao programa:
 
@@ -2025,6 +2075,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                   07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
                                de performance - Marcos(Supero)
+                               
+                  10/10/2017 - Adicionar NVL na soma do campo vllctpag.
+                               (Chamado 754474) - (Fabricio)
                                
     ..............................................................................*/
 
@@ -2068,6 +2121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        AND pfp.cdcooper = ass.cdcooper
        AND emp.nrdconta = ass.nrdconta
        AND pfp.idsitapr > 3 --> Aprovados
+       AND pfp.idsitapr <> 6 -- Transação pendente
        AND pfp.flsitdeb = 0 --> Ainda nao debitado
      GROUP BY emp.cdempres
              ,emp.nrdconta
@@ -2167,7 +2221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- que estejam com valores divergentes dos lançamentos
         BEGIN
           UPDATE crappfp pfp
-             SET pfp.vllctpag = (SELECT SUM(nvl(lfp.vllancto,0))
+             SET pfp.vllctpag = (SELECT NVL(SUM(nvl(lfp.vllancto,0)),0)
                                    FROM craplfp lfp
                                  WHERE lfp.cdcooper = pfp.cdcooper
                                    AND lfp.cdempres = pfp.cdempres
@@ -4280,6 +4334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  = 0 --> Ainda nao creditados
            AND lfp.idtpcont  = 'C'
@@ -5569,6 +5624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  IN (0,2) --> Ainda nao creditados           
            AND lfp.idtpcont  = 'T'
@@ -7941,9 +7997,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   -------- ROTINA 01 - Alerta ou cancelamento automático das empresas sem uso ------------------------
 
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 01 - ';
-
           -- Executada apenas uma vez por dia
           vr_dtsemus := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_CHECK_SEM_USO'),'DD/MM/RRRR');
 
@@ -7976,16 +8029,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   -------- ROTINA 02 - Aprovação automática de estouros com saldo ------------------------------------
 
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 02 - ';
-
           -- Acionar a rotina 02
           pc_aprova_estouros_automatico (vr_cdcooper, rw_crapdat);
 
   -------- ROTINA 03 - Reprovação automática de estouros com horário de análise expirado -------------
-
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 03 - ';
 
           -- Busca o horário limite para análise de estouros
           vr_dtexpest := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_ANA_EST'), 'DD/MM/RRRR HH24:MI');
@@ -8023,9 +8070,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
 
   -------- ROTINA 04 - Alerta de créditos após a expiração da portabilidade --------------------------
-
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 04 - ';
 
           -- Busca o horário limite para portabilidade em folha
           vr_dtexppor := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.FN_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_PORTAB'), 'DD/MM/RRRR HH24:MI');
@@ -8068,9 +8112,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 06.02 - Créditos pendentes conta ctasal --------------------------------------------
   -------- ROTINA 06.03 - Atualiza o XML do comprovante liquido --------------------------------------
 
-            -- Prepara mensagem de erro
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 05 - ';
-
             -- Acionar a rotina 05
             pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
 
@@ -8106,9 +8147,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   -------- ROTINA 08 - Conciliação dos pagamentos pendentes de devolução -----------------------------
 
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 08 - ';
-
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_CONCILI_ESTORNO'),'DD/MM/RRRR HH24:MI:SS');
 
@@ -8143,9 +8181,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   -------- ROTINA 09 - Estorno automático de rejeições TEC -------------------------------------------
 
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 09 - ';
-
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_ESTORNO_TEC'),'DD/MM/RRRR HH24:MI:SS');
 
@@ -8179,9 +8214,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
 
   -------- ROTINA 10 - Alerta as 19:00 de TRFSAL sem retorno SPB -------------------------------------------
-
-          -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 10 - ';
 
           -- Executada apenas uma vez por dia após as 19:00
           vr_dtavispb := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_SEM_RETORN_SPB'),'DD/MM/RRRR');
@@ -8224,34 +8256,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       
         -- Desfazer a operacao
         ROLLBACK;
-        -- envia ao LOG o problema ocorrido
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                             , pr_cdprograma => 'FOLH0001' 
-                             , pr_cdcooper => vr_cdcooper
-                             , pr_tpexecucao => 0
-                             , pr_tpocorrencia => 1 
-                             , pr_dsmensagem => vr_dscritic
-                             , pr_idprglog => vr_idprglog);
 
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
 
         -- Log de erro de execucao
         pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
-
+                              pr_dscritic => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                             ' - FOLH0001 --> Rotina pc_processo_controlador.' || SQLERRM);
         -- Desfazer a operacao
         ROLLBACK;
-        
-        CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
-        
-        -- envia ao LOG o problema ocorrido
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                             , pr_cdprograma => 'FOLH0001' 
-                             , pr_cdcooper => vr_cdcooper
-                             , pr_tpexecucao => 0
-                             , pr_tpocorrencia => 1 
-                             , pr_dsmensagem => vr_dscritic || SQLERRM
-                             , pr_idprglog => vr_idprglog);       
 
       END;
     END LOOP;
@@ -8286,7 +8300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Renato Darosci
-  --  Data     : Junho/2015.                   Ultima atualizacao: 28/04/2016
+  --  Data     : Junho/2015.                   Ultima atualizacao: 25/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8303,6 +8317,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          null - Marcos(Supero)
   --
   --             28/04/2016 - Retirada acentos por compatibilidade Ayllos Web (Guilherme/SUPERO)
+  --
+  --             25/09/2017 - verificar se o banco de destino da TEC esta ativo
+  --                          (Douglas - chamado 647346)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -8364,6 +8381,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          AND t.dtdemiss IS NULL;
     rw_assativ  cr_assativ%ROWTYPE;
 
+    -- Verificar se o banco esta ativo
+    CURSOR cr_crapban(pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
+      SELECT ban.cdbccxlt
+        FROM crapban ban
+       WHERE ban.cdbccxlt = pr_cdbccxlt
+         AND ban.flgdispb = 1; 
+    rw_crapban cr_crapban%ROWTYPE; 
   BEGIN
 
     -- Se não veio parametro de tipo de conta
@@ -8556,6 +8580,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Se o cursor estiver aberto
         IF cr_assativ%ISOPEN THEN
           CLOSE cr_assativ;
+        END IF;
+
+      ELSE
+        
+        -- Verificar se o banco que vai receber o credito esta ativo
+        OPEN cr_crapban (pr_cdbccxlt => rw_crapccs.cdbantrf);
+        FETCH cr_crapban INTO rw_crapban;
+        
+        IF cr_crapban%NOTFOUND THEN
+          -- Fechar Cursor 
+          CLOSE cr_crapban;
+          -- Retorna o alerta com a crítica
+          pr_dsalerta := 'Banco destino ' || rw_crapccs.cdbantrf || ' inativo. ' || 
+                         'Entre em contato com seu PA.';
+          RETURN;
+        ELSE 
+          -- Fechar cursor
+          CLOSE cr_crapban;
         END IF;
 
       END IF;
