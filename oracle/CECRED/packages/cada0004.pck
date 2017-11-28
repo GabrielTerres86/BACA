@@ -12104,6 +12104,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 						WHERE crapass.nrdconta = pr_nrdconta
 									AND crapass.nrcpfcgc = pr_nrcpfcgc;
 				rw_crapass cr_crapass%ROWTYPE;
+        -- Cursor da crapdoc
+        CURSOR cr_crapdoc(pr_cdcooper IN crapdoc.cdcooper%TYPE,pr_nrdconta IN crapdoc.nrdconta%TYPE) IS
+               SELECT t.idseqttl
+               FROM crapdoc t
+               WHERE t.cdcooper = pr_cdcooper
+               AND t.nrdconta = pr_nrdconta
+               AND t.tpdocmto = 56;
+        rw_crapdoc cr_crapdoc%ROWTYPE;
 				-- Tratamento de erros
 				vr_exc_saida EXCEPTION;
 				vr_cdcritic PLS_INTEGER;
@@ -12216,28 +12224,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
 																			 vr_nmarqimp || '</nmarqpdf>');
         -- gravar documento na CRAPDOC para controle de digitalização
-        begin
-          insert into crapdoc 
-          (cdcooper, 
+        OPEN cr_crapdoc(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapdoc INTO rw_crapdoc;
+        IF cr_crapdoc%NOTFOUND THEN
+          BEGIN
+            INSERT INTO crapdoc(cdcooper, 
             nrdconta, 
             flgdigit, 
             dtmvtolt, 
             tpdocmto, 
-            idseqttl, 
-            cdoperad)
-           values (pr_cdcooper,
+                                idseqttl)
+            VALUES (pr_cdcooper,
                    pr_nrdconta,
                    0,
                    rw_crapdat.dtmvtolt,
                    56, -- declaraçao PJ cooperativa
-                   1,
-                   user);
-        exception
-          when others then
-               vr_dscritic := 'Erro ao inserir CRAPDOC: ' || sqlerrm;
-						   RAISE vr_exc_saida; -- encerra programa
-        end;
+                   1);
 				COMMIT;
+          EXCEPTION
+               WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir CRAPDOC: ' || SQLERRM;
+						        RAISE vr_exc_saida; -- encerra programa
+               END;
+        END IF;
+        CLOSE cr_crapdoc;
 		EXCEPTION
 				WHEN vr_exc_saida THEN
 						-- Se foi retornado apenas código

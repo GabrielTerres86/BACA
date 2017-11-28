@@ -467,3 +467,14 @@ function imprimeDeclaracaoSimplesNacional(tpregtrb){
     carregaImpressaoAyllos("frmCabContas", action, callafter);
 	$('#imprimirsodeclaracaosn', '#frmCabContas').remove();
 }
+function imprimeDeclaracaoPJCooperativa(){
+	$form = $('<form id="frmImpressaoDeclaracaoPJCooperativa" name="frmImpressaoDeclaracaoPJCooperativa" />').appendTo('body');
+    $form.append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + normalizaNumero(nrdconta) + '" />')
+    $form.append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="' + normalizaNumero($('#nrcpfcgc', '#frmCabContas').val()) + '" />')
+    $form.append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />')
+    var action = UrlSite + 'telas/contas/ficha_cadastral/imp_declaracao_pj_cooperativa.php';
+    var callafter = "";
+    carregaImpressaoAyllos("frmImpressaoDeclaracaoPJCooperativa", action, callafter);
+    //Remove para não afetar a rotina de ficha cadastral
+    $form.remove();
+}

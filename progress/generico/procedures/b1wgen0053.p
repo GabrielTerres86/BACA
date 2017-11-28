@@ -491,7 +491,7 @@ PROCEDURE grava_dados:
         
        /* Se passou para PJ Cooperativa, seta a flag para gerar a impressao automatica */
        ASSIGN log_impdecpjcoop = "N".
-       IF (par_cdnatjur <> crapjur.natjurid) AND par_cdnatjur = 2143 THEN
+       IF par_cdnatjur = 2143 AND ((par_cdnatjur <> crapjur.natjurid) OR (crapass.dtinsori = TODAY)) THEN
         DO:
           ASSIGN log_impdecpjcoop = "S".
         END.

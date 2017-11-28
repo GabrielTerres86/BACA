@@ -49,6 +49,7 @@
 	$dtvallic = (isset($_POST['dtvallic'])) ? $_POST['dtvallic'] : '';
 	$tpregtrb = (isset($_POST['tpregtrb'])) ? $_POST['tpregtrb'] : '0';
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
+	$cdnatjurAnt = $cdnatjur;
 
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -138,6 +139,7 @@
 	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
 	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
 	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];
+	$impDecPJCoop = isset($xmlObjeto->roottag->tags[0]->attributes['IMPDECPJCOOP']) ? $xmlObjeto->roottag->tags[0]->attributes['IMPDECPJCOOP'] : '';
 	
 	if ($operacao == 'AV') {	
 
@@ -154,10 +156,18 @@
 				exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0053.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 			}
 			
-		} else {		
+			if ($impDecPJCoop == 'S'){
+				echo 'imprimeDeclaracaoPJCooperativa();';					
+			}
 			
+		} else {		
 			// Se não é validar, então é alteração, portanto mostrar mensagem de sucesso e retornar para página principal
 			echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
+
+		}
+
+		if ($impDecPJCoop == 'S'){
+			echo 'imprimeDeclaracaoPJCooperativa();';					
 		}
 	}
 
