@@ -584,6 +584,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
+       vr_vltaxa_iof_principal NUMBER := 0;
        vr_natjurid crapjur.natjurid%TYPE;
        vr_tpregtrb crapjur.tpregtrb%TYPE;
        
@@ -2219,6 +2220,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                                             ,pr_vliofpri   => vr_vliofpri
                                             ,pr_vliofadi   => vr_vliofadi
                                             ,pr_vliofcpl   => vr_vliofcpl
+                                            ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                             ,pr_dscritic   => vr_dscritic);
                  
                -- Condicao para verificar se houve critica                             

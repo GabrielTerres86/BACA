@@ -683,6 +683,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_dsrestar  crapres.dsrestar%TYPE;
        vr_natjurid  crapjur.natjurid%TYPE;
        vr_tpregtrb  crapjur.tpregtrb%TYPE;
+       vr_vltaxa_iof_principal NUMBER := 0;
 
        --Variaveis de controle de data
        vr_dtfimvig  DATE;
@@ -2120,6 +2121,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofpri   => vr_vliofpri
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
+                                          ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                           ,pr_dscritic   => vr_dscritic);
                                           
              -- Condicao para verificar se houve critica                             
@@ -2149,6 +2151,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofpri   => vr_vliofpri
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
+                                          ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                           ,pr_dscritic   => vr_dscritic);
              
              -- Condicao para verificar se houve critica                             
@@ -2177,6 +2180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_vliofpri   => vr_vliofpri
                                         ,pr_vliofadi   => vr_vliofadi
                                         ,pr_vliofcpl   => vr_vliofcpl
+                                        ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                         ,pr_dscritic   => vr_dscritic);
              
            -- Condicao para verificar se houve critica                             

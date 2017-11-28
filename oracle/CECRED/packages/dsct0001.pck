@@ -451,6 +451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%type
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
+              ,crapbdt.vltaxiof
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;        
@@ -500,6 +501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
       vr_nrdolote_lcm craplcm.nrdolote%TYPE;
       vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
+      vr_vltaxa_iof_principal NUMBER := 0;
       
       --vr_seq_tit      PLS_INTEGER := 0;    --> Sequencial do indice vr_ind_tit
       vr_tab_tar      typ_tab_tarifa;
@@ -1019,6 +1021,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         
         vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
         
+        /*#########BUSCAR BDT BORDERO##################################*/
+        --Selecionar Bordero de titulos
+        OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
+                        ,pr_nrborder => rw_craptdb.nrborder);
+        --Posicionar no proximo registro
+        FETCH cr_crapbdt INTO rw_crapbdt;
+        --Se nao encontrar
+        IF cr_crapbdt%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapbdt;
+          --Mensagem de erro
+          vr_dscritic:= 'Bordero nao encontrado.';
+          vr_cdcritic:= 0;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_crapbdt;
+        /*#########FIM BUSCAR BDT BORDERO##################################*/ 
+        
         ------------------------------------------------------------------------------------------
         -- Inicio Efetuar o Lancamento de IOF
         ------------------------------------------------------------------------------------------
@@ -1044,9 +1066,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                      ,pr_qtdiaiof   => vr_qtdiaiof
                                      ,pr_vloperacao => NVL(rw_craptdb.vlliquid,0)
                                      ,pr_vltotalope => vr_vltotal_liquido
+                                     ,pr_vltaxa_iof_atraso => NVL(rw_crapbdt.vltaxiof,0)
                                      ,pr_vliofpri   => vr_vliofpri
                                      ,pr_vliofadi   => vr_vliofadi
-                                     ,pr_vliofcpl   => vr_vliofcpl
+                                     ,pr_vliofcpl   => vr_vliofcpl                                     
+                                     ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                      ,pr_dscritic   => vr_dscritic);
 
         -- Condicao para verificar se houve critica
@@ -1143,26 +1167,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         END;
         /*#########FIM ATUALIZA TDB##################################*/  
         
-        /*#########BUSCAR BDT BORDERO##################################*/
-        --Selecionar Bordero de titulos
-        OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
-                        ,pr_nrborder => rw_craptdb.nrborder);
-        --Posicionar no proximo registro
-        FETCH cr_crapbdt INTO rw_crapbdt;
-        --Se nao encontrar
-        IF cr_crapbdt%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_crapbdt;
-          --Mensagem de erro
-          vr_dscritic:= 'Bordero nao encontrado.';
-          vr_cdcritic:= 0;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
-        --Fechar Cursor
-        CLOSE cr_crapbdt;
-        /*#########FIM BUSCAR BDT BORDERO##################################*/        
-    
         /*#########LIQUIDA BORDERO##################################*/
         /* Verifica se deve liquidar o bordero caso sim Liquida */
         DSCT0001.pc_efetua_liquidacao_bordero (pr_cdcooper => rw_craptdb.cdcooper  --Codigo Cooperativa
@@ -1701,6 +1705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%type
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
+              ,crapbdt.vltaxiof
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;
@@ -1787,6 +1792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
       vr_nrdolote_lcm craplcm.nrdolote%TYPE;
       vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
+      vr_vltaxa_iof_principal NUMBER := 0;
 
       --Variaveis de erro
       vr_des_erro     VARCHAR2(4000);
@@ -1919,6 +1925,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           ELSE
             vr_tottitul_sr:= Nvl(vr_tottitul_sr,0) + 1;
           END IF;
+          
+          --Selecionar Bordero de titulos
+          OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
+                          ,pr_nrborder => rw_craptdb.nrborder);
+          --Posicionar no proximo registro
+          FETCH cr_crapbdt INTO rw_crapbdt;
+          --Se nao encontrar
+          IF cr_crapbdt%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_crapbdt;
+            --Mensagem de erro
+            vr_dscritic:= 'Bordero nao encontrado.';
+            vr_cdcritic:= 0;
+            --Gerar erro
+            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => 1 /** Sequencia **/
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => vr_tab_erro);
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapbdt;
 
           /*
           Valor pago eh menor que o titulo (Ex: Desconto de 10%)
@@ -2251,9 +2283,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                            ,pr_qtdiaiof   => vr_qtdiaiof
                                            ,pr_vloperacao => NVL(rw_craptdb.vlliquid,0)
                                            ,pr_vltotalope => vr_vltotal_liquido
+                                           ,pr_vltaxa_iof_atraso => rw_crapbdt.vltaxiof
                                            ,pr_vliofpri   => vr_vliofpri
                                            ,pr_vliofadi   => vr_vliofadi
                                            ,pr_vliofcpl   => vr_vliofcpl
+                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                            ,pr_dscritic   => vr_dscritic);
 
               -- Condicao para verificar se houve critica
@@ -2589,32 +2623,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               CLOSE cr_crapcob;
             END IF;
           END IF; /* Final da baixa por vencimento */
-
-          --Selecionar Bordero de titulos
-          OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
-                          ,pr_nrborder => rw_craptdb.nrborder);
-          --Posicionar no proximo registro
-          FETCH cr_crapbdt INTO rw_crapbdt;
-          --Se nao encontrar
-          IF cr_crapbdt%NOTFOUND THEN
-            --Fechar Cursor
-            CLOSE cr_crapbdt;
-            --Mensagem de erro
-            vr_dscritic:= 'Bordero nao encontrado.';
-            vr_cdcritic:= 0;
-            --Gerar erro
-            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => 1 /** Sequencia **/
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => vr_tab_erro);
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-          --Fechar Cursor
-          CLOSE cr_crapbdt;
 
           /**** ABATIMENTO DE JUROS ****/
           vr_txdiaria:= APLI0001.fn_round((POWER(1 + (rw_crapbdt.txmensal / 100),1 / 30) - 1),7);
