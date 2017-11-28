@@ -158,42 +158,46 @@ END CYBE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa: CYBE0001                        Antiga: generico/procedures/b1wgen0168.p
-  --  Autor   : James Prust Junior
-  --  Data    : Agosto/2013                     Ultima Atualizacao: 29/02/2016
-  --
-  --  Dados referentes ao programa:
-  --
-  --  Objetivo  : Package referente a regras de geracao de arquivos CYBER
-  --
-  --  Alteracoes: 30/09/2013 - Conversao Progress para oracle (Gabriel).
-  --
-  --              04/10/2013 - Conversao Progress para oracle da rotina pc_atualiza_dados
-  --                           ( Renato-Supero / Odirlei-AMcom )
-  --
-  --              05/05/2014 - Removido o parametro dtatufin da procedure "pc_atualiza_dados_financeiro". (James)
-  --
-  --              02/06/2014 - Os campos cdestcvl e vlsalari foram removidos da crapass e adicionados
-  --                           na crapttl, portanto foram removidas as validações para crapass na
-  --                           "pc_proc_alteracoes_log". As validações já exitem para crapttl.
-  --                           (Douglas - Chamado 131253)
-  --              10/06/2014 - (Chamado 117414) - Troca do campo crapass.nmconjug por crapcje.nmconjug
-  --                           (Tiago Castro - RKAM).
-  --
-  --              22/09/2014 - Inserido o campo FLGFOLHA no UPDATE da procedure
-  --                           "pc_atualiza_dados_financeiro". (Jaison)
-  --
-  --              08/12/2014 - #213746 Ajuste nas verificações das alterações dos dados de conjuge (Carlos)
-  --
-  --              27/10/2015 - Incluido nova verificacao do campo crapass.indserma na procedure pc_proc_alteracoes_log,
-  --                           Prj. 131 - Assinatura Conjunta. (Jean Michel).
-  --
-  --              29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
-  --                           solicitado no chamado 402159 (Kelvin)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa: CYBE0001                        Antiga: generico/procedures/b1wgen0168.p
+    Autor   : James Prust Junior
+    Data    : Agosto/2013                     Ultima Atualizacao: 26/04/2017
+  
+    Dados referentes ao programa:
+  
+    Objetivo  : Package referente a regras de geracao de arquivos CYBER
+  
+    Alteracoes: 30/09/2013 - Conversao Progress para oracle (Gabriel).
+  
+                04/10/2013 - Conversao Progress para oracle da rotina pc_atualiza_dados
+                             ( Renato-Supero / Odirlei-AMcom )
+  
+                05/05/2014 - Removido o parametro dtatufin da procedure "pc_atualiza_dados_financeiro". (James)
+  
+                02/06/2014 - Os campos cdestcvl e vlsalari foram removidos da crapass e adicionados
+                             na crapttl, portanto foram removidas as validações para crapass na 
+                             "pc_proc_alteracoes_log". As validações já exitem para crapttl. 
+                             (Douglas - Chamado 131253)
+                10/06/2014 - (Chamado 117414) - Troca do campo crapass.nmconjug por crapcje.nmconjug
+                             (Tiago Castro - RKAM).   
+  
+                22/09/2014 - Inserido o campo FLGFOLHA no UPDATE da procedure 
+                             "pc_atualiza_dados_financeiro". (Jaison)
+  
+                08/12/2014 - #213746 Ajuste nas verificações das alterações dos dados de conjuge (Carlos)
+  
+                27/10/2015 - Incluido nova verificacao do campo crapass.indserma na procedure pc_proc_alteracoes_log,
+                             Prj. 131 - Assinatura Conjunta. (Jean Michel).
+  
+                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
+                             solicitado no chamado 402159 (Kelvin)
+  
+                26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+  ---------------------------------------------------------------------------------------------------------------*/
 
     --Tabela de Memoria com ROWID para log (usado no grava_dados)
     TYPE typ_tab_rowid IS TABLE OF ROWID INDEX BY VARCHAR2(7);
@@ -1173,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                    Ultima atualizacao: 27/10/2015
+   Data    : Abril/2006.                    Ultima atualizacao: 26/04/2017
 
    Dados referentes ao programa:
 
@@ -1250,6 +1254,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                27/10/2015 - Incluido a verificacao do campo crapass.idastcjt, Prj. 131 -
                             Assinatura Conjunta. (Jean Michel).
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+               
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)
+
+			   26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+						   (Adriano - P339).
     ............................................................................. */
       DECLARE
 
@@ -1571,7 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapass.dsnacion <> pr_tab_log(vr_index).crapass(1).dsnacion THEN
+            IF rw_crapass.cdnacion <> pr_tab_log(vr_index).crapass(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion. 1.ttl';
               vr_log_flgrecad:= TRUE;
@@ -1631,77 +1644,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
 
-            --Nome Segundo titular
-            IF rw_crapass.nmsegntl <> pr_tab_log(vr_index).crapass(1).nmsegntl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Tipo Documento Segundo titular
-            IF rw_crapass.tpdocstl <> pr_tab_log(vr_index).crapass(1).tpdocstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'tipo doc.seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Numero Documento Segundo titular
-            IF rw_crapass.nrdocstl <> pr_tab_log(vr_index).crapass(1).nrdocstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'doc.seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Data nascimento segundo titular
-            IF rw_crapass.dtnasstl <> pr_tab_log(vr_index).crapass(1).dtnasstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'nascto seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Filiacao Segundo titular
-            IF rw_crapass.dsfilstl <> pr_tab_log(vr_index).crapass(1).dsfilstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'filiacao seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Cpf Segundo titular
-            IF rw_crapass.nrcpfstl <> pr_tab_log(vr_index).crapass(1).nrcpfstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'cpf seg.titular';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
             --Exclusao Conta Integracao
             IF rw_crapass.nrdctitg <> pr_tab_log(vr_index).crapass(1).nrdctitg AND
                rw_crapass.cdtipcta = pr_tab_log(vr_index).crapass(1).cdtipcta THEN
@@ -1718,85 +1660,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
 
-            /* 24/08/2001 - Dados do responsavel como item de recadastramento */
-
-            --Orgao Emissor Documento Responsavel
-            IF rw_crapass.cdoedrsp <> pr_tab_log(vr_index).crapass(1).cdoedrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'org.ems.doc.resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --UF emissao documento responsavel
-            IF rw_crapass.cdufdrsp <> pr_tab_log(vr_index).crapass(1).cdufdrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'uf.ems.doc.resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Nome Responsavel
-            IF rw_crapass.nmrespon <> pr_tab_log(vr_index).crapass(1).nmrespon THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'nome resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --CPF responsavel
-            IF rw_crapass.nrcpfrsp <> pr_tab_log(vr_index).crapass(1).nrcpfrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'cpf resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Numero Documento Responsavel
-            IF rw_crapass.nrdocrsp <> pr_tab_log(vr_index).crapass(1).nrdocrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'doc.resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Tipo Documento Responsavel
-            IF rw_crapass.tpdocrsp <> pr_tab_log(vr_index).crapass(1).tpdocrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'tipo doc.resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Data Emissao Doc. Responsavel
-            IF rw_crapass.dtemdrsp <> pr_tab_log(vr_index).crapass(1).dtemdrsp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'dt.ems.doc.resp.';
-              vr_log_flgrecad:= TRUE;
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
             /*  Dados para atualizacao (geram tipo de alteracao 2) */
             --Agencia
             IF rw_crapass.cdagenci <> pr_tab_log(vr_index).crapass(1).cdagenci THEN
@@ -1840,17 +1703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --Fone Empresa
-            IF rw_crapass.nrfonemp <> pr_tab_log(vr_index).crapass(1).nrfonemp THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'fone empr.';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --Ramal Empresa
             IF rw_crapass.nrramemp <> pr_tab_log(vr_index).crapass(1).nrramemp THEN
               --Nome do campo
@@ -1986,7 +1839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             /* campos 14/10/98 */
 
             --orgao Emissor Doc. Primeiro titular
-            IF rw_crapass.cdoedptl <> pr_tab_log(vr_index).crapass(1).cdoedptl THEN
+            IF rw_crapass.idorgexp <> pr_tab_log(vr_index).crapass(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.ems.doc. 1.ttl';
               --Verificar se o campo já estah na alteracao
@@ -1996,17 +1849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --orgao Emissor Doc. Segundo titular
-            IF rw_crapass.cdoedstl <> pr_tab_log(vr_index).crapass(1).cdoedstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'org.ems.doc.seg.titular';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --UF Emissao Doc. Primeiro titular
             IF rw_crapass.cdufdptl <> pr_tab_log(vr_index).crapass(1).cdufdptl THEN
               --Nome do campo
@@ -2018,17 +1861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --UF Emissao Doc. Segundo titular
-            IF rw_crapass.cdufdstl <> pr_tab_log(vr_index).crapass(1).cdufdstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'uf.ems.doc.seg.titular';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --Data Emissao Doc. Primeiro titular
             IF rw_crapass.dtemdptl <> pr_tab_log(vr_index).crapass(1).dtemdptl THEN
               --Nome do campo
@@ -2040,37 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --Data Emissao Doc. Segundo titular
-            IF rw_crapass.dtemdstl <> pr_tab_log(vr_index).crapass(1).dtemdstl THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'dt.ems.doc.seg.titular';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Quantidade Dependentes
-            IF rw_crapass.qtdepend <> pr_tab_log(vr_index).crapass(1).qtdepend THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'qtd.dependentes';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Endereco Comercial
-            IF rw_crapass.dsendcol <> pr_tab_log(vr_index).crapass(1).dsendcol THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'end.coml';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --Situacao Titular
             IF rw_crapass.cdsitdtl <> pr_tab_log(vr_index).crapass(1).cdsitdtl THEN
               --Nome do campo
@@ -2147,17 +1950,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             IF rw_crapttl.cdturnos <> pr_tab_log(vr_index).crapttl(1).cdturnos THEN
               --Nome do campo
               vr_log_nmdcampo:= 'turno '||rw_crapttl.idseqttl||'.ttl';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                vr_flgctitg:= vr_log_flgctitg;
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
-            --Nome secao
-            IF rw_crapttl.nmdsecao <> pr_tab_log(vr_index).crapttl(1).nmdsecao THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'secao '||rw_crapttl.idseqttl||'.ttl';
               --Verificar se o campo já estah na alteracao
               IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
                 vr_flgctitg:= vr_log_flgctitg;
@@ -3332,16 +3124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --Capital Social
-            IF rw_crapjur.vlcapsoc <> pr_tab_log(vr_index).crapjur(1).vlcapsoc THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'capital social';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --Faturamento Anual
             IF rw_crapjur.vlfatano <> pr_tab_log(vr_index).crapjur(1).vlfatano THEN
               --Nome do campo
@@ -3511,7 +3294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Documento
-            IF rw_crapttl.cdoedttl <> pr_tab_log(vr_index).crapttl(1).cdoedttl THEN
+            IF rw_crapttl.idorgexp <> pr_tab_log(vr_index).crapttl(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.ems.doc.';
               --Verificar se o campo já estah na alteracao
@@ -3573,7 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapttl.dsnacion <> pr_tab_log(vr_index).crapttl(1).dsnacion THEN
+            IF rw_crapttl.cdnacion <> pr_tab_log(vr_index).crapttl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion.';
               --Recadastramento
@@ -3666,16 +3449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            --Certificado
-            IF rw_crapttl.nrcertif <> pr_tab_log(vr_index).crapttl(1).nrcertif THEN
-              --Nome do campo
-              vr_log_nmdcampo:= 'certificado';
-              --Verificar se o campo já estah na alteracao
-              IF INSTR(vr_dsaltera,vr_log_nmdcampo) = 0 THEN
-                --Concatenar o campo alterado
-                vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
-              END IF;
-            END IF;
+            
             --Nome Talao
             IF rw_crapttl.nmtalttl <> pr_tab_log(vr_index).crapttl(1).nmtalttl THEN
               --Nome do campo
@@ -4332,7 +4106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Documento
-            IF rw_crapcrl.dsorgemi <> pr_tab_log(vr_index).crapcrl(1).dsorgemi THEN
+            IF rw_crapcrl.idorgexp <> pr_tab_log(vr_index).crapcrl(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org emi doc. '||pr_tab_log(vr_index).crapcrl(1).idseqmen||'.ttl';
               --Verificar se o campo já estah na alteracao
@@ -4392,7 +4166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --nacionalidade
-            IF rw_crapcrl.dsnacion <> pr_tab_log(vr_index).crapcrl(1).dsnacion THEN
+            IF rw_crapcrl.cdnacion <> pr_tab_log(vr_index).crapcrl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacionalidade. '||pr_tab_log(vr_index).crapcrl(1).idseqmen||'.ttl';
               --Verificar se o campo já estah na alteracao
@@ -4596,7 +4370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Conjuge
-            IF rw_crapcje.cdoedcje <> pr_tab_log(vr_index).crapcje(1).cdoedcje THEN
+            IF rw_crapcje.idorgexp <> pr_tab_log(vr_index).crapcje(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.emiss.cje';
               --Verificar se o campo já estah na alteracao
@@ -6460,7 +6234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
      --Tabela para armazenar arquivos lidos
      vr_tab_arqzip gene0002.typ_split;
      vr_tab_arqtxt gene0002.typ_split;
-     
+
      cursor c_busca_crapcyc(pr_cdcooper number
                            ,pr_nrdconta number
                            ,pr_nrctremp number
