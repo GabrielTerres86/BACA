@@ -27,8 +27,6 @@
                           caso a comprovacao de vida esteja vencida.
                           Projeto 255 (Lombardi).
 						  
-             11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
-
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
 						  
 ******************************************************************************************/
@@ -136,21 +134,11 @@ function formataOpcoes(opcao){
 		
 			formataOpcoesLog();
 		
-            // Seta os valores caso tenha vindo do CRM
-            if ($("#crm_inacesso","#frmCabInss").val() == 1) {
-                $("#nrdconta_log","#frmOpcoes").val($("#crm_nrdconta","#frmCabInss").val());
-            }
-		
 		break;
 		
 		default:
 			
 			formataOpcoesBeneficio();
-			
-            // Seta os valores caso tenha vindo do CRM
-            if ($("#crm_inacesso","#frmCabInss").val() == 1) {
-                $("#nrcpfcgc","#frmOpcoes").val($("#crm_nrcpfcgc","#frmCabInss").val());
-            }
 
 		break;
 					
