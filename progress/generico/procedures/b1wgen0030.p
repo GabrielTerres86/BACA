@@ -2189,9 +2189,11 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
                                                     ,INPUT crabtdb.vlliquid       /* Valor liquido da operaçao */
                                                     ,INPUT aux_vltotoperac        /* Valor total da operaçao */
+                                                    ,INPUT 0                      /* Valor da taxa de IOF complementar */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
+                                                    ,OUTPUT 0                     /* Valor da taxa de IOF principal */
                                                     ,OUTPUT "").                  /* Critica */
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC pc_calcula_valor_iof
@@ -2584,7 +2586,8 @@ PROCEDURE efetua_liber_anali_bordero:
                    /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                    crapbdt.cdopeori = par_cdoperad
                    crapbdt.cdageori = par_cdagenci
-                   crapbdt.dtinsori = TODAY.
+                   crapbdt.dtinsori = TODAY
+                   crapbdt.vltaxiof = aux_vltxiofatraso.
                    /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */            
 
             /* 
@@ -13005,6 +13008,7 @@ PROCEDURE efetua_baixa_titulo:
     DEF VAR aux_vliofcpl AS DECIMAL             NO-UNDO.
     DEF VAR aux_qtdiaiof AS INTEGER             NO-UNDO.
     DEF VAR aux_vltotal_liquido AS DECIMAL      NO-UNDO.
+    DEF VAR aux_vltxiofatraso AS DECIMAL        NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE  NO-UNDO.
     
     DEF BUFFER crablot FOR craplot.
@@ -13414,9 +13418,11 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,INPUT aux_qtdiaiof        /* Quantidade de dias de atraso. */
                                                                ,INPUT craptdb.vlliquid    /* Valor do Titulo  */
                                                                ,INPUT aux_vltotal_liquido /* Total do Bordero */
+                                                               ,INPUT craptdb.vltaxiof    /* Valor da taxa de IOF de atraso */
                                                                ,OUTPUT 0                  /* IOF Principal */
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
+                                                               ,OUTPUT 0                  /* Taxa de IOF principal */
                                                                ,OUTPUT "").  /* Descrição da crítica */
                            /* Fechar o procedimento para buscarmos o resultado */ 
                            CLOSE STORED-PROC pc_calcula_valor_iof

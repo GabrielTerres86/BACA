@@ -12231,9 +12231,11 @@ PROCEDURE efetua_liber_anali_bordero:
                                                   ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
                                                   ,INPUT crapcdb.vlliquid       /* Valor liquido da operaçao */
                                                   ,INPUT aux_vltotoperac        /* Valor total da operaçao */
+                                                  ,INPUT 0                      /* Valor da taxa de IOF complementar */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
+                                                  ,OUTPUT 0                     /* Valor da taxa de IOF principal */
                                                   ,OUTPUT "").                  /* Critica */
               /* Fechar o procedimento para buscarmos o resultado */ 
               CLOSE STORED-PROC pc_calcula_valor_iof
