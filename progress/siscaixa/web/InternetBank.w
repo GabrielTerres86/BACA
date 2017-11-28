@@ -3871,7 +3871,8 @@ PROCEDURE proc_operacao39:
 
     ASSIGN aux_dtmvtage = DATE(GET-VALUE("aux_dtmvtage"))
            aux_nrdocmto = INTE(GET-VALUE("aux_nrdocmto"))
-           aux_cdtiptra = INTE(GET-VALUE("aux_cdtiptra")).
+           aux_cdtiptra = INTE(GET-VALUE("aux_cdtiptra"))
+           aux_idlancto = DECI(GET-VALUE("aux_idlancto")).
 
     RUN sistema/internet/fontes/InternetBank39.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3879,6 +3880,7 @@ PROCEDURE proc_operacao39:
                                                   INPUT aux_dtmvtocd,
                                                   INPUT aux_dtmvtage,
                                                   INPUT aux_nrdocmto,
+                                                  INPUT aux_idlancto,
                                                   INPUT aux_flmobile,
                                                   INPUT aux_cdtiptra,
                                                   INPUT aux_nrcpfope,

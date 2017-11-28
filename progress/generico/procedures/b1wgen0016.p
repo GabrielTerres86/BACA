@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 21/09/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 27/11/2017
     
     Dados referentes ao programa:
 
@@ -511,6 +511,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 			  
               21/09/2017 - Ajustar procedure convenios_aceitos para indicar os convenios que podem
                            ser cadastrados para debito automatico (David).
+                           
+              27/11/2017 - Encontrar agendamento para cancelamento atraves do parametro idlancto (David)
 						   
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -3551,7 +3553,9 @@ PROCEDURE cancelar-agendamento:
     DEF  INPUT PARAM par_dsorigem LIKE craplau.dsorigem             NO-UNDO.
     DEF  INPUT PARAM par_dtmvtage LIKE craplau.dtmvtolt             NO-UNDO.
     DEF  INPUT PARAM par_nrdocmto LIKE craplau.nrdocmto             NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR						    NO-UNDO.
+    DEF  INPUT PARAM par_idlancto LIKE craplau.idlancto             NO-UNDO.
+    
+    DEF  INPUT PARAM par_nmdatela AS CHAR						                NO-UNDO.
     DEF  INPUT PARAM par_nrcpfope AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
@@ -3652,16 +3656,20 @@ PROCEDURE cancelar-agendamento:
             
             ASSIGN par_dscritic = "".
         
-            FIND craplau WHERE craplau.cdcooper = par_cdcooper AND
-                               craplau.nrdconta = par_nrdconta AND
-                               craplau.dtmvtolt = par_dtmvtage AND
-                               craplau.cdagenci = par_cdagenci AND
-                               craplau.cdbccxlt = 100          AND
-                               craplau.nrdolote = aux_nrdolote AND
-                               craplau.nrdocmto = par_nrdocmto AND
-                               craplau.dsorigem = par_dsorigem 
-                               USE-INDEX craplau1
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            IF  par_idlancto <> 0  THEN
+                FIND craplau WHERE craplau.idlancto = par_idlancto 
+                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            ELSE
+                FIND craplau WHERE craplau.cdcooper = par_cdcooper AND
+                                   craplau.nrdconta = par_nrdconta AND
+                                   craplau.dtmvtolt = par_dtmvtage AND
+                                   craplau.cdagenci = par_cdagenci AND
+                                   craplau.cdbccxlt = 100          AND
+                                   craplau.nrdolote = aux_nrdolote AND
+                                   craplau.nrdocmto = par_nrdocmto AND
+                                   craplau.dsorigem = par_dsorigem 
+                                   USE-INDEX craplau1
+                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                
             IF  NOT AVAILABLE craplau  THEN
                 DO: 
