@@ -13141,6 +13141,21 @@ PROCEDURE efetua_baixa_titulo:
                     
                 END.
 
+            FIND crapbdt WHERE crapbdt.cdcooper = craptdb.cdcooper AND
+                               crapbdt.nrborder = craptdb.nrborder
+                               NO-LOCK NO-ERROR.
+            IF  NOT AVAIL crapbdt  THEN
+                DO:
+                    ASSIGN aux_dscritic = "Bordero nao encontrado."
+                           aux_cdcritic = 0.
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1, /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    UNDO BAIXA, RETURN "NOK".
+                END.                
             FIND crapdat WHERE crapdat.cdcooper = craptdb.cdcooper
                                        NO-LOCK NO-ERROR.
 
@@ -13419,7 +13434,7 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,INPUT aux_qtdiaiof        /* Quantidade de dias de atraso. */
                                                                ,INPUT craptdb.vlliquid    /* Valor do Titulo  */
                                                                ,INPUT aux_vltotal_liquido /* Total do Bordero */
-                                                               ,INPUT craptdb.vltaxiof    /* Valor da taxa de IOF de atraso */
+                                                               ,INPUT crapbdt.vltaxiof    /* Valor da taxa de IOF de atraso */
                                                                ,OUTPUT 0                  /* IOF Principal */
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
@@ -13679,25 +13694,10 @@ PROCEDURE efetua_baixa_titulo:
                     
                 END. /* Final da baixa por vencimento */
                 
-            FIND crapbdt WHERE crapbdt.cdcooper = craptdb.cdcooper AND
-                               crapbdt.nrborder = craptdb.nrborder
-                               NO-LOCK NO-ERROR.
 
-            IF  NOT AVAIL crapbdt  THEN
-                DO:
-                    ASSIGN aux_dscritic = "Bordero nao encontrado."
-                           aux_cdcritic = 0.
                     
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1, /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
 
-                    UNDO BAIXA, RETURN "NOK".
 
-                END.
             
             /**** ABATIMENTO DE JUROS ****/
             ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
