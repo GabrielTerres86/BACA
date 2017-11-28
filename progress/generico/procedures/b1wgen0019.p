@@ -271,15 +271,15 @@
                             que qnd quebra a pagina e a primeira linha esta em branco
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
-               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
                 02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
                              = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
 			  
-			   14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
-							(Andrey Formigari - RKAM)
+ 			    14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+				 			(Andrey Formigari - RKAM)
 			  
-               15/09/2016 - Inclusao dos parametros default na rotina oracle
+                15/09/2016 - Inclusao dos parametros default na rotina oracle
 				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
 		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
@@ -299,8 +299,8 @@
 
 				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
          
-         28/09/2017 - Ajuste leitura IDORGEXP.
-                      PRJ339 - CRM (Odirlei-AMcom) 	
+                 28/09/2017 - Ajuste leitura IDORGEXP.
+                              PRJ339 - CRM (Odirlei-AMcom)
  				 
                  22/11/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                               Projeto 339 - CRM. (Lombardi)
@@ -3477,9 +3477,7 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
-    DEF VAR aux_flgativo     AS INT                                 NO-UNDO.
-    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta                  NO-UNDO. 
-    DEF VAR aux_dsvinculo    AS CHAR                                NO-UNDO.
+    DEF VAR aux_mensagens    AS CHAR                                NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
@@ -3968,27 +3966,23 @@ PROCEDURE cadastrar-novo-limite:
               /* Verificar se a conta pertence ao grupo economico novo */	
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-              RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+              RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                     ,INPUT par_nrdconta
-                                                    ,0
-                                                    ,0
                                                     ,""
                                                     ,0
                                                     ,"").
 
-              CLOSE STORED-PROC pc_verifica_conta_grp_econ
+              CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
               ASSIGN aux_cdcritic      = 0
                      aux_dscritic     = ""
-                     aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
-                     aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
-                     aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
-                     aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
-                     aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+                     aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+                     aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+                     aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
                               
               IF aux_cdcritic > 0 THEN
                  DO:
@@ -4013,11 +4007,11 @@ PROCEDURE cadastrar-novo-limite:
                     UNDO TRANSACAO, LEAVE TRANSACAO.
                 END.
                             
-              IF aux_flgativo = 1 THEN
+              IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
                  DO:
                      CREATE tt-msg-confirma.                        
                      ASSIGN tt-msg-confirma.inconfir = 4
-                            tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+                            tt-msg-confirma.dsmensag = aux_mensagens.
                  END.
            END.
 
@@ -7138,10 +7132,10 @@ PROCEDURE obtem-dados-contrato:
                           PERSISTENT SET h-b1wgen0052b.
                   
                   RUN busca_org_expedidor IN h-b1wgen0052b 
-                                     (INPUT crapavt.idorgexp,
-                                      OUTPUT tt-repres-ctr.cdoedrep,
-                                      OUTPUT aux_cdcritic, 
-                                      OUTPUT aux_dscritic).
+                                   (INPUT crapavt.idorgexp,
+                                    OUTPUT tt-repres-ctr.cdoedrep,
+                                    OUTPUT aux_cdcritic, 
+                                    OUTPUT aux_dscritic).
 
                   DELETE PROCEDURE h-b1wgen0052b. 
                   
@@ -7200,7 +7194,7 @@ PROCEDURE obtem-dados-contrato:
 
                                   RETURN "NOK".
                               END.      
-                            END.
+                      END.
                     END.
                 
             END. /** Fim do FOR EACH crapavt **/
@@ -7215,7 +7209,7 @@ PROCEDURE obtem-dados-contrato:
               /* Retornar orgao expedidor */
               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                   RUN sistema/generico/procedures/b1wgen0052b.p 
-                      PERSISTENT SET h-b1wgen0052b.
+                     PERSISTENT SET h-b1wgen0052b.
 
               RUN busca_org_expedidor IN h-b1wgen0052b 
                                  (INPUT crapass.idorgexp,
