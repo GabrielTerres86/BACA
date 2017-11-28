@@ -12300,7 +12300,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     OPEN cr_tbcotas_devolucao;
 		FETCH cr_tbcotas_devolucao
      INTO rw_tbcotas_devolucao;
-		CLOSE cr_tbcotas_devolucao;
 
     IF cr_tbcotas_devolucao%NOTFOUND then
       pr_cdcritic         := 0;
