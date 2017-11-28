@@ -403,10 +403,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
 		
-	// Cria objeto para classe de tratamento de XML
-	$xmlGetFolha = getObjectXML($xmlResult);
-  $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
-  }
+	
 		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
