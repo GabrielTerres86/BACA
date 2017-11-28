@@ -1966,6 +1966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_qtrestri        INTEGER;
     vr_vlmedchq        NUMBER;
     vr_qtdiaprz        INTEGER;
+    vr_vltaxa_iof_principal NUMBER(25,8);
 
     
     vr_lstarifa VARCHAR2(100);
@@ -2374,6 +2375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                        ,pr_vliofpri   => vr_vliofpri                        --> Retorno do valor do IOF principal
                                        ,pr_vliofadi   => vr_vliofadi                        --> Retorno do valor do IOF adicional
                                        ,pr_vliofcpl   => vr_vliofcpl                        --> Retorno do valor do IOF complementar
+                                       ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                        ,pr_dscritic   => vr_dscritic);                                   
       vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
         -- Seta os totais
@@ -7354,6 +7356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_dsdmensg         VARCHAR2(300);
   vr_rowid_log        ROWID;
+  vr_vltaxa_iof_principal NUMBER(25,8);
   
   -- IOF
   vr_qtdiaiof         NUMBER;   
@@ -7825,6 +7828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vliofpri   => vr_vliofpri           --> Retorno do valor do IOF principal
                                    ,pr_vliofadi   => vr_vliofadi           --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl           --> Retorno do valor do IOF complementar
+                                   ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                    ,pr_dscritic   => vr_dscritic);                                   
       vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
