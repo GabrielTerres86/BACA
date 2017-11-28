@@ -14,7 +14,7 @@
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  * 006: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  */	
-?>
+
 
 	session_start();
 	require_once('../../../includes/config.php');
