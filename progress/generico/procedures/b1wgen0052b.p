@@ -294,7 +294,6 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.nmrespon = crapcrl.nmrespon
                           tt-crapcrl.nridenti = crapcrl.nridenti
                           tt-crapcrl.tpdeiden = crapcrl.tpdeiden
-                          tt-crapcrl.dsorgemi = crapcrl.dsorgemi
                                                                 
                           tt-crapcrl.cdufiden = crapcrl.cdufiden
                           tt-crapcrl.dtemiden = crapcrl.dtemiden
