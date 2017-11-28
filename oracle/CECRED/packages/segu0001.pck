@@ -2748,7 +2748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
+  --  Data     : Abril/2015.                   Ultima atualizacao: 27/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -2758,13 +2758,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   -- Alterações:
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
-  -- 
+  --             27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
+  --                          ( Andrei Vieira - MOUTs )
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
       -- Vetor Local
-      TYPE typ_mot_can IS VARRAY(9) OF VARCHAR2(100);
+      TYPE typ_mot_can IS VARRAY(11) OF VARCHAR2(100);
       vr_mot_can typ_mot_can:= typ_mot_can('Nao Interesse pelo Seguro'
                                           ,'Desligamento da Empresa (Estipulante)'
                                           ,'Falecimento'
@@ -2773,7 +2774,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                           ,'Alteracao de plano'
                                           ,'Venda do imovel'
                                           ,'Insuficiencia de saldo'
-                                          ,'Encerramento de conta');
+                                          ,'Encerramento de conta'
+                                          ,'Insatisfação'
+                                          ,'Perdido para a concorrência');
       --Variaveis Locais
       vr_dsorigem VARCHAR2(1000);
       vr_dstransa VARCHAR2(1000);
@@ -2801,7 +2804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       BEGIN
 
-        IF nvl(pr_cdmotcan,0) > 9 THEN
+        IF nvl(pr_cdmotcan,0) > 11 THEN
           vr_dscritic:= 'Motivo nao cadastrado';
           --Sair
           RAISE vr_exc_sair;
