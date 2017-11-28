@@ -232,7 +232,7 @@ FORM tt-logspb-detalhe.cdbandst FORMAT "zz9"
      tt-logspb-detalhe.nrctarem FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" AT 119
      tt-logspb-detalhe.dsnomrem FORMAT "x(40)" AT 150
      tt-logspb-detalhe.dscpfrem FORMAT "99999999999999" AT 192
-     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" AT 230
+     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" AT 219
      SKIP
      "MOTIVO:"
      tt-logspb-detalhe.dsmotivo FORMAT "x(90)"
