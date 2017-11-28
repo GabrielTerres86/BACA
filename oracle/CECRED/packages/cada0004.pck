@@ -5814,22 +5814,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
 
 	-- Verifica se a conta possui algum grupo economico novo
-    TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ(pr_cdcooper => pr_cdcooper, 
-                                                           pr_nrdconta => pr_nrdconta, 
-                                                           pr_flgativo => vr_flgativo, 
-                                                           pr_nrdconta_grp => vr_nrdconta_grp, 
-                                                           pr_dsvinculo => vr_dsvinculo, 
-                                                           pr_cdcritic => vr_cdcritic, 
-                                                           pr_dscritic => vr_dscritic);
+    vr_tab_mensagens.DELETE;
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_obtem_mensagem_grp_econ(pr_cdcooper      => pr_cdcooper 
+                                                          ,pr_nrdconta      => pr_nrdconta
+                                                          ,pr_tab_mensagens => vr_tab_mensagens
+                                                          ,pr_cdcritic      => vr_cdcritic
+                                                          ,pr_dscritic      => vr_dscritic);
     
     IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
     
-    IF vr_flgativo = 1 THEN
-      pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    -- Condicao para verificar se possui mensagem para exibir do grupo economico
+    IF vr_tab_mensagens.COUNT > 0 THEN
+      FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END LOOP; 
     END IF;
+
 	-- Verifica se foi impressa a declaração de optante do simples nacional
 	OPEN cr_impdecsn(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
 	FETCH cr_impdecsn
