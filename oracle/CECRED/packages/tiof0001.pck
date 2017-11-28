@@ -279,6 +279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     vr_exc_erro     EXCEPTION;
 	  vr_tab_erro     GENE0001.typ_tab_erro;
   BEGIN    
+    /*
 	  -- Condicao para verificar a imunidade tributaria
     IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -300,6 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       END IF;
       RAISE vr_exc_erro;
     END IF;	
+    */
 	
     IF vr_flgimune THEN
       vr_flgimune_int := 1;
