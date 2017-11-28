@@ -904,6 +904,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_vltotiofadi AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_vltotiofcpl AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_vltotoperac AS DECIMAL NO-UNDO.
+    DEFINE VARIABLE aux_vltxiofatraso AS DECIMAL NO-UNDO.
 
     DEF VAR h-b1wgen9999 AS HANDLE                                   NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE                                   NO-UNDO.
@@ -2189,7 +2190,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
                                                     ,INPUT crabtdb.vlliquid       /* Valor liquido da operaçao */
                                                     ,INPUT aux_vltotoperac        /* Valor total da operaçao */
-                                                    ,INPUT 0                      /* Valor da taxa de IOF complementar */
+                                                    ,INPUT aux_vltxiofatraso      /* Valor da taxa de IOF complementar */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */

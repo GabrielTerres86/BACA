@@ -156,10 +156,6 @@
 				exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0053.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 			}
 			
-			if ($impDecPJCoop == 'S'){
-				echo 'imprimeDeclaracaoPJCooperativa();';					
-			}
-			
 		} else {		
 			// Se não é validar, então é alteração, portanto mostrar mensagem de sucesso e retornar para página principal
 			echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
