@@ -2096,7 +2096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 UPDATE crapttl ttl
                    SET --  = pr_estrangeira_new.incrs,
                        --  = pr_estrangeira_new.infatca,
-                       ttl.cdnacion  = pr_estrangeira_new.cdpais,
+                       ttl.cdnacion  = nvl(pr_estrangeira_new.cdpais,0),
                        --  = pr_estrangeira_new.nridentificacao,
                        --  = pr_estrangeira_new.dsnatureza_relacao,
                        --  = pr_estrangeira_new.dsestado,
@@ -2161,7 +2161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 UPDATE crapass ass
                    SET --  = pr_estrangeira_new.incrs,
                        --  = pr_estrangeira_new.infatca,
-                       ass.cdnacion  = pr_estrangeira_new.cdpais
+                       ass.cdnacion  = nvl(pr_estrangeira_new.cdpais,0)
                        --  = pr_estrangeira_new.nridentificacao,
                        --  = pr_estrangeira_new.dsnatureza_relacao,
                        --  = pr_estrangeira_new.dsestado,
@@ -6706,7 +6706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      crl.cdestciv = pr_pessoa_fis_new.cdestado_civil,
                      crl.nridenti = pr_pessoa_fis_new.nrdocumento,
                      crl.tpdeiden = pr_pessoa_fis_new.tpdocumento,
-                     crl.cdnacion = pr_pessoa_fis_new.cdnacionalidade,
+                     crl.cdnacion = nvl(pr_pessoa_fis_new.cdnacionalidade,0),
                      crl.dsnatura = nvl(nvl(vr_dsnatura,crl.dsnatura),' ')
                WHERE crl.cdcooper = vr_tab_contas(idx).cdcooper
                  AND crl.nrctamen = vr_tab_contas(idx).nrdconta
