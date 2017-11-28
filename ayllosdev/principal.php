@@ -3,16 +3,15 @@
 	//************************************************************************//
 	//*** Fonte: principal.php                                             ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração: 28/11/2017 ***//
+	//*** Data : Julho/2007                   Última Alteração: 07/04/2017 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Tela inicial do sistema                              ***//
 	//***                                                                  ***//	 
 	//*** Alterações: 08/09/2011 - Implementar controle para limpeza de    ***//
 	//***                          sub-session antiga (David).             ***//
     //***                                                                  ***//
-    //***             28/11/2017 - Ajuste para alimentar variavel global   ***//
-	//***                          com nome da tela                        ***//
-    //***                          (Jonata - RKAM P364)                    ***//
+    //***             07/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
+    //***                          do CRM. (Jaison/Andrino)                ***//
     //***                                                                  ***//
 	//************************************************************************//
 	
@@ -67,10 +66,22 @@
 <script type="text/javascript" src="scripts/dimensions.js"></script>
 <script type="text/javascript" src="scripts/funcoes.js"></script>
 <script type="text/javascript">
-
-  // Tela inicial
-  var glb_nmdatela = '<?php echo $nmtelini; ?>';
-
+<?php
+    // Inicializa
+    $nmtelini = 'ATENDA';
+    // Caso tenha vindo do CRM
+    if ($_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO'] == 1) {
+        $nmtelini = $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NMDATELA'];
+        $nrctacrm = $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA'];
+        ?>
+        $(document).ready(function() {
+            $("#nrdconta","#frmMenu").val('<?php echo $nrctacrm; ?>');
+        });
+        <?php
+    }
+?>
+// Tela inicial
+var glb_nmdatela = '<?php echo $nmtelini; ?>';
 </script>
 <script type="text/javascript" src="scripts/menu.js"></script>
 <?php if (isset($dsmsgerr)) { ?>
