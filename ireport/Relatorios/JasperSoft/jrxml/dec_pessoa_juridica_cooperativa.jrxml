@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-11-27T09:14:20 -->
+<!-- 2017-11-29T15:03:26 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="dec_pessoa_juridica_cooperativa" pageWidth="442" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -95,7 +95,7 @@
 				<textFieldExpression><![CDATA["A " + $F{nmprimtl} + ", sociedade cooperativa inscrita no CNPJ/MF sob o n° " + $F{nrcpfcgc} + ", estabelecida na cidade de " + $F{nmcidade} + " / " + $F{cdufende} + ", na " + $F{dsendere} + ", n° " + $F{nrendere} + ", " + ($F{nmbairro}.equals("") ? "" : " bairro " + $F{nmbairro}.toString() + ",") + " CEP " + $F{nrcepend} + ", para fins de incidência de alíquota zero do Imposto sobre Operações de Crédito, Câmbio e Seguro, ou relativa a Títulos e Valores Mobiliários (IOF), prevista no inciso I do art. 8° do Decreto nº 6.306/2007, vem, por intermédio de seus representantes legais ao final assinado, DECLARAR que atende aos requisitos da legislação cooperativista, todos previstos na Lei Federal nº 5.764/71, e ainda, que está ciente de que a falsidade na atestação desta informação a sujeitará às penalidades previstas na legislação criminal e tributária relativas ao crime contra a ordem tributária."]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="30" y="266" width="380" height="30" isPrintWhenDetailOverflows="true" uuid="adbb4a99-558a-4dae-90bf-29d1fe78ca2a">
+				<reportElement x="30" y="267" width="380" height="30" isPrintWhenDetailOverflows="true" uuid="adbb4a99-558a-4dae-90bf-29d1fe78ca2a">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
