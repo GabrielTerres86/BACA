@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --  Sistema  : Rotinas referente ao processo de domicilio bancario
   --  Sigla    : CCRD
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : Setembro - 2015.                   Ultima atualizacao: 08/12/2016
+  --  Data     : Setembro - 2015.                   Ultima atualizacao: 10/02/2017
   --
   -- Dados referentes ao programa:
   --
@@ -28,11 +28,24 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --                    do job pc_efetua_processo (Carlos)
   --
   --       08/12/2016 - Tratamento para incorporacao/migracao de cooperativas. (Fabricio)
+  --
+  --       10/02/2017 - #602248 Melhoria de quando o programa pc_efetua_processo sinaliza o início 
+  --                    da execução; retirada a verificação de final de semana pois o job do mesmo
+  --                    executa apenas de seg a sex; criação da rotina pc_efetua_processo_web, chamada
+  --                    pela tela CONLDB (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina para o processamento do arquivo oriundo do Sicoob
   PROCEDURE pc_efetua_processo(pr_cdcritic OUT crapcri.cdcritic%TYPE
                               ,pr_dscritic OUT VARCHAR2);
+
+  -- Rotina para o processamento do arquivo oriundo do Sicoob (executada pela tela CONLDB)
+  PROCEDURE pc_efetua_processo_web(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica                                  
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
@@ -840,14 +853,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     -- Busca a sequencia do lancamento
     OPEN cr_sequencia;
     FETCH cr_sequencia INTO vr_nrsequencia;
-    CLOSE cr_sequencia;  
-    
+    CLOSE cr_sequencia; 
+     
     -- Abre o arquivo
-    gene0001.pc_abre_arquivo(pr_dsdiretorio,
-                             pr_nmarquivo,
-                             'R',
-                             vr_arquivo,
-                             vr_dscritic);
+    gene0001.pc_abre_arquivo(pr_nmdireto => pr_dsdiretorio,
+                             pr_nmarquiv => pr_nmarquivo,
+                             pr_tipabert => 'R',
+                             pr_utlfileh => vr_arquivo,
+                             pr_des_erro => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN 
       RAISE vr_exc_saida;
     END IF;
@@ -1032,7 +1045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
        WHERE nrseq_sicoob = pnrseq_sicoob
          AND insituacao   = 1;
     rw_registro_repetido cr_registro_repetido%ROWTYPE;
-    
+
     CURSOR cr_craptco (pr_cdcopant IN crapcop.cdcooper%TYPE,
                        pr_nrctaant IN craptco.nrctaant%TYPE) IS
       SELECT tco.nrdconta,
@@ -1156,7 +1169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
            vr_nrdconta := 0;
            vr_coopdest := 0;
           END IF;
-          
+        
           CLOSE cr_craptco;
           
         ELSE
@@ -1546,14 +1559,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
 
     BEGIN
     
-    -- Se o dia da semana for sabado ou domingo, nao deve executar o fonte
-    IF to_char(SYSDATE,'D') IN (1,7) THEN
-      RETURN; -- Encerra o programa;
-    END IF;
-    
-    -- Log de inicio de execucao
-    pc_controla_log_batch(pr_dstiplog => 'I');
-    
     -- Se for um feriado, nao deve executar o fonte
     OPEN cr_crapfer;
     FETCH cr_crapfer INTO rw_crapfer;
@@ -1589,12 +1594,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     -- Se possuir arquivos para serem processados
     IF vr_listaarq IS NOT NULL THEN
 
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
+
       --Carregar a lista de arquivos txt na pl/table
       vr_tab_arqtmp := gene0002.fn_quebra_string(pr_string => vr_listaarq);
       
       -- Leitura da PL/Table e processamento dos arquivos
       vr_indice := vr_tab_arqtmp.first;
-      while vr_indice is not null loop
+      WHILE vr_indice is not null LOOP
         -- Chama o procedimento que faz a leitura do arquivo
         processa_arquivos(vr_dsdiretorio,
                           vr_tab_arqtmp(vr_indice),
@@ -1669,6 +1677,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
       -- Efetuar rollback
       ROLLBACK;
 
+      pc_internal_exception;
+      
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
+
   END;
+  
+  PROCEDURE pc_efetua_processo_web(pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica                                  
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+  BEGIN
+    BEGIN
+      pc_efetua_processo(pr_cdcritic => pr_cdcritic, 
+                         pr_dscritic => pr_dscritic);                       
+      EXCEPTION
+        WHEN OTHERS THEN
+        pc_internal_exception(3, pr_dscritic);
+  END;
+  END; -- END pc_efetua_processo_web
+
 END CCRD0004;
 /
