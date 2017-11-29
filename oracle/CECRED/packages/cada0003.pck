@@ -8916,15 +8916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     END IF;
 
-    IF nvl(pr_vldsaque,0) < 1 THEN
-      
-      vr_dscritic := 'Não é possível saque menor que 1,00 em cotas.';
-      pr_nmdcampo := 'vlsaque';
-      RAISE vr_exc_saida;
-    
-    END IF;
-    
-    IF (rw_crapcot.vldcotas - nvl(pr_vldsaque,0)) = 0 THEN
+    IF (rw_crapcot.vldcotas - nvl(pr_vldsaque,0)) < 1 THEN
       
       vr_dscritic := 'Não é possível saque total, deve deixar pelo menos 1,00 em cotas.';
       pr_nmdcampo := 'vlsaque';
