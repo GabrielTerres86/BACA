@@ -27,11 +27,12 @@ isPostMethod();
                 <tr>
                     <th><?php echo utf8ToHtml('Arquivo') ?></th>
                     <th><?php echo utf8ToHtml('Tipo') ?></th>
-                    <th><?php echo utf8ToHtml('Credenciadora') ?></th>
+                    <th><?php echo utf8ToHtml('Banco Liquidante') ?></th>
                     <th><?php echo utf8ToHtml('Data Rec.') ?></th>
                     <th><?php echo utf8ToHtml('Data Liquidação C/C') ?></th>
                     <th><?php echo utf8ToHtml('Arquivo Gerado') ?></th>
                     <th><?php echo utf8ToHtml('Data Geração') ?></th>
+                    <th><?php echo utf8ToHtml('Ret.') ?></th>                    
                 </tr>
             </thead>
 
@@ -52,6 +53,7 @@ isPostMethod();
                     <td><?php echo getByTagName($r->tags, 'dtgeracao') ?>
                         <input type="hidden" id="dtgeracao" name="dtgeracao" value="<?php echo getByTagName($r->tags,'dtgeracao') ?>" />
                     </td>
+                    <td><?php echo getByTagName($r->tags, 'tpretorno') ?></td>
                     <input type="hidden" id="qtprocessados" name="qtprocessados" value="<? echo getByTagName($r->tags,'qtprocessados'); ?>" />
                     <input type="hidden" id="vlprocessados" name="vlprocessados" value="<? echo formataMoeda(getByTagName($r->tags,'vlprocessados')); ?>" />
                     <input type="hidden" id="qtintegrados" name="qtintegrados" value="<? echo getByTagName($r->tags,'qtintegrados'); ?>" />
