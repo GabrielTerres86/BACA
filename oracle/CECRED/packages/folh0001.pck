@@ -7905,6 +7905,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             22/12/2015 - Chamar a rotina de debito na mesma frequencia do crédito (Marcos-Suoero)
   --
+  --             25/10/2017 - Realizando o processamento dos pagamentos antigos cadastrados na tela SOL062,
+  --                          para ajustar o problema relatado no chamado 654712 (Kelvin)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca as cooperativas
@@ -7916,7 +7919,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       FROM crapcop
      WHERE flgativo = 1
        AND cdcooper <> 3;
-
+  
+  CURSOR cr_existe_folha_antiga(pr_cdcooper crapcop.cdcooper%TYPE
+                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+    SELECT 1 
+      FROM craplcs lcs
+     WHERE lcs.cdcooper = pr_cdcooper
+       AND lcs.dtmvtolt = pr_dtmvtolt
+           -- FOLHA EMAIL   --> 560
+           -- CAIXA ON-LINE --> 561
+           -- FOLHA IBANK   --> gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIS_CRE_TECSAL')
+       AND lcs.cdhistor IN(560,561,gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_HIS_CRE_TECSAL'))         
+       AND lcs.flgenvio = 0 --Nao enviado  
+       AND lcs.nrridlfp = 0; --Folha velha
+  rw_existe_folha_antiga cr_existe_folha_antiga%ROWTYPE; 
+   
   -- Cursor generico de calendario
   rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
@@ -8135,6 +8152,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                --Acionar a rotina 6.2
                pc_cr_pagto_aprovados_ctasal(vr_cdcooper, rw_crapdat);
+               
+               OPEN cr_existe_folha_antiga(pr_cdcooper => vr_cdcooper
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                 FETCH cr_existe_folha_antiga
+                   INTO rw_existe_folha_antiga;
+                 
+                 --Valida se há folhas antigas para serem processadas  
+                 IF cr_existe_folha_antiga%FOUND THEN
+                   --Faz o processamanento dos pagamentos carregados pela tela SOL062 (Antigos)
+                   SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => vr_cdcooper
+                                             ,pr_cdagenci => 0
+                                             ,pr_nrdcaixa => 1
+                                             ,pr_cdoperad => 1
+                                             ,pr_cdempres => 0
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+                 END IF;     
+               
+               CLOSE cr_existe_folha_antiga;
+               
+               
             END IF;
 
             -- Acionar a rotina 06.03
