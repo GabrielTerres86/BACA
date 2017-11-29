@@ -48,7 +48,7 @@
             //$nomeArquivo .= $arquivo["name"];
             $nomeArquivo .= 'importacao_impsim_'.date('Y-m-d').'.csv';
             if (!move_uploaded_file($arquivo["tmp_name"], $nmupload.$nomeArquivo)) {
-                showErrorsImportacao('error','Arquivo "'.$nomeArquivo.'" não pode ser enviado! '.getcwd());
+                showErrorsImportacao('error','Arquivo "'.$nomeArquivo.'" não pode ser enviado!');
             }
 
             // Caminho que deve ser enviado ao Mensageria / para ORACLE fazer exec do CURL

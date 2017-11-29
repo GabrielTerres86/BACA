@@ -3041,7 +3041,7 @@ PROCEDURE efetua_batimento_ged_termos:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF  CAN-DO("108,109,124,125,126,127", ENTRY(3,craptab.dstextab,";")) THEN DO:
+        IF  CAN-DO("108,109,124,125,126,127,162,163", ENTRY(3,craptab.dstextab,";")) THEN DO:
 
             CREATE tt-documentos.
             ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
