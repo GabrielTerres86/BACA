@@ -2182,8 +2182,9 @@ PROCEDURE efetua_liber_anali_bordero:
 
                 /* Projeto 410 - Novo IOF */
                 ASSIGN aux_qtdiaiof = crabtdb.dtvencto - par_dtmvtolt.
+                
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-                RUN STORED-PROCEDURE pc_calcula_valor_iof
+                RUN STORED-PROCEDURE pc_calcula_valor_iof_prg
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                      /* Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante) */
                                                     ,INPUT 1                      /* Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso) */
                                                     ,INPUT crabtdb.cdcooper       /* Código da cooperativa */
@@ -2195,40 +2196,43 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,INPUT aux_qtdiaiof           /* Qde dias em atraso (cálculo IOF atraso) */
                                                     ,INPUT crabtdb.vlliquid       /* Valor liquido da operaçao */
                                                     ,INPUT aux_vltotoperac        /* Valor total da operaçao */
-                                                    ,INPUT 0                      /* Valor da taxa de IOF complementar */
+                                                    ,INPUT "0"                    /* Valor da taxa de IOF complementar */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
-                                                    ,OUTPUT 0                     /* Valor da taxa de IOF principal */
+                                                    ,OUTPUT ""                     /* Valor da taxa de IOF principal */
                                                     ,OUTPUT "").                  /* Critica */
+                                                    
                 /* Fechar o procedimento para buscarmos o resultado */ 
-                CLOSE STORED-PROC pc_calcula_valor_iof
+                CLOSE STORED-PROC pc_calcula_valor_iof_prg
+                
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
                 /* Se retornou erro */
                 ASSIGN aux_dscritic = ""
-                       aux_dscritic = pc_calcula_valor_iof.pr_dscritic WHEN pc_calcula_valor_iof.pr_dscritic <> ?.
+                       aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                 IF aux_dscritic <> "" THEN
                   UNDO LIBERACAO, LEAVE.
                 /* Soma IOF principal */
-                IF pc_calcula_valor_iof.pr_vliofpri <> ? THEN
+                IF pc_calcula_valor_iof_prg.pr_vliofpri <> ? THEN
                   DO:
-                    ASSIGN aux_vltotiofpri = aux_vltotiofpri + ROUND(DECI(pc_calcula_valor_iof.pr_vliofpri),2).
+                    ASSIGN aux_vltotiofpri = aux_vltotiofpri + ROUND(DECI(pc_calcula_valor_iof_prg.pr_vliofpri),2).
                   END.
                 /* Soma IOF adicional */
-                IF pc_calcula_valor_iof.pr_vliofadi <> ? THEN
+                IF pc_calcula_valor_iof_prg.pr_vliofadi <> ? THEN
                   DO:
-                    ASSIGN aux_vltotiofadi = aux_vltotiofadi + ROUND(DECI(pc_calcula_valor_iof.pr_vliofadi),2).
+                    ASSIGN aux_vltotiofadi = aux_vltotiofadi + ROUND(DECI(pc_calcula_valor_iof_prg.pr_vliofadi),2).
                   END.
                 /* Soma IOF complementar */
-                IF pc_calcula_valor_iof.pr_vliofcpl <> ? THEN
+                IF pc_calcula_valor_iof_prg.pr_vliofcpl <> ? THEN
                   DO:
-                    ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
+                    ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof_prg.pr_vliofcpl),2).
                   END.
                 /* Valor da taxa de IOF principal */
-                IF pc_calcula_valor_iof.pr_vltaxa_iof_principal <> ? THEN
+                IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
-                    ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof.pr_vltaxa_iof_principal).
+                    ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
                   END.
             END.  /*  Fim do FOR EACH craptdb  */
             ASSIGN aux_vltotiof = aux_vltotiofpri + aux_vltotiofadi.
@@ -13426,7 +13430,7 @@ PROCEDURE efetua_baixa_titulo:
                            ASSIGN aux_qtdiaiof = par_dtmvtolt - craptdb.dtvencto.
                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                            /* Efetuar a chamada a rotina Oracle */
-                           RUN STORED-PROCEDURE pc_calcula_valor_iof
+                           RUN STORED-PROCEDURE pc_calcula_valor_iof_prg
                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                   /* Desconto de Titulo */
                                                                ,INPUT 2                   /* Pagamento em Atraso */
                                                                ,INPUT par_cdcooper        /* Cooperativa    */ 
@@ -13438,28 +13442,28 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,INPUT aux_qtdiaiof        /* Quantidade de dias de atraso. */
                                                                ,INPUT craptdb.vlliquid    /* Valor do Titulo  */
                                                                ,INPUT aux_vltotal_liquido /* Total do Bordero */
-                                                               ,INPUT crapbdt.vltaxiof    /* Valor da taxa de IOF de atraso */
+                                                               ,INPUT STRING(crapbdt.vltaxiof)    /* Valor da taxa de IOF de atraso */
                                                                ,OUTPUT 0                  /* IOF Principal */
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
-                                                               ,OUTPUT 0                  /* Taxa de IOF principal */
+                                                               ,OUTPUT ""                  /* Taxa de IOF principal */
                                                                ,OUTPUT "").  /* Descrição da crítica */
                            /* Fechar o procedimento para buscarmos o resultado */ 
-                           CLOSE STORED-PROC pc_calcula_valor_iof
+                           CLOSE STORED-PROC pc_calcula_valor_iof_prg
                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
                            ASSIGN aux_vliofpri = 0
                                   aux_vliofadi = 0
                                   aux_vliofcpl = 0
                                   aux_dscritic = ""
-                                  aux_vliofpri = pc_calcula_valor_iof.pr_vliofpri
-                                                 WHEN pc_calcula_valor_iof.pr_vliofpri <> ?
-                                  aux_vliofadi = pc_calcula_valor_iof.pr_vliofadi
-                                                 WHEN pc_calcula_valor_iof.pr_vliofadi <> ?
-                                  aux_vliofcpl = pc_calcula_valor_iof.pr_vliofcpl
-                                                 WHEN pc_calcula_valor_iof.pr_vliofcpl <> ?
-                                  aux_dscritic = pc_calcula_valor_iof.pr_dscritic
-                                                 WHEN pc_calcula_valor_iof.pr_dscritic <> ?.
+                                  aux_vliofpri = pc_calcula_valor_iof_prg.pr_vliofpri
+                                                 WHEN pc_calcula_valor_iof_prg.pr_vliofpri <> ?
+                                  aux_vliofadi = pc_calcula_valor_iof_prg.pr_vliofadi
+                                                 WHEN pc_calcula_valor_iof_prg.pr_vliofadi <> ?
+                                  aux_vliofcpl = pc_calcula_valor_iof_prg.pr_vliofcpl
+                                                 WHEN pc_calcula_valor_iof_prg.pr_vliofcpl <> ?
+                                  aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic
+                                                 WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                            /* Se retornou erro */
                            IF aux_dscritic <> "" THEN 
                               DO:

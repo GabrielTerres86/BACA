@@ -39,7 +39,25 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                 ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                 ,pr_vltaxa_iof_principal OUT NUMBER                --> Valor da Taxa do IOF Principal
                                 ,pr_dscritic             OUT crapcri.dscritic%TYPE);         
-                                
+  
+  PROCEDURE pc_calcula_valor_iof_prg(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                    ,pr_tpoperacao           IN  PLS_INTEGER --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                    ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
+                                    ,pr_nrdconta             IN  crapass.nrdconta%TYPE --> Número da conta
+                                    ,pr_inpessoa             IN  crapass.inpessoa%TYPE --> Tipo de Pessoa
+                                    ,pr_natjurid             IN  crapjur.natjurid%TYPE --> Natureza Juridica
+                                    ,pr_tpregtrb             IN  crapjur.tpregtrb%TYPE --> Tipo de Regime Tributario
+                                    ,pr_dtmvtolt             IN  crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
+                                    ,pr_qtdiaiof             IN  NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
+                                    ,pr_vloperacao           IN  NUMBER                --> Valor da operação
+                                    ,pr_vltotalope           IN  NUMBER                --> Valor Total da Operacao
+                                    ,pr_vltaxa_iof_atraso    IN  VARCHAR2              --> Valor da Taxa do IOF em Atraso
+                                    ,pr_vliofpri             OUT NUMBER                --> Retorno do valor do IOF principal
+                                    ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
+                                    ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
+                                    ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
+                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE);
+                                                                  
   PROCEDURE pc_calcula_valor_iof_inclusao(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                          ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
                                          ,pr_nrdconta             IN  crapass.nrdconta%TYPE --> Número da conta
@@ -268,6 +286,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       pr_dscritic := 'Erro ao calcular IOF. Rotina TIOF0001.pc_calcula_valor_iof. '||sqlerrm;
     END;
   END pc_calcula_valor_iof;
+  
+  PROCEDURE pc_calcula_valor_iof_prg(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
+                                    ,pr_tpoperacao           IN  PLS_INTEGER --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
+                                    ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
+                                    ,pr_nrdconta             IN  crapass.nrdconta%TYPE --> Número da conta
+                                    ,pr_inpessoa             IN  crapass.inpessoa%TYPE --> Tipo de Pessoa
+                                    ,pr_natjurid             IN  crapjur.natjurid%TYPE --> Natureza Juridica
+                                    ,pr_tpregtrb             IN  crapjur.tpregtrb%TYPE --> Tipo de Regime Tributario
+                                    ,pr_dtmvtolt             IN  crapdat.dtmvtolt%TYPE --> Data do movimento para busca na tabela de IOF
+                                    ,pr_qtdiaiof             IN  NUMBER DEFAULT 0      --> Qde dias em atraso (cálculo IOF atraso)
+                                    ,pr_vloperacao           IN  NUMBER                --> Valor da operação
+                                    ,pr_vltotalope           IN  NUMBER                --> Valor Total da Operacao
+                                    ,pr_vltaxa_iof_atraso    IN  VARCHAR2              --> Valor da Taxa do IOF em Atraso
+                                    ,pr_vliofpri             OUT NUMBER                --> Retorno do valor do IOF principal
+                                    ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
+                                    ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
+                                    ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
+                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
+  BEGIN
+    /* ..........................................................................
+		   Programa : pc_calcula_valor_iof
+			 Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+ 	     Autor   : Diogo - MoutS
+			 Data    : Outubro/2017                    Ultima atualizacao: 
+			 Dados referentes ao programa:
+			 Frequencia: Sempre que for solicitado
+			 Objetivo  :  Calcular o valor do IOF                   
+			
+       Alteracoes:  
+				 .............................................................................*/
+    DECLARE
+      vr_vltaxa_iof_principal tbgen_iof_taxa.vltaxa_iof%TYPE;
+      vr_dscritic             VARCHAR2(3000);
+      
+    BEGIN
+      -- Procedure para calcular o valor do IOF
+      pc_calcula_valor_iof(pr_tpproduto            => pr_tpproduto
+                          ,pr_tpoperacao           => pr_tpoperacao
+                          ,pr_cdcooper             => pr_cdcooper
+                          ,pr_nrdconta             => pr_nrdconta
+                          ,pr_inpessoa             => pr_inpessoa
+                          ,pr_natjurid             => pr_natjurid
+                          ,pr_tpregtrb             => pr_tpregtrb
+                          ,pr_dtmvtolt             => pr_dtmvtolt
+                          ,pr_qtdiaiof             => pr_qtdiaiof
+                          ,pr_vloperacao           => pr_vloperacao
+                          ,pr_vltotalope           => pr_vltotalope
+                          ,pr_vltaxa_iof_atraso    => TO_NUMBER(pr_vltaxa_iof_atraso)
+                          ,pr_vliofpri             => pr_vliofpri
+                          ,pr_vliofadi             => pr_vliofadi
+                          ,pr_vliofcpl             => pr_vliofcpl
+                          ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                          ,pr_dscritic             => pr_dscritic);
+                          
+      pr_vltaxa_iof_principal := TO_CHAR(vr_vltaxa_iof_principal);
+    EXCEPTION
+      WHEN OTHERS THEN
+        --Variavel de erro recebe erro ocorrido
+      pr_dscritic := 'Erro ao calcular IOF. Rotina TIOF0001.pc_calcula_valor_iof_prg. '||sqlerrm;
+    END;
+  END pc_calcula_valor_iof_prg;  
   
   PROCEDURE pc_calcula_valor_iof_inclusao(pr_tpproduto            IN  PLS_INTEGER           --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                          ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
