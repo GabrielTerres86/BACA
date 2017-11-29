@@ -6,6 +6,7 @@
  * OBJETIVO     : Forumlário de dados de Formulario emissao
  *
  * ALTERACOES   : 24/09/2015 - Reformulacao cadastral (Gabriel).
+ *				  29/11/2017 - Correcao no carregamento do campo cod.banco. SD 803263 Carlos Rafael Tanholi.
  */	
 ?>
 <form name="formEmissaoSistFinanc" id="formEmissaoSistFinanc" class="formulario">

@@ -4,6 +4,8 @@
  * CRIAÇÃO      : Gabriel C. Santos (DB1)
  * DATA CRIAÇÃO : 04/03/2010 
  * OBJETIVO     : Forumlário de dados de Cônjuge
+ * --------------
+ * ALTERAÇÕES   : 29/11/2017  - Correcao no carregamento do campo cod.banco. SD 803263 Carlos Rafael Tanholi.
  */
 ?>
 
