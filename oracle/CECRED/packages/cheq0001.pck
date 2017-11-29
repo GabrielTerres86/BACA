@@ -24,7 +24,6 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 	--               04/07/2016 - Adicionados busca_taloes_car para geração de relatório
   --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
 	--
-	--				 21/07/2017 - Alterações referente ao cancelamento manual do projeto 364. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -155,8 +154,6 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                              ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
                              ,pr_nrdconta  IN     NUMBER           --> Número da conta
                              ,pr_nrcheque  IN     NUMBER           --> Número de cheque
-														 ,pr_execimpe  IN     NUMBER           --> Se for chamado pela rotina de impedimentos
-														 ,pr_tppeschq  IN     NUMBER           --> Tipo de pesquisa da tela cheque vinda da rotina de impedimentos
                              ,pr_nrregist  IN     NUMBER           --> Número de registro
                              ,pr_nriniseq  IN     NUMBER           --> Inicial da sequencia
                              ,pr_xmllog    IN     VARCHAR2         --> XML com informações de LOG
@@ -236,7 +233,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            fonte progress (Lucas Ranghetti #422753)
 													 
       			  04/07/2016 - Adicionados busca_taloes_car para geração de relatório
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
+                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
                             
               13/10/2016 - #497744 Modificada a consulta de cheque sinistrado na rotina 
                            pc_ver_fraude_chq_extern pois a parte do cmc7 que pertence a
@@ -244,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
-
+                           
               11/10/2017 - Na procedure pc_busca_cheque mudar ordenacao do select pra trazer os 
                            ultimos cheques emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
 
@@ -1645,7 +1642,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         -- Validar indicador do cheque
         IF pr_incheque = 1 OR pr_incheque = 2 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Contra-Ordem';
-        ELSIF pr_incheque = 8 THEN 
+        ELSIF pr_incheque = 8 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Cancelado';
         ELSE
           pr_tab_cheques(vr_index)('dsobserv') := ' ';
@@ -2374,15 +2371,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-
-                        
+    
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
                            ,pr_nrdconta  IN     NUMBER           --> Número da conta
                            ,pr_nrcheque  IN     NUMBER           --> Número de cheque
-													 ,pr_execimpe  IN     NUMBER           --> Se for chamado pela rotina de impedimentos
-													 ,pr_tppeschq  IN     NUMBER           --> Tipo de pesquisa da tela cheque vinda da rotina de impedimentos
                            ,pr_nrregist  IN     NUMBER           --> Número de registro
                            ,pr_nriniseq  IN     NUMBER           --> Inicial da sequencia
                            ,pr_xmllog    IN     VARCHAR2         --> XML com informações de LOG
@@ -2517,17 +2511,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                'from crapfdc ' ||
                'where cdcooper = ' || pr_cdcooper || ' ' ||
                'and nrdconta = ' || pr_nrdconta || ' ';
-
-    IF pr_execimpe = 1 THEN
-			CASE pr_tppeschq
-				WHEN 2 THEN 
-					vr_sql := vr_sql || 'and incheque = 0 '; -- Devolvido(Verificar)
-				WHEN 3 THEN
-					vr_sql := vr_sql || 'and incheque = 8 ';
-				ELSE
-					NULL;
-			END CASE;
-		END IF;
 
     -- Valida fluxo do processamento
     CASE pr_nrtipoop
@@ -3020,7 +3003,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            /* nr da conta cadastrada LIKE qlqr str terminando no Conta completa do cmc7  */
            AND regexp_like(pr_nrctachq, '.*'||tbchq.nrcontachq||'$');
            
-         rw_tbchq cr_tbchq%ROWTYPE;
+         rw_tbchq cr_tbchq%ROWTYPE;     
        
       vr_cdcritic  NUMBER:= 0;
       vr_dscritic VARCHAR2(100);
