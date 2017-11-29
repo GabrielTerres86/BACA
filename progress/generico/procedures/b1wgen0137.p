@@ -3432,7 +3432,6 @@ PROCEDURE efetua_batimento_ged_termos:
         ELSE DO:
             FIND FIRST tt-documentos-termo
                  WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
-                   AND tt-documentos-termo.cdagenci = crapass.cdagenci
                    AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
                    AND tt-documentos-termo.dstpterm = "SIMPLESNACIONAL"
                NO-LOCK NO-ERROR.
@@ -3505,7 +3504,6 @@ PROCEDURE efetua_batimento_ged_termos:
         ELSE DO:
             FIND FIRST tt-documentos-termo
                  WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
-                   AND tt-documentos-termo.cdagenci = crapass.cdagenci
                    AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
                    AND tt-documentos-termo.dstpterm = "PJCOOPERATIVA"
                NO-LOCK NO-ERROR.
