@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 24/11/2017
+   Data    : 20/11/2006                        Ultima atualizacao: 17/08/2017
 
    Dados referentes ao programa:
 
@@ -188,11 +188,11 @@
                07/03/2016 - #407136 - Incluido novo filtro ao verificar se o operador
                             pertence a forca tarefa da VIACREDI. Estava considerando de forma
                             parcial (Ex: Operador 294 e 2941). (Heitor - RKAM)
-
+                            
                30/05/2016 - Adicionado campo de codigo identificador no layout do BB
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
-                            gerar_compel_altoVale (Douglas - Chamado 445731) 
+                            gerar_compel_altoVale (Douglas - Chamado 445731)
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
@@ -206,17 +206,12 @@
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
                
                31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
-               	 
+               
                17/08/2017 - #738442 Retiradas as mensagens informativas 
                             "Verificando registros para geracao de arquivo(s)" (Carlos)
 
 			   27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
 			                variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
-
-               24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
-                            se o cheque esta em bordero de desconto efetivado
-                            antes de prosseguir com a custodia
-                            Rotina gerar_digita (Tiago/Adriano #766582)               
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -1526,7 +1521,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"              
+              aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -1574,7 +1569,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"              
+              aux_tpdocmto           FORMAT "x(3)"
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -2547,34 +2542,14 @@ PROCEDURE gerar_digita:
                FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper  AND
                                       crapcst.dtlibera > aux_dtliber1  AND
                                       crapcst.dtlibera <= aux_dtliber2 AND
-                                      crapcst.insitprv = 0             AND                                      
+                                      crapcst.insitprv = 0             AND
+                                      crapcst.nrborder = 0             AND                                      
                                     ((par_cdagenci <> 0                AND
                                       crapcst.cdagenci = par_cdagenci) OR
                                       par_cdagenci = 0)                AND
                                      (crapcst.insitchq = 0             OR
                                       crapcst.insitchq = 2)
                                       NO-LOCK BREAK BY crapcst.cdcooper:
-    
-                    IF crapcst.nrborder <> 0 THEN
-                       DO:
-                          /*Se estiver em um bordero de descto efetivado nao 
-                            considerar para a custodia*/
-                          FIND crapcdb
-                            WHERE crapcdb.cdcooper = crapcst.cdcooper
-                              AND crapcdb.nrdconta = crapcst.nrdconta
-                              AND crapcdb.dtlibera = crapcst.dtlibera
-                              AND crapcdb.dtlibbdc <> ?
-                              AND crapcdb.cdcmpchq = crapcst.cdcmpchq
-                              AND crapcdb.cdbanchq = crapcst.cdbanchq
-                              AND crapcdb.cdagechq = crapcst.cdagechq
-                              AND crapcdb.nrctachq = crapcst.nrctachq
-                              AND crapcdb.nrcheque = crapcst.nrcheque
-                              AND crapcdb.dtdevolu = ?  
-                              AND crapcdb.nrborder = crapcst.nrborder NO-LOCK NO-ERROR.
-                              
-                          IF AVAILABLE(crapcdb) THEN
-                             NEXT.
-                       END.    
     
                     IF   FIRST-OF(crapcst.cdcooper)  THEN
                          DO:

@@ -3,7 +3,7 @@
 	/*****************************************************************************************************
 	  Fonte: solicita_consulta_beneficiario.php                                               
 	  Autor: Adriano                                                  
-	  Data : Maio/2013                       						Última Alteração: 26/06/2017
+	  Data : Maio/2013                       						Última Alteração: 10/03/2015
 	                                                                   
 	  Objetivo  : Solicita consulta para o beneficiario em questão.
 	                                                                 
@@ -11,8 +11,6 @@
 						      (Adriano - Softdesk 261226).	
                 01/12/2015 - Adicionado aviso caso comprovacao de vida esteja vencido
                              Projeto 255 INSS (Lombardi).
-	                                                                  
-				26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
 	                                                                  
 	*****************************************************************************************************/
 
@@ -42,7 +40,6 @@
 	
 	$nrcpfcgc = (isset($_POST["nrcpfcgc"])) ? $_POST["nrcpfcgc"] : 0;
 	$nrrecben = (isset($_POST["nrrecben"])) ? $_POST["nrrecben"] : 0;
-	$executandoProdutos = $_POST['executandoProdutos'];
 			
 	validaDados();
 	

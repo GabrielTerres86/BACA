@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : gera_relatorio.php                    Última alteração: 27/11/2017
+ * FONTE        : gera_relatorio.php                    Última alteração: 
  * CRIAÇÃO      : Tiago 
  * DATA CRIAÇÃO : Setembro/2017
  * OBJETIVO     : Rotina para gerar relatorio
  * --------------
- * ALTERAÇÕES   :  27/11/2017- Ajustar a validação de acesso a tela para opção "R" - RELATORIO (Douglas - Melhoria 271.3)
+ * ALTERAÇÕES   :  
  */
 ?>
 <?php
@@ -24,7 +24,7 @@ session_start();
 	require_once("../../class/xmlfile.php");
 	
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], "R")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"], $glbvars["nmrotina"], "I")) <> "") {
 		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}

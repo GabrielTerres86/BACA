@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 04/11/2017
+   Data : Fevereiro/2007                  Última Alteração: 14/10/2015
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -19,8 +19,6 @@
 							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
 							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
 							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
-                             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
-                                          (Jonata - RKAM P364).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -29,19 +27,6 @@ var dtfimper = "";
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
-	
-	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
-	if(sitaucaoDaContaCrm == '2' || 
-	   sitaucaoDaContaCrm == '3' || 
-	   sitaucaoDaContaCrm == '4' || 
-	   sitaucaoDaContaCrm == '5' || 
-	   sitaucaoDaContaCrm == '7' || 
-	   sitaucaoDaContaCrm == '8' || 
-	   sitaucaoDaContaCrm == '9'){ 
-	   opcao ="1";
-	   id="1";
-	}
-	
 	if (opcao == "0") {	// Opção Principal
 		var msg = "dep&oacute;sitos &agrave; vista";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/principal.php";
@@ -704,34 +689,6 @@ function controlaLayout( nomeForm ){
         cDtrefere.habilitaCampo();
 
     } else if ( nomeForm == 'frmExtCash' ) {
-
-		// campos
-		cDtrefere = $('#dtrefere', '#'+nomeForm);
-		cVlsddisp = $('#vlsddisp', '#'+nomeForm);
-		cVlsdbloq = $('#vlsdbloq', '#'+nomeForm);
-		cVlsdblpr = $('#vlsdblpr', '#'+nomeForm);
-		cVlsdblfp = $('#vlsdblfp', '#'+nomeForm);
-		cVlsdchsl = $('#vlsdchsl', '#'+nomeForm);
-		cVlsdindi = $('#vlsdindi', '#'+nomeForm);
-		cVlstotal = $('#vlstotal', '#'+nomeForm);
-		cVllimcre = $('#vllimcre', '#'+nomeForm);
-		cVlblqjud = $('#vlblqjud', '#'+nomeForm);
-		
-		cDtrefere.css({'width':'75px'});
-		cVlsddisp.css({'width':'75px','text-align':'right'});
-		cVlsdbloq.css({'width':'75px','text-align':'right'});
-		cVlsdblpr.css({'width':'75px','text-align':'right'});
-		cVlsdblfp.css({'width':'75px','text-align':'right'});
-		cVlsdchsl.css({'width':'75px','text-align':'right'});
-		cVlsdindi.css({'width':'75px','text-align':'right'});
-		cVlstotal.css({'width':'75px','text-align':'right'});
-		cVllimcre.css({'width':'75px','text-align':'right'});
-		cVlblqjud.css({'width':'75px','text-align':'right'});
-		
-		$('input, select', '#'+nomeForm).desabilitaCampo();
-		cDtrefere.habilitaCampo();
-
-	} else if ( nomeForm == 'frmExtCash' ) {
 
 		var altura = '210px';
 

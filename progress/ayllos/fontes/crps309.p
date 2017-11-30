@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson 
-   Data    : Maio/2001.                         Ultima atualizacao: 24/11/2017
+   Data    : Maio/2001.                         Ultima atualizacao: 23/01/2017
 
    Dados referentes ao programa:
 
@@ -56,9 +56,6 @@
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
                             igual a zero. (Projeto 300 - Rafael)
                             
-               24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
-                            se o cheque esta em bordero de desconto efetivado
-                            antes de prosseguir com a custodia(Tiago/Adriano #766582)                            
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -146,31 +143,11 @@ FOR EACH crapcst WHERE crapcst.cdcooper  = glb_cdcooper     AND
                        crapcst.dtlibera  > glb_dtmvtolt     AND
                        crapcst.dtlibera <= glb_dtmvtopr     AND
                        crapcst.insitchq  = 2                AND
-                       crapcst.dtdevolu  = ?                AND                       
+                       crapcst.dtdevolu  = ?                AND
+                       crapcst.nrborder  = 0                AND 
                        RECID(crapcst)    > glb_nrctares
                        USE-INDEX crapcst3 TRANSACTION
                        BY RECID(crapcst):
-
-    IF crapcst.nrborder <> 0 THEN
-       DO:
-          /*Se estiver em um bordero de descto efetivado nao 
-            considerar para a custodia*/
-          FIND crapcdb
-            WHERE crapcdb.cdcooper = crapcst.cdcooper
-              AND crapcdb.nrdconta = crapcst.nrdconta
-              AND crapcdb.dtlibera = crapcst.dtlibera
-              AND crapcdb.dtlibbdc <> ?
-              AND crapcdb.cdcmpchq = crapcst.cdcmpchq
-              AND crapcdb.cdbanchq = crapcst.cdbanchq
-              AND crapcdb.cdagechq = crapcst.cdagechq
-              AND crapcdb.nrctachq = crapcst.nrctachq
-              AND crapcdb.nrcheque = crapcst.nrcheque
-              AND crapcdb.dtdevolu = ?  
-              AND crapcdb.nrborder = crapcst.nrborder NO-LOCK NO-ERROR.
-              
-          IF AVAILABLE(crapcdb) THEN
-             NEXT.
-       END.    
 
     IF   tab_vlchqmai <= crapcst.vlcheque THEN
          aux_tpdmovto = 1.

@@ -1081,7 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 21/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 16/05/2017
 
    Dados referentes ao programa:
 
@@ -1284,12 +1284,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              
                 16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
                              mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
-
-			    14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
-
-			    19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
-
-				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5255,24 +5249,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            -- Apenas fechar o cursor
            CLOSE cr_crapsli;
         END IF;
-
-        -- Demetrius - Melhoria 460
---        BEGIN
---          UPDATE crapsli ci
---          SET ci.vlsddisp = greatest(0,ci.vlsddisp - pr_vllanmto)
---          WHERE ci.cdcooper = pr_cdcooper
---            AND ci.nrdconta = pr_nrdconta
---           AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
---            AND TO_CHAR(ci.dtrefere,'RRRR') = TO_CHAR(last_day(pr_dtmvtolt),'RRRR');
---        EXCEPTION
---          WHEN others THEN
---             -- Monta critica
---             vr_cdcritic := NULL;
---             vr_dscritic := 'Erro ao atualizar CRAPSLI: ' || SQLERRM;
---               
---             -- Gera exceção
---             RAISE vr_exc_erro;
---        END;
         
         BEGIN
           UPDATE craplot
@@ -9374,19 +9350,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   --
   -- Programa: pc_obtem_saldo_cotas - Antiga b1wgen0021.p/obtem-saldo-cotas
   -- Autor   : ---
-  -- Data    : ---                        Ultima atualizacao: 21/11/2017
+  -- Data    : ---                        Ultima atualizacao: 25/06/2014
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Retornar o saldo das Cotas do Associado.
   --
   -- Alteracoes: 24/06/2014 - Conversao Progress -> Oracle (Alisson - AMcom).      
-  --
-  --             14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).			
   --       
-  --             19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
-  --
-  --             21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
   -- .......................................................................................
                                      
     -- Selecionar Valor das Cotas
@@ -9398,27 +9369,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       AND   crapcot.nrdconta = pr_nrdconta;
     rw_crapcot cr_crapcot%ROWTYPE;
                                                    
-    CURSOR cr_craplct (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_nrdconta IN crapcot.nrdconta%TYPE) IS
-      SELECT lct.vllanmto
-      FROM craplct lct
-      WHERE lct.cdcooper = pr_cdcooper
-      AND   lct.nrdconta = pr_nrdconta
-      AND   lct.cdhistor IN (2079,2080,2136)
-	    AND   lct.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')
-      AND NOT EXISTS (SELECT 1 FROM craplcm lcm
-                              WHERE lcm.cdcooper = lct.cdcooper
-                                AND lcm.nrdconta = lct.nrdconta
-                                AND lcm.cdhistor IN (2081,2082,2063,2064,2137)
-								AND lcm.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')) --- fixo por causa de performance
-     UNION
-     SELECT D.VLCAPITAL - D.VLPAGO
-       FROM TBCOTAS_DEVOLUCAO D
-      WHERE D.CDCOOPER = pr_cdcooper
-        AND D.NRDCONTA = pr_nrdconta
-        AND d.tpdevolucao=3 ;
-    rw_craplct cr_craplct%ROWTYPE;
-                    
     --Variaveis Locais
     vr_vlblqjud NUMBER:= 0;
     vr_vlresblq NUMBER:= 0;
@@ -9455,7 +9405,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     --Fechar Cursor
     CLOSE cr_crapcot;   
 
-    
     /*** Busca Saldo Bloqueado Judicial ***/
     GENE0005.pc_retorna_valor_blqjud (pr_cdcooper => pr_cdcooper     --> Cooperativa
                                      ,pr_nrdconta => pr_nrdconta     --> Conta
@@ -9473,28 +9422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     END IF;
       
     /*** Fim Busca Saldo Bloqueado Judicial ***/
+    pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_crapcot.vldcotas;
     pr_tab_saldo_cotas(pr_nrdconta).vlblqjud:= vr_vlblqjud;
-    
-    --Selecionar Devolução de cotas
-    OPEN cr_craplct (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta);
-                    
-    FETCH cr_craplct INTO rw_craplct;                
-    
-    --Se já houve devolução de cotas então deve apresentar o valor devolvido na tela ATENDA
-    IF cr_craplct%FOUND THEN
-        
-      pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_craplct.vllanmto;
-        
-    ELSE
-    
-      pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_crapcot.vldcotas; 
-      
-    END IF;
-    
-    --Fechar Cursor
-    CLOSE cr_craplct; 
-    
     
   EXCEPTION
     WHEN vr_exc_erro THEN

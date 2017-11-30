@@ -550,7 +550,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   SELECT ass.nrdconta,
          ass.nrcpfcgc,
          ass.inpessoa,
-         decode(ass.inpessoa,1,1,2) inpessoa_vld,
          ass.cdcooper
     FROM crapass ass
    WHERE ass.cdcooper = pr_cdcooper
@@ -763,49 +762,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     WHEN OTHERS THEN
       RETURN FALSE;
   END fn_numericos;
-
-
-  /* Função para remover caracteres especiais */
-  FUNCTION fn_remove_chr_especial(pr_texto VARCHAR2    -- Texto Original
-                                  ) RETURN VARCHAR2 IS -- Texto sem caracteres especiais
-  /* ............................................................................
-
-    Programa: fn_remove_chr_especial
-    Autor   : Douglas Quisinski
-    Data    : Novembro/2017               Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Objetivo  : Remover os caracteres especiais na importação do arquivo de cobrança
-
-    Parametros : 
-    
-    Alteracoes: 
-  ............................................................................ */   
-    vr_texto VARCHAR2(30000);
-  BEGIN
-    -- Tetxo Original
-    vr_texto:= pr_texto;
-    
-    -- Remover o "&" pois gera erro no XML caso seja inserido no Banco de Dados
-    vr_texto:= REPLACE(vr_texto,'&','E');
-
-    -- Remover o chr(160) "Espaço em branco que não quebra (Non-breaking space)"
-    -- ele não é visivel no arquivo pois é identico a um espaço em branco,
-    -- porém é outro caracter
-    -- O espaço em branco é o chr(32)
-    vr_texto:= REPLACE(vr_texto,chr(160),'');
-    
-    -- Remover os espaços em branco
-    vr_texto:= TRIM(vr_texto);
-    
-    RETURN vr_texto;
-    
-  EXCEPTION
-    WHEN OTHERS THEN
-      RETURN vr_texto;
-  END fn_remove_chr_especial;
-
 
   /* Rotina para monitoração do processo de importação dos arquivos de cobrança para integraão ao Aymaru */
   PROCEDURE pc_monitora_processo(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -2006,12 +1962,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    29/12/2016 - P340 - Adição da chamada ao CRPS618 para envio de boletos a CIP 
   						               	  (Ricardo Linhares).                                
                                 
-         				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
-				                				(Andrei - Mouts). 
+				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
+								(Andrei - Mouts). 
 
                   14/07/2017 - Retirado verificação de pagador DDA e ROLLOUT. Essa verificação é
                                feita no pc_crps618. (Rafael)
-                               
+
                   21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
     ............................................................................ */   
@@ -4544,9 +4500,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
        
                    29/12/2016 - P340 - Ajustes para pagamentos divergentes (Ricardo Linhares)
-
-                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
-
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4678,7 +4631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
@@ -4822,9 +4775,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquicvo Header do lote
 
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
-
-                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
-
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4916,7 +4866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Lote Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Lote incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
@@ -5584,7 +5534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 08/11/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 26/10/2017
 
        Dados referentes ao programa:
 
@@ -5613,8 +5563,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    26/10/2017 - Validar CPF e CNPJ de acordo com o tipo de inscricao (Rafael)
 
-                   08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
-                                remove o caractere invalido chr(160) (Douglas - Chamado 778480)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5674,11 +5622,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- Dados do sacado
-    pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDSACAD').texto);
-    pr_rec_cobranca.dsendsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('DSENDSAC').texto);
-    pr_rec_cobranca.nmbaisac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMBAISAC').texto);
-    pr_rec_cobranca.nmcidsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMCIDSAC').texto);   
-    pr_rec_cobranca.cdufsaca := fn_remove_chr_especial(pr_texto => pr_tab_linhas('CDUFSACA').texto);
+    pr_rec_cobranca.nmdsacad := REPLACE(pr_tab_linhas('NMDSACAD').texto,'&','E');
+    pr_rec_cobranca.dsendsac := pr_tab_linhas('DSENDSAC').texto;
+    pr_rec_cobranca.nmbaisac := pr_tab_linhas('NMBAISAC').texto;
+    pr_rec_cobranca.nmcidsac := pr_tab_linhas('NMCIDSAC').texto;   
+    pr_rec_cobranca.cdufsaca := pr_tab_linhas('CDUFSACA').texto;
     pr_rec_cobranca.nrcepsac := pr_tab_linhas('NRCEPSAC').numero;
     
     IF pr_rec_cobranca.flserasa = 1 THEN
@@ -5739,7 +5687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo := '46';
       RAISE vr_exc_reje;
     END IF;
-
+    
     -- se pagador dor PF, entao validar CPF
     IF pr_rec_cobranca.cdtpinsc = 1 THEN
       gene0005.pc_valida_cpf(pr_nrcalcul => pr_rec_cobranca.nrinssac,
@@ -7032,9 +6980,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
-
-                   08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
-                                remove o caractere invalido chr(160) (Douglas - Chamado 778480)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -7115,11 +7060,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- Dados do sacado
-    pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDSACAD').texto);
-    pr_rec_cobranca.dsendsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('DSENDSAC').texto);
-    pr_rec_cobranca.nmbaisac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMBAISAC').texto);
-    pr_rec_cobranca.nmcidsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMCIDSAC').texto);
-    pr_rec_cobranca.cdufsaca := fn_remove_chr_especial(pr_texto => pr_tab_linhas('CDUFSACA').texto);
+    pr_rec_cobranca.nmdsacad := REPLACE(pr_tab_linhas('NMDSACAD').texto,'&','E');
+    pr_rec_cobranca.dsendsac := pr_tab_linhas('DSENDSAC').texto;
+    pr_rec_cobranca.nmbaisac := pr_tab_linhas('NMBAISAC').texto;
+    pr_rec_cobranca.nmcidsac := pr_tab_linhas('NMCIDSAC').texto;   
+    pr_rec_cobranca.cdufsaca := pr_tab_linhas('CDUFSACA').texto;       
     
     --Busca conveio
     OPEN cr_crapceb(pr_cdcooper => pr_cdcooper
@@ -7184,13 +7129,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_rec_cobranca.cdtpinsc := nvl(pr_tab_linhas('INPESSOA').numero,0);
     pr_rec_cobranca.nrinssac := pr_tab_linhas('NRCPFCGC').numero;
-    pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDSACAD').texto);
-    pr_rec_cobranca.dsendsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('DSENDSAC').texto);
-    pr_rec_cobranca.nmbaisac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMBAISAC').texto);
+    pr_rec_cobranca.nmdsacad := REPLACE(pr_tab_linhas('NMDSACAD').texto,'&','E');
+    pr_rec_cobranca.dsendsac := pr_tab_linhas('DSENDSAC').texto;
+    pr_rec_cobranca.nmbaisac := pr_tab_linhas('NMBAISAC').texto;
     pr_rec_cobranca.nrcepsac := pr_tab_linhas('NRCEPSAC').numero;
-    pr_rec_cobranca.nmcidsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMCIDSAC').texto);
-    pr_rec_cobranca.cdufsaca := fn_remove_chr_especial(pr_texto => pr_tab_linhas('CDUFSACA').texto);
-    pr_rec_cobranca.nmdavali := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDAVALI').texto);
+    pr_rec_cobranca.nmcidsac := pr_tab_linhas('NMCIDSAC').texto;
+    pr_rec_cobranca.cdufsaca := pr_tab_linhas('CDUFSACA').texto;
+    pr_rec_cobranca.nmdavali := pr_tab_linhas('NMDAVALI').texto;
     pr_rec_cobranca.nrinsava := pr_tab_linhas('NRINSAVA').numero;
     pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
     
@@ -7984,7 +7929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 08/11/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 26/10/2017
 
        Dados referentes ao programa:
 
@@ -8012,9 +7957,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                (Douglas - Chamado 601436)
                                
                    26/10/2017 - Validar CPF e CNPJ de acordo com o tipo de inscricao (Rafael)                               
-
-                   08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
-                                remove o caractere invalido chr(160) (Douglas - Chamado 778480)
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8606,11 +8548,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
     
     -- Dados do sacado
-    pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMSACADO').texto);
-    pr_rec_cobranca.dsendsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('ENDSACAD').texto);
-    pr_rec_cobranca.nmbaisac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('BAIRRSAC').texto);
-    pr_rec_cobranca.nmcidsac := fn_remove_chr_especial(pr_texto => pr_tab_linhas('CIDSACAD').texto);   
-    pr_rec_cobranca.cdufsaca := fn_remove_chr_especial(pr_texto => pr_tab_linhas('UFSACADO').texto);
+    pr_rec_cobranca.nmdsacad := REPLACE(pr_tab_linhas('NMSACADO').texto,'&','E');
+    pr_rec_cobranca.dsendsac := pr_tab_linhas('ENDSACAD').texto;
+    pr_rec_cobranca.nmbaisac := pr_tab_linhas('BAIRRSAC').texto;
+    pr_rec_cobranca.nmcidsac := pr_tab_linhas('CIDSACAD').texto;   
+    pr_rec_cobranca.cdufsaca := pr_tab_linhas('UFSACADO').texto;
     pr_rec_cobranca.nrcepsac := pr_tab_linhas('CEPSACAD').numero;
     pr_rec_cobranca.cdtpinsc := pr_tab_linhas('TPINSSAC').numero;
       
@@ -8647,12 +8589,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              pr_stsnrcal => vr_stsnrcal);                             
       -- Verifica se o CPF esta correto
       IF NOT vr_stsnrcal THEN
-      -- Tipo/Numero de Inscricao do Sacado Invalidos
-      vr_rej_cdmotivo := '46';
-      RAISE vr_exc_reje;
+        -- Tipo/Numero de Inscricao do Sacado Invalidos
+        vr_rej_cdmotivo := '46';
+        RAISE vr_exc_reje;
       END IF;                             
     END IF;
-      
+    
     -- se pagador dor PJ, entao validar CNPJ
     IF pr_rec_cobranca.cdtpinsc = 2 THEN
       gene0005.pc_valida_cnpj(pr_nrcalcul => pr_rec_cobranca.nrinssac,
@@ -8663,9 +8605,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := '46';
         RAISE vr_exc_reje;
       END IF;                             
-    END IF;
+    END IF;        
     
-
+  
     -- 40.7 Nome do Sacado
     IF TRIM(pr_rec_cobranca.nmdsacad) IS NULL THEN
       
@@ -9971,7 +9913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                             
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_1');
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -10003,7 +9945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_2');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -10034,7 +9976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_3');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -10059,7 +10001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_4');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
   END pc_intarq_remes_cnab240_001;
   
@@ -10970,7 +10912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                         
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_5');
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -11002,7 +10944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_6');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -11033,7 +10975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_7');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -11058,7 +11000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_8');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
   END pc_intarq_remes_cnab240_085;
   
   --> Integrar/processar arquivo de remessa CNAB400
@@ -11880,7 +11822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF; 
                         
     COMMIT;
-    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_9');
+    npcb0002.pc_libera_sessao_sqlserver_npc;
     
     pr_des_reto := 'OK';
     
@@ -11912,7 +11854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_10');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN vr_exc_erro THEN
       
@@ -11943,7 +11885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_11');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
     WHEN OTHERS THEN
     
@@ -11969,7 +11911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_12');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
       
   END pc_intarq_remes_cnab400_085;
   
@@ -13282,7 +13224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto := 'NOK';
 
     end;
-
+       
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';
@@ -14763,7 +14705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto := 'NOK';
 
     end;
-
+       
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';

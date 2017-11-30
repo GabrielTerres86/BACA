@@ -71,11 +71,7 @@
                              PRJ339 - CRM (Odirlei-AMcom)                              
                 11/10/2017 - Ajuste referente ao projeto 339. (Kelvin)
                 03/10/2017 - Correcao para carregar campo DSNACION.
-                             (Jaison/Andrino - PRJ339)	 
-
-                09/10/2017 - Projeto 410 - RF 52/62 - Adicionado indicador de 
-                             impressão da declaração do simples nacional na 
-                             crapjur (Diogo - Mouts).
+                             (Jaison/Andrino - PRJ339)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -409,63 +405,7 @@ PROCEDURE Busca_Impressao:
                        INPUT-OUTPUT aux_dscritic).
 
     IF  NOT TEMP-TABLE tt-erro:HAS-RECORDS  THEN
-	  DO:
-        /* Marca o registro da declaração do simples nacional como "impresso" */
-        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND
-                              crapjur.nrdconta = par_nrdconta AND 
-                              crapjur.idimpdsn <> 2 AND 
-                              (crapjur.tpregtrb = 1)
-                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-        IF AVAILABLE crapjur AND crapjur.idimpdsn <> 2 THEN
-          DO:
-              ASSIGN crapjur.idimpdsn = 2.
-              VALIDATE crapjur.
-              /* Grava a informação que o documento deve ser digitalizado no DIGIDOC */
-                ContadorDoc55: DO aux_contador = 1 TO 10:
-                  FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                     crapdoc.nrdconta = par_nrdconta AND
-                                     crapdoc.tpdocmto = 55            AND
-                                     crapdoc.dtmvtolt = par_dtmvtolt AND
-                                     crapdoc.idseqttl = 1
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                  IF NOT AVAILABLE crapdoc THEN
-                      DO:
-                          IF LOCKED(crapdoc) THEN
-                              DO:
-                                  IF aux_contador = 10 THEN
-                                      DO:
-                                          ASSIGN aux_cdcritic = 341.
-                                          LEAVE ContadorDoc55.
-                                      END.
-                                  ELSE 
-                                      DO: 
-                                          PAUSE 1 NO-MESSAGE.
-                                          NEXT ContadorDoc55.
-                                      END.
-                              END.
-                          ELSE
-                              DO:
-                                  CREATE crapdoc.
-                                  ASSIGN crapdoc.cdcooper = par_cdcooper
-                                         crapdoc.nrdconta = par_nrdconta
-                                         crapdoc.flgdigit = FALSE
-                                         crapdoc.dtmvtolt = par_dtmvtolt
-                                         crapdoc.tpdocmto = 55
-                                         crapdoc.idseqttl = 1.
-                                  VALIDATE crapdoc.
-                                  LEAVE ContadorDoc55.
-                              END.
-                      END.
-                  ELSE
-                      DO:
-                          ASSIGN crapdoc.flgdigit = FALSE
-                                 crapdoc.dtmvtolt = par_dtmvtolt.
-                          LEAVE ContadorDoc55.
-                      END.
-                END.
-          END.
         ASSIGN aux_retorno = "OK".
-      END.
 
     IF  par_flgerlog THEN
         RUN proc_gerar_log (INPUT par_cdcooper,

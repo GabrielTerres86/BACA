@@ -32,17 +32,9 @@
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
                              nome fantasia para o CDC. (Reinert Prj 289)     	
 
-				09/10/2017 - Projeto 410 - RF 52 / 62 - Diogo (Mouts): alterada 
-                             procedure grava_dados com as regras:
-                             - se o campo tpregtrb (regime de tributaçao) for Nao, 
-                               gravar o campo idimpdsn com zero.
-                             - se o campo tpregtrb for Sim, gravar o campo 
-                               idimpdsn com o valor 1; 
-                               Porém se o idimpdsn já estiver com 2, nao deve ser 
-                               alterado pois indica que a declaraçao já foi impressa.
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		                  		  
-                                    
+                 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 ..................................................................................*/
@@ -144,8 +136,7 @@ PROCEDURE busca_dados:
             tt-dados-jur.dtcadass = bcrapass.dtmvtolt
             tt-dados-jur.cdclcnae = bcrapass.cdclcnae
             tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
-			tt-dados-jur.dtvallic = bcrapjur.dtvallic
-            tt-dados-jur.tpregtrb = bcrapjur.tpregtrb.
+			      tt-dados-jur.dtvallic = bcrapjur.dtvallic.     
 
         /* Situacao do CPF/CNPJ */
         CASE tt-dados-jur.cdsitcpf:
@@ -324,7 +315,7 @@ PROCEDURE valida_dados:
 
             END.
     END.
-    
+
     IF  VALID-HANDLE(h-b1wgen0060) THEN
         DELETE OBJECT h-b1wgen0060.
 
@@ -383,11 +374,10 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_tpregtrb AS INTE                           NO-UNDO.
+
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_chavealt AS CHAR                           NO-UNDO.
-    DEF OUTPUT PARAM log_impdecpjcoop AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
@@ -396,7 +386,6 @@ PROCEDURE grava_dados:
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
-	DEF VAR aux_idimpdsn AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro. 
 
@@ -489,12 +478,6 @@ PROCEDURE grava_dados:
         
        ASSIGN aux_idseqttl = 0.
         
-       /* Se passou para PJ Cooperativa, seta a flag para gerar a impressao automatica */
-       ASSIGN log_impdecpjcoop = "N".
-       IF par_cdnatjur = 2143 AND ((par_cdnatjur <> crapjur.natjurid) OR (crapass.dtinsori = TODAY)) THEN
-        DO:
-          ASSIGN log_impdecpjcoop = "S".
-        END.
        IF  CAPS(par_nmfatasi) <> crapjur.nmfansia OR
            par_cdnatjur <> crapjur.natjurid OR 
            par_cdrmativ <> crapjur.cdrmativ THEN
@@ -561,14 +544,6 @@ PROCEDURE grava_dados:
        BUFFER-COPY crapass TO tt-dados-jur-ant.
        BUFFER-COPY crapjur TO tt-dados-jur-ant.
         
-	   /* Proj 410 - RF 52 / 62 - Se tpregtrb for diferente de 1 (Simples Nacional), grava IDIMPDSN com zero. Caso contrário, grava com 1 se está já não estiver sido impressa (IDIMPDSN = 2) */
-       IF par_tpregtrb <> 1 THEN
-            ASSIGN aux_idimpdsn = 0.
-       ELSE
-            IF crapjur.idimpdsn = 2 THEN
-                ASSIGN aux_idimpdsn = 2.
-            ELSE
-                ASSIGN aux_idimpdsn = 1.
        ASSIGN crapass.qtfoltal = par_qtfoltal
               crapass.dtcnscpf = par_dtcnscpf
               crapass.cdsitcpf = par_cdsitcpf
@@ -583,9 +558,7 @@ PROCEDURE grava_dados:
               crapjur.nmtalttl = CAPS(par_nmtalttl)
               crapjur.cdseteco = par_cdseteco
               crapjur.nrlicamb = par_nrlicamb 
-			  crapjur.dtvallic = par_dtvallic
-              crapjur.tpregtrb = par_tpregtrb	
-			  crapjur.idimpdsn = aux_idimpdsn NO-ERROR.
+			        crapjur.dtvallic = par_dtvallic NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
           DO:

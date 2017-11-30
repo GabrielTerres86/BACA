@@ -831,7 +831,7 @@ BEGIN
     --> Gravar dados a cada cooperativa (batch)
     IF nvl(pr_nrdconta,0) = 0 THEN
       COMMIT;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_1');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     END IF;
     
   END LOOP; -- Fim loop cooperativas    
@@ -862,7 +862,7 @@ EXCEPTION
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_2');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     END IF;
     
   WHEN OTHERS THEN
@@ -883,7 +883,7 @@ EXCEPTION
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_3');
+      npcb0002.pc_libera_sessao_sqlserver_npc;
     END IF;
 END pc_crps618;
 /

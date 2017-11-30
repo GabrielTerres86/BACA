@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 11/06/2017
+    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -59,10 +59,6 @@
 						     conjunta, SD 514239 (Jean Michel).
 			 
                 13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
-
-				11/06/2017 - Ajuste para verificar se o termo de cancelamento foi
-				             digitalizado ou nao
-							 Jonata - RKAM (P364).
 
                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
@@ -584,6 +580,7 @@ PROCEDURE Busca_Impressao :
 
         CASE tt-relat-cab.inpessoa:
             WHEN 1 THEN DO:
+              
                 CREATE tt-relat-fis.
                 ASSIGN
                     tt-relat-fis.cdagenci = crapass.cdagenci

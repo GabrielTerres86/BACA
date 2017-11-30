@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
   
     Dados referentes ao programa:
   
@@ -103,10 +103,6 @@
 
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
-                26/06/2017 - Incluido rotina para buscar contas demitidas a serem listadas
-				             na opcao "G" da tela MATRIC
-							 (Jonata - RKAM P364).
-
                 07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
                              gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
                              problema com validacao da data de nascimento.
@@ -123,11 +119,6 @@
                              para garantir replicaçao dos dados da tbcadast.
                              PRJ339 - CRM (Odirlei-AMcom)
                
-			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
-						     para pesquisa e retornar valor total da pesquisa
-							 (Jonata - RKAM P364). 
-
-			   16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
 
 ............................................................................*/
 
@@ -1050,7 +1041,7 @@ PROCEDURE Valida_Dados:
                            DO:
                               IF VALID-HANDLE(h-b1wgen0072) THEN
                                  DELETE PROCEDURE(h-b1wgen0072).
-                           
+                             
                               ASSIGN aux_geraerro = TRUE.
                            
                               LEAVE Dados.
@@ -1652,7 +1643,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_nrctanov AS INTE                                    NO-UNDO.
     DEF VAR aux_qtparcel AS INTE                                    NO-UNDO.
     DEF VAR aux_vlparcel AS DECI                                    NO-UNDO.
-    DEF VAR aux_msgretor AS CHAR                                    NO-UNDO.   
+    DEF VAR aux_msgretor AS CHAR                                    NO-UNDO.                                    
     DEF VAR aux_nrcpfcgc AS DECIMAL                                 NO-UNDO.
     DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
 
@@ -2359,7 +2350,7 @@ PROCEDURE Grava_Dados:
                                                     ASSIGN crapdoc.flgdigit = FALSE.
                                                     LEAVE ContadorDoc4.
                                                 END.              
-                                        END.
+                                        END.	   
                                         /* Gerar pendencia de conjuge */
                                         ContadorDoc22: DO aux_contador = 1 TO 10:
 
@@ -3194,207 +3185,5 @@ PROCEDURE Grava_Dados:
 
 END PROCEDURE.
 
-
-PROCEDURE busca_contas_demitidas:
-
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_nrdconta LIKE crapass.nrdconta             NO-UNDO.
-	DEF INPUT  PARAM par_nriniseq AS INTE                           NO-UNDO.
-    DEF INPUT  PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM par_qtdregis AS INTE                           NO-UNDO.
-	DEF OUTPUT PARAM par_vlrtotal AS DEC                            NO-UNDO.
-
-	DEF OUTPUT PARAM TABLE FOR tt-contas_demitidas.
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
-	
-    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
-	DEF VAR aux_nrregist AS INT                                     NO-UNDO.
-    DEF VAR aux_vldcotas LIKE crapcot.vldcotas					    NO-UNDO.
-	
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dscritic = ""
-           aux_cdcritic = 0
-           aux_returnvl = "NOK"
-		   aux_nrregist = par_nrregist.
-
-	IF par_nrdconta <> 0  THEN
-	   DO:
-	      FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-				 			 crapass.nrdconta = par_nrdconta
-							 NO-LOCK NO-ERROR.                       
-                       
-	 	  IF  NOT AVAIL crapass THEN
-			  DO: 
-				  ASSIGN aux_cdcritic = 9.
-                      
-				  RUN gera_erro (INPUT par_cdcooper,
-					 			 INPUT par_cdagenci,
-							 	 INPUT par_nrdcaixa,
-						 		 INPUT 1, /*sequencia*/
-					 			 INPUT aux_cdcritic,
-								 INPUT-OUTPUT aux_dscritic).
-
-				  RETURN "NOK".
-			 END.
-			 
-	   END.
-
-    FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
-					 WHERE  crapass.cdcooper = par_cdcooper  AND				           
-					       (par_nrdconta = 0                 OR
-						    crapass.nrdconta = par_nrdconta) AND
-						   (crapass.cdsitdct = 4             OR
-						    crapass.cdsitdct = 7             OR
-						    crapass.cdsitdct = 8            )
-
-						    NO-LOCK:
-		
-		ASSIGN aux_vldcotas = 0.
-		
-		IF crapass.cdsitdct = 8 THEN
-		   DO:
-		      FIND LAST craplct WHERE craplct.cdcooper = crapass.cdcooper AND
-			                          craplct.nrdconta = crapass.nrdconta AND
-									  craplct.cdhistor = (IF crapass.inpessoa = 1 THEN 
-									                         2079
-														  ELSE
-														     2080)
-									  NO-LOCK NO-ERROR.
-									  
-			  IF NOT AVAIL craplct THEN
-			     NEXT.
-				 
-			  ASSIGN aux_vldcotas = craplct.vllanmto.
-		   
-		   END.
-		ELSE
-		    DO:
-			
-				FIND FIRST crapcot WHERE crapcot.cdcooper = crapass.cdcooper AND
-										 crapcot.nrdconta = crapass.nrdconta AND
-										 crapcot.vldcotas > 0
-										 NO-LOCK NO-ERROR.
-										   
-				IF NOT AVAIL crapcot THEN
-				   NEXT.			
-			
-				ASSIGN aux_vldcotas = crapcot.vldcotas.
-				
-			END.
-			
-		ASSIGN par_qtdregis = par_qtdregis + 1
-		       par_vlrtotal = par_vlrtotal + aux_vldcotas.
-
-		/* controles da paginação */
-		IF  (par_qtdregis < par_nriniseq                    OR
-			par_qtdregis > (par_nriniseq + par_nrregist))  THEN
-			NEXT.
-			
-		IF aux_nrregist > 0 THEN
-		   DO:					  			
-				CREATE tt-contas_demitidas.
-		
-				ASSIGN tt-contas_demitidas.cdcooper = crapass.cdcooper
-					   tt-contas_demitidas.nrdconta = crapass.nrdconta
-					   tt-contas_demitidas.inpessoa = crapass.inpessoa
-					   tt-contas_demitidas.nmprimtl = crapass.nmprimtl
-					   tt-contas_demitidas.vldcotas = aux_vldcotas
-					   tt-contas_demitidas.dtdemiss = crapass.dtdemiss
-					   tt-contas_demitidas.mtdemiss = crapass.cdmotdem
-					   tt-contas_demitidas.qtdparce = 1
-					   tt-contas_demitidas.formadev = 1 /*No ato*/													  
-					   tt-contas_demitidas.datadevo = TODAY.
-
-				
-		   END. 
-
-		ASSIGN aux_nrregist = aux_nrregist - 1.     
-
-	END.
-	
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-        DO:
-           ASSIGN aux_returnvl = "NOK".
-
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-        END.
-    ELSE
-        ASSIGN aux_returnvl = "OK".
-    
-    RETURN aux_returnvl.
-
-END PROCEDURE.
-
-PROCEDURE Produtos_Servicos_Ativos:
-	
-	/* entrada e saida */
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_flgerlog AS LOG                            NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
-	DEF OUTPUT PARAM TABLE FOR tt-prod_serv_ativos.
-	
-    DEF VAR h-b1wgen0052v AS HANDLE                                NO-UNDO.
-    DEF VAR aux_cdcritic  AS INT 								   NO-UNDO.
-	DEF VAR aux_dscritic  AS CHAR                                  NO-UNDO.
-    
-    RUN sistema/generico/procedures/b1wgen0052v.p PERSISTENT SET h-b1wgen0052v.
-				
-    RUN Produtos_Servicos_Ativos IN h-b1wgen0052v(   INPUT par_cdcooper,
-												     INPUT par_dtdemiss,
-													 INPUT par_cdagenci,
-													 INPUT par_nrdcaixa,
-													 INPUT par_cdoperad,
-													 INPUT par_nmdatela,
-													 INPUT par_idorigem,
-													 INPUT par_nrdconta,
-													 INPUT par_idseqttl,
-													 INPUT par_flgerlog,
-													 INPUT par_dtmvtolt,
-													OUTPUT aux_cdcritic,
-													OUTPUT aux_dscritic,
-													OUTPUT TABLE tt-prod_serv_ativos).
-													
-    IF  VALID-HANDLE( h-b1wgen0052v)  THEN
-        DELETE OBJECT  h-b1wgen0052v.
-
-    IF  RETURN-VALUE <> "OK"  THEN
-        DO:
-            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Erro ao verificar servicos ativos.".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,           
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).           
-
-            RETURN "NOK".
-        END.
-										
-	 RETURN "OK".
-	 
-END PROCEDURE.										
 /*............................................................................*/
 

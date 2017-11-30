@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 22/11/2017
+	 Data : Julho/2007                   Última Alteração: 18/08/2016  
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -78,7 +78,7 @@
                               (Jaison/Andrino)
 
 					  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
-	
+				 
 				 09/08/2016 - Adicionado format na data das anotações conforme solicitado
 							  no chamado 490482. (Kelvin)
 	
@@ -101,16 +101,8 @@
 				18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
 
                  26/04/2017 - Incluido a tag textarea para mostrar o conteudo da mensagem de alerta (Rafael Monteiro).
-				 				 
-                 23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				              "Desligamento por determinação do BACEN" 
-							  ( Jonata - RKAM P364).	
-
+				 
 				 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
-
-				 14/11/2014 - Ajuste para controlar acesso as rotinas quando cooperado desligado (Jonata - P364)
-
-				 22/11/2017 - Ajuste para permitir apenas consulta, na rotina seguros, de acordo com a situação da conta (Jonata - RKAM p364).
 
  * ********************************************************************************** */
 
@@ -212,13 +204,13 @@ if ($flgerlog) {
 		echo 'flgAcessoRotina = false;';
 		exit();	
 	}
-
+	
 $cabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags : '';
 $compCabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags : '';
 $valores = ( isset($xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags : null;
 $mensagens = ( isset($xmlObjDadosAtenda->roottag->tags[3]->tags) )  ? $xmlObjDadosAtenda->roottag->tags[3]->tags : array();
 $anotacoes = ( isset($xmlObjDadosAtenda->roottag->tags[4]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[4]->tags : array();
-	
+
 	// Carrega variavel para verificar se existe Pagto de Titulos por Arquivo
 $flconven = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'] : null;
 $dscritic = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'] : null;
@@ -298,10 +290,6 @@ if ( isset($cabecalho[24]->cdata) ) {
 if ( isset($cabecalho[25]->cdata) ) {
 	echo '$("#qttitula","#frmCabAtenda").val("' . $cabecalho[25]->cdata . '");';
 }
-	if ( isset($cabecalho[27]->cdata) ) {
-		$cdsitdct = $cabecalho[27]->cdata;
-		echo 'sitaucaoDaContaCrm = "' . $cdsitdct . '";';
-	}
 
 	
 	// Dados complementares da conta/dv	
@@ -403,8 +391,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
 		
-	
-		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
 	for ($i = 0; $i < count($rotinasTela); $i++) {
@@ -415,154 +401,138 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Aplica&ccedil;&otilde;es"; 
                 $urlRotina = "aplicacoes";
                 $strValue = ( isset($valores[2]->cdata) ) ? number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "CAPITAL": {
 				$nomeRotina = "Capital";
                 $urlRotina = "capital";
                 $strValue = ( isset($valores[0]->cdata) ) ? number_format(str_replace(",", ".", $valores[0]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "CARTAO CRED": {
 				$nomeRotina = "Cart&otilde;es de Cr&eacute;dito";  
                 $urlRotina = "cartao_credito";
                 $strValue = ( isset($valores[14]->cdata) ) ? number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "CONTA INV": {
 				$nomeRotina = "Conta Investimento";  
                 $urlRotina = "conta_investimento";
                 $strValue = ( isset($valores[3]->cdata) ) ? number_format(str_replace(",", ".", $valores[3]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "CONVENIOS": {
 				$nomeRotina = "Conv&ecirc;nios";           
                 $urlRotina = "convenios";
                 $strValue = ( isset($valores[8]->cdata) ) ? formataNumericos("zzz.zzz", $valores[8]->cdata, ".") : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "DEP. VISTA": {
 				$nomeRotina = "Dep&oacute;sitos &agrave; Vista";   
                 $urlRotina = "dep_vista";
                 $strValue = ( isset($valores[5]->cdata) ) ? number_format(str_replace(",", ".", $valores[5]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "DESCONTOS": {
 				$nomeRotina = "Descontos"; 
                 $urlRotina = "descontos";
                 $strValue = ( isset($valores[17]->cdata) ) ? number_format(str_replace(",", ".", $valores[17]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "EMPRESTIMOS": {
 				$nomeRotina = "Empr&eacute;stimos";         
                 $urlRotina = "emprestimos";
                 $strValue = number_format(str_replace(",", ".", $vlemprst), 2, ",", ".");
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "FICHA CADASTRAL": {
 				$nomeRotina = "Ficha Cadastral";
                 $urlRotina = "ficha_cadastral";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 1;
                 break;
             }
      case "CARTAO ASSINATURA": {
 				$nomeRotina = "Cart&atilde;o Assinatura"; 
 				$urlRotina  = "cartao_assinaturas";
         $strValue   = "";
-				$telaPermitadaAcessoBacen = 1;
+				break;
+				}
+            case "CARTAO ASSINATURA": {
+				$nomeRotina = "Cart&atilde;o Assinatura"; 
+				$urlRotina  = "cartao_assinaturas";
+				$strValue   = "";	
 				break;
 			}			
 			case "FOLHAS CHEQ": {
 				$nomeRotina = "Folhas de Cheque";    
                 $urlRotina = "folhas_cheque";
                 $strValue = ( isset($valores[7]->cdata) ) ? formataNumericos("zzz.zzz", $valores[7]->cdata, ".") : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "INTERNET": {
 				$nomeRotina = "Internet";            
                 $urlRotina = "internet";
                 $strValue = ( isset($valores[12]->cdata) ) ? $valores[12]->cdata : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "LAUTOM": {
 				$nomeRotina = "Lan&ccedil;amentos Futuros"; 
                 $urlRotina = "lancamentos_futuros";
                 $strValue = ( isset($valores[11]->cdata) ) ? number_format(str_replace(",", ".", $valores[11]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "LIMITE CRED": {
                 $nomeRotina = ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == 1 ) ? "Limite de Cr&eacute;dito" : "Limite Empresarial";
                 $urlRotina = "limite_credito";
                 $strValue = ( isset($valores[6]->cdata) ) ? number_format(str_replace(",", ".", $valores[6]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;		
 			}	
 			case "MAGNETICO": {
 				$nomeRotina = "Cart&otilde;es Magn&eacute;ticos";  
                 $urlRotina = "magneticos";
                 $strValue = ( isset($valores[15]->cdata) ) ? $valores[15]->cdata : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;	
 			}
 			case "OCORRENCIAS": {
 				$nomeRotina = "Ocorr&ecirc;ncias";         
                 $urlRotina = "ocorrencias";
                 $strValue = ( isset($valores[9]->cdata) ) ? strtolower($valores[9]->cdata) == "yes" ? "SIM" : "NAO" : '';
-				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}
 			case "POUP. PROG": {
 				$nomeRotina = "Poupan&ccedil;a Programada"; 
                 $urlRotina = "poupanca_programada";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
 				break;	
 			}
 			case "PRESTACOES": {
 				$nomeRotina = "Presta&ccedil;&otilde;es";          
                 $urlRotina = "prestacoes";
                 $strValue = number_format(str_replace(",", ".", $vlpresta), 2, ",", ".");
-				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}
 			case "RELACIONAMENTO": {
 				$nomeRotina = "Relacionamento";              
                 $urlRotina = "relacionamento";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 0;
 				break;	
 			}
 			case "COBRANCA": {
 				$nomeRotina = "Cobran&ccedil;a";
                 $urlRotina = "cobranca";
                 $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "PAGTO POR ARQUIVO": {
 				$nomeRotina = "Pagto por Arquivo";
                 $urlRotina = "pagamento_titulo_arq";
                 $strValue = ($flconven == 1) ? "SIM" : "NAO";
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "SEGURO": {
 				$nomeRotina = "Seguro";    
 				$urlRotina  = "seguro";    
 				$strValue   = strtolower(getByTagName ($valores,"flgsegur")) == "yes" ? "SIM" : "NAO"; 
-				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}			
 			case "TELE ATEN": {
@@ -574,44 +544,42 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				if ( isset($valores[10]->cdata) ) {
 					$strValue = $valores[10]->cdata;
                 }
-				
-				$telaPermitadaAcessoBacen = 1;
-				
 				break;	
 			}
 			case "TELEFONE": {
 				$nomeRotina = "Telefone";
                 $urlRotina = "telefone";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "CONSORCIO": {
 				$nomeRotina = "Cons&oacute;rcio";
                 $urlRotina = "consorcio";
                 $strValue = strtolower($flgativo) == "yes" ? "SIM" : "NAO";
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "LIMITE SAQUE TAA": {
 				$nomeRotina = "Limite Saque TAA";
                 $urlRotina = "limite_saque_taa";
                 $strValue = ( isset($valores[19]->cdata) ) ? number_format(str_replace(",", ".", $valores[19]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
                 break;
             }
 			case "SERVICOS COOPERATIVOS": {
 				$nomeRotina = "Servi&ccedil;os Cooperativos";
 				$urlRotina  = "pacote_tarifas";
 				$strValue   = ( isset($valores[20]->cdata) ) ? strtolower($valores[20]->cdata) == 'yes' ? 'SIM' : 'NAO' : 'NAO'; 
-				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "SERVICOS COOPERATIVOS": {
+				$nomeRotina = "Servi&ccedil;os Cooperativos";
+				$urlRotina  = "pacote_tarifas";
+				$strValue   = strtolower($valores[20]->cdata) == "yes" ? "SIM" : "NAO"; 
 				break;
 			}
 			case "DDA": {
 				$nomeRotina = "DDA";
                 $urlRotina = "dda";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "CONVENIO CDC": {
@@ -619,7 +587,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Conv&ecirc;nio CDC";
                 $urlRotina = "convenio_cdc";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			case "ATENDIMENTO": {
@@ -627,7 +594,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Atendimento";
                 $urlRotina = "atendimento";
                 $strValue = "";
-				$telaPermitadaAcessoBacen = 1;
 				break;
 			}		
 			case "PRODUTOS": {
@@ -636,7 +602,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 $urlRotina = "produtos";
                 $strValue = "";
 				$opeProdutos = 1;				
-				$telaPermitadaAcessoBacen = 0;				
 				break;
 			}
         case "RECEBE SALARIO": {
@@ -648,9 +613,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                     $nomeRotina = " ";
                     $urlRotina = "";
                     $strValue = "";
-                }  
-
-				$telaPermitadaAcessoBacen = 1; 
+                }
 
                 break;
             }
@@ -658,8 +621,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			
 				$nomeRotina = "Desabilitar Operacoes";
                 $urlRotina = "liberar_bloquear";
-                $strValue = "";	
-				$telaPermitadaAcessoBacen = 0;
+                $strValue = "";
 				break;
 			}	
 			default: {
@@ -680,42 +642,10 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 		
 		if (trim($urlRotina) <> "") {
 			
-			/*Projeto crm: Não deve permitir a contratação de produtos quando a conta estiver com uma 
-			  das situações 4, 7, 8 ou 9. Os produtos que não podem ser contrato quando a conta
-			  estiver com uma das situações citada estão identificadas com telaPermitadaAcessoBacen = 0, conforme
-			  solicitado pela equipe de negócio. Qualquer alteração na lógica abaixo ou com a inclusão de novo produtos
-			  na tela ATENDA, deverá ser verificado junto a área de negócio.
-			*/
-			if(($cdsitdct == '7' || 
-				 $cdsitdct == '8') && 
-				 $telaPermitadaAcessoBacen == 0 ){
-				
-			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
-				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';
-				echo '$("#valueRot'.$contRotina.'").unbind("click");';
-				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
-				
-			}else if(($cdsitdct == '4' || 
-			          $cdsitdct == '7' || 
-				        $cdsitdct == '8' || 
-				        $cdsitdct == '9') && 
-				        $telaPermitadaAcessoBacen == 0 ){
-				
-			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
-				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';
-				echo '$("#valueRot'.$contRotina.'").unbind("click");';
-				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';	
-				
-      
-      }else{
-			
-				echo '$("#labelRot'.$contRotina.'").unbind("click");';
-			  echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
-		  	echo '$("#valueRot'.$contRotina.'").unbind("click");';
-		  	echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
-				
-			}
-
+			echo '$("#labelRot'.$contRotina.'").unbind("click");';
+			echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
+			echo '$("#valueRot'.$contRotina.'").unbind("click");';
+			echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
 		}
 		
 		$contRotina++;
@@ -742,8 +672,10 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 	$flgMsgAnota = false;
 	
 	if ($glbvars["nmrotina"] == "") {
+
 		// Monta HTML para mostrar mensagens de alerta
 		if (count($mensagens) > 0 && $flgProdutos != 'true') {	
+
 			$flgMsgAnota = true;
 			
 			echo 'var strHTML = \'<table width="445" border="0" cellpadding="1" cellspacing="2">\';';

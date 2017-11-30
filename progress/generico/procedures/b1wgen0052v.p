@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 29/09/2017
   
     Dados referentes ao programa:
   
@@ -139,11 +139,8 @@
 				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
                              Transulcred (Daniel)
 
-				25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 					
-			    11/06/2017 - Ajuste para validar processo de demissao
-							 Jonata - RKAM (P364).   
-
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)               
 
@@ -152,32 +149,22 @@
 				
 				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
 							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
-
+							
                 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
-							 
-				29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
-							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).
-
-               14/11/2017 - Corrigido consulta do produtos impeditivos para desligamento (Jonata - RKAM P364).
-
-			   21/11/2017 - Retirado validacao de convenio CDC (Jonata - RKAM P364).
-
-			   22/11/2017 - Incluido verificao de cartao de credito (Jonata - RKAM p364).
+                             
+			    29/09/2017 - Ajuste na tela matric para que apenas chame a funcao identifica_org_expedidor
+							 quando for pessoa fisica na inclusao ou alteracao. (PRJ339 - Kelvin).                          
 ........................................................................*/
 
 
 /*............................... DEFINICOES ................................*/
 
 { sistema/generico/includes/b1wgen0003tt.i }
-{ sistema/generico/includes/b1wgen0004tt.i }
 { sistema/generico/includes/b1wgen0052tt.i }
 { sistema/generico/includes/b1wgen0079tt.i }
-{ sistema/generico/includes/b1wgen0001tt.i }
-{ sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
-{ sistema/generico/includes/b1wgen0006tt.i }
 
 
 DEF VAR aux_contador AS INTE                                        NO-UNDO.
@@ -409,7 +396,7 @@ PROCEDURE Valida_Dados :
               END.
               
            END.
-
+        
 
         /* validacao especifica por operacao */
         CASE par_cddopcao:
@@ -1321,7 +1308,7 @@ END PROCEDURE. /* Calcula_Parcelamento */
 /*                     VERIFICA PRODUTOS/SERVICOS ATIVOS                    */
 /* ------------------------------------------------------------------------ */
 
-PROCEDURE Produtos_Servicos_Ativos:
+PROCEDURE Produtos_Servicos_Ativos PRIVATE :
     
     /* entrada e saida */
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -1349,20 +1336,9 @@ PROCEDURE Produtos_Servicos_Ativos:
     DEF VAR aux_cdseqcia AS INTE                                    NO-UNDO.
     DEF VAR aux_existere AS CHAR                                    NO-UNDO.
     DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dstrans1 AS CHAR                                    NO-UNDO.
-	DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
-	DEF VAR aux_qttotage AS INTE                                    NO-UNDO.
-	DEF VAR aux_dsdmesag AS CHAR                                    NO-UNDO.
-	DEF VAR aux_vlresapl AS DECIMAL INIT 0                          NO-UNDO.
-	DEF VAR aux_vlsrdrpp AS DECIMAL INIT 0                          NO-UNDO.
 
     DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0082 AS HANDLE                                  NO-UNDO.
-	DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
-	DEF VAR h-b1wgen0006 AS HANDLE                                  NO-UNDO.
-
 
     /* inicializando e zerando */
     ASSIGN  aux_cdseqcia = 0
@@ -1375,6 +1351,7 @@ PROCEDURE Produtos_Servicos_Ativos:
     EMPTY TEMP-TABLE tt-prod_serv_ativos.
 
     Produtos_Servicos_Ativos: 
+
         DO WHILE TRUE ON ERROR UNDO Produtos_Servicos_Ativos, 
         LEAVE Produtos_Servicos_Ativos:
 
@@ -1415,58 +1392,6 @@ PROCEDURE Produtos_Servicos_Ativos:
                    tt-prod_serv_ativos.nmproser = "Poupanca Programada".
         END.
     
-		/*Cartao de credito*/
-		IF CAN-FIND(FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper
-								   AND crawcrd.nrdconta = par_nrdconta
-								   AND (crawcrd.insitcrd = 4 
-									OR  crawcrd.insitcrd = 3
-									OR  crawcrd.insitcrd = 7)
-									NO-LOCK) THEN
-		DO:
-		    ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
-            CREATE tt-prod_serv_ativos.
-            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                   tt-prod_serv_ativos.nmproser = "Cartao de credito".
-		END.
-
-		/* Buscar data do proximo dia util*/
-		FOR FIRST crapdat FIELDS(dtmvtopr inproces)
-						  WHERE crapdat.cdcooper = par_cdcooper
-						  NO-LOCK:
-		END.
-
-		RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
-    
-		RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
-											   INPUT par_cdagenci,
-											   INPUT par_nrdcaixa,
-											   INPUT par_cdoperad,
-											   INPUT par_nmdatela,
-											   INPUT par_idorigem,
-											   INPUT par_nrdconta,
-											   INPUT par_idseqttl,
-											   INPUT 0,
-											   INPUT par_dtmvtolt,
-											   INPUT crapdat.dtmvtopr,
-											   INPUT crapdat.inproces,
-											   INPUT par_nmdatela,
-											   INPUT FALSE,
-											  OUTPUT aux_vlsrdrpp,
-											  OUTPUT TABLE tt-erro,
-											  OUTPUT TABLE tt-dados-rpp).
-                                          
-		DELETE PROCEDURE h-b1wgen0006.
-
-		IF aux_vlsrdrpp > 0 THEN
-		   DO:
-		        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
-				CREATE tt-prod_serv_ativos.
-				ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-					   tt-prod_serv_ativos.nmproser = "Poupanca Programada".
-
-		   END.
-
-		
         /***************** Limite de Desconto de Cheques *********************/
         IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                                         craplim.nrdconta = par_nrdconta AND
@@ -1491,6 +1416,16 @@ PROCEDURE Produtos_Servicos_Ativos:
                 tt-prod_serv_ativos.nmproser = "Limite de Desconto de Titulos".
         END.
 
+        /************************ Cartao de Credito **************************/
+        IF CAN-FIND(FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper AND
+                                        crawcrd.nrdconta = par_nrdconta AND
+                                        crawcrd.insitcrd = 4        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Cartao de Credito".
+        END.
 
         /******************** Cartao Magnetico *******************************/
         IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
@@ -1505,39 +1440,66 @@ PROCEDURE Produtos_Servicos_Ativos:
                    tt-prod_serv_ativos.nmproser = "Cartao Magnetico".
         END.
 
-		
+        /************************ Internet ***********************************/
+        IF CAN-FIND(FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper AND
+                                        crapsnh.nrdconta = par_nrdconta AND
+                                        crapsnh.tpdsenha = 1            AND
+                                        crapsnh.cdsitsnh = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Internet".
+        END.
 
-		/* Buscar quantidade de folhas de cheque em uso */
-		FOR EACH crapfdc FIELDS(cdcooper nrdconta cdbanchq cdagechq nrctachq nrcheque) 
-						  WHERE crapfdc.cdcooper = par_cdcooper 
-							AND crapfdc.nrdconta = par_nrdconta
-							AND crapfdc.incheque = 0 
-							AND crapfdc.dtliqchq = ? 
-							AND crapfdc.dtemschq <> ? 
-							AND crapfdc.dtretchq <> ?
-								NO-LOCK:
-								
-			FIND FIRST crapneg WHERE crapneg.cdcooper = crapfdc.cdcooper AND
-								     crapneg.nrdconta = crapfdc.nrdconta AND
-									 crapneg.cdbanchq = crapfdc.cdbanchq AND
-									 crapneg.cdagechq = crapfdc.cdagechq AND
-									 crapneg.nrctachq = crapfdc.nrctachq AND
-									 crapneg.cdhisest = 1 				AND
-									 INT(SUBSTR(STRING(crapneg.nrdocmto,"9999999"),1,6))  = crapfdc.nrcheque 
-									 NO-LOCK NO-ERROR.
-								
-			IF NOT AVAIL crapneg THEN
-			   DO:
+        /************************** Seguro ***********************************/
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+        /* Seguro CASA Renovado */ 
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 3            AND
+                                        crapseg.tpseguro = 11      NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+        /* Seguro AUTO Substiuido */ 
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 3            AND
+                                        crapseg.tpseguro = 2            AND
+                                        crapseg.dtfimvig >= par_dtmvtolt
+                                        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+
+        /************************* Cheque ************************************/
+        IF CAN-FIND(FIRST crapfdc WHERE crapfdc.cdcooper  = par_cdcooper AND
+                                        crapfdc.nrdconta  = par_nrdconta AND
+                                        crapfdc.dtliqchq  = ?            AND 
+                                        crapfdc.dtretchq <> ?            AND
+                                        crapfdc.incheque <> 8            
+                                        NO-LOCK USE-INDEX crapfdc4)
+        THEN DO:
             ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
             CREATE tt-prod_serv_ativos.
             ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
                    tt-prod_serv_ativos.nmproser = "Cheque".
-			      LEAVE.
         END. 
-
-		END.
-		
-		
 
         /************************ Emprestimo *********************************/
         IF CAN-FIND(FIRST crapepr WHERE crapepr.cdcooper = par_cdcooper AND
@@ -1550,34 +1512,81 @@ PROCEDURE Produtos_Servicos_Ativos:
                    tt-prod_serv_ativos.nmproser = "Emprestimo".
         END. 
 
-		RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT SET h-b1wgen0081.
+        /************************ Aplicacao **********************************/
+        IF CAN-FIND(FIRST craprda WHERE craprda.cdcooper = par_cdcooper AND
+                                        craprda.nrdconta = par_nrdconta AND
+                                        craprda.insaqtot = 0        NO-LOCK) OR
+		   CAN-FIND(FIRST craprac WHERE craprac.cdcooper = par_cdcooper AND
+                                        craprac.nrdconta = par_nrdconta AND
+                                        craprac.idsaqtot = 0        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Aplicacao".
+        END.
 
-		RUN obtem-dados-aplicacoes IN h-b1wgen0081 (INPUT par_cdcooper,
-													INPUT par_cdagenci,
-													INPUT par_nrdcaixa,
-													INPUT par_cdoperad,
-													INPUT par_nmdatela,
-													INPUT par_idorigem,
-													INPUT par_nrdconta,
-													INPUT par_idseqttl,
-													INPUT 0,
-													INPUT par_nmdatela,                                                 
-													INPUT 0,
-													INPUT ?,
-													INPUT ?,
-												   OUTPUT aux_vlresapl,
-												   OUTPUT TABLE tt-saldo-rdca,
-												   OUTPUT TABLE tt-erro).
+        /******************** Inscricao Progrid ******************************/
+        /** Agenda PROGRID **/
         
-		DELETE PROCEDURE h-b1wgen0081.
+        FIND LAST gnpapgd WHERE gnpapgd.cdcooper = par_cdcooper AND
+                                gnpapgd.idevento = 1        NO-LOCK NO-ERROR.
         
-		IF aux_vlresapl > 0 THEN
+        IF AVAIL gnpapgd THEN 
         DO:
+            IF  YEAR(TODAY) = gnpapgd.dtanonov  THEN 
+                ASSIGN aux_dtanopgd = gnpapgd.dtanonov.
+            ELSE
+            IF  YEAR(TODAY) < gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanopgd = gnpapgd.dtanoage.
+            ELSE
+            IF  YEAR(TODAY) > gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanopgd = 0.
+        END.
+
+        /** Agenda Assembleias **/
+        FIND LAST gnpapgd WHERE gnpapgd.cdcooper = par_cdcooper AND    
+                                gnpapgd.idevento = 2        NO-LOCK NO-ERROR.
+        IF AVAIL gnpapgd THEN 
+        DO:
+            IF  YEAR(TODAY) = gnpapgd.dtanonov  THEN 
+                ASSIGN aux_dtanoasb = gnpapgd.dtanonov.
+            ELSE
+            IF  YEAR(TODAY) < gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanoasb = gnpapgd.dtanoage.
+            ELSE
+            IF  YEAR(TODAY) > gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanoasb = 0.
+        END.
+        FOR EACH crapidp WHERE crapidp.cdcooper = par_cdcooper AND
+                               crapidp.nrdconta = par_nrdconta AND
+                             ((crapidp.dtanoage = aux_dtanopgd AND
+                               crapidp.idevento = 1)           OR
+                              (crapidp.dtanoage = aux_dtanoasb AND
+                               crapidp.idevento = 2))          AND
+           /** PENDENTE   **/ (crapidp.idstains = 1            OR        
+           /** CONFIRMADO **/  crapidp.idstains = 2)           NO-LOCK:  
+           
+            FIND crapadp WHERE crapadp.cdcooper = crapidp.cdcooper AND   
+                               crapadp.idevento = crapidp.idevento AND 
+                               crapadp.dtanoage = crapidp.dtanoage AND
+                               crapadp.cdevento = crapidp.cdevento AND
+                               crapadp.nrseqdig = crapidp.nrseqeve 
+                               NO-LOCK NO-ERROR.
+           
+            IF  NOT AVAILABLE crapadp  THEN
+                NEXT.
+            IF  crapadp.idstaeve = 1  OR   /** AGENDADO    **/
+                crapadp.idstaeve = 3  OR   /** TRANSFERIDO **/
+                crapadp.idstaeve = 6  THEN /** ACRESCIDO   **/
+                DO:
                     ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
                     CREATE tt-prod_serv_ativos.
                     ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-					   tt-prod_serv_ativos.nmproser = "Aplicacao".
+                           tt-prod_serv_ativos.nmproser = "Inscricao Progrid".
+                    LEAVE.
                 END.
+        END.
     
         /***************************** Convenio ******************************/
         IF CAN-FIND(FIRST crapatr WHERE crapatr.cdcooper = par_cdcooper AND
@@ -1594,7 +1603,6 @@ PROCEDURE Produtos_Servicos_Ativos:
         /*********************** Lancamento Futuro ***************************/
         RUN sistema/generico/procedures/b1wgen0003.p 
             PERSISTENT SET h-b1wgen0003.
-			
         RUN consulta-lancamento IN 
             h-b1wgen0003 (INPUT par_cdcooper,
                           INPUT par_cdagenci,
@@ -1621,39 +1629,256 @@ PROCEDURE Produtos_Servicos_Ativos:
             ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
             CREATE tt-prod_serv_ativos.
             ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                   tt-prod_serv_ativos.nmproser = "Lancamentos Futuros".    
+                   tt-prod_serv_ativos.nmproser = "Lancamento Futuro".    
         END.
 
+        /************************* Informativo *******************************/
+        IF CAN-FIND(FIRST crapcra WHERE crapcra.cdcooper = par_cdcooper AND
+                                       crapcra.nrdconta = par_nrdconta NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Informativo".
+        END.
 
-		RUN sistema/generico/procedures/b1wgen0082.p PERSISTENT SET h-b1wgen0082.
+        /*************************** Avalista ********************************/
+        FOR EACH crapavl WHERE 
+                 crapavl.cdcooper = par_cdcooper AND
+                 crapavl.nrdconta = par_nrdconta AND
+                (crapavl.tpctrato = 1            OR        /** EMPRESTIMO  **/
+                 crapavl.tpctrato = 2            OR        /** DSC.CHEQUES **/
+                 crapavl.tpctrato = 3            OR        /** LIM.CREDITO **/
+                 crapavl.tpctrato = 4            OR        /** CAR.CREDITO **/
+                 crapavl.tpctrato = 8)           NO-LOCK:  /** DSC.TITULOS **/
 
-		RUN carrega-convenios-ceb IN h-b1wgen0082 (INPUT par_cdcooper,
-												   INPUT par_cdagenci,
-												   INPUT par_nrdcaixa,
-												   INPUT par_cdoperad,
-												   INPUT par_nmdatela,
-												   INPUT par_idorigem,
-												   INPUT par_nrdconta,
-												   INPUT par_idseqttl,
-												   INPUT par_dtmvtolt,
-												   INPUT FALSE,
-												  OUTPUT aux_dsdmesag,
-												  OUTPUT TABLE tt-cadastro-bloqueto,
-												  OUTPUT TABLE tt-crapcco,
-												  OUTPUT TABLE tt-titulares,
-												  OUTPUT TABLE tt-emails-titular).
+            IF  crapavl.tpctrato = 1  THEN
+            DO:               
+                FIND crapepr WHERE crapepr.cdcooper = crapavl.cdcooper AND
+                                   crapepr.nrdconta = crapavl.nrctaavd AND
+                                   crapepr.nrctremp = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
        
-		DELETE PROCEDURE h-b1wgen0082.
+                IF  AVAILABLE crapepr     AND
+                    crapepr.inliquid = 0  THEN
+                    DO:
+                        IF aux_tpctrato1 THEN
+                           NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                          tt-prod_serv_ativos.nmproser = "Avalista Emprestimo"
+                          aux_tpctrato1 = TRUE.
+                    END.
+
+            END.
+            ELSE
+            IF  crapavl.tpctrato = 4  THEN
+            DO:
+                FIND crawcrd WHERE crawcrd.cdcooper = crapavl.cdcooper AND
+                                   crawcrd.nrdconta = crapavl.nrctaavd AND
+                                   crawcrd.nrctrcrd = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE crawcrd     AND
+                    crawcrd.insitcrd = 4  THEN
+                    DO:
+                        IF aux_tpctrato4 THEN
+                            NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista Car. Credito"
+                        aux_tpctrato4 = TRUE.
+                    END.
+            END.
+            ELSE
+            DO:
+                IF  crapavl.tpctrato = 8  THEN
+                    ASSIGN aux_tpctrlim = 3
+                           aux_nmctrato = "Dsc. Titulos".
+                ELSE
+                IF  crapavl.tpctrato = 2  THEN
+                    ASSIGN aux_tpctrlim = 2
+                           aux_nmctrato = "Dsc. Cheques".
+                ELSE
+                IF  crapavl.tpctrato = 3  THEN
+                    ASSIGN aux_tpctrlim = 1
+                           aux_nmctrato = "Lim. Credito".
+                FIND craplim WHERE craplim.cdcooper = crapavl.cdcooper AND
+                                   craplim.nrdconta = crapavl.nrctaavd AND
+                                   craplim.tpctrlim = aux_tpctrlim     AND
+                                   craplim.nrctrlim = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE craplim     AND
+                    craplim.insitlim = 2  THEN
+                    DO:
+                        IF ((crapavl.tpctrato = 2 AND aux_tpctrato2) OR
+                            (crapavl.tpctrato = 3 AND aux_tpctrato3) OR
+                            (crapavl.tpctrato = 8 AND aux_tpctrato8)) THEN
+                            NEXT.
+                        
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista "+ aux_nmctrato.
+
+                        CASE crapavl.tpctrato:
+                            WHEN 2 THEN
+                                ASSIGN aux_tpctrato2 = TRUE.
+                            WHEN 3 THEN
+                                ASSIGN aux_tpctrato3 = TRUE.
+                            WHEN 8 THEN
+                                ASSIGN aux_tpctrato8 = TRUE.
+                        END CASE.
+                    END.
+            END.
+        END.
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND             
+                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
+        ASSIGN aux_tpctrato1 = FALSE
+               aux_tpctrato2 = FALSE
+               aux_tpctrato3 = FALSE
+               aux_tpctrato4 = FALSE
+               aux_tpctrato8 = FALSE.
+
+        FOR EACH crapavt WHERE 
+                 crapavt.cdcooper = par_cdcooper     AND
+                 crapavt.nrcpfcgc = crapass.nrcpfcgc AND
+                (crapavt.tpctrato = 1                OR       /* EMPRESTIMO  */
+                 crapavt.tpctrato = 2                OR       /* DSC.CHEQUES */
+                 crapavt.tpctrato = 3                OR       /* LIM.CREDITO */
+                 crapavt.tpctrato = 4                OR       /* CAR.CREDITO */
+                 crapavt.tpctrato = 8)               NO-LOCK: /* DSC.TITULOS */
+
+            IF  crapavt.tpctrato = 1  THEN
+            DO:
+                FIND crapepr WHERE crapepr.cdcooper = crapavt.cdcooper AND
+                                   crapepr.nrdconta = crapavt.nrdconta AND
+                                   crapepr.nrctremp = crapavt.nrctremp 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE crapepr AND crapepr.inliquid = 0  THEN
+                DO:
+                    IF aux_tpctrato1 THEN
+                        NEXT.
+                    ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                    CREATE tt-prod_serv_ativos.
+                    ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                           tt-prod_serv_ativos.nmproser = "Avalista Emprestimo"
+                           aux_tpctrato1 = TRUE.
+                END.
+            END.
+            ELSE
+            IF  crapavt.tpctrato = 4  THEN
+            DO:
+                    FIND crawcrd WHERE crawcrd.cdcooper = crapavt.cdcooper AND
+                                       crawcrd.nrdconta = crapavt.nrdconta AND
+                                       crawcrd.nrctrcrd = crapavt.nrctremp 
+                                       NO-LOCK NO-ERROR.
+           
+                    IF  AVAILABLE crawcrd AND crawcrd.insitcrd = 4  THEN
+                    DO:
+                        IF aux_tpctrato4 THEN
+                            NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista Car. Credito"
+                        aux_tpctrato4 = TRUE.
+                    END.
+            END.
+            ELSE
+            DO:
+                    IF  crapavt.tpctrato = 8  THEN
+                        ASSIGN aux_tpctrlim = 3
+                               aux_nmctrato = "Dsc. Titulos".
+                    ELSE
+                    IF  crapavt.tpctrato = 2  THEN
+                        ASSIGN aux_tpctrlim = 2
+                               aux_nmctrato = "Dsc. Cheques".
+                    ELSE
+                    IF  crapavt.tpctrato = 3  THEN
+                        ASSIGN aux_tpctrlim = 1
+                               aux_nmctrato = "Lim. Credito".
     
-		/* Projeto 364 - Andrey - INICIO */
-		FOR FIRST tt-cadastro-bloqueto WHERE tt-cadastro-bloqueto.insitceb = 1 NO-LOCK:
+                    FIND craplim WHERE craplim.cdcooper = crapavt.cdcooper AND
+                                       craplim.nrdconta = crapavt.nrdconta AND
+                                       craplim.tpctrlim = aux_tpctrlim     AND
+                                       craplim.nrctrlim = crapavt.nrctremp 
+                                       NO-LOCK NO-ERROR.
+           
+                    IF  AVAILABLE craplim AND craplim.insitlim = 2  THEN
+                    DO:
+                        IF ((crapavl.tpctrato = 2 AND aux_tpctrato2) OR
+                            (crapavl.tpctrato = 3 AND aux_tpctrato3) OR
+                            (crapavl.tpctrato = 8 AND aux_tpctrato8)) THEN
+                            NEXT.
+
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista "+ aux_nmctrato.
+
+                        CASE crapavt.tpctrato:
+                            WHEN 2 THEN
+                                ASSIGN aux_tpctrato2 = TRUE.
+                            WHEN 3 THEN
+                                ASSIGN aux_tpctrato3 = TRUE.
+                            WHEN 8 THEN
+                                ASSIGN aux_tpctrato8 = TRUE.
+                        END CASE.
+                    END.
+            END.
+        END.
+    
+        /*************************** Cobranca ********************************/
+        FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper NO-LOCK:
+            IF CAN-FIND(
+                FIRST crapcob WHERE crapcob.cdcooper = crapcco.cdcooper AND
+                                    crapcob.cdbandoc = crapcco.cdbccxlt AND
+                                    crapcob.nrdctabb = crapcco.nrdctabb AND
+                                    crapcob.nrcnvcob = crapcco.nrconven AND
+                                    crapcob.nrdconta = par_nrdconta     AND
+                                    crapcob.incobran = 0                AND
+                                    crapcob.dtdpagto = ?                NO-LOCK
+            ) THEN DO:
                 ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
                 CREATE tt-prod_serv_ativos.
                 ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
                        tt-prod_serv_ativos.nmproser = "Cobranca".
                 LEAVE.
             END.
+        END.
+
+        /********************** Deposito Bloqueado ***************************/
+        IF CAN-FIND(FIRST crapdpb WHERE crapdpb.cdcooper  = par_cdcooper AND
+                                        crapdpb.nrdconta  = par_nrdconta AND
+                                        crapdpb.dtliblan >= par_dtmvtolt AND
+                                        crapdpb.inlibera  = 1
+                                        NO-LOCK USE-INDEX crapdpb2)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Deposito Bloqueado".
+        END.
              
+     
+        /********************** Custodia de Cheques **************************/
+        IF CAN-FIND(
+            FIRST crapcst WHERE crapcst.cdcooper = par_cdcooper AND
+                                crapcst.nrdconta = par_nrdconta AND
+                                crapcst.dtlibera > par_dtmvtolt AND
+                                crapcst.insitchq = 0            NO-LOCK
+        ) THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Custodia de Cheques".
+        END.
 
         /********************** DDA (Pagador eletronico) **********************/
         RUN sistema/generico/procedures/b1wgen0079.p PERSISTENT 
@@ -1699,24 +1924,78 @@ PROCEDURE Produtos_Servicos_Ativos:
                           par_nmdcampo = "flgpamca".*/
              
                END.
+
+        END.
         
+
+        /*************************  PROCURADOR  *****************************/
+        IF CAN-FIND(FIRST crapavt WHERE crapavt.cdcooper = par_cdcooper AND
+                                        crapavt.nrdctato = par_nrdconta AND
+                                        crapavt.tpctrato = 6 /*proc*/
+                                        NO-LOCK) THEN
+           DO:  
+              ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+              CREATE tt-prod_serv_ativos.
+              ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                     tt-prod_serv_ativos.nmproser = "Procurador em outras " + 
+                                                    "contas".
+
            END.
 
-		
-		/* Verificar se conta possui conta ITG ativa */
-		FOR FIRST crapass WHERE crapass.cdcooper = par_cdcooper
-							AND crapass.nrdconta = par_nrdconta
-							AND crapass.flgctitg = 2 NO-LOCK:
+        /**********************  RESPONSAVEL LEGAL  ************************/
+        IF CAN-FIND(FIRST crapcrl WHERE crapcrl.cdcooper = par_cdcooper AND
+                                        crapcrl.nrdconta = par_nrdconta 
+                                        NO-LOCK) THEN
+
+            DO:
                ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
                CREATE tt-prod_serv_ativos.
                ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-		  		   tt-prod_serv_ativos.nmproser = "Conta ITG.".
+                      tt-prod_serv_ativos.nmproser = "Responsavel Legal em " +
+                                                     "outras contas".
+
+           END.
+		
+		/***********************  PACOTE TARIFAS  **************************/
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+        
+        /* Efetuar a chamada a rotina Oracle */
+        RUN STORED-PROCEDURE pc_ver_exist_pct_trf
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper         /* Código da Cooperativa*/   
+                                            ,INPUT par_nrdconta         /* Número da conta */
+                                            ,OUTPUT ""                  /* Existe Registro */
+                                            ,OUTPUT ""                  /* Indicador erro OK/NOK */
+                                            ,OUTPUT "").                /* Descrição da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_ver_exist_pct_trf
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+        /* Busca possíveis erros */ 
+        ASSIGN aux_des_erro = ""
+               par_dscritic = ""
+               aux_existere = ""
+               aux_des_erro = pc_ver_exist_pct_trf.pr_des_erro 
+                              WHEN pc_ver_exist_pct_trf.pr_des_erro <> ?
+               par_dscritic = pc_ver_exist_pct_trf.pr_dscritic 
+                              WHEN pc_ver_exist_pct_trf.pr_dscritic <> ?
+               aux_existere = pc_ver_exist_pct_trf.pr_existere 
+                              WHEN pc_ver_exist_pct_trf.pr_existere <> ?.
+        
+        IF aux_existere = 'true' THEN
+           DO:
+               ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+               CREATE tt-prod_serv_ativos.
+               ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                      tt-prod_serv_ativos.nmproser = "Pacote de Tarifas".
            END.
 
         ASSIGN aux_returnvl = "OK".
 
         LEAVE Produtos_Servicos_Ativos.
-		
     END.
 
     IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
@@ -1964,7 +2243,6 @@ PROCEDURE Criticas_Alteracao PRIVATE :
                    END.
                ELSE
                    DO:
-				      
                       IF par_dtdemiss = ? THEN
                       DO:
                           ASSIGN par_nmdcampo = "dtdemiss"
@@ -1972,7 +2250,6 @@ PROCEDURE Criticas_Alteracao PRIVATE :
                                                 "informado".
                           LEAVE CriticasA.
                       END.
-
                    END.
 
 

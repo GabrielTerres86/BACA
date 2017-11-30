@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: plano_de_capital.php                                      
 	 Autor: David                                                     
-	 Data : Outubro/2007                 Ultima Alteracao: 14/11/2017 
+	 Data : Outubro/2007                 Ultima Alteracao: 23/03/2017 
 	                                                                  
 	 Objetivo  : Mostrar opcao Plano de Capital o da rotina de        
 	             Capital da tela ATENDA                               
@@ -32,8 +32,6 @@
                              para coleta da assinatura 
                             (Jonata - RKAM / M294).   
                           
-			   14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando (Jonata - RKAM P364).
-                          
 	***********************************************************************/
 	
 	session_start();
@@ -59,7 +57,6 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
-	$sitaucaoDaContaCrm = $_POST["sitaucaoDaContaCrm"];
 
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -171,13 +168,14 @@
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao('Deseja cancelar o plano de capital atual?','Confirma&ccedil;&atilde;o - Ayllos','excluirPlano()',metodoBlock,'sim.gif','nao.gif');return false;">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,false);return false;">
 	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
+		
 </div>
 					
 
 <div id="divBotoesSenha" style="display:none;">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
   <input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,true);return false;">
-  <input type="image" id="btImprimir" src=""<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
+	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
 </div>				
 					
 <form action="<?php echo $UrlSite; ?>telas/atenda/capital/termo_cancelamento.php" name="frmTermoCancela" id="frmTermoCancela" method="post">
@@ -188,6 +186,7 @@
 <input type="hidden" name="nrdconta" id="nrdconta" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>	
+
 <script type="text/javascript"> 
 
 // Configura propriedades do campo "flgpagto" conforme tipo de d&eacute;bito
@@ -270,20 +269,4 @@ hideMsgAguardo();
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
 $("#vlprepla","#frmNovoPlano").focus();
-	
-	
-	<?php if($sitaucaoDaContaCrm == '2' || 
-			 $sitaucaoDaContaCrm == '3' || 
-			 $sitaucaoDaContaCrm == '4' || 
-			 $sitaucaoDaContaCrm == '5' || 
-			 $sitaucaoDaContaCrm == '7' || 
-			 $sitaucaoDaContaCrm == '8' || 
-			 $sitaucaoDaContaCrm == '9' ){?>
-		
-		cTodos.desabilitaCampo();
-		$('#divBotoesSenha','#divConteudoOpcao').html("");
-		$('#divBotoesAutorizacao','#divConteudoOpcao').html("");
-		
-	<?}?>
-	
 </script>

@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 18/11/2017
+    Data    : Novembro/91.                      Ultima atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -189,9 +189,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               12/09/2016 - SD520894 - Correcao na chamada ao relatorio 011, pois está ocorrendo erro 
                            na geracao devido a varios relatorios com o mesmo nome (Marcos-Supero)
 
-              08/07/2017 - Ajuste para inclusão de novos lotes (Jonata - RKAM P364).
-
-			  18/11/2017 - Ajuste para inclusão de novos lotes (Jonata - RKAM P364).
     ............................................................................. */
     DECLARE
       TYPE typ_reg_craphis_res IS
@@ -482,144 +479,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               ,'0'
               ,1
               ,1
-        FROM DUAL
-        UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600038               
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,TRUNC(SYSDATE)       
-              ,0                    
-              ,'0'                  
-              ,0                    
-              ,0                    
-              ,0                    
-              ,'0'                  
-              ,1                    
-              ,1                    
-        FROM DUAL
-        UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600041               
-              ,0
-              ,0
-              ,0
-              ,0
-              ,0
-              ,0
-              ,0
-              ,0
-              ,TRUNC(SYSDATE)
-              ,0
-              ,'0'
-              ,0
-              ,0
-              ,0
-              ,'0'
-              ,1
-              ,1
-        FROM DUAL
-		UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600039               
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,TRUNC(SYSDATE)       
-              ,0                    
-              ,'0'                  
-              ,0                    
-              ,0                    
-              ,0                    
-              ,'0'                  
-              ,1                    
-              ,1                    
-        FROM DUAL
-		UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600040               
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,TRUNC(SYSDATE)       
-              ,0                    
-              ,'0'                  
-              ,0                    
-              ,0                    
-              ,0                    
-              ,'0'                  
-              ,1                    
-              ,1                    
-        FROM DUAL
-		UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600042               
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,TRUNC(SYSDATE)       
-              ,0                    
-              ,'0'                  
-              ,0                    
-              ,0                    
-              ,0                    
-              ,'0'                  
-              ,1                    
-              ,1                    
-        FROM DUAL
-	    UNION
-        SELECT pr_dtmvtolt          
-              ,NULL                    
-              ,100                  
-              ,600043               
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,0                    
-              ,TRUNC(SYSDATE)       
-              ,0                    
-              ,'0'                  
-              ,0                    
-              ,0                    
-              ,0                    
-              ,'0'                  
-              ,1                    
-              ,1                    
         FROM DUAL
      ORDER BY 2;
 

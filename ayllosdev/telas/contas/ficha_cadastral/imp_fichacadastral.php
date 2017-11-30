@@ -10,7 +10,6 @@
  *
  *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
- *                09/10/2017 - P410-RF 52 / 62 - Impressão declaração optante simples nacional (Diogo - MoutS)
  */	 
 ?>
 
@@ -35,9 +34,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 	$tpregist = (isset($_POST['tpregist'])) ? $_POST['tpregist'] : '';	
-	$tpregtrb = (isset($_POST['tpregtrb'])) ? $_POST['tpregtrb'] : '';
-	$impSoDeclaracao = (isset($_POST['imprimirsodeclaracaosn'])) ? $_POST['imprimirsodeclaracaosn'] : '0';	//vem de impressoes.js
-
+	
 	// Retirando caracteres do cpf e cnpj  
 	$arrayRetirada = array('.','-');                                                        
 	$nrdconta = str_replace($arrayRetirada,'',$nrdconta);
@@ -83,40 +80,14 @@
 
 	$GLOBALS['tprelato'] = 'ficha_cadastral';
 
-	$nomeArquivoPDF = 'ficha_cadastral_'.$impchave;
-
-	if (empty($tpregtrb)){
-		$tpregtrb = getByTagName($xmlObjeto->roottag->tags[11]->tags[0]->tags,'tpregtrb');			
-	}
-
 	// Gera o relatório em PDF através do DOMPDF
 	$dompdf = new DOMPDF();
 	if ( $tpregist == '1' ) {
 		$dompdf->load_html_file( './imp_fichacadastral_pf_html.php' );
 	} else {
-		//$dompdf->load_html_file( './imp_fichacadastral_pj_html.php' );
-				
-		$conteudo = "";
-		if ($impSoDeclaracao){
-			//Somente a declaração do simples nacional e o regime de tributação deve ser 1 ou 2 (simples nacional)
-			if ($tpregtrb == '1'){
-				$nomeArquivoPDF = 'declaracao_simples_'.$impchave;
-				$conteudo .= file_get_contents('./imp_declaracao_simples.php');
-			}
-		}
-		else{
-			//Imprime a ficha e a declaração do simples nacional e o regime de tributação deve ser 1 ou 2 (simples nacional)
-			$conteudo = file_get_contents('./imp_fichacadastral_pj_html.php');
-		
-			if ($tpregtrb == '1'){
-				$conteudo .= '<div style="page-break-before: always;"></div>';
-				$conteudo .= file_get_contents('./imp_declaracao_simples.php');
-			}
-		}
-        
-        $dompdf->load_html($conteudo);
+		$dompdf->load_html_file( './imp_fichacadastral_pj_html.php' );
 	}
 	$dompdf->set_paper('a4');
 	$dompdf->render();
-	$dompdf->stream($nomeArquivoPDF.'.pdf', $opcoes);	
+	$dompdf->stream('ficha_cadastral_'.$impchave.'.pdf', $opcoes );	
 ?>

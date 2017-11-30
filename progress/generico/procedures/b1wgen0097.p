@@ -102,8 +102,6 @@
 				07/04/2017 - Passar o tipo de emprestimo fixo como 1-PP na chamada da 
 				             rotina pc_calcula_iof_epr, pois todas as simulações são 
 							 empréstimos PP  ( Renato Darosci )
-				27/09/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts) e valor total da simulação
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -237,8 +235,7 @@ PROCEDURE busca_dados_simulacao:
                     tt-crapsim.nrdialib = 
                                    fnRetornaDiasUteis(par_cdcooper,
                                                       tt-crapsim.dtmvtolt,
-                                                      tt-crapsim.dtlibera)
-                    tt-crapsim.idfiniof = crapsim.idfiniof.
+                                                      tt-crapsim.dtlibera).
              FIND crapass OF crapsim NO-LOCK NO-ERROR.
              IF   AVAIL crapass   THEN
                   ASSIGN tt-crapsim.cdagenci = crapass.cdagenci.
@@ -255,7 +252,6 @@ PROCEDURE busca_dados_simulacao:
              IF   AVAIL crapfin   THEN
                   ASSIGN tt-crapsim.dsfinemp = crapfin.dsfinemp.
 
-             ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlemprst + tt-crapsim.vliofepr + tt-crapsim.vlrtarif.
              
              IF (AVAIL crapfin) AND (AVAIL craplcr) THEN
              DO:
@@ -535,7 +531,6 @@ PROCEDURE grava_simulacao:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.  
     DEF  INPUT PARAM par_percetop AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nrgravad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_txcetano AS DECI                           NO-UNDO.
@@ -808,8 +803,7 @@ PROCEDURE grava_simulacao:
            crapsim.percetop = aux_txcetano
            crapsim.cdoperad = par_cdoperad
            crapsim.vlajuepr = var_vlajuepr
-           crapsim.cdfinemp = par_cdfinemp
-           crapsim.idfiniof = par_idfiniof.
+           crapsim.cdfinemp = par_cdfinemp.
 
     VALIDATE crapsim.
 

@@ -3595,7 +3595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 17/11/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 09/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3673,13 +3673,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
   -- 
   --              29/09/2017 - Ajuste na hora de montar a campo dscedent qdo for pagamento de GPS (Tiago/Adriano)
-  --
   --              05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando 
   --                           esta em Transacao Pendente (Rafael Monteiro - Mouts)
-  -- 
-  --              17/11/2017 - No cursor cr_cred_npc, se já existir crepret com ocorrencia 6 ou 17 então
-  --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
-  --                           (SD793999 e SD795994 - AJFink)
   -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -4271,21 +4266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           AND t.nrdconta = pr_nrdconta
           AND t.dtcredito >= pr_dtmvtolt
           AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
-          AND not exists (
-                          --se já existir crepret com ocorrencia 6 ou 17 então
-                          --será exibido somente no cursor cr_crapret (SD793999 e SD795994)
-                          select 1
-                          from crapret ret
-                          where ret.cdcooper = t.cdcooper
-                            and ret.nrcnvcob = t.nrcnvcob
-                            and ret.nrdconta = t.nrdconta
-                            and ret.nrdocmto = t.nrdocmto
-                            AND ret.cdocorre IN (6,17)
-                         )
-        GROUP BY
-               t.dtcredito
-              ,t.dtmvtolt
-              ,t.flgbaixa_efetiva;
+          GROUP BY t.dtcredito, t.dtmvtolt, t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
       --Variaveis Locais
@@ -5419,7 +5400,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(3);          
         END IF;  
         /* caso exista valor iof sera criado registro para debito */
-        IF rw_crapsld.vliofmes > 0 AND (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
+        IF rw_crapsld.vliofmes > 0 AND
+          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
+          --Verificar Imunidade Tributaria
+          IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper  => pr_cdcooper          --> Codigo Cooperativa
+                                             ,pr_nrdconta  => pr_nrdconta          --> Numero da Conta
+                                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data movimento
+                                             ,pr_flgrvvlr  => FALSE                --> Identificador se deve gravar valor
+                                             ,pr_cdinsenc  => 0                    --> Codigo da isenção
+                                             ,pr_vlinsenc  => 0                    --> Valor insento
+                                             ,pr_inpessoa  => rw_crapass.inpessoa  --> Tipo de pessoa
+                                             ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc  --> CPF/CNPJ
+                                             ,pr_flgimune  => vr_flgimune          --> Identificador se é imune
+                                             ,pr_dsreturn  => vr_des_reto          --> Descricao Critica
+                                             ,pr_tab_erro  => pr_tab_erro);        --> Tabela erros
+          -- Caso retornou com erro, levantar exceção
+          IF vr_des_reto = 'NOK' THEN
+            -- Tenta buscar o erro no vetor de erro
+            IF pr_tab_erro.COUNT > 0 THEN
+              vr_cdcritic:= pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+              vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic||' '||gene0002.fn_mask_conta(pr_nrdconta);
+            ELSE
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Retorno "NOK" na IMUT0001.pc_verifica_imunidade_trib e sem informação na pr_tab_erro, Conta: '||gene0002.fn_mask_conta(pr_nrdconta);
+            END IF;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF; 
+          IF NOT vr_flgimune THEN
             --Resultado 4
             vr_tab_resulta(4):= rw_crapsld.vliofmes;
             --Incrementar Conta          
@@ -5433,6 +5441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
             pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
             pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
+          END IF;   
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
       
@@ -17421,7 +17430,6 @@ END pc_consulta_ir_pj_trim;
       
         vr_tab_extrato_ope_credito(vr_index).dscricao := 'Limite de Credito';            
         
-        -- Projeto 410 - busca despesa referente IOF sobre limite credito
         --Busca demais despesas referente a limite de crédito
         FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta
@@ -17433,22 +17441,6 @@ END pc_consulta_ir_pj_trim;
           
         END LOOP;
         
-        --Busca demais despesas referente a limite de crédito
-        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtiniext => vr_dtiniext
-                                      ,pr_dtfinext => vr_dtfimext
-                                      ,pr_cdhistor => '2322') LOOP
-          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
-        END LOOP;
-        --Busca demais despesas referente a limite de crédito
-        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtiniext => vr_dtiniext
-                                      ,pr_dtfinext => vr_dtfimext
-                                      ,pr_cdhistor => '2322') LOOP
-          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
-        END LOOP;
         --Busca juros remuneratórios refente a limite de crédito
         FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
@@ -17494,14 +17486,6 @@ END pc_consulta_ir_pj_trim;
           
         END LOOP;
         
-        --Busca demais despesas referente a desconto de cheques
-        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtiniext => vr_dtiniext
-                                      ,pr_dtfinext => vr_dtfimext
-                                      ,pr_cdhistor => '2318') LOOP
-          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
-        END LOOP;
         --Busca juros remuneratórios referente a desconto de cheques
         OPEN cr_crapljd(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
@@ -17573,14 +17557,6 @@ END pc_consulta_ir_pj_trim;
                                       ,pr_dtiniext => vr_dtiniext
                                       ,pr_dtfinext => vr_dtfimext
                                       ,pr_cdhistor => '688') LOOP
-          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
-        END LOOP;
-        --Busca demais despesas referente a desconto de títulos
-        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtiniext => vr_dtiniext
-                                      ,pr_dtfinext => vr_dtfimext
-                                      ,pr_cdhistor => '2320') LOOP
                                  
           vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
           

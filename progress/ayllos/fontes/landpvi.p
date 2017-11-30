@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 19/11/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 10/08/2017
 
    Dados referentes ao programa:
 
@@ -498,17 +498,10 @@
 
                12/06/2017 - Nao deixar realizar lancamento do historico 1668 - Estorno de débito indevido               
                             na viacredi (Tiago/Fabricio #661260)
-
-              11/07/2017 - Ajustes historico 354
-                           (Demetrius Wolff MOUTS - Prj 364)
-
                             
                10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
                             cartao do titular nao for de um operador isso na leitura da crapcrm 
                             (Lucas Ranghetti #726238)
-			  19/11/2017 - Ajustes para retirar o uso do historico 354
-                           (Jonata RKAM - P364)
-
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -4225,7 +4218,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            END.
   
       /*** Magui incluido em 21/01/2002 ***/
-      IF   tel_cdhistor = 451   OR    /* credito de estorno de capital  */
+      IF   tel_cdhistor = 354   OR    /* credito cotas */
+           tel_cdhistor = 451   OR    /* credito de estorno de capital  */
            tel_cdhistor = 275   OR    /* pagto emprestimo */
            tel_cdhistor = 394   OR    /* pagto emprestimo pelo aval  */
            tel_cdhistor = 428   OR    /* pagto empr. c/cap */
@@ -4238,6 +4232,11 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            tel_cdhistor = 1806  OR    /* PAGAMENTO PARCELA FINAME  */ 
            tel_cdhistor = 931 THEN    /*credito cotas proc*/
            DO:
+               IF   tel_cdhistor = 354   THEN
+                    ASSIGN his_cdhistor = 81
+                           his_nrdolote = 10002
+                           his_tplotmov = 2.
+               ELSE
                IF   tel_cdhistor = 451   THEN
                     ASSIGN his_cdhistor = 402
                            his_nrdolote = 10002
@@ -4367,6 +4366,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
                     END.
                
+     
                IF   tel_cdhistor = 104   OR
                     tel_cdhistor = 302   OR 
                     tel_cdhistor = 1806  THEN
@@ -4406,7 +4406,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
                     END.
                ELSE   
-               IF   tel_cdhistor = 451   OR
+               IF   tel_cdhistor = 354   OR
+                    tel_cdhistor = 451   OR
                     tel_cdhistor = 127   THEN
                     DO: 
                         FIND craplct WHERE craplct.cdcooper = glb_cdcooper AND
@@ -4566,8 +4567,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                              
                              crapcot.vldcotas = crapcot.vldcotas - tel_vllanmto.
                         END.
-							
-                    END. /*FIM DO */
+                    END.
                ELSE
                    IF  tel_cdhistor = 931 THEN 
                        DO:

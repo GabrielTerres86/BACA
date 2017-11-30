@@ -384,11 +384,8 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                        craplcm.dtmvtolt >= aux_dtiniper AND
                        craplcm.dtmvtolt <= glb_dtmvtolt AND
                       (craplcm.cdhistor  = 322          OR  
-                       craplcm.cdhistor  = 323          OR
-                       craplcm.cdhistor  = 2322        OR					   
+                       craplcm.cdhistor  = 323          OR  
                        craplcm.cdhistor  = 324          OR
-					   craplcm.cdhistor  = 2318        OR
-					   craplcm.cdhistor  = 2320        OR
                        craplcm.cdhistor  = 688)         NO-LOCK
                        USE-INDEX craplcm4:
 
@@ -428,8 +425,7 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                        jur_vlepriof = jur_vlepriof + craplcm.vllanmto.
             END.
     ELSE
-    IF  craplcm.cdhistor = 323  
-	or  craplcm.cdhistor = 2322 THEN /** Conta Corrente **/
+    IF  craplcm.cdhistor = 323  THEN /** Conta Corrente **/
         DO:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vlctabas = fis_vlctabas + DECI(craplcm.cdpesqbb)
@@ -439,8 +435,7 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                        jur_vlctaiof = jur_vlctaiof + craplcm.vllanmto.
         END.
     ELSE
-    IF  craplcm.cdhistor = 324 
-    or  craplcm.cdhistor = 2318	THEN /** Desconto de Cheques **/
+    IF  craplcm.cdhistor = 324  THEN /** Desconto de Cheques **/
         DO:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vlchqbas = fis_vlchqbas + DECI(craplcm.cdpesqbb)
@@ -450,8 +445,7 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                        jur_vlchqiof = jur_vlchqiof + craplcm.vllanmto.    
         END.
     ELSE
-    IF  craplcm.cdhistor = 688  
-    or  craplcm.cdhistor = 2320	THEN /** Desconto de Titulos **/
+    IF  craplcm.cdhistor = 688  THEN /** Desconto de Titulos **/
         DO:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vltitbas = fis_vltitbas + 

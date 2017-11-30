@@ -1350,7 +1350,7 @@ PROCEDURE confirmar-novo-limite:
 
         IF  aux_dscritic <> ""  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
-            
+         
 		FIND crapope WHERE crapope.cdcooper = par_cdcooper
 		               AND UPPER(crapope.cdoperad) = UPPER(par_cdoperad)
 					   NO-LOCK NO-ERROR.
@@ -3978,8 +3978,8 @@ PROCEDURE cadastrar-novo-limite:
 
               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-              ASSIGN aux_cdcritic      = 0
-                     aux_dscritic     = ""
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
                      aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
                      aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
                      aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
@@ -4006,7 +4006,7 @@ PROCEDURE cadastrar-novo-limite:
                                     
                     UNDO TRANSACAO, LEAVE TRANSACAO.
                 END.
-                            
+                
               IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
                  DO:
                      CREATE tt-msg-confirma.                        
@@ -7122,7 +7122,7 @@ PROCEDURE obtem-dados-contrato:
                                                        "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-repres-ctr.dsdocrep = crapavt.nrdocava.
-                 
+                           
                 ASSIGN tt-repres-ctr.cdoedrep = "".  
                 IF crapavt.idorgexp <> 0 THEN 
                 DO:
@@ -7130,7 +7130,7 @@ PROCEDURE obtem-dados-contrato:
                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                       RUN sistema/generico/procedures/b1wgen0052b.p 
                           PERSISTENT SET h-b1wgen0052b.
-                  
+
                   RUN busca_org_expedidor IN h-b1wgen0052b 
                                    (INPUT crapavt.idorgexp,
                                     OUTPUT tt-repres-ctr.cdoedrep,
@@ -7138,7 +7138,7 @@ PROCEDURE obtem-dados-contrato:
                                     OUTPUT aux_dscritic).
 
                   DELETE PROCEDURE h-b1wgen0052b. 
-                  
+                
                   IF  RETURN-VALUE = "NOK" THEN
                   DO:
                       RUN gera_erro (INPUT par_cdcooper,
@@ -7166,7 +7166,7 @@ PROCEDURE obtem-dados-contrato:
                                                             "99999999999"),
                                                             "xxx.xxx.xxx-xx")
                                    tt-repres-ctr.dsdocrep = crabass.nrdocptl.
-                            
+                                   
 							ASSIGN tt-repres-ctr.cdoedrep = "".       
                             IF crabass.idorgexp <> 0 THEN
                             DO:
@@ -7174,7 +7174,7 @@ PROCEDURE obtem-dados-contrato:
                               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                                   RUN sistema/generico/procedures/b1wgen0052b.p 
                                       PERSISTENT SET h-b1wgen0052b.
-                              
+
                               RUN busca_org_expedidor IN h-b1wgen0052b 
                                                  (INPUT crabass.idorgexp,
                                                   OUTPUT tt-repres-ctr.cdoedrep,
@@ -7182,7 +7182,7 @@ PROCEDURE obtem-dados-contrato:
                                                   OUTPUT aux_dscritic).
 
                               DELETE PROCEDURE h-b1wgen0052b. 
-                              
+                            
                               IF  RETURN-VALUE = "NOK" THEN
                               DO:
                                   RUN gera_erro (INPUT par_cdcooper,
@@ -7193,7 +7193,7 @@ PROCEDURE obtem-dados-contrato:
                                                  INPUT-OUTPUT aux_dscritic).
 
                                   RETURN "NOK".
-                              END.      
+                              END.       
                       END.
                     END.
                 
@@ -7218,7 +7218,7 @@ PROCEDURE obtem-dados-contrato:
                                   OUTPUT aux_dscritic).
 
               DELETE PROCEDURE h-b1wgen0052b. 
-              
+            
               IF  RETURN-VALUE = "NOK" THEN
               DO:
                   RUN gera_erro (INPUT par_cdcooper,
@@ -7231,7 +7231,7 @@ PROCEDURE obtem-dados-contrato:
                   RETURN "NOK".
               END.    
             END.
-
+        
             ASSIGN tt-dados-ctr.nrcpfcgc = "CPF: " +
                                            STRING(STRING(crapass.nrcpfcgc,
                                                   "99999999999"),
@@ -9537,7 +9537,6 @@ PROCEDURE alterar-novo-limite:
                        crapdoc.nrdconta = par_nrdconta AND
                        crapdoc.tpdocmto = 19           AND
                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                       crapdoc.nrcpfcgc = crapass.nrcpfcgc AND
                        crapdoc.idseqttl = par_idseqttl 
                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
@@ -9564,7 +9563,6 @@ PROCEDURE alterar-novo-limite:
                                    crapdoc.flgdigit = FALSE
                                    crapdoc.dtmvtolt = par_dtmvtolt
                                    crapdoc.tpdocmto = 19
-                                   crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                    crapdoc.idseqttl = par_idseqttl.
                             VALIDATE crapdoc.    
                             
