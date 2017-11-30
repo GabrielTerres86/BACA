@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 14/09/2017
  * OBJETIVO     : Rotina para upload de arquivo remessa
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 24/11/2017 - Ajustado validação do nome do arquivo e a validação do inpessoa 
+ *                             (Douglas - Melhoria 271.3)
  * --------------
  */?>
 <?
@@ -35,6 +36,9 @@
 	$cdagectl = (isset($_POST['cdagectl'])) ? $_POST['cdagectl'] : '0';
 	$nrconven = '1';
 	$aux_remessa = 0;
+	
+	// decode do INPESSOA - Se for 1 "PF" vai continuar com 1, caso contrario eh 2 -"PJ" 
+	$inpessoa = ($inpessoa == 1) ? 1 : 2;
 
 	// retorno sera de eval ou html
 	$eval     = (isset($_POST['redirect'])) ? true : false;
@@ -151,45 +155,11 @@
 	
 	
     // Validar nome do arquivo
-	$file_name = explode("_", substr($file["name"], 0, strlen($file["name"]) - 4 ));
-	
-	// Tamanho do campo do Numero da Conta
-	/*
-	if ( strlen($file_name[1]) <> 8 ) {
-		$arrCrit[] = "Conta/DV do nome do arquivo n&atilde;o possui tamanho de 8 caracteres!";
+	// Validar nome do arquivo
+	$file_name = substr($file["name"], 0, 3);
+	if ($file_name <> "PGT") { // Não inicia com PGT
+		$arrCrit[] = "Nome do arquivo fora do padr&atilde;o!";
 	}
-	*/
-	// Verificar se o Numero da Conta eh numerico
-	/*if (is_numeric($file_name[1])) {
-		$file_name[1] = (int) $file_name[1];
-		// Numero da conta no nome do arquivo eh diferente do numero da conta logada
-		if ($file_name[1] <> $nrdconta) {
-			$arrCrit[] = "Conta/DV do nome do arquivo divergente da conta/DV do cooperado! ";
-		}
-	}*/
-	
-	// Tamanho do campo do Numero Sequencial
-	/*
-	if ( strlen($file_name[2]) <> 9 ) {
-		$arrCrit[] = "Numero Sequencial do nome do arquivo n&atilde;o possui tamanho de 9 caracteres!";
-	} */
-	
-	// Verificar se o Sequencial eh numerico
-	/*if (is_numeric($file_name[2])) {
-		$file_name[2] = (int) $file_name[2];
-		// numero da remessa esta no nome do arquivo
-		$aux_remessa = $file_name[2];
-	}*/
-	
-	if ( ($file_name[0] <> "PGT")          // Não inicia com PGT
-	     //(!is_numeric($file_name[1]))     OR  Numero da conta nao eh numerico
-		 //($file_name[1] <> $nrdconta) OR // Numero da conta no nome do arquivo eh diferente do numero da conta logada
-		 //(!is_numeric($file_name[2])) ){     // Numero Sequencial do arquivo nao eh numerico
-		)
-	{	 
-		$arrCrit[] = "Nome do arquivo fora do padr&atilde;o! ";
-	}	
-	
 	
 	// gerar erros criticos
 	if(count($arrCrit) > 0){
