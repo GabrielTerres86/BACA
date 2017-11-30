@@ -1986,6 +1986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       RAISE vr_exp_erro;
     END IF;
     
+	vr_inserlcm := FALSE; --inicializando a vr_insere para creditar apenas 1 vez
+
     -- Percorrer todos os bloqueios da conta
     FOR rw_crapblj IN cr_crapblj(vr_nrcpfcgc) LOOP
       ww_vldesblo := 0;
