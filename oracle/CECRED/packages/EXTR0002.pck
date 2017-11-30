@@ -3595,7 +3595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 09/08/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 17/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3673,8 +3673,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
   -- 
   --              29/09/2017 - Ajuste na hora de montar a campo dscedent qdo for pagamento de GPS (Tiago/Adriano)
+  --
   --              05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando 
   --                           esta em Transacao Pendente (Rafael Monteiro - Mouts)
+  -- 
+  --              17/11/2017 - No cursor cr_cred_npc, se já existir crepret com ocorrencia 6 ou 17 então
+  --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
+  --                           (SD793999 e SD795994 - AJFink)
   -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -4266,7 +4271,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           AND t.nrdconta = pr_nrdconta
           AND t.dtcredito >= pr_dtmvtolt
           AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
-          GROUP BY t.dtcredito, t.dtmvtolt, t.flgbaixa_efetiva;
+          AND not exists (
+                          --se já existir crepret com ocorrencia 6 ou 17 então
+                          --será exibido somente no cursor cr_crapret (SD793999 e SD795994)
+                          select 1
+                          from crapret ret
+                          where ret.cdcooper = t.cdcooper
+                            and ret.nrcnvcob = t.nrcnvcob
+                            and ret.nrdconta = t.nrdconta
+                            and ret.nrdocmto = t.nrdocmto
+                            AND ret.cdocorre IN (6,17)
+                         )
+        GROUP BY
+               t.dtcredito
+              ,t.dtmvtolt
+              ,t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
       --Variaveis Locais
