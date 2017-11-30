@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 05/08/2016
  * OBJETIVO     : Biblioteca de funções da tela SOL030
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 14/06/2017 - Ajuste para inclusão da opção de prazo para desligamento (Jonata - RKAM P364).
  *				  
  *				  
  * --------------
@@ -26,6 +26,7 @@ function estadoInicial() {
 
 	$('#frmCab').css({'display':'block'});
 	$('#divDetalhes').css({'display':'none'});
+	$('#divFiltro').html('');
 
 	$('#divBotoes', '#divTela').html('').css({'display':'block'});
 
@@ -109,8 +110,209 @@ function acessa_rotina() {
 		case 'A':
 			acessaCalculoSobras(cddopcao);
 			break;
+			
+		case 'P':
+		
+			consultaPrazoDesligamento();
+		
+		break;
+		
+		case 'V':
+		
+			consultaValorMinimoCapitalTed();
+		
+		break;
+		
+		case 'G':
+		
+			apresentaFormFiltro();
+			
+		break;
+		
 	}
 	return false;
+}
+
+
+function consultaPrazoDesligamento() {
+	
+	var cddopcao = $('#cddopcao','#frmCab').val();
+		
+    showMsgAguardo('Aguarde, carregando...');
+
+	// Executa script atraves de ajax
+    $.ajax({		
+        type: 'POST',
+        url: UrlSite + 'telas/sol030/consulta_prazo_desligamento.php',
+        data: {
+				cddopcao: cddopcao,
+				redirect: 'html_ajax'			
+              }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divDetalhes').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+        }				
+    });
+	
+    return false;
+	
+}
+
+function alterarPrazoDesligamento() {
+	
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	var qtddias = $('#qtddias','#frmPrazoDesligamento').val();
+	
+	if( $('#flgNoAto','#frmPrazoDesligamento').prop('checked')){
+		
+		var tpprazo = 1;
+		
+	}else if( $('#flgAposAgo','#frmPrazoDesligamento').prop('checked')){
+		
+		var tpprazo = 2;
+		
+	}
+
+	showMsgAguardo('Aguarde ...');
+
+	// Executa script atraves de ajax
+    $.ajax({		
+        type: 'POST',
+        url: UrlSite + 'telas/sol030/alterar_prazo_desligamento.php',
+        data: {
+				cddopcao : cddopcao,
+				qtddias  : qtddias,
+				tpprazo  : tpprazo,
+				redirect: 'html_ajax'			
+              }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divDetalhes').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+        }				
+    });
+	
+    return false;
+	
+}
+
+function alterarValorMinimoTedCapital() {
+	
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	var vlminimo = isNaN(parseFloat($('#vlminimo', '#frmValorMinimoCapital').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlminimo', '#frmValorMinimoCapital').val().replace(/\./g, "").replace(/\,/g, "."));
+	
+	$('input','#frmValorMinimoCapital').desabilitaCampo();
+	
+    showMsgAguardo('Aguarde, realizando opera&ccedil;&atilde;o...');
+
+	// Executa script atraves de ajax
+    $.ajax({		
+        type: 'POST',
+        url: UrlSite + 'telas/sol030/alterar_valor_minimo_ted_capital.php',
+        data: {
+				cddopcao : cddopcao,
+				vlminimo : vlminimo,
+				redirect: 'html_ajax'			
+              }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divDetalhes').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+        }				
+    });
+	
+    return false;
+	
+}
+
+function consultaValorMinimoCapitalTed() {
+	
+	var cddopcao = $('#cddopcao','#frmCab').val();
+		
+    showMsgAguardo('Aguarde, carregando...');
+
+	// Executa script atraves de ajax
+    $.ajax({		
+        type: 'POST',
+        url: UrlSite + 'telas/sol030/consulta_valor_minimo_capital_ted.php',
+        data: {
+				cddopcao: cddopcao,
+				redirect: 'html_ajax'			
+              }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divDetalhes').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+        }				
+    });
+	
+    return false;
+	
 }
 
 function acessaDataInformativo(cddopcao) {
@@ -164,6 +366,146 @@ function acessaCalculoSobras(cddopcao) {
     });
     return false;
 }
+
+
+function formataPrazoDesligamento(){
+
+	highlightObjFocus( $('#frmPrazoDesligamento') );
+	highlightObjFocus( $('#fsetDevolucaoCapital') );
+	
+	$('#fsetPrazoDesligamento').css({'border-bottom':'1px solid #777'});	
+	$('#fsetDevolucaoCapital').css({'border-bottom':'1px solid #777'});	
+	
+	//Label do fsetPrazoDesligamento
+	rFlgNoAto = $('label[for="flgNoAto"]','#frmPrazoDesligamento');
+	rFlgAposAgo = $('label[for="flgAposAgo"]','#frmPrazoDesligamento');
+	rQtddias = $('label[for="qtddias"]','#frmPrazoDesligamento');
+	
+	rFlgNoAto.addClass('radio').css({'width':'80px', 'text-align':'left'});
+	rFlgAposAgo.addClass('radio').css({'width':'80px', 'text-align':'left'});
+	rQtddias.addClass("rotulo").css('width','250px');
+		  		
+	//Campos do fsetPrazoDesligamento
+	cFlgNoAto = $('#flgNoAto','#frmPrazoDesligamento');
+	cFlgAposAgo = $('#flgAposAgo','#frmPrazoDesligamento');
+	cQtddias = $('#qtddias','#frmPrazoDesligamento');
+	
+    cFlgNoAto.css({'width':'20px','padding-left':'120px'}).habilitaCampo();
+	cFlgAposAgo.css({'width':'20px','padding-left':'120px'}).habilitaCampo();
+	cQtddias.addClass('inteiro').css({'width':'120px'}).attr('maxlength','4').habilitaCampo();
+	
+	// Percorrendo todos os links
+    $('input, select', '#frmPrazoDesligamento').each(function () {
+		
+		//Define ação para o campo
+		$(this).unbind('keypress').bind('keypress', function (e) {
+
+			$('input,select').removeClass('campoErro');
+			
+			if (divError.css('display') == 'block') { return false; }
+
+			// Se é a tecla ENTER, TAB
+			if (e.keyCode == 13 || e.keyCode == 9) {
+
+				$(this).nextAll('.campo:first').focus();
+
+				return false;
+			}
+			
+		});
+		
+    });
+
+    cFlgNoAto.unbind('change').bind('change', function () {
+
+        if ($(this).prop('checked')) {
+
+            $('#qtddias', '#frmPrazoDesligamento').val('0').desabilitaCampo();
+            
+        } else {
+
+            $('#qtddias', '#frmPrazoDesligamento').habilitaCampo();
+
+        }
+
+        return false;
+
+    });
+
+    cFlgAposAgo.unbind('change').bind('change', function () {
+
+        if ($(this).prop('checked')) {
+
+            $('#qtddias', '#frmPrazoDesligamento').habilitaCampo();
+
+        } else {
+
+            $('#qtddias', '#frmPrazoDesligamento').val('0').desabilitaCampo();
+
+        }
+
+        return false;
+
+    });
+	
+	layoutPadrao();
+	
+	$('#divDetalhes').css({'display':'block'});
+	$('#frmPrazoDesligamento').css('display','block');
+	$('#divBotoesPrazoDesligamento').css('display','block');
+	
+	cFlgNoAto.trigger("change");
+	cFlgNoAto.focus();
+	
+	return false;
+	
+}
+
+function formataValorMinimoCapital(){
+
+	highlightObjFocus( $('#frmValorMinimoCapital') );
+	
+	$('#fsetValorMinimoCapital').css({'border-bottom':'1px solid #777'});
+	
+	//Label do fsetValorMinimoCapital
+	rVlminimo = $('label[for="vlminimo"]','#frmValorMinimoCapital');
+		
+	rVlminimo.css('width','120px').addClass('rotulo');
+	
+	//Campos do fsetValorMinimoCapital
+	cVlminimo = $('#vlminimo','#frmValorMinimoCapital');
+	
+    cVlminimo.css('width','200px').addClass('moeda').habilitaCampo();
+	
+	//Define ação para o campo vlminimo
+    cVlminimo.unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $('#btConcluir','#divBotoesValorMinimoCapital').click();
+
+            return false;
+        }
+
+    });
+	
+	layoutPadrao();
+	
+	$('#divDetalhes').css({'display':'block'});
+	$('#frmValorMinimoCapital').css('display','block');
+	$('#divBotoesValorMinimoCapital').css('display','block');
+	
+	cVlminimo.focus();
+	
+	return false;
+	
+}
+
 
 function formataCalculoSobras(cddopcao) {
 	
@@ -535,4 +877,348 @@ function preencheDistribuicaoSobras() {
 
 function converteNumero (numero){
   return Number(numero.replace('.','').replace(',','.'));
+}
+
+
+function buscarContasRateioTedCapital(nriniseq,nrregist) {
+
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	var flctadst = $('#flctadst','#frmFiltro').val();
+	
+	$('select','#frmFiltro').desabilitaCampo();
+	$('#divBotoesFiltro').css('display','none');
+	
+    showMsgAguardo("Aguarde, buscando contas ...");
+
+	$('input,select').removeClass('campoErro');
+	
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/sol030/buscar_contas_rateio_ted_capital.php",
+        data: {
+			cddopcao: cddopcao,
+			flctadst: flctadst,
+			nriniseq: nriniseq,
+            nrregist: nrregist,
+			redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+        },
+        success: function (response) {
+
+			hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divDetalhes').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+			
+        }
+
+    });
+
+    return false;
+
+}
+
+
+
+function formataFormContas(tpoperac){
+
+	$('#fsetContas').css({'border-bottom':'1px solid #777'});	
+	$('#fsetDestino').css({'border-bottom':'1px solid #777'});	
+	
+	var cTodosDados = $('input[type="text"],select','#fsetDestino');
+
+	cTodosDados.desabilitaCampo();
+
+	var rNrconta_dest = $('label[for="nrconta_dest"]','#fsetDestino');
+	var rCdbanco_dest = $('label[for="cdbanco_dest"]','#fsetDestino');
+	var rCdagenci_dest = $('label[for="cdagenci_dest"]','#fsetDestino');
+	var rDsagenci_dest = $('label[for="dsagenci_dest"]','#fsetDestino');
+	var rDsbanco_dest = $('label[for="dsagenci_dest"]','#fsetDestino');
+	var rNrcpfcgc_dest = $('label[for="nrcpfcgc_dest"]','#fsetDestino');
+	var rNmtitular_dest = $('label[for="nmtitular_dest"]','#fsetDestino');
+	var rInsit_autoriza = $('label[for="insit_autoriza"]','#fsetDestino');
+
+	rNrconta_dest.css({'width':'70px'}).addClass('rotulo');
+	rNmtitular_dest.addClass('rotulo-linha');
+	rNrcpfcgc_dest.css({'width':'70px'}).addClass('rotulo');	
+	rCdbanco_dest.css({'width':'70px'}).addClass('rotulo');
+	rDsbanco_dest.css({'width':'262px'}).addClass('rotulo-linha');
+	rCdagenci_dest.css({'width':'70px'}).addClass('rotulo');
+	rDsagenci_dest.css({'width':'262px'}).addClass('rotulo-linha');
+	rInsit_autoriza.css({'width':'70px'}).addClass('rotulo-linha');
+	
+	
+	var cNrconta_dest   = $('#nrconta_dest','#fsetDestino');
+	var cNrdigito_dest   = $('#nrdigito_dest','#fsetDestino');
+	var cCdbanco_dest   = $('#cdbanco_dest','#fsetDestino');
+	var cDsbanco_dest   = $('#dsbanco_dest','#fsetDestino');
+	var cCdagenci_dest  = $('#cdagenci_dest','#fsetDestino');
+	var cDsagenci_dest  = $('#dsagenci_dest','#fsetDestino');
+	var cNrcpfcgc_dest  = $('#nrcpfcgc_dest','#fsetDestino');
+	var cNmtitular_dest =  $('#nmtitular_dest','#fsetDestino');
+	var cInsit_autoriza = $('#insit_autoriza','#fsetDestino');
+
+	cNrconta_dest.css({'width':'100px'}).attr('maxlength','10').addClass('inteiro');  
+	cNrdigito_dest.css({'width':'40px'}).attr('maxlength','1').addClass('inteiro');  
+	cCdbanco_dest.css({'width':'100px'}).attr('maxlength','5').addClass('inteiro');    
+	cDsbanco_dest.css({'width':'375px'}).attr('maxlength','55').addClass('alphanum');    
+	cCdagenci_dest.css({'width':'100px'}).attr('maxlength','5').addClass('inteiro');   
+	cDsagenci_dest.css({'width':'375px'}).attr('maxlength','55').addClass('alphanum');   
+	cNrcpfcgc_dest.css({'width':'145px'}).attr('maxlength','18').addClass('inteiro');   
+	cNmtitular_dest.css({'width':'290px'}).attr('maxlength','55').addClass('alphanum');  
+	cInsit_autoriza.css({'width':'100px'}).attr('maxlength','20').addClass('alphanum');  
+	
+	highlightObjFocus( $('#fsetDestino') );
+
+	layoutPadrao();
+		
+	return false;
+	
+}
+
+
+//Funcao para formatar a tabela com as contas demitidas
+function formataTabelaContasRateioTedCapital(){
+
+	var divRegistro = $('div.divRegistros');		
+	var tabela      = $('table',divRegistro );	
+	var linha		= $('table > tbody > tr', divRegistro );
+									
+	divRegistro.css({ 'height': '150px', 'width' : '100%'});
+			
+	var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+					
+	var arrayLargura = new Array(); 
+	    arrayLargura[0] = '20%';
+	    arrayLargura[1] = '50%';
+							
+	var arrayAlinha = new Array();
+		arrayAlinha[0] = 'right';
+		arrayAlinha[1] = 'left';
+		arrayAlinha[2] = 'right';				
+	
+	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha);
+		
+	//Seleciona o registro que é clicado
+	$('table > tbody > tr', divRegistro).click( function() {
+		
+		selecionaRegistro($(this));	
+		
+	});			
+	
+	$('table > tbody > tr', divRegistro).focus(function () {
+		
+		selecionaRegistro($(this));	
+
+	});
+
+	//Deixa o primeiro registro ja selecionado
+	$('table > tbody > tr', divRegistro).each(function (i) {
+
+		if ($(this).hasClass('corSelecao')) {
+
+			selecionaRegistro($(this));	
+
+		}
+
+	});
+	
+	$('#divRegistros').css('display','block');
+	$('#divRegistrosRodape','#divDetalhes').formataRodapePesquisa();		
+		
+	return false;
+	
+}
+
+
+function selecionaRegistro(linha){
+	
+	$('#nrconta_dest','#fsetDestino').val($('#nrconta_dest',linha).val());
+	$('#nrdigito_dest','#fsetDestino').val($('#nrdigito_dest',linha).val());
+	$('#nmtitular_dest','#fsetDestino').val($('#nmtitular_dest',linha).val());
+	$('#nrcpfcgc_dest','#fsetDestino').val($('#nrcpfcgc_dest',linha).val());
+	$('#cdbanco_dest','#fsetDestino').val($('#cdbanco_dest',linha).val());
+	$('#dsbanco_dest','#fsetDestino').val($('#dsbanco_dest',linha).val());
+	$('#cdagenci_dest','#fsetDestino').val($('#cdagenci_dest',linha).val());
+	$('#dsagenci_dest','#fsetDestino').val($('#dsagenci_dest',linha).val());
+	$('#insit_autoriza','#fsetDestino').val($('#insit_autoriza',linha).val());
+	
+	return false;
+}
+
+
+function gerarTedRateioCapital() {
+	
+	var cddopcao = $('#cddopcao','#frmCab').val();
+	
+	showMsgAguardo('Aguarde, realizando opera&ccedil;&atilde;o...');
+
+	// Executa script atraves de ajax
+    $.ajax({		
+        type: 'POST',
+        url: UrlSite + 'telas/sol030/gerar_ted_rateio_capital.php',
+        data: {
+				cddopcao : cddopcao,
+				redirect: 'html_ajax'			
+              }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divRotina').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+        }				
+    });
+	
+    return false;
+	
+}
+
+
+function formataTabelaContasTedCapital() {
+
+	var divRegistro = $('div.divRegistros','#divRotina');		
+	var tabela      = $('table',divRegistro );	
+	var linha		= $('table > tbody > tr', divRegistro );
+									
+	divRegistro.css({'height':'150px'});
+			
+	var ordemInicial = new Array();
+					
+	var arrayLargura = new Array(); 
+		arrayLargura[0] = '100px';
+		arrayLargura[1] = '500px';
+							
+	var arrayAlinha = new Array();
+		arrayAlinha[0] = 'right';
+		arrayAlinha[1] = 'left';
+		arrayAlinha[2] = 'right';
+				
+	var metodoTabela = '';
+				
+	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,metodoTabela);	
+	
+	$('#divBotoesInconsistencias').css('display','block');
+	$('#divRegistros','#divRotina').css('display','block');
+	$('#divRegistrosRodape','#frmInconsistencias').formataRodapePesquisa();		
+	
+	return false;
+	
+}
+
+function apresentaFormFiltro() {
+		
+	var cddopcao = $('#cddopcao','#frmCabMincap').val(); 
+	
+	showMsgAguardo('Aguarde...');		
+		
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/sol030/form_filtro.php', 
+		data: {			 
+			cddopcao: cddopcao,
+			redirect: 'html_ajax'			
+			}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"estadoInicial();");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divFiltro').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial()');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+		}				
+	});
+	
+	return false;
+	
+}
+
+function formataFormFiltro(){
+
+	$('#frmFiltro').css({'display':'block'});	
+	$('#fsetFiltro').css({'border-bottom':'1px solid #777'});	
+
+	var rFlctadst = $('label[for="flctadst"]','#fsetFiltro');
+
+	rFlctadst.css({'width':'140px'}).addClass('rotulo');
+		
+	var cFlctadst = $('#flctadst','#fsetFiltro');
+
+	cFlctadst.css({'width':'120px'}).addClass('alphanum').habilitaCampo();
+
+	highlightObjFocus( $('#fsetFiltro') );
+
+	$('#divBotoesFiltro').css('display','block');
+	layoutPadrao();
+		
+	cFlctadst.focus();
+	
+	return false;
+	
+}
+
+function controlaVoltar(ope){
+	
+	switch (ope){
+		
+		case '1':
+		
+			estadoInicial();
+		break;
+		
+		case '2':
+		
+			$('#divDetalhes').html('');
+			apresentaFormFiltro();
+		
+		break;
+		
+		
+	}
+	
+	return false;
+	
 }

@@ -2,7 +2,7 @@
 
 Programa: siscaixa/web/crap011.w
 Sistema : CAIXA ON-LINE                                       
-                                             Ultima atualizacao: 18/05/2017
+                                             Ultima atualizacao: 14/11/2017
    
 Dados referentes ao programa:
 
@@ -24,6 +24,8 @@ Alteracoes: 30/04/2009 -  Excluida as variaveis "v_complem4" e "v_complem5"
                          
             18/05/2017 - Incluir DO TRANSACTION para a critica do historico 707 
                          pois estava ocorrendo erro ao compilar o fonte (Lucas Ranghetti #654609)
+
+			14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital (Jonata - RKAM P364).
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -47,11 +49,18 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_deschist AS CHARACTER FORMAT "X(256)":U 
        FIELD v_doc AS CHARACTER FORMAT "X(256)":U 
        FIELD v_hist AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_aux_hist AS CHARACTER FORMAT "X(256)":U 
        FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
        FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_valor AS CHARACTER FORMAT "X(256)":U .
+       FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_aux_valor AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_origem_devol AS CHARACTER FORMAT "X(256)":U 
+	   FIELD v_tpoperacao AS CHARACTER FORMAT "X(256)":U
+	   FIELD v_conta AS CHARACTER FORMAT "X(256)":U
+	   FIELD v_sequencia_ope AS CHARACTER FORMAT "X(256)":U
+	   FIELD v_nome AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -103,6 +112,7 @@ DEFINE VARIABLE l-erro     AS LOGICAL   NO-UNDO.
 DEFINE VARIABLE l-valor    AS LOGICAL.
 DEFINE VARIABLE c-hist     AS CHARACTER NO-UNDO.
 DEF VAR l-ok AS LOG NO-UNDO.
+DEF VAR l-habilita         AS INT INIT 0 NO-UNDO.
 
 
 DEF VAR l-houve-erro    AS LOG          NO-UNDO.
@@ -134,8 +144,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.ok ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_valor 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.ok ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_valor 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.ok ab_unmap.v_conta  ab_unmap.v_sequencia_ope ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_aux_valor ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.ok ab_unmap.v_conta ab_unmap.v_sequencia_ope  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_aux_valor ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -213,6 +223,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+	 ab_unmap.v_aux_hist AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
      ab_unmap.v_msg AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -233,10 +247,39 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_aux_valor AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+	ab_unmap.v_origem_devol AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+	ab_unmap.v_tpoperacao AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+          "v_tpoperacao 1", "1":U,
+          "v_tpoperacao 2", "2":U,
+		  "v_tpoperacao 3", "3":U
+          SIZE 20 BY 3
+	ab_unmap.v_conta AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+	ab_unmap.v_sequencia_ope AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+	ab_unmap.v_nome AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
          SIZE 80 BY 20.
+
 
 
 /* *********************** Procedure Settings ************************ */
@@ -268,11 +311,18 @@ DEFINE FRAME Web-Frame
           FIELD v_deschist AS CHARACTER FORMAT "X(256)":U 
           FIELD v_doc AS CHARACTER FORMAT "X(256)":U 
           FIELD v_hist AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_aux_hist AS CHARACTER FORMAT "X(256)":U 
           FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
           FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_aux_valor AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_origem_devol AS CHARACTER FORMAT "X(256)":U 
+		  FIELD v_tpoperacao AS CHARACTER FORMAT "X(256)":U
+		  FIELD v_conta AS CHARACTER FORMAT "X(256)":U  
+		  FIELD v_sequencia_ope AS CHARACTER FORMAT "X(256)":U  
+		  FIELD v_nome AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -337,6 +387,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_hist IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR fill-in ab_unmap.v_aux_hist IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* SETTINGS FOR fill-in ab_unmap.v_msg IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_operador IN FRAME Web-Frame
@@ -346,7 +398,19 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_senha IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valor IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */		   
+/* SETTINGS FOR fill-in ab_unmap.v_aux_valor IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
+/* SETTINGS FOR fill-in ab_unmap.v_origem_devol IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
+/* SETTINGS FOR FILL-IN ab_unmap.v_tpoperacao IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_conta IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_sequencia_ope IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
+/* SETTINGS FOR FILL-IN ab_unmap.v_nome IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
@@ -424,6 +488,8 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_hist":U,"ab_unmap.v_hist":U,ab_unmap.v_hist:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
+    ("v_aux_hist":U,"ab_unmap.v_aux_hist":U,ab_unmap.v_aux_hist:HANDLE IN FRAME {&FRAME-NAME}).	
+  RUN htmAssociate
     ("v_msg":U,"ab_unmap.v_msg":U,ab_unmap.v_msg:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_operador":U,"ab_unmap.v_operador":U,ab_unmap.v_operador:HANDLE IN FRAME {&FRAME-NAME}).
@@ -433,6 +499,19 @@ PROCEDURE htmOffsets :
     ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_aux_valor":U,"ab_unmap.v_aux_valor":U,ab_unmap.v_aux_valor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_origem_devol":U,"ab_unmap.v_origem_devol":U,ab_unmap.v_origem_devol:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tpoperacao":U,"ab_unmap.v_tpoperacao":U,ab_unmap.v_tpoperacao:HANDLE IN FRAME {&FRAME-NAME}).
+RUN htmAssociate
+    ("v_conta":U,"ab_unmap.v_conta":U,ab_unmap.v_conta:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_sequencia_ope":U,"ab_unmap.v_sequencia_ope":U,ab_unmap.v_sequencia_ope:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_nome":U,"ab_unmap.v_nome":U,ab_unmap.v_nome:HANDLE IN FRAME {&FRAME-NAME}).
+
 END PROCEDURE.
 
 
@@ -518,7 +597,8 @@ PROCEDURE process-web-request :
    * check particular input fields (using GetField in web-utilities-hdl). 
    * Here we look at REQUEST_METHOD. 
    */
-  IF REQUEST_METHOD = "POST":U THEN DO:
+	IF REQUEST_METHOD = "POST":U THEN 
+		DO:
     /* STEP 1 -
      * Copy HTML input field values to the Progress form buffer. */
     RUN inputFields.
@@ -541,10 +621,14 @@ PROCEDURE process-web-request :
          {include/assignfields.i} /* Colocado a chamada do assignFields dentro ~da i~nclude */
 
 
+
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-     IF  get-value("cancela") <> "" THEN DO:
-         ASSIGN v_hist = ""  
+			IF  get-value("cancela") <> "" THEN 
+				DO:  
+         ASSIGN v_conta   = ""
+		        v_hist = ""  
+						v_aux_hist = ""  
                 v_deschist = ""  
                 v_chistcont = ""
                 v_cdeb = "" 
@@ -553,25 +637,37 @@ PROCEDURE process-web-request :
                 v_complem2 = " "
                 v_complem3 = " "
                 v_valor = ""
+                 v_aux_valor = ""
+						v_origem_devol = ""
                 v_digita = 1
                 vh_foco = "7"
                 v_doc = " "
                 v_cod = ""
-                v_senha = "".
+                v_senha = ""
+				v_nome       = ""
+						v_tpoperacao = "1"
+						v_sequencia_ope = "1".
      END.
-     ELSE DO:
+			ELSE 
+				DO:  
+					 IF (v_tpoperacao = "2"      OR
+						 v_tpoperacao = "3"   ) then
+						 ASSIGN v_hist = v_aux_hist.												
 
          RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                             INPUT v_pac,
                                             INPUT v_caixa).
     
      
-         IF RETURN-VALUE = "NOK" THEN DO:
+					 IF RETURN-VALUE = "NOK" THEN
+						DO:
              ASSIGN v_cod = ""
                     v_senha = "".
+						    
              {include/i-erro.i}
          END.
-         ELSE DO:
+					 ELSE 
+					    DO:
 
              RUN dbo/b1crap11.p PERSISTENT SET h-b1crap11.
 
@@ -582,16 +678,17 @@ PROCEDURE process-web-request :
                                                           INPUT int(v_hist)).
 
 
-             IF RETURN-VALUE = "NOK" THEN  DO:
+							 IF RETURN-VALUE = "NOK" THEN  
+							    DO:
                 {include/i-erro.i}
                 ASSIGN v_cod = ""
                        v_senha = "".
                 ASSIGN vh_foco = "7"
                        ok = ''.
              END.
-             ELSE DO:        
-
-                 RUN retorna-valor-historico IN h-b1crap11 (INPUT v_coop,
+							 ELSE 
+							    DO:        
+				 RUN retorna-valor-historico IN h-b1crap11 (INPUT v_coop,
                                                             INPUT int(v_pac),
                                                             INPUT int(v_hist),
                                                             OUTPUT v_ccred,
@@ -600,36 +697,89 @@ PROCEDURE process-web-request :
                                                             OUTPUT v_digita,
                                                             OUTPUT v_deschist).
                 
-                 IF RETURN-VALUE = "NOK" THEN  DO:
+									 IF RETURN-VALUE = "NOK" THEN 
+   									     DO:
                      ASSIGN vh_foco = "7"
                             ok = ''.
                      ASSIGN v_cod = ""
                             v_senha = "".
                     {include/i-erro.i}
                  END.
-                 ELSE DO:
+									ELSE 
+										DO: 
+										
+											IF (v_tpoperacao = "2"      OR
+											    v_tpoperacao = "3"   ) AND
+												v_sequencia_ope = "1"  THEN
+												DO:
+													ASSIGN 	v_sequencia_ope = "2".
+												
+												END.
+											ELSE IF (v_tpoperacao = "2"      OR
+											         v_tpoperacao = "3"   ) AND
+												     v_sequencia_ope = "2"  THEN
+												DO: 
+													 
+													 RUN valida-lancamento-capital IN h-b1crap11(INPUT  v_coop,
+																								 INPUT  v_conta	,
+																								 INPUT  v_operador,
+																								 INPUT  int(v_pac),
+																								 INPUT  int(v_caixa),
+																								 INPUT  int(v_hist),
+																								 OUTPUT v_valor,
+																								 OUTPUT v_origem_devol,
+																								 OUTPUT v_nome).
+													
+													 IF RETURN-VALUE = "NOK" THEN  
+														DO:
+															{include/i-erro.i}
+															ASSIGN v_cod = ""
+																   v_senha = "".
+															ASSIGN vh_foco = "7"
+																   ok = ''.
 
+														END.
+													ELSE
+														DO:	ASSIGN v_sequencia_ope = "3".
+																														
+															IF v_origem_devol = "1" THEN
+															    DO:
+																	ASSIGN l-habilita = 1.
+																	
+																END.
+															ELSE
+															    DO:
+																	ASSIGN l-habilita = 2.
+																																			
+																END.
+																													
+														END.
+														
+												END.
+											ELSE															
+											IF get-value("sok") <> "" THEN 
+												DO:												 	
+                         
+                        
                  ASSIGN vh_foco = "12".           
 
-                 IF  get-value("ok") <> "" THEN DO:
-
                      ASSIGN OK = ''.
-                     RUN valida-existencia-boletim 
-                             IN h-b1crap11 (INPUT v_coop,
+													
+													 RUN valida-existencia-boletim IN h-b1crap11(INPUT v_coop,
                                             INPUT v_operador,
                                             INPUT INT(v_pac),
                                             INPUT INT(v_caixa),
                                             INPUT INT(v_hist),
                                             INPUT INT(v_doc),
-                                            INPUT DEC(v_valor)).
-                    IF  RETURN-VALUE = "NOK" THEN DO:
+                                            INPUT DEC(v_aux_valor)).
+													IF  RETURN-VALUE = "NOK" tHEN 
+														DO:
                          ASSIGN v_cod = ""
                                 v_senha = "".
                          {include/i-erro.i}
                     END.
-                    ELSE DO:
-
-                     
+													ELSE 
+														DO:
                      ASSIGN l-houve-erro = NO.
 
                      DO TRANSACTION:
@@ -640,7 +790,8 @@ PROCEDURE process-web-request :
                                                INPUT INT(v_pac),
                                                INPUT INT(v_caixa),
                                                INPUT INT(v_hist),
-                                               INPUT DEC(v_valor),
+                                               INPUT DEC(v_aux_valor),
+																					   INPUT DEC(v_conta),
                                                INPUT v_complem1,
                                                INPUT v_complem2,
                                                INPUT v_complem3,
@@ -650,16 +801,19 @@ PROCEDURE process-web-request :
                                                INPUT v_ccred,
                                                INPUT v_chistcon,
                                                INPUT v_doc,
+																					   INPUT v_origem_devol,
                                                OUTPUT p-pg,
                                                OUTPUT p-literal,
                                                OUTPUT p-ult-sequencia).
 
-                             IF RETURN-VALUE = "NOK" THEN DO:
+																 IF RETURN-VALUE = "NOK" THEN 
+																	DO:
                                  ASSIGN l-houve-erro = YES.
 
                                  FOR EACH w-craperr:
                                      DELETE w-craperr.
                                  END.
+																		 
                                  FOR EACH craperr NO-LOCK WHERE
                                           craperr.cdcooper = 
                                                   crapcop.cdcooper         AND
@@ -682,11 +836,13 @@ PROCEDURE process-web-request :
                                             w-craperr.erro       =
                                             craperr.erro.
                                  END.
+																		
                                  UNDO.
                              END.     
                       END.  /* Do transaction */
 
-                      IF  l-houve-erro = YES  THEN DO:
+															IF  l-houve-erro = YES  THEN
+																DO:
                           ASSIGN vh_foco = "18".            
                           ASSIGN v_cod = ""
                                  v_senha = "".
@@ -710,15 +866,19 @@ PROCEDURE process-web-request :
                                          craperr.erro       = w-craperr.erro.
                                   VALIDATE craperr.
                               END.
+																	
                               {include/i-erro.i}
                       END.
 
-                      IF  l-houve-erro = NO THEN DO:   
+															IF  l-houve-erro = NO THEN 
+																DO:   
 
-   					              IF v_hist <> '707' THEN DO:
+																	IF v_hist <> '707' THEN 
+																		DO:
  
                               IF  v_digita = 0  /* OR 
-                               v_hist = '746'  */ THEN DO:
+																				v_hist = '746'  */ THEN 
+																				DO:
                               
                                {&OUT}
                                 '<script>window.open("autentica.html?v_plit="
@@ -727,7 +887,8 @@ PROCEDURE process-web-request :
                                  "&v_prec=" + "NO"  + "&v_psetcook=" + "yes","waut","width=250,height=14,scrollbars=auto,alwaysRaised=true")
                                    </script>'.
                                END.
-                               ELSE DO:
+																			ELSE 
+																				DO:
                                   {&OUT}
 
                                      '<script>window.open("autentica.html?v_plit="
@@ -737,7 +898,8 @@ PROCEDURE process-web-request :
                                        </script>'.
                                END.      
                           END.
-                          ELSE DO:
+																	ELSE 
+																		DO:
 
                               DO  TRANSACTION:
                                 
@@ -753,7 +915,7 @@ PROCEDURE process-web-request :
                                       DELETE craperr.
                                   END.
 
-                                  
+                            
                                   CREATE craperr.
                                   ASSIGN craperr.cdcooper   = crapcop.cdcooper
                                          craperr.cdagenci   = INTE(v_pac)
@@ -778,23 +940,32 @@ PROCEDURE process-web-request :
                                      v_complem2 = " "
                                      v_complem3 = " "
                                      v_valor = ""
+                                     v_aux_valor = ""
                                      v_digita = 1
                                      vh_foco = "7"
                                      v_cod = ""
-                                     v_senha = "".
+                                     v_senha = ""
+                                     v_nome = ""
+                                     v_conta = "".
                          END.
                      
                      END. 
                  END.
                 
+											
                  END.
              END.
+								
+						END.
+						
              DELETE PROCEDURE h-b1crap11.
-         END.
+						
      END.
 
      DELETE PROCEDURE h-b1crap00.
-     IF l-erro AND v_hist <> "" THEN DO:
+
+			IF l-erro AND v_hist <> "" THEN 
+				DO:
          RUN dbo/b1crap11.p PERSISTENT SET h-b1crap11.
          RUN retorna-valor-historico IN h-b1crap11 (INPUT v_coop,
                                                     INPUT int(v_pac),
@@ -808,7 +979,8 @@ PROCEDURE process-web-request :
          ASSIGN l-valor = NO.
  
          
-         IF RETURN-VALUE = "NOK" THEN  DO:
+					 IF RETURN-VALUE = "NOK" THEN  
+						DO:
             {include/i-erro.i}
          END.
      END.
@@ -839,6 +1011,25 @@ PROCEDURE process-web-request :
      * Enable objects that should be enabled. */
     RUN enableFields.
 
+    IF (v_tpoperacao = "2"      OR
+		    v_tpoperacao = "3"   ) THEN
+        DO:
+		     
+			      DISABLE v_complem1 WITH FRAME {&FRAME-NAME}.
+            DISABLE v_complem2 WITH FRAME {&FRAME-NAME}.
+            DISABLE v_complem3 WITH FRAME {&FRAME-NAME}.
+                  ENABLE  v_doc      WITH FRAME {&FRAME-NAME}.
+               
+            IF  INT(v_hist) = 701  OR INT(v_hist) = 702  OR
+                INT(v_hist) = 733  OR INT(v_hist)= 734   OR
+                INT(v_hist) = 1152 OR INT(v_hist) = 1153 THEN
+                ENABLE  v_cod v_senha WITH FRAME {&FRAME-NAME}.
+            ELSE
+                DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.
+        
+        END.
+    ELSE 
+       DO:
     IF v_digita = 0  /* OR 
        v_hist = '746' */  THEN
        DO:
@@ -858,12 +1049,30 @@ PROCEDURE process-web-request :
     ELSE
         DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.
 
-
+       END.
 
     /* STEP 4.2c -
      * OUTPUT the Progress form buffer to the WEB stream. */
     RUN outputFields.
     
+			IF l-habilita = 1 THEN DO:
+				{&OUT}
+					   '<script language="JavaScript"> ' SKIP
+						 'document.form1.v_hist.disabled=true; ' SKIP
+						 'document.form1.v_valor.disabled=true; ' SKIP
+						'</script>' SKIP.
+			END.
+			ELSE IF l-habilita = 2 THEN
+				DO:
+					{&OUT}
+						   '<script language="JavaScript"> ' SKIP
+							 'document.form1.v_hist.disabled=true; ' SKIP
+							 'document.form1.v_valor.disabled=true; ' SKIP
+							'</script>' SKIP.
+							
+				END.
+				
+			
   END. /* Form has been submitted. */
  
   /* REQUEST-METHOD = GET */ 
@@ -875,7 +1084,9 @@ PROCEDURE process-web-request :
     /* STEP 1 -
      * Open the database or SDO query and and fetch the first record. */ 
     RUN findRecords.
-    ASSIGN vh_foco = "7".
+    ASSIGN vh_foco = "7"
+	       v_sequencia_ope = "1"
+		   v_origem_devol = "".
     
      
     /* Return the form again. Set data values, display them, and output them

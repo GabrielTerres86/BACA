@@ -75,9 +75,13 @@
                18/08/2015 - Ajuste na data limite de pagto para boletos do 
                             convenio "EMPRESTIMO" - Projeto 210 (Rafael).
                
-                           06/10/2016 - Incluido tratamento de crapcco.dsorgarq = ACORDO”,
+               06/10/2016 - Incluido tratamento de crapcco.dsorgarq = ACORDO”,
                             na procedure p_cria_titulo, Projeto 302 (Jean Michel).
+
                29/06/2017 - Fonte convertido para Oracle - Projeto 340 (Rafael)
+
+			   24/11/2017 - Comentar chamada de fimprg.p para evitar log no proc_batch
+                            com critica 145 (SD 801299 AJFink)
  ........................................................................... */
 
 { includes/var_batch.i "NEW" }
@@ -158,5 +162,6 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/crps618.log").
-                  
+/*                  
 RUN fontes/fimprg.p.
+*/
