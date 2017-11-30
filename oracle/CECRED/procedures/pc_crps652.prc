@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 14/11/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 28/11/2017
 
    Dados referentes ao programa:
 
@@ -209,6 +209,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             (Jonata - SD 742850). 
                             
                14/11/2017 - Log de trace da exception others (Carlos)
+
+               28/11/2017 - #802506 Passada a execução de pc_valida_fimprg para o final do programa (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -5371,12 +5373,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        --Zerar tabelas de memoria auxiliar
        pc_limpa_tabela;
 
-       -- Processo OK, devemos chamar a fimprg
-       btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_stprogra => pr_stprogra);
-
        -- M432 - envio Cyber. no fim do processo, chamar a carga de importação cyber
        CYBE0001.pc_importa_arquivo_cyber(pr_dtmvto => SYSDATE
                                         ,pr_des_reto => vr_typ_saida
@@ -5387,6 +5383,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        --   vr_dscritic := 'Erro na chamada da importacao arquivo CYBER: ' || vr_dscritic;
        --   raise vr_exc_fimprg;
        --end if;
+
+       -- Processo OK, devemos chamar a fimprg
+       btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
+                                 ,pr_cdprogra => vr_cdprogra
+                                 ,pr_infimsol => pr_infimsol
+                                 ,pr_stprogra => pr_stprogra);
 
        --Salvar informacoes no banco de dados
        COMMIT;

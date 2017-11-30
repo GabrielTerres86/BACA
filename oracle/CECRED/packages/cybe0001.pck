@@ -162,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
     Programa: CYBE0001                        Antiga: generico/procedures/b1wgen0168.p
     Autor   : James Prust Junior
-    Data    : Agosto/2013                     Ultima Atualizacao: 26/04/2017
+    Data    : Agosto/2013                     Ultima Atualizacao: 29/11/2017
   
     Dados referentes ao programa:
   
@@ -197,6 +197,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
 
+                29/11/2017 - #802506 Retirado o commit do procedimento pc_importa_arquivo_cyber pois o mesmo executa
+                             dentro do programa pc_crps652; limpeza do diretório passada para o final do processo 
+                             para que não fiquem no servidor; no script SincronizaArquivosCyber.sh, inclusão do 
+                             comando chmod 666 no arquivo .zip para que possa ser excluido pelo usuario oracle no 
+                             job (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
     --Tabela de Memoria com ROWID para log (usado no grava_dados)
@@ -6167,9 +6172,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       END;
     END pc_atualiza_crapalt;
 
-  PROCEDURE pc_importa_arquivo_cyber(pr_dtmvto     IN DATE      --> Data de movimento
-                     ,pr_des_reto   OUT VARCHAR2      --> descrição do retorno ("OK" ou "NOK")
-                     ,pr_des_erro   out VARCHAR2) IS   --> descrição do erro
+  PROCEDURE pc_importa_arquivo_cyber(pr_dtmvto     IN DATE          --> Data de movimento
+                                    ,pr_des_reto   OUT VARCHAR2     --> descrição do retorno ("OK" ou "NOK")
+                                    ,pr_des_erro   out VARCHAR2) IS --> descrição do erro
      /*
    Programa: pc_importa_arquivo_cyber
      Sistema : Conta-Corrente - Cooperativa de Credito
@@ -6186,18 +6191,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
          A chamada da rotina será efetuada diariamente através de DB JOB, sempre após a atualização do CYBER;
 
 		 20/04/2017 - colocado tratamento de excecao no INSERT da crapcyc, estava abortando o programa - Jean (Mout´s)
+
    */
      vr_exc_erro    EXCEPTION;
      vr_handle_log  utl_file.file_type;
      rw_crapdat     btch0001.cr_crapdat%rowtype;
      vr_des_erro    varchar2(2000);
-     vr_des_log      varchar2(2000);
+     vr_des_log     varchar2(2000);
      vr_nm_arquivo  varchar2(2000);
      vr_nm_arqlog   varchar2(2000);
-     vr_nm_direto    varchar2(2000);
-     vr_linha_arq    varchar2(110);
+     vr_nm_direto   varchar2(2000);
+     vr_linha_arq   varchar2(110);
      vr_inicio      boolean := true;
-     vr_gerou_log    boolean := false;
+     vr_gerou_log   boolean := false;
      vr_flgjudic    number;
      vr_flextjud    number;
      vr_flgehvip    number;
@@ -6230,6 +6236,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
      vr_nrindice INTEGER;
      vr_bkpndice integer;
      vr_contarqv integer;
+     
+     vr_idprglog NUMBER;
 
      --Tabela para armazenar arquivos lidos
      vr_tab_arqzip gene0002.typ_split;
@@ -6254,175 +6262,184 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                and  CDACESSO like 'CYBER_CD_SIGLA%'
                and  t.dsvlrprm = rtrim(pr_cdassessoria);
 
+  PROCEDURE remover_dir(pr_diretorio VARCHAR2) IS BEGIN
+    DECLARE
+      vr_typ_saida VARCHAR2(1000);
+      vr_des_erro  VARCHAR2(4000);
+    BEGIN
+      -- Remove os arquivos
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                          ,pr_des_comando => 'rm '||pr_diretorio||'/*.txt 1> /dev/null'
+                          ,pr_typ_saida   => vr_typ_saida
+                          ,pr_des_saida   => vr_des_erro);
+
+      -- Remover o diretório
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                          ,pr_des_comando => 'rmdir '||pr_diretorio||' 1> /dev/null'
+                          ,pr_typ_saida   => vr_typ_saida
+                          ,pr_des_saida   => vr_des_erro);
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_compleme => vr_des_erro);
+    END;
+  END;
+
   BEGIN
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
                FETCH btch0001.cr_crapdat INTO rw_crapdat;
                CLOSE btch0001.cr_crapdat;
 
-    vr_nm_arquivo := to_char(pr_dtmvto, 'YYYYMMDD_HH24MISS') || '_contratos_distrib_out.txt';
     vr_nm_arqlog  := 'LOG_' || to_char(pr_dtmvto, 'YYYYMMDD_HH24MISS') || '_contratos_distrib.txt';
 
     vr_nm_direto  := gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
                                           ,pr_cdcooper => 3
                                           ,pr_nmsubdir => '/cyber/recebe/');
-    vr_nm_arquivo := vr_nm_direto || '/' || vr_nm_arquivo;
+
     vr_nm_arqlog  := vr_nm_direto || '/' || vr_nm_arqlog;
     --==================================================================================
     -- TRATAR ARQUIVO ZIP
     --==================================================================================
     vr_nmtmpzip:= '%contratos_distrib_out.zip';
 
-       /* Vamos ler todos os arquivos .zip */
-       gene0001.pc_lista_arquivos(pr_path     => vr_nm_direto
-                                 ,pr_pesq     => vr_nmtmpzip
-                                 ,pr_listarq  => vr_listadir
-                                 ,pr_des_erro => vr_des_erro);
+    /* Vamos ler todos os arquivos .zip */
+    gene0001.pc_lista_arquivos(pr_path     => vr_nm_direto
+                             ,pr_pesq     => vr_nmtmpzip
+                             ,pr_listarq  => vr_listadir
+                             ,pr_des_erro => vr_des_erro);
 
-       -- se ocorrer erro ao recuperar lista de arquivos registra no log
-       IF trim(vr_des_erro) IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                    || vr_cdprogra || ' --> '
-                                                    || vr_des_erro);
-       END IF;
+    -- se ocorrer erro ao recuperar lista de arquivos registra no log
+    IF trim(vr_des_erro) IS NOT NULL THEN
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                               ,pr_ind_tipo_log => 2 -- Erro tratato
+                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                || vr_cdprogra || ' --> '
+                                                || vr_des_erro);
+    END IF;
 
-       --Carregar a lista de arquivos na temp table
-       vr_tab_arqzip:= gene0002.fn_quebra_string(pr_string => vr_listadir);
+    --Carregar a lista de arquivos na temp table
+    vr_tab_arqzip:= gene0002.fn_quebra_string(pr_string => vr_listadir);
 
-       --Filtrar os arquivos da lista
-       IF vr_tab_arqzip.count > 0 THEN
-         vr_nrindice:= vr_tab_arqzip.first;
-         -- carrega informacoes na cratqrq
-         WHILE vr_nrindice IS NOT NULL LOOP
-           --Filtrar a data apartir do Nome arquivo
-           vr_nmtmparq:= SUBSTR(vr_tab_arqzip(vr_nrindice),1,8);
-           --Transformar em Data
-           vr_dtarquiv:= TO_DATE(vr_nmtmparq,'YYYYMMDD');
-           --Data Arquivo entre a data anterior e proximo dia util
-           IF vr_dtarquiv > rw_crapdat.dtmvtoan AND vr_dtarquiv < rw_crapdat.dtmvtopr THEN
-             --Incrementar quantidade arquivos
-             vr_contarqv:= vr_tab_arqzip.count + 1;
-             --Proximo Registro
-             vr_nrindice:= vr_tab_arqzip.next(vr_nrindice);
-           ELSE
-             --Diminuir quantidade arquivos
-             vr_contarqv:= vr_tab_arqzip.count - 1;
-             --Salvar Proximo Registro
-             vr_bkpndice:= vr_tab_arqzip.next(vr_nrindice);
-             --Retirar o arquivo da lista
-             vr_tab_arqzip.DELETE(vr_nrindice);
-             --Setar o proximo (backup) no indice
-             vr_nrindice:= vr_bkpndice;
-           END IF;
-         END LOOP;
-       END IF;
+    --Filtrar os arquivos da lista
+    IF vr_tab_arqzip.count > 0 THEN
+      vr_nrindice:= vr_tab_arqzip.first;
+      -- carrega informacoes na cratqrq
+      WHILE vr_nrindice IS NOT NULL LOOP
+        --Filtrar a data apartir do Nome arquivo
+        vr_nmtmparq:= SUBSTR(vr_tab_arqzip(vr_nrindice),1,8);
+        --Transformar em Data
+        vr_dtarquiv:= TO_DATE(vr_nmtmparq,'YYYYMMDD');
+        --Data Arquivo entre a data anterior e proximo dia util
+        IF vr_dtarquiv > rw_crapdat.dtmvtoan AND vr_dtarquiv < rw_crapdat.dtmvtopr THEN
+          --Incrementar quantidade arquivos
+          vr_contarqv:= vr_tab_arqzip.count + 1;
+          --Proximo Registro
+          vr_nrindice:= vr_tab_arqzip.next(vr_nrindice);
+        ELSE
+          --Diminuir quantidade arquivos
+          vr_contarqv:= vr_tab_arqzip.count - 1;
+          --Salvar Proximo Registro
+          vr_bkpndice:= vr_tab_arqzip.next(vr_nrindice);
+          --Retirar o arquivo da lista
+          vr_tab_arqzip.DELETE(vr_nrindice);
+          --Setar o proximo (backup) no indice
+          vr_nrindice:= vr_bkpndice;
+        END IF;
+      END LOOP;
+    END IF;
 
-       -- Buscar Primeiro arquivo da temp table
-       vr_nrindice:= vr_tab_arqzip.FIRST;
-       --Processar os arquivos lidos
-       WHILE vr_nrindice IS NOT NULL LOOP
-         --Nome Arquivo zip
-         vr_nmarqzip:= vr_tab_arqzip(vr_nrindice);
+    -- Buscar Primeiro arquivo da temp table
+    vr_nrindice:= vr_tab_arqzip.FIRST;
+    --Processar os arquivos lidos
+    WHILE vr_nrindice IS NOT NULL LOOP
+      --Nome Arquivo zip
+      vr_nmarqzip:= vr_tab_arqzip(vr_nrindice);
 
-         --Nome do arquivo sem extensao
-         vr_nmtmparq:= SUBSTR(vr_nmarqzip,1,LENGTH(vr_nmarqzip)-4);
+      --Nome do arquivo sem extensao
+      vr_nmtmparq:= SUBSTR(vr_nmarqzip,1,LENGTH(vr_nmarqzip)-4);
 
-         /* Montar Comando para eliminar arquivos do diretorio */
-         vr_comando:= 'rm '||vr_nm_direto ||'/'||vr_nmtmparq||'/*.txt 1> /dev/null';
+      /*  Executar Extracao do arquivo zip */
+      vr_comando:= 'unzip '||vr_nm_direto||'/'||vr_nmarqzip ||' -d ' || vr_nm_direto||'/'||vr_nmtmparq;
 
-         --Executar o comando no unix
-         GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
-                              ,pr_typ_saida   => vr_typ_saida
-                              ,pr_des_saida   => vr_des_erro);
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
 
-         /* Remover o diretorio caso exista */
-         vr_comando:= 'rmdir '||vr_nm_direto||'/'||vr_nmtmparq||' 1> /dev/null';
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_des_erro := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+        RAISE vr_exc_erro;
+      END IF;
 
-         --Executar o comando no unix
-         GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
-                              ,pr_typ_saida   => vr_typ_saida
-                              ,pr_des_saida   => vr_des_erro);
+      /* Lista todos os arquivos .txt do diretorio criado */
+      vr_endarqtxt := vr_nm_direto||'/'||vr_nmtmparq;
 
-         /*  Executar Extracao do arquivo zip */
-         vr_comando:= 'unzip '||vr_nm_direto||'/'||vr_nmarqzip ||' -d ' || vr_nm_direto||'/'||vr_nmtmparq;
+      --Buscar todos os arquivos extraidos na nova pasta
+      gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
+                                ,pr_pesq     => '%contratos_distrib_out.txt'
+                                ,pr_listarq  => vr_listadir
+                                ,pr_des_erro => vr_dscritic);
 
-         --Executar o comando no unix
-         GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
-                              ,pr_typ_saida   => vr_typ_saida
-                              ,pr_des_saida   => vr_des_erro);
+      -- se ocorrer erro ao recuperar lista de arquivos registra no log
+      IF trim(vr_dscritic) IS NOT NULL THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic);
+      END IF;
 
-         --Se ocorreu erro dar RAISE
-         IF vr_typ_saida = 'ERR' THEN
-           vr_des_erro := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
-           RAISE vr_exc_erro;
-         END IF;
+      --Carregar a lista de arquivos na temp table
+      vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
 
-         /* Lista todos os arquivos .txt do diretorio criado */
-         vr_endarqtxt:= vr_nm_direto||'/'||vr_nmtmparq;
+      --Se possuir arquivos no diretorio
+      IF vr_tab_arqtxt.COUNT > 0 THEN
 
-         --Buscar todos os arquivos extraidos na nova pasta
-         gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
-                                   ,pr_pesq     => '%contratos_distrib_out.txt'
-                                   ,pr_listarq  => vr_listadir
-                                   ,pr_des_erro => vr_dscritic);
+        --Selecionar primeiro arquivo
+        vr_idx_txt:= vr_tab_arqtxt.FIRST;
+        --Percorrer todos os arquivos lidos
+        WHILE vr_idx_txt IS NOT NULL LOOP
 
-         -- se ocorrer erro ao recuperar lista de arquivos registra no log
-         IF trim(vr_dscritic) IS NOT NULL THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic);
-         END IF;
+          --Nome do arquivo
+          vr_nm_arquivo := vr_tab_arqtxt(vr_idx_txt);
+          --Montar Mensagem para log
+          vr_cdcritic:= 219;
+          --Buscar mensagem
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          --Imprimir mensagem no log
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || vr_dscritic || ' --> '||vr_nm_arquivo);
+          vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
+        END LOOP;
 
-         --Carregar a lista de arquivos na temp table
-         vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
+      END IF;
 
-         --Se possuir arquivos no diretorio
-         IF vr_tab_arqtxt.COUNT > 0 THEN
+      -- modifica nome do arquivo zip para "processado".
+      vr_comando := 'mv '||vr_nm_direto ||'/'||vr_nmtmparq||'.zip '||
+                    vr_nm_direto ||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_dscritic);
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic:= 'Nao foi possivel executar comando unix. ' || vr_dscritic || 
+                      ' Comando: ' || vr_comando;
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'E',
+                               PR_CDPROGRAMA => vr_cdprogra, 
+                               pr_dsmensagem => vr_dscritic,
+                               PR_IDPRGLOG   => vr_idprglog);
+        RAISE vr_exc_erro;
+      END IF;
 
-           --Selecionar primeiro arquivo
-           vr_idx_txt:= vr_tab_arqtxt.FIRST;
-           --Percorrer todos os arquivos lidos
-           WHILE vr_idx_txt IS NOT NULL LOOP
-
-             --Nome do arquivo
-             vr_nm_arquivo := vr_tab_arqtxt(vr_idx_txt);
-             --Montar Mensagem para log
-             vr_cdcritic:= 219;
-             --Buscar mensagem
-             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-             --Imprimir mensagem no log
-             btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic || ' --> '||vr_nm_arquivo);
-             vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
-           end loop;
-
-         end if;
-         -- modifica nome do arquivo zip para "processado".
-           vr_comando:= 'mv '||vr_nm_direto ||'/'||vr_nmtmparq||'.zip '||
-                        vr_nm_direto ||'/'||vr_nmtmparq||'_processado.pro 1> /dev/null';
-           --Executar o comando no unix
-           GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                                ,pr_des_comando => vr_comando
-                                ,pr_typ_saida   => vr_typ_saida
-                                ,pr_des_saida   => vr_dscritic);
-           --Se ocorreu erro dar RAISE
-           IF vr_typ_saida = 'ERR' THEN
-             vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
-             RAISE vr_exc_erro;
-           END IF;
-
-         --Proximo arquivo zip da/ lista
-         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
-     end loop;
+      --Proximo arquivo zip da/ lista
+      vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
+    END LOOP;
     --================================================================================
 
     vr_nm_arquivo := vr_endarqtxt || '/' || vr_nm_arquivo;
@@ -6458,21 +6475,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     vr_nrlinha := 1;
 
     IF utl_file.IS_OPEN(vr_input_file) then
-       BEGIN
-         LOOP
-           vr_gerou_log := false;
+      BEGIN
+        LOOP
+          vr_gerou_log := false;
 
-           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file
-                                       ,pr_des_text => vr_linha_arq);
-
-
+          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file
+                                      ,pr_des_text => vr_linha_arq);
 
           -- Verifica registro Header
-          if  vr_inicio
-          and substr(vr_linha_arq, 1, 1) <> 'H' then -- nao possui registro Header
-              vr_des_erro := 'Layout do arquivo inválido, não possui registro Header';
-              raise vr_exc_erro;
-          end if;
+          IF vr_inicio
+            and substr(vr_linha_arq, 1, 1) <> 'H' then -- nao possui registro Header
+            vr_des_erro := 'Layout do arquivo inválido, não possui registro Header';
+            raise vr_exc_erro;
+          END IF;
 
          /* -- Verifica data de geração
           if vr_inicio
@@ -6594,13 +6609,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             end if;
     
             /* Regra 2: Se for contrato judicial ou VIP não permite carregar, mas não gera alerta */
-            if vr_flgjudic = 1
-            or vr_flgehvip = 1 then
-                vr_gerou_log := true;
+            if vr_flgjudic = 1 or 
+               vr_flgehvip = 1 then
+              vr_gerou_log := true;
             end if;
 
             if  not vr_gerou_log  --vr_des_log  is null
-            and nvl(vr_cdassess,0) <> 0 then
+              and nvl(vr_cdassess,0) <> 0 then
 
                -- Busca data de movimento
                 OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
@@ -6649,7 +6664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             end if;
 
             if  nvl(vr_cdassess,0) = 0
-            and not vr_gerou_log then -- vr_des_log is null then
+              and not vr_gerou_log then -- vr_des_log is null then
                 BEGIN
                   UPDATE CRAPCYB
                   SET    dtmancad = rw_crapdat.dtmvtolt
@@ -6688,7 +6703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
           vr_des_log := null;
           vr_nrlinha :=  vr_nrlinha + 1;
 
-         END LOOP;
+        END LOOP;
       EXCEPTION
          WHEN NO_DATA_FOUND THEN
           -- Fim das linhas do arquivo
@@ -6696,33 +6711,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       END;
     END IF;
 
-    COMMIT;
-
     -- verifica se gerou arquivo de LOG
     if vr_gerou_log then
        vr_des_erro := 'Verifique as informacoes geradas no arquivo de LOG';
        raise vr_exc_erro;
     end if;
+
     -- Fecha arquivos
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
 
+    IF vr_nmtmparq IS NOT NULL THEN
+      remover_dir(vr_nm_direto ||'/'||vr_nmtmparq);
+    END IF;
+
   EXCEPTION
-      WHEN vr_exc_erro THEN
-       -- fechar arquivos
-       if utl_file.IS_OPEN(vr_input_file) then
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
-       end if;
+    WHEN vr_exc_erro THEN
+      -- fechar arquivos
+      if utl_file.IS_OPEN(vr_input_file) then
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+      end if;
 
-       if utl_file.IS_OPEN(vr_handle_log) then
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
-       end if;
+      if utl_file.IS_OPEN(vr_handle_log) then
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
+      end if;
 
-           -- Retorno não OK
-           pr_des_reto := 'NOK';
-           -- Montar descrição de erro não tratado
-           pr_des_erro := vr_des_erro;
+      IF vr_nmtmparq IS NOT NULL THEN
+        remover_dir(vr_nm_direto ||'/'||vr_nmtmparq);
+      END IF;
+       
+      -- Retorno não OK
+      pr_des_reto := 'NOK';
+      -- Montar descrição de erro não tratado
+      pr_des_erro := vr_des_erro;
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 
+      -- fechar arquivos
+      if utl_file.IS_OPEN(vr_input_file) then
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+      end if;
+
+      if utl_file.IS_OPEN(vr_handle_log) then
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
+      end if;
+
+      IF vr_nmtmparq IS NOT NULL THEN
+        remover_dir(vr_nm_direto ||'/'||vr_nmtmparq);
+      END IF;
   END pc_importa_arquivo_cyber;
 
 END CYBE0001;
