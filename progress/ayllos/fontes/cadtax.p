@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Julho/2007                      Ultima atualizacao: 30/11/2016
+   Data    : Julho/2007                      Ultima atualizacao: 30/11/2017
 
    Dados referentes ao programa:
 
@@ -56,6 +56,9 @@
                            
                30/11/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   30/11/2017 - Alteração da mascara do campo vlfaxini para cadastro de 
+							faixas maiores. SD 804416 (Carlos Rafael Tanholi)
                             
 ............................................................................. */
 
@@ -83,7 +86,7 @@ DEF VAR tel_qtdiafim LIKE crapttx.qtdiafim                          NO-UNDO.
 DEF VAR tel_qtdiacar LIKE crapdtc.qtdiacar                          NO-UNDO.
 
 /*********FAIXAS*********/
-DEF VAR tel_vlfaxini AS DECIMAL  FORMAT "zzz,zz9.99"                NO-UNDO.
+DEF VAR tel_vlfaxini AS DECIMAL  FORMAT "zzz,zzz,zz9.99"                NO-UNDO.
 DEF VAR tel_vlfaxfim LIKE craplcm.vllanmto                          NO-UNDO.
 DEF VAR tel_perapltx LIKE crapftx.perapltx                          NO-UNDO.
 DEF VAR tel_perrdttx LIKE crapftx.perrdttx                          NO-UNDO.
@@ -134,7 +137,7 @@ DEF BUFFER crabdtc FOR crapdtc.
 DEF TEMP-TABLE w_faixas                                              NO-UNDO
     FIELD tptaxrdc  AS INT                   
     FIELD cdperapl  LIKE crapttx.cdperapl
-    FIELD vlfaxini  AS DECIMAL  FORMAT "zzz,zz9.99"
+    FIELD vlfaxini  AS DECIMAL  FORMAT "zzz,zzz,zz9.99"
     FIELD vlfaxfim  AS DECIMAL  FORMAT "zzz,zzz,zz9.99"
     FIELD perapltx  AS DECIMAL  FORMAT "zz9.999999"
     FIELD perrdttx  AS DECIMAL  FORMAT "zz9.999999".
@@ -280,7 +283,7 @@ FORM SKIP(1)
      SKIP(1)
      b_faixas
      WITH FRAME f_faixas NO-LABEL SIDE-LABELS COLUMN 5
-     WIDTH 72 TITLE "FAIXAS CAPTACAO" OVERLAY ROW 9.
+     WIDTH 76 TITLE "FAIXAS CAPTACAO" OVERLAY ROW 9.
 
 
 /*** Frame da opcao "Acumula"  ***/
