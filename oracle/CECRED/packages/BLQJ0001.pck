@@ -1291,37 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         vr_flblcrft := 0;
       END IF;
       
--- Demetrius -- podem ocorrer vários pedidos com o mesmo oficio
-/*
-      -- Percorrer os registros para validar se algum dos mesmos já existe
-      FOR vr_indice IN vr_tbcontas.FIRST..vr_tbcontas.LAST LOOP
-
-        -- Buscar registro de cadastro de bloqueio
-        OPEN  cr_crapblj(pr_cdcooper
-                        ,vr_tbcontas(vr_indice)
-                        ,pr_nroficio
-                        ,vr_tbmodali(vr_indice));
-        FETCH cr_crapblj INTO rw_crapblj;
-        
-        -- Se encontrar registro
-        IF cr_crapblj%FOUND THEN
-          -- Fechar o cursor
-          CLOSE cr_crapblj;
-          
-          -- Definir a crítica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Ja existe este Nr. Oficio para esta Conta.';
-          
-          -- Exception
-          RAISE vr_exp_erro;
-        END IF;
-
-        -- Fechar o cursor
-        CLOSE cr_crapblj;
-        
-      END LOOP;   
-
-*/      
+      
 
       FOR vr_indice IN vr_tbcontas.FIRST()..vr_tbcontas.LAST() LOOP
         
@@ -1850,8 +1820,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
--- Demetrius
---      vr_dscritic := 'Nao foi possivel desbloquear os registros.';
       vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic; -- Retornar o erro ocorrido na rotina
       RAISE vr_exc_saida;
     END IF;
@@ -1935,16 +1903,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND ass.nrdconta = blj.nrdconta
          AND blj.cdcooper = pr_cdcooper
          AND blj.nroficio = pr_nroficio
-         AND blj.nrdconta = pr_nrctacon -- Demetrius
+         AND blj.nrdconta = pr_nrctacon 
          AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
          AND blj.dtblqfim IS NULL
          AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0)
--- Demetrius
---      ORDER BY blj.cdcooper
---             , blj.nroficio
---             , blj.nrcpfcgc
---             , blj.cdmodali;
       ORDER BY blj.cdmodali
              , blj.dtblqini
              , blj.hrblqini
@@ -1984,7 +1947,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_nrdregis      NUMBER;
     vr_nmprimtl      VARCHAR2(100);
     vr_fldestrf      NUMBER;
---    vr_vldesblo      NUMBER := GENE0002.fn_char_para_number(pr_vldesblo);
     vr_vldesblo      NUMBER := pr_vldesblo;
     ww_vldesblo      NUMBER;
     vr_vltotblq      NUMBER;
