@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 19/04/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 30/11/2017
     
     Dados referentes ao programa:
 
@@ -340,6 +340,9 @@
 			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
+							
+                30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
+				             Prova de vida nao aparecendo na AV - Andrei - Mouts							
 
 ..............................................................................*/
 
@@ -4679,21 +4682,6 @@ PROCEDURE verifica_prova_vida_inss:
 
     IF  VALID-HANDLE(h_b1wgen0091)  THEN
         DO:
-            /* para a ALTOVALE, os beneficios das contas migradas NAO FORAM MIGRADOS,
-               entao busca na VIACREDI */
-            IF  par_cdcooper = 16  THEN
-                DO:
-                    /* Verifica se a conta foi migrada da VIACREDI */
-                    FIND craptco WHERE craptco.cdcopant = 1                 AND
-                                       craptco.nrctaant = par_nrdconta      AND
-                                       craptco.tpctatrf = 1 /* C/C */       AND
-                                       craptco.flgativo = YES
-                                       NO-LOCK NO-ERROR.
-
-                    /* troca a cooperativa */
-                    IF  AVAIL craptco  THEN
-                        par_cdcooper = 1.
-                END.
 
             /* varre todos os beneficios em busca de algum que precise comprovar vida */
             FOR EACH crapcbi WHERE crapcbi.cdcooper = par_cdcooper  AND
