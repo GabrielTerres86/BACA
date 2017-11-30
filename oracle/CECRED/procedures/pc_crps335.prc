@@ -76,6 +76,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
                                 somente se o saldo do dia anterior for inferior ao saldo atual
                                 Projeto 218 Melhorias Tarifas - (Carlos Rafael Tanholi)       
                           
+                   25/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+                                Heitor (Mouts) - Melhoria 440
+                          
     ............................................................................. */
     DECLARE
       -- Código do programa
@@ -396,8 +399,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
         -- Inicializar controle de compensação
         vr_flgcompe := FALSE;
         -- Somar o saldo total
-        vr_vlsldtot := vr_tab_crapsld(rw_crapass.nrdconta).vlsdblfp + vr_tab_crapsld(rw_crapass.nrdconta).vlsdbloq
-                     + vr_tab_crapsld(rw_crapass.nrdconta).vlsdblpr + vr_tab_crapsld(rw_crapass.nrdconta).vlsddisp
+        vr_vlsldtot := vr_tab_crapsld(rw_crapass.nrdconta).vlsddisp
                      + vr_tab_crapsld(rw_crapass.nrdconta).vlsdchsl + NVL(rw_crapass.vllimcre,0);
 
         -- Se saldo negativo inferior a 20 reais
@@ -432,7 +434,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
              FETCH cr_crapsda INTO rw_crapsda;
              
              --monta o saldo devedor total do dia anterior (CRAPSDA)
-             vr_slddiaanterior := rw_crapsda.vlsddisp + rw_crapsda.vlsdblfp + rw_crapsda.vlsdbloq + rw_crapsda.vlsdblpr + rw_crapsda.vlsdchsl + NVL(rw_crapsda.vllimcre,0);
+             vr_slddiaanterior := rw_crapsda.vlsddisp + rw_crapsda.vlsdchsl + NVL(rw_crapsda.vllimcre,0);
              
              IF cr_crapsda%FOUND THEN
                 -- saldo atual com valor negativo maior que o saldo de ontem
@@ -585,4 +587,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps335;
 /
-
