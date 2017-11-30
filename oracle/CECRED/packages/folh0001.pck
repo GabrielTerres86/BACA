@@ -8160,6 +8160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                  
                  --Valida se há folhas antigas para serem processadas  
                  IF cr_existe_folha_antiga%FOUND THEN
+                   CLOSE cr_existe_folha_antiga;
                    --Faz o processamanento dos pagamentos carregados pela tela SOL062 (Antigos)
                    SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => vr_cdcooper
                                              ,pr_cdagenci => 0
@@ -8168,10 +8169,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                              ,pr_cdempres => 0
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
+                 
+                 ELSE
+                   CLOSE cr_existe_folha_antiga;
                  END IF;     
-               
-               CLOSE cr_existe_folha_antiga;
-               
                
             END IF;
 
