@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 27/03/2017 ***//
+//*** Data : Agosto/2007                  Última Alteração: 14/11/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -74,7 +74,13 @@
 
 				  20/01/2017 - Adicionar parametro 'produtos', na chamada da function acessaRotina(Lucas Ranghetti #537087)
 
-				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)
+				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)		 
+
+                  14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+
+                  14/11/2017 - Não apresentar pop-up de anotações quando impedimentos estiver sendo executado (Jonata - P364).
+
+                   21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -89,7 +95,7 @@ var contWinAnot = 0; // Para impressão das anotações
 var cdproduto = 0; // Identificar que servico foi chamado via rotina Produtos
 var bkp_inpessoa = 0; // Bkp do inpessoa pois, o inpessoa e' queimada em outras rotinas
 
-
+var sitaucaoDaContaCrm =0 //Recebe a situação da conta para controle de acesso a determinado produtos da tela ATENDA;
 
 $(document).ready(function () {
 
@@ -443,6 +449,32 @@ function sequenciaProdutos() {
     }
 }
 
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		if (nmtelant == "COBRAN"){		
+			acessaRotina('','COBRANCA','Cobran&ccedil;a','cobranca');
+			nmtelant = "";
+			if (posicao == 1){ // Se for selecionado primeiramente cobrança
+				posicao++;
+			}
+            return false;			
+        }else if (posicao <= produtosCancMAtenda.length) {
+			if (produtosCancMAtenda[posicao - 1] == '' || produtosCancMAtenda[posicao - 1] == 'undefined'){
+				eval(produtosCancM[posicao - 1]);
+				posicao++;
+			}else{
+				eval(produtosCancMAtenda[posicao - 1]);
+				posicao++;
+			}
+            return false;
+        }else{
+			eval(produtosCancM[posicao - 1]);
+			posicao++;
+			return false;
+		}
+    }
+}
+
 // Função para carregar dados da conta informada
 function obtemCabecalho() {
 
@@ -513,6 +545,12 @@ function obtemCabecalho() {
                     }
                     flgProdutos = false;
                 }
+				if (executandoImpedimentos){
+				    // Limpar tela anterior
+					$("#divMsgsAlerta").css('visibility', 'hidden');
+					$("#divAnotacoes").css('visibility', 'hidden');
+					sequenciaImpedimentos();
+				}
 
             } catch (error) {
                 hideMsgAguardo();
@@ -758,5 +796,27 @@ function dossieDigdoc(cdproduto){
 				}
 	});
 
+	return false;
+}	  
+
+function impedSeguros(seguroVida, seguroAuto) {
+
+    if (seguroVida == '1' && seguroAuto == '1') {
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');")');
+    } else if (seguroVida == '1') {
+
+       showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\')");
+
+    } else if (seguroAuto == '1') {
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'acessaRotina("","SEGURO","Seguro","seguro");');
+    } else {
+        acessaRotina("", "SEGURO", "Seguro", "seguro");
+    }
+
+    return false;
+}
+
+function impedConsorcios(){
+	showError('error','Cancelamento dos CONSORCIOS devem ser realizados pelo portal do Sicredi.','Alerta - Ayllos','acessaRotina(\'\',\'CONSORCIO\',\'Cons&oacute;rcios\',\'consorcio\');');
 	return false;
 }

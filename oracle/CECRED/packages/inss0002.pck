@@ -207,7 +207,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 						     ,pr_flmobile   IN INTEGER DEFAULT 0
                              ,pr_dshistor   IN VARCHAR2 DEFAULT NULL
                              ,pr_dsprotoc  OUT VARCHAR2                             
-                             ,pr_dslitera  OUT CLOB
+							 ,pr_dslitera  OUT CLOB
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
 
@@ -348,12 +348,12 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-                                   
+                               
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
   ---------------------------------------------------------------------------------------------------------------*/                                        
-
+                               
       PROCEDURE pc_gps_validar(pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE
                               ,pr_cdagenci IN NUMBER        
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 26/10/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 27/11/2017
 
    Dados referentes ao programa:
 
@@ -441,7 +441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
-                            
+
                29/09/2017 - Corrigido caracter invalida na procedure pc_gps_arrecadar_sicredi (Tiago/Adriano).             
 
                08/09/2017 - Implementação GPS para Mobile.
@@ -452,6 +452,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             não havia sido concluido qdo na verdade ja tinha sido processado no SICREDI
                             fazendo com que o operador fizesse o pagamento em duplicidade
                             (Tiago #716275)
+                            
+               27/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
+                            e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1276,7 +1279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
 								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
-                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
+									,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro
@@ -1933,7 +1936,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   BEGIN
     pr_des_reto := 'NOK';
-
+    
     IF TRIM(pr_dshistor) IS NULL THEN
       vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
     ELSE
@@ -2803,7 +2806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_nrdrowid => vr_nrdrowid);
 
   END pc_gps_agmto_consulta;
-
+  
 
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
@@ -2868,7 +2871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_cdoperad   IN crapope.cdoperad%TYPE
                                   ,pr_nmdatela   IN craptel.nmdatela%TYPE
                                   ,pr_dsdrowid   IN VARCHAR2
-								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397
+								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397  								  
 								  ,pr_flmobile   IN INTEGER DEFAULT 0
                                   ,pr_dscritic  OUT VARCHAR2) IS
     
@@ -3780,8 +3783,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
     -- que antecede o final de semana ou feriado nacional
-    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
-       rw_crapdat.dtmvtolt = vr_dtdebito THEN
+    IF TRUNC(SYSDATE) > vr_dtdebito  THEN   
+      pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
+      RAISE vr_exc_saida;     
+    ELSIF TRUNC(SYSDATE) = vr_dtdebito AND to_char(SYSDATE,'sssss') >= vr_hriniexe THEN
       pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
       RAISE vr_exc_saida;     
     END IF;
@@ -4821,7 +4826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
      -- Sempre passa a data que já está no CX-online
      vr_dtmvtolt := rw_crapdat.dtmvtocd;
-
+     
      IF pr_idorigem = 2 THEN -- Apenas CAIXA ON-LINE
        
        --Selecionar informacoes dos boletins dos caixas

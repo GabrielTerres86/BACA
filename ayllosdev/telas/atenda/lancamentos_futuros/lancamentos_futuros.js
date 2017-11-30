@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: lancamentos_futuros.js
       Autor: Guilherme
-      Data : Fevereiro/2007                Ultima Alteracao: 27/05/2016
+      Data : Fevereiro/2007                Ultima Alteracao: 04/11/2017
 
       Objetivo  : Biblioteca de funcoes da rotina OCORRENCIAS da tela
                   ATENDA
@@ -13,9 +13,11 @@
 
             27/05/2016 - Inclusao de selecao dos debitos. (Jaison/James)
 
-			25/07/2016 - Adicionado função controlaFoco  (Evandro - RKAM)	
+			25/07/2016 - Adicionado função controlaFoco  (Evandro - RKAM)
+            
+             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
+                           (Jonata - RKAM P364).
  ***********************************************************************/
-
 var glb_gen_dstabela, glb_gen_cdhistor, glb_gen_recid; 
 
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
@@ -49,6 +51,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		url: UrlSite + "telas/atenda/lancamentos_futuros/principal.php",
 		data: {
 			nrdconta: nrdconta,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
 			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -73,8 +76,8 @@ function controlaFoco(opcao) {
         $(this).bind('keydown', function (e) {
             if (e.keyCode == 13) {
                 $(this).click();
-            }
-        });
+		}				
+	}); 		
     });
 
     $(".LastInputModal").focus(function () {
@@ -83,7 +86,7 @@ function controlaFoco(opcao) {
         $(this).bind('keyup', function (e) {
             if (e.keyCode == 16) {
                 pressedShift = false;//Quando tecla shift for solta passa valor false 
-            }
+}
         })
 
         $(this).bind('keydown', function (e) {
@@ -163,15 +166,15 @@ function controlaLayout() {
 		
     habilitaBotao('btExcluir', 'D'); // Desabilitar
     habilitaBotao('btDebitar', 'D'); // Desabilitar
-
+	
     $('label[for="vltotal"]').addClass('rotulo txtNormalBold');
     $('#vltotal').addClass('campo').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo();
 		}
 		
 function confirmaExclusaoLanctoFut(){
 	showConfirmacao('Confirma a exclus&atilde;o do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Ayllos','excluirLanctoFut();','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
-}
-
+		}
+		
 function excluirLanctoFut(){
 
 	var qtexclu = 0;
@@ -237,7 +240,7 @@ function verificaCheckbox() {
         habilitaBotao('btExcluir', 'H'); // Habilitar
     } else {
         habilitaBotao('btExcluir', 'D'); // Desabilitar
-    }
+}
 
     // Somente habilita se foi selecionado apenas registros de debito
     if (qtexclu == 0 && qtdebit > 0) {
@@ -245,10 +248,10 @@ function verificaCheckbox() {
     } else {
         habilitaBotao('btDebitar', 'D'); // Desabilitar
 }
-
-    $('#vltotal').val(vltotal == 0 ? '' : number_format(vltotal,2,',','.'));
-}
 	
+    $('#vltotal').val(vltotal == 0 ? '' : number_format(vltotal,2,',','.'));
+	}		
+
 function habilitaBotao(botao, opcao) {
     if (opcao == 'D') {
         // Desabilitar
@@ -316,5 +319,4 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
 			}
 		}				
 	});				
-
 }

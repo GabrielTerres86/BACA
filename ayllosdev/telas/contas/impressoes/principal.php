@@ -1,17 +1,18 @@
 <?php 
 /*!
  * FONTE         : principal.php
- * CRIA«√O       : Gabriel Capoia (DB1)
- * DATA CRIA«√O  : 05/05/2010 
- * OBJETIVO      : Mostrar opcao Principal da rotina de Impressıes da tela de CONTAS
+ * CRIA√á√ÉO       : Gabriel Capoia (DB1)
+ * DATA CRIA√á√ÉO  : 05/05/2010 
+ * OBJETIVO      : Mostrar opcao Principal da rotina de Impress√µes da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- * ALTERACOES   : 23/07/2013 - Inclus„o da opÁ„o de Cart„o Assinatura (Jean Michel).
+ * ALTERACOES   : 23/07/2013 - Inclus√£o da op√ß√£o de Cart√£o Assinatura (Jean Michel).
  *                02/09/2015 - Projeto Reformulacao cadastral. (Tiago Castro - RKAM)
  *                14/07/2016 - Correcao na forma de recuperacao de informacoes do XML. SD 479874. Carlos R.
  *
- *                01/12/2016 - P341-AutomatizaÁ„o BACENJUD - Removido passagem do departamento como parametros
- *                             pois a BO n„o utiliza o mesmo (Renato Darosci)
+ *                01/12/2016 - P341-Automatiza√ß√£o BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO n√£o utiliza o mesmo (Renato Darosci)
+ * 				        03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impress√£o declara√ß√£o optante simples nacional (Diogo - Mouts)
  */
  
 	session_start();
@@ -21,22 +22,23 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();		
 	
-	// Verifica permissıes de acessa a tela
+	// Verifica permiss√µes de acessa a tela
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)');
 	
-	// Verifica se o n˙mero da conta foi informado
+	// Verifica se o n√∫mero da conta foi informado
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 
-	// Guardo os par‚metos do POST em vari·veis	
+	// Guardo os par√¢metos do POST em vari√°veis	
 	$nrdconta = $_POST["nrdconta"] == "" ?  0  : $_POST["nrdconta"];
 	$idseqttl = $_POST["idseqttl"] == "" ?  0  : $_POST["idseqttl"];
 	$inpessoa = $_POST["inpessoa"] == "" ?  0  : $_POST["inpessoa"];
-	
-	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
+	$tpregtrb = $_POST["tpregtrb"] == "" ?  0  : $_POST["tpregtrb"];
+
+	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -61,6 +63,24 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjImp = getObjectXML($xmlResult);
 	
+	//Busca se deve mostrar o bot√£o para impress√£o da declara√ß√£o de isen√ß√£o de IOF
+	$xml = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+	$xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CONTAS", "CONS_DEC_PJ_COOPER", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjDados = getObjectXML($xmlResult);
+	// Se ocorrer um erro, mostra cr√≠tica
+	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
+		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+	}
+	$pessoaJuridicaCooperativa = $xmlObjDados->roottag->tags[0]->cdata;
 ?>
 
 <div id="divImpressoes">	
@@ -72,6 +92,12 @@
 	<div id="declaracao_pep">Declara&ccedil;&atilde;o PEP</div>
 	<? } ?>
 	<div id="cartao_assinatura">Cart&atilde;o Assinatura</div>
+    <? if ($tpregtrb == 1) { ?>
+        <div id="declaracao_optante_simples_nacional">Declara&ccedil;&atilde;o de Optante Simples Nacional</div>
+    <? } ?>
+    <? if ($pessoaJuridicaCooperativa == 'S') { ?>
+        <div id="declaracao_pj_cooperativa">Declara&ccedil;&atilde;o de pessoa jur&iacute;dica cooperativa</div>
+    <? } ?>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>
@@ -80,7 +106,7 @@
 	
 	var relatorios = new Object();
 	
-	<? for($i = 0; $i <= 7; $i++ ){ ?>
+	<? for($i = 0; $i <= 8; $i++ ){ ?>
 		
 	 var relatorio = new Object();	 
 		 relatorio['msg']  = '<?php echo ( isset($xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata) ) ? $xmlObjImp->roottag->tags[0]->tags[$i]->tags[1]->cdata : '';?>';

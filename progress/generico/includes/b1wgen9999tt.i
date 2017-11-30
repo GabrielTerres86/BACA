@@ -77,6 +77,8 @@ DEF TEMP-TABLE tt-iof NO-UNDO
     FIELD dtfimiof AS DATE
     FIELD txccdiof AS DECI.
 
+DEF TEMP-TABLE tt-iof-sn LIKE tt-iof.
+
 DEF TEMP-TABLE tt-listal NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper
     FIELD nmrescop LIKE crapcop.nmrescop

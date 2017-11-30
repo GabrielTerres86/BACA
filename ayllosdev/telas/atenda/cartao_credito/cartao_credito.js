@@ -59,6 +59,7 @@
  * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
  * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
  * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualização do histórico de alteração de limites (P360)
+ * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -227,6 +228,22 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 $("#btnupdo").css('cursor', 'default');
 			}
 		}
+		
+        //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
+        //informando que o cartão deve ser cancelado através do SIPAGNET.
+		if (executandoImpedimentos &&
+            (cdadmcrd == 3  || 
+             cdadmcrd == 11 || 
+             cdadmcrd == 12 ||
+             cdadmcrd == 13 ||
+             cdadmcrd == 14 ||
+             cdadmcrd == 15 ||
+             cdadmcrd == 16 ||
+             cdadmcrd == 17)) {
+		    $("#btncanc").prop("disabled", false);
+		    $("#btncanc").css('cursor', 'default');
+
+        }
 		
 		return true;
 	}
@@ -1503,7 +1520,7 @@ function validarNovoCartao() {
         showError("error", "Identidade nao pode ter mais de 15 caracteres.", "Alerta - Ayllos", "$('#nrdoccrd','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
     }
-    
+	
 	
 	if (dtnasccr == "") {
         hideMsgAguardo();
@@ -1515,17 +1532,17 @@ function validarNovoCartao() {
 	if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80) ) {
 		// Nome da Empresa deve estar preenchido
 		if (nmempres.trim() == "") {
-		hideMsgAguardo();
-		showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
+			hideMsgAguardo();
+			showError("error","Empresa do Plastico deve ser informada.","Alerta - Ayllos","$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
 		// Nome da Empresa não pode conter mais de 23 caracteres
 		if (nmempres.length > 23) {
-		hideMsgAguardo();
-        showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
+			hideMsgAguardo();
+			showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
+	    
 		// Nome da Empresa não pode conter numeros
 		if ( /[0-9]/gm.test(nmempres) ){
 			hideMsgAguardo();
@@ -3404,6 +3421,12 @@ function opcaoCancBloq() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
 
+    if (executandoImpedimentos){
+        hideMsgAguardo();
+        showError("error", "O cancelamento do cart&atilde;o deve ser efetuado via SIPAGNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
 	if (nrctrcrd == 0) {
 		hideMsgAguardo();
         showError("error", "N&atilde;o h&aacute; cart&atilde;o selecionado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -4350,7 +4373,7 @@ function lerCartaoChip() {
 				if (sTagPortador == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[2]);
 				eval("oRetornoJson = " + oRetornoJson);
-				sTagPortador = oRetornoJson.szTagsData;
+					sTagPortador = oRetornoJson.szTagsData;		
 				}
 				
 				// Busca Numero do cartao
@@ -4367,7 +4390,7 @@ function lerCartaoChip() {
 				if (sTagNumeroCartao == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[2]);
 				eval("oRetornoJson = " + oRetornoJson);
-				sTagNumeroCartao = oRetornoJson.szTagsData;
+					sTagNumeroCartao = oRetornoJson.szTagsData;
 				}
 				
 				// Buscar Validade do cartao                
@@ -4380,11 +4403,11 @@ function lerCartaoChip() {
 					eval("oRetornoJson = " + oRetornoJson);
 					sTagDataValidade = oRetornoJson.szTagsData;
 				}
-				
+												
 				if (sTagDataValidade == ""){
 					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[2]);				
-				eval("oRetornoJson = " + oRetornoJson);
-				sTagDataValidade = oRetornoJson.szTagsData;
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagDataValidade = oRetornoJson.szTagsData;
 				}
 				
 				// Carrega conteúdo da opção através de ajax

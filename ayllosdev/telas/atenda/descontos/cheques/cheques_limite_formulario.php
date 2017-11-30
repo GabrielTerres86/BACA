@@ -26,6 +26,7 @@
  * 011: [20/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 011: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
+ * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
  */
 ?>
 
@@ -261,8 +262,18 @@
 
 	// Atribui eventos para botões do formulário
 	$("#btnVoltarLimite","#divBotoesLimite").unbind("click").bind("click",function() {
+		
+		if(executandoProdutos){
+			
+			encerraRotina(true);
+			
+		}else{
+			
 		voltaDiv(3,2,4,"DESCONTO DE CHEQUES - LIMITE");
+			
+		}
 		return false;
+		
 	});
 	
 	$("#btnContinuarLimite","#divBotoesLimite").unbind("click").bind("click",function() {

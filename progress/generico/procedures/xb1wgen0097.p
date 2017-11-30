@@ -23,6 +23,9 @@
 			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
 			                da descrição do departamento como parametro e 
 							passar o código (Renato Darosci)
+                            
+               20/09/2017 - Projeto 410 - Incluir campo Indicador de 
+                            financiamento do IOF (Diogo - Mouts)
 .............................................................................*/
 
 DEF VAR aux_cdcooper    AS  INTE                                      NO-UNDO.
@@ -49,6 +52,7 @@ DEF VAR aux_dtfinper    AS  DATE                                      NO-UNDO.
 DEF VAR aux_percetop    AS  DECI                                      NO-UNDO.
 DEF VAR aux_txcetano    AS  CHAR                                      NO-UNDO.
 DEF VAR aux_cdfinemp    AS  INTE                                      NO-UNDO.  
+DEF VAR aux_idfiniof    AS  INTE                                      NO-UNDO.  
 
 DEF VAR par_nmarqimp    AS  CHAR                                      NO-UNDO.
 DEF VAR par_nmarqpdf    AS  CHAR                                      NO-UNDO.
@@ -88,6 +92,7 @@ PROCEDURE valores_entrada:
             WHEN "dtiniper" THEN aux_dtiniper =    DATE(tt-param.valorCampo).
             WHEN "dtfinper" THEN aux_dtfinper =    DATE(tt-param.valorCampo).
             WHEN "percetop" THEN aux_percetop =    DECI(tt-param.valorCampo).
+			WHEN "idfiniof" THEN aux_idfiniof =    INTE(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -291,6 +296,7 @@ PROCEDURE grava_simulacao:
                                 INPUT  aux_dtdpagto,
                                 INPUT  aux_percetop,
                                 INPUT  aux_cdfinemp,
+								INPUT  aux_idfiniof,
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT aux_nrgravad,
                                 OUTPUT aux_txcetano).

@@ -1,6 +1,6 @@
 <?php
 /*****************************************************************
-	Fonte        : form_consulta.php					Última alteração: 03/08/2016
+	Fonte        : form_consulta.php					Última alteração: 26/06/2017
   Criação      : Adriano
   Data criação : Maio/2013
   Objetivo     : Mostra o form de consulta da tela INSS
@@ -14,6 +14,10 @@
 							  Projeto 255 - INSS (Lombardi)
 
 					03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+
+
+					26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
+
   --------------
  ****************************************************************/ 
  
@@ -168,7 +172,9 @@
 	
 	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('V4');">Voltar</a>
 	
-	<?for ($i = 0; $i < count($rotinas); $i++) {
+	<?if ($executandoProdutos != 'true') {
+		
+		for ($i = 0; $i < count($rotinas); $i++) {
 		
 		/*Habilita os botões abaixo apenas se a cooperativa do benefício for igual a cooperativa logada*/
 		if($rotinas[$i] == "CONSULTA" && 
@@ -179,6 +185,8 @@
 			<a href="#" class="botao" id="btAlteracaoCadastral" onClick="acessaRotina('<?echo $rotinas[$i];?>','A');return false;" >Altera Cadastro</a>	
 					
 		<?}	
+		}
+	
 	}?>
 	
 </div>

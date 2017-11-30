@@ -13,6 +13,7 @@
 				     de licença ambiental conforme solicitado no chamado 449294. (Kelvin)
  * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
  * 004: [30/09/2016] Incluido validacao para Data validade da licenca 'dtvallic' (Tiago/Thiago M310)
+ * 005: [13/07/2017] Incluido campo Identificador do Regime tributário 'tpregtrb' (Diogo M410)
  */
 ?>
  
@@ -46,6 +47,9 @@
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
 	$nrlicamb = (isset($_POST['nrlicamb'])) ? $_POST['nrlicamb'] : '';
 	$dtvallic = (isset($_POST['dtvallic'])) ? $_POST['dtvallic'] : '';
+	$tpregtrb = (isset($_POST['tpregtrb'])) ? $_POST['tpregtrb'] : '0';
+	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
+	$cdnatjurAnt = $cdnatjur;
 
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -108,6 +112,7 @@
 	if ($procedure == 'grava_dados') {
 		$xml .= '       <nrlicamb>'.$nrlicamb.'</nrlicamb>';
 		$xml .= '       <dtvallic>'.$dtvallic.'</dtvallic>';
+	    $xml .= '       <tpregtrb>'.$tpregtrb.'</tpregtrb>';
 	}
 	
 	$xml .= '	</Dados>';
@@ -134,6 +139,7 @@
 	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
 	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
 	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];
+	$impDecPJCoop = isset($xmlObjeto->roottag->tags[0]->attributes['IMPDECPJCOOP']) ? $xmlObjeto->roottag->tags[0]->attributes['IMPDECPJCOOP'] : '';
 	
 	if ($operacao == 'AV') {	
 
@@ -151,9 +157,13 @@
 			}
 			
 		} else {		
-			
 			// Se não é validar, então é alteração, portanto mostrar mensagem de sucesso e retornar para página principal
 			echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
+
+		}
+
+		if ($impDecPJCoop == 'S'){
+			echo 'imprimeDeclaracaoPJCooperativa();';					
 		}
 	}
 
@@ -163,6 +173,9 @@
 		// Nome Fantasia GLOBALS
 		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmDadosIdentJuridica\')',false);
 
+		// Regime de tributação - apenas para PJ - não usar validaInteiro pois zero retorna true, e neste caso zero deve retornar false (empty garante isso)
+        $inPessoa = (int)substr($GLOBALS['inpessoa'], 0, 1);
+ 		if (($inPessoa >= 2) && (empty($GLOBALS['tpregtrb']))) exibirErro('error','Faltou informar o Regime tribut&aacute;rio.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpregtrb\',\'frmDadosIdentJuridica\')',false);
 		//if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
 
 		// Data Consulta CPF

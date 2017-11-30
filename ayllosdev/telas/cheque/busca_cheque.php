@@ -6,6 +6,8 @@
  * OBJETIVO     : Realiza a pesquisa dos cheques da conta informada
  * --------------
  * ALTERAÇÕES   : 06/08/2014 - Conversão Progress >> Oracle ( Renato - Supero )
+
+				  18/11/2017 - Retirado envio de parametros, não serão usados (Jonata - RKAM P364).
  * -------------- 
  */ 
 ?>
@@ -27,6 +29,8 @@
 	$nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;	
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;	
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;	
+	$execimpe = (isset($_POST['execimpe'])) ? $_POST['execimpe'] : 0;	
+	$tppeschq = (isset($_POST['tppeschq'])) ? $_POST['tppeschq'] : 0;	
 	
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Ayllos','',false);

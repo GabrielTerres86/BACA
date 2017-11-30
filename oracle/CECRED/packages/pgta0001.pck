@@ -6937,7 +6937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     Programa: pc_inserir_convenio
     Sistema : Ayllos Web
     Autor   : Tiago
-    Data    : Agosto - 2017.                Ultima atualizacao:
+    Data    : Agosto - 2017.                Ultima atualizacao: 24/11/2017
 
     Dados referentes ao programa:
 
@@ -6945,7 +6945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     Objetivo  : Rotina para incluir o convenio de pagto por arquivo
 
-    Alteracoes: -----
+    Alteracoes: 24/11/2017 - Adicinar DECODE no campo inpessoa (Douglas - Melhoria 271.3)
     ..............................................................................*/
     DECLARE
 
@@ -6974,7 +6974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       
       CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
                        ,pr_nrdconta crapass.nrdconta%TYPE) IS
-        SELECT crapass.inpessoa
+        SELECT DECODE(crapass.inpessoa,1,1,2) inpessoa
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
@@ -7122,7 +7122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     Programa: pc_inserir_emails
     Sistema : Ayllos Web
     Autor   : Tiago
-    Data    : Agosto - 2017.                Ultima atualizacao:
+    Data    : Agosto - 2017.                Ultima atualizacao: 24/11/2017
 
     Dados referentes ao programa:
 
@@ -7131,7 +7131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     Objetivo  : Rotina para incluir os emails de retorno do convenio de pagto por arquivo,
                 ***apaga todos emails e insere novamente
 
-    Alteracoes: -----
+    Alteracoes: 24/11/2017 - Adicinar DECODE no campo inpessoa (Douglas - Melhoria 271.3)
     ..............................................................................*/
     DECLARE
 
@@ -7166,7 +7166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       
       CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
                        ,pr_nrdconta crapass.nrdconta%TYPE) IS
-        SELECT crapass.inpessoa
+        SELECT DECODE(crapass.inpessoa,1,1,2) inpessoa
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;

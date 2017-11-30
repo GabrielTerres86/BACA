@@ -8,6 +8,10 @@
  * ALTERAÇÕES   : 20/12/2011 - Funcao de botao voltar alterada para funcaoVoltar() (Jorge)
  * --------------
  *				  10/06/2016 - Incluir style nas divs (Lucas Ranghetti #422753) 
+ *
+ *				  14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+
+                  14/11/2017 - Ajuste para receber o tipo de consulta (Jonata - P364)
  */
 ?>
 
@@ -35,9 +39,9 @@
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js"></script>
+		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="cheque.js"></script>
+		<script type="text/javascript" src="cheque.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -124,3 +128,37 @@
 </table>
 </body>
 </html>
+<script>
+	var nrdconta           	   = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
+	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
+	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var tppeschq = '0';
+
+	if (executandoImpedimentos){
+		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
+		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
+		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
+		var posicao = '<? echo $_POST['posicao']; ?>';
+		produtosCancM = produtos.split("|");		
+		produtosCancMAtenda = produtosAtenda.split("|");
+		produtosCancMContas = produtosContas.split("|");
+		produtosCancMCheque = produtosCheque.split("|");
+		tppeschq = produtosCancMCheque[0];
+
+		eval(produtosCancMCheque[posicao - 1]);		
+		posicao++;
+		if (nrdconta != '') {
+			$("#nrdconta","#frmCabCheque").val(nrdconta);
+			$("#btnOK","#frmCabCheque").click();		
+		}else{
+			nrdconta = 0;
+		}
+
+	}	
+</script>

@@ -40,7 +40,8 @@ DEFINE TEMP-TABLE tt-dados-jur NO-UNDO
     FIELD dtcadass LIKE crapass.dtmvtolt
     FIELD cdclcnae LIKE crapass.cdclcnae
     FIELD nrlicamb AS DECI
-	FIELD dtvallic LIKE crapjur.dtvallic.
+	FIELD dtvallic LIKE crapjur.dtvallic
+	FIELD tpregtrb LIKE crapjur.tpregtrb.
 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 
@@ -58,7 +59,8 @@ DEFINE TEMP-TABLE tt-dados-jur NO-UNDO
         FIELD nmtalttl LIKE crapjur.nmtalttl
         FIELD cdseteco LIKE crapjur.cdseteco
 		FIELD nrlicamb LIKE crapjur.nrlicamb
-		FIELD dtvallic LIKE crapjur.dtvallic.
+		FIELD dtvallic LIKE crapjur.dtvallic
+		FIELD tpregtrb LIKE crapjur.tpregtrb.
 
     DEFINE TEMP-TABLE tt-dados-jur-atl NO-UNDO LIKE tt-dados-jur-ant.
 

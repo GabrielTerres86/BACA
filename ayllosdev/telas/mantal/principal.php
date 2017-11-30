@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * -------------- 
+                  04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS
+                               (Jonata - RKAM P364).
  */ 
 ?>
 
@@ -65,7 +67,7 @@
 
 	$registros 	= $xmlObjeto->roottag->tags[0]->tags;
 	
-	include('form_cabecalho.php');	
+
 	include('form_mantal.php');	
 	
 		
@@ -73,6 +75,6 @@
 
 <script type='text/javascript'>
 	atualizaSeletor();
-	formataCabecalho();
+
 	controlaLayout();
 </script>

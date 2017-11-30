@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
   ---------------------------------------------------------------------------------------------------------------*/
               
   --> Procedure para liberar sessoes apos fim do processamento
-  procedure pc_libera_sessao_sqlserver_npc;
+  procedure pc_libera_sessao_sqlserver_npc(pr_cdprogra_org in varchar2 default 'vazio');
 
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_consultar_valor_titulo(pr_cdcooper       IN NUMBER       -- Cooperativa
@@ -123,7 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
   --> Declaração geral de exception
   vr_exc_erro        EXCEPTION;
                          
-  procedure pc_libera_sessao_sqlserver_npc is
+  procedure pc_libera_sessao_sqlserver_npc(pr_cdprogra_org in varchar2 default 'vazio') is
     /******************************************************************************
       Programa: pc_libera_sessao_sqlserver_npc
       Sistema : Cobranca - Cooperativa de Credito
@@ -147,8 +147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     when others then
       begin
         npcb0001.pc_gera_log_npc( pr_cdcooper => 3,
-                                  pr_nmrotina => 'npcb0002.pc_libera_sessao_sqlserver_npc',
-                                  pr_dsdolog  => 'SqlErrm:'||sqlerrm);
+                                  pr_nmrotina => 'npcb0002.plssn('||pr_cdprogra_org||')',
+                                  pr_dsdolog  => sqlerrm);
       exception
         when others then
           null;
@@ -1170,11 +1170,11 @@ begin
            ',pr_cdcritic  => vr_cdcritic '||
            ',pr_dscritic  => vr_dscritic );
   commit;
-  npcb0002.pc_libera_sessao_sqlserver_npc;
+  npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => ''NPCB0002_JB618'');
 exception
   when others then
     rollback;
-    npcb0002.pc_libera_sessao_sqlserver_npc;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => ''NPCB0002_JB618'');
     raise;
 end;';
     

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0060.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 02/08/2016
+    Data    : Marco/2010                   Ultima atualizacao: 19/06/2017
 
     Objetivo  : Realiza a busca de dados - retorno de descricoes p/ tela de 
                 maneira dinamica
@@ -25,6 +25,10 @@
 
                02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                             (Jaison/Anderson)                                             
+
+               19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  				             "Desligamento por determinação do BACEN" 
+							( Jonata - RKAM P364).							
 
 .............................................................................*/
 
@@ -688,7 +692,10 @@ FUNCTION BuscaSituacaoConta RETURNS LOGICAL
         WHEN 4 THEN ASSIGN par_dssitdct = "ENCERRADA PELA DEMISSAO".
         WHEN 5 THEN ASSIGN par_dssitdct = "NAO APROVADA".
         WHEN 6 THEN ASSIGN par_dssitdct = "NORMAL - SEM TALAO".
+        WHEN 7 THEN ASSIGN par_dssitdct = "EM PROC. DEMISSAO".
+		WHEN 8 THEN ASSIGN par_dssitdct = "EM PROC. DEM. BACEN".
         WHEN 9 THEN ASSIGN par_dssitdct = "ENCERRADA P/ OUTRO MOTIVO".
+		
         OTHERWISE 
             ASSIGN par_dssitdct = ""
                    par_dscritic = "Situacao de Conta Inexistente.".

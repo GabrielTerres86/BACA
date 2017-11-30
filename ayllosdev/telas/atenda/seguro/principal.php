@@ -11,6 +11,10 @@
  *                             Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi)
  *
  *                29/08/2016 - Proj 187.2 - Sicredi Seguros (Guilherme/SUPERO)
+
+				  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
+
+				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
  */
 session_start();
 
@@ -45,6 +49,8 @@ $nrctrseg = (isset($_POST['nrctrseg'])?$_POST['nrctrseg']:'');
 $cdsegura = (isset($_POST['cdsegura'])?$_POST['cdsegura']:'');
 $tpseguro = (isset($_POST['tpseguro'])?$_POST['tpseguro']:'');
 $cdsitpsg = (isset($_POST['cdsitpsg'])?$_POST['cdsitpsg']:'');
+$executandoImpedimentos = (isset($_POST['executandoImpedimentos'])?$_POST['executandoImpedimentos']:'');
+$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 
 $nrctrseg = ( $nrctrseg == 'null' ) ? '' : $nrctrseg ;
 $cdsegura = ( $cdsegura == 'null' ) ? '' : $cdsegura ;
@@ -69,7 +75,6 @@ if($operacao == 'C_AUTO'){
         exibeErro("Contrato inv&aacute;lido!");
     }
     $flgNovo = true;
-
 }else if($operacao == 'C_CASA'){
 	$procedure = 'buscar_seguro_geral';
 }else if($operacao == 'SEGUR'){
@@ -179,6 +184,58 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
 
             arraySeguroCasa['tpendcor'] = '<?php echo getByTagName($seguros,'tpendcor'); ?>';
 
+		arraySeguroAuto['nmresseg'] = '<? echo getByTagName($seguro_auto,'nmdsegur'); ?>';
+		arraySeguroAuto['dsmarvei'] = '<? echo getByTagName($seguro_auto,'dsmarvei'); ?>';
+		arraySeguroAuto['dstipvei'] = '<? echo getByTagName($seguro_auto,'dstipvei'); ?>';
+		arraySeguroAuto['nranovei'] = '<? echo getByTagName($seguro_auto,'nranovei'); ?>';
+		arraySeguroAuto['nrmodvei'] = '<? echo getByTagName($seguro_auto,'nrmodvei'); ?>';
+		arraySeguroAuto['nrdplaca'] = '<? echo getByTagName($seguro_auto,'nrdplaca'); ?>';
+		arraySeguroAuto['dtinivig'] = '<? echo getByTagName($seguro_auto,'dtinivig'); ?>';
+		arraySeguroAuto['dtfimvig'] = '<? echo getByTagName($seguro_auto,'dtfimvig'); ?>';
+		arraySeguroAuto['qtparcel'] = '<? echo getByTagName($seguro_auto,'qtparcel'); ?>';
+		arraySeguroAuto['vlpreseg'] = '<? echo getByTagName($seguro_auto,'vlpreseg'); ?>';
+		arraySeguroAuto['vlpremio'] = '<? echo getByTagName($seguro_auto,'vlpremio'); ?>';
+		arraySeguroAuto['dtdebito'] = '<? echo getByTagName($seguro_auto,'dtdebito'); ?>';
+		
+	</script><?
+}else if(in_array($operacao,array('C_CASA'))){
+	$seguros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
+	
+	?>
+	
+	<script type="text/javascript">
+		
+		var arraySeguroCasa = new Object();
+		
+		arraySeguroCasa['nmresseg'] = '<? echo getByTagName($seguros,'nmresseg'); ?>';
+		arraySeguroCasa['nrctrseg'] = '<? echo getByTagName($seguros,'nrctrseg'); ?>';
+		arraySeguroCasa['tpplaseg'] = '<? echo getByTagName($seguros,'tpplaseg'); ?>';
+		arraySeguroCasa['ddpripag'] = '<? echo getByTagName($seguros,'dtprideb'); ?>';
+		arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'].split("/");
+		arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'][0];
+			
+		arraySeguroCasa['ddvencto'] = '<? echo getByTagName($seguros,'dtdebito'); ?>';
+		arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'].split("/");
+		arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'][0];
+		
+		arraySeguroCasa['vlpreseg'] = '<? echo getByTagName($seguros,'vlpreseg'); ?>';
+		arraySeguroCasa['dtinivig'] = '<? echo getByTagName($seguros,'dtinivig'); ?>';
+		arraySeguroCasa['dtfimvig'] = '<? echo getByTagName($seguros,'dtfimvig'); ?>';
+		arraySeguroCasa['flgclabe'] = '<? echo getByTagName($seguros,'flgclabe'); ?>';
+		arraySeguroCasa['nmbenvid'] = '<? echo $seguros[28]->tags[0]->cdata; ?>';
+		arraySeguroCasa['dtcancel'] = '<? echo getByTagName($seguros,'dtcancel'); ?>';
+		arraySeguroCasa['dsmotcan'] = '<? echo getByTagName($seguros,'dsmotcan'); ?>';
+		
+		arraySeguroCasa['nrcepend'] = '<? echo getByTagName($seguros,'nrcepend'); ?>';
+		arraySeguroCasa['dsendres'] = '<? echo getByTagName($seguros,'dsendres'); ?>';
+		arraySeguroCasa['nrendere'] = '<? echo getByTagName($seguros,'nrendres'); ?>';
+		arraySeguroCasa['complend'] = '<? echo getByTagName($seguros,'complend'); ?>';
+		arraySeguroCasa['nmbairro'] = '<? echo getByTagName($seguros,'nmbairro'); ?>';
+		arraySeguroCasa['nmcidade'] = '<? echo getByTagName($seguros,'nmcidade'); ?>';
+		arraySeguroCasa['cdufresd'] = '<? echo getByTagName($seguros,'cdufresd'); ?>';
+		
+		arraySeguroCasa['tpendcor'] = '<? echo getByTagName($seguros,'tpendcor'); ?>';
+		
 	</script><?
     }else if($operacao == 'SEGUR'){
         $seguradoras  = $xmlObjeto->roottag->tags[0]->tags;

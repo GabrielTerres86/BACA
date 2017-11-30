@@ -9716,7 +9716,45 @@ END pc_gera_titulos_iptu_prog;
   --               07/04/2017 - Ajustado para quando nao encontrar CEB e TCO rejeitar o pagamento com a 
   --                            mensagem "911 - Beneficiario nao cadastrado.", ao invés de aceitar o 
   --                            pagamento como sendo "Liquidação Interbancária" (Douglas - Chamado 619274)
+  --
+  --               14/11/2017 - Quando o convenio existe na cooperativa porém não encontra a conta
+  --                            que está no código de barras, então verificar se o convênio existe
+  --                            em outra singular para tratar como  "Liquidação Interbancária"
+  --                            (AJFink - Chamado 792324)
+  --
   ---------------------------------------------------------------------------------------------------------------
+    --
+    procedure pc_convenio_outra_singular(pr_cdcooper in  crapceb.cdcooper%type
+                                        ,pr_nrconven in  crapceb.nrconven%type
+                                        ,pr_idcnvsng out number) is
+      --
+      --verifica se o convenio existe em outra singular do sistema Cecred
+      cursor cr_crapcco(pr_cdcooper in crapceb.cdcooper%type
+                       ,pr_nrconven in crapceb.nrconven%type) is
+        select 1 idexiste
+        from crapcco cco
+        where cco.cdcooper <> pr_cdcooper
+          and cco.nrconven = pr_nrconven;
+      --
+      vr_idexiste number(1);
+      vr_idcnvsng number(1) := 0;
+      --
+    begin
+      --
+      open cr_crapcco(pr_cdcooper => pr_cdcooper
+                     ,pr_nrconven => pr_nrconven);
+      fetch cr_crapcco into vr_idexiste;
+      if cr_crapcco%found then
+        --
+        vr_idcnvsng := 1;
+        --
+      end if;
+      close cr_crapcco;
+      --
+      pr_idcnvsng := vr_idcnvsng;
+      --
+    end pc_convenio_outra_singular;
+    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -9883,6 +9921,7 @@ END pc_gera_titulos_iptu_prog;
       vr_exc_erro  EXCEPTION;
       vr_dtvencto DATE;
       vr_fv INTEGER;
+      vr_idcnvsng number(1);
 
       PROCEDURE pc_checa_convenio_cooperado
                 (pr_cdcooper IN crapcco.cdcooper%TYPE
@@ -10524,6 +10563,19 @@ END pc_gera_titulos_iptu_prog;
                 IF cr_crapceb1%ISOPEN THEN
                    CLOSE cr_crapceb1;
                 END IF;
+
+                --Se chegou até aqui é porque o convênio existe na cooperativa
+                --porém não foi localizada a conta que está no "nosso número".
+                --Nesse caso o convênio pode ser de outra cooperativa do sistema Cecred.
+                pc_convenio_outra_singular(pr_cdcooper => pr_cooper
+                                          ,pr_nrconven => vr_convenio
+                                          ,pr_idcnvsng => vr_idcnvsng);
+                --se o convênio também existe em outra singular do sistema Cecred então Liq Interbancária
+                if vr_idcnvsng = 1 then
+                  --
+                  RAISE vr_exc_saida;
+                  --
+                end if;
 
                 -- Se nao encontrou CEB e TCO, então a conta não existe
                 CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper

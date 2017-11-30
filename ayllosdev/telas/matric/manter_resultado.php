@@ -17,8 +17,7 @@
 
 					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
 				 
-				 28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
-                              esteja cadastrado na cooperativa. (Kelvin)
+                 26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
 					 
 				 
 				 	 
@@ -99,6 +98,7 @@
 	// Controle remoção da classe erro dos campos
 	//----------------------------------------------------------------------------------------------------------------------------------		
 	echo '$("input,select","#frmCabMatric").removeClass("campoErro");';
+	echo '$("input,select","#frmFiltro").removeClass("campoErro");';
 	echo '$("input,select","#frmJuridico").removeClass("campoErro");';		
 	echo '$("input,select","#frmFisico").removeClass("campoErro");';		
 		
@@ -116,7 +116,7 @@
 		
 		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';
 				
-		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
+		echo '$("#nrdconta","#frmFiltro").val(' . $nrctanov . ');';
 		
         //Removido, pois tela será aberta apos salvar os dados, devido a replicação de dados da pessoa.
 		//echo "verificaResponsavelLegal();";
@@ -197,25 +197,15 @@
             $metodo = ($inpessoa == 1) ? "verificaResponsavelLegal();" : "abrirProcuradores();";
 		}
 		else {
-			$metodo = "estadoInicial();";	
-		}
 				
-		$metodoMsg = "exibirMensagens('" . $stringArrayMsg . "','" . $metodo . "')";		
+			$metodo = "controlaVoltar();";	
 				
-		if ( $msgRecad != '' ){
-			if ($msgAtCad != '') {
-				$metRecad = 'showConfirmacao(\''.$msgAtCad.'\',\'1Confirma&ccedil;&atilde;o - MATRIC\',\'revisaoCadastral(\"'.$chaveAlt.'\",\"'.$tpAtlCad.'\",\"b1wgen0052.p\",\"'.$stringArrayMsg.'\",\"estadoInicial();\")\',\'revisaoCadastral(\"'.$chaveAlt.'\",\"0\",\"b1wgen0052.p\",\"'.$stringArrayMsg.'\",\"estadoInicial();\")\' ,\'sim.gif\',\'nao.gif\');';
-			} else {
-				$metRecad = 'revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0052.p\',\''.$stringArrayMsg.'\',\'estadoInicial();\');';	
 			}
 						
-			exibirConfirmacao($msgRecad,'Confirmação - MATRIC',$metRecad,$metodoMsg,false); 
+		$metodoMsg = "exibirMensagens('" . $stringArrayMsg . "','" . $metodo . "')";		
 						
-		}else if ( $msgAtCad != '' ) {
-			exibirConfirmacao($msgAtCad,'Confirmação - MATRIC','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0052.p\',\''.$stringArrayMsg.'\',\'estadoInicial();\');',$metodoMsg,false); 
-		}else{
 			echo $metodoMsg;
-		}	
+			
 	} 		
 	
 	if ($operacao == 'LCD') { // Verificar se este CPF/CNPJ ja tem conta
@@ -362,7 +352,7 @@
 		
 		$nomeForm = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 			
-		echo "$('#nrdconta','#frmCabMatric').val($nrctanov);";
+		echo "$('#nrdconta','#frmFiltro').val($nrctanov);";
 		echo "nrdconta = '$nrctanov';";
 		echo "operacao = 'DCC';";
 		echo "manterOutros('$nomeForm');";

@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 23/10/2017
+ * FONTE        : emprestimos.js                            Última alteração: 27/11/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -111,8 +111,11 @@
  * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
- * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
- * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 091: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 092: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 093: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
+ * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -359,6 +362,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             idseqttl: idseqttl,
             operacao: operacao,
             inconfir: 1,
+			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1250,6 +1254,7 @@ function controlaOperacao(operacao) {
             nrcpfcgc_busca: nrcpfcgc_busca,
             inconfir: 1,
             nomeAcaoCall: nomeAcaoCall,
+			executandoProdutos: executandoProdutos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1403,6 +1408,10 @@ function manterRotina(operacao) {
     var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
     var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
     var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
+    var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
+    var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
+    var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
+    var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
     var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
     var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
 
@@ -1535,6 +1544,7 @@ function manterRotina(operacao) {
     dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
     dtoutris = (dtoutris == '') ? '?' : dtoutris;
     nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
+    idfiniof = (idfiniof == '') ? 1 : idfiniof;
 
     nrcpfcjg = normalizaNumero(nrcpfcjg);
     nrcpfav1 = normalizaNumero(nrcpfav1);
@@ -1598,8 +1608,9 @@ function manterRotina(operacao) {
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
-            resposta: resposta,
-            redirect: 'script_ajax'
+            resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
+            vlrtarif: vlrtarif, vlrtotal: vlrtotal, 
+            executandoProdutos: executandoProdutos, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -1775,13 +1786,13 @@ function controlaLayout(operacao) {
 
 
         nomeForm = 'frmNovaProp';
-        altura = '320px';
-        largura = '445px';
+        altura = '330px';
+        largura = '465px';
 
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="flgimppr"],label[for="dsctrliq"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
         var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
@@ -1811,6 +1822,9 @@ function controlaLayout(operacao) {
         var rProposta = $('label[for="flgimppr"]', '#' + nomeForm);
         var rNtPromis = $('label[for="flgimpnp"]', '#' + nomeForm);
         var rLiquidacoes = $('label[for="dsctrliq"]', '#' + nomeForm);
+        var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
+        var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
+        var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
@@ -1825,6 +1839,9 @@ function controlaLayout(operacao) {
         var cDsQualiParc = $('#dsquapro', '#' + nomeForm);
         var cDebitar = $('#flgpagto', '#' + nomeForm);
         var cTipoEmpr = $('#tpemprst', '#' + nomeForm);
+        var cVliofepr = $('#vliofepr', '#' + nomeForm);
+        var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
+        var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
 
         var cLiberar = $('#qtdialib', '#' + nomeForm);
         var cDtlibera = $('#dtlibera', '#' + nomeForm);
@@ -1862,18 +1879,24 @@ function controlaLayout(operacao) {
 
         rRotulos.addClass('rotulo').css('width', '75px');
 
+        rVliofepr.addClass('rotulo').css('width', '75px');
+        cVliofepr.addClass('rotulo moeda').css('width', '90px');
+        rVlrtarif.addClass('rotulo').css('width', '75px');
+        cVlrtarif.addClass('rotulo moeda').css('width', '90px');
+        rVlrtotal.addClass('rotulo').css('width', '75px');
+        cVlrtotal.addClass('rotulo moeda').css('width', '90px');
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '265px');
+        rProposta.css('width', '97px');
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '137px');
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
-        rPercCET.addClass('').css('width', '265px');
-        rDtPgmento.addClass('rotulo').css('width', '265px');
-        rDtUltPag.addClass('rotulo').css('width', '265px');
+        rPercCET.addClass('').css('width', '97px');
+        rDtPgmento.addClass('').css('width', '104px');
+        rDtUltPag.addClass('').css('width', '97px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
         rNtPromis.addClass('rotulo').css('width', '265px');
         rDiasUteis.addClass('rotulo-linha');
@@ -2148,6 +2171,9 @@ function controlaLayout(operacao) {
         cDtliquidacao.removeClass('campo');
         cDtliquidacao.addClass('campoTelaSemBorda').attr('disabled', 'disabled');
 
+        cVlrtarif.desabilitaCampo();
+        cVliofepr.desabilitaCampo();
+        cVlrtotal.desabilitaCampo();
     } else if (in_array(operacao, ['C_DADOS_PROP', 'A_DADOS_PROP', 'I_DADOS_PROP'])) {
 
         nomeForm = 'frmDadosProp';
@@ -2681,7 +2707,7 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
-
+        
         // Exibe o Fieldset de GARANTIAS
         $('#' + nomeForm + ' fieldset:eq(1)').show();
 
@@ -2739,7 +2765,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-
+		
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -3689,6 +3715,7 @@ function copiaProposta(novaOp) {
     arrayProposta['flgimppr'] = $('#flgimppr', '#frmNovaProp').val();
     arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
     arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
+	arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
 
     flgimppr = arrayProposta['flgimppr'];
     flgimpnp = arrayProposta['flgimpnp'];
@@ -3740,6 +3767,10 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
         arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
         arrayProposta['tpemprst'] = $('#tpemprst', '#frmNovaProp').val();
+        arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
+        arrayProposta['vliofepr'] = $('#vliofepr', '#frmNovaProp').val();
+        arrayProposta['vlrtarif'] = $('#vlrtarif', '#frmNovaProp').val();
+        arrayProposta['vlrtotal'] = $('#vlrtotal', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
         flgimpnp = arrayProposta['flgimpnp'];
@@ -4018,6 +4049,10 @@ function atualizaTela() {
         $('#dslcremp', '#frmNovaProp').val(arrayProposta['dslcremp']);
         $('#dsfinemp', '#frmNovaProp').val(arrayProposta['dsfinemp']);
         $('#dtlibera', '#frmNovaProp').val(arrayProposta['dtlibera']);
+        $('#idfiniof', '#frmNovaProp').val(arrayProposta['idfiniof']);
+        $('#vliofepr', '#frmNovaProp').val(arrayProposta['vliofepr']);
+        $('#vlrtarif', '#frmNovaProp').val(arrayProposta['vlrtarif']);
+        $('#vlrtotal', '#frmNovaProp').val(arrayProposta['vlrtotal']);
 
         if (operacao == 'TI') {
 
@@ -5275,7 +5310,7 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-
+		
 		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
@@ -5320,11 +5355,11 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-
+		
 		if (inobriga == 'N'){
-        if (!validaAnaliseProposta()) {
-            return false;
-        }
+			if (!validaAnaliseProposta()) {
+				return false;
+			}
 		}
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
@@ -6034,9 +6069,6 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
-
-	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
-	return false;
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
@@ -6837,7 +6869,7 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-
+    
     inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
     
     // Executa script de confirmação através de ajax
@@ -8666,7 +8698,7 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,            
+            nrdconta: nrdconta,     
             dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },
@@ -9176,7 +9208,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-	arrayLargura[1] = '110px';
+	  arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';

@@ -47,16 +47,18 @@
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
  *		                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
- * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
- * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
- * 027: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
- * 028: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
- * 028: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
- * 027: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro. 
- * 031: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
- * 029: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+ * 025: [26/06/2017] Jonata             (RKAM): Ajustes para inclusão da nova opção "G" (P364).
+ * 026: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
+ * 027: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
+ * 028: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
+ * 029: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
+ * 030: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
+ * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 032: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
+ * 033: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
  *                                             replicação dos dados da pessoa. (PRJ339).
-
+ * 035: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
  */
 
 // Definição de algumas variáveis globais 
@@ -78,7 +80,6 @@ var hrinicad = 0; // Horario de inicio do cadastro
 var XMLContas = "";
  
 // Opções que o operador tem acesso na tela MATRIC
-var flgAlterar = ''; // Operador possui permissão para Alterar
 var flgConsultar = ''; // Permissão para Consultar
 var flgIncluir = ''; // Permissão para Incluir
 var flgRelatorio = ''; // Permissão para emitir o relatório
@@ -103,6 +104,8 @@ var arrayBackupAvt = new Array(); 		// Array que armazena o arrayFilhosAvtMatric
 var arrayBackupBens = new Array(); 		// Array que armazena o arrayFilhosBensMatric antes de qualquer operação.
 var arrayFilhos = new Array(); 			// Variável global para armazenar os responsaveis legais
 var arrayBackupFilhos = new Array();    // Array que armazena o arrayFilhos antes de qualquer operação.
+var lstContasDemitidas = new Array(); // Variável para armazenar contas demitidas
+var lstContasAntigasDemitidas = new Array(); // Variável para armazenar contas antigas demitidas
 
 //Variaveis que armazenam informações do parcelamento
 var dtdebito = '';
@@ -115,15 +118,365 @@ var outconta = '';
 
 exibeAlerta = false;
 
+
+
 $(document).ready(function() {
+
 	// Inicializa algumas variáveis
     idseqttl = 1;
 	exibeAlerta = false;
-	controlaOperacao();		
+	estadoInicial();
 	
 }); 
 
+
+
+function estadoInicial() {
+	
+	formataCabecalho();	
+	
+	$('#divConteudoMatric').html('');
+	$('#divContasDemitidas').html('');
+	$('#opcao','#frmCabMatric').habilitaCampo().focus().val('C');	
+		
+	layoutPadrao();
+				
+}
+
+
+function formataCabecalho(){
+
+	$('label[for="opcao"]','#frmCabMatric').css('width','42px').addClass('rotulo');
+	$('#opcao','#frmCabMatric').css('width','584px');
+	removeOpacidade('divMatric');		
+		
+	cTodosCabecalho = $('input[type="text"],select', '#frmCabMatric');
+    
+	highlightObjFocus( $('#frmCabMatric') );
+	
+	cTodosCabecalho.habilitaCampo();
+	
+	if ($.browser.msie) {
+        $('#opcao','#frmCabMatric').css('width', '582px');         
+	}	
+	
+    //Ao pressionar botao opcao
+	$('#opcao','#frmCabMatric').unbind('keypress').bind('keypress', function(e){
+    
+		$('input,select').removeClass('campoErro');
+			
+		// Se é a tecla ENTER, TAB
+		if(e.keyCode == 13 || e.keyCode == 9){
+			
+			$('#btOK','#frmCabMatric').click();
+			$(this).desabilitaCampo();			
+			
+			return false;						
+			
+		}
+						
+	});
+	
+	//Ao clicar no botao OK
+	$('#btOK','#frmCabMatric').unbind('click').bind('click', function(){
+		
+		if ( $('#opcao','#frmCabMatric').hasClass('campoTelaSemBorda')  ) { return false; }
+		
+		$('#opcao','#frmCabMatric').desabilitaCampo();		
+		$(this).unbind('click');
+		
+		operacao = $('#opcao','#frmCabMatric').val();
+		aux_operacao = $('#opcao','#frmCabMatric').val();
+			
+		if($('#opcao','#frmCabMatric').val() == 'CG'){
+			
+			controlaLayout('3');
+			
+		}else if($('#opcao','#frmCabMatric').val() == 'CH'){
+		
+		    controlaLayout('4');
+		
+		}else{
+			controlaLayout('1');
+		}
+								
+	});
+		
+	$('#opcao', '#frmCabMatric').focus();
+	
+	return false;		
+
+}
+
+function controlaLayout(ope) {
+
+	switch(ope){
+		
+		case '1':
+
+			$('#frmFiltro').css('display','block');
+			$('#divBotoesFiltro').css('display','block');
+			formataFiltro();
+			
+		break;
+
+		case '2':
+		
+			$('#frmFiltro').css('display','none');
+			$('#divBotoesFiltro').css('display', 'none');
+			$('#frmFiltroContasDemitidas').css('display', 'none');
+			$('#divBotoesFiltroContasDemitidas').css('display', 'none');
+			$('#frmFiltroContasAntigasDemitidas').css('display', 'none');
+			$('#divBotoesFiltroContaAntigasDemitidas').css('display', 'none');
+			
+						
+		break;
+		
+	    case '3':
+            
+	        $('#frmFiltro').css('display', 'none');
+	        $('#divBotoesFiltro').css('display', 'none');
+
+	        $('#frmFiltroContasDemitidas').css('display', 'block');
+	        $('#divBotoesFiltroContasDemitidas').css('display', 'block');
+	        formataFiltroContasDemitidas();	        
+
+	    break;
+
+	    case '4':
+
+	        $('#frmFiltro').css('display', 'none');
+	        $('#divBotoesFiltro').css('display', 'none');
+
+	        $('#frmFiltroContasAntigasDemitidas').css('display', 'block');
+	        $('#divBotoesFiltroContaAntigasDemitidas').css('display', 'block');
+	        formataFiltroContasAntigasDemitidas();
+
+	        break;
+	}
+	
+	
+}
+
+
+function formataFiltro() {
+
+	highlightObjFocus($('#frmFiltro'));
+	$('#frmFiltro').limpaFormulario();
+	$('#divBotoesFiltro').css('display','block');
+
+    var rNrConta = $('label[for="nrdconta"]', '#frmFiltro');
+    var rCodAgencia = $('label[for="cdagepac"]', '#frmFiltro');
+    var rNrMatric = $('label[for="nrmatric"]', '#frmFiltro');
+    var rInpessoa = $('label[for="inpessoa"]', '#frmFiltro');
+    	
+    var cTodos = $('input[type="text"],select', '#frmFiltro');
+    var cNrConta = $('#nrdconta', '#frmFiltro');
+    var cCodAgencia = $('#cdagepac', '#frmFiltro');
+    var cDesAgencia = $('#nmresage', '#frmFiltro');
+    var cNrMatric = $('#nrmatric', '#frmFiltro');
+    var cNatureza = $('#input[name="inpessoa"]', '#frmFiltro');
+    	
+	rNrConta.addClass('rotulo').css({ 'width': '42px' });
+    rCodAgencia.addClass('rotulo-linha').css({ 'width': '32px' });
+    rNrMatric.addClass('rotulo-linha').css({ 'width': '37px' });
+    rInpessoa.addClass('rotulo-linha').css({ 'width': '2px' });
+	
+    cTodos.desabilitaCampo();
+    cNrConta.addClass('conta pesquisa').css('width', '85px');
+    cCodAgencia.addClass('codigo pesquisa').css('width', '50px');
+    cDesAgencia.addClass('descricao').css('width', '174px');
+    cNrMatric.addClass('matricula').css('width', '70px');
+	
+    $('#pessoaFi,#pessoaJu', '#frmFiltro').desabilitaCampo();
+	
+	if ($.browser.msie) {
+        cDesAgencia.css('width', '175px');
+	}	
+	
+	// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+	cNrConta.unbind('keypress').bind('keypress', function (e) {
+	
+		if (divError.css('display') == 'block') { return false; }
+		
+		// Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+		if (e.keyCode == 13) {
+			// Armazena o número da conta na variável global
+			nrdconta = normalizaNumero($(this).val());
+			nrdcontaOld = nrdconta;
+		
+			// Verifica se o número da conta é vazio
+			if (nrdconta == '') { return false; }
+				
+			// Verifica se a conta é válida
+			if (!validaNroConta(nrdconta)) {
+				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
+				return false; 
+			}
+			
+			$("#btProsseguir","#divBotoesFiltro").click();
+			return false;
+		}
+		
+	});		
+	
+	if (operacao == 'CI'){
+		
+		cNrConta.val("");
+		cNrConta.desabilitaCampo();
+		
+		// Se eu mudar a opção, muda a variável global operacao
+	    $("#pessoaFi,#pessoaJu", "#frmFiltro").unbind('keypress').bind('keypress', function (e) {
+			
+            if (divError.css('display') == 'block') { return false; }
+
+			if (e.keyCode == 9) {
+				$("#btProsseguir","#divBotoesFiltro").focus();
+				return false;
+			}	
+			
+		});
+		
+		// Libera os devidos campos do Cabeçalho
+		$('#cdagepac,#pessoaFi,#pessoaJu', '#frmFiltro').habilitaCampo();
+		
+		layoutPadrao();
+		controlaPesquisasFiltro();
+		
+		// Sugerir PA de trabalho
+		$('#cdagepac', '#frmFiltro').trigger('blur');
+		$("#cdagepac", "#frmFiltro").val(cdpactra).focus();
+		$('#cdagepac', '#frmFiltro').trigger('blur');
+		
+		// Sugerir PF
+		$('#pessoaFi', '#frmFiltro').attr('checked', true);		
+				
+		$('#btProsseguir','#divBotoesFiltro').unbind("click").bind("click", (function () {
+						
+			controlaOperacao($('#opcao', '#frmCabMatric').val());				
+			
+		}));
+			
+				
+	}else {
+		
+		$('#btProsseguir','#divBotoesFiltro').unbind("click").bind("click", (function () {
+			
+			// Armazena o número da conta na variável global
+			nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+			nrdcontaOld = nrdconta;
+		
+			// Verifica se o número da conta é vazio
+			if (nrdconta == '') { return false; }
+				
+			// Verifica se a conta é válida
+			if (!validaNroConta(nrdconta)) {
+				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
+				return false; 
+			}
+			
+			controlaOperacao($('#opcao', '#frmCabMatric').val());
+			 
+		}));
+		
+		layoutPadrao();
+		cNrConta.habilitaCampo().focus();
+		controlaPesquisasFiltro();
+		
+	}	
+	
+	return false;		
+}
+
+
+
+function controlaPesquisasFiltro() {
+	
+	// Definindo as variáveis
+    var bo = 'b1wgen0059.p';
+    var procedure = '';
+    var titulo = '';
+    var qtReg = '';
+    var filtrosPesq = '';
+    var filtrosDesc = '';
+    var colunas = '';
+	var nomeForm = 'frmFiltro';
+	
+	/*-------------------------------------*/
+    /*       CONTROLE DAS PESQUISAS        */
+    /*-------------------------------------*/
+
+    // Atribui a classe lupa para os links 
+    $('a', '#' + nomeForm).addClass('lupa').css('cursor', 'auto');
+
+    // Percorrendo todos os links
+    $('a', '#' + nomeForm).each(function () {
+
+        if (!$(this).prev().hasClass('campoTelaSemBorda')) { $(this).css('cursor', 'pointer'); }
+
+        $(this).unbind("click").bind("click", (function () {
+            if ($(this).prev().hasClass('campoTelaSemBorda')) {
+                return false;
+			} else {
+                campoAnterior = $(this).prev().attr('name');
+				
+				// Número da conta
+                if (campoAnterior == 'nrdconta') {
+					
+					mostraPesquisaAssociado('nrdconta', 'frmFiltro');
+					return false;
+	
+				// Agência
+                }else if (campoAnterior == 'cdagepac') {
+					procedure = 'busca_pac';
+					titulo = 'Agência PA';
+					qtReg = '20';
+					filtrosPesq = 'Cód. PA;cdagepac;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
+					colunas = 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
+					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
+					return false;	
+										
+				}
+
+            }
+            return false;
+        }));
+	
+	});
+		
+	//Agência
+    $('#cdagepac', '#' + nomeForm).unbind('blur').bind('blur', function () {
+			
+            procedure = 'busca_pac';
+            titulo = 'Agência PA';
+			filtrosDesc = '';
+            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresage', $(this).val(), 'dsagepac', filtrosDesc, 'frmFiltro');
+			return false;
+		
+		});
+		
+	//Agência
+    $('#cdagepac', '#' + nomeForm).unbind('keypress').bind('keypress', function (e) {
+			
+		$('input,select').removeClass('campoErro');
+			
+		// Se é a tecla ENTER, TAB
+		if(e.keyCode == 13 || e.keyCode == 9){
+			
+                $("#pessoaFi", "#frmFiltro").focus();
+			
+			return false;						
+			
+			}
+	
+}); 
+
+	}
+
 function controlaOperacao(novaOp) {
+	
+	$('#divBotoesFiltro').css('display','none');
+	$('input,select','#frmFiltro').desabilitaCampo();
 	
     operacao = (typeof novaOp != 'undefined') ? novaOp : operacao;
 		
@@ -140,10 +493,10 @@ function controlaOperacao(novaOp) {
 		case 'CA': mensagem = 'Aguarde, verificando conta/dv ...'; break;
 		case 'CD': mensagem = 'Aguarde, verificando conta/dv ...'; break;
 		
-        case 'IC': showConfirmacao('Deseja cancelar inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'estadoInicial()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
-        case 'XC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'estadoInicial()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
-        case 'AC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'estadoInicial()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
-        case 'DC': showConfirmacao('Deseja cancelar desvinculação?', 'Confirma&ccedil;&atilde;o - Matric', 'estadoInicial()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'IC': showConfirmacao('Deseja cancelar inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'XC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'AC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'DC': showConfirmacao('Deseja cancelar desvinculação?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
 		
 		case 'IV': manterRotina(); semaforo--; return false; break;
 		case 'XV': manterRotina(); semaforo--; return false; break;
@@ -170,8 +523,13 @@ function controlaOperacao(novaOp) {
 				   return false; 
 				   break;			   
 		
-        default: mensagem = 'Aguarde, abrindo tela ...'; break;
+        default: //Deverá retonar ao inicio da tela
+					controlaVoltar();		
+					return false;
+					
+				break;
 	}
+	
     showMsgAguardo(mensagem);
 			
 	// Carrega dados da conta através de ajax
@@ -190,19 +548,14 @@ function controlaOperacao(novaOp) {
         error: function (objAjax, responseError, objExcept) {
 					semaforo--;
 					hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmCabMatric\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
 				},
         success: function (response) {
 					semaforo--;
 					hideMsgAguardo();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 						try {
-							$('#divMatric').html(response);
-							
-                    if ($("#dtnasctl", "#frmFisico").val() == "" && $('input[name="inpessoa"]:checked', '#frmCabMatric').val() == 1) {
-								$('#divMatric').html(response);
-								return false;
-							}
+							$('#divConteudoMatric').html(response);
 							
 							return false;
 							
@@ -250,10 +603,10 @@ function manterRotina() {
 	
     showMsgAguardo(mensagem);
 	
-    nrdconta = normalizaNumero($('#nrdconta', '#frmCabMatric').val());
-    cdagepac = $('#cdagepac', '#frmCabMatric').val();
-    rowidass = $('#rowidass', '#frmCabMatric').val();
-    inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+    cdagepac = $('#cdagepac', '#frmFiltro').val();
+    rowidass = $('#rowidass', '#frmFiltro').val();
+    inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 	
 	// Obtem o nome do formulario
     nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
@@ -603,20 +956,11 @@ function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
     return false;
 }
 
-//Função criado para resolver problema de mensagens no IE.
-function estadoInicial() {
-
-    showMsgAguardo('Aguarde, carregando ...');
-    setTimeout('limpaTela()', 150);
 	
-	return false;
+function limpaTela() {
 	
-}
+	fechaRotina(divRotina);
 
-function limpaTela(oldVal) {
-		
-	fechaRotina($('#divRotina'));
-		
     showMsgAguardo('Aguarde, carregando ...');
     setTimeout('', 900);
 	
@@ -625,98 +969,45 @@ function limpaTela(oldVal) {
 	rowidass = '';
     tppessoa = 1;
 				
-    $("input,select", "#divMatric").removeClass("campoErro");
-	
-	$('#frmCabMatric').limpaFormulario();
-    $('#frmJuridico').css('display', 'none').limpaFormulario();
-    $('#frmFisico').css('display', 'block').limpaFormulario();
-
-    $('#opcao', '#frmCabMatric').val('FC').habilitaCampo();
-    $('#nrdconta', '#frmCabMatric').val('').habilitaCampo();
-		
-	formataCabecalho();
-	controlaBotoes();	
-	formataPessoaFisica();
-	formataPessoaJuridica();
-	controlaPesquisas();
 	hideMsgAguardo();
-	controlaFoco();
+	
+	controlaVoltar('1');
 	
 }
 
-function bloqueiaCabecalho() {
+function bloqueiaFormFiltro() {
 	
 	// Definindo variaveis
-    var valorPAC = normalizaNumero($('#cdagepac', '#frmCabMatric').val());
-    var descPAC = $('#nmresage', '#frmCabMatric').val();
+    var valorPAC = normalizaNumero($('#cdagepac', '#frmFiltro').val());
+    var descPAC = $('#nmresage', '#frmFiltro').val();
 	
 	// Verifico se o PA está informado
     if (valorPAC == 0) {
-        showError('error', 'PA n&atilde;o cadastrado.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmCabMatric\');');
+        showError('error', 'PA n&atilde;o cadastrado.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
 		return false;
 	}
 
 	//Verifico a descrição do PA
     if (descPAC == '') {
-        showError('error', 'PA inv&aacute;lido.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmCabMatric\');');
+        showError('error', 'PA inv&aacute;lido.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
 		return false;
 	}
 	
-    if ($('#cdagepac', '#frmCabMatric').hasClass('campoErro')) { return false; }
+    if ($('#cdagepac', '#frmFiltro').hasClass('campoErro')) { return false; }
 	
 	// Se o PA é diferente de zero, então bloqueia o cabecalho
-    $('input:text,input:radio,select', '#frmCabMatric').removeClass('campoErro').desabilitaCampo();
+    $('input:text,input:radio,select', '#frmFiltro').removeClass('campoErro').desabilitaCampo();
 	
-    $('a', '#frmCabMatric').unbind('click').css('cursor', 'auto');
+    $('a', '#frmFiltro').unbind('click').css('cursor', 'auto');
 	
 	return true;	
-	
-}
-
-function processoIncluir() {
-				
-	// Libera os devidos campos do Cabeçalho
-    $('#cdagepac,#pessoaFi,#pessoaJu', '#frmCabMatric').habilitaCampo();
-	
-	// O nr. conta vem vazio, portanto colocar o antigo valor e desabilita o campo
-    $('#nrdconta', '#frmCabMatric').desabilitaCampo();
-    $('#opcao', '#frmCabMatric').desabilitaCampo();
-			
-	// Sugerir PA de trabalho
-    $("#cdagepac", "#frmCabMatric").val(cdpactra).focus();
-	
-	// Sugerir PF
-    $('#pessoaFi', '#frmCabMatric').attr('checked', true);
-	
-	// Controla exibição do formulário Físico
-    $('#pessoaFi', '#frmCabMatric').click(function () {
-		
-        if ($('#frmFisico').css('display') == 'none') {
-            $('#frmJuridico').css('display', 'none');
-            $('#frmFisico').css('display', 'block');
-		} 
-				
-	});	
-	
-	// Controla exibição do formulário Jurídico
-    $('#pessoaJu', '#frmCabMatric').click(function () {
-				
-        if ($('#frmJuridico').css('display') == 'none') {
-            $('#frmFisico').css('display', 'none');
-            $('#frmJuridico').css('display', 'block');
-		} 
-				
-	});
-		
-	controlaPesquisas();	
-	return false;
 	
 }
 
 function controlaAcessoOperacoes() {
 				
 	if (operacao == '') {
-        $('#nrdconta', '#frmCabMatric').val('');
+        $('#nrdconta', '#frmFiltro').val('');
 		nrdconta = 0;
 		semaforo--;
 		return true;
@@ -739,7 +1030,6 @@ function controlaAcessoOperacoes() {
 	}
 	
 	// Verifica permissões de acesso	
-    if ((operacao == 'CA') && (flgAlterar != '1')) { showError('error', 'Seu usuário não possui permissão de alteração.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
     if ((operacao == 'CI') && (flgIncluir != '1')) { showError('error', 'Seu usuário não possui permissão de inclusão.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
     if ((operacao == 'FC') && (flgConsultar != '1')) { showError('error', 'Seu usuário não possui permissão de consulta.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
     if ((operacao == 'CR') && (flgRelatorio != '1')) { showError('error', 'Seu usuário não possui permissão para emissão do relatório.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
@@ -750,9 +1040,8 @@ function controlaAcessoOperacoes() {
 	return true;
 }
 
-function controlaLayout() {
 
-    $('#divMatric').fadeTo(0, 0.1);
+function controlaApresentacaoForms() {
 	
     $('fieldset').css({ 'margin': '0px', 'border-color': '#777', 'margin': '3px 0px' });
 	
@@ -772,7 +1061,6 @@ function controlaLayout() {
 	controlaBotoes();
 	
 	$('input').trigger('blur');	
-	removeOpacidade('divMatric');
 	
 }
 
@@ -790,11 +1078,13 @@ function controlaBotoes() {
     $('#btVoltarAltNome').css('display', 'none');
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
+    $('#btSaqueParcial').css('display', 'none');
     $('#btProsseguirCns').css('display', 'none');
     $('#btVoltarDesvinc').css('display', 'none');
     $('#btSalvarDesvinc').css('display', 'none');
     $('#btVoltarAltCpfCnpj').css('display', 'none');
     $('#btSalvarAltCpfCnpj').css('display', 'none');
+    $('#btDesligarAlt').css('display', 'none');
 	
 	
 	aux_cdrotina = operacao;
@@ -804,12 +1094,12 @@ function controlaBotoes() {
 		case 'FC': 
 		
             $('#btVoltarCns').unbind("click").bind("click", (function () {
-				estadoInicial();
+				controlaVoltar();
 			}));
 				
             $('#btVoltarCns').css('display', 'inline');
 			
-            if ($('input[name="inpessoa"]:checked', '#frmCabMatric').val() == 1) {
+            if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 					
                 if (($('#inhabmen', '#frmFisico').val() == 0 && nrdeanos < 18) || $('#inhabmen', '#frmFisico').val() == 2) {
 										
@@ -819,6 +1109,10 @@ function controlaBotoes() {
 					
                     $('#btProsseguirCns').css('display', 'inline');
 				
+				}
+				
+                if (!$('#dtdemiss', '#frmFisico').val()) {
+                    $('#btDesligarAlt').css('display', 'inline');
 				}
 				
                 $('#btVoltarCns', '#divBotoes').css('display', 'inline');
@@ -832,13 +1126,23 @@ function controlaBotoes() {
 				
                 $('#btProsseguirCns').css('display', 'inline');
 				
+                if (!$('#dtdemiss', '#frmJuridico').val()) {
+                    $('#btDesligarAlt').css('display', 'inline');
 			}
+					
+			}
+					
+            $('#btSaqueParcial').css('display', 'inline');
+
+            $('#btSaqueParcial').unbind("click").bind("click", (function () {
+                abrirRotinaSaqueParcial();
+            }));
 					
 			break;
 			
 		case 'CI': 
 			
-            if (isHabilitado($('#cdagepac', '#frmCabMatric')) == false && $('#cdagepac', '#frmCabMatric').val() == '') {
+            if (isHabilitado($('#cdagepac', '#frmFiltro')) == false && $('#cdagepac', '#frmFiltro').val() == '') {
 				
                 $('#btProsseguirPreInc').unbind("click").bind("click", (function () {
 					consultaPreIncluir();								
@@ -853,7 +1157,7 @@ function controlaBotoes() {
 				
             } else {
 				
-                if ($('input[name="inpessoa"]:checked', '#frmCabMatric').val() == 1) {
+                if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 					
                     $('#btProsseguirInc').unbind("click").bind("click", (function () {
 						controlaOperacao('IV');				
@@ -873,46 +1177,13 @@ function controlaBotoes() {
 					
                     $('#btVoltarInc').css('display', 'inline');
                     $('#btProsseguirInc').css('display', 'inline');
+
 				}
 				 
 			} 
 			
 			break;
 			
-		case 'CA': 
-		
-            if ($('input[name="inpessoa"]:checked', '#frmCabMatric').val() == 1) {
-			
-                if (($('#inhabmen', '#frmFisico').val() == 0 && nrdeanos < 18) || $('#inhabmen', '#frmFisico').val() == 2) {
-
-                    $('#btSalvarAlt').css('display', 'inline');
-                    $('#btSalvarAlt').unbind("click").bind("click", (function () {
-						controlaOperacao('AV');
-					}));
-					
-                    $('#btVoltarAlt').css('display', 'inline');
-					
-                } else {
-				
-                    $('#btSalvarAlt').unbind("click").bind("click", (function () {
-						controlaOperacao('AV');						
-					}));
-                    $('#btVoltarAlt').css('display', 'inline');
-                    $('#btSalvarAlt').css('display', 'inline');
-					
-				}
-				
-            } else {
-				
-                $('#btSalvarAlt').unbind("click").bind("click", (function () {
-					controlaOperacao('AV');
-				}));
-									
-                $('#btVoltarAlt').css('display', 'inline');
-                $('#btSalvarAlt').css('display', 'inline');
-			}
-			
-			break;
 			
 		case 'CX': 
 			
@@ -932,125 +1203,10 @@ function controlaBotoes() {
 			break;
 			
 	}
-	
-	
-}
 
-function formataCabecalho() {
-
-	highlightObjFocus($('#frmCabMatric'));
-
-    var rOpcao = $('label[for="opcao"]', '#frmCabMatric');
-    var rNrConta = $('label[for="nrdconta"]', '#frmCabMatric');
-    var rCodAgencia = $('label[for="cdagepac"]', '#frmCabMatric');
-    var rNrMatric = $('label[for="nrmatric"]', '#frmCabMatric');
-    var rInpessoa = $('label[for="inpessoa"]', '#frmCabMatric');
 	
-    var cTodos = $('input[type="text"],select', '#frmCabMatric');
-    var cOpcao = $('#opcao', '#frmCabMatric');
-    var cNrConta = $('#nrdconta', '#frmCabMatric');
-    var cCodAgencia = $('#cdagepac', '#frmCabMatric');
-    var cDesAgencia = $('#nmresage', '#frmCabMatric');
-    var cNrMatric = $('#nrmatric', '#frmCabMatric');
-    var cNatureza = $('#input[name="inpessoa"]', '#frmCabMatric');
-	
-    rOpcao.addClass('rotulo').css({ 'width': '42px' });
-    rNrConta.addClass('rotulo').css({ 'width': '42px' });
-    rCodAgencia.addClass('rotulo-linha').css({ 'width': '32px' });
-    rNrMatric.addClass('rotulo-linha').css({ 'width': '37px' });
-    rInpessoa.addClass('rotulo-linha').css({ 'width': '2px' });
-	
-	cTodos.desabilitaCampo();
-    cOpcao.css('width', '624px');
-    cNrConta.addClass('conta pesquisa').css('width', '85px');
-    cCodAgencia.addClass('codigo pesquisa').css('width', '50px');
-    cDesAgencia.addClass('descricao').css('width', '174px');
-    cNrMatric.addClass('matricula').css('width', '70px');
-	
-    $('#pessoaFi,#pessoaJu', '#frmCabMatric').desabilitaCampo();
-	
-    if ($.browser.msie) {
-        cOpcao.css('width', '622px');
-        cDesAgencia.css('width', '175px');
 	}	
 	
-	if (operacao == 'CI') {
-		// Se eu mudar a opção, muda a variável global operacao
-        $("#pessoaFi,#pessoaJu", "#frmCabMatric").unbind('keypress').bind('keypress', function (e) {
-			
-            if (divError.css('display') == 'block') { return false; }
-
-			if (e.keyCode == 9) {
-				$("#btProsseguirPreInc").focus();
-				return false;
-			}	
-			
-		});
-	}
-
-    if (operacao == '' || operacao == 'FC') {
-		
-		cNrConta.habilitaCampo();
-		cOpcao.habilitaCampo();
-
-		// Se eu mudar a opção, muda a variável global operacao
-        cOpcao.unbind('change').bind('change', function () {
-
-			operacao = $(this).val();
-			aux_operacao = $(this).val();
-			
-			// Se for inclusao, desabilitar c/c e habilitar PA
-			if (operacao == 'CI') {	
-				cNrConta.val("");	
-				$('#frmJuridico').limpaFormulario();
-				$('#frmFisico').limpaFormulario();
-				controlaOperacao(operacao); 
-			} else {
-				cNrConta.focus();
-			}
-			
-		});
-		
-		// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
-        cNrConta.unbind('keypress').bind('keypress', function (e) {
-		
-            if (divError.css('display') == 'block') { return false; }
-			
-			// Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 13) {
-				// Armazena o número da conta na variável global
-                nrdconta = normalizaNumero($(this).val());
-				nrdcontaOld = nrdconta;
-			
-				// Verifica se o número da conta é vazio
-                if (nrdconta == '') { return false; }
-					
-				// Verifica se a conta é válida
-                if (!validaNroConta(nrdconta)) {
-                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmCabMatric\');');
-					return false; 
-				}
-				
-				// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
-                controlaOperacao($('#opcao', '#frmCabMatric').val());
-				return false;
-			}
-			
-		});		
-	
-	} else {
-		// Selecionar a a opção (operação) correta
-        $('#opcao option:selected', '#frmCabMatric').val();
-        $('#opcao', '#frmCabMatric').val(operacao);
-	
-		cNrConta.desabilitaCampo();
-		cOpcao.desabilitaCampo();
-	}	
-	
-	cNrConta.trigger('blur');
-	return false;	
-}
-
 function formataRodape(nomeForm) {
 	
     var rDtAdmissao = $('label[for="dtadmiss"]', '#' + nomeForm);
@@ -1090,7 +1246,7 @@ function formataRodape(nomeForm) {
 //				  e a ação de habilitar os campos foi passado para as funções formataPessoaFisica e formataPessoaJuridica
 function formataEndereco(nomeForm) {
 
-    var inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 
 	// rotulo endereco
     var rCep = $('label[for="nrcepend"]', '#' + nomeForm);
@@ -1114,15 +1270,15 @@ function formataEndereco(nomeForm) {
 	// campo endereco
     var cTodos = $('#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#cdufende,#idorigee', '#' + nomeForm);
     var endDesabilita = $('#dsendere,#cdufende,#nmbairro,#nmcidade', '#' + nomeForm);
-    var cCep = $('#nrcepend', '#' + nomeForm);
-    var cEnd = $('#dsendere', '#' + nomeForm);
-    var cNum = $('#nrendere', '#' + nomeForm);
-    var cCom = $('#complend', '#' + nomeForm);
-    var cBai = $('#nmbairro', '#' + nomeForm);
-    var cEst = $('#cdufende', '#' + nomeForm);
-    var cCid = $('#nmcidade', '#' + nomeForm);
-    var cOri = $('#idorigee', '#' + nomeForm);
-
+    var cCep = $('#nrcepend', '#' + nomeForm);		
+    var cEnd = $('#dsendere', '#' + nomeForm);      
+    var cNum = $('#nrendere', '#' + nomeForm);      
+    var cCom = $('#complend', '#' + nomeForm);      
+    var cBai = $('#nmbairro', '#' + nomeForm);      
+    var cEst = $('#cdufende', '#' + nomeForm);      
+    var cCid = $('#nmcidade', '#' + nomeForm);      
+    var cOri = $('#idorigee', '#' + nomeForm);	    
+	
 	cTodos.desabilitaCampo();
     cCep.addClass('cep pesquisa').css('width', '100px').attr('maxlength', '9');
     cEnd.addClass('alphanum').css('width', '427px').attr('maxlength', '40');
@@ -1136,7 +1292,7 @@ function formataEndereco(nomeForm) {
 	// Validar que o CEP do cooperado seja numa cidade de atuacao da cooperativa. Somente alerta, nao trava
     cNum.unbind('blur').bind('blur', function () {
 		
-        inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+        inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 		
 		if (isHabilitado($(this)) == false || cCid.val() == "") {
 			return false;
@@ -1449,9 +1605,9 @@ function formataPessoaFisica() {
 	
 	// [ I ] - Se operacão é inclusão, habilito os campos
 	if (operacao == 'CI') {
-        $('#pessoaFi', '#frmCabMatric').keypress(function (e) {
-            if (e.which == 13) {
-                if (bloqueiaCabecalho()) {
+        
+		if (bloqueiaFormFiltro()) {
+			
 					cTodosPF1.habilitaCampo();	
 					cTodosPF2.habilitaCampo();
 					cTodosEnd.habilitaCampo();
@@ -1463,10 +1619,9 @@ function formataPessoaFisica() {
 					controlaBotoes();
 					controlaPesquisas();
 					cCPF.focus();
-					return true;
+			
 				}	
-			}
-		});	
+		
 	} else // [ X ] - Se operacão for alteração do nome/cpf
 	if (operacao == 'CX') {
 		cNomeTitular.habilitaCampo();
@@ -1594,16 +1749,17 @@ function formataPessoaJuridica() {
 	
     cCNPJ.unbind('blur').bind('blur', function (e) {
 		if ($('#opcao', '#frmCabMatric').val() == "CI") {
-			if ($(this).val() != normalizaNumero(nrcpfcgc)) {
-				$("#nmttlrfb", "#frmJuridico").val("");
-				$("#cdsitcpf", "#frmJuridico").val(0);
-				$("#dtcnscpf", "#frmJuridico").val("");
-				$("#inconrfb", "#frmJuridico").val("");
-				
-				nrcpfcgc = $(this).val();
+		if ($(this).val() != normalizaNumero(nrcpfcgc)) {
+            
+            $("#nmttlrfb", "#frmJuridico").val("");
+            $("#cdsitcpf", "#frmJuridico").val(0);
+            $("#dtcnscpf", "#frmJuridico").val("");
+            $("#inconrfb", "#frmJuridico").val("");
+		
+		nrcpfcgc = $(this).val();
 		    }
-	    }
-				
+		}
+		
 	});
 	// Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
@@ -1661,9 +1817,8 @@ function formataPessoaJuridica() {
 
 	// [ I ] - Se operacão é inclusão, habilito os campos
 	if (operacao == 'CI') {
-        $('#pessoaJu', '#frmCabMatric').keypress(function (e) {
-            if (e.which == 13) {
-                if (bloqueiaCabecalho()) {
+       
+		if (bloqueiaFormFiltro()) {
 					cTodosPJ1.habilitaCampo();
 					cTodosEnd.habilitaCampo();
 					cNomeRFB.desabilitaCampo();
@@ -1672,10 +1827,8 @@ function formataPessoaJuridica() {
 					controlaBotoes();
 					controlaPesquisas();
 					cCNPJ.focus();
-					return false;
-				}	
 			}
-		});
+			
 	} else  // [ X ] - Se operacão for alteração do Razão Social/CNPJ
         if (operacao == 'CX') {
 		cRazaoSocial.habilitaCampo();
@@ -1699,7 +1852,7 @@ function controlaFoco() {
 	} else if (operacao == 'CD') {
 		$('#btSalvarDesvinc').focus();
     } else if ((operacao == 'CX') && (tppessoa == 1)) {
-        $('#nrcpfcgc', '#frmFisico').focus();
+        $('#nmprimtl', '#frmFisico').focus();
     } else if ((operacao == 'CX') && (tppessoa == 2)) {
         $('#nmprimtl', '#frmJuridico').focus();
     } else if ((operacao == 'PA') && (tppessoa == 1)) {
@@ -1721,54 +1874,10 @@ function controlaPesquisas() {
     var titulo = '';
     var qtReg = '';
     var filtrosPesq = '';
-    var filtrosDesc = '';
+    var filtrosDesc = '';	
     var colunas = '';
     var camposOrigem = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade';
 	
-	/*---------------------*/
-	/*  CONTROLE CONTA/DV  */
-	/*---------------------*/
-    var linkConta = $('a:eq(0)', '#frmCabMatric');
-    if (linkConta.prev().hasClass('campoTelaSemBorda')) {
-        linkConta.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
-	} else {
-        linkConta.css('cursor', 'pointer').unbind('click').bind('click', function () {
-            mostraPesquisaAssociado('nrdconta', 'frmCabMatric');
-		});
-	}
-	
-	/*----------------*/
-	/*  CONTROLE PA   */
-	/*----------------*/
-    var linkPAC = $('a:eq(2)', '#frmCabMatric');
-    if (linkPAC.prev().hasClass('campoTelaSemBorda')) {
-        linkPAC.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
-	} else {
-        linkPAC.css('cursor', 'pointer').unbind('click').bind('click', function () {
-            procedure = 'busca_pac';
-            titulo = 'Agência PA';
-            qtReg = '20';
-            filtrosPesq = 'Cód. PA;cdagepac;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
-            colunas = 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
-            mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
-			return false;	
-		});
-		
-        linkPAC.prev().unbind('blur').bind('blur', function () {
-            procedure = 'busca_pac';
-            titulo = 'Agência PA';
-			filtrosDesc = '';
-            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresage', $(this).val(), 'dsagepac', filtrosDesc, 'frmCabMatric');
-			return false;
-		});
-		
-        linkPAC.prev().unbind('keypress').bind('keypress', function (e) {
-			if (e.keyCode == 13) {
-                $("#pessoaFi", "#frmCabMatric").focus();
-			}
-		});
-		
-	}
 	
 	/*-------------------------------*/
 	/*  CONTROLE ORGAO EMISSOR		 */
@@ -2134,7 +2243,7 @@ function controlaPesquisas() {
 			return false;
 		});
 	}
-	
+
 
 	/*-----------------------------------------------*/
 	/*    CONTROLE ENDEREÇO FISICO E JURIDICO        */
@@ -2155,7 +2264,7 @@ function controlaPesquisas() {
         linkEnderecoJuridico.css('cursor', 'pointer');
 		linkEnderecoJuridico.prev().buscaCEP('frmJuridico', camposOrigem, $('#divMatric'));
 	}
-	
+
 	/*-------------------------------*/
 	/*    CONTROLE MOTOVO DEMISSAO   */
 	/*-------------------------------*/		
@@ -2193,7 +2302,7 @@ function controlaPesquisas() {
 
 function verificaResponsavelLegal() {
 	
-    if ($('input[name="inpessoa"]:checked', '#frmCabMatric').val() == 1) {
+    if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 		
         if ($('#inhabmen', '#frmFisico').val() == 0 && nrdeanos < 18 || $('#inhabmen', '#frmFisico').val() == 2) {
             abrirRotina('RESPONSAVEL LEGAL', 'Responsavel Legal', 'responsavel_legal', 'responsavel_legal', 'CT');
@@ -2233,7 +2342,7 @@ function controlaNomeConjuge() {
 			return true;
 		});
 	}
-    if ($('#cdagepac', '#frmCabMatric').prop('disabled')) {
+    if ($('#cdagepac', '#frmFiltro').prop('disabled')) {
 		estadoCivil.trigger('focusout'); 
 	}
 	
@@ -2245,45 +2354,21 @@ function imprime() {
 	
     $('#frmCabMatric').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
 							
-    $('#nrdconta', '#frmCabMatric').val(nrdconta);
+    $('#nrdconta', '#frmFiltro').val(nrdconta);
 	
     var action = UrlSite + 'telas/matric/imp_relatorio.php?nrdconta=' + nrdconta;
-    var callback = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : '';
+    var callback = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
 
     carregaImpressaoAyllos("frmCabMatric", action, callback);
 	
-}
-
-function consultaInicial() { 	
-	
-    if (divError.css('display') == 'block') { return false; }
-    if ($('#nrdconta', '#frmCabMatric').hasClass('campoTelaSemBorda')) { return false; }
-				
-	// Armazena o número da conta na variável global
-    nrdconta = normalizaNumero($('#nrdconta', '#frmCabMatric').val());
-	nrdcontaOld = nrdconta;
-
-	// Verifica se o número da conta é vazio
-    if (nrdconta == '') { return false; }
-		
-	// Verifica se a conta é válida
-    if (!validaNroConta(nrdconta)) {
-        showError('error', 'Conta/dv inválida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmCabMatric\');');
-		return false; 
 	}
 	
-	// Se chegou até aqui, a conta é diferente de vazio e é válida, então realizar a operação desejada
-    controlaOperacao($('#opcao', '#frmCabMatric').val());
-	return false;
-	
-};	
-
 function consultaPreIncluir() {
 
 	showMsgAguardo('Aguarde, validando inclus&atilde;o ...');
 	
-    cdagepac = $('#cdagepac', '#frmCabMatric').val();
-    inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    cdagepac = $('#cdagepac', '#frmFiltro').val();
+    inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 			
 	// Carrega dados da conta através de ajax
 	$.ajax({		
@@ -2298,12 +2383,13 @@ function consultaPreIncluir() {
 				},
         error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmCabMatric\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
 				},
         success: function (response) {
 					try {
                 eval(response);
-            } catch (error) {
+						} 
+					catch (error) {
 						hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o', 'Alerta - Ayllos', 'unblockBackground()');
 					}					
@@ -2316,17 +2402,9 @@ function consultaPreIncluir() {
 // ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
 function formataInclusao() {
 	
-    if ($.browser.msie) {
-	
-        if ($('#cdagepac', '#frmCabMatric').hasClass('campoErro')) {
-            $('#cdagepac', '#frmCabMatric').trigger('change');
-		}	
-		
-	}
-		
     if ($('#frmFisico').css('display') == 'block') {
 	
-        if (bloqueiaCabecalho()) {
+        if (bloqueiaFormFiltro()) {
 			
             var cTodosPF1 = $('input,select', '#frmFisico fieldset:eq(0)');
             var cTodosPF2 = $('input,select', '#frmFisico fieldset:eq(1)');
@@ -2354,7 +2432,7 @@ function formataInclusao() {
 			
 		}
     } else if ($('#frmJuridico').css('display') == 'block') {
-        if (bloqueiaCabecalho()) {
+        if (bloqueiaFormFiltro()) {
 			
             var cTodosPJ1 = $('input,select', '#frmJuridico fieldset:eq(0)');
             var cDescricaoPJ1 = $('#rsnatjur,#nmseteco,#dsrmativ,#dscnae', '#frmJuridico');
@@ -2407,7 +2485,7 @@ function verificaRelatorio() {
 				},
         error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmCabMatric\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
 				},
         success: function (response) {
 					hideMsgAguardo();
@@ -2415,7 +2493,7 @@ function verificaRelatorio() {
             if (response.indexOf('showError("error"') == -1) {
 						
 						// Se esta incluindo, efetuar consultas
-                var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : '';
+						var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
 
                 showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "imprime();", metodo, "sim.gif", "nao.gif");
 					} else {
@@ -2523,20 +2601,20 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 	semaforo++;	
 		
 	operacao = ope;
-    inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
     nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
 	permalte = true;
     dtnasctl = $('#dtnasctl', '#frmFisico').val();
     cdhabmen = $('#inhabmen', '#frmFisico').val();
 	nmrotina = 'MATRIC';		
     nrcpfcgc = $('#nrcpfcgc', '#' + nomeForm).val();
-    nrdconta = normalizaNumero($("#nrdconta", "#frmCabMatric").val());
+    nrdconta = normalizaNumero($("#nrdconta", "#frmFiltro").val());
 	
 	
 	// Mostra mensagem de aguardo	
 	showMsgAguardo("Aguarde, carregando  " + nomeTitulo + " ...");
 	
-	if (ope == 'RFB') {
+	if (ope == 'RFB' || ope == 'TED_CAPITAL') {
 		var url = UrlSite + "includes/" + nomeScript + "/" + nomeURL;
 	} else {
 		var url = UrlSite + "telas/contas/" + nomeScript + "/" + nomeURL;
@@ -2551,8 +2629,6 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 																		
 		operacao_rsp = operacao;
 	
-        //console.log(url);
-
 		$.ajax({
 			type: "POST",
 			dataType: "html",
@@ -2710,7 +2786,7 @@ function mostrarRotina(operacao) {
         success: function (response) {
 			$('#divRotina').html(response);
 			
-			if (operacao == 'VX' || operacao == 'LCD' || operacao == 'LCC') {
+			if (operacao == 'VX' || operacao == 'LCD' || operacao == 'LCC' || operacao == 'LCH') {
 				buscaSenha(operacao)
             } else if (operacao == 'VJ') {
 				manterOutros(nomeForm);
@@ -2883,7 +2959,7 @@ function formataContas() {
 
 function selecionaConta(nrdconta) {
 	
-    var inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 	
     nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
 	operacao = 'BCC';
@@ -2898,7 +2974,21 @@ function validarSenha(operacao) {
 	// Situacao
     operauto = $('#operauto', '#frmSenha').val();
     var codsenha = $('#codsenha', '#frmSenha').val();
-    var cddopcao = (operacao == 'LCD' || operacao == 'LCC') ? 'I' : 'X';
+	
+    if(operacao == 'LCD' || operacao == 'LCC'){
+
+        var cddopcao =  'I';
+
+    }else if(operacao == 'LCH' ){
+
+        var cddopcao =  'H';
+
+    }else{
+
+        var cddopcao =  'X';
+
+    }
+
 	
     showMsgAguardo('Aguarde, validando dados ...');
 
@@ -2927,7 +3017,12 @@ function validarSenha(operacao) {
 							selecionaConta(outconta);
                     } else if (operacao == 'LCC') {
 							buscaContas();
+                    } else if (operacao == 'LCH') {
+
+                        atualizarContasAntigasDemitidas();
+
 						}
+
 					}
 					return false;
             } catch (error) {
@@ -2941,19 +3036,19 @@ function validarSenha(operacao) {
 }
 
 function manterOutros(nomeForm) {
-
-    inmatric = $('#inmatric', '#frmCabMatric').val();
-    cdagepac = $('#cdagepac', '#frmCabMatric').val();
+	
+    inmatric = $('#inmatric', '#frmFiltro').val();
+    cdagepac = $('#cdagepac', '#frmFiltro').val();
     nmprimtl = $('#nmprimtl', '#' + nomeForm).val();
     nrcpfcgc = $('#nrcpfcgc', '#' + nomeForm).val();
     cdsitcpf = $('#cdsitcpf', '#' + nomeForm).val();
     dtdemiss = $('#dtdemiss', '#' + nomeForm).val();
     dtcnscpf = $('#dtcnscpf', '#' + nomeForm).val();
     dtnasctl = (nomeForm == 'frmFisico') ? $('#dtnasctl', '#' + nomeForm).val() : '';
-    nmmaettl = (nomeForm == 'frmFisico') ? $('#nmmaettl', '#' + nomeForm).val() : '';
-    nmcidade = $("#nmcidade", '#' + nomeForm).val();
-    cdufende = $("#cdufende", '#' + nomeForm).val();
-    inpessoa = $('input[name="inpessoa"]:checked', '#frmCabMatric').val();
+    nmmaettl = (nomeForm == 'frmFisico') ? $('#nmmaettl', '#' + nomeForm).val() : '';	
+			nmcidade = $("#nmcidade", '#' + nomeForm).val();
+			cdufende = $("#cdufende", '#' + nomeForm).val();
+    inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 	inhabmen = (nomeForm == 'frmFisico') ? $('#inhabmen', '#' + nomeForm).val() : '';
 	dthabmen = (nomeForm == 'frmFisico') ? $('#dthabmen', '#' + nomeForm).val() : '';	
 					
@@ -3023,7 +3118,7 @@ function manterOutros(nomeForm) {
 			nmmaettl: nmmaettl,
 			cdsitcpf: cdsitcpf,
 			nmcidade: nmcidade,
-			cdufende: cdufende,	
+			cdufende: cdufende,				
 			operacao: operacao,		
 			verrespo: verrespo,	
 			permalte: permalte,
@@ -3100,15 +3195,15 @@ function limpaCharEsp(texto) {
 // Somente para nao dar erro quando fechada alguma rotina
 function btnVoltar() {
 	
-}
+		}				
 
 function validaAcessoEexecuta(UrlSite, tipo) {
     //alert('in');
 
     //abrirRotina('', 'Consulta RFB', 'consulta_rfb', 'consulta_rfb', 'RFB');
-    if((tipo) && (tipo == 'CPF')){
+    if ((tipo) && (tipo == 'CPF')) {
         var url = UrlSite + "includes/consulta_rfb/rfb/cpf/getcaptcha.php";
-    }else{
+    } else {
         var url = UrlSite + "includes/consulta_rfb/rfb/cnpj/getcaptcha.php";
     }
     var metodo = '$("#divBloqueio").css("display", "")';
@@ -3120,17 +3215,17 @@ function validaAcessoEexecuta(UrlSite, tipo) {
     if ((!(cDtConsulta.attr('receitadisponivel')) || (cDtConsulta.attr('receitadisponivel') == undefined) || (cDtConsulta.attr('receitadisponivel') == 'vazio'))) {
         showMsgAguardo("Aguarde, consulta a receita ...");
         //console.log('Entrou ['+cDtConsulta.attr('receitadisponivel')+']');
-        $('#nrcpfcgc', '#frmFisico').bind('blur', function(){
+        $('#nrcpfcgc', '#frmFisico').bind('blur', function () {
             //console.log('entrou - change nrcpfcgc');
             $('#dtcnscpf').attr('receitadisponivel', 'vazio');
         });
 
-        $('#nrcpfcgc', '#frmJuridico').bind('blur', function(){
+        $('#nrcpfcgc', '#frmJuridico').bind('blur', function () {
             //console.log('entrou - change nrcpfcgc');
             $('#dtcnscpf').attr('receitadisponivel', 'vazio');
         });
 
-        $('#dtnasctl', '#frmFisico').bind('blur', function(){
+        $('#dtnasctl', '#frmFisico').bind('blur', function () {
             //console.log('entrou - change dtcnscpf');
             $('#dtcnscpf').attr('receitadisponivel', 'vazio');
         });
@@ -3163,11 +3258,554 @@ function validaAcessoEexecuta(UrlSite, tipo) {
                     cDtConsulta.attr('receitadisponivel', 'false');
                     showError(tipo, mensagem, titulo, metodo);
                 }
-		}				
-	});
+            }
+        });
+    }
+
 }
 
 
+
+
+function buscarContasDemitidas(nriniseq,nrregist) {
+
+    var numeroConta = normalizaNumero($('#nrdconta', '#frmFiltroContasDemitidas').val());
+
+    $('#nrdconta', '#frmFiltroContasDemitidas').desabilitaCampo();
+	
+    showMsgAguardo("Aguarde, buscando contas ...");
+
+	$('input,select').removeClass('campoErro');
+	
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/buscar_contas_demitidas.php",
+        data: {
+			nriniseq: nriniseq,
+            nrregist: nrregist,
+			numeroConta: numeroConta,
+			redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+        },
+        success: function (response) {
+
+			hideMsgAguardo();
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divContasDemitidas').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$("#cddopcao","#frmCabMatric").focus();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$("#cddopcao","#frmCabMatric").focus();');
+				}
+			}
+			
+        }
+
+    });
+
+    return false;
+
+}
+
+
+function buscarContasAntigasDemitidas(nriniseq, nrregist) {
+
+    var numeroConta = normalizaNumero($('#nrdconta', '#frmFiltroContasAntigasDemitidas').val());
+
+    $('#nrdconta', '#frmFiltroContasAntigasDemitidas').desabilitaCampo();
+
+    showMsgAguardo("Aguarde, buscando contas ...");
+
+    $('input,select').removeClass('campoErro');
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/buscar_contas_antigas_demitidas.php",
+        data: {
+            nriniseq: nriniseq,
+            nrregist: nrregist,
+            numeroConta: numeroConta,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divContasDemitidas').html(response);
+    return false;
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '$("#cddopcao","#frmCabMatric").focus();');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '$("#cddopcao","#frmCabMatric").focus();');
+			}
+            }
+			
+        }
+
+    });
+
+    return false;
+
+}
+
+
+function marcaDesmarcaTodos(qtd,tipo) {
+	
+    if ($("#marcaTodos").is(":checked")) {
+        for (var i = 0; i < qtd; i++) {
+			
+			$("#conta" + (i)).prop("checked", true);
+			
+			selecionaContas(i,tipo);
+									
+		}
+			
+	} else {
+        for (var i = 0; i < qtd; i++) {
+			
+			$("#conta" + (i)).removeProp("checked");
+			
+			selecionaContas(i,tipo);
+					
+		}
+	}
+	
+}
+
+
+//adiciona ou retira a conta da lista
+function selecionaContas(num,tipo) {
+
+    if (tipo == '1') {
+    if ($("#conta" + num).is(":checked")) {
+				
+		for (i = 0; i < lstContasDemitidas.length; i++) {
+            if (lstContasDemitidas[i]["auxidres"] == num) {
+                lstContasDemitidas[i].tpoperac = "1";
+				
+			}
+		}
+				
+    } else {
+				
+		for (i = 0; i < lstContasDemitidas.length; i++) {
+            if (lstContasDemitidas[i]["auxidres"] == num) {
+                lstContasDemitidas[i].tpoperac = "2";
+				
+			}
+            }
+
+		}
+    }else {
+
+        if ($("#conta" + num).is(":checked")) {
+
+            for (i = 0; i < lstContasAntigasDemitidas.length; i++) {
+                if (lstContasAntigasDemitidas[i]["auxidres"] == num) {
+                    lstContasAntigasDemitidas[i].tpoperac = "1";
+		
+	}
+}
+
+        } else {
+
+            for (i = 0; i < lstContasAntigasDemitidas.length; i++) {
+                if (lstContasAntigasDemitidas[i]["auxidres"] == num) {
+                    lstContasAntigasDemitidas[i].tpoperac = "2";
+
+			}
+		}
+		
+	}
+}
+}
+
+
+//Funcao para formatar a tabela com as contas demitidas
+function formataTabelaContasDemitidas(){
+
+	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'0 3px 5px 3px'});
+	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
+		
+	var divRegistro = $('div.divRegistros');		
+	var tabela      = $('table',divRegistro );	
+	var linha		= $('table > tbody > tr', divRegistro );
+									
+	divRegistro.css({ 'height': '350px', 'width' : '100%'});
+			
+	var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+					
+	var arrayLargura = new Array(); 
+	    arrayLargura[0] = '1%';
+	    arrayLargura[1] = '10%';
+	    arrayLargura[2] = '15%';
+	    arrayLargura[3] = '50%';
+							
+	var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'left';
+		arrayAlinha[4] = 'right';
+				
+	
+	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha);
+		
+	$('#divRegistros').css('display','block');
+	$('#divRegistrosRodape','#divTabela').formataRodapePesquisa();		
+	
+	
+	return false;
+	
+}
+
+
+//Funcao para formatar a tabela com as contas antigas demitidas
+function formataTabelaContasAntigasDemitidas() {
+
+    $('fieldset').css({ 'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '0 3px 5px 3px' });
+    $('fieldset > legend').css({ 'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px' });
+
+    var divRegistro = $('div.divRegistros');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    divRegistro.css({ 'height': '350px'});
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '80px';
+    arrayLargura[1] = '250px';
+    arrayLargura[2] = '100px';
+    arrayLargura[3] = '100px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'right';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'right';
+    arrayAlinha[3] = 'left';
+    arrayAlinha[4] = 'center';
+    
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+
+    $('#divRegistros').css('display', 'block');
+    $('#divRegistrosRodape', '#divTabela').formataRodapePesquisa();
+
+
+    return false;
+
+}
+
+
+function controlaVoltar(ope){
+	
+	
+	switch(ope){
+		
+		case '1':
+		
+			controlaLayout('2');
+			estadoInicial();
+		
+		break;
+		
+		case '2':
+		
+			$('#divConteudoMatric').html('');
+			formataFiltro();
+			formataFiltroContasDemitidas();
+		
+			break;
+		
+	    case '3':
+		
+	        $('#divContasDemitidas').html('');
+
+	        $('#frmFiltroContasDemitidas').css('display', 'block');
+	        $('#divBotoesFiltroContasDemitidas').css('display', 'block');
+	        formataFiltroContasDemitidas();
+        
+		break;
+		
+		default:
+			
+			showMsgAguardo('Aguarde, carregando ...');
+			setTimeout('limpaTela()', 150);
+	
+			return false;
+		
+		break;
+		
+	}
+	
+}
+
+function reverterSituacaoContasDemitidas() {
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, efetuando operação ...");
+	
+	var camposPc = '';
+    camposPc = retornaCampos(lstContasDemitidas, '|');
+	
+	var dadosPrc = '';
+    dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
+			
+	// Executa script de consulta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/matric/gerar_devolucao_capital_apos_ago.php",
+		data: {
+			camposPc: camposPc,
+			dadosPrc: dadosPrc,
+			redirect: "script_ajax"
+		}, 
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+		},
+        success: function (response) {
+			try {
+				eval(response);
+            } catch (error) {
+				hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+			}
+		}				
+	});	
+}
+
+
+
+function atualizarContasAntigasDemitidas() {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando operação ...");
+
+    var camposPc = '';
+    camposPc = retornaCampos(lstContasAntigasDemitidas, '|');
+
+    var dadosPrc = '';
+    dadosPrc = retornaValores(lstContasAntigasDemitidas, ';', '|', camposPc);
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/atualizar_contas_antigas_demitidas.php",
+        data: {
+            camposPc: camposPc,
+            dadosPrc: dadosPrc,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+            }
+        }
+    });
+}
+
+function gerarDevolucaoCotasContasSelecionadas() {
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, gerando devolu&ccedil;&atilde;o ...");
+	
+	var camposPc = '';
+    camposPc = retornaCampos(lstContasDemitidas, '|');
+	
+	var dadosPrc = '';
+    dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
+			
+	// Executa script de consulta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/matric/gerar_devolucao_cotas_contas_selecionadas.php",
+		data: {
+			camposPc: camposPc,
+			dadosPrc: dadosPrc,
+			redirect: "script_ajax"
+		}, 
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+		},
+        success: function (response) {
+			try {
+				eval(response);
+            } catch (error) {
+				hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#opcao','#frmCabMatric').focus();");
+			}
+		}				
+	});	
+}
+
+// Função para acessar rotina de Saque Parcial 
+function abrirRotinaSaqueParcial() {
+			
+    var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();			
+	
+	// Mostra mensagem de aguardo	
+	showMsgAguardo("Aguarde, carregando ...");
+	
+    // Executa script através de ajax
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/matric/apresentar_rotina_saque_parcial.php', 
+		data: {			
+			nrdconta: normalizaNumero(nrdconta),
+			redirect: 'html_ajax'			
+			}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			$('#divRotina').html(response);
+			exibeRotina($('#divRotina'));
+			hideMsgAguardo();
+			bloqueiaFundo($('#divRotina'));
+			formataRotinaSaqueParcial();
+		}				
+	});
+	
+  return false;
+ 	
+}
+
+function formataRotinaSaqueParcial(){
+	
+	highlightObjFocus( $('#frmSaqueParcial') );
+	
+	//Label do frmSaqueParcial
+	rVldcotas = $('label[for="vldcotas"]','#frmSaqueParcial');
+	rVldsaque = $('label[for="vldsaque"]','#frmSaqueParcial');
+	rNrdconta = $('label[for="nrdconta"]','#frmSaqueParcial');
+	
+	rVldcotas.addClass('rotulo').css({ 'width': '230px' });
+	rVldsaque.css('width','230px').addClass('rotulo');
+	rNrdconta.css('width','230px').addClass('rotulo');
+	
+	//Campos do frmSaqueParcial
+	cVldcotas = $('#vldcotas','#frmSaqueParcial');
+	cVldsaque = $('#vldsaque','#frmSaqueParcial');
+	cNrdconta = $('#nrdconta','#frmSaqueParcial');
+
+	cVldcotas.css('width','150px').addClass('moeda_15').desabilitaCampo();
+	cVldsaque.css({'width':'150px'}).addClass('moeda_15').habilitaCampo();
+	cNrdconta.addClass('conta pesquisa').css('width', '85px').desabilitaCampo();
+	
+	//Ao pressionar do campo cVldsaque
+	cVldsaque.unbind('keypress').bind('keypress', function(e){
+		
+		if ( divError.css('display') == 'block' ) { return false; }		
+		
+		//Ao pressionar ENTER, TAB
+		if(e.keyCode == 13 || e.keyCode == 9){
+		
+			$(this).removeClass('campoErro');
+			
+			cNrdconta.focus();	
+			return false;
+		}
+		
+	});
+		
+	// Evento change no campo cNrdconta
+	cNrdconta.unbind("change").bind("change",function() {
+		
+		$(this).removeClass('campoErro');
+		
+		if ($(this).val() == "") {
+			return true;
+		}
+				
+		if ( divError.css('display') == 'block' ) { return false; }		
+		
+		// Valida número da conta
+		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
+		
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmSaqueParcial').focus();");
+			return false;
+			
+		}				
+		
+		return true;
+		
+	});
+	
+	controlaPesquisaSaquelPacial();
+	
+	layoutPadrao();
+	
+	cVldsaque.focus();
+	
+	return false;
+	
+}
+
+
+function efetuarSaqueParcial() {
+	
+	var nrctadst = $('#nrdconta','#frmSaqueParcial').val();
+	var vldsaque = isNaN(parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."));
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, efetuando saque ...");
+			
+	// Executa script de consulta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/matric/efetuar_saque_parcial.php",
+		data: {
+			nrctaori: normalizaNumero(nrdconta),
+			nrctadst: normalizaNumero(nrctadst),
+			vldsaque: vldsaque,
+			redirect: "script_ajax"
+		}, 
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesSaqueParcial').focus();");							
+		},
+        success: function (response) {
+			hideMsgAguardo();				
+			try {
+				eval( response );						
+			} catch(error) {						
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($("#divRotina").css("z-index")));$("#btVoltar","#divBotoesSaqueParcial").focus();');
+			}
+		}				
+	});
 }
 
 function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpessoa, nmpessoaReceita, tpsexo, dtnascimento,
@@ -3279,7 +3917,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
 		
 	}
-	else if (inpessoa == 2){		
+    else if (inpessoa == 2) {
 		$('#nmfansia', '#' + nomeForm).val(nmfantasia);
 		$('#nrcepend', '#' + nomeForm).val(comercialNrCep);
 		$('#dsendere', '#' + nomeForm).val(comercialNmLogradouro);
@@ -3319,6 +3957,459 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		filtrosDesc = 'flserasa|2';
 		buscaDescricao('ZOOM0001', procedure, titulo, 'cdcnae', 'dscnae', cdCnae, 'dscnae', filtrosDesc, 'frmJuridico');				
 		
-	}
 
+	}
+	
+
+
+
+}
+
+function controlaPesquisaSaquelPacial(){
+		
+    // Definindo as variáveis
+    var bo = 'b1wgen0059.p';
+    var procedure = '';
+    var titulo = '';
+    var qtReg = '';
+    var filtrosPesq = '';
+    var filtrosDesc = '';
+    var colunas = '';
+    var nomeForm = 'frmSaqueParcial';
+	
+    /*-------------------------------------*/
+    /*       CONTROLE DAS PESQUISAS        */
+    /*-------------------------------------*/
+
+    // Atribui a classe lupa para os links 
+    $('a', '#' + nomeForm).addClass('lupa').css('cursor', 'auto');
+
+    // Percorrendo todos os links
+    $('a', '#' + nomeForm).each(function () {
+
+        if (!$(this).prev().hasClass('campoTelaSemBorda')) { $(this).css('cursor', 'pointer'); }
+
+        $(this).unbind("click").bind("click", (function () {
+            if ($(this).prev().hasClass('campoTelaSemBorda')) {
+                return false;
+            } else {
+                campoAnterior = $(this).prev().attr('name');
+				
+                // Número da conta
+                if (campoAnterior == 'nrdconta') {
+					
+                    mostraPesquisaAssociado('nrdconta', 'frmSaqueParcial',$('#divRotina') );
+                    return false;
+	
+                }
+
+            }
+            return false;
+        }));
+	
+    });
+	
+    return false;
+
+}
+
+    // Função para acessar rotina de Saque Parcial 
+function apresentarDesligamento() {			
+	
+    // Mostra mensagem de aguardo	
+    showMsgAguardo("Aguarde, carregando ...");
+	
+    // Executa script através de ajax
+    $.ajax({		
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/matric/apresentar_desligamento.php', 
+        data: {			
+            nrdconta: normalizaNumero(nrdconta),
+            redirect: 'html_ajax'			
+        }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            $('#divRotina').html(response);
+						
+        }				
+    });
+	
+    return false;
+ 	
+}
+
+
+function efetuarDevolucaoCotas() {
+	
+    var vldcotas = isNaN(parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."));
+    var mtdemiss = $('#cdmotdem','#frmMotivoDesligamento').val();
+    var dtdemiss = $('#dtdemiss','#frmMotivoDesligamento').val();
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando devolução ...");
+			
+    // Executa script de consulta através de ajax
+    $.ajax({		
+        type: "POST",
+        url: UrlSite + "telas/matric/efetuar_devolucao_cotas.php",
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            vldcotas: vldcotas,
+            
+            mtdemiss: mtdemiss,
+            dtdemiss: dtdemiss,			
+            redirect: "script_ajax"
+        }, 
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesSaqueParcial').focus();");							
+        },
+        success: function (response) {
+            hideMsgAguardo();				
+            try {
+                eval( response );						
+            } catch(error) {						
+                showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($("#divRotina").css("z-index")));$("#btVoltar","#divBotoesSaqueParcial").focus();');
+            }
+        }				
+    });	
+}
+
+
+function controlaVoltarTelaDesligamento(tipoAcao) {
+   
+    switch (tipoAcao) {
+
+        case '1':
+
+            fechaRotina($('#divRotina'));
+
+            break;
+
+        case '2':
+
+            $('#divMotivoDesligamento').css('display', 'none');
+            $('#divDesligamento').css('display', 'block');
+
+            break;
+
+        case '3':
+
+            $('#divMotivoDesligamento').css('display', 'block');
+            $('#divDesligamento').css('display', 'none');
+
+            break;
+
+        case '4':
+
+            showConfirmacao('Deseja confirmar o desligamento?','Confirma&ccedil;&atilde;o - Ayllos','efetuarDevolucaoCotas();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));','sim.gif','nao.gif');
+			
+            break;
+
+    }
+    
+    return false;
+}
+
+
+function formataTelaDesligamento(){	
+	
+    highlightObjFocus( $('#frmMotivoDesligamento') );
+    highlightObjFocus( $('#frmDesligamento') );
+
+    //Label do frmMotivoDesligamento
+    rDtdemiss = $('label[for="dtdemiss"]','#frmMotivoDesligamento');
+    rCdmotdem = $('label[for="cdmotdem"]','#frmMotivoDesligamento');
+    rDsmotdem = $('label[for="dsmotdem"]','#frmMotivoDesligamento');
+	
+    rDtdemiss.css('width','70px').addClass('rotulo');
+    rCdmotdem.css('width','75px').addClass('rotulo-linha');
+    rDsmotdem.css('width','227px').addClass('rotulo-linha');
+	
+    //Campos do frmMotivoDesligamento
+    cDtdemiss = $('#dtdemiss','#frmMotivoDesligamento');
+    cCdmotdem = $('#cdmotdem','#frmMotivoDesligamento');
+    cDsmotdem = $('#dsmotdem','#frmMotivoDesligamento');
+
+    cDtdemiss.css({'width':'100px'}).addClass('data').desabilitaCampo();
+    cCdmotdem.addClass('codigo pesquisa').css({ 'width': '40px' }).habilitaCampo();
+    cDsmotdem.addClass('descricao').css('width', '227px');
+	
+	
+    //Label do frmDesligamento
+    rVldcotas = $('label[for="vldcotas"]','#frmDesligamento');
+    rNrdconta = $('label[for="nrdconta"]','#frmDesligamento');
+	
+	
+    rVldcotas.css('width','240px').addClass('rotulo');
+    rNrdconta.css('width','240px').addClass('rotulo');
+	
+	
+    //Campos do frmDesligamento
+    cVldcotas = $('#vldcotas','#frmDesligamento');
+    cNrdconta = $('#nrdconta','#frmDesligamento');
+	
+    //Campos do frmDesligamento
+    cVldcotas = $('#vldcotas','#frmDesligamento');
+    cNrdconta = $('#nrdconta','#frmDesligamento');
+
+    cVldcotas.css({'width':'130px'}).addClass('moeda').desabilitaCampo();
+    cNrdconta.addClass('inteiro').css({ 'width': '130px' }).desabilitaCampo();
+			
+    // Definindo as variáveis
+    var bo = 'b1wgen0059.p';
+    var procedure = '';
+    var titulo = '';
+    var qtReg = '';
+    var filtrosPesq = '';
+    var filtrosDesc = '';
+    var colunas = '';
+     	
+    var motivoLink = $('a:eq(0)', '#frmMotivoDesligamento');
+	
+    if (motivoLink.prev().hasClass('campoTelaSemBorda')) {
+        motivoLink.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
+    } else {
+        motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
+            procedure = 'busca_motivo_demissao';
+            titulo = 'Motivo de saída';
+            qtReg = '30';
+            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
+            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
+            mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas,$('#divRotina'));
+            return false;	
+        });
+        
+		motivoLink.prev().unbind('change').bind('change', function () {
+            procedure = 'busca_motivo_demissao';
+            titulo = 'Motivo de saída';
+			filtrosDesc = '';
+            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
+			return false;
+		});
+        motivoLink.prev().unbind('blur').bind('blur', function () {
+            $(this).unbind('change').bind('change', function () {
+                procedure = 'busca_motivo_demissao';
+                titulo = 'Motivo de saída';
+				filtrosDesc = '';
+                buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
+				return false;
+			});		
+		});
+		
+    }
+	
+    $('#divMotivoDesligamento').css('display', 'block');
+    $('#divDesligamento').css('display', 'none');
+	
+    layoutPadrao();
+	
+    $('#cdmotdem','#frmMotivoDesligamento').focus();
+	
+    return false;
+}
+
+
+
+
+function verificaProdutosAtivos() {
+
+    var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+    // Obtem o nome do formulario
+    var fomulario = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
+	
+    var dtdemiss = $("#dtdemiss", "#" + fomulario).val();
+    var cdmotdem = $("#cdmotdem", "#" + fomulario).val();
+    var cddopcao = 'C';
+	
+    showMsgAguardo("Aguarde...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/verifica_produtos_ativos.php",
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            cddopcao : cddopcao, 
+            dtdemiss : dtdemiss, 
+            cdmotdem : cdmotdem,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+            }
+        }
+
+    });
+
+    return false;
+
+}
+
+
+
+function formataFiltroContasDemitidas() {
+
+    highlightObjFocus($('#frmFiltroContasDemitidas'));
+    $('#frmFiltroContasDemitidas').limpaFormulario();
+    
+    var rNrConta = $('label[for="nrdconta"]', '#frmFiltroContasDemitidas');
+
+    var cTodos = $('input[type="text"],select', '#frmFiltroContasDemitidas');
+    var cNrConta = $('#nrdconta', '#frmFiltroContasDemitidas');
+    
+    rNrConta.addClass('rotulo').css({ 'width': '80px' });
+   
+    cTodos.desabilitaCampo();
+    cNrConta.addClass('conta pesquisa').css('width', '85px');
+   
+   
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+    cNrConta.unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+        if (e.keyCode == 13) {
+            // Armazena o número da conta na variável global
+            nrdconta = normalizaNumero($(this).val());
+            nrdcontaOld = nrdconta;
+
+            // Verifica se o número da conta é vazio
+            if (nrdconta == '') { return false; }
+
+            // Verifica se a conta é válida
+            if (!validaNroConta(nrdconta)) {
+                showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasDemitidas\');');
+                return false;
+            }
+
+            $("#btProsseguir", "#divBotoesFiltroContasDemitidas").click();
+    return false;
+        }
+
+    });
+
+    // Atribui a classe lupa para os links 
+    $('a', '#frmFiltroContasDemitidas').addClass('lupa').css('cursor', 'auto');
+
+    // Percorrendo todos os links
+    $('a', '#frmFiltroContasDemitidas').each(function () {
+
+        if (!$(this).prev().hasClass('campoTelaSemBorda')) { $(this).css('cursor', 'pointer'); }
+
+        $(this).unbind("click").bind("click", (function () {
+            if ($(this).prev().hasClass('campoTelaSemBorda')) {
+                return false;
+            } else {
+                campoAnterior = $(this).prev().attr('name');
+
+                // Número da conta
+                if (campoAnterior == 'nrdconta') {
+
+                    mostraPesquisaAssociado('nrdconta', 'frmFiltroContasDemitidas');
+                    return false;
+
+                    // Agência
+                }
+            }
+            return false;
+        }));
+
+    });
+
+    layoutPadrao();
+    cNrConta.habilitaCampo().focus();
+       
+    return false;
+}
+
+
+
+function formataFiltroContasAntigasDemitidas() {
+
+    highlightObjFocus($('#frmFiltroContasAntigasDemitidas'));
+    $('#frmFiltroContasAntigasDemitidas').limpaFormulario();
+
+    var rNrConta = $('label[for="nrdconta"]', '#frmFiltroContasAntigasDemitidas');
+
+    var cTodos = $('input[type="text"],select', '#frmFiltroContasAntigasDemitidas');
+    var cNrConta = $('#nrdconta', '#frmFiltroContasAntigasDemitidas');
+
+    rNrConta.addClass('rotulo').css({ 'width': '80px' });
+
+    cTodos.desabilitaCampo();
+    cNrConta.addClass('conta pesquisa').css('width', '85px');
+
+
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+    cNrConta.unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+        if (e.keyCode == 13) {
+            // Armazena o número da conta na variável global
+            nrdconta = normalizaNumero($(this).val());
+            nrdcontaOld = nrdconta;
+
+            // Verifica se o número da conta é vazio
+            if (nrdconta == '') { return false; }
+
+            // Verifica se a conta é válida
+            if (!validaNroConta(nrdconta)) {
+                showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasAntigasDemitidas\');');
+                return false;
+            }
+
+            $("#btProsseguir", "#divBotoesFiltroContasAntigasDemitidas").click();
+            return false;
+        }
+
+    });
+
+    // Atribui a classe lupa para os links 
+    $('a', '#frmFiltroContasAntigasDemitidas').addClass('lupa').css('cursor', 'auto');
+
+    // Percorrendo todos os links
+    $('a', '#frmFiltroContasAntigasDemitidas').each(function () {
+
+        if (!$(this).prev().hasClass('campoTelaSemBorda')) { $(this).css('cursor', 'pointer'); }
+
+        $(this).unbind("click").bind("click", (function () {
+            if ($(this).prev().hasClass('campoTelaSemBorda')) {
+                return false;
+            } else {
+                campoAnterior = $(this).prev().attr('name');
+
+                // Número da conta
+                if (campoAnterior == 'nrdconta') {
+
+                    mostraPesquisaAssociado('nrdconta', 'frmFiltroContasAntigasDemitidas');
+                    return false;
+
+                    // Agência
+                }
+            }
+            return false;
+        }));
+
+    });
+
+    layoutPadrao();
+    cNrConta.habilitaCampo().focus();
+
+    return false;
 }
