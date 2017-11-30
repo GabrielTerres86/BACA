@@ -4224,7 +4224,7 @@ function verificaProdutosAtivos() {
 	
     var dtdemiss = $("#dtdemiss", "#" + fomulario).val();
     var cdmotdem = $("#cdmotdem", "#" + fomulario).val();
-    var cddopcao = $('#opcao', '#frmCabMatric').val();
+    var cddopcao = 'C';
 	
     showMsgAguardo("Aguarde...");
 
