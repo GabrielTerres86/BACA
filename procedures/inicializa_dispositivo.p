@@ -532,12 +532,12 @@ IF  par_cdoperac = 10 THEN
 
         ASSIGN aux_totnotas = glb_qtnotk7A + glb_qtnotk7B + glb_qtnotk7C + glb_qtnotk7D + glb_qtnotk7R.
 
-        RUN procedures/grava_log.p (INPUT "NOTAS TA - K7A: " + STRING(glb_qtnotk7A,'zz,zz9') +
-                                                    " K7B: " + STRING(glb_qtnotk7B,'zz,zz9') +
-                                                    " K7C: " + STRING(glb_qtnotk7C,'zz,zz9') +
-                                                    " K7D: " + STRING(glb_qtnotk7D,'zz,zz9') +
-                                                    " K7R: " + STRING(glb_qtnotk7R,'zz,zz9') +
-                                                    " TOTAL: " + STRING(aux_totnotas,'zz,zz9')).
+        RUN procedures/grava_log.p (INPUT "NOTAS TA - K7A: " + STRING(glb_qtnotk7A,'zz,zz9-') +
+                                                    " K7B: " + STRING(glb_qtnotk7B,'zz,zz9-') +
+                                                    " K7C: " + STRING(glb_qtnotk7C,'zz,zz9-') +
+                                                    " K7D: " + STRING(glb_qtnotk7D,'zz,zz9-') +
+                                                    " K7R: " + STRING(glb_qtnotk7R,'zz,zz9-') +
+                                                    " TOTAL: " + STRING(aux_totnotas,'zz,zz9-')).
 
         RUN procedures/grava_log.p (INPUT "STATUS SAQUE - K7A: " + STRING(glb_cassetes[1],"OK/NOK") + 
                                                         " K7B: " + STRING(glb_cassetes[2],"OK/NOK") + 
