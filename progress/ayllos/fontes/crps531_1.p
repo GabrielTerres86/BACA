@@ -212,8 +212,6 @@
 
 			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
 
-			   06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)
-
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -310,7 +308,6 @@ DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
 DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
 DEF VAR aux_TpCtDebtd     AS CHAR                                   NO-UNDO.
 DEF VAR aux_CNPJNLiqdant  AS CHAR                                   NO-UNDO.
-DEF VAR aux_Hist          AS CHAR                                   NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -658,8 +655,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_tpemprst      = 2
            aux_qtregist      = 0
            aux_vlsldliq      = 0
-           aux_CNPJNLiqdant  = ""
-		   aux_Hist          = "".
+           aux_CNPJNLiqdant  = "".
                               
     EMPTY TEMP-TABLE tt-situacao-if.   
 
@@ -828,7 +824,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
             /* Efetuar a chamada a rotina Oracle */
             RUN STORED-PROCEDURE pc_insere_msg_domicilio
                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)  /* Valor Lancamento */
-                                                      ,INPUT aux_Hist         /* CPNJ Credenciador */
+                                                      ,INPUT aux_CNPJNLiqdant  /* CPNJ Liquidante */
                                                       ,OUTPUT ?).             /* Retorno do Erro */
 
             /* Fechar o procedimento para buscarmos o resultado */ 
@@ -3602,8 +3598,8 @@ PROCEDURE trata_dados_transferencia.
            ASSIGN aux_DtMovto = aux_descrica.
        ELSE
        /* CNPJ Liquidante - antecipaçao de recebíveis - Mauricio*/
-       IF  hNameTag:NAME = "Hist"  THEN
-           ASSIGN aux_Hist = aux_descrica.
+       IF  hNameTag:NAME = "CNPJNLiqdant"  THEN
+           ASSIGN aux_CNPJNLiqdant = aux_descrica.
                    
    END.
 

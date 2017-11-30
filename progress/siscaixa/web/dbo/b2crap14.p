@@ -27,23 +27,13 @@
 *******************************************************************************/
 
 
-
-
-
-
-
-
-
-
-
-
 /* ..........................................................................
     
    Programa: siscaixa/web/dbo/b2crap14.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/03/2016
+   Data    : Marco/2001                      Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -314,6 +304,13 @@
                             titulos na procedure identifica-titulo-coop para calcular
                             conforme a rotina do caixa online de estorno MOD11
                             (Lucas Ranghetti #421963,#410478 ).
+                            
+               24/08/2016 - #456682 Atualizacao do campo crapcbf.dscodbar para 
+                            dsfraude e inclusao do campo crapcbf.tpfraude (Carlos)
+
+               06/10/2016 - Incluido tratamento na procedure identifica-titulo-coop,
+							para origem de "ACORDO", Prj. 302 (Jean Michel).
+
 ............................................................................ */
 
 /*---------------------------------------------------------------------*/
@@ -765,7 +762,9 @@ PROCEDURE retorna-valores-titulo-iptu.
               END. 
               
            /* Verificar se o codigo de barras eh fraudulento - (Andrino-RKAM) */
-           FIND crapcbf WHERE crapcbf.dscodbar = p-codigo-barras NO-LOCK NO-ERROR.
+           FIND crapcbf WHERE crapcbf.tpfraude = 1 AND 
+                              crapcbf.dsfraude = p-codigo-barras NO-LOCK NO-ERROR.
+
            IF avail crapcbf THEN
               DO:
 
@@ -3204,7 +3203,8 @@ PROCEDURE identifica-titulo-coop:
            IF  crapcco.dsorgarq = "IMPRESSO PELO SOFTWARE" OR
                crapcco.dsorgarq = "INTERNET"               OR 
                crapcco.dsorgarq = "EMPRESTIMO"             OR
-               crapcco.dsorgarq = "MIGRACAO"               THEN
+               crapcco.dsorgarq = "MIGRACAO"               OR
+			   crapcco.dsorgarq = "ACORDO"				 THEN
            DO:
                FIND crapcob WHERE 
                     crapcob.cdcooper = crapcop.cdcooper  AND
