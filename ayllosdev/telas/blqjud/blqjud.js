@@ -1303,6 +1303,7 @@ function efetuaDesbloqueio() {
 	var vlbloque = $("#vlbloque","#frmAcaojud").val();
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
+	var cdmodali = $("#cdmodali","#frmAcaojud").val();
 	
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
@@ -1362,6 +1363,7 @@ function efetuaDesbloqueio() {
 			dtenvdes: dtenvdes,
 			dsinfdes: dsinfdes,
 			fldestrf: fldestrf,
+			vldesblo: vldesblo,
 			cdmodali: cdmodali,
 			redirect: "script_ajax"
 		}, 
@@ -1776,6 +1778,7 @@ function selecionaBloqueio(seq, cdmodali) {
     $('#nrofides','#frmDesbloqueio').val(arrbloqueios[seq]['nrofides']);
     $('#dtenvdes','#frmDesbloqueio').val(arrbloqueios[seq]['dtenvdes']);
     $('#dsinfdes','#frmDesbloqueio').val(arrbloqueios[seq]['dsinfdes']);
+	$('#cdmodali','#frmAcaojud').val(cdmodali);
 	
     if (arrbloqueios[seq]['fldestrf'] == "yes") {
         $('#flgsim', '#frmDesbloqueio').prop('checked', 'true');
