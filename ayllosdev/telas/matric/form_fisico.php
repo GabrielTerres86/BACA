@@ -231,16 +231,7 @@
 		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
 
 		<br style="clear:both" />
-		
-		
-			<option value=""> - </option>
-			<option value="1" <? if (getByTagName($registro,'idorigee') == '1' ){ echo ' selected'; } ?>> Cooperado </option>
-			<option value="2" <? if (getByTagName($registro,'idorigee') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
-			<option value="3" <? if (getByTagName($registro,'idorigee') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
-		</select>
-		
-		<br style="clear:both" />
-		
+				
 	</fieldset>	
 
 	<fieldset>
