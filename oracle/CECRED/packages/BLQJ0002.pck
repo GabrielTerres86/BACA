@@ -17,6 +17,12 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
                              considerando nr da conta tambem.
                              Heitor (Mouts) - BACENJUD
 
+                09/10/2017 - Incluido substr no nome do favorecido para evitar estouro
+                             de campo e de variaveis
+                             Heitor (Mouts) - BACENJUD	 
+
+			    30/11/2017 - Alterações referentes a M460 BACENJUD. (Thiago Rodrigues)
+
   .............................................................................*/
 
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -134,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         FROM crapblj a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
-         AND a.nroficio = pr_nroficio --LIKE pr_nroficio||'%'
+         AND a.nroficio = pr_nroficio
          AND a.cdmodali = pr_cdmodali
          AND a.dtblqfim IS NULL; -- Que nao esteja desbloqueado
     rw_crapblj cr_crapblj%ROWTYPE;
@@ -146,7 +152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         FROM crapblj a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
-         AND a.nroficio = pr_nroficio --LIKE pr_nroficio||'%'
+         AND a.nroficio = pr_nroficio
          AND a.cdmodali = pr_cdmodali
        ORDER BY nroficio DESC;
     rw_crapblj_2 cr_crapblj_2%ROWTYPE;
@@ -174,16 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Verifica se ja existe bloqueio ativo para este oficio
     OPEN cr_crapblj;
     FETCH cr_crapblj INTO rw_crapblj;
-      
-    -- Se ja existir registro, deve-se cancelar com erro
-    /* --thiago rodrigues
-    IF cr_crapblj%FOUND THEN
-      CLOSE cr_crapblj;
-      vr_dscritic := 'Ja existe bloqueio para o oficio informado!';
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_crapblj;
-    */ --fim thiago rodrigues
+         
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -279,27 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
 
     -- Busca o numero do oficio que sera utilizado
-    vr_nroficio := pr_nroficio; --thiago rodrigues
-    --thiago rodrigues
-    /*
-    OPEN cr_crapblj_2;
-    FETCH cr_crapblj_2 INTO rw_crapblj_2;
-    
-    -- Se nao encontrar, utiliza o oficio do parametro
-    IF cr_crapblj_2%NOTFOUND THEN
-      vr_nroficio := pr_nroficio;
-    ELSE -- Se encontrar, utiliza o sequencial
-      -- Verifica se já existe sequencial
-      IF instr(rw_crapblj_2.nroficio,'/') = 0 THEN
-        vr_nroficio := rw_crapblj_2.nroficio||'/01';
-      ELSE
-        vr_nroficio := substr(rw_crapblj_2.nroficio,1,instr(rw_crapblj_2.nroficio,'/'))||
-             to_char((SUBSTR(rw_crapblj_2.nroficio,instr(rw_crapblj_2.nroficio,'/')+1)+1),'fm00');
-      END IF;
-    END IF;    
-    CLOSE cr_crapblj_2;
-      
-    */ --fim thiago rodrigues
+    vr_nroficio := pr_nroficio;
     -- Inclui o bloqueio judicial
     blqj0001.pc_inclui_bloqueio_jud(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -396,52 +373,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     CLOSE cr_crapblj;
 
     
-
-/* Demetrius -- a logica de valor está na BLQJ0001.pc_efetua_desbloqueio_jud
-
-    -- Verifica se o bloqueio solicitado eh superior ao bloqueio existente
-    -- Neste caso deve-se desbloquear somente o valor existente
-    IF pr_vlbloque > rw_crapblj.vlbloque THEN
-      pr_vlbloque := rw_crapblj.vlbloque;
-    END IF;
-    
-    -- Se o valor do bloqueio for inferior ao que esta bloqueado,
-    -- Deve-se desbloquear tudo e fazer o bloqueio do saldo
-    IF pr_vlbloque < rw_crapblj.vlbloque THEN 
-      -- Desbloquear todo o valor
-      pc_desbloqueio(pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta,
-                     pr_cdmodali => pr_cdmodali,
-                     pr_nroficio => pr_nroficio,
-                     pr_nrproces => pr_nrproces,
-                     pr_dsjuizem => pr_dsjuizem,
-                     pr_fldestrf => pr_fldestrf,
-                     pr_vlbloque => rw_crapblj.vlbloque, -- Desbloqueia integral
-                     pr_dscritic => vr_dscritic);
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Calcular quanto que devera ser bloqueado
-      vr_vlbloqueio := rw_crapblj.vlbloque - pr_vlbloque;
-      
-      -- Efetua o bloqueio com o saldo que ficou
-      pc_bloqueio(pr_cdcooper => pr_cdcooper,
-                  pr_nrdconta => pr_nrdconta,
-                  pr_cdmodali => pr_cdmodali,
-                  pr_nroficio => pr_nroficio,
-                  pr_nrproces => pr_nrproces,
-                  pr_dsjuizem => pr_dsjuizem,
-                  pr_dsresord => rw_crapblj.dsresord,
-                  pr_vlbloque => vr_vlbloqueio, -- Bloqueio o saldo calculado
-                  pr_dscritic => vr_dscritic);
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-    ELSE -- Se o valor solicitado eh o mesmo valor que esta bloqueado
-            
-*/
       IF pr_fldestrf = 0 THEN
         vr_fldestrf := FALSE;
         vr_dsinfdes := 'Desbloqueio BACENJUD';
@@ -450,7 +381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         vr_dsinfdes := 'Desbloqueio/Transferência BACENJUD';
       END IF;
 
-      vr_vlbloqueio := pr_vlbloque; --thiago rodrigues
+      vr_vlbloqueio := pr_vlbloque;
 
       -- Efetua o desbloqueio judicial
       blqj0001.pc_efetua_desbloqueio_jud(pr_cdcooper  => pr_cdcooper
@@ -472,7 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         RAISE vr_exc_saida;
       END IF;
     
- --   END IF;   -- pr_vlbloque < rw_crapblj.vlbloque
+
     
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -2218,7 +2149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.nragencia_if_destino,
              b.nrcpfcnpj_favorecido,
              b.cdtransf_bacenjud,
-             b.nmfavorecido,
+             substr(b.nmfavorecido,1,60) nmfavorecido,
              SUM(b.vlordem) vllanmto
         FROM tbblqj_ordem_transf b,
              tbblqj_ordem_online a
