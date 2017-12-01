@@ -352,7 +352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 18/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -398,6 +398,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             18/10/2017 - Incluído pc_set_modulo com novo padrão
   --                          (Ana - Envolti - Chamado 776896)
+  --
+  --             24/11/2017 - Ajuste na rotina fn_char_para_number, para sair da mesma quando o parâmetro estiver
+  --                          nulo (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -4873,6 +4876,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
   	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_char_para_number');
+
+      -- Se o parâmetro estiver nulo, retornar
+      IF pr_dsnumtex IS NULL THEN
+        RETURN NULL;
+      END IF;
+      
       -- Se a tabela de dados estiver vazia vai carregar
       IF vr_nlspar.count = 0 THEN
         FOR rw_sep IN cr_sep LOOP

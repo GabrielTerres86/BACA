@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 11/08/2017
+   Data    : Agosto/2017.                   Ultima atualizacao: 24/11/2017
    
    Projeto:  Chamado 714566.
 
@@ -27,6 +27,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
      - relatorio 686 - "MOVIMENTO FLOAT - 085"
 
    Alteracoes: 
+
+   - Incluido controle de inicio e fim de programa - 
+     ( Belli - Chamado 801477 - 24/11/2017 )
               
    .............................................................................*/
 
@@ -1543,6 +1546,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
       
+      -- Incluido controle de inicio de programa - Chamado 801477 - 24/11/2017
+      pc_controla_log_programa('I', NULL);   
+      
       --Posicionar parametros
       vr_typ_craprej_array  := pr_tab_cratrej;
             
@@ -1553,7 +1559,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       END IF;
       -- Incluir nome do modulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-                             
+                                
       pc_controla_log_programa('O', 'Programa CRPS538_1 iniciado');
       
       --Se der um erro no CRPS538_1 Ficara registrado no Log com erro e vai abrir chamado Não vai parar a cadeia     
@@ -1694,6 +1700,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       COMMIT;
       
       pc_controla_log_programa('O', 'Programa CRPS538_1 Finalizado com Sucesso');
+      
+      -- Incluido controle de fim de programa - Chamado 801477 - 24/11/2017
+      pc_controla_log_programa('F', NULL);   
       
     EXCEPTION
       WHEN vr_exc_saida THEN
