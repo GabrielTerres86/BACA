@@ -91,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 29/09/2016
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 30/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -115,6 +115,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --
   --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
   --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
+  --
+  --             30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
+  --                          a rotina que efetua o lançamento
+  --                          (Adriano - SD 804308).
   --
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
@@ -1599,7 +1603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 22/02/2017
+      Data    : Julho/2016.                    Ultima atualizacao: 30/11/2017
 
       Dados referentes ao programa:
 
@@ -1617,6 +1621,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                Prj. 302 (Jean Michel). 
 
                   22/02/2017 - Passagem de parametros rw_tbacordo para cr_crapass. (Jaison/James)
+
+                  30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
+                               a rotina que efetua o lançamento
+                               (Adriano - SD 804308).
 
     ..............................................................................*/                                    
     
@@ -1777,7 +1785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                     ,pr_nrdconta => rw_crapass.nrdconta             --> Número da conta
                                     ,pr_cdhistor => 2194                    --> Codigo historico 2194 - CR.DESB.ACORD
                                     ,pr_vllanmto => rw_tbacordo.vlbloqueado --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => rw_tbacordo.nracordo    --> Número parcelas empréstimo
+                                    ,pr_nrparepr => 0                       --> Número parcelas empréstimo
                                     ,pr_nrctremp => 0                       --> Número do contrato de empréstimo
                                     ,pr_des_reto => vr_des_reto             --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro);           --> Tabela com possíves erros
