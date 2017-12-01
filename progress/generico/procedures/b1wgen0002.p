@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 29/09/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 31/10/2017
 
    Dados referentes ao programa:
 
@@ -716,6 +716,8 @@
 
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
+
+              31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
  ..............................................................................*/
 
@@ -9620,7 +9622,9 @@ PROCEDURE obtem-dados-conta-contrato:
 
     FOR EACH crapadt WHERE crapadt.cdcooper = par_cdcooper     AND
                            crapadt.nrdconta = par_nrdconta     AND
-                           crapadt.nrctremp = crapepr.nrctremp NO-LOCK:
+                           crapadt.nrctremp = crapepr.nrctremp AND
+                           crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                           NO-LOCK:
 
         ASSIGN aux_qtaditiv = aux_qtaditiv + 1.
 

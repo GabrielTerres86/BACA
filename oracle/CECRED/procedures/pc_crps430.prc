@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2004.                    Ultima atualizacao: 21/01/2015
+   Data    : Dezembro/2004.                    Ultima atualizacao: 26/10/2017
 
    Dados referentes ao programa:
 
@@ -45,13 +45,16 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
 
                21/01/2015 - Alterado o formato do campo nrctremp para 8
                             caracters (Kelvin - 233714)
+
+               26/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+
      ............................................................................. */
 
      DECLARE
 
        --Tipo de tabela de memoria
        TYPE typ_tab_crapadt  IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-       TYPE typ_tab_dsaditiv IS VARRAY (8) OF VARCHAR2(50);
+       TYPE typ_tab_dsaditiv IS VARRAY (9) OF VARCHAR2(50);
 
        --Tabela de memoria dos emprestimos
        vr_tab_crapadt  typ_tab_crapadt;
@@ -62,7 +65,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
                                                           ,'5- Substituicao de Veiculo'
                                                           ,'6- Interveniente Garantidor Veiculo'
                                                           ,'7- Sub-rogacao - C/Nota Promissoria'
-                                                          ,'8- Sub-rogacao - S/Nota Promissoria');
+                                                          ,'8- Sub-rogacao - S/Nota Promissoria'
+                                                          ,'9- Cobertura de Aplicacao Vinculada a Operacao');
 
 
        /* Cursores da rotina crps430 */
@@ -103,6 +107,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
                ,crapadt.nrctremp
                ,crapadt.cdaditiv
                ,crapadt.nraditiv
+               ,crapadt.tpctrato
          FROM crapadt
          WHERE crapadt.cdcooper = pr_cdcooper
          AND   crapadt.nrdconta = pr_nrdconta
@@ -141,11 +146,25 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
          AND   crawepr.nrdconta = pr_nrdconta
          AND   crawepr.nrctremp = pr_nrctremp;
        rw_crawepr cr_crawepr%ROWTYPE;
+       
+       -- Buscar dados do contrato de limite
+       CURSOR cr_craplim(pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                        ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                        ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
+         SELECT craplim.dtinivig
+         FROM craplim
+         WHERE craplim.cdcooper = pr_cdcooper
+         AND   craplim.nrdconta = pr_nrdconta
+         AND   craplim.nrctrlim = pr_nrctremp
+         AND   craplim.tpctrlim = pr_tpctrlim;
+       rw_craplim cr_craplim%ROWTYPE;
 
        --Variaveis Locais
        vr_rel_dtctrato DATE;
        vr_flgerpdf     BOOLEAN := FALSE;
        vr_flg_impri    VARCHAR2(10);
+       vr_dstipctr     VARCHAR2(15);
 
        /***** Variaveis RDCA para BO *****/
        vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS430';
@@ -274,33 +293,58 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
 
              /* data do contrato */
-             --Selecionar informacoes dos emprestimos
-             OPEN cr_crapepr (pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => rw_crapass.nrdconta
-                             ,pr_nrctremp => rw_crapadt.nrctremp);
-             --Posicionar no primeiro registro
-             FETCH cr_crapepr INTO rw_crapepr;
-             --Se nao encontrou
-             IF cr_crapepr%NOTFOUND THEN
-               --Selecionar informacoes adicionais do emprestimo
-               OPEN cr_crawepr (pr_cdcooper => pr_cdcooper
+             -- Se for Emprestimo/Financimento
+             IF rw_crapadt.tpctrato = 90 THEN
+               --Selecionar informacoes dos emprestimos
+               OPEN cr_crapepr (pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => rw_crapass.nrdconta
                                ,pr_nrctremp => rw_crapadt.nrctremp);
                --Posicionar no primeiro registro
-               FETCH cr_crawepr INTO rw_crawepr;
-               --Se Encontrou
-               IF cr_crawepr%FOUND THEN
+               FETCH cr_crapepr INTO rw_crapepr;
+               --Se nao encontrou
+               IF cr_crapepr%NOTFOUND THEN
+                 --Selecionar informacoes adicionais do emprestimo
+                 OPEN cr_crawepr (pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapass.nrdconta
+                                 ,pr_nrctremp => rw_crapadt.nrctremp);
+                 --Posicionar no primeiro registro
+                 FETCH cr_crawepr INTO rw_crawepr;
+                 --Se Encontrou
+                 IF cr_crawepr%FOUND THEN
+                   --Atribuir a data do contrato
+                   vr_rel_dtctrato:= rw_crawepr.dtmvtolt;
+                 END IF;
+                 --Fechar Cursor
+                 CLOSE cr_crawepr;
+               ELSE
                  --Atribuir a data do contrato
-                 vr_rel_dtctrato:= rw_crawepr.dtmvtolt;
+                 vr_rel_dtctrato:= rw_crapepr.dtmvtolt;
                END IF;
                --Fechar Cursor
-               CLOSE cr_crawepr;
+               CLOSE cr_crapepr;
              ELSE
-               --Atribuir a data do contrato
-               vr_rel_dtctrato:= rw_crapepr.dtmvtolt;
+               --Selecionar informacoes do limite
+               OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => rw_crapass.nrdconta
+                               ,pr_nrctremp => rw_crapadt.nrctremp
+                               ,pr_tpctrlim => rw_crapadt.tpctrato);
+               FETCH cr_craplim INTO rw_craplim;
+               --Se encontrou
+               IF cr_craplim%FOUND THEN
+                 --Atribuir a data do contrato
+                 vr_rel_dtctrato := rw_craplim.dtinivig;
+               END IF;
+               --Fechar Cursor
+               CLOSE cr_craplim;
              END IF;
-             --Fechar Cursor
-             CLOSE cr_crapepr;
+
+             CASE rw_crapadt.tpctrato
+               WHEN 1 THEN vr_dstipctr := '01-LIM.CRED';
+               WHEN 2 THEN vr_dstipctr := '02-DSCT.CHQ';
+               WHEN 3 THEN vr_dstipctr := '03-DSCT.TIT';
+               WHEN 90 THEN vr_dstipctr := '90-EMP/FIN';
+             END CASE;
+
              --Montar tag da conta para arquivo XML
              pc_escreve_xml
                ('<conta>
@@ -310,6 +354,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
                   <dtctrato>'||To_Char(vr_rel_dtctrato,'DD/MM/YYYY')||'</dtctrato>
                   <dsaditiv>'||vr_tab_dsaditiv(rw_crapadt.cdaditiv)||'</dsaditiv>
                   <nraditiv>'||To_Char(rw_crapadt.nraditiv,'fm999g999')||'</nraditiv>
+                  <dstipctr>'||vr_dstipctr||'</dstipctr>
              </conta>');
 
              vr_flgerpdf := TRUE;
@@ -337,10 +382,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
                                   ,pr_dsjasper  => 'crrl401.jasper'    --> Arquivo de layout do iReport
                                   ,pr_dsparams  => NULL                --> Sem parametros
                                   ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final com código da agência
-                                  ,pr_qtcoluna  => 80                 --> 132 colunas
+                                  ,pr_qtcoluna  => 132                --> 132 colunas
                                   ,pr_sqcabrel  => 1                  --> Sequencia do Relatorio {includes/cabrel132_5.i}
                                   ,pr_flg_impri => vr_flg_impri       --> Chamar a impressão (Imprim.p)
-                                  ,pr_nmformul  => '80col'            --> Nome do formulário para impressão
+                                  ,pr_nmformul  => '132col'           --> Nome do formulário para impressão
                                   ,pr_nrcopias  => 1                   --> Número de cópias
                                   ,pr_flg_gerar => 'N'                 --> Gerar o arquivo na hora
                                   ,pr_des_erro  => vr_dscritic);       --> Saída com erro
@@ -413,4 +458,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS430" ( pr_cdcooper  IN crapcop.cdcoop
      END;
    END pc_crps430;
 /
-

@@ -8,7 +8,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando
-   Data    : FEVEREIRO/2010                     Ultima atualizacao: 22/06/2012
+   Data    : FEVEREIRO/2010                     Ultima atualizacao: 30/10/2017
    Dados referentes ao programa:
 
    Frequencia: Diario
@@ -19,7 +19,10 @@
                22/09/2010 - Mudada a estrutura da crawepr para a crapbpr
                             quando bens alienados (Gabriel).
                
-               22/06/2012 - Substituido gncoper por crapcop (Tiago).                                                 
+               22/06/2012 - Substituido gncoper por crapcop (Tiago).
+
+               30/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+
 ............................................................................. */
 { includes/var_online.i "NEW" }
 
@@ -1541,11 +1544,14 @@ IF   par_cdorigem = 3   THEN
         FOR EACH crapadt WHERE crapadt.cdcooper = glb_cdcooper     AND
                                crapadt.nrdconta = crapepr.nrdconta AND
                                crapadt.nrctremp = crapepr.nrctremp AND
-                               crapadt.cdaditiv = 2           NO-LOCK:
+                               crapadt.cdaditiv = 2                AND
+                               crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                               NO-LOCK:
 
             FOR EACH crapadi WHERE crapadi.cdcooper = glb_cdcooper     AND
                                    crapadi.nrdconta = crapadt.nrdconta AND
-                                   crapadi.nrctremp = crapadt.nrctremp NO-LOCK:
+                                   crapadi.nrctremp = crapadt.nrctremp AND
+                                   crapadi.tpctrato = crapadt.tpctrato NO-LOCK:
                 
                 FIND FIRST craptab WHERE 
                            craptab.cdcooper = glb_cdcooper               AND   

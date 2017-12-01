@@ -4425,7 +4425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 06/10/2017
+       Data    : Abril/2013.                         Ultima atualizacao: 26/10/2017
     
        Dados referentes ao programa:
     
@@ -4483,6 +4483,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
+
+                    26/10/2017 - Passagem do tpctrato fixo 90. (Jaison/Marcos Martini - PRJ404)
 
     ............................................................................. */
     DECLARE
@@ -4597,7 +4599,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           FROM crapadt
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
-               AND nrctremp = pr_nrctremp;
+               AND nrctremp = pr_nrctremp
+               AND tpctrato = 90; -- Emprestimo/Financiamento
       vr_qtaditiv INTEGER;
       -- Busca dos avalistas terceiros
       CURSOR cr_crapavt(pr_nrctremp IN crapavt.nrctremp%TYPE) IS

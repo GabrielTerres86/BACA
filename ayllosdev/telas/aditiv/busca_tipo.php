@@ -7,7 +7,9 @@
  *
  * ALTERACOES   : 26/11/2012 - Ajustado erro fechamento if no tipo 5 (Daniel).
  *				  03/04/2013 - Correcao tratamento dos includes quando cdaditiv
- *				  igual a 5 (Daniel)					
+ *				  igual a 5 (Daniel)
+ *
+ *                01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
  *
  */
 ?>
@@ -27,6 +29,7 @@
 	$nraditiv = (isset($_POST['nraditiv'])) ? $_POST['nraditiv'] : 0 ;
 	$cdaditiv = (isset($_POST['cdaditiv'])) ? $_POST['cdaditiv'] : 0 ;
 	$tpaplica = (isset($_POST['tpaplica'])) ? $_POST['tpaplica'] : '';
+	$tpctrato = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0;
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -53,6 +56,7 @@
 	$xml .= '		<cdaditiv>'.$cdaditiv.'</cdaditiv>';
 	$xml .= '		<tpaplica>'.$tpaplica.'</tpaplica>';
 	$xml .= '		<nrctagar>'.$nrctagar.'</nrctagar>';
+	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 

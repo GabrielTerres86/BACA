@@ -33,6 +33,8 @@
  *
  * 010: 23/12/2015 - Odirlei(AMcom)            : Ajustado validacao no campo chassi para nao digitar letras I,O e Q  
  *                                               devido ao keycode nao diferenciar maiusculos e minusculos (Odirlei-AMcom SD378702)
+ *
+ * 011: 31/10/2017 - Jaison (CECRED)           : Ajustes conforme inclusao do campo tipo de contrato. (Jaison/Marcos Martini - PRJ404)
  * --------------
  *
  */
@@ -51,13 +53,14 @@ var cdaditiv		= 0;
 var flgaplic 		= '';
 var nmdgaran		= '';
 var regtotal		= 0;
+var tpctrato        = 90;
 
 var aplicacao		= new Array();
 var arrayAditiv		= new Array();
 
 //Labels/Campos do cabeçalho
-var rCddopcao, rNrdconta, rNrctremp, rNraditiv, rDtmvtolx, rCdaditiv, rCdaditix,
-	cCddopcao, cNrdconta, cNrctremp, cNraditiv, cDtmvtolx, cCdaditiv, cCdaditix, cTodosCabecalho, btnOK1, btnOK2;
+var rCddopcao, rNrdconta, rNrctremp, rNraditiv, rDtmvtolx, rCdaditiv, rCdaditix, rTpctrato,
+	cCddopcao, cNrdconta, cNrctremp, cNraditiv, cDtmvtolx, cCdaditiv, cCdaditix, cTpctrato, cTodosCabecalho, btnOK1, btnOK2;
 
 
 $(document).ready(function() {
@@ -107,6 +110,7 @@ function atualizaSeletor(){
 	rDtmvtolx			= $('label[for="dtmvtolx"]','#'+frmCab);
 	rCdaditiv			= $('label[for="cdaditiv"]','#'+frmCab);
 	rCdaditix			= $('label[for="cdaditix"]','#'+frmCab);
+    rTpctrato			= $('label[for="tpctrato"]','#'+frmCab);
 
 	cCddopcao			= $('#cddopcao','#'+frmCab);
 	cNrdconta			= $('#nrdconta','#'+frmCab);
@@ -115,6 +119,7 @@ function atualizaSeletor(){
 	cDtmvtolx			= $('#dtmvtolx','#'+frmCab);
 	cCdaditiv			= $('#cdaditiv','#'+frmCab);
 	cCdaditix			= $('#cdaditix','#'+frmCab);
+	cTpctrato			= $('#tpctrato','#'+frmCab);
 
 	cTodosCabecalho		= $('input[type="text"],select','#'+frmCab);
 	btnOK1				= $('#btnOK1','#'+frmCab);
@@ -141,6 +146,7 @@ function controlaOperacao(nriniseq, nrregist) {
                     nrdconta	: nrdconta,
 					nrctremp	: nrctremp,
 				    dtmvtolx	: dtmvtolx,
+                    tpctrato    : tpctrato,
 					nriniseq	: nriniseq,
 					nrregist	: nrregist,
  					redirect	: 'script_ajax'
@@ -180,6 +186,8 @@ function manterRotina( operacao ) {
 	var mensagem = '';
 
 	var idseqbem = $('#idseqbem', '#'+frmCab).val();	// inteiro
+
+	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
 
 	var flgpagto = $('#flgpagto', '#frmTipo').val(); //
 	var dtdpagto = $('#dtdpagto', '#frmTipo').val(); //
@@ -251,6 +259,7 @@ function manterRotina( operacao ) {
 				nrctremp	: nrctremp, // global
 				nraditiv	: nraditiv, // global
 				cdaditiv	: cdaditiv, // global
+                tpctrato    : tpctrato, // global
 
 				idseqbem	: idseqbem,
 
@@ -307,6 +316,8 @@ function manterRotina( operacao ) {
 				tpproap5    : tpproap5,
 				tpproap7    : tpproap7,
 				tpproap8    : tpproap8,
+
+				idgaropc    : idcobert,
 				
 				redirect	: 'script_ajax'
 			},
@@ -339,6 +350,7 @@ function Gera_Impressao() {
 	$('#nraditiv','#frmTipo').remove();
 	$('#cdaditiv','#frmTipo').remove();
 	$('#sidlogin','#frmTipo').remove();
+	$('#tpctrato','#frmTipo').remove();
 
 	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
 	$('#frmTipo').append('<input type="hidden" id="nrdconta" name="nrdconta" />');
@@ -346,6 +358,7 @@ function Gera_Impressao() {
 	$('#frmTipo').append('<input type="hidden" id="nraditiv" name="nraditiv" />');
 	$('#frmTipo').append('<input type="hidden" id="cdaditiv" name="cdaditiv" />');
 	$('#frmTipo').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+	$('#frmTipo').append('<input type="hidden" id="tpctrato" name="tpctrato" />');
 
 	// Agora insiro os devidos valores nos inputs criados
 	$('#nrdconta','#frmTipo').val( nrdconta );
@@ -353,6 +366,7 @@ function Gera_Impressao() {
 	$('#nraditiv','#frmTipo').val( nraditiv );
 	$('#cdaditiv','#frmTipo').val( cdaditiv );
 	$('#sidlogin','#frmTipo').val( $('#sidlogin','#frmMenu').val() );
+	$('#tpctrato','#frmTipo').val( tpctrato );
 
 	var action = UrlSite + 'telas/aditiv/imprimir_dados.php';
 
@@ -368,13 +382,14 @@ function formataCabecalho() {
 
 	//atualizaSeletor();
 
-	rCddopcao.addClass('rotulo').css({'width':'47px'});
-	rNrdconta.addClass('rotulo-linha').css({'width':'44px'});
-	rNrctremp.addClass('rotulo-linha').css({'width':'58px'});
+	rCddopcao.addClass('rotulo').css({'width':'58px'});
+	rNrdconta.addClass('rotulo-linha').css({'width':'55px'});
+	rNrctremp.addClass('rotulo').css({'width':'58px'});
 	rNraditiv.addClass('rotulo-linha').css({'width':'48px'});
 	rDtmvtolx.addClass('rotulo-linha').css({'width':'52px','display':'none'});
 	rCdaditix.addClass('rotulo-linha').css({'width':'36px','display':'none'});
 	rCdaditiv.addClass('rotulo').css({'width':'0px'});
+    rTpctrato.addClass('rotulo-linha').css({'width':'90px'});
 
 	cCddopcao.css({'width':'470px'});
 	cNrdconta.addClass('conta pesquisa').css({'width':'80px'})
@@ -383,9 +398,10 @@ function formataCabecalho() {
 	cDtmvtolx.addClass('data').css({'width':'83px','display':'none'});
 	cCdaditix.css({'width':'99px','display':'none'});
 	cCdaditiv.css({'width':'563px','height':'130px'});
+	cTpctrato.css({'width':'278px'}).val(tpctrato);
 
 	if ( $.browser.msie ) {
-		rNrdconta.css({'width':'47px'});
+		rNrdconta.css({'width':'58px'});
 		rNrctremp.css({'width':'62px'});
 		rNraditiv.css({'width':'51px'});
 		rCdaditix.css({'width':'39px'});
@@ -407,6 +423,10 @@ function formataCabecalho() {
 			cNraditiv.habilitaCampo();
 			cCdaditix.habilitaCampo();
 			cDtmvtolx.habilitaCampo();
+
+            if ( cddopcao != 'X' ) {
+                cTpctrato.habilitaCampo();
+			}
 
 			$('#divBotoes', '#divTela').css({'display':'block'});
 			$("#btVoltar","#divBotoes").show();
@@ -432,6 +452,7 @@ function formataCabecalho() {
 		nraditiv = normalizaNumero( cNraditiv.val() );
 		cdaditiv = cCdaditiv.val() ? cCdaditiv.val()[0] : 0;
 		dtmvtolx = cDtmvtolx.val();
+		tpctrato = normalizaNumero( cTpctrato.val() );
 
 		cTodosCabecalho.removeClass('campoErro');
 
@@ -445,7 +466,46 @@ function formataCabecalho() {
 			controlaOperacao(1, 50);
 
 		} else {
-			mostraTipo();
+
+            // Se for Cobertura de Aplicacao Vinculada a Operacao
+            if (cdaditiv == 9) {
+                buscaDadosGAROPC();
+            } else {
+                
+                showMsgAguardo('Aguarde, buscando ...');
+
+                // Executa script de confirmação através de ajax
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'html',
+                    url: UrlSite + 'telas/aditiv/busca_tipo_aditivo.php',
+                    data: {
+                        nrdconta : nrdconta,
+                        nrctremp : nrctremp,
+                        nraditiv : nraditiv,
+                        tpctrato : tpctrato,
+                        redirect : 'html_ajax'
+                        },
+                    error: function(objAjax,responseError,objExcept) {
+                        hideMsgAguardo();
+                        showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+                    },
+                    success: function(cdaditiv_ajax) {
+
+                        // Marca o aditivo
+                        $("#cdaditiv option[value='" + cdaditiv_ajax + "']",'#frmCab').prop('selected',true);
+
+                        cdaditiv = $("#cdaditiv","#frmCab").val()[0];
+
+                        // Se for Cobertura de Aplicacao Vinculada a Operacao
+                        if (cdaditiv_ajax == 9) {
+                            buscaDadosGAROPC();
+                        } else {
+                            mostraTipo();
+                        }
+                    }
+                });
+            }
 		}
 
 		return false;
@@ -460,12 +520,25 @@ function formataCabecalho() {
 				mostraPesquisaAssociado('nrdconta', frmCab );
 				return false;
 			} else {
-				cNrctremp.focus();
+                if ( cCddopcao.val() != 'X' ) {
+                    cTpctrato.focus();
+                } else {
+                    cNrctremp.focus();
+                }
 				return false;
 			}
 		} else if ( e.keyCode == 118 ) {
 			mostraPesquisaAssociado('nrdconta', frmCab );
 			return false;
+		}
+	});
+
+	cTpctrato.unbind('keypress').bind('keypress', function(e) {
+		if ( divError.css('display') == 'block' ) { return false; }
+		// Se é a tecla ENTER,
+		if ( e.keyCode == 13 ) {
+			cNrctremp.focus();
+            return false;
 		}
 	});
 
@@ -648,6 +721,7 @@ function buscaTipo() {
 			nrctremp: nrctremp,
 			nraditiv: nraditiv,
 			cdaditiv: cdaditiv,
+            tpctrato: tpctrato,
 			redirect: 'script_ajax'
 			},
 		error: function(objAjax,responseError,objExcept) {
@@ -1747,6 +1821,7 @@ function buscaAplicacao(tpaplica) {
 		data: {
 			cddopcao : cddopcao,
 			nrdconta : nrdconta,
+            tpctrato : tpctrato,
 			nrctremp : nrctremp,
 			nraditiv : nraditiv,
 			cdaditiv : cdaditiv,
@@ -1877,27 +1952,41 @@ function continuarAplicacao(tp) {
 
 // contrato
 function mostraContrato() {
+    var s_tpctrato = normalizaNumero($('#tpctrato','#frmCab').val());
+    var s_nrdconta = normalizaNumero($('#nrdconta','#frmCab').val());
 
-	showMsgAguardo('Aguarde, buscando ...');
+    // Se for Emprestimo/Financiamento
+    if (s_tpctrato == 90) {
+        showMsgAguardo('Aguarde, buscando ...');
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
-		type: 'POST',
-		dataType: 'html',
-		url: UrlSite + 'telas/aditiv/contrato.php',
-		data: {
-			redirect: 'html_ajax'
-			},
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
-		},
-		success: function(response) {
-			$('#divRotina').html(response);
-			buscaContrato();
-			return false;
-		}
-	});
+        // Executa script de confirmação através de ajax
+        $.ajax({
+            type: 'POST',
+            dataType: 'html',
+            url: UrlSite + 'telas/aditiv/contrato.php',
+            data: {
+                redirect: 'html_ajax'
+                },
+            error: function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+            },
+            success: function(response) {
+                $('#divRotina').html(response);
+                buscaContrato();
+                return false;
+            }
+        });
+    } else {
+        // Definicao dos filtros
+        var filtros = "Contrato;nrctrlim;120px;S;;;|;vllimite;;N;;N;|;dtinivig;;N;;N;|;dtfimvig;;N;;N;|;cddlinha;;N;;N;|;nrdconta;;;"+s_nrdconta+";N|;tpctrlim;;;"+s_tpctrato+";N";
+
+        // Campos que serao exibidos na tela
+        var colunas = 'Contrato;nrctrlim;20%;right|Limite;vllimite;20%;right|Data Ini.;dtinivig;20%;center;|Data Fim;dtfimvig;20%;center|Linha;cddlinha;20%;center';
+
+        // Exibir a pesquisa
+        mostraPesquisa("ZOOM0001", "ZOOM_BUSCA_LIMITE_CREDITO", "Limites de Cr&eacute;dito", "30", filtros, colunas, '', '$(\'#nrctremp\',\'#frmCab\').val($(\'#nrctrlim\',\'#frmCab\').val()).focus();', 'frmCab');
+    }
 
 	return false;
 
@@ -2180,6 +2269,7 @@ function btnVoltar() {
 	$("#cdaditiv option[value='6']",'#'+frmCab).prop('selected',false);
 	$("#cdaditiv option[value='7']",'#'+frmCab).prop('selected',false);
 	$("#cdaditiv option[value='8']",'#'+frmCab).prop('selected',false);
+	$("#cdaditiv option[value='9']",'#'+frmCab).prop('selected',false);
 	return false;
 }
 
@@ -2231,11 +2321,12 @@ function GerenciaPesquisa(opcao) {
 			// Aditivo
 			var nrdcont1	= normalizaNumero( cNrdconta.val() );
 			var nrctrem1	= normalizaNumero( cNrctremp.val() );
+            var tpctrat1    = normalizaNumero( cTpctrato.val() );
 			var bo 			= 'b1wgen0059.p';
 			var procedure	= 'busca_aditivos';
 			var titulo      = 'Busca do Aditivo';
 			var qtReg		= '30';
-			var filtrosPesq	= 'Aditivo;nraditiv;30px;S;0|Tipo;cdaditiv;200px;S|;nrdconta;;;'+nrdcont1+';N|;nrctremp;;;'+nrctrem1+';N';
+			var filtrosPesq	= 'Aditivo;nraditiv;30px;S;0|Tipo;cdaditiv;200px;S|;nrdconta;;;'+nrdcont1+';N|;nrctremp;;;'+nrctrem1+';N|;tpctrato;;;'+tpctrat1+';N';
 			var colunas 	= 'Aditivo;nraditiv;50%;right|Tipo;cdaditiv;50%;left';
 			mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,$('#divTela'));
 			return false;
@@ -2246,4 +2337,89 @@ function GerenciaPesquisa(opcao) {
 }
 
 
+function buscaDadosGAROPC() {
 
+    $('#codlinha,#vlropera','#'+frmCab).val(0);
+
+	showMsgAguardo('Aguarde, buscando ...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/aditiv/busca_dados_garopc.php',
+		data: {
+            cddopcao : cddopcao,
+            nrdconta : nrdconta,
+            tpctrato : tpctrato,
+            nrctremp : nrctremp,
+			redirect : 'html_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+            eval(response);
+			return false;
+		}
+	});
+	return false;
+
+}
+
+
+function abrirTelaGAROPC() {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    exibeRotina($('#divUsoGAROPC'));
+
+    var tipaber  = cddopcao;
+    var idcobert = normalizaNumero($('#idcobert','#'+frmCab).val());
+    var codlinha = normalizaNumero($('#codlinha','#'+frmCab).val());
+    var vlropera = $('#vlropera','#'+frmCab).val();
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            nmdatela     : 'ADITIV',
+            tipaber      : tipaber,
+            nrdconta     : nrdconta,
+            tpctrato     : tpctrato,
+            idcobert     : idcobert,
+            dsctrliq     : '',
+            codlinha     : codlinha,
+            vlropera     : vlropera,
+            ret_nomcampo : 'idcobert',
+            ret_nomformu : 'frmCab',
+            ret_execfunc : 'manterRotina(\\\'GD\\\');',
+            divanterior  : '',
+			redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            $('#divUsoGAROPC').html(response);
+            bloqueiaFundo($('#divUsoGAROPC'));
+        }
+    });
+}
+
+function carregaAditivoCadastrado(par_nrdconta,par_tpctrato,par_nrctremp,par_nraditiv) {
+    estadoInicial();
+
+    $('#cddopcao', '#frmCab').val('C');
+    $('#btnOK1',   '#frmCab').click();
+    $('#nrdconta', '#frmCab').val(par_nrdconta);
+    $('#tpctrato', '#frmCab').val(par_tpctrato);
+    $('#nrctremp', '#frmCab').val(par_nrctremp);
+    $('#nraditiv', '#frmCab').val(par_nraditiv);
+    $('#btnOK2',   '#frmCab').click();
+}

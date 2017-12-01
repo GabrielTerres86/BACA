@@ -9,6 +9,7 @@
  * --------------
  *   001 [28/02/2014] Guilherme(SUPERO)         : Novos campos NrCpfCgc e validações.
  *	 002 [11/12/2014] Lucas Reinert(CECRED)		: Adicionado campos tpproapl e novo parametro na function arrayTipo
+ *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404)
  */
 ?>
 
@@ -35,6 +36,8 @@
 	$nrctremp		= (isset($_POST['nrctremp']))   ? $_POST['nrctremp']   : 0  ;
 	$cdaditiv		= (isset($_POST['cdaditiv']))   ? $_POST['cdaditiv']   : 0  ;
 	$nraditiv		= (isset($_POST['nraditiv']))   ? $_POST['nraditiv']   : 0  ;
+	$tpctrato		= (isset($_POST['tpctrato']))   ? $_POST['tpctrato']   : 0  ;
+	$idgaropc		= (isset($_POST['idgaropc']))   ? $_POST['idgaropc']   : 0  ;
 
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
 
@@ -137,6 +140,8 @@
 	$xml .= '		<nrctremp>'.$nrctremp.'</nrctremp>';
 	$xml .= '		<cdaditiv>'.$cdaditiv.'</cdaditiv>';
 	$xml .= '		<nraditiv>'.$nraditiv.'</nraditiv>';
+	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
+	$xml .= '		<idgaropc>'.$idgaropc.'</idgaropc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<dtdpagto>'.$dtdpagto.'</dtdpagto>';
 	$xml .= '		<flgaplic>'.$flgaplic.'</flgaplic>';
@@ -221,11 +226,18 @@
 
 	} else if ( $cddopcao == 'I' and $operacao == 'GD' ) {
 		echo "bloqueiaFundo( $('#divRotina') );";
-		$nraditiv = $xmlObjeto->roottag->tags[0]->attributes['NRADITIV'];
-		echo "$('#dtmvtolt', '#frmTipo').val('".$glbvars['dtmvtolt']."');";
-		echo "nraditiv ='".$nraditiv."';";
-		echo "$('select, input', '#frmTipo').desabilitaCampo();";
-		echo "trocaBotao( 'imprimir' );";
+
+        $nraditiv = $xmlObjeto->roottag->tags[0]->attributes['NRADITIV'];
+
+        // Se for Cobertura de Aplicacao Vinculada a Operacao
+        if ($cdaditiv == 9) {
+            exibirErro('inform','Aditivo contratual de Cobertura de Aplicação criado com sucesso!','Alerta - Ayllos','carregaAditivoCadastrado(\''.$nrdconta.'\',\''.$tpctrato.'\',\''.$nrctremp.'\',\''.$nraditiv.'\')',false);
+        } else {
+            echo "$('#dtmvtolt', '#frmTipo').val('".$glbvars['dtmvtolt']."');";
+            echo "nraditiv ='".$nraditiv."';";
+            echo "$('select, input', '#frmTipo').desabilitaCampo();";
+            echo "trocaBotao( 'imprimir' );";
+        }
 	}
 
 	// cria um array com todas as aplicacoes
