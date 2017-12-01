@@ -43,7 +43,7 @@
 
     Programa: b1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima Atualizacao: 19/07/2017
+    Data    : Novembro/2009                   Ultima Atualizacao: 17/11/2017
            
     Dados referentes ao programa:
                 
@@ -136,8 +136,8 @@
                              alterar o campo do cpf do remetente para buscar do campo 
                              correto (Lucas Ranghetti #440959)
                            - Remover chamado em duplicidade das opcoes "ENVIADOS -> TODOS" 
-                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)  
-
+                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)                             
+                
                 27/09/2016 - M211 - Adicionado parametros par_cdifconv nas procs 
                             obtem-log-spb, impressao-log-pdf e impressao-log-csv.
                             Tambem chamada a rotina convertida da obtem-log-cecred
@@ -145,6 +145,11 @@
                              
                 19/07/2017 - Alterado impressao-log-pdf e impressao-log-csv para quando
                              chamar obtem-log-cecred nao limitar os resultados a 9999 (Tiago #708595)
+							 
+				17/11/2017 - Ajustado o relatorio da opcao R para 234 colunas, e tambem o relatorio da opcao
+							 L aumentado o tamanho da conta do remetente e destinatario, conforme solicitado
+							 no chamado 776168. (Kelvin).
+
 ..............................................................................*/
 
 
@@ -199,39 +204,39 @@ DEF VAR aux_dtmvtlog AS DATE                                           NO-UNDO.
 FORM SKIP(2) 
      aux_dstitcab NO-LABEL FORMAT "x(35)"
      SKIP(1)
-     WITH NO-BOX WIDTH 132 FRAME f_titulo.
+     WITH NO-BOX WIDTH 234 FRAME f_titulo.
 
 FORM "                       DESTINATARIO                       "
      "                        REMETENTE                         "
      SKIP
-     "----------------------------------------------------------"
-     "----------------------------------------------------------"
+     "---------------------------------------------------------------------------------------------------   "
+     "   ---------------------------------------------------------------------------------------------------"
      SKIP
      "BCO  AGE          CONTA/DV DESTINATARIO           CPF/CNPJ" 
      "BCO  AGE          CONTA/DV REMETENTE              CPF/CNPJ"
      "         VALOR"
      SKIP
-     aux_pontilha FORMAT "x(132)"
-     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_cabecalho.
+     aux_pontilha FORMAT "x(234)"
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_cabecalho.
 
-FORM aux_dslinlog FORMAT "x(132)"
-     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_rejeitadas.
+FORM aux_dslinlog FORMAT "x(234)"
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_rejeitadas.
 
 FORM tt-logspb-detalhe.cdbandst FORMAT "zz9"
-     tt-logspb-detalhe.cdagedst FORMAT "zzz9"
-     tt-logspb-detalhe.nrctadst FORMAT "xxxxxxx.xxx.xxx-x"
-     tt-logspb-detalhe.dsnomdst FORMAT "x(16)"
-     tt-logspb-detalhe.dscpfdst FORMAT "99999999999999"
-     tt-logspb-detalhe.cdbanrem FORMAT "zz9"
-     tt-logspb-detalhe.cdagerem FORMAT "zzz9"
-     tt-logspb-detalhe.nrctarem FORMAT "xxxxxxx.xxx.xxx-x"
-     tt-logspb-detalhe.dsnomrem FORMAT "x(16)"
-     tt-logspb-detalhe.dscpfrem FORMAT "99999999999999"
-     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99"
+     tt-logspb-detalhe.cdagedst FORMAT "zzz9" AT 6
+     tt-logspb-detalhe.nrctadst FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" AT 13
+     tt-logspb-detalhe.dsnomdst FORMAT "x(40)" AT 43
+     tt-logspb-detalhe.dscpfdst FORMAT "99999999999999" AT 86
+     tt-logspb-detalhe.cdbanrem FORMAT "zz9" AT 107
+     tt-logspb-detalhe.cdagerem FORMAT "zzz9" AT 112
+     tt-logspb-detalhe.nrctarem FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" AT 119
+     tt-logspb-detalhe.dsnomrem FORMAT "x(40)" AT 150
+     tt-logspb-detalhe.dscpfrem FORMAT "99999999999999" AT 192
+     tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" AT 230
      SKIP
      "MOTIVO:"
      tt-logspb-detalhe.dsmotivo FORMAT "x(90)"
-     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_devolucao.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_devolucao.
 
 FORM SKIP(1)
      aux_dtmvtlog LABEL "DATA" FORMAT "99/99/9999"
@@ -253,7 +258,7 @@ FORM SKIP(1)
      tt-logspb-totais.vlenvnok AT 044 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
      tt-logspb-totais.vlrrecok AT 069 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
      tt-logspb-totais.vlrecnok AT 100 NO-LABEL FORMAT "zzz,zzz,zzz,zz9.99"
-     WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totais.
+     WITH NO-BOX SIDE-LABELS WIDTH 234 FRAME f_totais.
                                                                     
 /* BUSCA O ISPB DA CECRED PARA ALIMENTAR A TELA DE DETALHES*/
 FIND crapban  WHERE crapban.cdbccxlt = 85 NO-LOCK NO-ERROR.
@@ -673,7 +678,7 @@ PROCEDURE obtem-log-cecred:
     CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
     CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */         
-    
+
     EMPTY TEMP-TABLE tt-logspb.
     EMPTY TEMP-TABLE tt-logspb-detalhe.
     EMPTY TEMP-TABLE tt-logspb-totais.
@@ -700,8 +705,8 @@ PROCEDURE obtem-log-cecred:
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_obtem_log_cecred_car
        aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
-                                           INPUT par_cdagenci,
-                                           INPUT par_nrdcaixa,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
                                            INPUT par_cdoperad,
                                            INPUT par_nmdatela,
                                            INPUT par_cdorigem,                                                            
@@ -710,12 +715,12 @@ PROCEDURE obtem-log-cecred:
 										   INPUT STRING(par_numedlog),
                                            INPUT par_cdsitlog,
                                            INPUT STRING(par_nrdconta),
-                                           INPUT par_nrsequen,
-                                           INPUT par_nriniseq,
+                           INPUT par_nrsequen,
+                           INPUT par_nriniseq,
                                            INPUT STRING(par_nrregist),
-                                           INPUT par_inestcri,
+                           INPUT par_inestcri,
                                            INPUT par_cdifconv,
-                                           INPUT par_vlrdated,
+                           INPUT par_vlrdated,
                                            OUTPUT ?,  /* pr_clob_logspb */
                                            OUTPUT 0, /* cdcritic */
                                            OUTPUT ""). /* dscritic */
@@ -746,7 +751,7 @@ PROCEDURE obtem-log-cecred:
                    tt-erro.dscritic = aux_dscritic.     
             RETURN "NOK".
             
-        END.       
+        END.
         
 	EMPTY TEMP-TABLE tt-logspb.
 	EMPTY TEMP-TABLE tt-logspb-detalhe.
@@ -759,7 +764,7 @@ PROCEDURE obtem-log-cecred:
     PUT-STRING(ponteiro_xml,1) = xml_logspb_totais.    
     
     IF  ponteiro_xml <> ? THEN
-        DO: 
+        DO:
            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
            xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
            
@@ -771,7 +776,7 @@ PROCEDURE obtem-log-cecred:
                    NEXT.            
 
                IF xRoot2:name = "linhas_logspb" THEN
-			      DO:
+        DO:
 				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
 					   xRoot2:GET-CHILD(xField,aux_cont). 
@@ -801,8 +806,8 @@ PROCEDURE obtem-log-cecred:
 							   ASSIGN tt-logspb.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"
                         tt-logspb.dslinlog = hTextTag:NODE-VALUE  WHEN xField2:NAME = "dslinlog".
 				 
-							 END. 
-							 
+        END.
+        
 						 END. 
 						 
 				     END. 
@@ -810,7 +815,7 @@ PROCEDURE obtem-log-cecred:
 				  END. 
 			   ELSE
 			   IF xRoot2:name = "linhas_logspb_detalhe" THEN
-			      DO:
+        DO:
 				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
 					   xRoot2:GET-CHILD(xField,aux_cont). 
@@ -866,8 +871,8 @@ PROCEDURE obtem-log-cecred:
                     tt-logspb-detalhe.nmevento =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nmevento"
                     tt-logspb-detalhe.nrctrlif =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctrlif"     .
 				 
-							 END. 
-							 
+        END.
+
 						 END. 
 						 
 				     END. 
@@ -875,8 +880,8 @@ PROCEDURE obtem-log-cecred:
 				  END. 
 			   ELSE
 			   IF xRoot2:name = "linhas_logspb_totais" THEN
-			      DO:
-				     CREATE tt-logspb-totais.
+        DO:
+    CREATE tt-logspb-totais.
 				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
 					   xRoot2:GET-CHILD(xField,aux_cont). 
@@ -979,13 +984,13 @@ PROCEDURE imprime-relatorio:
     ASSIGN par_nmarqimp = "/usr/coop/" + crapcop.dsdircop + "/rl/O538_" + 
                           par_dsiduser + "_" + 
                                   STRING(TIME,"99999") + ".ex"
-           aux_pontilha = FILL("-",132).
+           aux_pontilha = FILL("-",234).
       
     UNIX SILENT VALUE("rm " + par_nmarqimp + " 2> /dev/null").
                             
     OUTPUT STREAM str_1 TO VALUE(par_nmarqimp) PAGED PAGE-SIZE 84.
 
-    { sistema/generico/includes/b1cabrel132.i "11" "538" }
+    { sistema/generico/includes/b1cabrel234.i "15" "538" }
     
     FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
                                           
@@ -2266,7 +2271,7 @@ PROCEDURE obtem-log-sistema-cecred:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtiniper AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtfimper AS DATE                           NO-UNDO.
-        
+	
     DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
     
     DEF BUFFER crabcop FOR crapcop.
@@ -2274,16 +2279,16 @@ PROCEDURE obtem-log-sistema-cecred:
 
     EMPTY TEMP-TABLE tt-logspb-detalhe.
 
-        FOR EACH craplcm WHERE craplcm.cdcooper =  par_cdcooper AND
+	FOR EACH craplcm WHERE craplcm.cdcooper =  par_cdcooper AND
                            craplcm.nrdconta =  par_nrdconta AND
                            craplcm.dtmvtolt >= par_dtiniper AND
                            craplcm.dtmvtolt <= par_dtfimper AND
                           (craplcm.cdhistor = 539   OR
                            craplcm.cdhistor = 1011  OR
                            craplcm.cdhistor = 1015) NO-LOCK:
-        
+	
         IF  CAN-DO("539,1015", STRING(craplcm.cdhistor)) THEN
-                DO:
+        	DO:
                 /* Dados do remetente */
                 FOR FIRST crapcop WHERE 
                           crapcop.cdcooper = craplcm.cdcooper NO-LOCK. END.
@@ -2312,10 +2317,10 @@ PROCEDURE obtem-log-sistema-cecred:
              
                 IF  NOT AVAIL crabass  THEN
                     NEXT.
-                END.
-            ELSE
-                DO:
-                    /* Dados do remetente */
+        	END.
+    	ELSE
+        	DO:
+        	    /* Dados do remetente */
                 FOR FIRST crapcop WHERE 
                           crapcop.cdagectl = INTE(SUBSTR(craplcm.cdpesqbb,10,4)) 
                           NO-LOCK. END.
@@ -2343,26 +2348,26 @@ PROCEDURE obtem-log-sistema-cecred:
 
                 IF  NOT AVAIL crabass  THEN
                     NEXT.
-                END.
-        
-            CREATE tt-logspb-detalhe.
-                ASSIGN tt-logspb-detalhe.cdbanrem = crapcop.cdbcoctl
-                           tt-logspb-detalhe.cdagerem = crapcop.cdagectl
-                           tt-logspb-detalhe.nrctarem = STRING(crapass.nrdconta)
-                           tt-logspb-detalhe.dsnomrem = crapass.nmprimtl
-                           tt-logspb-detalhe.dscpfrem = crapass.nrcpfcgc
-                           tt-logspb-detalhe.cdbandst = crabcop.cdbcoctl
-                           tt-logspb-detalhe.cdagedst = crabcop.cdagectl
-                           tt-logspb-detalhe.nrctadst = STRING(crabass.nrdconta)
-                           tt-logspb-detalhe.dsnomdst = crabass.nmprimtl
-                           tt-logspb-detalhe.dscpfdst = crabass.nrcpfcgc
-                           tt-logspb-detalhe.dttransa = craplcm.dtmvtolt
-                           tt-logspb-detalhe.hrtransa = STRING(craplcm.hrtransa, "HH:MM:SS")
-                           tt-logspb-detalhe.vltransa = craplcm.vllanmto
-                           tt-logspb-detalhe.cdtiptra = 1
-                           tt-logspb-detalhe.dstiptra = "TRANSFERENCIA".
-        
-        END. /* Fim do FOR EACH craplcm */
+        	END.
+	
+	    CREATE tt-logspb-detalhe.
+		ASSIGN tt-logspb-detalhe.cdbanrem = crapcop.cdbcoctl
+			   tt-logspb-detalhe.cdagerem = crapcop.cdagectl
+			   tt-logspb-detalhe.nrctarem = STRING(crapass.nrdconta)
+			   tt-logspb-detalhe.dsnomrem = crapass.nmprimtl
+			   tt-logspb-detalhe.dscpfrem = crapass.nrcpfcgc
+			   tt-logspb-detalhe.cdbandst = crabcop.cdbcoctl
+			   tt-logspb-detalhe.cdagedst = crabcop.cdagectl
+			   tt-logspb-detalhe.nrctadst = STRING(crabass.nrdconta)
+			   tt-logspb-detalhe.dsnomdst = crabass.nmprimtl
+			   tt-logspb-detalhe.dscpfdst = crabass.nrcpfcgc
+			   tt-logspb-detalhe.dttransa = craplcm.dtmvtolt
+			   tt-logspb-detalhe.hrtransa = STRING(craplcm.hrtransa, "HH:MM:SS")
+			   tt-logspb-detalhe.vltransa = craplcm.vllanmto
+			   tt-logspb-detalhe.cdtiptra = 1
+			   tt-logspb-detalhe.dstiptra = "TRANSFERENCIA".
+	
+	END. /* Fim do FOR EACH craplcm */
 
 END PROCEDURE.
 
@@ -2394,12 +2399,12 @@ PROCEDURE impressao-log-pdf:
          tt-logspb-detalhe.nrctrlif COLUMN-LABEL "Num.Controle"  FORMAT "x(20)"                         
          tt-logspb-detalhe.cdbandst COLUMN-LABEL "Banco Dst."    FORMAT "zz9"
          tt-logspb-detalhe.cdagedst COLUMN-LABEL "Age. Dst."     FORMAT "zzz9"
-         tt-logspb-detalhe.nrctadst COLUMN-LABEL "Conta Dst."    FORMAT "xxxxxxx.xxx.xxx-x"
+         tt-logspb-detalhe.nrctadst COLUMN-LABEL "Conta Dst."    FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x"
          tt-logspb-detalhe.dscpfdst COLUMN-LABEL "Cpf/Cnpj Dst." FORMAT "99999999999999"
          tt-logspb-detalhe.dsnomdst COLUMN-LABEL "Nome Dst."     FORMAT "x(16)"                         
          tt-logspb-detalhe.cdbanrem COLUMN-LABEL "Banco Rem."    FORMAT "zz9"
          tt-logspb-detalhe.cdagerem COLUMN-LABEL "Age. Rem."     FORMAT "zzz9"
-         tt-logspb-detalhe.nrctarem COLUMN-LABEL "Conta Rem."    FORMAT "xxxxxxx.xxx.xxx-x"
+         tt-logspb-detalhe.nrctarem COLUMN-LABEL "Conta Rem."    FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x"
          tt-logspb-detalhe.dscpfrem COLUMN-LABEL "Cpf/Cnpj Rem." FORMAT "99999999999999"
          tt-logspb-detalhe.dsnomrem COLUMN-LABEL "Nome Rem."     FORMAT "x(16)"                         
          tt-logspb-detalhe.vltransa COLUMN-LABEL "Valor"         FORMAT "zzz,zzz,zz9.99"                
@@ -2598,12 +2603,12 @@ PROCEDURE impressao-log-csv:
                          tt-logspb-detalhe.nrctrlif FORMAT "x(20)" ";"
                          tt-logspb-detalhe.cdbandst FORMAT "zz9" ";"
                          tt-logspb-detalhe.cdagedst FORMAT "zzz9" ";"
-                         tt-logspb-detalhe.nrctadst FORMAT "xxxxxxx.xxx.xxx-x" ";"
+                         tt-logspb-detalhe.nrctadst FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" ";"
                          tt-logspb-detalhe.dscpfdst FORMAT "99999999999999" ";"
                          tt-logspb-detalhe.dsnomdst FORMAT "x(50)" ";"
                          tt-logspb-detalhe.cdbanrem FORMAT "zz9" ";"
                          tt-logspb-detalhe.cdagerem FORMAT "zzz9" ";"
-                         tt-logspb-detalhe.nrctarem FORMAT "xxxxxxx.xxx.xxx-x" ";"
+                         tt-logspb-detalhe.nrctarem FORMAT "xxxx.xxx.xxx.xxx.xxx.xxx-x" ";"
                          tt-logspb-detalhe.dscpfrem FORMAT "99999999999999" ";"
                          tt-logspb-detalhe.dsnomrem FORMAT "x(50)" ";"
                          tt-logspb-detalhe.vltransa FORMAT "zzz,zzz,zz9.99" ";"
