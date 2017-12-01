@@ -422,7 +422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 01/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -453,6 +453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          (Adriano - SD 734960).
   --
   --             24/10/2017 - #714566 Procedimento para verificar/controlar a execução de programas (Belli-Envolti)
+  --
+  --             01/12/2017 - Na rotina pc_submit_job, alterado a forma como é tratado o parâmetro pr_jobname
+  --                          para melhorar os eventuais logs (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -2654,14 +2657,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 
     ..............................................................................*/
     BEGIN
-      -- Efetuar geração de nome para o JOB
-      pr_jobname := pr_jobname;
-      
       --Caso o job não possuir intervalo, significa que é um job paralelo.
       -- que será executado e destruido.
       -- para isso devemos garantir que o nome não se repita
       IF TRIM(pr_interva) IS NULL THEN
-        pr_jobname := dbms_scheduler.generate_job_name(substr(pr_jobname,1,18));
+        pr_jobname := substr(pr_jobname,1,18);
+        pr_jobname := dbms_scheduler.generate_job_name(pr_jobname);
       END IF;      
       
       -- Chamar a rotina padrão do banco (dbms_scheduler.create_job)
@@ -2688,7 +2689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       
     EXCEPTION
       WHEN OTHERS THEN
-      cecred.pc_internal_exception(pr_compleme => '_'||pr_jobname ||'_');  
+      cecred.pc_internal_exception(pr_compleme => 'Job:'||pr_jobname);  
       
         ROLLBACK;
         -- Preparar saída com erro

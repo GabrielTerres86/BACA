@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_GPS(pr_cdcooper in crapcop.cdcooper%TY
    JOB: PC_JOB_GPS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Guilherme/SUPERO
-   Data    : Outubro/2016.                     Ultima atualizacao: /  /
+   Data    : Outubro/2016.                     Ultima atualizacao: 01/12/2017
 
    Dados referentes ao programa:
 
@@ -13,7 +13,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_GPS(pr_cdcooper in crapcop.cdcooper%TY
    Objetivo  : Excluir Guias GPS canceladas pelo sistema após 2 meses
 
    Alteracoes:
-
+   
+   01/12/2017 - Nome do job paralelo alterado para JBGPS_DEL_INAT_01$ pois a rotina
+                generate_job_name suporta o nome até 18 caracteres não terminando
+                em número (Carlos)
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    CONSTANT VARCHAR2(40) := 'PC_JOB_GPS';
@@ -92,10 +95,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_GPS(pr_cdcooper in crapcop.cdcooper%TY
         END IF;
 
         -- Criar o nome para o job
-        vr_jobname := 'JBGPS_EXC_INATIV_'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
+        -- 15 chars + 2 (coop) + 1 ($) = 18 chars não terminando com número
+        vr_jobname := 'JBGPS_DEL_INAT_'||LPAD(rw_crapcop.cdcooper,2,'0')||'$';
 
         vr_dsplsql := 'begin cecred.PC_JOB_GPS(pr_cdcooper => '||rw_crapcop.cdcooper ||'); end;';
-
 
         vr_minuto := 0; --(1/24/60); -- 1 minuto
 
