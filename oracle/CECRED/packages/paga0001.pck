@@ -15465,7 +15465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 29/10/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 29/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -15479,6 +15479,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --              29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
     --
     --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
+    --
+    --              29/11/2017 - Ajustado para carregar as informações da tarifa 
+    --                           após o UPDATE da cob devido ao indpagto ser atualizado 
+    --                           nesse update (Douglas - Chamado 799851)
     -- .........................................................................*/
 
   BEGIN
@@ -15596,27 +15600,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         RAISE vr_exc_erro;
       END IF;
 
-      vr_cdmotivo := 0;
-
-      IF pr_cdbanpag = 85 THEN
-         vr_cdmotivo := pr_dsmotivo;
-      END IF;
-
-      /* Gerar dados para tt-lcm-consolidada */
-      PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
-                                          ,pr_cdocorre => pr_cdocorre --Codigo Ocorrencia
-                                          ,pr_tplancto => 'T'         --Tipo Lancamento
-                                          ,pr_vltarifa => 0           --Valor Tarifa
-                                          ,pr_cdhistor => 0           --Codigo Historico
-                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
-                                          ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
-                                          ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                          ,pr_dscritic => vr_dscritic); --Descricao Critica
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
       --Historico de Pagamento
       IF pr_indpagto = 0 THEN
         vr_cdhistor:= 0;
@@ -15826,6 +15809,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+      
+      -- Deve ser feito após o  UPDATE da cob devido ao indpagto ser atualizado nesse update
+      vr_cdmotivo := 0;
+
+      IF pr_cdbanpag = 85 THEN
+         vr_cdmotivo := pr_dsmotivo;
+      END IF;
+
+      /* Gerar dados para tt-lcm-consolidada */
+      PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
+                                          ,pr_cdocorre => pr_cdocorre --Codigo Ocorrencia
+                                          ,pr_tplancto => 'T'         --Tipo Lancamento
+                                          ,pr_vltarifa => 0           --Valor Tarifa
+                                          ,pr_cdhistor => 0           --Codigo Historico
+                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
+                                          ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
+                                          ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+                                          ,pr_dscritic => vr_dscritic); --Descricao Critica
+      --Se ocorreu erro
+      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
       
       /* Cancela Negativação Serasa */
       OPEN cr_crapcob (pr_rowid => pr_idtabcob);
@@ -16687,7 +16693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 29/10/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 29/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -16698,6 +16704,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --               29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
     --
+    --               29/11/2017 - Ajustado para carregar as informações da tarifa 
+    --                            após o UPDATE da cob devido ao indpagto ser atualizado 
+    --                            nesse update (Douglas - Chamado 799851)
+    -- .........................................................................
   BEGIN
     DECLARE
       -- selecionar conta do cooperado do contrato de emprestimo
@@ -16775,30 +16785,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         RAISE vr_exc_erro;
       END IF;
 
-      vr_cdmotivo := 0;
-
-      IF pr_cdbanpag = 85 THEN
-         vr_cdmotivo := pr_dsmotivo;
-      END IF;
-
-      -- Utilizar rotina para alimentar pr_tab_lcm_consolidada apenas para títulos Banco do Brasil
-      -- * VR Boleto
-      /* Gerar dados para tt-lcm-consolidada */
-      PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
-                                          ,pr_cdocorre => pr_cdocorre --Codigo Ocorrencia
-                                          ,pr_tplancto => 'T'         --Tipo Lancamento
-                                          ,pr_vltarifa => 0           --Valor Tarifa
-                                          ,pr_cdhistor => 0           --Codigo Historico
-                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
-                                          ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
-                                          ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                          ,pr_dscritic => vr_dscritic); --Descricao Critica
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-
       /* Alterar situacao do Titulo */
       IF rw_crapcob.incobran <> 5 THEN
         BEGIN
@@ -16821,6 +16807,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             RAISE vr_exc_erro;
         END;
       END IF;
+
+      -- Deve ser feito após o  UPDATE da cob devido ao indpagto ser atualizado nesse update
+      vr_cdmotivo := 0;
+
+      IF pr_cdbanpag = 85 THEN
+         vr_cdmotivo := pr_dsmotivo;
+      END IF;
+
+      -- Utilizar rotina para alimentar pr_tab_lcm_consolidada apenas para títulos Banco do Brasil
+      -- * VR Boleto
+      /* Gerar dados para tt-lcm-consolidada */
+      PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
+                                          ,pr_cdocorre => pr_cdocorre --Codigo Ocorrencia
+                                          ,pr_tplancto => 'T'         --Tipo Lancamento
+                                          ,pr_vltarifa => 0           --Valor Tarifa
+                                          ,pr_cdhistor => 0           --Codigo Historico
+                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
+                                          ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
+                                          ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+                                          ,pr_dscritic => vr_dscritic); --Descricao Critica
+      --Se ocorreu erro
+      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;      
+      
       /* Preparar Lote de Retorno Cooperado */
       PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => pr_idtabcob     --ROWID da cobranca
                                          ,pr_cdocorre => pr_cdocorre     --Codigo Ocorrencia
