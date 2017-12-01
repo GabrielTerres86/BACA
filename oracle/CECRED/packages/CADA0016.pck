@@ -247,7 +247,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
   -- Objetivo  : Rotinas para atualizar informações de cadastro da estrutura nova para 
   --             estrutura antiga
   --
-  -- Alteracoes:   
+  -- Alteracoes:  24/11/2017 - Ajustado para gravar espaco qnd nulo no campos de cidada e uf.
+  --                           PRJ339-CRM (Odirlei-AMcom) 
   --  
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -612,8 +613,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      nrendere = pr_endereco_new.nrlogradouro,       
                      complend = pr_endereco_new.dscomplemento,      
                      nmbairro = pr_endereco_new.nmbairro,           
-                     nmcidade = vr_dscidade,           
-                     cdufende = vr_cdestado,           
+                     nmcidade = nvl(vr_dscidade,' '),
+                     cdufende = nvl(vr_cdestado,' '),      
                      nrcepend = pr_endereco_new.nrcep,              
                      incasprp = pr_endereco_new.tpimovel,                                
                      vlalugue = pr_endereco_new.vldeclarado,                                  
@@ -667,8 +668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                 pr_endereco_new.nrlogradouro,           --> nrendere
                                 pr_endereco_new.dscomplemento,          --> complend
                                 pr_endereco_new.nmbairro,               --> nmbairro
-                                vr_dscidade,                            --> nmcidade
-                                vr_cdestado,                            --> cdufende
+                                nvl(vr_dscidade,' '),                   --> nmcidade
+                                nvl(vr_cdestado,' '),                   --> cdufende
                                 pr_endereco_new.nrcep,                  --> nrcepend
                                 pr_endereco_new.tpimovel,               --> incasprp                        
                                 pr_endereco_new.vldeclarado,            --> vlalugue                        
@@ -704,8 +705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
                      avt.complend     = substr(pr_endereco_new.dscomplemento,1,47),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
-                     avt.nmcidade     = vr_dscidade,
-                     avt.cdufresd     = vr_cdestado
+                     avt.nmcidade     = nvl(vr_dscidade,' '),
+                     avt.cdufresd     = nvl(vr_cdestado,' ')
                WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                  AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                  AND avt.nrcpfcgc = vr_tab_contas(idx).idseqttl
@@ -755,8 +756,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
                      avt.complend     = substr(pr_endereco_new.dscomplemento,1,57),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
-                     avt.nmcidade     = vr_dscidade,
-                     avt.cdufresd     = vr_cdestado
+                     avt.nmcidade     = nvl(vr_dscidade,' '),
+                     avt.cdufresd     = nvl(vr_cdestado,' ')
                WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                  AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                  AND nvl(avt.nrcpfcgc,0) = nvl(rw_pessoa.nrcpfcgc,0)
@@ -809,8 +810,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      crl.nrendres =  pr_endereco_new.nrlogradouro,
                      crl.dscomres =  substr(pr_endereco_new.dscomplemento,1,40),
                      crl.dsbaires =  pr_endereco_new.nmbairro,
-                     crl.dscidres =  vr_dscidade,
-                     crl.dsdufres =  vr_cdestado
+                     crl.dscidres =  nvl(vr_dscidade,' '),
+                     crl.dsdufres =  nvl(vr_cdestado,' ')
                WHERE crl.cdcooper = vr_tab_contas(idx).cdcooper
                  AND crl.nrctamen = vr_tab_contas(idx).nrdconta
                  AND crl.nrcpfcgc = rw_pessoa.nrcpfcgc
@@ -2095,7 +2096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 UPDATE crapttl ttl
                    SET --  = pr_estrangeira_new.incrs,
                        --  = pr_estrangeira_new.infatca,
-                       ttl.cdnacion  = pr_estrangeira_new.cdpais,
+                       ttl.cdnacion  = nvl(pr_estrangeira_new.cdpais,0),
                        --  = pr_estrangeira_new.nridentificacao,
                        --  = pr_estrangeira_new.dsnatureza_relacao,
                        --  = pr_estrangeira_new.dsestado,
@@ -2160,7 +2161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 UPDATE crapass ass
                    SET --  = pr_estrangeira_new.incrs,
                        --  = pr_estrangeira_new.infatca,
-                       ass.cdnacion  = pr_estrangeira_new.cdpais
+                       ass.cdnacion  = nvl(pr_estrangeira_new.cdpais,0)
                        --  = pr_estrangeira_new.nridentificacao,
                        --  = pr_estrangeira_new.dsnatureza_relacao,
                        --  = pr_estrangeira_new.dsestado,
@@ -3687,7 +3688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                       rw_pessoa_fis.inhabilitacao_menor,       --> inhabmen
                       rw_pessoa_fis.dthabilitacao_menor,       --> dthabmen
                       nvl(rw_pessoa_fis.cdnacionalidade,0),    --> cdnacion
-                      vr_dsnatura,                             --> dsnatura
+                      nvl(vr_dsnatura,' '),                    --> dsnatura
                       --> pessoa_relacao tprelacao=> 3, -- Pai      
                       vr_nmpaicto,                                                         
                       --> pessoa_relacao tprelacao=> 4 -- Mae       
@@ -3698,8 +3699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                       rw_endereco.nrlogradouro,                --> nrendere
                       rw_endereco.dscomplemento,               --> complend
                       rw_endereco.nmbairro,                    --> nmbairro
-                      rw_endereco.dscidade,                    --> nmcidade                    
-                      rw_endereco.cdestado,                    --> cdufresd
+                      nvl(rw_endereco.dscidade,' '),           --> nmcidade                    
+                      nvl(rw_endereco.cdestado,' '),           --> cdufresd
                       --> pessoa_bem
                       nvl(vr_tab_bens(1).dsbem,' '),           --> dsrelbem##1
                       nvl(vr_tab_bens(1).pebem,0),             --> persemon##1
@@ -3759,7 +3760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      inhabmen = rw_pessoa_fis.inhabilitacao_menor,       
                      dthabmen = rw_pessoa_fis.dthabilitacao_menor,       
                      cdnacion = nvl(rw_pessoa_fis.cdnacionalidade,0),    
-                     dsnatura = vr_dsnatura,                             
+                     dsnatura = nvl(vr_dsnatura,' '),                             
                       --> pessoa_relacao tprelacao=> 3, -- Pai      
                      nmpaicto = vr_nmpaicto,                                                    
                       --> pessoa_relacao tprelacao=> 4 -- Mae       
@@ -3770,7 +3771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      nrendere = rw_endereco.nrlogradouro,                
                      complend = rw_endereco.dscomplemento,               
                      nmbairro = rw_endereco.nmbairro,                    
-                     nmcidade = rw_endereco.dscidade,                                       
+                     nmcidade = nvl(rw_endereco.dscidade,' '),
+                     cdufresd = nvl(rw_endereco.cdestado,' '),
                       --> pessoa_bem
                      dsrelbem##1 = nvl(vr_tab_bens(1).dsbem,' '),           
                      persemon##1 = nvl(vr_tab_bens(1).pebem,0),             
@@ -4546,6 +4548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END;
     ELSE
       --> Buscar naturalidade
+      vr_dsnatura := ' ';
       IF rw_pessoa_fis.cdnaturalidade > 0 THEN
         vr_dsnatura := cada0014.fn_desc_naturalidade( pr_cdnatura => rw_pessoa_fis.cdnaturalidade, 
                                                       pr_dscritic => vr_dscritic);
@@ -4621,8 +4624,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_endereco.dscomplemento,          --> dscomres
                     rw_endereco.nmbairro,               --> dsbaires
                     0,                                  --> nrcxpost
-                    rw_endereco.dscidade,               --> dscidres
-                    rw_endereco.cdestado,               --> dsdufres
+                    nvl(rw_endereco.dscidade,' '),      --> dscidres
+                    nvl(rw_endereco.cdestado,' '),      --> dsdufres
                     vr_nmpaicto,                        --> nmpairsp
                     vr_nmmaecto,                        --> nmmaersp
                     rw_pessoa_fis.tpdocumento,          --> tpdeiden
@@ -6593,8 +6596,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 
                 BEGIN
                   UPDATE crapttl ttl
-                     SET ttl.dsnatura = nvl(vr_dsnatura,ttl.dsnatura),
-                         ttl.cdufnatu = nvl(vr_cdufnatu,ttl.cdufnatu),
+                     SET ttl.dsnatura = nvl(nvl(vr_dsnatura,ttl.dsnatura),' '),
+                         ttl.cdufnatu = nvl(nvl(vr_cdufnatu,ttl.cdufnatu),' '),
                          ttl.cdsexotl = pr_pessoa_fis_new.tpsexo,
                          ttl.cdestcvl = nvl(pr_pessoa_fis_new.cdestado_civil,0),
                          ttl.dtnasttl = pr_pessoa_fis_new.dtnascimento,
@@ -6661,7 +6664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      avt.inhabmen = pr_pessoa_fis_new.inhabilitacao_menor,
                      avt.dthabmen = pr_pessoa_fis_new.dthabilitacao_menor,
                      avt.cdnacion = nvl(pr_pessoa_fis_new.cdnacionalidade,0),
-                     avt.dsnatura = nvl(vr_dsnatura,avt.dsnatura)
+                     avt.dsnatura = nvl(nvl(vr_dsnatura,avt.dsnatura),' ')
                WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                  AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                  AND nvl(avt.nrcpfcgc,0) = nvl(rw_pessoa.nrcpfcgc,0)
@@ -6703,8 +6706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      crl.cdestciv = pr_pessoa_fis_new.cdestado_civil,
                      crl.nridenti = pr_pessoa_fis_new.nrdocumento,
                      crl.tpdeiden = pr_pessoa_fis_new.tpdocumento,
-                     crl.cdnacion = pr_pessoa_fis_new.cdnacionalidade,
-                     crl.dsnatura = nvl(vr_dsnatura,crl.dsnatura)                 
+                     crl.cdnacion = nvl(pr_pessoa_fis_new.cdnacionalidade,0),
+                     crl.dsnatura = nvl(nvl(vr_dsnatura,crl.dsnatura),' ')
                WHERE crl.cdcooper = vr_tab_contas(idx).cdcooper
                  AND crl.nrctamen = vr_tab_contas(idx).nrdconta
                  AND crl.idseqmen = vr_tab_contas(idx).idseqttl
