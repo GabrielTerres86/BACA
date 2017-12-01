@@ -1539,11 +1539,13 @@ BEGIN
               -- Atribuir a descricao do motivo
               vr_dsmotdem:= vr_tab_craptab_motivo(idx);
            END IF;
-           -- Montar tag da conta para arquivo XML
-           pc_escreve_xml('<tot_motivo>
-                           <tot_dsmotdem>'||idx||' - '||vr_dsmotdem||'</tot_dsmotdem>
-                           <tot_qttotmot>'||vr_tab_rel_qttotmot(idx)||'</tot_qttotmot>
-                           </tot_motivo>');
+           IF vr_tab_rel_qttotmot.EXISTS(idx) THEN
+             -- Montar tag da conta para arquivo XML
+             pc_escreve_xml('<tot_motivo>
+                             <tot_dsmotdem>'||idx||' - '||vr_dsmotdem||'</tot_dsmotdem>
+                             <tot_qttotmot>'||vr_tab_rel_qttotmot(idx)||'</tot_qttotmot>
+                             </tot_motivo>');
+           END IF;
         END LOOP;
 
         -- Finalizar agrupador total motivos e criar total geral e duplicadas
