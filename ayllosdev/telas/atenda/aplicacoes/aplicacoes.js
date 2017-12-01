@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 28/09/2017
+ Data : Setembro/2009                Última Alteração: 29/11/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -83,6 +83,8 @@
              29/03/2017 - Inclui validacao para uso da senha do operador para o resgate de aplicacoes. SD 632578
 
              28/09/2017 - Correcao na simulacao de aplicacoes atraves ATENDA - APLICACOES. SD 685979. (Carlos Rafael Tanholi)
+
+			 29/11/2017 - Validacao sobre valor bloqueado. M460 - BancenJud (Thiago Rodrigues)
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -173,10 +175,10 @@ function controlaFoco() {
 
     //Se estiver com foco na classe FluxoNavega
     $(".FluxoNavega").focus(function () {
-    $(this).bind('keydown', function (e) {
-        if (e.keyCode == 27) {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 27) {
                 encerraRotina(true).click();
-        }
+            }
         });
     });
 
@@ -519,8 +521,8 @@ function cadastrarResgate(flmensag) {
     var dtresgat = $("#dtresgat", "#frmResgate").val();
     var flgctain = $("#flgctain", "#frmResgate").val();
     // consiste check "Autorizar operação" 
-    var cdopera2 = ( $("#flautori").is(':checked') ) ? $("#cdopera2", "#frmResgate").val() : '';
-    var cddsenha = ( $("#flautori").is(':checked') ) ? $("#cddsenha", "#frmResgate").val() : '';
+    var cdopera2 = ($("#flautori").is(':checked')) ? $("#cdopera2", "#frmResgate").val() : '';
+    var cddsenha = ($("#flautori").is(':checked')) ? $("#cddsenha", "#frmResgate").val() : '';
 
     if (tpresgat == "P" || tpresgat == 1) {
         // Valida valor do resgate
@@ -742,7 +744,7 @@ function selecionaCarencia(periodo, qtdiaapl, carencia, dtcarenc, simulacao) {
         $("#qtdiacar", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(carencia);
         $("#dtcarenc", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(dtcarenc);
         $("#dtvencto", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).focus();
-		// seta o periodo da aplicacao
+        // seta o periodo da aplicacao
         $("#cdperapl", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(cdperapl);
         $("#divCarencia").css("visibility", "hidden");
 
@@ -1608,7 +1610,9 @@ function controlaLayout(layout) {
     cDtfimper.setMask("STRING", "99/9999", "/", "");
     cDtfimper.val('');
 
-    $("#flgdebci", "#frmDadosAplicacaoPos").desabilitaCampo();
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
+        $("#flgdebci", "#frmDadosAplicacaoPos").desabilitaCampo();
+    }
 
     controlaFocoEnter('divConteudoOpcao');
 
@@ -1616,7 +1620,9 @@ function controlaLayout(layout) {
     $('input, select', '#frmDadosAplicacaoPos').habilitaCampo();
     $('input, select', '#frmDadosAplicacao').habilitaCampo();
 
-    cFlgdebciPos.desabilitaCampo();
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
+        cFlgdebciPos.desabilitaCampo();
+    }
     cDtcarencPos.desabilitaCampo();
     cQtdiacarPos.desabilitaCampo();
     cTxaplicaPos.desabilitaCampo();
@@ -1624,7 +1630,9 @@ function controlaLayout(layout) {
     cDtresgatPos.desabilitaCampo();
 
     $('input, select', '#frmDadosAplicacaoPre').habilitaCampo();
-    cFlgdebciPre.desabilitaCampo();
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
+        cFlgdebciPre.desabilitaCampo();
+    }
     cQtdiacarPre.desabilitaCampo();
     cTxaplicaPre.desabilitaCampo();
     cDsaplicaPre.desabilitaCampo();

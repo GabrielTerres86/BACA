@@ -47,10 +47,7 @@ var vintegra = 0;
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		
 	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
-	if((sitaucaoDaContaCrm == '2' || 
-	    sitaucaoDaContaCrm == '3' || 
-	    sitaucaoDaContaCrm == '4' || 
-	    sitaucaoDaContaCrm == '5' || 
+	if((sitaucaoDaContaCrm == '4' || 
 	    sitaucaoDaContaCrm == '7' || 
 	    sitaucaoDaContaCrm == '8' || 
 	    sitaucaoDaContaCrm == '9') &&

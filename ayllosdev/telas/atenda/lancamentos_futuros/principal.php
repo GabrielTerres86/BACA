@@ -8,7 +8,7 @@
 	    Objetivo  : Listar os Lancamentos Futuros
 
         Alteracoes:
-              30/06/2011 - Alterado para layout padr„o (Rogerius - DB1).		
+              30/06/2011 - Alterado para layout padr√£o (Rogerius - DB1).		
 			  
 			  21/07/2015 - Exclusao de lancamentos futuros (Tiago)
 		
@@ -173,11 +173,8 @@
 	<a href="#" class="botao" id="btVoltar">Voltar</a>
 	
 	<?php
-	   //Projeto CRM: Para a situaÁıes de conta abaixo, a tela deve ser apresentada apenas para consulta.
-		if(!($sitaucaoDaContaCrm == '2' || 
-			 $sitaucaoDaContaCrm == '3' || 
-			 $sitaucaoDaContaCrm == '4' || 
-			 $sitaucaoDaContaCrm == '5' || 
+	   //Projeto CRM: Para a situa√ß√µes de conta abaixo, a tela deve ser apresentada apenas para consulta.
+		if(!($sitaucaoDaContaCrm == '4' || 
 			 $sitaucaoDaContaCrm == '7' || 
 			 $sitaucaoDaContaCrm == '8' || 
 			 $sitaucaoDaContaCrm == '9')){ 

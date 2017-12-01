@@ -1081,7 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 21/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 30/11/2017
 
    Dados referentes ao programa:
 
@@ -1290,6 +1290,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 			    19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
 
 				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
+
+                30/11/2017 - Incluido update na crapsli quando dinheiro para aplicacao nova vem da conta investimento. 
+							 (M460 BACENJUD - Thiago Rodrigues).
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5257,22 +5260,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         END IF;
 
         -- Demetrius - Melhoria 460
---        BEGIN
---          UPDATE crapsli ci
---          SET ci.vlsddisp = greatest(0,ci.vlsddisp - pr_vllanmto)
---          WHERE ci.cdcooper = pr_cdcooper
---            AND ci.nrdconta = pr_nrdconta
---           AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
---            AND TO_CHAR(ci.dtrefere,'RRRR') = TO_CHAR(last_day(pr_dtmvtolt),'RRRR');
---        EXCEPTION
---          WHEN others THEN
---             -- Monta critica
---             vr_cdcritic := NULL;
---             vr_dscritic := 'Erro ao atualizar CRAPSLI: ' || SQLERRM;
---               
---             -- Gera exceção
---             RAISE vr_exc_erro;
---        END;
+        BEGIN
+          UPDATE crapsli ci
+          SET ci.vlsddisp = greatest(0,ci.vlsddisp - pr_vllanmto)
+          WHERE ci.cdcooper = pr_cdcooper
+            AND ci.nrdconta = pr_nrdconta
+           AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
+            AND TO_CHAR(ci.dtrefere,'RRRR') = TO_CHAR(last_day(pr_dtmvtolt),'RRRR');
+        EXCEPTION
+          WHEN others THEN
+             -- Monta critica
+             vr_cdcritic := NULL;
+             vr_dscritic := 'Erro ao atualizar CRAPSLI: ' || SQLERRM;
+               
+             -- Gera exceção
+             RAISE vr_exc_erro;
+        END;
         
         BEGIN
           UPDATE craplot

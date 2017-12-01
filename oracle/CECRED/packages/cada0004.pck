@@ -6209,12 +6209,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     CURSOR cr_craplcm (pr_cdcooper craplcm.cdcooper%TYPE,
                        pr_nrdconta craplcm.nrdconta%TYPE) IS
+/*
       SELECT decode(l.nrdolote,600041,l.vllanmto,0) - decode(l.nrdolote,600042,l.vllanmto,0) vl_deposito_vista
         FROM craplcm l
        WHERE l.cdcooper = pr_cdcooper
         AND  l.nrdconta = pr_nrdconta
         AND l.nrdolote in (600041,600042)        
       UNION
+*/
       SELECT D.VLCAPITAL - D.VLPAGO
         FROM TBCOTAS_DEVOLUCAO D
        WHERE D.CDCOOPER = pr_cdcooper

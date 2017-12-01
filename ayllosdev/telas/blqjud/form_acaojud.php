@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Mostrar campos da opcao B - Bloqueio
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : Melhoria 460 - Andrey Formigari (Mouts)
  * --------------
  */
 
@@ -44,12 +44,11 @@
         <input id="vlbloque" name="vlbloque" type="text" maxlength="20" />
 		
 		<label for="flblcrft">Bloquear Créditos Futuros ?</label>
-        <input id="flblcrft" name="flblcrft" type="checkbox"  />        
+        <input id="flblcrft" name="flblcrft" type="checkbox"  />                
+		<input id="cdmodali" name="cdmodali" type="hidden"  />
 		
     </fieldset>
-	<br style="clear:both;" />
-		
 </form>
    
 </div>
-<div id="div_tabblqjud"></div>
+

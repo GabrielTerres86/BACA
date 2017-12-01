@@ -695,9 +695,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
 				
-			}else if(($cdsitdct == '4' || 
-			          $cdsitdct == '7' || 
-				        $cdsitdct == '8' || 
+			}else if(($cdsitdct == '9' || 
 				        $cdsitdct == '9') && 
 				        $telaPermitadaAcessoBacen == 0 ){
 				
