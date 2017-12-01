@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Janeiro/2011                       Ultima atualizacao: 23/01/2017
+   Data    : Janeiro/2011                       Ultima atualizacao: 24/11/2017
 
    Dados referentes ao programa:
    Frequencia: Diario.
@@ -69,6 +69,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
 
                23/01/2017 - Realizado merge com PROD ref ao projeto 300 (Rafael)
 
+               24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
+                            se o cheque esta em bordero de desconto efetivado
+                            antes de prosseguir com a custodia(Tiago/Adriano #766582)
 ..............................................................................*/
 BEGIN
   DECLARE
@@ -168,6 +171,8 @@ BEGIN
             ,ct.nrdconta
             ,ct.dtlibera
             ,ct.nrcheque
+            ,ct.cdcooper
+            ,ct.nrborder
       FROM crapcst ct
       WHERE ct.dtlibera  > pr_dtmvtolt
         AND ct.dtlibera <= pr_dtlimite
@@ -175,6 +180,31 @@ BEGIN
         AND ct.insitprv <= 3
         AND ct.cdcooper = pr_cdcooper
         AND ct.nrborder = 0;
+
+    CURSOR cr_cdbcst(pr_cdcooper  IN crapcdb.cdcooper%TYPE
+                    ,pr_nrdconta  IN crapcdb.nrdconta%TYPE
+                    ,pr_dtlibera  IN crapcdb.dtlibera%TYPE
+                    ,pr_cdcmpchq  IN crapcdb.cdcmpchq%TYPE
+                    ,pr_cdbanchq  IN crapcdb.cdbanchq%TYPE
+                    ,pr_cdagechq  IN crapcdb.cdagechq%TYPE
+                    ,pr_nrctachq  IN crapcdb.nrctachq%TYPE
+                    ,pr_nrcheque  IN crapcdb.nrcheque%TYPE
+                    ,pr_nrborder  IN crapcdb.nrborder%TYPE) IS
+      SELECT 1 
+        FROM crapcdb
+       WHERE crapcdb.cdcooper = pr_cdcooper
+         AND crapcdb.nrdconta = pr_nrdconta
+         AND crapcdb.dtlibera = pr_dtlibera
+         AND crapcdb.dtlibbdc IS NOT NULL
+         AND crapcdb.cdcmpchq = pr_cdcmpchq
+         AND crapcdb.cdbanchq = pr_cdbanchq
+         AND crapcdb.cdagechq = pr_cdagechq
+         AND crapcdb.nrctachq = pr_nrctachq
+         AND crapcdb.nrcheque = pr_nrcheque
+         AND crapcdb.dtdevolu IS NULL
+         AND crapcdb.nrborder = pr_nrborder;
+    rw_cdbcst cr_cdbcst%ROWTYPE;   
+        
 
     -- Buscar dados do bordero de desconto de cheques
     CURSOR cr_crapcdb(pr_cdcooper IN crapcdb.cdcooper%TYPE     --> Código da cooperativa
@@ -459,6 +489,29 @@ BEGIN
 
       -- Iterado para coletar os registros da PL Table pelo índice formado
       FOR rw_crapcst IN cr_crapcst(registro.cdcooper, rw_crapdat.dtmvtolt, vr_dtlimite) LOOP
+      
+        IF rw_crapcst.nrborder <> 0 THEN
+          /*Se estiver em um bordero de descto efetivado nao 
+              considerar para a custodia*/
+          OPEN cr_cdbcst(pr_cdcooper => rw_crapcst.cdcooper
+                        ,pr_nrdconta => rw_crapcst.nrdconta
+                        ,pr_dtlibera => rw_crapcst.dtlibera
+                        ,pr_cdcmpchq => rw_crapcst.cdcmpchq
+                        ,pr_cdbanchq => rw_crapcst.cdbanchq
+                        ,pr_cdagechq => rw_crapcst.cdagechq
+                        ,pr_nrctachq => rw_crapcst.nrctachq
+                        ,pr_nrcheque => rw_crapcst.nrcheque
+                        ,pr_nrborder => rw_crapcst.nrborder);
+          FETCH cr_cdbcst INTO rw_cdbcst;
+          
+          IF cr_cdbcst%FOUND THEN
+             CLOSE cr_cdbcst;
+             CONTINUE;
+          END IF;            
+          
+          CLOSE cr_cdbcst;        
+        END IF;
+      
         -- Verifica tipo do cheque
         IF rw_crapcst.inchqcop = 1 THEN
           vr_ctrproce := 'PG_CX';
