@@ -3,12 +3,12 @@
 	//************************************************************************//
 	//*** Fonte: desativa_push.php                                         ***//
 	//*** Autor: Jean Michel                                               ***//
-	//*** Data : Setembro/2017                   Última Alteração:  			 ***//
+	//*** Data : Setembro/2017                   Última Alteração:         ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Mostrar listagem de dispositivos Mobile							 ***//
-	//****																							    						   ***//
+	//*** Objetivo  : Mostrar listagem de dispositivos Mobile              ***//
+	//***                                                                  ***//
 	//***                                                                  ***//	 
-	//*** Alterações: 																									   ***//
+	//*** Alterações:                                                      ***//
 	//***                                                                  ***//	 
 	//************************************************************************//
 	
@@ -25,7 +25,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");	
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
 		exibeErro($msgError);		
 	}	
 	
