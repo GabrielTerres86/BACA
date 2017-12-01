@@ -178,9 +178,8 @@ BEGIN
         AND ct.dtlibera <= pr_dtlimite
         AND (ct.insitchq  = 0 OR ct.insitchq  = 2)
         AND ct.insitprv <= 3
-        AND ct.cdcooper = pr_cdcooper
-        AND ct.nrborder = 0;
-
+        AND ct.cdcooper = pr_cdcooper;
+    
     CURSOR cr_cdbcst(pr_cdcooper  IN crapcdb.cdcooper%TYPE
                     ,pr_nrdconta  IN crapcdb.nrdconta%TYPE
                     ,pr_dtlibera  IN crapcdb.dtlibera%TYPE
