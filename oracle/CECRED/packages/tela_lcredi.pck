@@ -2411,7 +2411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     
     IF pr_tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
       
-      vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+      vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre \"0.01\" e \"300\".' || to_char(vr_permingr);
       pr_nmdcampo := 'permingr';
         
       RAISE  vr_exc_saida;
