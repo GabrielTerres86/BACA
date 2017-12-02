@@ -1041,7 +1041,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,4 -- DEPOSITO - EQUIVALE HIST 110
                                             ,rw_crapsld.vlsddisp); 
               END IF;
-              vr_vllanmto:= rw_crapsld.vlsddisp;
 
             EXCEPTION
               WHEN OTHERS THEN
