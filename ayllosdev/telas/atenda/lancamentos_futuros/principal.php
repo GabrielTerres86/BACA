@@ -174,10 +174,7 @@
 	
 	<?php
 	   //Projeto CRM: Para a situações de conta abaixo, a tela deve ser apresentada apenas para consulta.
-		if(!($sitaucaoDaContaCrm == '2' || 
-			 $sitaucaoDaContaCrm == '3' || 
-			 $sitaucaoDaContaCrm == '4' || 
-			 $sitaucaoDaContaCrm == '5' || 
+		if(!($sitaucaoDaContaCrm == '4' || 
 			 $sitaucaoDaContaCrm == '7' || 
 			 $sitaucaoDaContaCrm == '8' || 
 			 $sitaucaoDaContaCrm == '9')){ 
