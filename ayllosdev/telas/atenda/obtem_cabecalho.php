@@ -694,7 +694,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			  estiver com uma das situações citada estão identificadas com telaPermitadaAcessoBacen = 0, conforme
 			  solicitado pela equipe de negócio. Qualquer alteração na lógica abaixo ou com a inclusão de novo produtos
 			  na tela ATENDA, deverá ser verificado junto a área de negócio.
-			*/
+			  A validação abaixo será liberada em Janeiro/2018.
 			if(($cdsitdct == '4' || 
 			    $cdsitdct == '7' || 
 				$cdsitdct == '8') && 
@@ -706,13 +706,14 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
 				
 			}else{
-			
+			*/
 				echo '$("#labelRot'.$contRotina.'").unbind("click");';
 				echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
 				
-			}
+			/*}
+			*/
 
 		}
 		
