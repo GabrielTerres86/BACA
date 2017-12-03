@@ -761,7 +761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 23/06/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -807,6 +807,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --			                crapass, crapttl, crapjur 
   --						   (Adriano - P339).
+  --
+  --               14/11/2017 - Ajuste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).                 
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -3038,7 +3040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Setembto/2015.                   Ultima atualizacao: 16/09/2015
+    --  Data     : Setembto/2015.                   Ultima atualizacao: 14/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3047,7 +3049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 16/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              14/11/2017 - Auste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).
     -- ..........................................................................*/
     
     ---------------> cursores <----------------
@@ -3063,6 +3065,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE; 
+    
+    CURSOR cr_craplct (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapcot.nrdconta%TYPE) IS
+      SELECT lct.*
+      FROM craplct lct
+      WHERE lct.cdcooper = pr_cdcooper
+      AND   lct.nrdconta = pr_nrdconta
+      AND   lct.cdhistor IN (2079,2080,2136)
+      AND NOT EXISTS (SELECT 1 FROM craplcm lcm
+                              WHERE lcm.cdcooper = lct.cdcooper
+                                AND lcm.nrdconta = lct.nrdconta
+                                AND lcm.cdhistor IN (2081,2082,2063,2064,2137))
+      ORDER BY lct.dtmvtolt DESC;
+    rw_craplct cr_craplct%ROWTYPE;
     
     --> buscar observacoes geraris do cooperado
     CURSOR cr_crapobs IS 
@@ -3146,6 +3162,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_tab_crapobs(vr_idxobs).nmoperad := rw_crapobs.nmoperad;
     
     END LOOP;
+    
+     --Selecionar Devolução de cotas
+    OPEN cr_craplct (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+                    
+    FETCH cr_craplct INTO rw_craplct;                
+    
+    --Se cooperado ainda não sacou valor de cotas decorrente a demissão 
+    IF cr_craplct%FOUND THEN
+        
+      vr_idxobs := pr_tab_crapobs.count;
+      
+      pr_tab_crapobs(vr_idxobs).nrdconta := pr_nrdconta;
+      pr_tab_crapobs(vr_idxobs).dtmvtolt := rw_craplct.dtmvtolt;
+      pr_tab_crapobs(vr_idxobs).nrseqdig := rw_craplct.nrseqdig;
+      pr_tab_crapobs(vr_idxobs).dsobserv := 'Devolucao de capital: R$ ' || to_char(rw_craplct.vllanmto,'fm999g999g990d00');
+      pr_tab_crapobs(vr_idxobs).recidobs := rw_craplct.progress_recid;
+      
+    END IF;
+    
+    --Fechar Cursor
+    CLOSE cr_craplct;
     
     -- Se foi solicitado log
     IF pr_flgerlog = 'S' THEN
@@ -5747,7 +5785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_tab_mensagens.COUNT > 0 THEN
       FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END LOOP; 
     END IF;
     
@@ -6048,7 +6086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 14/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -6076,6 +6114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              09/08/2017 - P364 - Alteração na regra de busca do valor de saldo deposito a vista,
     --                                  irá buscar da LCM pelo LOTE, caso seja maior que 0 irá exibir 
     --                                  o valor retornado (Mateus Zimmermann-MoutS)                         
+    -- 
+	--             14/11/2017 - Ajuste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).                 
     -- 
     -- ..........................................................................*/
     
@@ -6117,7 +6157,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         FROM craplcm l
        WHERE l.cdcooper = pr_cdcooper
         AND  l.nrdconta = pr_nrdconta
-        AND l.nrdolote in (600041,600042);
+        AND l.nrdolote in (600041,600042)        
+      UNION
+      SELECT D.VLCAPITAL - D.VLPAGO
+        FROM TBCOTAS_DEVOLUCAO D
+       WHERE D.CDCOOPER = pr_cdcooper
+         AND D.NRDCONTA = pr_nrdconta
+         AND D.TPDEVOLUCAO = 4; -- DEPOSITO A VISTA
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;

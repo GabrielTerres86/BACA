@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 16/10/2017
+    Data    : Maio/2010                   Ultima atualizacao: 14/11/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -201,9 +201,9 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
-			    19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+                19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				             "Desligamento por determinação do BACEN" 
-							( Jonata - RKAM P364).	
+							( Jonata - RKAM P364).			
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)
@@ -218,6 +218,10 @@
                 16/10/2017 - Remocao de Tratamento temporario para nao permitir solicitacao
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
+
+				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
+				             ja estiver com situacao = 4
+							( Jonata - RKAM P364).		
 
 .............................................................................*/
 
@@ -1118,7 +1122,7 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 
-                   END.
+                   END.				   
 				   
 				/*Se for demissao BACEN, deve informar que nao ha reversao ao prosseguir 
 				  com a alteracao da situacao para 8 (Processo demissa BACEN)*/
@@ -1133,7 +1137,16 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 				   
-            END.
+				   END.   
+				ELSE IF crapass.cdsitdct = 4 THEN
+				   DO:
+				      ASSIGN par_dscritic = "Conta ja encerrada por demissao."
+					         par_nmdcampo = "cdsitdct".
+
+                      LEAVE ValidaAltera.
+
+				   END.
+
             END.
 
         /*  Mudou o tipo de conta  */
@@ -3749,7 +3762,7 @@ PROCEDURE Grava_Dados_Altera:
                crabass.cdtipcta = par_cdtipcta
                crabass.cdbcochq = par_cdbcochq
                crabass.cdsitdct = par_cdsitdct
-               crabass.flgiddep = par_flgiddep
+			   crabass.flgiddep = par_flgiddep
                crabass.tpavsdeb = par_tpavsdeb
                crabass.tpextcta = par_tpextcta
                crabass.cdsecext = par_cdsecext

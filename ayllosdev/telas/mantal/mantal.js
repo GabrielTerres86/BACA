@@ -10,6 +10,7 @@
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
  * 003: [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 004: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
+ * 005: [14/11/2017] Jonata           (RKAM)  : Ajuste nas rotinas de controle para sequencia dos impedimetnos (P364)
                                
  * --------------
  */
@@ -57,14 +58,14 @@ function estadoInicial() {
 
 	setGlobais();	
 	
- 	$('input', '#'+ formCab ).limpaFormulario();
+	$('input', '#'+ formCab ).limpaFormulario();
 	$('input', '#'+ formDados ).limpaFormulario();
 	$('#divTabMantal').css({'display':'none'});
 	
 	atualizaSeletor();
 	controlaLayout();
 	formataCabecalho();
-
+	
 
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
@@ -510,7 +511,7 @@ function formataCabecalho() {
 		controlaOperacao( operacao );
 		return false;
 			
-	});		
+	});
 	
 	cOpcao.unbind('keypress').bind('keypress', function(e) { 	
 		
@@ -793,20 +794,23 @@ function continuarCheque( opcao ) {
 }
 
 
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {
+        eval(produtosCancM[posicao - 1]);
+        posicao++;
+        return false;
+    }
+}
+
 // botoes
 function btnVoltar() {
 	
-		if (executandoImpedimentos){
-			posicao++;
-			showMsgAguardo('Aguarde, carregando tela DCTROR ...');
-			setaParametrosImped('DCTROR','',nrdconta,flgcadas, 'MANTAL');
-			setaImped();
-			direcionaTela('DCTROR','no');
-		}else{
-
-		estadoInicial();
-	}
-	
+    if (executandoImpedimentos) {
+        sequenciaImpedimentos();
+        return false;
+    } else {
+			estadoInicial();	
+		}
 	
 	return false;
 }

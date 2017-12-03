@@ -15,6 +15,7 @@
  * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
  * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
+ * [14/11/2017] Jonata   (RKAM)         : Ajuste para chamar rotina correta (P364).
  * --------------
  */
 
@@ -109,7 +110,7 @@ function buscaConta() {
 						if (tppeschq == 1){
 							$("#tpChequ1","#frmTipoCheque").click();						
 						}else if (tppeschq == 2){
-							$("#tpChequ5","#frmTipoCheque").click();
+							$("#tpChequ2","#frmTipoCheque").click();
 						}else if (tppeschq == 3){
 							$("#tpChequ5","#frmTipoCheque").click();						
 						}

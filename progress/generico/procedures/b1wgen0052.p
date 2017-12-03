@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 22/09/201
+    Data    : Junho/2010                      Ultima atualizacao: 14/11/2017
   
     Dados referentes ao programa:
   
@@ -110,13 +110,23 @@
                 07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
                              gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
                              problema com validacao da data de nascimento.
-                             Heitor (Mouts) - Chamado 702785	    	
+                             Heitor (Mouts) - Chamado 702785   	
 
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
-				 
+
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
+
+                23/10/2017 - Ajustes para nao validar responsavel legal ao incluir CONTA
+                             na tela MATRIC, pois validaçao ocorrerá apenas apos a inclusao
+                             para garantir replicaçao dos dados da tbcadast.
+                             PRJ339 - CRM (Odirlei-AMcom)
+               
+			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
+						     para pesquisa e retornar valor total da pesquisa
+							 (Jonata - RKAM P364). 
+
 ............................................................................*/
 
 
@@ -218,7 +228,7 @@ PROCEDURE Busca_Dados:
             END.
 
         IF  RETURN-VALUE <> "OK" THEN
-            LEAVE Busca.
+               LEAVE Busca.
 
         ASSIGN aux_returnvl = "OK".
 
@@ -562,7 +572,7 @@ PROCEDURE Valida_Dados:
     
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
-	
+    
     DEF OUTPUT PARAM par_nrctanov AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtparcel AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_vlparcel AS DECI                           NO-UNDO.
@@ -946,111 +956,111 @@ PROCEDURE Valida_Dados:
         IF par_nmdatela <> 'MATRIC' OR 
            par_cddopcao <> 'I' THEN
         DO:   
-          IF   par_inpessoa = 1    AND 
-               par_idorigem <> 1   AND
-               par_dtnasctl <> ?   AND
-               par_verrespo = TRUE THEN
-               DO:
-                  IF VALID-HANDLE(h-b1wgen9999) THEN
-                     DELETE OBJECT h-b1wgen9999.
+        IF   par_inpessoa = 1    AND 
+             par_idorigem <> 1   AND
+             par_dtnasctl <> ?   AND
+             par_verrespo = TRUE THEN
+             DO:
+                IF VALID-HANDLE(h-b1wgen9999) THEN
+                   DELETE OBJECT h-b1wgen9999.
                 
-                  RUN sistema/generico/procedures/b1wgen9999.p
-                      PERSISTENT SET h-b1wgen9999.
+                RUN sistema/generico/procedures/b1wgen9999.p
+                    PERSISTENT SET h-b1wgen9999.
                 
-                  /* validar pela procedure generica do b1wgen9999.p */
-                  RUN idade IN h-b1wgen9999 (INPUT par_dtnasctl,
-                                             INPUT par_dtmvtolt,
-                                             OUTPUT par_nrdeanos,
-                                             OUTPUT par_nrdmeses,
-                                             OUTPUT par_dsdidade ).
-                
-                  IF  VALID-HANDLE(h-b1wgen9999) THEN
-                      DELETE OBJECT h-b1wgen9999.
-
-                  IF  NOT CAN-FIND(FIRST crapcrl WHERE 
-                                         crapcrl.cdcooper = par_cdcooper AND
-                                         crapcrl.nrctamen = par_nrdconta AND
-                                         crapcrl.idseqmen = 1) AND
-                    ((par_inhabmen = 0    AND
-                      par_nrdeanos < 18)  OR
-                      par_inhabmen = 2  ) AND 
-                      par_nrdconta > 0    THEN
-                      DO:
-                         ASSIGN aux_dscritic = "Cooperado menor de idade. " + 
-                                               "Obrigatorio Responsavel Legal.".
-                         LEAVE Dados.
-                      END.
-
-                  IF NOT VALID-HANDLE(h-b1wgen0072) THEN
-                     RUN sistema/generico/procedures/b1wgen0072.p 
-                              PERSISTENT SET h-b1wgen0072.
-                     
-                  FOR EACH tt-crapcrl:
-                      CREATE tt-cratcrl.
-                      BUFFER-COPY tt-crapcrl TO tt-cratcrl.
-                  END.
-
-                  FOR EACH tt-resp NO-LOCK:
-               
-                      RUN Valida_Dados IN h-b1wgen0072 
-                                          (INPUT par_cdcooper,    
-                                           INPUT par_cdagenci,
-                                           INPUT par_nrdcaixa,
-                                           INPUT par_cdoperad,
-                                           INPUT par_nmdatela,
-                                           INPUT par_idorigem,
-                                           INPUT tt-resp.nrctamen,
-                                           INPUT tt-resp.idseqmen,
-                                           INPUT YES,
-                                           INPUT tt-resp.nrdrowid,
+                /* validar pela procedure generica do b1wgen9999.p */
+                RUN idade IN h-b1wgen9999 (INPUT par_dtnasctl,
                                            INPUT par_dtmvtolt,
-                                           INPUT tt-resp.cddopcao,
-                                           INPUT tt-resp.nrdconta,
-                                           INPUT tt-resp.nrcpfcgc,
-                                           INPUT tt-resp.nmrespon,
-                                           INPUT tt-resp.tpdeiden,
-                                           INPUT tt-resp.nridenti,
-                                           INPUT tt-resp.dsorgemi,
-                                           INPUT tt-resp.cdufiden,
-                                           INPUT tt-resp.dtemiden,
-                                           INPUT tt-resp.dtnascin,
-                                           INPUT tt-resp.cddosexo,
-                                           INPUT tt-resp.cdestciv,
-                                           INPUT tt-resp.cdnacion,
-                                           INPUT tt-resp.dsnatura,
-                                           INPUT tt-resp.cdcepres,
-                                           INPUT tt-resp.dsendres,
-                                           INPUT tt-resp.dsbaires,
-                                           INPUT tt-resp.dscidres,
-                                           INPUT tt-resp.dsdufres,
-                                           INPUT tt-resp.nmmaersp,
-                                           INPUT NO,         
-                                           INPUT tt-resp.nrcpfmen,
-                                           INPUT "Identificacao",
-                                           INPUT par_dtnasctl,
-                                           INPUT par_inhabmen,
-                                           INPUT par_permalte,
-                                           INPUT TABLE tt-cratcrl,
-                                           OUTPUT par_nmdcampo,
-                                           OUTPUT TABLE tt-erro).
-                     
-                      IF   RETURN-VALUE <> "OK" THEN
-                           DO:
-                              IF VALID-HANDLE(h-b1wgen0072) THEN
-                                 DELETE PROCEDURE(h-b1wgen0072).
-                             
-                              ASSIGN aux_geraerro = TRUE.
-                           
-                              LEAVE Dados.
-                           
-                           END.
-                     
-                  END.  
-             
-                  IF VALID-HANDLE(h-b1wgen0072) THEN
-                     DELETE PROCEDURE(h-b1wgen0072).              
+                                           OUTPUT par_nrdeanos,
+                                           OUTPUT par_nrdmeses,
+                                           OUTPUT par_dsdidade ).
+                
+                IF  VALID-HANDLE(h-b1wgen9999) THEN
+                    DELETE OBJECT h-b1wgen9999.
 
-             END.
+                IF  NOT CAN-FIND(FIRST crapcrl WHERE 
+                                       crapcrl.cdcooper = par_cdcooper AND
+                                       crapcrl.nrctamen = par_nrdconta AND
+                                       crapcrl.idseqmen = 1) AND
+                  ((par_inhabmen = 0    AND
+                    par_nrdeanos < 18)  OR
+                    par_inhabmen = 2  ) AND 
+                    par_nrdconta > 0    THEN
+                    DO:
+                       ASSIGN aux_dscritic = "Cooperado menor de idade. " + 
+                                             "Obrigatorio Responsavel Legal.".
+                       LEAVE Dados.
+                    END.
+
+                IF NOT VALID-HANDLE(h-b1wgen0072) THEN
+                   RUN sistema/generico/procedures/b1wgen0072.p 
+                            PERSISTENT SET h-b1wgen0072.
+                     
+                FOR EACH tt-crapcrl:
+                    CREATE tt-cratcrl.
+                    BUFFER-COPY tt-crapcrl TO tt-cratcrl.
+                END.
+
+                FOR EACH tt-resp NO-LOCK:
+               
+                    RUN Valida_Dados IN h-b1wgen0072 
+                                        (INPUT par_cdcooper,    
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT tt-resp.nrctamen,
+                                         INPUT tt-resp.idseqmen,
+                                         INPUT YES,
+                                         INPUT tt-resp.nrdrowid,
+                                         INPUT par_dtmvtolt,
+                                         INPUT tt-resp.cddopcao,
+                                         INPUT tt-resp.nrdconta,
+                                         INPUT tt-resp.nrcpfcgc,
+                                         INPUT tt-resp.nmrespon,
+                                         INPUT tt-resp.tpdeiden,
+                                         INPUT tt-resp.nridenti,
+                                         INPUT tt-resp.dsorgemi,
+                                         INPUT tt-resp.cdufiden,
+                                         INPUT tt-resp.dtemiden,
+                                         INPUT tt-resp.dtnascin,
+                                         INPUT tt-resp.cddosexo,
+                                         INPUT tt-resp.cdestciv,
+                                         INPUT tt-resp.cdnacion,
+                                         INPUT tt-resp.dsnatura,
+                                         INPUT tt-resp.cdcepres,
+                                         INPUT tt-resp.dsendres,
+                                         INPUT tt-resp.dsbaires,
+                                         INPUT tt-resp.dscidres,
+                                         INPUT tt-resp.dsdufres,
+                                         INPUT tt-resp.nmmaersp,
+                                         INPUT NO,         
+                                         INPUT tt-resp.nrcpfmen,
+                                         INPUT "Identificacao",
+                                         INPUT par_dtnasctl,
+                                         INPUT par_inhabmen,
+                                         INPUT par_permalte,
+                                         INPUT TABLE tt-cratcrl,
+                                         OUTPUT par_nmdcampo,
+                                         OUTPUT TABLE tt-erro).
+                     
+                    IF   RETURN-VALUE <> "OK" THEN
+                         DO:
+                            IF VALID-HANDLE(h-b1wgen0072) THEN
+                               DELETE PROCEDURE(h-b1wgen0072).
+                           
+                            ASSIGN aux_geraerro = TRUE.
+                           
+                            LEAVE Dados.
+                           
+                         END.
+                     
+                END.  
+             
+                IF VALID-HANDLE(h-b1wgen0072) THEN
+                   DELETE PROCEDURE(h-b1wgen0072).              
+
+           END.
            END.
 
         /* Se esta na inclusao, gerar a nova conta no final da validacao */
@@ -1199,7 +1209,7 @@ PROCEDURE Valida_Cidades:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.	
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -1610,15 +1620,15 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nmttlrfb AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inconrfb AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
-	
+
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
     DEF  INPUT PARAM TABLE FOR tt-bens.
 
-	DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 
-	
+
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -1651,9 +1661,9 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
 
 
-    DEF BUFFER crabavt FOR crapavt.    
-	
-	ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+    DEF BUFFER crabavt FOR crapavt.
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dscritic = "Erro na gravacao dos dados. "
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -2347,7 +2357,7 @@ PROCEDURE Grava_Dados:
                                                     ASSIGN crapdoc.flgdigit = FALSE.
                                                     LEAVE ContadorDoc4.
                                                 END.              
-                                        END.	   
+                                        END.
                                         /* Gerar pendencia de conjuge */
                                         ContadorDoc22: DO aux_contador = 1 TO 10:
 
@@ -3192,9 +3202,11 @@ PROCEDURE busca_contas_demitidas:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrdconta LIKE crapass.nrdconta             NO-UNDO.
 	DEF INPUT  PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF INPUT  PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtdregis AS INTE                           NO-UNDO.
+	DEF OUTPUT PARAM par_vlrtotal AS DEC                            NO-UNDO.
 
 	DEF OUTPUT PARAM TABLE FOR tt-contas_demitidas.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -3233,9 +3245,13 @@ PROCEDURE busca_contas_demitidas:
 	   END.
 	       							 
 	FOR EACH crapass FIELDS(cdcooper nrdconta inpessoa nmprimtl cdmotdem dtdemiss)
-					 WHERE  crapass.cdcooper = par_cdcooper AND				           
-						   (crapass.cdsitdct = 7            OR
+					 WHERE  crapass.cdcooper = par_cdcooper  AND				           
+					       (par_nrdconta = 0                 OR
+						    crapass.nrdconta = par_nrdconta) AND
+						   (crapass.cdsitdct = 4             OR
+						    crapass.cdsitdct = 7             OR
 						    crapass.cdsitdct = 8            )
+
 						    NO-LOCK:
 		
 		ASSIGN aux_vldcotas = 0.
@@ -3271,7 +3287,8 @@ PROCEDURE busca_contas_demitidas:
 				
 			END.
 			
-		ASSIGN par_qtdregis = par_qtdregis + 1.
+		ASSIGN par_qtdregis = par_qtdregis + 1
+		       par_vlrtotal = par_vlrtotal + aux_vldcotas.
 
 		/* controles da paginação */
 		IF  (par_qtdregis < par_nriniseq                    OR
