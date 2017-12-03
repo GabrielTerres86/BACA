@@ -14,11 +14,12 @@
  * [10/06/2016] Lucas Ranghetti         : Alterado Width da frame dos detalhes (#422753)
  * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
+ * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  * --------------
  */
 
 // Variáveis globais usadas para as requisições AJAX
-var nrdconta, idseqttl, nrtipoop, nrcheque;
+var idseqttl, nrtipoop, nrcheque;
 
 // Variáveis globais para alguns seletores úteis
 var frmCheque, frmCabecalho, frmTipoCheque, divTabela;
@@ -36,7 +37,7 @@ var cNrpedido, cDtsolped, cDtrecped, cDsdocmc7,
 $(document).ready(function() {
 	
 	// Inicializando algumas variáveis
-	nrdconta = 0;
+	//nrdconta = 0;
 	idseqttl = 1;
 	nrtipoop = '';
 	nrcheque = '';
@@ -103,6 +104,17 @@ function buscaConta() {
 		success : function(response) { 
 					hideMsgAguardo();
 					eval(response);
+					if (executandoImpedimentos){
+						//$("[name=nrtipoop]", "#frmTipoCheque").val(5);
+						if (tppeschq == 1){
+							$("#tpChequ1","#frmTipoCheque").click();						
+						}else if (tppeschq == 2){
+							$("#tpChequ5","#frmTipoCheque").click();
+						}else if (tppeschq == 3){
+							$("#tpChequ5","#frmTipoCheque").click();						
+						}
+						$("#btBuscaCheque","#frmTipoCheque").click();						
+					}
 				}
 	}); 
 }
@@ -118,6 +130,12 @@ function buscaCheque(nriniseq) {
 	nrregist = normalizaNumero(cNrregist.val());	
 	nrtipoop = normalizaNumero($(cNrtipoop.selector+':checked').val());
 			
+	if (executandoImpedimentos){
+		var execimpe = 1;
+	}else{
+		var execimpe = 0;
+	}
+	
 	$.ajax({		
 		type	: 'POST',
 		dataType: 'html',
@@ -129,6 +147,8 @@ function buscaCheque(nriniseq) {
 				  nrcheque: nrcheque,
 				  nriniseq: nriniseq,
 				  nrregist: nrregist,
+				  execimpe: execimpe,
+				  tppeschq: tppeschq,
 				  redirect: 'script_ajax'
 				  
 				},
@@ -174,6 +194,7 @@ function controlaLayout() {
     if ($("#crm_inacesso","#frmCabCheque").val() == 1) {
         $("#nrdconta","#frmCabCheque").val($("#crm_nrdconta","#frmCabCheque").val());
     }
+	
 }
 
 function formataCabecalho() {
@@ -256,6 +277,9 @@ function formataCabecalho() {
 		}
 	});
 	
+	if (nrdconta != 0){		
+		$('#btnOK').click();
+	}
 	
 }
 
@@ -428,7 +452,12 @@ function funcaoVoltar(){
 			$('table > tbody', 'div.divRegistros').html('');
 			$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });
 		} else {
+			if (executandoImpedimentos){
+				sequenciaImpedimentos();
+				return false;
+			}else{
 			estadoInicial();			
+			}
 		}		
 	}else{
 		trocaVisao();
@@ -475,4 +504,26 @@ function estadoInicial() {
 	cNrcheque.val('0');
 	$('table > tbody', 'div.divRegistros').html('');
 	$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });	
+}
+
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		if (posicao <= produtosCancMCheque.length) {
+			if (produtosCancMCheque[posicao - 1] == '' || produtosCancMCheque[posicao - 1] == 'undefined'){
+				eval(produtosCancM[posicao - 1]);
+				posicao++;
+			}else{				
+				eval(produtosCancMCheque[posicao - 1]);
+				posicao++;
+				estadoInicial();
+				$("#nrdconta","#frmCabCheque").val(nrdconta);
+				$("#btnOK","#frmCabCheque").click();						
+			}
+            return false;
+        }else{
+			eval(produtosCancM[posicao - 1]);
+			posicao++;
+			return false;
+		}
+    }
 }

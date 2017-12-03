@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 31/05/2017
+	 Data : Novembro/2008                Última Alteração: 26/06/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
 	                                                                  	 
@@ -22,6 +22,9 @@
                  31/05/2017 - Ajuste para verificar se possui cheque custodiado
                                no dia de hoje. 
                                PRJ300- Desconto de cheque. (Odirlei-AMcom) 
+							   
+                 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+				 							    
 	************************************************************************/
 	
 	session_start();
@@ -50,6 +53,7 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
+	$executandoProdutos = $_POST['executandoProdutos'];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -163,8 +167,14 @@
 	$dispI = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoes" >
+<div id="divBotoesChequesBordero" >
+	
+	<?if($executandoProdutos == 'true'){?>
+		<a href="#" class="botao" id="btVoltar" onclick="encerraRotina(true);return false;">Voltar</a>
+	<?}else{?>
 	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;">Voltar</a>
+	
+	<?}?>	
 	<a href="#" class="botao" id="btIncluir" style="<? echo $dispI ?>" onclick="mostraFormIABordero('I');">Incluir</a>
 	<a href="#" class="botao" id="btConsultar" style="<? echo $dispC ?>" onClick="mostraDadosBorderoDscChq('C');return false;">Consultar</a>
 	<a href="#" class="botao" id="btAlterar" style="<? echo $dispA ?>" onclick="mostraFormIABordero('A');">Alterar</a>
@@ -177,6 +187,7 @@
 </div>
 
 <script type="text/javascript">
+
 dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
 // Muda o título da tela
@@ -189,4 +200,12 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
+	
+	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+	if (executandoProdutos == true) {
+		
+		$("#btIncluir", "#divBotoesChequesBordero").click();
+		
+	}
+	
 </script>

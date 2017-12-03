@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 21/11/2016
 	 * OBJETIVO     : Rotina para manter bordero de desconto de cheque
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 	 * -------------- 
 	 */		
 
@@ -28,6 +28,7 @@
 	$cddopcao = !isset($_POST["cddopcao"]) ? "" : $_POST["cddopcao"];
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 	$dscheque_exc = !isset($_POST["dscheque_exc"]) ? "" : $_POST["dscheque_exc"];
+	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
@@ -61,6 +62,17 @@
 		exit();
 	}else{
 		$msgErro = ($cddopcao == 'I') ? 'Border&ocirc; inclu&iacute;do com sucesso' : 'Border&ocirc; alterado com sucesso';
+		
+		//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+		if ($executandoProdutos == 'true') {
+			
+			exibirErro('inform',$msgErro,'Alerta - Ayllos','encerraRotina(true);',false);
+			
+		}else{
+		
 		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); carregaBorderosCheques();',false);
+		
+		}
+		
 	}	
 ?>

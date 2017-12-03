@@ -24,6 +24,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 	--               04/07/2016 - Adicionados busca_taloes_car para geração de relatório
   --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
 	--
+	--				 21/07/2017 - Alterações referente ao cancelamento manual do projeto 364. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -2371,7 +2372,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-    
+
+                        
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação

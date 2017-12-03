@@ -8,6 +8,8 @@
  * 000: [29/06/2012] Jorge Hamaguchi  (CECRED): Ajuste para novo esquema de impressao em funcao Gera_Impressao()
  * 001: [03/06/2016] Lucas Ranghetti  (CECRED): Incluir validação de agencia e de conta migrada (Lucas Ranghetti #449707)
  * 002: [24/06/2016] Lucas Ranghetti  (CECRED): Ajustado para chamar formulario de impressão para Opcao "A" (#448006 )
+ * 003: [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 004: [04/11/2017] Jonata           (RKAM)  : Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
  * --------------
  */
 
@@ -18,7 +20,6 @@ var controle		= '';
 
 var cddopcao		= '';
 var tptransa 		= 0 ;
-var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 var idseqttl		= 1 ;
 
 var aux_cdagechq	= ''; // Armazena o retorno verif-agechq da consulta tipo 2 no manter_rotina.php
@@ -92,9 +93,6 @@ function estadoInicial() {
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
 
-	cOpcao.val('I');
-	cTipo.val('0');
-
 	removeOpacidade('divTela');
 	return false;
 }
@@ -119,6 +117,14 @@ function estadoCabecalho() {
 	$('#divTabDctror').css('display','none');
 
 	removeOpacidade('divTela');
+	
+	if (executandoImpedimentos){	
+	
+		cTipo.val('0');
+		cOpcao.val('E').desabilitaCampo();
+		
+	} 
+	
 	return false;
 }
 
@@ -770,8 +776,22 @@ function formataCabecalho() {
 		
 
 	});		
-	
-	
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+    }else if (nrdconta != '') {
+		
+		cTipo.val('0');
+		cOpcao.val('E').desabilitaCampo();
+		$("#nrdconta","#frmCab").val(nrdconta);
+		
+	}else{
+		nrdconta = 0;
+		cOpcao.val('I');
+		cTipo.val('0');
+	}
+
 	layoutPadrao();
 	$('.conta').trigger('blur');
 	controlaPesquisas();
@@ -1467,8 +1487,13 @@ function btnVoltar() {
 		if ( cConta.hasClass('campoTelaSemBorda') ) {
 			estadoCabecalho();
 		} else {
+			if (executandoImpedimentos){		
+				sequenciaImpedimentos();
+				return false;
+			} else {
 			estadoInicial();
 		}
+	}
 	}
 	
 	controlaPesquisas();
@@ -1681,4 +1706,11 @@ function validaAgencia() {
 		});
 	
 	return aux_retorno;
+}
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		eval(produtosCancM[posicao - 1]);
+		posicao++;
+		return false;
+    }
 }

@@ -23,6 +23,7 @@
                                              (Chamado 181988) - (Fabricio)
  * 010: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
+ * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
@@ -143,6 +144,7 @@
 <div id="divBotoesLimite">
 		
 	<input type="image" id="btnVoltarLimite" name="btnVoltarLimite" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
+	
 	
 	<? if ($cddopcao == "C") { ?> 
 				<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $dados[29]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos('z.zzz.zz9',$nrctrlim,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>
@@ -266,7 +268,16 @@
 
 	// Atribui eventos para botões do formulário
 	$('#btnVoltarLimite','#divBotoesLimite').unbind('click').bind('click',function() {
+		
+		if(executandoProdutos){
+			
+			encerraRotina(true);
+			
+		}else{
+			
 		voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
+			
+		}
 		return false;
 	});
 	
