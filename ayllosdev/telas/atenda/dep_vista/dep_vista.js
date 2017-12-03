@@ -30,18 +30,7 @@ var dtfimper = "";
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	
-	//Projeto CRM: Se for uma das situações abaixo deve apenas permitir acesso a seção de extrato.
-	if(sitaucaoDaContaCrm == '2' || 
-	   sitaucaoDaContaCrm == '3' || 
-	   sitaucaoDaContaCrm == '4' || 
-	   sitaucaoDaContaCrm == '5' || 
-	   sitaucaoDaContaCrm == '7' || 
-	   sitaucaoDaContaCrm == '8' || 
-	   sitaucaoDaContaCrm == '9'){ 
-	   opcao ="1";
-	   id="1";
-	}
-	
+
 	if (opcao == "0") {	// Opção Principal
 		var msg = "dep&oacute;sitos &agrave; vista";
 		var UrlOperacao = UrlSite + "telas/atenda/dep_vista/principal.php";
