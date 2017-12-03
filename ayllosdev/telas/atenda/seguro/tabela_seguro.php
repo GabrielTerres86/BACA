@@ -102,10 +102,7 @@
 
 	<?php if (!$executandoImpedimentos){?>
 
-		<?php if($sitaucaoDaContaCrm == '2' || 
-				 $sitaucaoDaContaCrm == '3' || 
-				 $sitaucaoDaContaCrm == '4' || 
-				 $sitaucaoDaContaCrm == '5' || 
+		<?php if($sitaucaoDaContaCrm == '4' || 
 				 $sitaucaoDaContaCrm == '7' || 
 				 $sitaucaoDaContaCrm == '8' || 
 				 $sitaucaoDaContaCrm == '9' ){?>
