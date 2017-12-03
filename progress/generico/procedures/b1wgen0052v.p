@@ -162,6 +162,8 @@
                14/11/2017 - Corrigido consulta do produtos impeditivos para desligamento (Jonata - RKAM P364).
 
 			   21/11/2017 - Retirado validacao de convenio CDC (Jonata - RKAM P364).
+
+			   22/11/2017 - Incluido verificao de cartao de credito (Jonata - RKAM p364).
 ........................................................................*/
 
 
@@ -175,6 +177,7 @@
 { sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0006tt.i }
 
 
 DEF VAR aux_contador AS INTE                                        NO-UNDO.
@@ -1351,12 +1354,15 @@ PROCEDURE Produtos_Servicos_Ativos:
 	DEF VAR aux_qttotage AS INTE                                    NO-UNDO.
 	DEF VAR aux_dsdmesag AS CHAR                                    NO-UNDO.
 	DEF VAR aux_vlresapl AS DECIMAL INIT 0                          NO-UNDO.
+	DEF VAR aux_vlsrdrpp AS DECIMAL INIT 0                          NO-UNDO.
 
     DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0082 AS HANDLE                                  NO-UNDO.
 	DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
+	DEF VAR h-b1wgen0006 AS HANDLE                                  NO-UNDO.
+
 
     /* inicializando e zerando */
     ASSIGN  aux_cdseqcia = 0
@@ -1409,6 +1415,57 @@ PROCEDURE Produtos_Servicos_Ativos:
                    tt-prod_serv_ativos.nmproser = "Poupanca Programada".
         END.
     
+		/*Cartao de credito*/
+		IF CAN-FIND(FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper
+								   AND crawcrd.nrdconta = par_nrdconta
+								   AND (crawcrd.insitcrd = 4 
+									OR  crawcrd.insitcrd = 3
+									OR  crawcrd.insitcrd = 7)
+									NO-LOCK) THEN
+		DO:
+		    ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Cartao de credito".
+		END.
+
+		/* Buscar data do proximo dia util*/
+		FOR FIRST crapdat FIELDS(dtmvtopr inproces)
+						  WHERE crapdat.cdcooper = par_cdcooper
+						  NO-LOCK:
+		END.
+
+		RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
+    
+		RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
+											   INPUT par_cdagenci,
+											   INPUT par_nrdcaixa,
+											   INPUT par_cdoperad,
+											   INPUT par_nmdatela,
+											   INPUT par_idorigem,
+											   INPUT par_nrdconta,
+											   INPUT par_idseqttl,
+											   INPUT 0,
+											   INPUT par_dtmvtolt,
+											   INPUT crapdat.dtmvtopr,
+											   INPUT crapdat.inproces,
+											   INPUT par_nmdatela,
+											   INPUT FALSE,
+											  OUTPUT aux_vlsrdrpp,
+											  OUTPUT TABLE tt-erro,
+											  OUTPUT TABLE tt-dados-rpp).
+                                          
+		DELETE PROCEDURE h-b1wgen0006.
+
+		IF aux_vlsrdrpp > 0 THEN
+		   DO:
+		        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+				CREATE tt-prod_serv_ativos.
+				ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+					   tt-prod_serv_ativos.nmproser = "Poupanca Programada".
+
+		   END.
+
 		
         /***************** Limite de Desconto de Cheques *********************/
         IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
