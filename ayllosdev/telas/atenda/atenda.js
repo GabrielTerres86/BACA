@@ -79,6 +79,8 @@
                   14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
 
                   14/11/2017 - Não apresentar pop-up de anotações quando impedimentos estiver sendo executado (Jonata - P364).
+
+                   21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -797,9 +799,21 @@ function dossieDigdoc(cdproduto){
 	return false;
 }	  
 
-function impedSeguros(){
-	showError('error','Cancelamento do SEGURO AUTO deve ser realizado via 0800.','Alerta - Ayllos','showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');")');
-	return false;
+function impedSeguros(seguroVida, seguroAuto) {
+
+    if (seguroVida == '1' && seguroAuto == '1') {
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');")');
+    } else if (seguroVida == '1') {
+
+       showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\')");
+
+    } else if (seguroAuto == '1') {
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'acessaRotina("","SEGURO","Seguro","seguro");');
+    } else {
+        acessaRotina("", "SEGURO", "Seguro", "seguro");
+    }
+
+    return false;
 }
 
 function impedConsorcios(){
