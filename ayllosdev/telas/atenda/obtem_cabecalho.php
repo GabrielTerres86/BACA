@@ -679,7 +679,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 		if (trim($urlRotina) <> "") {
 			
 			/*Projeto crm: Não deve permitir a contratação de produtos quando a conta estiver com uma 
-			  das situações 2, 3, 4, 5, 7, 8 ou 9. Os produtos que não podem ser contrato quando a conta
+			  das situações 4, 7, 8 ou 9. Os produtos que não podem ser contrato quando a conta
 			  estiver com uma das situações citada estão identificadas com telaPermitadaAcessoBacen = 0, conforme
 			  solicitado pela equipe de negócio. Qualquer alteração na lógica abaixo ou com a inclusão de novo produtos
 			  na tela ATENDA, deverá ser verificado junto a área de negócio.
@@ -693,10 +693,9 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
 				
-			}else if(($cdsitdct == '2' || 
-			          $cdsitdct == '3' || 
-				        $cdsitdct == '4' || 
-				        $cdsitdct == '5' ||
+			}else if(($cdsitdct == '4' || 
+			          $cdsitdct == '7' || 
+				        $cdsitdct == '8' || 
 				        $cdsitdct == '9') && 
 				        $telaPermitadaAcessoBacen == 0 ){
 				
