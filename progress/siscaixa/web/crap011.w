@@ -55,10 +55,12 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
        FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_aux_valor AS CHARACTER FORMAT "X(256)":U 
        FIELD v_origem_devol AS CHARACTER FORMAT "X(256)":U 
 	   FIELD v_tpoperacao AS CHARACTER FORMAT "X(256)":U
 	   FIELD v_conta AS CHARACTER FORMAT "X(256)":U
-	   FIELD v_sequencia_ope AS CHARACTER FORMAT "X(256)":U.
+	   FIELD v_sequencia_ope AS CHARACTER FORMAT "X(256)":U
+	   FIELD v_nome AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -142,8 +144,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.ok ab_unmap.v_conta  ab_unmap.v_sequencia_ope ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.ok ab_unmap.v_conta ab_unmap.v_sequencia_ope  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.ok ab_unmap.v_conta  ab_unmap.v_sequencia_ope ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_aux_valor ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.ok ab_unmap.v_conta ab_unmap.v_sequencia_ope  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_ccred ab_unmap.v_cdeb ab_unmap.v_chistcont ab_unmap.v_cod ab_unmap.v_complem1 ab_unmap.v_complem2 ab_unmap.v_complem3 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_deschist ab_unmap.v_doc ab_unmap.v_hist ab_unmap.v_aux_hist ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_senha ab_unmap.v_aux_valor ab_unmap.v_valor ab_unmap.v_origem_devol ab_unmap.v_tpoperacao
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -245,6 +247,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_aux_valor AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
 	ab_unmap.v_origem_devol AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -265,10 +271,15 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+	ab_unmap.v_nome AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
          SIZE 80 BY 20.
+
 
 
 /* *********************** Procedure Settings ************************ */
@@ -306,10 +317,12 @@ DEFINE FRAME Web-Frame
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_aux_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_origem_devol AS CHARACTER FORMAT "X(256)":U 
 		  FIELD v_tpoperacao AS CHARACTER FORMAT "X(256)":U
 		  FIELD v_conta AS CHARACTER FORMAT "X(256)":U  
 		  FIELD v_sequencia_ope AS CHARACTER FORMAT "X(256)":U  
+		  FIELD v_nome AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -386,6 +399,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */		   
+/* SETTINGS FOR fill-in ab_unmap.v_aux_valor IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* SETTINGS FOR fill-in ab_unmap.v_origem_devol IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* SETTINGS FOR FILL-IN ab_unmap.v_tpoperacao IN FRAME Web-Frame
@@ -393,6 +408,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_conta IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_sequencia_ope IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
+/* SETTINGS FOR FILL-IN ab_unmap.v_nome IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -483,6 +500,8 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
+    ("v_aux_valor":U,"ab_unmap.v_aux_valor":U,ab_unmap.v_aux_valor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
     ("v_origem_devol":U,"ab_unmap.v_origem_devol":U,ab_unmap.v_origem_devol:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_tpoperacao":U,"ab_unmap.v_tpoperacao":U,ab_unmap.v_tpoperacao:HANDLE IN FRAME {&FRAME-NAME}).
@@ -490,6 +509,8 @@ RUN htmAssociate
     ("v_conta":U,"ab_unmap.v_conta":U,ab_unmap.v_conta:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_sequencia_ope":U,"ab_unmap.v_sequencia_ope":U,ab_unmap.v_sequencia_ope:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_nome":U,"ab_unmap.v_nome":U,ab_unmap.v_nome:HANDLE IN FRAME {&FRAME-NAME}).
 
 END PROCEDURE.
 
@@ -600,6 +621,7 @@ PROCEDURE process-web-request :
          {include/assignfields.i} /* Colocado a chamada do assignFields dentro ~da i~nclude */
 
 
+
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
 			IF  get-value("cancela") <> "" THEN 
@@ -615,12 +637,14 @@ PROCEDURE process-web-request :
                 v_complem2 = " "
                 v_complem3 = " "
                 v_valor = ""
+                 v_aux_valor = ""
 						v_origem_devol = ""
                 v_digita = 1
                 vh_foco = "7"
                 v_doc = " "
                 v_cod = ""
                 v_senha = ""
+				v_nome       = ""
 						v_tpoperacao = "1"
 						v_sequencia_ope = "1".
      END.
@@ -695,6 +719,7 @@ PROCEDURE process-web-request :
 											         v_tpoperacao = "3"   ) AND
 												     v_sequencia_ope = "2"  THEN
 												DO: 
+													 
 													 RUN valida-lancamento-capital IN h-b1crap11(INPUT  v_coop,
 																								 INPUT  v_conta	,
 																								 INPUT  v_operador,
@@ -702,7 +727,8 @@ PROCEDURE process-web-request :
 																								 INPUT  int(v_caixa),
 																								 INPUT  int(v_hist),
 																								 OUTPUT v_valor,
-																								 OUTPUT v_origem_devol).
+																								 OUTPUT v_origem_devol,
+																								 OUTPUT v_nome).
 													
 													 IF RETURN-VALUE = "NOK" THEN  
 														DO:
@@ -733,6 +759,8 @@ PROCEDURE process-web-request :
 											ELSE															
 											IF get-value("sok") <> "" THEN 
 												DO:												 	
+                         
+                        
                  ASSIGN vh_foco = "12".           
 
                      ASSIGN OK = ''.
@@ -743,7 +771,7 @@ PROCEDURE process-web-request :
                                             INPUT INT(v_caixa),
                                             INPUT INT(v_hist),
                                             INPUT INT(v_doc),
-                                            INPUT DEC(v_valor)).
+                                            INPUT DEC(v_aux_valor)).
 													IF  RETURN-VALUE = "NOK" tHEN 
 														DO:
                          ASSIGN v_cod = ""
@@ -762,7 +790,7 @@ PROCEDURE process-web-request :
                                                INPUT INT(v_pac),
                                                INPUT INT(v_caixa),
                                                INPUT INT(v_hist),
-                                               INPUT DEC(v_valor),
+                                               INPUT DEC(v_aux_valor),
 																					   INPUT DEC(v_conta),
                                                INPUT v_complem1,
                                                INPUT v_complem2,
@@ -887,7 +915,7 @@ PROCEDURE process-web-request :
                                       DELETE craperr.
                                   END.
 
-                                  
+                            
                                   CREATE craperr.
                                   ASSIGN craperr.cdcooper   = crapcop.cdcooper
                                          craperr.cdagenci   = INTE(v_pac)
@@ -912,10 +940,13 @@ PROCEDURE process-web-request :
                                      v_complem2 = " "
                                      v_complem3 = " "
                                      v_valor = ""
+                                     v_aux_valor = ""
                                      v_digita = 1
                                      vh_foco = "7"
                                      v_cod = ""
-                                     v_senha = "".
+                                     v_senha = ""
+                                     v_nome = ""
+                                     v_conta = "".
                          END.
                      
                      END. 
@@ -980,6 +1011,25 @@ PROCEDURE process-web-request :
      * Enable objects that should be enabled. */
     RUN enableFields.
 
+    IF (v_tpoperacao = "2"      OR
+		    v_tpoperacao = "3"   ) THEN
+        DO:
+		     
+			      DISABLE v_complem1 WITH FRAME {&FRAME-NAME}.
+            DISABLE v_complem2 WITH FRAME {&FRAME-NAME}.
+            DISABLE v_complem3 WITH FRAME {&FRAME-NAME}.
+                  ENABLE  v_doc      WITH FRAME {&FRAME-NAME}.
+               
+            IF  INT(v_hist) = 701  OR INT(v_hist) = 702  OR
+                INT(v_hist) = 733  OR INT(v_hist)= 734   OR
+                INT(v_hist) = 1152 OR INT(v_hist) = 1153 THEN
+                ENABLE  v_cod v_senha WITH FRAME {&FRAME-NAME}.
+            ELSE
+                DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.
+        
+        END.
+    ELSE 
+       DO:
     IF v_digita = 0  /* OR 
        v_hist = '746' */  THEN
        DO:
@@ -999,6 +1049,7 @@ PROCEDURE process-web-request :
     ELSE
         DISABLE v_cod v_senha WITH FRAME {&FRAME-NAME}.
 
+       END.
 
     /* STEP 4.2c -
      * OUTPUT the Progress form buffer to the WEB stream. */
@@ -1016,7 +1067,7 @@ PROCEDURE process-web-request :
 					{&OUT}
 						   '<script language="JavaScript"> ' SKIP
 							 'document.form1.v_hist.disabled=true; ' SKIP
-							 'document.form1.v_valor.disabled=false; ' SKIP
+							 'document.form1.v_valor.disabled=true; ' SKIP
 							'</script>' SKIP.
 							
 				END.

@@ -11992,6 +11992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 		  pr_cdcritic         := null;
 			pr_dscritic         := null;
     END IF;
+		CLOSE cr_tbcotas_devolucao;
 
   EXCEPTION
     WHEN OTHERS THEN
