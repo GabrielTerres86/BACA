@@ -6,6 +6,8 @@
  * OBJETIVO     : Realiza a pesquisa dos cheques da conta informada
  * --------------
  * ALTERAÇÕES   : 06/08/2014 - Conversão Progress >> Oracle ( Renato - Supero )
+
+				  18/11/2017 - Retirado envio de parametros, não serão usados (Jonata - RKAM P364).
  * -------------- 
  */ 
 ?>
@@ -55,8 +57,6 @@
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<nrtipoop>".$nrtipoop."</nrtipoop>";
 	$xml .= "		<nrcheque>".$nrcheque."</nrcheque>";
-	$xml .= "		<execimpe>".$execimpe."</execimpe>";
-	$xml .= "		<tppeschq>".$tppeschq."</tppeschq>";
 	$xml .= "		<nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "		<nrregist>".$nrregist."</nrregist>";
 	$xml .= "	</Dados>";
