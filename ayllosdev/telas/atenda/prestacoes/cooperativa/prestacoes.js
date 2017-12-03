@@ -50,7 +50,6 @@
  * 041: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
- * 042: [05/10/2017] Adicionado campo vliofcpl no formulário (Diogo - MoutS - Projeto 410 - RF 23)
 
  */
 
@@ -617,15 +616,15 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['C_PREJU']) ) {
 
 		nomeForm = 'frmPreju';
-		altura   = '270px';
+		altura   = '240px';
 		largura  = '485px';
 		
-		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlsdprej"],label[for="vlttmupr"],label[for="vlpgmupr"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="vlsdprej"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"]','#'+nomeForm);
 
-		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
+		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr','#'+nomeForm);
 
 
 		
@@ -641,10 +640,10 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['TC']) ) {
 
 		nomeForm = 'frmDadosPrest';
-		altura   = '475px';
+		altura   = '445px';
 		largura  = '485px';
 
-		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"],label[for="vliofcpl"]','#'+nomeForm);
+		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"]','#'+nomeForm); 
 		var cTodos       = $('select,input','#'+nomeForm);
 
 		var rRotuloLinha = $('label[for="cdpesqui"],label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm);
@@ -654,20 +653,18 @@ function controlaLayout(operacao) {
 		var r_Linha2    = $('label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm );
 		var cTodosGr    = $('#dsdaval1,#dsdaval2,#dsdpagto,#dslcremp,#dsfinemp','#'+nomeForm);
 
-		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag,#vliofcpl','#'+nomeForm);
+		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag','#'+nomeForm);
 		var cContrato   = $('#nrctremp','#'+nomeForm);
 		var cTaxaMes	= $('#txmensal','#'+nomeForm);
 		var cTaxaJuros  = $('#txjuremp','#'+nomeForm);
 		var cMesesDeco  = $('#qtmesdec','#'+nomeForm);
 		var cQtAditiv   = $('#qtaditiv','#'+nomeForm);
-		var cVlIofCpl   = $('#vliofcpl','#'+nomeForm);
 
 		cQtAditiv.addClass('inteiro');
 		cTaxaMes.addClass('porcento_7');
 		cTaxaJuros.addClass('porcento_7');
 		cContrato.setMask('INTEGER','zzz.zzz.zz9','.','');
 		cMesesDeco.addClass('inteiro');
-		cVlIofCpl.addClass('porcento');
 
 		cMoeda.addClass('moeda');
 		cTodos.addClass('campo').css('width','131px');
@@ -1360,7 +1357,7 @@ function controlaLayout(operacao) {
 	}else if (in_array(operacao,['C_PAG_PREST'])){
 
 		nomeForm = 'frmVlParc';
-		altura   = '305px';
+		altura   = '295px';
 		largura  = '780px';
 
 		var rTotAtual  = $('label[for="totatual"]','#'+nomeForm );
@@ -1697,7 +1694,6 @@ function atualizaTela(){
 		$('#vlmtapar','#frmDadosPrest').val( arrayRegistros['vlmtapar'] );
 		$('#vlmrapar','#frmDadosPrest').val( arrayRegistros['vlmrapar'] );
 		$('#vltotpag','#frmDadosPrest').val( arrayRegistros['vltotpag'] );
-		$('#vliofcpl','#frmDadosPrest').val( arrayRegistros['vliofcpl'] );
 
 	}else if (in_array(operacao,['C_PREJU'])){
 
@@ -1710,7 +1706,6 @@ function atualizaTela(){
 		$('#vlrpagos','#frmPreju').val( arrayRegistros['vlrpagos'] );
 		$('#vlacresc','#frmPreju').val( arrayRegistros['vlacresc'] );
 		$('#vlsdprej','#frmPreju').val( arrayRegistros['vlsdprej'] );
-		$('#vliofcpl','#frmPreju').val( arrayRegistros['vliofcpl'] );
 		
 		/* Daniel */
 		$('#vlttmupr','#frmPreju').val( arrayRegistros['vlttmupr'] );
