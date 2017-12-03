@@ -1090,6 +1090,7 @@ PROCEDURE grava-lancamento-boletim:
 			CREATE craplcx.
 			ASSIGN craplcx.cdcooper = crapcop.cdcooper
 					craplcx.cdagenci = p-cod-agencia
+  	 		        craplcx.nrdcaixa = p-nro-caixa
 					craplcx.cdopecxa = p-cod-operador
 					craplcx.dtmvtolt = crapdat.dtmvtolt
 					craplcx.cdhistor = 2065					         
@@ -1317,6 +1318,7 @@ PROCEDURE grava-lancamento-boletim:
 							CREATE craplcx.
 							ASSIGN craplcx.cdcooper = crapcop.cdcooper
 									craplcx.cdagenci = p-cod-agencia
+                                    craplcx.nrdcaixa = p-nro-caixa
 									craplcx.cdopecxa = p-cod-operador
 									craplcx.dtmvtolt = crapdat.dtmvtolt
 									craplcx.cdhistor = 2083					         
