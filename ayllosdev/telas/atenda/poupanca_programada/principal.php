@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Março/2010                   Última Alteração: 30/09/2015
+	 Data : Março/2010                   Última Alteração: 01/12/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Poupanças da    
 	             tela ATENDA                                          
@@ -16,6 +16,8 @@
 	 
 	             30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
 						     (Gabriel - Rkam -> Projeto 217).	
+
+				 01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 						  
 	***************************************************************************/
 	
@@ -42,6 +44,7 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -195,7 +198,15 @@
 		<input type="image" id="btnCancelar" name="btnCancelar" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoCancelar();return false;"'; } ?> />
 		<input type="image" id="btnConsultar" name="btnConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="consultarPoupanca();return false;"'; } ?> />
 		<input type="image" id="btnImprimir" name="btnImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="imprimirAutorizacao(\'\',\'\');return false;"'; } ?> />
-		<input type="image" id="btnIncluir" name="btnIncluir" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoIncluir();return false;"'; } ?> />
+		
+		<?php if(!($sitaucaoDaContaCrm == '4' || 
+				   $sitaucaoDaContaCrm == '7' || 
+				   $sitaucaoDaContaCrm == '8'  )){?>
+
+			<input type="image" id="btnIncluir" name="btnIncluir" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoIncluir();return false;"'; } ?> />
+		
+		<?}?>
+		
 		<input type="image" id="btnReativar" name="btnReativar" src="<?php echo $UrlImagens; ?>botoes/reativar.gif" <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoReativar();return false;"'; } ?> />
 		<input type="image" id="btnResgate" name="btnResgate" src="<?php echo $UrlImagens; ?>botoes/resgate.gif" <?php if (!in_array("G",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoResgate();return false;"'; } ?> />
 		<input type="image" id="btnSuspender" name="btnSuspender" src="<?php echo $UrlImagens; ?>botoes/suspender.gif" <?php if (!in_array("S",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoSuspender();return false;"'; } ?> />

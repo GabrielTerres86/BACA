@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 01/12/2017
   
     Dados referentes ao programa:
   
@@ -128,6 +128,8 @@
 							 (Jonata - RKAM P364). 
 
 			   16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
+
+			   01/12/2017 - Retirado leitura da craplct ( Jonata - RKAM P364).
 
 ............................................................................*/
 
@@ -3251,42 +3253,25 @@ PROCEDURE busca_contas_demitidas:
 						    crapass.nrdconta = par_nrdconta) AND
 						   (crapass.cdsitdct = 4             OR
 						    crapass.cdsitdct = 7             OR
-						    crapass.cdsitdct = 8            )
-
+						    crapass.cdsitdct = 8            ) AND
+							crapass.dtelimin = ? 
 						    NO-LOCK:
 		
 		ASSIGN aux_vldcotas = 0.
 		
-		IF crapass.cdsitdct = 8 THEN
-		   DO:
-		      FIND LAST craplct WHERE craplct.cdcooper = crapass.cdcooper AND
-			                          craplct.nrdconta = crapass.nrdconta AND
-									  craplct.cdhistor = (IF crapass.inpessoa = 1 THEN 
-									                         2079
-														  ELSE
-														     2080)
-									  NO-LOCK NO-ERROR.
-									  
-			  IF NOT AVAIL craplct THEN
-			     NEXT.
-				 
-			  ASSIGN aux_vldcotas = craplct.vllanmto.
-		   
-		   END.
-		ELSE
-		    DO:
+		    
 			
-				FIND FIRST crapcot WHERE crapcot.cdcooper = crapass.cdcooper AND
-										 crapcot.nrdconta = crapass.nrdconta AND
-										 crapcot.vldcotas > 0
-										 NO-LOCK NO-ERROR.
-										   
-				IF NOT AVAIL crapcot THEN
-				   NEXT.			
-			
-				ASSIGN aux_vldcotas = crapcot.vldcotas.
+			FIND FIRST crapcot WHERE crapcot.cdcooper = crapass.cdcooper AND
+									 crapcot.nrdconta = crapass.nrdconta AND
+									 crapcot.vldcotas > 0
+									 NO-LOCK NO-ERROR.
+									   
+			IF NOT AVAIL crapcot THEN
+			   NEXT.			
+		
+			ASSIGN aux_vldcotas = crapcot.vldcotas.
 				
-			END.
+		
 			
 		ASSIGN par_qtdregis = par_qtdregis + 1
 		       par_vlrtotal = par_vlrtotal + aux_vldcotas.

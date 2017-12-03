@@ -19,6 +19,7 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
+ * 012: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
  */
 ?>
 
@@ -80,7 +81,15 @@
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
 	<a href="#" class="botao" id="btExcluir"   onClick="controlaOperacao('TE');">Excluir</a>
-	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	
+	<?php if(!($sitaucaoDaContaCrm == '4' || 
+			   $sitaucaoDaContaCrm == '7' || 
+			   $sitaucaoDaContaCrm == '8'  )){?>
+
+			<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	
+	<?}?>
+	
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
 	<div style="margin-top:5px;" />

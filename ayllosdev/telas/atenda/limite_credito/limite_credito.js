@@ -33,7 +33,8 @@
  *
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
- * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
+ * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
+ * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
  */
 
 var callafterLimiteCred = '';
@@ -119,6 +120,17 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 
     var flpropos;
 
+	//Projeto CRM: Se for uma das situações não deve permitir acesso a inclusão.
+	if((sitaucaoDaContaCrm == '4' || 
+	    sitaucaoDaContaCrm == '7' || 
+	    sitaucaoDaContaCrm == '8' ) &&
+        (cddopcao == "N" || cddopcao == "N1")){ 
+
+	    showError('inform', 'Situa&ccedil;&atilde;o de conta n&atilde;o permite acesso.', 'Alerta - Ayllos', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		return false;
+		
+	}
+	
     if (cddopcao == "@") {	// Opção Principal
         var msg = ", carregando dados do " + strTitRotinaLC;
         var urlOperacao = UrlSite + "telas/atenda/limite_credito/principal.php";

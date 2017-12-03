@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: poupanca_programada.js                                     ***//
 //*** Autor: David                                                      ***//
-//*** Data : Março/2010                   Ultima Alteracao: 04/06/2013  ***//
+//*** Data : Março/2010                   Ultima Alteracao: 01/12/2017  ***//
 //***                                                                   ***//
 //*** Objetivo  : Biblioteca de funções da rotina Poupança Programada   ***//
 //***             da tela ATENDA                                        ***//
@@ -24,7 +24,12 @@
 //***						   impressao em imprimirAutorizacao() (Jorge).*//
 //***    																***//
 //***			  04/06/2013 - Incluido var complemento no controlaLayout**//
-//***						   (Lucas R.)                               ***//  
+//***						   (Lucas R.)                               ***// 
+//***                                                                   ***//
+//***             01/12/2017 - Não permitir acesso a opção de incluir   ***//
+//***                          quando conta demitida                    ***//
+//***                         (Jonata - RKAM P364).                     ***//
+//***                                                                   ***//
 //*************************************************************************//
 
 var nrctrrpp    = 0;        // Variável para armazenar número da poupança selecionada
@@ -56,6 +61,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		url: UrlSite + "telas/atenda/poupanca_programada/principal.php",
 		data: {
 			nrdconta: nrdconta,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {

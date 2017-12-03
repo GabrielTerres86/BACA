@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/11/2017
+    Data    : Junho/2010                      Ultima atualizacao: 01/12/2017
   
     Dados referentes ao programa:
   
@@ -164,6 +164,9 @@
 			   21/11/2017 - Retirado validacao de convenio CDC (Jonata - RKAM P364).
 
 			   22/11/2017 - Incluido verificao de cartao de credito (Jonata - RKAM p364).
+
+			   01/12/2017 - Retirado verificacao de DDA (Jonata - RKAM P364).
+
 ........................................................................*/
 
 
@@ -172,7 +175,6 @@
 { sistema/generico/includes/b1wgen0003tt.i }
 { sistema/generico/includes/b1wgen0004tt.i }
 { sistema/generico/includes/b1wgen0052tt.i }
-{ sistema/generico/includes/b1wgen0079tt.i }
 { sistema/generico/includes/b1wgen0001tt.i }
 { sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -1357,7 +1359,6 @@ PROCEDURE Produtos_Servicos_Ativos:
 	DEF VAR aux_vlsrdrpp AS DECIMAL INIT 0                          NO-UNDO.
 
     DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0082 AS HANDLE                                  NO-UNDO.
 	DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
@@ -1655,33 +1656,6 @@ PROCEDURE Produtos_Servicos_Ativos:
             END.
              
 
-        /********************** DDA (Pagador eletronico) **********************/
-        RUN sistema/generico/procedures/b1wgen0079.p PERSISTENT 
-            SET h-b1wgen0079.
-        RUN requisicao-consulta-situacao IN h-b1wgen0079 
-                                        (INPUT par_cdcooper,
-                                         INPUT par_cdagenci,
-                                         INPUT par_nrdcaixa,
-                                         INPUT par_cdoperad,
-                                         INPUT par_nmdatela,
-                                         INPUT par_idorigem,
-                                         INPUT par_nrdconta,
-                                         INPUT par_idseqttl,
-                                         INPUT FALSE,
-                                        OUTPUT TABLE tt-erro,
-                                        OUTPUT TABLE tt-consulta-situacao).
-        DELETE PROCEDURE h-b1wgen0079.
-
-        IF  CAN-FIND(FIRST tt-consulta-situacao WHERE
-                           tt-consulta-situacao.flgativo = TRUE NO-LOCK)  THEN
-            DO:
-                ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
-                CREATE tt-prod_serv_ativos.
-                ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-                       tt-prod_serv_ativos.nmproser = "DDA (Pagador Eletronico)".
-            END.
-
-        
         /********************** PAMCARD  *********************************/
         IF par_dtdemiss <> ? THEN
         DO:
