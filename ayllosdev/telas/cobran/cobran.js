@@ -415,11 +415,6 @@ function buscaOpcao() {
                 formataOpcaoS();
             }
 
-            // Seta os valores caso tenha vindo do CRM
-            if ($("#crm_inacesso","#frmCab").val() == 1) {
-                $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmCab").val());
-            }
-
 			if (flgimped){
 				$('#frmOpcao', '#flgregis').val('yes').change();
 				$('#frmOpcao', '#tprelato').val('5').change();

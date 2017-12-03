@@ -5,8 +5,7 @@
  * DATA CRIAÇÃO : 21/06/2011
  * OBJETIVO     : Cabeçalho para a tela MANTAL
  * --------------
- * ALTERAÇÕES   : 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
-                  04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
+ * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
  * --------------
  */ 
 ?>

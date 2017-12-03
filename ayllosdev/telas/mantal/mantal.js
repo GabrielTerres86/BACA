@@ -8,9 +8,8 @@
  * 000: [02/07/2012] Jorge Hamaguchi  (CECRED): Alterado funcao Gera_Impressao(), novo esquema de impressao.
  * 001: [06/06/2016] Lucas Ranghetti  (CECRED): Incluir validação para o campo cAgencia e validar agencia ( #462172)
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
- * 003: [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
- * 004: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
- * 005: [14/11/2017] Jonata           (RKAM)  : Ajuste nas rotinas de controle para sequencia dos impedimetnos (P364)
+ * 003: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
+ * 004: [14/11/2017] Jonata           (RKAM)  : Ajuste nas rotinas de controle para sequencia dos impedimetnos (P364)
                                
  * --------------
  */
@@ -69,7 +68,7 @@ function estadoInicial() {
 
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
-
+	
 	cBanco.attr('aux','');
 	cConta.focus();
 	removeOpacidade('divTela');

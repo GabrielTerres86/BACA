@@ -26,9 +26,7 @@
              01/12/2015 - Adicionado alerta nas telas de consulta para 
                           caso a comprovacao de vida esteja vencida.
                           Projeto 255 (Lombardi).
-
-             11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
-
+						  
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM - P364).
 						  
 ******************************************************************************************/
@@ -135,13 +133,13 @@ function formataOpcoes(opcao){
 		case 'L':
 		
 			formataOpcoesLog();
-
+		
 		break;
 		
 		default:
 			
 			formataOpcoesBeneficio();
-
+			
 		break;
 					
 	}
