@@ -1534,6 +1534,7 @@ create or replace package body cecred.PAGA0002 is
       IF pr_flgexecu = 0 THEN
         FOR vr_idxp IN vr_tab_agenda_recorrente.first..vr_tab_agenda_recorrente.last LOOP
           vr_vltarifa := vr_vltarifa + vr_tab_agenda_recorrente(vr_idxp).vltarifa;
+          EXIT;
         END LOOP;
       END IF;
 

@@ -1623,6 +1623,9 @@ PROCEDURE process-web-request :
 
         IF  GET-VALUE("flcadast") <> ""  THEN
             ASSIGN aux_flcadast = INT(GET-VALUE("flcadast")).
+            
+        IF  GET-VALUE("tpoperac") <> ""  THEN
+            ASSIGN aux_tpoperac = INT(GET-VALUE("tpoperac")).
 
         /* Verificar senha e frase */
         IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
@@ -1649,6 +1652,10 @@ PROCEDURE process-web-request :
                   /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
                   CAN-DO("100",STRING(aux_operacao))
                ) OR
+               (
+                  /** Nao utiliza criptografia se for pagamento de GPS **/
+                  CAN-DO("153",STRING(aux_operacao)) AND (aux_tpoperac = 3 OR aux_tpoperac = 5)
+               ) 
                (
                   /** Nao utiliza criptografia se for pagamento de emprestimo **/
                   CAN-DO("158",STRING(aux_operacao))
