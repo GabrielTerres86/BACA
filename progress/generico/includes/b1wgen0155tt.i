@@ -26,7 +26,16 @@ DEF TEMP-TABLE tt-cooperado    NO-UNDO
 DEF TEMP-TABLE tt-dados-blq LIKE crapblj 
     FIELD dsmodali AS CHAR
     FIELD vltotblq AS DECI
-    FIELD dscpfcgc AS CHAR.
+    FIELD nmrofici AS CHAR
+    FIELD dscpfcgc AS CHAR
+    FIELD idmodali AS INT
+	FIELD dsblqini AS CHAR
+    FIELD dsblqfim AS CHAR.
+	
+DEF TEMP-TABLE tt-dados-blq-oficio NO-UNDO
+    FIELD nrdconta AS INT
+    FIELD nroficio AS CHAR
+    FIELD vlbloque AS DECI.
 
 DEF TEMP-TABLE tt-imprime-bloqueio NO-UNDO
     FIELD cdagenci AS INT
