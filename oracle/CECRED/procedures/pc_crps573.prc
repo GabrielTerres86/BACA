@@ -2742,11 +2742,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                     ,pr_texto_completo => vr_xml_3040_temp
                                     ,pr_texto_novo     => '<Gar'
                                                        || ' Tp="0104"' 
-                                                       || ' Ident="' || vr_nrcpfcnpj || '"' 
-                                                       || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"' 
-                                                       || ' VlrData="' || replace(to_char(vr_vlratualizado ,'fm99999999999990D00'),',','.') || '"'
-                                                       || ' DtReav="' || to_char(vr_dtrefere,'YYYY-MM-DD') || '"' 
-                                                       || ' />');
+                                                       || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"');
+              
+             -- Enviar o ident quando o CNPJ for diferente do contratante do empréstimo
+             IF vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_nrcpfcnpj THEN
+               gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                      ,pr_texto_completo => vr_xml_3040_temp
+                                      ,pr_texto_novo     => ' Ident="' || vr_nrcpfcnpj || '"');
+             END IF;
              
              IF vr_vlroriginal <> vr_vlratualizado THEN
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
