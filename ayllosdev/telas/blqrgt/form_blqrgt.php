@@ -10,34 +10,41 @@
  */
  ?>
  <fieldset style="padding: 10px <? echo $cddopcao == 'L' ? '110px' : '180px';?> 5px <? echo $cddopcao == 'L' ? '110px' : '180px';?>;">
-  <legend align="center">Bloqueios de Aplica&ccedil;&atilde;o </legend>
+  <legend align="center">Bloqueios de Aplica&ccedil;&atilde;o/Poupan&ccedil;a </legend>
   <div id="divBloqueiosAplicacao" class="divRegistros">
-	<table>
-	  <thead>
-		<tr>
-			<th>Tipo</th>
-			<th>Aplica&ccedil;&atilde;o</th>
-			<th>Saldo</th>
-		<? if ($cddopcao == 'L') { ?>
-			<th>Desbloquear</th>
-		<? } ?>
-		</tr>
-	  </thead>
-	  <tbody>
-		<? foreach( $bloqueios as $bloqueio ) { ?>
-		  <tr id="trBloqueio" style="cursor: pointer;">
-			<td align="center"><? echo $bloqueio->dstipapl ?></td>
-			<td align="center"><? echo $bloqueio->nrctrrpp ?></td>
-			<td align="center"><? echo $bloqueio->vlsdrdpp ?></td>
+	<?php if ($countBloqueios > 0) { ?>
+		<table>
+		  <thead>
+			<tr>
+				<th>Tipo</th>
+				<th>Aplica&ccedil;&atilde;o</th>
+				<th>Saldo</th>
 			<? if ($cddopcao == 'L') { ?>
-				<td align="center" style="text-align:center">
-					<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioApl('<? echo $bloqueio->tpaplica; ?>', '<? echo $bloqueio->idtipapl; ?>', '<? echo $bloqueio->nrctrrpp; ?>', '<? echo $bloqueio->nmprodut; ?>');"></img>
-				</td>
+				<th>Desbloquear</th>
 			<? } ?>
-		  </tr>
-		<? } ?>
-	  </tbody>
-	</table>
+			</tr>
+		  </thead>
+		  <tbody>
+			<? foreach( $bloqueios as $bloqueio ) { ?>
+			  <tr id="trBloqueio" style="cursor: pointer;">
+				<td align="center"><? echo $bloqueio->dstipapl ?></td>
+				<td align="center"><? echo $bloqueio->nrctrrpp ?></td>
+				<td align="center"><? echo $bloqueio->vlsdrdpp ?></td>
+				<? if ($cddopcao == 'L') { ?>
+					<td align="center" style="text-align:center">
+						<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioApl('<? echo $bloqueio->tpaplica; ?>', '<? echo $bloqueio->idtipapl; ?>', '<? echo $bloqueio->nrctrrpp; ?>', '<? echo $bloqueio->nmprodut; ?>');"></img>
+					</td>
+				<? } ?>
+			  </tr>
+			<? } ?>
+		  </tbody>
+		</table>
+	<?php
+	} else {
+		?><center><?
+		echo "Sem aplica&ccedil;&otilde;es/poupan&ccedil;a bloqueadas para a conta informada.";
+		?></center><?
+	} ?>
   </div>
 </fieldset>
 
@@ -48,12 +55,14 @@
 		<table>
 		  <thead>
 			<tr>
-			  <th>Tipo</th>
-			  <th>Conta</th>
-			  <th>Contrato</th>
-			  <th>Saldo Dev/Limite</th>
-			  <th>Bloqueado</th>
-			  <th>Desbloquear</th>
+				<th>Tipo</th>
+				<th>Conta</th>
+				<th>Contrato</th>
+				<th>Saldo Dev/Limite</th>
+				<th>Bloqueado</th>
+			<? if ($cddopcao == 'L') { ?>
+				<th>Desbloquear</th>
+			<? } ?>
 			</tr>
 		  </thead>
 		  <tbody>
@@ -67,16 +76,20 @@
 				<td align="center"><? echo getByTagName($registro->tags,'nrcontrato') ?></td>
 				<td align="center"><? echo getByTagName($registro->tags,'vlopera') ?></td>
 				<td align="center"><? echo getByTagName($registro->tags,'valbloque') ?></td>
-				<td align="center" style="text-align:center">
-					<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioCob('<? echo getByTagName($registro->tags,'idcobertura'); ?>', '<? echo getByTagName($registro->tags,'vlopera') ?>');"></img>
-				</td>
+				<? if ($cddopcao == 'L') { ?>
+					<td align="center" style="text-align:center">
+						<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioCob('<? echo getByTagName($registro->tags,'idcobertura'); ?>', '<? echo getByTagName($registro->tags,'vlopera') ?>');"></img>
+					</td>
+				<? } ?>
 			  </tr>
 			<? } ?>
 		  </tbody>
 		</table>
 	<?php
 	} else {
+		?><center><?
 		echo "Sem aplica&ccedil;&otilde;es / cobertura bloqueadas para a conta informada.";
+		?></center><?
 	} ?>
   </div>
 </fieldset>

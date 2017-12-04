@@ -101,6 +101,7 @@
 	$registros .= '</Root>';
 	
 	$bloqueios = simplexml_load_string($registros);
+	$countBloqueios = count($bloqueios);
 	
 	include('form_blqrgt.php');
 	

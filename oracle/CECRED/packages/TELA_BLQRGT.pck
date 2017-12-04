@@ -92,9 +92,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
     
-      -- Variaveis auxiliares
-      vr_retxml XMLType;
-    
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
       vr_cdoperad VARCHAR2(100);
@@ -159,8 +156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       
       -- Variaveis auxiliares
       vr_valopera   NUMBER       := 0;
-      vr_datopera   DATE         := NULL;
+      vr_vlroriginal         NUMBER       := 0;
       vr_valbloque  NUMBER       := 0;
+      vr_nrcpfcnpj_cobertura NUMBER       := 0;
       vr_tpcontrato VARCHAR2(10) := '';
     
     BEGIN
@@ -228,6 +226,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                          ,pr_nrctremp => rw_cobertura.nrcontrato);
           FETCH cr_crapepr INTO rw_crapepr;
           
+          CLOSE cr_crapepr;
+          
           vr_valopera := rw_crapepr.vlsdeved;
           
         ELSE
@@ -237,12 +237,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                          ,pr_nrctrlim => rw_cobertura.nrcontrato
                          ,pr_tpctrlim => rw_cobertura.tpcontrato);
           FETCH cr_craplim INTO rw_craplim;
-          
+          CLOSE cr_craplim;
           vr_valopera := rw_craplim.vllimite;
         END IF;
         
         -- Calcular o valor a bloquear
-        vr_valbloque := BLOQ0001.fn_valor_bloqueio_garantia (pr_idcobert => rw_cobertura.idcobertura);
+        BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert =>            rw_cobertura.idcobertura
+                                               ,pr_vlroriginal =>         vr_vlroriginal
+                                               ,pr_vlratualizado =>       vr_valbloque
+                                               ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj_cobertura
+                                               ,pr_dscritic =>            vr_dscritic);
         
         IF vr_valbloque > 0 THEN
           
@@ -336,9 +340,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
     
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-    
-      -- Variaveis auxiliares
-      vr_retxml XMLType;
       
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
