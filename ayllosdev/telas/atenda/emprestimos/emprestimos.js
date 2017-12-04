@@ -1824,9 +1824,9 @@ function controlaLayout(operacao) {
         var rProposta = $('label[for="flgimppr"]', '#' + nomeForm);
         var rNtPromis = $('label[for="flgimpnp"]', '#' + nomeForm);
         var rLiquidacoes = $('label[for="dsctrliq"]', '#' + nomeForm);
- //       var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
- //       var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
- //       var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
+        var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
+        var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
+        var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
