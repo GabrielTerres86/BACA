@@ -50,7 +50,7 @@ BEGIN
             ,crapepr.dtmvtolt
             ,crapepr.qtpreemp
             ,crapepr.vlsprojt
-            ,crapepr.dtdpagto
+            ,crawepr.dtdpagto
             ,crapepr.vlemprst
             ,crapepr.cdlcremp
             ,crawepr.txmensal
@@ -307,17 +307,17 @@ BEGIN
 
       -- Caso seja ultimo registro da conta
       IF rw_epr_pep.numconta = rw_epr_pep.qtdconta THEN
-         vr_qtdconta := vr_qtdconta + 1;
-         -- Salvar a cada 1.000 contas
-         IF MOD(vr_qtdconta,1000) = 0 THEN
-           -- Grava os dados conforme PL Table
-           pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
-                         ,pr_tab_parc_epr => vr_tab_parc_epr);
-           -- Limpa PL Table
-           vr_tab_parc_epr.DELETE;
-           vr_tab_parc_pep.DELETE;
-         END IF;
-      END IF;
+           vr_qtdconta := vr_qtdconta + 1;
+           -- Salvar a cada 1.000 contas
+           IF MOD(vr_qtdconta,1000) = 0 THEN
+             -- Grava os dados conforme PL Table
+             pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
+                           ,pr_tab_parc_epr => vr_tab_parc_epr);
+             -- Limpa PL Table
+             vr_tab_parc_epr.DELETE;
+             vr_tab_parc_pep.DELETE;
+           END IF;
+        END IF;
 
     END LOOP; -- cr_epr_pep
 

@@ -119,10 +119,10 @@ BEGIN
     vr_tab_craplcr typ_tab_craplcr;
     
     -- Definicao do tipo da tabela para controlar as parcelas que precisam ser processadas
-    TYPE typ_tab_controle_empr_pago IS
+    TYPE typ_tab_controle_lcto_juros IS
       TABLE OF BOOLEAN
         INDEX BY VARCHAR2(20); --> O número da conta + nr contrato serão as chaves
-    vr_tab_controle_empr_pago typ_tab_controle_empr_pago;
+    vr_tab_controle_lcto_juros typ_tab_controle_lcto_juros;
 
     ------------------------------- VARIAVEIS -------------------------------
     vr_flgachou          BOOLEAN;
@@ -133,15 +133,20 @@ BEGIN
     vr_vlsldisp          NUMBER;
     vr_vlpagpar          NUMBER;
     vr_percmult          NUMBER(25,2);
-    vr_diavecto          PLS_INTEGER;
+    vr_vljuremu          NUMBER(25,2);
+    vr_vljurcor          NUMBER(25,2);
     vr_dstextab          craptab.dstextab%TYPE;
     vr_txdiaria          craplcr.txdiaria%TYPE;
     vr_dsctactrjud       crapprm.dsvlrprm%TYPE := NULL;
-    vr_index_controle    VARCHAR2(20);
-    vr_dtvencto          DATE;
     vr_qtdconta          INTEGER;
     vr_ultconta          INTEGER;
     vr_idcontrole        tbgen_batch_controle.idcontrole%TYPE;
+    vr_dtvencto_niv      crappep.dtvencto%TYPE;
+    vr_dtrefjur          crapepr.dtrefjur%TYPE;
+    vr_diarefju          crapepr.diarefju%TYPE;
+    vr_mesrefju          crapepr.mesrefju%TYPE;
+    vr_anorefju          crapepr.anorefju%TYPE;
+    vr_index_controle    VARCHAR2(20);
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Grava os dados dos pagamentos e controle do batch
@@ -200,7 +205,7 @@ BEGIN
 
     -- Limpar tabela de memoria
     vr_tab_craplcr.DELETE;
-    vr_tab_controle_empr_pago.DELETE;
+    vr_tab_controle_lcto_juros.DELETE;
     
     -- Obter o % de multa da CECRED - TAB090
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 3 -- Fixo 3 - Cecred
@@ -252,9 +257,129 @@ BEGIN
       vr_floperac := (vr_tab_craplcr(rw_epr_pep.cdlcremp).dsoperac = 'FINANCIAMENTO');
       -- Calcula a taxa diaria
       vr_txdiaria := POWER(1 + (NVL(rw_epr_pep.txmensal,0) / 100),(1 / 30)) - 1;
-      --------------------
-      -- Parcela em dia --
-      --------------------
+      
+      -------------------------------------------------------------------------------------------------------------
+      -- INICIO -- Na data de aniversario da parcela devera ser lancado Juros Remuneratorio e Juros de Correcao
+      -------------------------------------------------------------------------------------------------------------
+      vr_dtvencto_niv := TO_DATE(TO_CHAR(rw_epr_pep.dtvencto,'DD')||'/'||
+                                 TO_CHAR(rw_crapdat.dtmvtolt,'MM')||'/'||
+                                 TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'DD/MM/RRRR');
+                             
+      IF vr_dtvencto_niv > rw_crapdat.dtmvtoan AND vr_dtvencto_niv <= rw_crapdat.dtmvtolt THEN
+        -- Condicao para verificar se a parcela ja foi lancado Juros
+        vr_index_controle := LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
+        IF vr_tab_controle_lcto_juros.EXISTS(vr_index_controle) THEN
+          CONTINUE;
+        END IF;
+        
+        IF rw_epr_pep.nrctremp = 212897 THEN
+          NULL;
+        END IF;
+        
+        -- Tab de controle para somente lancar juros para uma parcela por contrato
+        vr_tab_controle_lcto_juros(vr_index_controle) := TRUE;       
+      
+        vr_diarefju := rw_epr_pep.diarefju;
+        vr_mesrefju := rw_epr_pep.mesrefju;
+        vr_anorefju := rw_epr_pep.anorefju;          
+        -- Efetua o lancamento de Juros Remuneratorio
+        EMPR0011.pc_efetua_lcto_juros_remun(pr_cdcooper => pr_cdcooper
+                                           ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                           ,pr_cdagenci => rw_epr_pep.cdagenci
+                                           ,pr_cdpactra => rw_epr_pep.cdagenci
+                                           ,pr_cdoperad => 1
+                                           ,pr_cdorigem => 7 -- BATCH
+                                           ,pr_nrdconta => rw_epr_pep.nrdconta
+                                           ,pr_nrctremp => rw_epr_pep.nrctremp
+                                           ,pr_txjuremp => rw_epr_pep.txjuremp
+                                           ,pr_vlpreemp => rw_epr_pep.vlpreemp
+                                           ,pr_dtlibera => rw_epr_pep.dtmvtolt
+                                           ,pr_dtrefjur => rw_epr_pep.dtrefjur
+                                           ,pr_floperac => vr_floperac
+                                           ,pr_dtvencto => vr_dtvencto_niv
+                                           ,pr_vlsprojt => rw_epr_pep.vlsprojt
+                                           ,pr_ehmensal => vr_flmensal
+                                           ,pr_txdiaria => vr_txdiaria
+                                           ,pr_nrparepr => rw_epr_pep.nrparepr
+                                           ,pr_diarefju => vr_diarefju
+                                           ,pr_mesrefju => vr_mesrefju
+                                           ,pr_anorefju => vr_anorefju
+                                           ,pr_vljuremu => vr_vljuremu
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        -- Efetuar o lancameto de Juros de Correcao
+        EMPR0011.pc_efetua_lcto_juros_correc (pr_cdcooper => pr_cdcooper
+                                             ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                             ,pr_cdagenci => rw_epr_pep.cdagenci
+                                             ,pr_cdpactra => rw_epr_pep.cdagenci
+                                             ,pr_cdoperad => 1
+                                             ,pr_cdorigem => 7 -- BATCH
+                                             ,pr_flgbatch => TRUE
+                                             ,pr_nrdconta => rw_epr_pep.nrdconta
+                                             ,pr_nrctremp => rw_epr_pep.nrctremp
+                                             ,pr_dtlibera => rw_epr_pep.dtmvtolt
+                                             ,pr_dtrefjur => rw_epr_pep.dtrefjur
+                                             ,pr_vlrdtaxa => rw_epr_pep.vltaxatu
+                                             ,pr_txjuremp => rw_epr_pep.txjuremp
+                                             ,pr_vlpreemp => rw_epr_pep.vlpreemp
+                                             ,pr_dtvencto => vr_dtvencto_niv
+                                             ,pr_vlsprojt => rw_epr_pep.vlsprojt
+                                             ,pr_ehmensal => vr_flmensal
+                                             ,pr_floperac => vr_floperac
+                                             ,pr_nrparepr => rw_epr_pep.nrparepr
+                                             ,pr_vljurcor => vr_vljurcor
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
+        vr_dtrefjur := rw_crapdat.dtmvtolt;
+        -- Condicao para verificar se foi lancado Juros Remuneratorio no contrato de Emprestimo
+        IF NVL(vr_vljuremu,0) <= 0 THEN
+          vr_dtrefjur := rw_epr_pep.dtrefjur;
+          vr_diarefju := rw_epr_pep.diarefju;
+          vr_mesrefju := rw_epr_pep.mesrefju;
+          vr_anorefju := rw_epr_pep.anorefju;
+        END IF;
+        
+        -- Atualizar Emprestimo
+        BEGIN
+          UPDATE crapepr
+             SET crapepr.dtrefjur = vr_dtrefjur
+                ,crapepr.diarefju = vr_diarefju
+                ,crapepr.mesrefju = vr_mesrefju
+                ,crapepr.anorefju = vr_anorefju
+                ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
+                ,crapepr.vljuratu = NVL(crapepr.vljuratu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
+                ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
+           WHERE crapepr.cdcooper = pr_cdcooper
+             AND crapepr.nrdconta = rw_epr_pep.nrdconta
+             AND crapepr.nrctremp = rw_epr_pep.nrctremp;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar crapepr'   ||
+                           '. Coop.: '    || pr_cdcooper || 
+                           '. Conta: '    || rw_epr_pep.nrdconta ||
+                           '. Contrato: ' || rw_epr_pep.nrctremp || 
+                           '. ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        
+      END IF;
+      -------------------------------------------------------------------------------------------------------------
+      -- FIM -- Na data de aniversario da parcela devera ser lancado Juros Remuneratorio e Juros de Correcao
+      -------------------------------------------------------------------------------------------------------------
+      
+      -------------------------------------------------------------------------------------------------------------
+      -- Parcela em dia
+      -------------------------------------------------------------------------------------------------------------
       IF rw_epr_pep.dtvencto > rw_crapdat.dtmvtoan AND rw_epr_pep.dtvencto <= rw_crapdat.dtmvtolt THEN
         -- Chama validacao generica
         EMPR0011.pc_valida_pagamentos_pos(pr_cdcooper => pr_cdcooper
@@ -426,69 +551,8 @@ BEGIN
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
-
-      ----------------------
-      -- Parcela a Vencer --
-      ----------------------
-      ELSIF rw_epr_pep.dtvencto > rw_crapdat.dtmvtolt AND vr_flmensal THEN
-        -- Condicao para verificar se a parcela ja foi lancado Juros
-        vr_index_controle := LPAD(rw_epr_pep.nrdconta,10,'0') || LPAD(rw_epr_pep.nrctremp,10,'0');
-        IF vr_tab_controle_empr_pago.EXISTS(vr_index_controle) THEN
-          CONTINUE;
-        END IF;
         
-        -- Tab de controle para somente lancar juros para uma parcela por contrato
-        vr_tab_controle_empr_pago(vr_index_controle) := TRUE;
-        
-        -- Condicao para os casos com vencimento do dia 26/27, e a mensal é do dia 23/24
-        IF TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'DD')) > TO_NUMBER(TO_CHAR(rw_epr_pep.dtvencto,'DD')) THEN
-          CONTINUE;
-        END IF;     
-      
-        -- Dia do Vencimento
-        vr_diavecto := TO_NUMBER(TO_CHAR(rw_epr_pep.dtvencto,'DD'));
-        -- Monta data de vencimento
-        vr_dtvencto := TO_DATE(vr_diavecto || '/' || TO_CHAR(rw_crapdat.dtmvtolt, 'MM/RRRR'),'DD/MM/RRRR');
-        -- Efetua o lancamento de Juros Remuneratorio/Juros Correcao
-        EMPR0011.pc_efetua_pagamento_em_dia(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtcalcul => rw_crapdat.dtmvtolt
-                                           ,pr_cdagenci => rw_epr_pep.cdagenci
-                                           ,pr_cdpactra => rw_epr_pep.cdagenci
-                                           ,pr_cdoperad => 1
-                                           ,pr_cdorigem => 7 -- BATCH
-                                           ,pr_flgbatch => TRUE
-                                           ,pr_nrdconta => rw_epr_pep.nrdconta
-                                           ,pr_nrctremp => rw_epr_pep.nrctremp
-                                           ,pr_vlpreemp => rw_epr_pep.vlpreemp
-                                           ,pr_qtprepag => rw_epr_pep.qtprepag
-                                           ,pr_qtprecal => rw_epr_pep.qtprecal
-                                           ,pr_dtlibera => rw_epr_pep.dtmvtolt
-                                           ,pr_dtrefjur => rw_epr_pep.dtrefjur
-                                           ,pr_diarefju => rw_epr_pep.diarefju
-                                           ,pr_mesrefju => rw_epr_pep.mesrefju
-                                           ,pr_anorefju => rw_epr_pep.anorefju
-                                           ,pr_vlrdtaxa => rw_epr_pep.vltaxatu
-                                           ,pr_txdiaria => vr_txdiaria
-                                           ,pr_txjuremp => rw_epr_pep.txjuremp
-                                           ,pr_vlsprojt => rw_epr_pep.vlsprojt
-                                           ,pr_floperac => vr_floperac
-                                           ,pr_nrseqava => 0
-                                           ,pr_nrparepr => rw_epr_pep.nrparepr
-                                           ,pr_dtvencto => vr_dtvencto
-                                           ,pr_vlpagpar => 0
-                                           ,pr_vlsdvpar => rw_epr_pep.vlsdvpar
-                                           ,pr_vlsdvatu => rw_epr_pep.vlsdvatu
-                                           ,pr_vljura60 => rw_epr_pep.vljura60
-                                           ,pr_ehmensal => vr_flmensal
-                                           ,pr_vlsldisp => 0
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic);
-        -- Se houve erro
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;
-        
-      END IF; -- Parcela a Vencer
+      END IF; -- Parcela em Atraso
 
       -- Faz a liquidacao do contrato
       EMPR0011.pc_efetua_liquidacao_empr_pos(pr_cdcooper   => pr_cdcooper
