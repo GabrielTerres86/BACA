@@ -1410,7 +1410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       WHERE usr.cdcooper = cop.cdcooper
         AND usr.cdcooper = pr_cdcooper
         AND usr.nrdconta = pr_nrdconta
-        AND (pr_idseqttl IS NULL OR usr.idseqttl = pr_idseqttl);
+        AND (pr_idseqttl IS NULL OR pr_idseqttl = 0 OR usr.idseqttl = pr_idseqttl);
     TYPE typ_usuarios_internet IS TABLE OF cr_usuarios_internet%ROWTYPE INDEX BY PLS_INTEGER;
     vr_usuarios_internet typ_usuarios_internet;
     
