@@ -1788,13 +1788,13 @@ function controlaLayout(operacao) {
 
 
         nomeForm = 'frmNovaProp';
-        altura = '330px';
-        largura = '465px';
+        altura = '320px';
+        largura = '445px';
 
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="flgimppr"],label[for="dsctrliq"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
         var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
@@ -1824,9 +1824,9 @@ function controlaLayout(operacao) {
         var rProposta = $('label[for="flgimppr"]', '#' + nomeForm);
         var rNtPromis = $('label[for="flgimpnp"]', '#' + nomeForm);
         var rLiquidacoes = $('label[for="dsctrliq"]', '#' + nomeForm);
-        var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
-        var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
-        var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
+ //       var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
+ //       var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
+ //       var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
@@ -1889,16 +1889,16 @@ function controlaLayout(operacao) {
         cVlrtotal.addClass('rotulo moeda').css('width', '90px');
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '97px');
+        rProposta.css('width', '265px'); 
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '137px');
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
-        rPercCET.addClass('').css('width', '97px');
-        rDtPgmento.addClass('').css('width', '104px');
-        rDtUltPag.addClass('').css('width', '97px');
+        rPercCET.addClass('').css('width', '265px');
+        rDtPgmento.addClass('rotulo').css('width', '265px');
+        rDtUltPag.addClass('rotulo').css('width', '265px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
         rNtPromis.addClass('rotulo').css('width', '265px');
         rDiasUteis.addClass('rotulo-linha');
