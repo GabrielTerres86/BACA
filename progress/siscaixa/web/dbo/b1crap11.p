@@ -941,46 +941,6 @@ PROCEDURE grava-lancamento-boletim:
 
 					END.
 	  
-				IF crapass.inpessoa = 1 THEN
-				   DO:
-						  
-						CREATE craplcm.
-						ASSIGN craplcm.cdcooper = crapcop.cdcooper
-								craplcm.dtmvtolt = crapdat.dtmvtolt
-								craplcm.cdagenci = p-cod-agencia
-								craplcm.cdbccxlt  = 100
-								craplcm.nrdolote = 600040
-								craplcm.nrdconta = p-conta
-								craplcm.nrdocmto = i-nro-docto
-								craplcm.vllanmto = p-vlr-docto 
-								craplcm.cdhistor = 2063
-								craplcm.nrseqdig = aux_nrseqdig
-								craplcm.nrdctabb = p-conta
-								craplcm.nrdctitg = STRING(p-conta,"99999999")
-								craplcm.cdpesqbb = "CRAP54," + p-codigo
-								craplcm.nrautdoc = p-ult-sequencia.
-						  
-				   END.                          
-				ELSE
-				   DO:
-						  
-						CREATE craplcm.
-						ASSIGN craplcm.cdcooper = crapcop.cdcooper
-								craplcm.dtmvtolt = crapdat.dtmvtolt
-								craplcm.cdagenci = p-cod-agencia
-								craplcm.cdbccxlt  = 100
-								craplcm.nrdolote = 600040
-								craplcm.nrdconta = p-conta
-								craplcm.nrdocmto = i-nro-docto
-								craplcm.vllanmto = p-vlr-docto 
-								craplcm.cdhistor = 2064
-								craplcm.nrseqdig = aux_nrseqdig
-								craplcm.nrdctabb = p-conta
-								craplcm.nrdctitg = STRING(p-conta,"99999999")
-								craplcm.cdpesqbb = "CRAP54," + p-codigo
-								craplcm.nrautdoc = p-ult-sequencia.
-								  
-				   END.
 			  
 				CREATE craplcx.
 				ASSIGN craplcx.cdcooper = crapcop.cdcooper
@@ -1116,47 +1076,6 @@ PROCEDURE grava-lancamento-boletim:
 								END.
 								
 								
-							
-						END.
-					 
-					IF crapass.inpessoa = 1 THEN
-						DO:
-										  
-							CREATE craplcm.
-							ASSIGN craplcm.cdcooper = crapcop.cdcooper
-									craplcm.dtmvtolt = crapdat.dtmvtolt
-									craplcm.cdagenci = p-cod-agencia
-									craplcm.cdbccxlt  = 100
-									craplcm.nrdolote = 600042
-									craplcm.nrdconta = p-conta
-									craplcm.nrdocmto = i-nro-docto
-									craplcm.vllanmto = p-vlr-docto 
-									craplcm.cdhistor = 2081
-									craplcm.nrseqdig = aux_nrseqdig
-									craplcm.nrdctabb = p-conta
-									craplcm.nrdctitg = STRING(p-conta,"99999999")
-									craplcm.cdpesqbb = "CRAP54," + p-codigo
-									craplcm.nrautdoc = p-ult-sequencia.
-										  
-						END.                          
-					ELSE
-						DO:
-										  
-							CREATE craplcm.
-							ASSIGN craplcm.cdcooper = crapcop.cdcooper
-									craplcm.dtmvtolt = crapdat.dtmvtolt
-									craplcm.cdagenci = p-cod-agencia
-									craplcm.cdbccxlt  = 100
-									craplcm.nrdolote = 600042
-									craplcm.nrdconta = p-conta
-									craplcm.nrdocmto = i-nro-docto
-									craplcm.vllanmto = p-vlr-docto 
-									craplcm.cdhistor = 2082
-									craplcm.nrseqdig = aux_nrseqdig
-									craplcm.nrdctabb = p-conta
-									craplcm.nrdctitg = STRING(p-conta,"99999999")
-									craplcm.cdpesqbb = "CRAP54," + p-codigo
-									craplcm.nrautdoc = p-ult-sequencia.
 										  
 						END.
 				         
