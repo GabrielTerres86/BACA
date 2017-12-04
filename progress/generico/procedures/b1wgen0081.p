@@ -43,7 +43,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 25/09/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 30/11/2017
 
    Dados referentes ao programa:
 
@@ -199,6 +199,11 @@
 
 			  25/09/2017 - Inclusao do departamento 14 - Produtos, na listagem do Demonstrativo de aplicacoes
 						   procedure consulta-extrato-rdca. SD 759762. (Carlos Rafael Tanholi)
+               
+                            
+               30/11/2017 - Removido rotina ver-valores-bloqueados-judicial,
+                            pois foi convertida e nao é mais utilizada.
+                            PRJ404-Garantia(Odirlei-AMcom)             
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -1619,191 +1624,6 @@ PROCEDURE valida-acesso-opcao-resgate:
 
 END PROCEDURE.
 
-/******************************************************************************/
-/**       Procedure para obter os valores Bloqueados Judicialmente           **/
-/******************************************************************************/
-
-PROCEDURE ver-valores-bloqueados-judicial:
-
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nraplica AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_vlresgat AS DECI                           NO-UNDO.
-    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
-    
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
-
-    DEF VAR aux_sltotres AS DECIMAL                                 NO-UNDO.
-    DEF VAR aux_vlresgat AS DECIMAL                                 NO-UNDO.
-    DEF VAR tot_vlsldtot AS DECI                                    NO-UNDO.
-    DEF VAR aux_vlblqjud AS DECI                                    NO-UNDO.
-    DEF VAR aux_vlresblq AS DECI                                    NO-UNDO.
-    
-    DEF VAR h-b1wgen0155 AS HANDLE                                  NO-UNDO.
-
-    RUN obtem-dados-aplicacoes(INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT par_cdoperad,
-                               INPUT par_nmdatela,
-                               INPUT par_idorigem,
-                               INPUT par_nrdconta,
-                               INPUT par_idseqttl,
-                               INPUT 0,
-                               INPUT par_cdprogra,
-                               INPUT FALSE,
-                               INPUT ?,
-                               INPUT ?,
-                               OUTPUT tot_vlsldtot,
-                               OUTPUT TABLE tt-saldo-rdca,
-                               OUTPUT TABLE tt-erro).
-
-    IF   RETURN-VALUE = "NOK"  THEN
-         DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-            
-            IF  AVAILABLE tt-erro  THEN
-                ASSIGN aux_cdcritic = tt-erro.cdcritic
-                       aux_dscritic = tt-erro.dscritic.
-            ELSE
-                DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Nao foi possivel cadastrar o " +
-                                          "resgate.".
-                                          
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,          /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).                 
-                END.
-                                          
-            IF  par_flgerlog THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-            RETURN "NOK".       
-         END.
-        
-    FOR EACH tt-saldo-rdca WHERE tt-saldo-rdca.dtmvtolt < par_dtmvtolt
-                             AND tt-saldo-rdca.sldresga > 0
-                             AND (tt-saldo-rdca.dssitapl = "DISPONIVEL"
-                              OR tt-saldo-rdca.dssitapl = "")
-                             NO-LOCK:
-
-        FIND craplrg WHERE craplrg.cdcooper = par_cdcooper
-                       AND craplrg.nrdconta = par_nrdconta
-                       AND craplrg.nraplica = tt-saldo-rdca.nraplica
-                       AND craplrg.tpaplica = tt-saldo-rdca.tpaplica
-                       AND craplrg.dtresgat >= par_dtmvtolt
-                       AND craplrg.inresgat = 0 NO-LOCK NO-ERROR.
-
-        IF   AVAIL craplrg THEN
-             DO:
-                  IF   craplrg.tpresgat = 2 THEN
-                       NEXT.
-                  ELSE
-                       ASSIGN aux_sltotres = aux_sltotres + 
-                              (tt-saldo-rdca.sldresga - craplrg.vllanmto).
-             END.
-        ELSE
-             ASSIGN aux_sltotres = aux_sltotres + tt-saldo-rdca.sldresga.
-    END.
-
-    IF   par_vlresgat = 0 THEN
-         aux_vlresgat = aux_sltotres.
-    ELSE
-         aux_vlresgat = par_vlresgat.
-
-    IF   par_nraplica <> 0 AND
-         par_vlresgat =  0 THEN
-         DO:
-             FIND tt-saldo-rdca WHERE tt-saldo-rdca.nraplica = par_nraplica
-                                  AND tt-saldo-rdca.dtmvtolt < par_dtmvtolt
-                                  AND tt-saldo-rdca.sldresga > 0
-                                  AND (tt-saldo-rdca.dssitapl = "DISPONIVEL"
-                                   OR tt-saldo-rdca.dssitapl = "")
-                                   NO-LOCK NO-ERROR.
-
-             IF   NOT AVAIL tt-saldo-rdca THEN
-                  DO:
-                       ASSIGN aux_cdcritic = 426
-                              aux_dscritic = "".
-                               
-                       RUN gera_erro (INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT 1,          /** Sequencia **/
-                                      INPUT aux_cdcritic,
-                                      INPUT-OUTPUT aux_dscritic).
-
-                       RETURN "NOK".
-                  END.
-        
-             FIND craplrg WHERE craplrg.cdcooper = par_cdcooper
-                            AND craplrg.nrdconta = par_nrdconta
-                            AND craplrg.nraplica = tt-saldo-rdca.nraplica
-                            AND craplrg.tpaplica = tt-saldo-rdca.tpaplica
-                            AND craplrg.dtresgat >= par_dtmvtolt
-                            AND craplrg.inresgat = 0 NO-LOCK NO-ERROR.
-
-             IF   AVAIL craplrg THEN
-                  DO:
-                      IF   craplrg.tpresgat = 2 THEN
-                           NEXT.
-                      ELSE
-                           ASSIGN aux_vlresgat = 
-                                  (tt-saldo-rdca.sldresga - craplrg.vllanmto).
-                  END.
-             ELSE
-                  ASSIGN aux_vlresgat = tt-saldo-rdca.sldresga.
-         END.
-    
-    RUN sistema/generico/procedures/b1wgen0155.p
-                   PERSISTENT SET h-b1wgen0155.
-
-    RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
-                                             INPUT par_nrdconta,
-                                             INPUT 0, /* fixo - nrcpfcgc  */
-                                             INPUT 1, /* Bloqueio         */
-                                             INPUT 2, /* 2 - Aplicacao    */
-                                             INPUT par_dtmvtolt,
-                                             OUTPUT aux_vlblqjud,
-                                             OUTPUT aux_vlresblq).
-
-    DELETE PROCEDURE h-b1wgen0155.
-
-    IF   aux_vlresgat > (aux_sltotres - aux_vlblqjud) THEN
-         DO:
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = "Nao foi possivel resgatar. " + 
-                                    "Ha valores bloqueados judicialmente".
-
-              RUN gera_erro (INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1,          /** Sequencia **/
-                             INPUT aux_cdcritic,
-                             INPUT-OUTPUT aux_dscritic).
-         END.         
-
-END.
 
 /******************************************************************************/
 /**        Procedure para obter resgates programados para a aplicacao        **/

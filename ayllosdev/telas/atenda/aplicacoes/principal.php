@@ -34,6 +34,9 @@
 							  
 				 21/07/2016 - Inicializei a varivale $xml, tratei o retorno do XML "ERRO"
 							  consisti os indices do XML retornados. SD 479874 (Carlos R.)
+                              
+                 27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                              PRJ404 - Garantia(Odirlei-AMcom)              
 							  
 	************************************************************************/
 	
@@ -144,7 +147,31 @@
 	if (strtoupper($xmlObjBlqJud->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
-	
+    
+    
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqapl  = getByTagName($registros, 'vlblqapl');   
+    
+    
 	include('principal_tabela.php');
 	include('principal_dados.php');
 	include('principal_resgate.php');

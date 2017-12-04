@@ -8,6 +8,7 @@
   | consulta-poupanca                        | APLI0001.pc_consulta_poupanca     |
   | consulta-extrato-poupanca                | EXTR0002.pc_consulta_extrato_poup |
   | gera-saldo-anterior                      | EXTR0002.pc_gera_saldo_anterior   |
+  | ver-valores-bloqueados-judicial          | APLI0002.pc_ver_val_bloqueio_poup |
   +------------------------------------------+-----------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -1990,21 +1991,21 @@ PROCEDURE valida-resgate:
 
     IF  NOT par_flgoprgt  THEN
         DO:
-            RUN ver-valores-bloqueados-judicial (INPUT par_cdcooper,
-                                                 INPUT par_cdagenci,
-                                                 INPUT par_nrdcaixa,
-                                                 INPUT par_cdoperad,
-                                                 INPUT par_nmdatela,
-                                                 INPUT par_idorigem,
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_idseqttl,
-                                                 INPUT par_dtmvtolt,
-                                                 INPUT par_dtmvtopr,
-                                                 INPUT par_inproces,
-                                                 INPUT par_cdprogra,
-                                                 INPUT par_vlresgat,
-                                                 INPUT par_flgerlog,
-                                                 OUTPUT TABLE tt-erro).
+            RUN ver-valores-bloqueados-poup (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT par_cdoperad,
+                                             INPUT par_nmdatela,
+                                             INPUT par_idorigem,
+                                             INPUT par_nrdconta,
+                                             INPUT par_idseqttl,
+                                             INPUT par_dtmvtolt,
+                                             INPUT par_dtmvtopr,
+                                             INPUT par_inproces,
+                                             INPUT par_cdprogra,
+                                             INPUT par_vlresgat,
+                                             INPUT par_flgerlog,
+                                             OUTPUT TABLE tt-erro).
                                          
             IF   RETURN-VALUE = "NOK"  THEN
                  DO:
@@ -3760,7 +3761,7 @@ PROCEDURE incluir-poupanca-programada:
 END PROCEDURE.
 
 
-PROCEDURE ver-valores-bloqueados-judicial:
+PROCEDURE ver-valores-bloqueados-poup:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
@@ -3779,127 +3780,56 @@ PROCEDURE ver-valores-bloqueados-judicial:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
-    DEF VAR aux_vlsldrpp AS DECI                                    NO-UNDO.
-    DEF VAR tot_vlsldtot AS DECI                                    NO-UNDO.
-    DEF VAR aux_vlblqjud AS DECI                                    NO-UNDO.
-    DEF VAR aux_vlresblq AS DECI                                    NO-UNDO.
-    DEF VAR aux_vlresgat AS DECI                                    NO-UNDO.
-
-    DEF VAR h-b1wgen0155 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+        
     
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_ver_val_bloqueio_poup
+       aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT par_cdoperad,
+                                           INPUT par_nmdatela,
+                                           INPUT par_idorigem,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idseqttl,
+                                           INPUT par_dtmvtolt,
+                                           INPUT par_dtmvtopr,
+                                           INPUT par_inproces,
+                                           INPUT par_cdprogra,
+                                           INPUT par_vlresgat,
+                                           INPUT IF par_flgerlog THEN 1 ELSE 0 ,
+                                           OUTPUT 0,
+                                           OUTPUT "").
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_ver_val_bloqueio_poup
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Busca possíveis erros */ 
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_ver_val_bloqueio_poup.pr_cdcritic 
+                          WHEN pc_ver_val_bloqueio_poup.pr_cdcritic <> ?
+           aux_dscritic = pc_ver_val_bloqueio_poup.pr_dscritic 
+                          WHEN pc_ver_val_bloqueio_poup.pr_dscritic <> ?.
     
-    RUN consulta-poupanca (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT par_cdoperad,
-                           INPUT par_nmdatela,
-                           INPUT par_idorigem,
-                           INPUT par_nrdconta,
-                           INPUT par_idseqttl,
-                           INPUT 0,
-                           INPUT par_dtmvtolt,
-                           INPUT par_dtmvtopr,
-                           INPUT par_inproces,
-                           INPUT par_cdprogra,
-                           INPUT FALSE,  /** Nao Gerar Log **/
-                           OUTPUT aux_vlsldrpp,
-                           OUTPUT TABLE tt-erro,
-                           OUTPUT TABLE tt-dados-rpp).
+   IF aux_cdcritic <> 0 OR
+     aux_dscritic <> "" THEN
+     DO:
+          CREATE tt-erro.
+          ASSIGN tt-erro.cdcritic = aux_cdcritic
+                 tt-erro.dscritic = aux_dscritic.
 
-    IF   RETURN-VALUE = "NOK"  THEN
-         DO:
-             FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-             IF  AVAILABLE tt-erro  THEN
-                 ASSIGN aux_cdcritic = tt-erro.cdcritic
-                        aux_dscritic = tt-erro.dscritic.
-             ELSE
-                 DO:
-                     ASSIGN aux_cdcritic = 0
-                            aux_dscritic = "Nao foi possivel cadastrar o " +
-                                           "resgate.".
-                                          
-                     RUN gera_erro (INPUT par_cdcooper,
-                                    INPUT par_cdagenci,
-                                    INPUT par_nrdcaixa,
-                                    INPUT 1,          /** Sequencia **/
-                                    INPUT aux_cdcritic,
-                                    INPUT-OUTPUT aux_dscritic).
-                 END.
-                                                   
-             IF  par_flgerlog THEN
-                 RUN proc_gerar_log (INPUT par_cdcooper,
-                                     INPUT par_cdoperad,
-                                     INPUT aux_dscritic,
-                                     INPUT aux_dsorigem,
-                                     INPUT aux_dstransa,
-                                     INPUT FALSE,
-                                     INPUT par_idseqttl,
-                                     INPUT par_nmdatela,
-                                     INPUT par_nrdconta,
-                                    OUTPUT aux_nrdrowid).
-             RETURN "NOK".
-         END.
-                                                        
-    FOR EACH tt-dados-rpp WHERE
-             tt-dados-rpp.dsblqrpp <> "Sim" NO-LOCK: /* Bloq. Garantia */
-             
-        FIND craplrg WHERE craplrg.cdcooper = par_cdcooper           AND
-                           craplrg.nrdconta = par_nrdconta           AND
-                           craplrg.nraplica = tt-dados-rpp.nrctrrpp  AND
-                           craplrg.dtresgat >= par_dtmvtolt          AND
-                           craplrg.inresgat = 0
-                           NO-LOCK NO-ERROR.
-         
-        IF   AVAIL craplrg THEN
-             DO:
-                  IF   craplrg.tpresgat = 2 THEN
-                       NEXT.
-                  ELSE
-                       ASSIGN tot_vlsldtot = tot_vlsldtot +
-                                (tt-dados-rpp.vlrgtrpp - craplrg.vllanmto).
-             END.
-        ELSE
-             ASSIGN tot_vlsldtot = tot_vlsldtot + tt-dados-rpp.vlrgtrpp.
-    END.
-    
-    IF   par_vlresgat = 0 THEN
-         aux_vlresgat = tot_vlsldtot.
-    ELSE
-         aux_vlresgat = par_vlresgat.
-                              
-    RUN sistema/generico/procedures/b1wgen0155.p PERSISTENT SET h-b1wgen0155.
-
-    RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
-                                             INPUT par_nrdconta,
-                                             INPUT 0, /* fixo - nrcpfcgc  */
-                                             INPUT 1, /* Bloqueio         */
-                                             INPUT 3, /* 3 - Poup. Prog.  */
-                                             INPUT par_dtmvtolt,
-                                             OUTPUT aux_vlblqjud,
-                                             OUTPUT aux_vlresblq).
-                                                       
-    DELETE PROCEDURE h-b1wgen0155.
-
-    
-    IF   aux_vlblqjud > 0                             AND
-         aux_vlresgat > (tot_vlsldtot - aux_vlblqjud) THEN
-         DO:
-             ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Nao foi possivel resgatar. " +
-                                   "Ha valores bloqueados judicialmente".
-                                    
-             RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT 1,          /** Sequencia **/
-                            INPUT aux_cdcritic,
-                            INPUT-OUTPUT aux_dscritic).
-                            
-             RETURN "NOK".               
-         END.
-
-   RETURN "OK".
+          RETURN "NOK".
+      END.
+  
+  RETURN "OK". 
    
 END.
 

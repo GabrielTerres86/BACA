@@ -7,6 +7,9 @@
  * ALTERAÇÕES   : 26/10/2012 - Incluso efeito highlightObjFocus, ajustado
 							   tamanho campos para trabalhar com novo css,
 							   alterado input imagem por botões. (Daniel)  
+                  
+                  27/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                               PRJ404 - Garantia Empr.(Odirlei-AMcom)
  * --------------
  */
 
@@ -22,8 +25,8 @@ var arrayExtrda		= new Array();
 var rNrdconta, rNmprimtl,  
 	cNrdconta, cNmprimtl, cTodosCabecalho, btnOK;
 
-var rNraplica, rVlsdrdad, rVlsdrdca, rCdoperad, rVlsdresg, rQtdiaapl, rQtdiauti, rTxcntrat, rTxminima,  
-	cNraplica, cVlsdrdad, cVlsdrdca, cCdoperad, cVlsdresg, cQtdiaapl, cQtdiauti, cTxcntrat, cTxminima,  
+var rNraplica, rVlsdrdad, rVlsdrdca, rCdoperad, rVlsdresg, rQtdiaapl, rQtdiauti, rTxcntrat, rTxminima, rVlbloque, rVlblqapl, 
+	cNraplica, cVlsdrdad, cVlsdrdca, cCdoperad, cVlsdresg, cQtdiaapl, cQtdiauti, cTxcntrat, cTxminima, cVlbloque, cVlblqapl, 
 	cDsaplica, cTodosDados;
 
 var rVlstotal, cVlstotal;
@@ -92,6 +95,8 @@ function atualizaSeletor(){
 	rQtdiauti			= $('label[for="qtdiauti"]','#'+frmDados);
 	rTxcntrat			= $('label[for="txcntrat"]','#'+frmDados);
 	rTxminima			= $('label[for="txminima"]','#'+frmDados);
+    rVlbloque			= $('label[for="vlbloque"]','#'+frmDados);
+    rVlblqapl			= $('label[for="vlblqapl"]','#'+frmDados);
 	
 	cNraplica			= $('#nraplica', '#'+frmDados);
 	cDsaplica			= $('#dsaplica', '#'+frmDados);
@@ -103,6 +108,8 @@ function atualizaSeletor(){
 	cQtdiauti			= $('#qtdiauti', '#'+frmDados);
 	cTxcntrat			= $('#txcntrat', '#'+frmDados);
 	cTxminima			= $('#txminima', '#'+frmDados);
+    cVlbloque			= $('#vlbloque', '#'+frmDados);
+    cVlblqapl			= $('#vlblqapl', '#'+frmDados);    
 	cTodosDados			= $('input[type="text"],select','#'+frmDados);
 	
 	return false;
@@ -319,15 +326,17 @@ function formataCabecalho() {
 
 function formataDados() {
 	
-	rNraplica.addClass('rotulo').css({'width':'57px'});
+	rNraplica.addClass('rotulo').css({'width':'60px'});
 	rVlsdrdad.addClass('rotulo-linha').css({'width':'98px'});
 	rVlsdrdca.addClass('rotulo-linha').css({'width':'88px'});
-	rCdoperad.addClass('rotulo').css({'width':'57px'});
+	rCdoperad.addClass('rotulo').css({'width':'60px'});
 	rVlsdresg.addClass('rotulo-linha').css({'width':'115px'});
 	rQtdiaapl.addClass('rotulo-linha').css({'width':'88px'});
-	rQtdiauti.addClass('rotulo').css({'width':'57px'});
+	rQtdiauti.addClass('rotulo').css({'width':'60px'});
 	rTxcntrat.addClass('rotulo-linha').css({'width':'115px'});
 	rTxminima.addClass('rotulo-linha').css({'width':'88px'});
+    rVlbloque.addClass('rotulo').css({'width':'60px'});
+    rVlblqapl.addClass('rotulo-linha').css({'width':'115px'});
 	
 	cNraplica.css({'width':'50px','text-align':'right'}).attr('maxlength','7').setMask('INTEGER','zzz.zz9','.','');
 	cDsaplica.css({'width':'72px'})
@@ -339,6 +348,8 @@ function formataDados() {
 	cQtdiauti.css({'width':'125px'});
 	cTxcntrat.css({'width':'115px'});
 	cTxminima.css({'width':'115px'});
+    cVlbloque.css({'width':'125px'});
+    cVlblqapl.css({'width':'115px'});
 	
 	if ( $.browser.msie ) {
 		rNraplica.css({'width':'59px'});
@@ -350,6 +361,8 @@ function formataDados() {
 		rQtdiauti.css({'width':'59px'});
 		rTxcntrat.css({'width':'107px'});
 		rTxminima.css({'width':'87px'});
+        rVlbloque.css({'width':'59px'});
+        rVlblqapl.css({'width':'107px'});
 	}
 	
 	cTodosDados.desabilitaCampo();

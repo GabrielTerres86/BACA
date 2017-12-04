@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl458" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="0"/>
+	<property name="ireport.x" value="11"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -48,6 +48,12 @@
 	</field>
 	<field name="nrramfon" class="java.lang.String">
 		<fieldDescription><![CDATA[nrramfon]]></fieldDescription>
+	</field>
+	<field name="vlblqjud" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlblqjud]]></fieldDescription>
+	</field>
+	<field name="vlblqapl" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlblqapl]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -105,7 +111,7 @@
 				<textFieldExpression><![CDATA[$F{agencia}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="6d494768-f82f-45d0-b758-2a636bd98e82" x="0" y="24" width="238" height="8"/>
+				<reportElement uuid="6d494768-f82f-45d0-b758-2a636bd98e82" x="0" y="24" width="286" height="8"/>
 				<textElement>
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -240,7 +246,7 @@
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="8" splitType="Stretch">
+		<band height="24" splitType="Stretch">
 			<textField>
 				<reportElement uuid="c5c309fb-0c5f-4a8f-8fb9-9df8b2e2a457" x="0" y="0" width="14" height="8"/>
 				<textElement textAlignment="Right">
@@ -303,6 +309,42 @@
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlaplica}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="51f78206-bb7d-4888-8bf9-c299e8c274cb" positionType="Float" x="238" y="8" width="141" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{vlblqapl}.equals( new Double("0") )? false: true)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Bloqueio Cob. Garantia:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="51f78206-bb7d-4888-8bf9-c299e8c274cb" positionType="Float" x="238" y="16" width="141" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{vlblqjud}.equals( new Double(0) )? false: true)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Bloqueio Judicial:]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="e159c69c-d9f1-44a7-938e-6df7b5533aa8" positionType="Float" x="385" y="8" width="70" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{vlblqapl}.equals( new Double(0) )? false: true)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlblqapl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="e159c69c-d9f1-44a7-938e-6df7b5533aa8" positionType="Float" x="385" y="16" width="70" height="8" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[($F{vlblqjud}.equals( new Double(0) )? false: true)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlblqjud}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

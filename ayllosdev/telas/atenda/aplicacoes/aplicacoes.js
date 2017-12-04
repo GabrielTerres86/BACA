@@ -83,6 +83,9 @@
              29/03/2017 - Inclui validacao para uso da senha do operador para o resgate de aplicacoes. SD 632578
 
              28/09/2017 - Correcao na simulacao de aplicacoes atraves ATENDA - APLICACOES. SD 685979. (Carlos Rafael Tanholi)
+             
+             27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                          PRJ404 - Garantia Empr.(Odirlei-AMcom) 
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -1492,10 +1495,12 @@ function controlaLayout(layout) {
     $('li:eq(7)', complemento).addClass('txtNormal').css({ 'width': '8%' });
     $('li:eq(8)', complemento).addClass('txtNormalBold');
     $('li:eq(9)', complemento).addClass('txtNormal');
-    $('li:eq(10)', complemento).addClass('txtNormalBold').css({ 'width': '20%' });
-    $('li:eq(11)', complemento).addClass('txtNormal').css({ 'width': '30%' });
-    $('li:eq(12)', complemento).addClass('txtNormalBold');
-    $('li:eq(13)', complemento).addClass('txtNormal');
+    $('li:eq(10)', complemento).addClass('txtNormalBold').css({ 'width': '18%' });
+    $('li:eq(11)', complemento).addClass('txtNormal').css({ 'width': '14%' });
+    $('li:eq(12)', complemento).addClass('txtNormalBold').css({ 'width': '18%' });
+    $('li:eq(13)', complemento).addClass('txtNormal').css({ 'width': '14%' });
+    $('li:eq(14)', complemento).addClass('txtNormalBold').css({ 'width': '19%' });
+    $('li:eq(15)', complemento).addClass('txtNormal').css({ 'width': '13%' });
 
     /*****************************
 			FORMATA DADOS		

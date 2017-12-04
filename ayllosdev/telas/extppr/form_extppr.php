@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 20/09/2012 - Inclusao da funcao utf8ToHtml no legend (Lucas R.)
  * 				  05/06/2013 - Inclusao de label vlbloque - Bloqueio Judicial (Lucas R.)
+ *                27/11/2017 - Inclusao do valor de bloqueio em garantia. PRJ404 - Garantia Empr.(Odirlei-AMcom)  
  *
  */	
 ?>
@@ -28,12 +29,15 @@
 		<input name="dddebito" id="dddebito" type="text" />
 		
 		<br />
-		<label for="vlbloque"><? echo utf8ToHtml('Saldo Bloq. Jud:') ?></label>
+		<label for="vlbloque"><? echo utf8ToHtml('Bloq. Jud:') ?></label>
 		<input name="vlbloque" id="vlbloque" type="text" />
-		
+        
+        <label for="vlblqpou"><? echo utf8ToHtml('Bloq. Garantia:') ?></label>
+		<input name="vlblqpou" id="vlblqpou" type="text" />
+		<br />
+        
 		<label for="vlrdcapp"><? echo utf8ToHtml('Saldo Atual:') ?></label>
 		<input name="vlrdcapp" id="vlrdcapp" type="text" />
-
 		
 	</fieldset>		
 

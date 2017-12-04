@@ -1680,11 +1680,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsistem => 'CRED'
-                                          ,pr_tptabela => 'GENERI'
-                                          ,pr_cdempres => 0
-                                          ,pr_cdacesso => 'SOMAPLTAXA'
-                                          ,pr_dstextab => 'SIM') LOOP
+                                    ,pr_nmsistem => 'CRED'
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => 0
+                                    ,pr_cdacesso => 'SOMAPLTAXA'
+                                    ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -2491,11 +2491,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsistem => 'CRED'
-                                          ,pr_tptabela => 'GENERI'
-                                          ,pr_cdempres => 0
-                                          ,pr_cdacesso => 'SOMAPLTAXA'
-                                          ,pr_dstextab => 'SIM') LOOP
+                                    ,pr_nmsistem => 'CRED'
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => 0
+                                    ,pr_cdacesso => 'SOMAPLTAXA'
+                                    ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -3579,11 +3579,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         --Carregar tabela de memoria de taxas
         --Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsistem => 'CRED'
-                                          ,pr_tptabela => 'GENERI'
-                                          ,pr_cdempres => 0
-                                          ,pr_cdacesso => 'SOMAPLTAXA'
-                                          ,pr_dstextab => 'SIM') LOOP
+                                    ,pr_nmsistem => 'CRED'
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => 0
+                                    ,pr_cdacesso => 'SOMAPLTAXA'
+                                    ,pr_dstextab => 'SIM') LOOP
           --Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist):= rw_craptab.tpregist;
         END LOOP;
@@ -6966,7 +6966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Observacao: -----
 
      Alteracoes: 14/04/2015 - Foram adicionados novos campos para retorno 
-                             (DTCARENC) SD 266191 (Kelvin).			
+                             (DTCARENC) SD 266191 (Kelvin).
                  
                  27/11/2017 - Foram adicionados novos campos para retorno 
                              (tpaplica). Projeto 404 (Lombardi).	
@@ -7107,7 +7107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
            <dsnomenc>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsnomenc),' ') || '</dsnomenc>
            <idtippro>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtippro),'0') || '</idtippro>
            <dtcarenc>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtcarenc,'dd/mm/RRRR') || '</dtcarenc>
-           <tpaplica>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).tpaplica),'0') || '<tpaplica>
+           <tpaplica>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).tpaplica),'0') || '</tpaplica>
            </inf>');
         END LOOP;
 
@@ -7770,8 +7770,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       /*Valores bloqueados judicialmente*/
       IF pr_idvldblq = 1 THEN
-        -- Consulta de valores bloqueados judicialmente
-        APLI0002.pc_ver_valor_blq_judicial(pr_cdcooper => pr_cdcooper         --> Codigo Cooperativa  
+        -- Consulta de valores bloqueados 
+        APLI0002.pc_ver_val_bloqueio_aplica( pr_cdcooper => pr_cdcooper         --> Codigo Cooperativa  
                                           ,pr_cdagenci => 1                   --> Codigo Agencia
                                           ,pr_nrdcaixa => 1                   --> Numero do Caixa
                                           ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador

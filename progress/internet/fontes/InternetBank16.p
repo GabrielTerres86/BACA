@@ -47,7 +47,10 @@
                             (Jean Michel). 
                             
                29/04/2015 - Incluido verificacao de ponteiro null, ocorria erro
-                            somente no log (Jean Michel).                                    
+                            somente no log (Jean Michel).         
+                                                        
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)                          
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -62,6 +65,7 @@ CREATE WIDGET-POOL.
 DEF VAR h-b1wgen0081 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0004 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -105,6 +109,9 @@ DEF VAR aux_qtdiaapl AS INTE                                           NO-UNDO.
 DEF VAR aux_nmdindex AS CHAR                                           NO-UNDO. 
 DEF VAR aux_idtxfixa AS INTE                                           NO-UNDO.
 DEF VAR aux_idtipapl AS CHAR                                           NO-UNDO.  
+DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.
+
 
 /* Variáveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
@@ -121,7 +128,9 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 ASSIGN aux_dstransa = "Extrato de aplicacoes RDCA e RDC para Internet.".
 
 ASSIGN aux_vlblqjud = 0
-       aux_vlresblq = 0.
+       aux_vlresblq = 0
+       aux_vlblqapl_gar = 0
+       aux_vlblqpou_gar = 0.
 
 FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                          NO-LOCK NO-ERROR.
@@ -142,7 +151,30 @@ RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
 
 IF  VALID-HANDLE(h-b1wgen0155) THEN
     DELETE PROCEDURE h-b1wgen0155.
-/*** FIM - Busca Saldo Bloqueado Judicial ***/                         
+/*** FIM - Busca Saldo Bloqueado Judicial ***/ 
+
+/*** Busca Saldo Bloqueado Garantia ***/
+IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+    RUN sistema/generico/procedures/b1wgen0112.p 
+        PERSISTENT SET h-b1wgen0112.
+
+RUN calcula_bloq_garantia IN h-b1wgen0112
+                         ( INPUT par_cdcooper,
+                           INPUT par_nrdconta,                                             
+                          OUTPUT aux_vlblqapl_gar,
+                          OUTPUT aux_vlblqpou_gar,
+                          OUTPUT aux_dscritic).
+
+IF aux_dscritic <> "" THEN
+DO:
+   ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
+   RUN proc_geracao_log (INPUT FALSE).
+   RETURN "NOK".
+
+END.
+    
+IF  VALID-HANDLE(h-b1wgen0112) THEN
+    DELETE PROCEDURE h-b1wgen0112.                        
 
 
 /********NOVA CONSULTA APLICACOOES*********/
@@ -458,6 +490,8 @@ FOR EACH tt-extr-rdca NO-LOCK:
                                        "<sldresga>" + TRIM(STRING(aux_sldresga,"zzz,zzz,zzz,zz9.99-")) + "</sldresga>" +
                                        "<dsaplica>" + TRIM(STRING(tt-extr-rdca.dsaplica),"zzz,zz9") + "</dsaplica>" +
                                        "<vlblqjud>" + TRIM(STRING(aux_vlblqjud,"zzz,zzz,zzz,zz9.99")) + "</vlblqjud>" +
+                                       "<vlblqapl_gar>" + TRIM(STRING(aux_vlblqapl_gar, "zzz,zzz,zzz,zz9.99")) + "</vlblqapl_gar>" +
+                                       "<vlblqpou_gar>" + TRIM(STRING(aux_vlblqpou_gar, "zzz,zzz,zzz,zz9.99")) + "</vlblqpou_gar>" +      
                                    "</APLICACAO>".
 END.
 

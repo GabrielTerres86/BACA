@@ -596,6 +596,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_qtprecal       crapepr.qtprecal%TYPE;
     vr_dstextab       craptab.dstextab%TYPE;
     vr_inusatab       BOOLEAN;
+    vr_vlblqapl       NUMBER(18,2);
+    vr_vlblqpou       NUMBER(18,2); 
+    vr_vlblqamb       NUMBER(18,2); 
+    
     
     vr_tbsaldo_rdca   APLI0001.typ_tab_saldo_rdca;
     vr_tbdados_rpp    APLI0001.typ_tab_dados_rpp;
@@ -939,6 +943,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                                                - rw_crapblj.vlbloque;
           END IF;        
         END LOOP; -- cr_crapblj
+        
+        BLOQ0001.pc_calc_bloqueio_garantia 
+                                  (PR_CDCOOPER        => rw_crapass.cdcooper 
+                                  ,PR_NRDCONTA        => rw_crapass.nrdconta 
+                                  ,PR_VLBLOQUE_APLICA => vr_vlblqapl 
+                                  ,PR_VLBLOQUE_POUPA  => vr_vlblqpou 
+                                  ,PR_DSCRITIC        => vr_dscritic); 
+        -- Se retornou critica 
+        IF vr_dscritic IS NOT NULL THEN 
+          -- Retornar com a critica
+          vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta '|| rw_crapass.nrdconta || '-->'||vr_dscritic; 
+          -- Gerar registro de erro 
+          GENE0001.pc_gera_erro( pr_cdcooper => pr_cdcooper 
+                                ,pr_cdagenci => pr_cdagenci 
+                                ,pr_nrdcaixa => pr_nrdcaixa 
+                                ,pr_nrsequen => 1
+                                ,pr_cdcritic => 0 
+                                ,pr_dscritic => vr_dscritic 
+                                ,pr_tab_erro => pr_tab_erro); 
+          -- Retornar a mensagem de erro          
+          RAISE vr_exp_erro; 
+        END IF;
+        
+        -- diminuir valor bloqueado
+        vr_vlsldapl := GREATEST(NVL(vr_vlsldapl,0) - NVL(vr_vlblqapl,0),0);
+        vr_vlsldpou := GREATEST(NVL(vr_vlsldpou,0) - NVL(vr_vlblqpou,0),0);
         
         
         /* Buscar valor do saldo devedor dos empréstimos ativos, contratados a partir de Outubro/2014 e

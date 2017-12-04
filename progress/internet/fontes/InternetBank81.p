@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Agosto/2012                        Ultima atualizacao: 30/03/2016
+   Data    : Agosto/2012                        Ultima atualizacao: 29/11/2017
    
    Dados referentes ao programa:
    
@@ -19,6 +19,9 @@
 			   30/03/2016 - Incluido o recebimento do parametro dsiduser para
 							utiliza-lo na geracao do nome do arquivo
 			               (Adriano).
+                     
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)        
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -59,6 +62,9 @@ DEF          VAR aux_nmarqpdf AS CHAR                                  NO-UNDO.
 DEF          VAR aux_dtmvtolt AS DATE                                  NO-UNDO.
 DEF          VAR aux_vlblqjud AS DECI                                  NO-UNDO.
 DEF          VAR aux_vlresblq AS DECI                                  NO-UNDO.
+DEF          VAR aux_vlblqapl_gar  AS DECI                             NO-UNDO.
+DEF          VAR aux_vlblqpou_gar  AS DECI                             NO-UNDO.
+
 DEF          VAR h-b1wgen0155 AS HANDLE                                NO-UNDO.
 
 RUN sistema/generico/procedures/b1wgen0112.p PERSISTENT SET h-b1wgen0112.
@@ -91,6 +97,10 @@ ELSE
     par_dtvctfim = DATE(MONTH(par_dtvctfim) + 1,1,YEAR(par_dtvctfim)).
 */
           
+          
+ASSIGN aux_vlblqapl_gar = 0
+       aux_vlblqpou_gar = 0.
+          
 /*** Busca Saldo Bloqueado Judicial ***/
     
 RUN retorna-valor-blqjud IN h-b1wgen0155(
@@ -116,6 +126,23 @@ IF  RETURN-VALUE <> "OK"  THEN
         
         RETURN "NOK".
     END.
+
+/*** Busca Saldo Bloqueado Garantia ***/
+RUN calcula_bloq_garantia IN h-b1wgen0112
+                         ( INPUT par_cdcooper,
+                           INPUT par_nrdconta,                                             
+                          OUTPUT aux_vlblqapl_gar,
+                          OUTPUT aux_vlblqpou_gar,
+                          OUTPUT aux_dscritic).
+
+IF aux_dscritic <> "" THEN
+DO:
+   ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
+   RUN proc_geracao_log (INPUT FALSE).
+   RETURN "NOK".
+
+END.
+        
          
 RUN Gera_Impressao_Aplicacao IN h-b1wgen0112
                       ( INPUT par_cdcooper,
@@ -243,7 +270,9 @@ FOR EACH tt-demonstrativo NO-LOCK
         CREATE xml_operacao.
         ASSIGN xml_operacao.dslinxml = "<APLICACAO nraplica='" + 
                STRING(tt-demonstrativo.nraplica,"zzz,zz9") + "'
-               vlblqjud='" + STRING(aux_vlblqjud,"zzz,zzz,zzz,zz9.99") + "' >".
+               vlblqjud='" + STRING(aux_vlblqjud,"zzz,zzz,zzz,zz9.99") + "'
+               vlblqapl_gar='" + STRING(aux_vlblqapl_gar,"zzz,zzz,zzz,zz9.99") + "'
+               vlblqpou_gar='" + STRING(aux_vlblqpou_gar,"zzz,zzz,zzz,zz9.99") + "' >".
        
         /* CRIA LINHA DE TITULOS COM MESES **/
         CREATE xml_operacao.

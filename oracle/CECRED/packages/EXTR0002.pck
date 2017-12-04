@@ -13803,6 +13803,9 @@ END pc_consulta_ir_pj_trim;
   --
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)
+  --
+  --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+  --                           PRJ404 - Garantia.(Odirlei-AMcom) 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -13863,6 +13866,8 @@ END pc_consulta_ir_pj_trim;
         --Variaveis Locais
         vr_vlblqjud NUMBER;
         vr_vlresblq NUMBER;
+        vr_vlblqapl NUMBER;
+        vr_vlblqpou NUMBER;
         vr_vlsldapl NUMBER;
         vr_dsaplica VARCHAR2(100);
         vr_txaplica NUMBER(35,8);
@@ -13934,6 +13939,20 @@ END pc_consulta_ir_pj_trim;
                                          ,pr_vlbloque => vr_vlblqjud          --Valor Bloqueado
                                          ,pr_vlresblq => vr_vlresblq          --Valor Residual
                                          ,pr_dscritic => vr_dscritic);        --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+        /*** Busca valor bloquedo garantia epr ***/
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        bloq0001.pc_calc_bloqueio_garantia( pr_cdcooper => pr_cdcooper          --Cooperativa
+                                           ,pr_nrdconta => pr_nrdconta          --Conta Corrente                                        
+                                           ,pr_vlbloque_aplica => vr_vlblqapl   --Valor Bloqueado aplicacao
+                                           ,pr_vlbloque_poupa  => vr_vlblqpou   --Valor Bloqueado poupanca
+                                           ,pr_dscritic        => vr_dscritic);  --Critica
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
@@ -14346,6 +14365,15 @@ END pc_consulta_ir_pj_trim;
               ELSE
                 vr_dsextrat:= ' flgmsgjud="N" dsmsgjud=""'; 
               END IF;  
+              
+              --Verificar se possui bloqueio por garantia
+              IF vr_vlblqapl > 0 THEN
+                vr_dsextrat:= vr_dsextrat||' flgmsggar="S" dsmsggar="Valor Bloqueado para Cobertura e de R$ '||
+                              to_char(vr_vlblqapl,'fm999g999g999g990d00')||'"'; 
+              ELSE
+                vr_dsextrat:= vr_dsextrat||' flgmsggar="N" dsmsggar=""'; 
+              END IF;
+               
               --Montar texto
               vr_dstexto:= '<conta nrdconta="'||to_char(rw_crapass.nrdconta,'fm9g999g999g0')||
                              '" nmprimtl="'||rw_crapass.nmprimtl||
@@ -14745,7 +14773,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 27/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -14756,6 +14784,9 @@ END pc_consulta_ir_pj_trim;
   --              
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)              
+  --
+  --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+  --                           PRJ404 - Garantia.(Odirlei-AMcom)               
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -14800,10 +14831,12 @@ END pc_consulta_ir_pj_trim;
         --Variaveis Locais
         vr_vlblqjud NUMBER:= 0;
         vr_vlresblq NUMBER:= 0;
+        vr_vlblqapl NUMBER:= 0;
+        vr_vlblqpou NUMBER:= 0;
         vr_vltotrpp NUMBER;
         vr_percenir NUMBER;
         vr_flgfirst BOOLEAN;
-        vr_dsblqjud VARCHAR2(100);
+        vr_dsblqjud VARCHAR2(300);
         vr_dsextrat VARCHAR2(100);
         vr_dsorigem VARCHAR2(100);
         vr_dstransa VARCHAR2(100);
@@ -14850,6 +14883,21 @@ END pc_consulta_ir_pj_trim;
            --Levantar Excecao
            RAISE vr_exc_erro;
          END IF;
+
+        /*** Busca valor bloquedo garantia epr ***/
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        bloq0001.pc_calc_bloqueio_garantia( pr_cdcooper => pr_cdcooper          --Cooperativa
+                                           ,pr_nrdconta => pr_nrdconta          --Conta Corrente                                        
+                                           ,pr_vlbloque_aplica => vr_vlblqapl   --Valor Bloqueado aplicacao
+                                           ,pr_vlbloque_poupa  => vr_vlblqpou   --Valor Bloqueado poupanca
+                                           ,pr_dscritic        => vr_dscritic);  --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF; 
+         
 
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
@@ -15067,6 +15115,15 @@ END pc_consulta_ir_pj_trim;
             ELSE
               vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
             END IF;  
+            
+            --Verificar se possui bloqueio judicial
+            IF vr_vlblqpou > 0 THEN
+              vr_dsblqjud:= vr_dsblqjud||' flgmsggar="S" dsmsggar="Valor Bloqueado para Cobertura de Garantia e de R$ '||
+                            to_char(vr_vlblqpou,'fm999g999g999g990d00')||'"'; 
+            ELSE
+              vr_dsblqjud:= vr_dsblqjud||' flgmsggar="N" dsmsggar=""'; 
+            END IF; 
+            
             --Verificar se possui extratos de poupanca
             IF vr_tab_extrato_rpp.COUNT = 0 THEN
               vr_dsextrat:= '<extratos flgmsgext="S" dsmsgext="** NAO HA LANCAMENTOS NO MES **">';

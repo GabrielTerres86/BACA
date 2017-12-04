@@ -18,6 +18,9 @@
 				
 				 14/04/2015 - Adicionado novo campo com a data de carência 
 						      da aplicação SD - 266191 (Kelvin)
+                              
+                 27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                              PRJ404 - Garantia(Odirlei-AMcom)              
 	************************************************************************/	
 ?> 
 
@@ -149,8 +152,11 @@
 		<li id="tdResg"></li>
 		<li>Dt.Resg:</li>
 		<li id="tdDtResg"></li>
+        <br style="clear: both">
 		<li id="VlBloq" class="txtNormalBold" align="left" >Valor Bloq. Judicial:</li>
 		<li id="VlBloq"><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></li>	
+        <li id="Vlblqapl" class="txtNormalBold" align="left" >Valor Bloq. Garantia:</li>
+		<li id="Vlblqapl"><? echo number_format(str_replace(",",".", $vlblqapl),2,",","."); ?></li>	
 		<li>Numero da Aplicacao:</li>
 		<li id="tdNrApl"></li>	
 	</ul>

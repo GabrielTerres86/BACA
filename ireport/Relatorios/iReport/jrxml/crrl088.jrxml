@@ -57,6 +57,12 @@
 	<field name="txacumul" class="java.lang.String">
 		<fieldDescription><![CDATA[@txacumul]]></fieldDescription>
 	</field>
+	<field name="flgmsggar" class="java.lang.String">
+		<fieldDescription><![CDATA[@flgmsggar]]></fieldDescription>
+	</field>
+	<field name="dsmsggar" class="java.lang.String">
+		<fieldDescription><![CDATA[@dsmsggar]]></fieldDescription>
+	</field>
 	<group name="Conta" isReprintHeaderOnEachPage="true">
 		<groupExpression><![CDATA[$F{nrdconta}]]></groupExpression>
 		<groupHeader>
@@ -107,7 +113,7 @@
 			</band>
 		</groupHeader>
 		<groupFooter>
-			<band height="33">
+			<band height="44">
 				<textField>
 					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" positionType="Float" x="0" y="11" width="442" height="11" isRemoveLineWhenBlank="true">
 						<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "S")]]></printWhenExpression>
@@ -125,6 +131,15 @@
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{dsmsgjud}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" positionType="Float" x="0" y="33" width="442" height="11" isRemoveLineWhenBlank="true">
+						<printWhenExpression><![CDATA[new Boolean($F{flgmsggar} == "S")]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsmsggar}]]></textFieldExpression>
 				</textField>
 			</band>
 		</groupFooter>

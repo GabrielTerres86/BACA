@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0155.p
    Autor   : Guilherme / SUPERO
-   Data    : Abril/2013                     Ultima atualizacao: 15/09/2014
+   Data    : Abril/2013                     Ultima atualizacao: 30/11/2017
 
    Dados referentes ao programa:
 
@@ -13,6 +13,10 @@
                             
                15/09/2014 - Adicionado retorno de "OK" em procedure
                             efetua-desbloqueio-jud. (Jorge)
+                            
+               30/11/2017 - Removido rotinas efetua-desbloqueio-jud e 
+                            busca-contas-cooperado que nao sao mais utilizadas.
+                            PRJ404-Garantia(Odirlei-Amcom) 
 ............................................................................ */
 
 DEF VAR aux_cooperad AS DECI NO-UNDO.
@@ -121,52 +125,6 @@ PROCEDURE valores_entrada:
     
     END. /** Fim do FOR EACH tt-param **/
      
-END PROCEDURE.
-
-
-PROCEDURE busca-contas-cooperado:
- 
-   RUN busca-contas-cooperado IN hBO (INPUT aux_cdcooper,
-                                       INPUT aux_cdagenci,
-                                       INPUT aux_nrdcaixa,
-                                       INPUT aux_cdoperad,   
-                                       INPUT aux_dtmvtolt,
-                                       INPUT aux_dtmvtopr,
-                                       INPUT aux_dtmvtoan,
-                                       INPUT aux_dtiniper,
-                                       INPUT aux_dtfimper,
-                                       INPUT aux_nmdatela,
-                                       INPUT aux_idorigem,
-                                       INPUT aux_idseqttl,
-                                       INPUT aux_inproces,
-                                       INPUT aux_cooperad,
-                                      OUTPUT aux_nmprimtl,
-                                      OUTPUT TABLE tt-cooperado,
-                                      OUTPUT TABLE tt-erro).
-
-    IF RETURN-VALUE = "NOK" THEN
-    DO:
-        FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-        IF NOT AVAILABLE tt-erro THEN
-        DO:
-            CREATE tt-erro.
-            ASSIGN tt-erro.dscritic = "Nao foi possivel consultar os " +
-                                      "registros.".
-        END.
-
-        RUN piXmlNew.
-        RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
-        RUN piXmlSave.
-    END.
-    ELSE
-    DO:
-        RUN piXmlNew.
-        RUN piXmlExport (INPUT TEMP-TABLE tt-cooperado:HANDLE, INPUT "DADOS").
-        RUN piXmlAtributo (INPUT "nmprimtl", INPUT aux_nmprimtl).
-        RUN piXmlSave.
-    END.
-
 END PROCEDURE.
 
 PROCEDURE consulta-bloqueio-jud:
@@ -405,54 +363,6 @@ PROCEDURE Gera_Impressao:
             RUN piXmlNew.
             RUN piXmlAtributo (INPUT "nmarqimp", INPUT STRING(aux_nmarqimp)).
             RUN piXmlAtributo (INPUT "nmarqpdf", INPUT STRING(aux_nmarqpdf)).
-            RUN piXmlSave.
-        END.
-
-END PROCEDURE.
-
-PROCEDURE efetua-desbloqueio-jud:
-    
-    RUN efetua-desbloqueio-jud IN hBO (INPUT aux_cdcooper,
-                                       INPUT aux_dtmvtolt,
-                                       INPUT aux_cdoperad,
-                                       INPUT aux_cdtipmov,
-                                       INPUT aux_cdmodali,
-                                       INPUT aux_vlbloque,
-                                       INPUT aux_vlresblq,
-                                       INPUT aux_nroficio,
-                                       INPUT aux_nrproces,
-                                       INPUT aux_dsjuizem,
-                                       INPUT aux_dsresord,
-                                       INPUT aux_flblcrft,
-                                       INPUT aux_dtenvres,
-                                       INPUT aux_nroficon,
-                                       INPUT aux_nrctacon,
-                                       INPUT aux_dsinfadc,
-                                       INPUT aux_nrofides,
-                                       INPUT aux_dtenvdes,
-                                       INPUT aux_dsinfdes,
-                                       INPUT aux_fldestrf,
-                                      OUTPUT TABLE tt-erro).
-                                   
-    IF  RETURN-VALUE <> "OK" THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-    
-            IF NOT AVAILABLE tt-erro THEN
-            DO:
-                CREATE tt-erro.
-                ASSIGN tt-erro.dscritic = "Nao foi possivel desbloquear os " +
-                                          "registros.".
-            END.
-    
-            RUN piXmlNew.
-            RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "ERRO").
-            RUN piXmlSave.
-        END.
-    ELSE
-        DO:
-            RUN piXmlNew.
-            RUN piXmlAtributo (INPUT "retorno", INPUT "OK").
             RUN piXmlSave.
         END.
 
