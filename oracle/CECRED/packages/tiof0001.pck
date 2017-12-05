@@ -38,7 +38,8 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                 ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
                                 ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                 ,pr_vltaxa_iof_principal OUT NUMBER                --> Valor da Taxa do IOF Principal
-                                ,pr_dscritic             OUT crapcri.dscritic%TYPE);         
+                                ,pr_dscritic             OUT crapcri.dscritic%TYPE --> Descricao da Critica
+                                ,pr_flgimune             OUT BOOLEAN);             --> Possui imunidade tributária
   
   PROCEDURE pc_calcula_valor_iof_prg(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                     ,pr_tpoperacao           IN  PLS_INTEGER --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
@@ -56,8 +57,35 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                     ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
                                     ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                     ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
-                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE);
-                                                                  
+                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE --> Descricao da Critica
+                                    ,pr_flgimune             OUT NUMBER);             --> Possui imunidade tributária (1 - Sim / 0 - Não)
+                                    
+  PROCEDURE pc_calcula_valor_iof_epr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
+                                    ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
+                                    ,pr_vlemprst IN NUMBER                --> Valor do empréstimo para efeito de cálculo
+                                    ,pr_dscatbem IN VARCHAR2              --> Descrição da categoria do bem, valor default NULO 
+                                    ,pr_cdlcremp IN NUMBER                --> Linha de crédito do empréstimo
+                                    ,pr_dtmvtolt IN DATE                  --> Data do movimento
+                                    ,pr_qtdiaiof IN NUMBER DEFAULT 0      --> Quantidade de dias em atraso
+                                    ,pr_vliofpri IN OUT NUMBER            --> Valor do IOF principal
+                                    ,pr_vliofadi IN OUT NUMBER            --> Valor do IOF adicional
+                                    ,pr_vliofcpl IN OUT NUMBER            --> Valor do IOF complementar
+                                    ,pr_vltaxa_iof_principal OUT NUMBER   --> Valor da Taxa do IOF Principal
+                                    ,pr_flgimune OUT BOOLEAN              --> Possui imunidade tributária
+                                    ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+                                    
+                                    
+  PROCEDURE pc_verifica_isencao_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
+                                    ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
+                                    ,pr_dscatbem IN VARCHAR2              --> Descrição da categoria do bem, valor default NULO 
+                                    ,pr_cdlcremp IN NUMBER                --> Linha de crédito do empréstimo                                                                        
+                                    ,pr_vliofpri IN OUT NUMBER            --> Valor do IOF principal
+                                    ,pr_vliofadi IN OUT NUMBER            --> Valor do IOF adicional
+                                    ,pr_vliofcpl IN OUT NUMBER            --> Valor do IOF complementar
+                                    ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+                                
   PROCEDURE pc_calcula_valor_iof_inclusao(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                          ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
                                          ,pr_nrdconta             IN  crapass.nrdconta%TYPE --> Número da conta
@@ -99,6 +127,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                           ,pr_vliofpri       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Principal
                           ,pr_vliofadi       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Adicional
                           ,pr_vliofcpl       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Complementar
+                          ,pr_flgimune       IN PLS_INTEGER                                           --> Possui imunidade tributária (1 - Sim / 0 - Não)
                           ,pr_cdcritic       OUT NUMBER                                               --> Código da Crítica
                           ,pr_dscritic       OUT VARCHAR2);
                           
@@ -148,7 +177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                 ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
                                 ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                 ,pr_vltaxa_iof_principal OUT NUMBER                --> Valor da Taxa do IOF Principal
-                                ,pr_dscritic             OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
+                                ,pr_dscritic             OUT crapcri.dscritic%TYPE --> Descricao da Critica
+                                ,pr_flgimune             OUT BOOLEAN) IS           --> Possui imunidade tributária
   BEGIN
     /* ..........................................................................
 		   Programa : pc_calcula_valor_iof
@@ -173,7 +203,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       --  Variáveis gerais
       vr_vltaxa_iof_adicional tbgen_iof_taxa.vltaxa_iof%TYPE;
       vr_vltaxa_iof_principal tbgen_iof_taxa.vltaxa_iof%TYPE;
-      vr_flgimune             BOOLEAN     := FALSE;
       vr_qtdiaiof             PLS_INTEGER;
          
       -- Variaveis de Excecao
@@ -228,12 +257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       -- Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 
       --                  5-> Adiantamento Depositante)
       ----------------------------------------------------------------------------------------------------------------------
-      -- Emprestimo
-      IF pr_tpproduto IN (1) THEN
-        NULL;
-           
-      -- Adiantamento a Depositante
-      ELSIF pr_tpproduto IN (2,3,4,5) THEN
+      IF pr_tpproduto IN (1,2,3,4,5) THEN
         -- Inclusao da Operacao
         IF pr_tpoperacao = 1 THEN
           -- Cálculo do IOF principal
@@ -253,7 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                          ,pr_flgrvvlr => FALSE
                                          ,pr_cdinsenc => 0
                                          ,pr_vlinsenc => 0
-                                         ,pr_flgimune => vr_flgimune
+                                         ,pr_flgimune => pr_flgimune
                                          ,pr_dsreturn => vr_dsreturn
                                          ,pr_tab_erro => vr_tab_erro);
          
@@ -268,11 +292,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         RAISE vr_exc_erro;
       END IF;
       
-      -- Caso o cooperado for Imune devemos retornar o valor do IOF zerado
-      IF vr_flgimune THEN
+      --Quem chama deve verificar se é imune
+      /*-- Caso o cooperado for Imune devemos retornar o valor do IOF zerado
+      IF pr_flgimune THEN
         pr_vliofpri := 0;
         pr_vliofadi := 0;
         pr_vliofcpl := 0;
+      END IF;*/
+      
+      IF pr_flgimune THEN
+        vr_vltaxa_iof_principal := 0;
       END IF;
       
       -- Taxa do IOF Principal
@@ -303,7 +332,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                     ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
                                     ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                     ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
-                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
+                                    ,pr_dscritic             OUT crapcri.dscritic%TYPE --> Descricao da Critica
+                                    ,pr_flgimune             OUT NUMBER) IS           --> Possui imunidade tributária (1 - Sim / 0 - Não)
   BEGIN
     /* ..........................................................................
 		   Programa : pc_calcula_valor_iof
@@ -319,7 +349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
 				 .............................................................................*/
     DECLARE
       vr_vltaxa_iof_principal tbgen_iof_taxa.vltaxa_iof%TYPE;
-      vr_dscritic             VARCHAR2(3000);
+      vr_flgimune BOOLEAN := FALSE;
       
     BEGIN
       -- Procedure para calcular o valor do IOF
@@ -339,7 +369,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                           ,pr_vliofadi             => pr_vliofadi
                           ,pr_vliofcpl             => pr_vliofcpl
                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                          ,pr_dscritic             => pr_dscritic);
+                          ,pr_dscritic             => pr_dscritic
+                          ,pr_flgimune             => vr_flgimune);
+                          
+      IF vr_flgimune THEN
+        pr_flgimune := 1;
+      ELSE
+        pr_flgimune := 0;
+      END IF;
                           
       pr_vltaxa_iof_principal := TO_CHAR(vr_vltaxa_iof_principal);
     EXCEPTION
@@ -348,6 +385,207 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       pr_dscritic := 'Erro ao calcular IOF. Rotina TIOF0001.pc_calcula_valor_iof_prg. '||sqlerrm;
     END;
   END pc_calcula_valor_iof_prg;  
+  
+  
+  PROCEDURE pc_calcula_valor_iof_epr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
+                                    ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
+                                    ,pr_vlemprst IN NUMBER                --> Valor do empréstimo para efeito de cálculo
+                                    ,pr_dscatbem IN VARCHAR2              --> Descrição da categoria do bem, valor default NULO 
+                                    ,pr_cdlcremp IN NUMBER                --> Linha de crédito do empréstimo
+                                    ,pr_dtmvtolt IN DATE                  --> Data do movimento
+                                    ,pr_qtdiaiof IN NUMBER DEFAULT 0      --> Quantidade de dias em atraso
+                                    ,pr_vliofpri IN OUT NUMBER            --> Valor do IOF principal
+                                    ,pr_vliofadi IN OUT NUMBER            --> Valor do IOF adicional
+                                    ,pr_vliofcpl IN OUT NUMBER            --> Valor do IOF complementar
+                                    ,pr_vltaxa_iof_principal OUT NUMBER   --> Valor da Taxa do IOF Principal
+                                    ,pr_flgimune OUT BOOLEAN              --> Possui imunidade tributária
+                                    ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+  BEGIN
+    /* ..........................................................................
+		   Programa : pc_calcula_valor_iof_epr
+			 Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+ 	     Autor   : Diogo - MoutS
+			 Data    : Dezembro/2017                    Ultima atualizacao: 
+			 Dados referentes ao programa:
+			 Frequencia: Sempre que for solicitado
+			 Objetivo  :  Calcular o valor do IOF para empréstimos. Ao final, verificar as 
+                    regras de isenção do empréstimo
+
+       Alteracoes:  
+				 .............................................................................*/
+    DECLARE
+      vr_exc_erro EXCEPTION;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+      -- Cursor para dados da PF, PJ, PJ Cooperativa e regime tributário
+      CURSOR cr_pessoa(pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+         SELECT a.inpessoa, NVL(j.natjurid,0) natjurid, NVL(j.tpregtrb,0) tpregtrb
+         FROM crapass a
+         LEFT JOIN crapjur j ON j.cdcooper = a.cdcooper AND j.nrdconta = a.nrdconta
+         WHERE a.nrdconta = pr_nrdconta AND a.cdcooper = pr_cdcooper;
+       rw_pessoa cr_pessoa%ROWTYPE;  
+       
+    BEGIN
+      OPEN cr_pessoa(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+      FETCH cr_pessoa INTO rw_pessoa;
+      
+      IF cr_pessoa%NOTFOUND THEN
+        CLOSE cr_pessoa;
+        vr_dscritic := 'Associado não localizado!';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_pessoa;
+      
+      -- Procedure para calcular o valor do IOF
+      pc_calcula_valor_iof(pr_tpproduto            => 1 --> 1 - Emprestimo
+                          ,pr_tpoperacao           => 1 --> 1 Calculo IOF/Atraso
+                          ,pr_cdcooper             => pr_cdcooper
+                          ,pr_nrdconta             => pr_nrdconta
+                          ,pr_inpessoa             => rw_pessoa.inpessoa
+                          ,pr_natjurid             => rw_pessoa.natjurid
+                          ,pr_tpregtrb             => rw_pessoa.tpregtrb
+                          ,pr_dtmvtolt             => pr_dtmvtolt
+                          ,pr_qtdiaiof             => pr_qtdiaiof
+                          ,pr_vloperacao           => pr_vlemprst
+                          ,pr_vltotalope           => pr_vlemprst
+                          ,pr_vltaxa_iof_atraso    => 0
+                          ,pr_vliofpri             => pr_vliofpri
+                          ,pr_vliofadi             => pr_vliofadi
+                          ,pr_vliofcpl             => pr_vliofcpl
+                          ,pr_vltaxa_iof_principal => pr_vltaxa_iof_principal
+                          ,pr_dscritic             => vr_dscritic
+                          ,pr_flgimune             => pr_flgimune);
+                          
+        IF NVL(vr_dscritic, ' ') <> ' ' THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        pc_verifica_isencao_iof(pr_cdcooper => pr_cdcooper --> Código da cooperativa referente ao contrato de empréstimos
+                               ,pr_nrdconta => pr_nrdconta --> Número da conta referente ao empréstimo
+                               ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                               ,pr_dscatbem => pr_dscatbem --> Descrição da categoria do bem, valor default NULO 
+                               ,pr_cdlcremp => pr_cdlcremp --> Linha de crédito do empréstimo                                                                        
+                               ,pr_vliofpri => pr_vliofpri --> Valor do IOF principal
+                               ,pr_vliofadi => pr_vliofadi --> Valor do IOF adicional
+                               ,pr_vliofcpl => pr_vliofcpl --> Valor do IOF complementar
+                               ,pr_dscritic => vr_dscritic); --> Descrição da crítica
+      
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+          --Variavel de erro recebe erro ocorrido
+        pr_dscritic := 'Erro ao calcular IOF-EPR. Rotina TIOF0001.pc_calcula_valor_iof_epr. '||sqlerrm;
+    END;
+      
+  END pc_calcula_valor_iof_epr;
+  
+  
+  PROCEDURE pc_verifica_isencao_iof(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
+                                   ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
+                                   ,pr_dscatbem IN VARCHAR2              --> Descrição da categoria do bem, valor default NULO 
+                                   ,pr_cdlcremp IN NUMBER                --> Linha de crédito do empréstimo                                                                        
+                                   ,pr_vliofpri IN OUT NUMBER            --> Valor do IOF principal
+                                   ,pr_vliofadi IN OUT NUMBER            --> Valor do IOF adicional
+                                   ,pr_vliofcpl IN OUT NUMBER            --> Valor do IOF complementar
+                                   ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+  BEGIN
+     /* ..........................................................................
+		   Programa : pc_verifica_isencao_iof
+			 Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+ 	     Autor   : Diogo - MoutS
+			 Data    : Dezembro/2017                    Ultima atualizacao: 
+			 Dados referentes ao programa:
+			 Frequencia: Sempre que for solicitado
+			 Objetivo  :  Calcular o valor do IOF, respeitando as regras de isenção do IOF
+                 
+                 Regras:
+                    1 - Aquisição de motos/motonetas/motocicletas
+                         valor do IOF principal assumirá zero
+                         valor do IOF adicional deve ser calculado 
+                         valor do IOF complementar de atraso assumirá zero
+                         
+                    2 - Habitação (casa ou apartamento) e linha de crédito for hipoteca
+                         valor do IOF principal assumirá zero
+                         valor do IOF adicional assumirá zero
+                         valor do IOF complementar de atraso assumirá zero
+                         
+                    3 - Linha de crédito isenta de IOF
+                         valor do IOF principal assumirá zero
+                         valor do IOF adicional assumirá zero
+                         valor do IOF complementar de atraso assumirá zero
+                         
+                    3.1 - Caso a linha de crédito for 800, 850 e 900
+                         valor do IOF principal assumirá zero
+                         valor do IOF adicional assumirá zero
+                         valor do IOF complementar de atraso deverá ser calculado
+                         
+                    4 - Outras situações
+                        Calcular os valores normalmente
+			
+       Alteracoes:  
+				 .............................................................................*/
+         
+  DECLARE
+      vr_exc_erro EXCEPTION;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+       -- Cursor da linha de crédito do empréstimo
+       CURSOR cr_craplcr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+         SELECT a.tpctrato, a.flgtaiof, a.cdlcremp
+         FROM craplcr a
+         WHERE a.cdcooper = pr_cdcooper AND a.cdlcremp = pr_cdlcremp;
+       rw_craplcr cr_craplcr%ROWTYPE;
+       
+  BEGIN
+      
+      -- 1 - Aquisição de motos/motonetas/motocicletas
+      IF UPPER(pr_dscatbem) = 'MOTO' THEN
+        pr_vliofpri := 0;
+        pr_vliofcpl := 0;
+      END IF;
+
+      OPEN cr_craplcr(pr_cdcooper => pr_cdcooper, pr_cdlcremp => pr_cdlcremp);
+      FETCH cr_craplcr INTO rw_craplcr;
+         
+      -- 2 - Habitação (casa ou apartamento) e linha de crédito for hipoteca
+      IF UPPER(pr_dscatbem) IN ('CASA', 'APARTAMENTO') THEN
+         IF cr_craplcr%FOUND AND rw_craplcr.tpctrato = 3 THEN
+            pr_vliofpri := 0;
+            pr_vliofadi := 0;
+            pr_vliofcpl := 0;
+         END IF;
+      END IF;
+      
+      -- 3 - Linha de crédito isenta de IOF (flgtaiof = 0 ==> isentar cobrança de IOF)
+      IF cr_craplcr%FOUND AND rw_craplcr.flgtaiof = 0 THEN
+         pr_vliofpri := 0;
+         pr_vliofadi := 0;
+         -- 3.1 - Caso a linha de crédito for 800, 850 e 900 não isentar cobrança de IOF por atraso
+         IF rw_craplcr.cdlcremp NOT IN (800,850,900) THEN
+            pr_vliofcpl := 0;
+         END IF;
+      END IF;
+      CLOSE cr_craplcr;
+
+      -- 4 - Outras situações, retornar valores calculados
+             
+                   
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        --Variavel de erro recebe erro ocorrido
+      pr_dscritic := 'Erro ao verificar isenção de IOF. Rotina TIOF0001.pc_verifica_isencao_iof. '||sqlerrm;
+    END;
+  END pc_verifica_isencao_iof;
+                                    
   
   PROCEDURE pc_calcula_valor_iof_inclusao(pr_tpproduto            IN  PLS_INTEGER           --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                          ,pr_cdcooper             IN  crapcop.cdcooper%TYPE --> Código da cooperativa
@@ -586,6 +824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                           ,pr_vliofpri       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Principal
                           ,pr_vliofadi       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Adicional
                           ,pr_vliofcpl       IN tbgen_iof_lancamento.vliof%TYPE DEFAULT 0             --> Valor do IOF Complementar
+                          ,pr_flgimune       IN PLS_INTEGER                                           --> Possui imunidade tributária (1 - Sim / 0 - Não)
                           ,pr_cdcritic       OUT NUMBER                                               --> Código da Crítica
                           ,pr_dscritic       OUT VARCHAR2)  IS                                        --> Descrição da Crítica
   
@@ -605,8 +844,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     Observacao: -----
     Alteracoes:
     ..............................................................................*/
-	  vr_flgimune     BOOLEAN     := FALSE;
-    vr_flgimune_int PLS_INTEGER := 0;
 	
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
@@ -614,9 +851,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     vr_cdcritic     INTEGER;
     vr_exc_erro     EXCEPTION;
   BEGIN    
-    IF vr_flgimune THEN
-      vr_flgimune_int := 1;
-    END IF;	
 	
     -- Condicao para verificar se devemos lancar valor do IOF Principal
     IF pr_vliofpri > 0 THEN
@@ -648,7 +882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,vr_flgimune_int
+                    ,pr_flgimune
                     ,pr_vliofpri);
       EXCEPTION
         WHEN OTHERS THEN
@@ -687,7 +921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,vr_flgimune_int
+                    ,pr_flgimune
                     ,pr_vliofadi);
       EXCEPTION
         WHEN OTHERS THEN
@@ -726,7 +960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                     ,pr_cdbccxlt_lcm
                     ,pr_nrdolote_lcm
                     ,pr_nrseqdig_lcm
-                    ,vr_flgimune_int
+                    ,pr_flgimune
                     ,pr_vliofcpl);
       EXCEPTION
         WHEN OTHERS THEN

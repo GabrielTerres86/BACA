@@ -888,7 +888,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_pertengp AS LOG                                      NO-UNDO.
     DEF VAR aux_dsdrisco AS CHAR                                     NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                     NO-UNDO.
-    DEF VAR aux_flgimune AS LOGICAL                                  NO-UNDO.
+    DEF VAR aux_flgimune AS INT                                      NO-UNDO.
     DEF VAR aux_flsnhcoo AS LOGICAL INIT "N"                         NO-UNDO.
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
@@ -900,7 +900,6 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotaliofsn AS DECIMAL NO-UNDO.
-    
     DEFINE VARIABLE aux_natjurid AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_tpregtrb AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotiofpri AS DECIMAL NO-UNDO.
@@ -2100,6 +2099,8 @@ PROCEDURE efetua_liber_anali_bordero:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
             
+            ASSIGN aux_flgimune = 0.
+            
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
@@ -2200,9 +2201,9 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF principal */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
-                                                    ,OUTPUT ""                     /* Valor da taxa de IOF principal */
-                                                    ,OUTPUT "").                  /* Critica */
-                                                    
+                                                    ,OUTPUT ""                    /* Valor da taxa de IOF principal */
+                                                    ,OUTPUT ""                    /* Critica */
+                                                    ,OUTPUT 0).                   /* Flag imunidade */        
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC pc_calcula_valor_iof_prg
                 
@@ -2214,6 +2215,7 @@ PROCEDURE efetua_liber_anali_bordero:
                        aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                 IF aux_dscritic <> "" THEN
                   UNDO LIBERACAO, LEAVE.
+                  
                 /* Soma IOF principal */
                 IF pc_calcula_valor_iof_prg.pr_vliofpri <> ? THEN
                   DO:
@@ -2234,6 +2236,13 @@ PROCEDURE efetua_liber_anali_bordero:
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
                   END.
+                  
+                IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
+                  DO:
+                    ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
+                  END.
+                  
+                  
             END.  /*  Fim do FOR EACH craptdb  */
             ASSIGN aux_vltotiof = aux_vltotiofpri + aux_vltotiofadi.
 
@@ -2450,6 +2459,9 @@ PROCEDURE efetua_liber_anali_bordero:
             /*  Cobranca do IOF de desconto  */
             IF  aux_vltotiof > 0 THEN         
                DO:
+                  /* Só grava na craplcm se nao FOR imune */
+                  IF aux_flgimune <= 0 THEN
+                    DO:
                    DO aux_contador = 1 TO 10:
                       FIND craplot WHERE
                            craplot.cdcooper = par_cdcooper   AND
@@ -2491,39 +2503,41 @@ PROCEDURE efetua_liber_anali_bordero:
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
                 
-                   CREATE craplcm.
-                   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                          craplcm.cdagenci = craplot.cdagenci
-                          craplcm.cdbccxlt = craplot.cdbccxlt
-                          craplcm.nrdolote = craplot.nrdolote
-                          craplcm.nrdconta = crapbdt.nrdconta
-                          craplcm.nrdctabb = crapbdt.nrdconta
-                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                    "99999999")
-                          craplcm.nrdocmto = craplot.nrseqdig + 1
-                          /* craplcm.cdhistor = 688 */
-                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
+                     CREATE craplcm.
+                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+                            craplcm.cdagenci = craplot.cdagenci
+                            craplcm.cdbccxlt = craplot.cdbccxlt
+                            craplcm.nrdolote = craplot.nrdolote
+                            craplcm.nrdconta = crapbdt.nrdconta
+                            craplcm.nrdctabb = crapbdt.nrdconta
+                            craplcm.nrdctitg = STRING(crapbdt.nrdconta,
+                                                      "99999999")
+                            craplcm.nrdocmto = craplot.nrseqdig + 1
+                            /* craplcm.cdhistor = 688 */
+                            craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
-                          craplcm.nrseqdig = craplot.nrseqdig + 1
-                          craplcm.cdpesqbb = "Bordero " +
-                                             STRING(crapbdt.nrborder)
-                                             + " - " +
-                                             STRING(aux_vlborder,
-                                                    "999,999,999.99")
-                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
-                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
-                          craplcm.cdcooper = par_cdcooper
-                          craplot.vlinfodb = craplot.vlinfodb + 
-                                                     craplcm.vllanmto
-                          craplot.vlcompdb = craplot.vlcompdb + 
-                                                     craplcm.vllanmto
-                          craplot.qtinfoln = craplot.qtinfoln + 1
-                          craplot.qtcompln = craplot.qtcompln + 1
-                          craplot.nrseqdig = craplot.nrseqdig + 1.
-                     
-                   VALIDATE craplot.
-                   VALIDATE craplcm.
+                            craplcm.nrseqdig = craplot.nrseqdig + 1
+                            craplcm.cdpesqbb = "Bordero " +
+                                               STRING(crapbdt.nrborder)
+                                               + " - " +
+                                               STRING(aux_vlborder,
+                                                      "999,999,999.99")
+                            /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
+                            craplcm.vllanmto = ROUND(aux_vltotiof, 2)
+                            craplcm.cdcooper = par_cdcooper
+                            craplot.vlinfodb = craplot.vlinfodb + 
+                                                       craplcm.vllanmto
+                            craplot.vlcompdb = craplot.vlcompdb + 
+                                                       craplcm.vllanmto
+                            craplot.qtinfoln = craplot.qtinfoln + 1
+                            craplot.qtcompln = craplot.qtcompln + 1
+                            craplot.nrseqdig = craplot.nrseqdig + 1.
+                       
+                     VALIDATE craplot.
+                     VALIDATE craplcm.
+                   END.
 
+                  
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -2542,6 +2556,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                       ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
                                                       ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
                                                       ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */
+                                                      ,INPUT aux_flgimune           /* Flag da imunidade */   
                                                       ,OUTPUT 0                     /* Código da Crítica */
                                                       ,OUTPUT "").
                   /* Fechar o procedimento para buscarmos o resultado */ 
@@ -12976,6 +12991,7 @@ PROCEDURE efetua_baixa_titulo:
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_indbaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_dtintegr AS DATE                    NO-UNDO.
     /* 1-Pagamento 2- Vencimento */
     
     DEF INPUT PARAM TABLE FOR tt-titulos.
@@ -13018,6 +13034,7 @@ PROCEDURE efetua_baixa_titulo:
     DEF VAR aux_qtdiaiof AS INTEGER             NO-UNDO.
     DEF VAR aux_vltotal_liquido AS DECIMAL      NO-UNDO.
     DEF VAR aux_vltxiofatraso AS DECIMAL        NO-UNDO.
+    DEF VAR aux_flgimune AS INTEGER             NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE  NO-UNDO.
     
     DEF BUFFER crablot FOR craplot.
@@ -13382,7 +13399,7 @@ PROCEDURE efetua_baixa_titulo:
                                        NO-LOCK NO-ERROR. */
                                    
                     /*  Condicao para verificar se o Titulo estah em Atraso */
-                    IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtmvtolt THEN
+                    IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtintegr THEN
                        DO:
                            /* Busca o tipo de pessoa */
                            FOR crapass FIELDS (inpessoa)
@@ -13446,8 +13463,9 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,OUTPUT 0                  /* IOF Principal */
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
-                                                               ,OUTPUT ""                  /* Taxa de IOF principal */
-                                                               ,OUTPUT "").  /* Descrição da crítica */
+                                                               ,OUTPUT ""                 /* Taxa de IOF principal */
+                                                               ,OUTPUT ""                 /* Descrição da crítica */
+                                                               ,OUTPUT 0).
                            /* Fechar o procedimento para buscarmos o resultado */ 
                            CLOSE STORED-PROC pc_calcula_valor_iof_prg
                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -13456,6 +13474,7 @@ PROCEDURE efetua_baixa_titulo:
                                   aux_vliofadi = 0
                                   aux_vliofcpl = 0
                                   aux_dscritic = ""
+                                  aux_flgimune = 0
                                   aux_vliofpri = pc_calcula_valor_iof_prg.pr_vliofpri
                                                  WHEN pc_calcula_valor_iof_prg.pr_vliofpri <> ?
                                   aux_vliofadi = pc_calcula_valor_iof_prg.pr_vliofadi
@@ -13464,6 +13483,10 @@ PROCEDURE efetua_baixa_titulo:
                                                  WHEN pc_calcula_valor_iof_prg.pr_vliofcpl <> ?
                                   aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic
                                                  WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
+                                                 
+                            IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
+                              ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
+
                            /* Se retornou erro */
                            IF aux_dscritic <> "" THEN 
                               DO:
@@ -13476,7 +13499,7 @@ PROCEDURE efetua_baixa_titulo:
                                   UNDO BAIXA, RETURN "NOK".
                               END.
                            /* Condicao para verificar se o valor do complemento eh maior que 0 */    
-                           IF aux_vliofcpl > 0 THEN
+                           IF aux_vliofcpl > 0 AND aux_flgimune <= 0 THEN
                               DO:
                                   DO aux_contador = 1 TO 10:
                                      FIND craplot WHERE 
@@ -13562,6 +13585,7 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,INPUT aux_vliofpri        /* Valor Principal IOF      */
                                                                ,INPUT aux_vliofadi        /* Valor Adicional IOF      */
                                                                ,INPUT aux_vliofcpl        /* Valor Complementar IOF   */
+                                                               ,INPUT aux_flgimune        /* Flag de imunidade tributária */
                                                                ,OUTPUT 0                  /* Codigo da Critica */
                                                                ,OUTPUT "").               /* Descrição da crítica */
                            /* Fechar o procedimento para buscarmos o resultado */ 

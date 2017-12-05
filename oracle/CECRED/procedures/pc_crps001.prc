@@ -727,6 +727,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
        vr_idlancto NUMBER;
+       vr_flgimune BOOLEAN;
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
        -- Cursor genérico de calendário
@@ -2122,7 +2123,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                          ,pr_dscritic   => vr_dscritic);
+                                          ,pr_dscritic   => vr_dscritic,
+                                          pr_flgimune    => vr_flgimune);
                                           
              -- Condicao para verificar se houve critica                             
              IF vr_dscritic IS NOT NULL THEN
@@ -2152,7 +2154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                          ,pr_dscritic   => vr_dscritic);
+                                          ,pr_dscritic   => vr_dscritic
+                                          ,pr_flgimune   => vr_flgimune);
              
              -- Condicao para verificar se houve critica                             
              IF vr_dscritic IS NOT NULL THEN
@@ -2181,7 +2184,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_vliofadi   => vr_vliofadi
                                         ,pr_vliofcpl   => vr_vliofcpl
                                         ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                        ,pr_dscritic   => vr_dscritic);
+                                        ,pr_dscritic   => vr_dscritic
+                                        ,pr_flgimune   => vr_flgimune);
              
            -- Condicao para verificar se houve critica                             
            IF vr_dscritic IS NOT NULL THEN
@@ -2198,6 +2202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_nrcontrato => 0
                                  ,pr_vliofpri   => vr_vliof_principal
                                  ,pr_vliofadi   => vr_vliofadi
+                                 ,pr_flgimune   => CASE WHEN vr_flgimune THEN 1 ELSE 0 END
                                  ,pr_cdcritic   => vr_cdcritic
                                  ,pr_dscritic   => vr_dscritic);
                                 
@@ -2206,10 +2211,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              RAISE vr_exc_saida;
            END IF;
            
+           IF NOT vr_flgimune THEN
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
            rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
+           ELSE
+             rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0);
+             rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0);
+           END IF;
 
             --Se deve calcular cpmf
            IF vr_flgdcpmf THEN  --linha(905)

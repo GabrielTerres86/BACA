@@ -1554,8 +1554,17 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic);                                   
-      vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+                                   ,pr_dscritic   => vr_dscritic
+                                   ,pr_flgimune   => vr_flgimune);
+      IF NOT vr_flgimune THEN
+        vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      ELSE 
+        vr_vliofcpl := 0;
+        vr_vliofpri := 0;
+        vr_vliofadi := 0;
+        vr_vlrdoiof := 0;
+      END IF;
+      
       -- VERIFICA SE OCORREU UMA CRITICA
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;        
@@ -2355,8 +2364,17 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
                                    ,Pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic);                                   
-      vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+                                   ,pr_dscritic   => vr_dscritic
+                                   ,pr_flgimune   => vr_flgimune);
+      IF NOT vr_flgimune THEN
+        vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      ELSE
+        vr_vliofcpl := 0;
+        vr_vliofpri := 0;
+        vr_vliofadi := 0;
+        vr_vlrdoiof := 0;
+      END IF;
+      
       
       -- abre cursor da tabela
       OPEN cr_craplat(pr_cdcooper => pr_cdcooper,

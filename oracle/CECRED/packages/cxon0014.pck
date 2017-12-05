@@ -3271,6 +3271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                           ,pr_idorigem    => vr_idorigem         --Identificador Origem pagamento
                                           ,pr_nrdconta    => pr_nrdconta         --Numero da conta
                                           ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                          ,pr_dtintegr    => rw_crapdat.dtmvtocd -- Data de integração do pagamento
                                           ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                           ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                           ,pr_dscritic    => vr_dscritic         --Descricao Critica
