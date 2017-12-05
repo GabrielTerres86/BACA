@@ -102,6 +102,21 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
                                     ,pr_idseqttl IN NUMBER DEFAULT 1 -- Sequencia do titular
                                     ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
 
+  -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
+  PROCEDURE pc_busca_nome_pessoa(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE,
+                                 pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                                 pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
+                                 pr_dscritic OUT VARCHAR2);
+
+  -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
+  PROCEDURE pc_busca_nome_pessoa_xml(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE,
+                                     pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                     pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                     pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                     pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                     pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                     pr_des_erro OUT VARCHAR2);             --> Erros do processo
+
 END CADA0008;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
@@ -827,5 +842,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                       ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
                                          pr_dscritic);                     
   END pc_marca_replica_ayllos;
+  
+  -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
+  PROCEDURE pc_busca_nome_pessoa(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE,
+                                 pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                                 pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
+                                 pr_dscritic OUT VARCHAR2) IS
+    -- Cursor sobre o cadastro de pessoa
+    CURSOR cr_pessoa IS
+      SELECT a.nmpessoa,
+             a.tpcadastro
+        FROM tbcadast_pessoa a
+       WHERE a.nrcpfcgc = pr_nrcpfcgc;                                 
+    rw_pessoa cr_pessoa%ROWTYPE;
+  BEGIN
+    -- Busca os dados da pessoa
+    OPEN cr_pessoa;
+    FETCH cr_pessoa INTO rw_pessoa;
+    IF cr_pessoa%NOTFOUND THEN
+      pr_idaltera := 1; -- Permite alterar
+    ELSE
+      pr_nmpessoa := rw_pessoa.nmpessoa;
+      -- Se o tipo de cadastro for intermediario ou completo, eh que possui conta.
+      -- Neste caso, nao deve permitir alterar o nome
+      IF rw_pessoa.tpcadastro IN (3,4) THEN
+        pr_idaltera := 0; -- Nao permite alterar
+      ELSE -- Nao possui conta
+        pr_idaltera := 1; -- Permite alterar
+      END IF;
+    END IF;
+    CLOSE cr_pessoa;
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA: '||SQLERRM;
+  END pc_busca_nome_pessoa;
+  
+  
+  -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
+  PROCEDURE pc_busca_nome_pessoa_xml(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE,
+                                     pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                     pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                     pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                     pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                     pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                     pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+
+    --Variaveis
+    vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
+    vr_idaltera PLS_INTEGER;
+    
+    -- Controle de erro
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_saida     EXCEPTION;
+    
+    --Variaveis de LOG
+    vr_cdoperad      VARCHAR2(100);
+    vr_cdcooper      NUMBER;
+    vr_nmdatela      VARCHAR2(100);
+    vr_nmeacao       VARCHAR2(100);
+    vr_cdagenci      VARCHAR2(100);
+    vr_nrdcaixa      VARCHAR2(100);
+    vr_idorigem      VARCHAR2(100);
+
+  BEGIN
+    -- Busca o nome da pessoa
+    CADA0008.pc_busca_nome_pessoa(pr_nrcpfcgc => pr_nrcpfcgc,
+                                  pr_nmpessoa => vr_nmpessoa,
+                                  pr_idaltera => vr_idaltera,
+                                  pr_dscritic => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;  
+
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    
+    -- Preenche os dados
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmpessoa', pr_tag_cont => vr_nmpessoa, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'idaltera', pr_tag_cont => vr_idaltera, pr_des_erro => vr_dscritic);
+                                  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA_XML: '||SQLERRM;
+  END pc_busca_nome_pessoa_xml;
+  
 END;
 /
