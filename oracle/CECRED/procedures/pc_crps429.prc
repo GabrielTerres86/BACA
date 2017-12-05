@@ -80,6 +80,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS429(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vlsddisp NUMBER;
   vr_nrdconta PLS_INTEGER;
 
+  vr_vlbloque NUMBER;
+  vr_vlresblq NUMBER;
+  vr_idblqjud CHAR(1);
+
   vr_cdagenci crapass.cdagenci%TYPE;
   vr_vldisppf crapsli.vlsddisp%TYPE;
   vr_vldisppj crapsli.vlsddisp%TYPE;
@@ -183,7 +187,7 @@ BEGIN
   vr_vldisppj := 0;
   vr_vltotapf := 0;
   vr_vltotapj := 0;
-  vr_cdagenci := 0; 
+  vr_cdagenci := 0;
  -- Incluir nome do modulo logado
   GENE0001.pc_informa_acesso(pr_module => 'PC_' || vr_cdprogra,
                              pr_action => vr_cdprogra);
@@ -266,13 +270,33 @@ BEGIN
         vr_tab_cta_bndes(vr_nrdconta).nrdconta := rw_crapsli.nrdconta;
       END IF;
     END IF;
+
     
+    -- Demetrius  - Melhoria 460
+    -- Rotina para retorno de valores bloqueados judicialmente para o cooperado
+    GENE0005.pc_retorna_valor_blqjud(pr_cdcooper => rw_crapsli.cdcooper
+                                    ,pr_nrdconta => rw_crapsli.nrdconta
+                                    ,pr_nrcpfcgc => NULL
+                                    ,pr_cdtipmov => 0
+                                    ,pr_cdmodali => 2 --> Aplicação
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_vlbloque => vr_vlbloque
+                                    ,pr_vlresblq => vr_vlresblq
+                                    ,pr_dscritic => vr_dscritic);
+    IF NVL(vr_vlbloque,0) > 0 THEN
+      vr_idblqjud := 'S';
+    ELSE
+      vr_idblqjud := 'N';
+    END IF;  
+
+
     -- Enviar o registro para o relatório
     pc_escreve_clob(vr_clobxml,'<saldos>'
                              ||'  <cdagenci>'||rw_crapsli.cdagenci||'</cdagenci>'
                              ||'  <nrdconta>'||gene0002.fn_mask_conta(rw_crapsli.nrdconta)||'</nrdconta>'
                              ||'  <nmprimtl>'||rw_crapsli.nmprimtl||'</nmprimtl>'
                              ||'  <vlsddisp>'||rw_crapsli.vlsddisp||'</vlsddisp>'
+                             ||'  <idblqjud>'||vr_idblqjud||'</idblqjud>'
                              ||'</saldos>');
                              
                              

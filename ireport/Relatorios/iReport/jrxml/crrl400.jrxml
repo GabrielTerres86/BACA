@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="924" whenNoDataType="NoDataSection" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="34"/>
+	<property name="ireport.x" value="103"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -29,6 +29,9 @@
 	</field>
 	<field name="vlsddisp" class="java.lang.Double">
 		<fieldDescription><![CDATA[vlsddisp]]></fieldDescription>
+	</field>
+	<field name="idblqjud" class="java.lang.String">
+		<fieldDescription><![CDATA[idblqjud]]></fieldDescription>
 	</field>
 	<variable name="vr_tot_vlsddisp" class="java.lang.Double" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlsddisp}]]></variableExpression>
@@ -103,14 +106,21 @@
 					<text><![CDATA[  CONTA/DV]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="bf8fd124-4752-4074-bfbc-7f712146d591" x="109" y="0" width="210" height="11"/>
+					<reportElement uuid="bf8fd124-4752-4074-bfbc-7f712146d591" x="109" y="0" width="154" height="11"/>
 					<textElement>
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[NOME]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="481b53d1-c16c-4c18-960b-d7eeecbbe3ef" x="398" y="0" width="30" height="11"/>
+					<reportElement uuid="bf8fd124-4752-4074-bfbc-7f712146d591" x="392" y="0" width="34" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<text><![CDATA[BLQJUD]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="481b53d1-c16c-4c18-960b-d7eeecbbe3ef" x="348" y="0" width="30" height="11"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
@@ -131,18 +141,25 @@
 					<text><![CDATA[----------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="bf8fd124-4752-4074-bfbc-7f712146d591" x="109" y="11" width="210" height="11"/>
+					<reportElement uuid="bf8fd124-4752-4074-bfbc-7f712146d591" x="109" y="11" width="154" height="11"/>
 					<textElement>
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[----------------------------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="481b53d1-c16c-4c18-960b-d7eeecbbe3ef" x="325" y="11" width="103" height="11"/>
+					<reportElement uuid="481b53d1-c16c-4c18-960b-d7eeecbbe3ef" x="275" y="11" width="103" height="11"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[-------------------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="481b53d1-c16c-4c18-960b-d7eeecbbe3ef" x="392" y="11" width="34" height="11"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<text><![CDATA[------]]></text>
 				</staticText>
 			</frame>
 		</band>
@@ -157,18 +174,25 @@
 				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="419d38a1-5b42-48cf-8311-323aaf50cc5f" x="119" y="0" width="210" height="11"/>
+				<reportElement uuid="419d38a1-5b42-48cf-8311-323aaf50cc5f" x="119" y="0" width="154" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="86d5dee5-18af-453f-b349-c23143c5f9cd" x="335" y="0" width="103" height="11"/>
+				<reportElement uuid="86d5dee5-18af-453f-b349-c23143c5f9cd" x="285" y="0" width="103" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlsddisp}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="86d5dee5-18af-453f-b349-c23143c5f9cd" x="402" y="0" width="34" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{idblqjud}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement uuid="74c69442-badc-47f4-8f4a-1bdeb5042cfe" x="10" y="0" width="26" height="11"/>
@@ -182,7 +206,7 @@
 	<summary>
 		<band height="22">
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="098e6368-e148-476e-8311-bf8ee5a1f430" x="335" y="11" width="103" height="11"/>
+				<reportElement uuid="098e6368-e148-476e-8311-bf8ee5a1f430" x="285" y="11" width="103" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
