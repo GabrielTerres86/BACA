@@ -27,7 +27,7 @@
   <tr valign="botton">
     <td height="20"><table width="189" border="0" cellpadding="0" cellspacing="0">
         <tr>
-          <td>
+          <td width="25%" >
 	    <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
               <tr>
      		 <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
@@ -36,9 +36,15 @@
               </tr>
             </table>
 	  </td>
+		 <td  width="75%"  align="right" class="txtTituloHid" style="text-align:right;">                                                
+			<div id="adicionar" style="text-align:right; width:485px;"> <a href="#." onclick="AdLocal();">Adicionar</a> </div>
+		 </td>
         </tr>
       </table></td>
+	   
   </tr>
+   <!-- Links de Adicionar -->
+                                                       
   <tr valign="top" bgcolor="#FFFFFF">
     <td><table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
         <tr>
@@ -196,7 +202,20 @@ function mudaCor(){
      }
   } 
 }
+function AdLocal() {
 
+		VarURL = document.form.aux_dsendurl.value + '/wpgd0013.htm' + '?aux_cdevento=' + document.form.aux_cdevento.value 
+																	+ '&aux_idevento=' + document.form.aux_idevento.value
+																	+ '&aux_cdcopope=' + document.form.aux_cdcopope.value 
+																	+ '&cdcooper=' + document.form.aux_cdcooper.value
+																	+ '&aux_cdcooper=' + document.form.aux_cdcooper.value
+																	+ '&aux_cdageevt=' + document.form.aux_cdagenci.value
+																	+ '&aux_cdoperad=' + document.form.aux_cdoperad.value
+																	+ '&aux_origem=agenda';
+																
+		window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=400,top=10,left=10');
+	
+}
 function mostraLocal(){
 
   var row; var cell;
@@ -330,6 +349,12 @@ function armazenaLocal(){
      document.form.aux_lslocali.value = '0,';
   }
 
+}
+
+function Recarrega(){ 
+  //location.reload();  
+   history.go(0);
+ 	  
 }
 
 if (mlocal.length == 0){

@@ -10,9 +10,12 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                          tipo do evento for igual a 10 (EAD).
                          Projeto 229 - Melhorias OQS (Lombardi)
 
-            31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05(Vanessa)
-
-            29/06/2016 - Ajuste na função DetEventos e DetEventos2 para trazer o PA do evento (Vanessa)
+            31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
+			
+			29/06/2016 - Ajuste na função DetEventos e DetEventos2 para trazer o PA do evento (Vanessa)
+			
+			23/06/2016 - Retirada do envio do email e inclusão dos dos campos cdoperad e 
+						 cdcopope na seleção do local RF05 - (Vanessa K.)
 -->
 
 <html>
@@ -59,24 +62,26 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
     </script>
     <form action="#." method="POST" name="form">
         <div width="100%" border="0" cellpadding="1" cellspacing="1" align="center" style="float:right; margin-right:36px;">
-            <input type="hidden" name="aux_dsendurl" value="">
-            <input type="hidden" name="aux_idevento" value="">
-            <input type="hidden" name="aux_cddopcao" value="">
-            <input type="hidden" name="aux_nrdrowid" value="">
-            <input type="hidden" name="aux_lspermis" value="">
-            <input type="hidden" name="aux_dsretorn" value="">
-            <input type="hidden" name="aux_stdopcao" value="">
-            <input type="hidden" name="dtanoage" value="">
-            <input type="hidden" name="cdagenci" value="">
-            <input type="hidden" name="cdevento" value="">
-            <input type="hidden" name="pagina" value="">
-            <input type="hidden" name="aux_contarow" value=0>
-            <input type="hidden" name="aux_maxrows" value=0>
+			<input type="hidden" name="aux_dsendurl" value="">
+			<input type="hidden" name="aux_idevento" value="">
+			<input type="hidden" name="aux_cddopcao" value="">
+			<input type="hidden" name="aux_nrdrowid" value="">
+			<input type="hidden" name="aux_lspermis" value="">
+			<input type="hidden" name="aux_dsretorn" value="">
+			<input type="hidden" name="aux_stdopcao" value="">
+			<input type="hidden" name="dtanoage" value="">
+			<input type="hidden" name="cdagenci" value="">
+			<input type="hidden" name="cdevento" value="">
+			<input type="hidden" name="pagina"   value="">
+			<input type="hidden" name="aux_contarow" value=0>
+			<input type="hidden" name="aux_maxrows"  value=0>
+			<input type="hidden" name="aux_cdoperad" value="">
+			<input type="hidden" name="aux_cdcopope" value="">
 
-            <!-- Para o carregamento dos registros em partes -->
-            <input type="hidden" name="aux_carregar" value="">
-            <input type="hidden" name="aux_reginils" value="">
-            <input type="hidden" name="aux_regfimls" value="">
+			<!-- Para o carregamento dos registros em partes -->
+			<input type="hidden" name="aux_carregar" value="">
+			<input type="hidden" name="aux_reginils" value="">
+			<input type="hidden" name="aux_regfimls" value="">
 
             <!-- Inicio do modelo com abas -->
             <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 18px; top: 2px; visibility: ;">
@@ -134,10 +139,10 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                                     </td>
 																					 <td width="30" height="25" align="right" class="NomeCampo">Até:</td>
                                                                                      <td height="25" align="left" class="NomeCampo" colspan="2">
-                                                                                         <div align="left" width="400px" style="font-size:10px">
+																					  <div align="left"  width="400px" style="font-size:10px">
 																						<input size="8" id="dtfineve" name="aux_dtfineve" type="text" readonly="readonly" onblur="verificaDatas(this);" onchange="if(verificaDatas(this)) { aguarde(); document.form.submit(); }">
-                                                                                             Filtra apenas eventos com Data
-																					   </div>
+																					  </div> 
+																					   
 																					 </td>
                                                                                 </tr>
                                                                             </table>
@@ -246,13 +251,9 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                             <tr align="center">
                                                                                 <td width="130" height="15" align="left">
                                                                                     <table width="128" border="0" cellpadding="0" cellspacing="0" id="AbaInscrito">
-                                                                                        <tr style="cursor:hand;">
+                                                                                        <tr>
                                                                                             <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
-                                                                                            <td width="120" align="center" class="txtTituloHid" onclick="mostraDiv('divInscrito'); aguarde();
-                                                                                                              document.form.aux_cdagenci.value = 0;
-                                                                                                              document.form.aux_cdevento.value = 0;
-                                                                                                              document.form.submit();">
-                                                                                                Agenda do PA
+                                                                                            <td width="120" align="center" class="txtTituloHid">Agenda do PA
                                                                                             </td>
                                                                                             <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
                                                                                         </tr>
@@ -484,9 +485,9 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Assembléias não tem acesso a local
                 if (mevento[i].tpevento != '7') {
                     // Agnaldo 25/11 - Mostrar link somente quando não tem endereço
-                    if (mevento[i].dslocali == '') {
+                    if (mevento[i].dslocali == '') { 
                         cell.style.cursor = 'hand';
-                        cell.innerHTML = '<a href="#." id="sel_cdagenci' + i + '" value="' + mevento[i].cdagenci + '">Selecionar</a>';
+                        cell.innerHTML = '<a href="#." id="sel_cdagenci'+i+'"  value="' + mevento[i].cdagenci + '">Selecionar</a>';
                         cell.onclick = Local;
 						
                     }
@@ -602,16 +603,23 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                     document.form.aux_reginils.value = mevento[i].nrdrowid;
 
                 // guarda o ROWID do último da lista
-                if (i == mevento.length - 1)
+                if (i == mevento.length - 1){
                     document.form.aux_regfimls.value = mevento[i].nrdrowid;
+					
+					}
 					
             }
 
 				
         }
-
-        // linha de final da listagem se nao tiver 80 linhas
-        if (document.all.tbevento.rows.length != '30') {
+		if(aux_exibedir == 1 ){
+			document.form.anteriores.style.visibility = '';
+		}else{
+			document.form.anteriores.style.visibility = 'hidden';
+		}
+		
+        // linha de final da listagem se nao tiver 100 linhas
+        if (document.all.tbevento.rows.length != '150') {
             row = tbevento.insertRow();
             if (cor == '#FFFFFF')
                 cor = '#F7F7F7';
@@ -626,8 +634,12 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
             cell.width = '100%';
             cell.colSpan = 16;
             cell.innerText = 'Fim da listagem';
+			document.form.proximos.style.visibility = 'hidden';
 			
-        }
+			
+        }else{
+			document.form.proximos.style.visibility = '';
+		}
 		
 		
         // Se não tem eventos para mostrar, emite mensagem
@@ -637,48 +649,47 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
     }
 
     function DetEventos() {
-        if (document.form.aux_cdevent2.length > 1) {
+        if (document.form.aux_cdevent2.length > 1) { 
             VarURL = document.form.aux_dsendurl.value + '/wpgd0026a.htm'
            + '?LinkRowid=' + document.form.idpropo2[this.id].value
            + '&aux_cdcooper=' + document.form.aux_cdcooper.value
            + '&aux_cdagenci=' + document.form.aux_cdagenc2[this.id].value
            + '&aux_cdevento=' + document.form.aux_cdevent2[this.id].value
            + '&aux_nrseqeve=' + document.form.nrseqev2[this.id].value
-                   + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
-            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=850,height=440');
+           + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
+            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=200,top=150,width=850,height=440');
         }
-        else {
+        else { 
             VarURL = document.form.aux_dsendurl.value + '/wpgd0026a.htm'
                + '?LinkRowid=' + document.form.idpropo2.value
                + '&aux_cdcooper=' + document.form.aux_cdcooper.value
                + '&aux_cdagenci=' + document.form.aux_cdagenc2.value
                + '&aux_cdevento=' + document.form.aux_cdevent2.value
                + '&aux_nrseqeve=' + document.form.nrseqev2.value
-                       + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
-            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=850,height=440');
+               + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
+            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,left=200,top=150,width=850,height=440');
         }
     }
 
     function DetEventos2() {
-        if (document.form.aux_cdevent3.length > 1) {
+        if (document.form.aux_cdevent3.length > 1) { 
             VarURL = document.form.aux_dsendurl.value + '/wpgd0026a.htm'
                + '?LinkRowid=' + document.form.idpropo3[this.id].value
                + '&aux_cdcooper=' + document.form.aux_cdcooper.value
                + '&aux_cdagenci=' + document.form.aux_cdagenc3[this.id].value
-                       + '&aux_cdevento=' + document.form.aux_cdevento.value
+               + '&aux_cdevento=' + document.form.aux_cdevento.value
                + '&aux_nrseqeve=' + document.form.nrseqev3[this.id].value
-                       + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
-            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=850,height=400');
-        }
-        else {
+               + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
+            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,left=200,top=150,width=850,height=400');        }
+        else { 
             VarURL = document.form.aux_dsendurl.value + '/wpgd0026a.htm'
                + '?LinkRowid=' + document.form.idpropo3.value
                + '&aux_cdcooper=' + document.form.aux_cdcooper.value
                + '&aux_cdagenci=' + document.form.aux_cdagenc3.value
-                       + '&aux_cdevento=' + document.form.aux_cdevento.value
+               + '&aux_cdevento=' + document.form.aux_cdevento.value
                + '&aux_nrseqeve=' + document.form.nrseqev3.value
-                       + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
-            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=850,height=400');
+               + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
+            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,left=200,top=150,width=850,height=400');
         }
     }
 
@@ -786,7 +797,6 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
     function mostraPACsEve() {
 
         var row; var cell;
-
         var cor = '#F7F7F7';
 
         // Apaga todas as linhas, menos a do cabeçalho
@@ -806,7 +816,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 
                 row.bgColor = cor;
 
-                // PA
+                // PAC
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
                 cell.width = 85;
@@ -986,7 +996,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
         }
 
         // linha de final da listagem se nao tiver 80 linhas
-        if (document.all.tbpac.rows.length != '30') {
+        if (document.all.tbpac.rows.length != '150') {
             row = tbpac.insertRow();
             if (cor == '#FFFFFF')
                 cor = '#F7F7F7';
@@ -1001,6 +1011,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
             cell.width = '100%';
             cell.colSpan = 16;
             cell.innerText = 'Fim da listagem';
+			document.form.proximos.style.visibility = 'hidden';
         }
     }
 
@@ -1022,7 +1033,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
               '&cdageins=' + document.form.aux_cdagenc2.value +
               '&nrseqeve=' + document.form.nrseqev2.value;
 
-        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=390');
+        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
     function Confirma() {
@@ -1042,7 +1053,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
               '&cdageins=' + document.form.aux_cdagenc2.value +
               '&nrseqeve=' + document.form.nrseqev2.value;
 
-        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=390');
+        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
     function Inscricao2() {
@@ -1061,7 +1072,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
               '&cdageins=' + document.form.aux_cdagenc3.value +
               '&nrseqeve=' + document.form.nrseqev3.value;
 
-        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=390');
+        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
     function Confirma2() {
@@ -1080,7 +1091,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
               '&cdageins=' + document.form.aux_cdagenc3.value +
               '&nrseqeve=' + document.form.nrseqev3.value;
 
-        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=390');
+        window.open(VarURL, 'inscri', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=875,height=475');
     }
 
     function DetEvento() {
@@ -1125,8 +1136,10 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 VarURL = document.form.aux_dsendurl.value + '/wpgd0026b.htm'
                    + '?aux_idevento=' + document.form.aux_idevento.value
                    + '&aux_cdcooper=' + document.form.aux_cdcooper.value
-                   + '&aux_cdagenci=' + document.getElementById("sel_cdagenci" + [this.id]).value
-                   + '&aux_dtanoage=' + document.form.aux_dtanoage.value;
+                   + '&aux_cdagenci=' + document.getElementById("sel_cdagenci"+[this.id]).value
+                   + '&aux_dtanoage=' + document.form.aux_dtanoage.value
+				   + '&aux_cdcopope=' + document.form.aux_cdcopope.value
+				   + '&aux_cdoperad=' + document.form.aux_cdoperad.value;
 
                 if (document.form.nrseqev2.length > 1)
                     VarURL = VarURL +
@@ -1135,7 +1148,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                     VarURL = VarURL +
                       '&aux_nrseqeve=' + document.form.nrseqev2.value;
 
-                window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=700,height=500');
+                window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=700,height=500');
             }
         }
     }
@@ -1162,7 +1175,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
         if (mevento.length == 0) {
             alert('Não há registros de eventos!');
             return false;
-        }
+        } 
 
         if ((document.form.aux_contarow.value >= document.form.aux_maxrows.value) ||
             ((document.form.aux_contarow.value < document.form.aux_maxrows.value) && (direcao == 'anteriores' || direcao == 'proximos'))) {

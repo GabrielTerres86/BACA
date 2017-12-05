@@ -1,0 +1,736 @@
+<!--
+	Alterações:
+-->
+
+<html>
+	<head> 
+		<title>Informações do Evento (wpgd0060a)</title>
+	</head>
+	<body>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+		<script SRC="/cecred/jsbiblio/biblio.js"></script>
+		<script SRC="/cecred/jsbiblio/frcod.js"></script>
+    	<script language="JavaScript">
+
+		
+		</script>
+		<form action="#." method="POST" name="form">			
+			<input name="aux_idevento" type="hidden" value="">
+			<input name="aux_dtanoage" type="hidden" value="">
+			<input name="aux_dsendurl" type="hidden" value="">
+			<input name="aux_stdopcao" type="hidden" value="">
+			<input name="aux_dsretorn" type="hidden" value="">
+			<input name="aux_nrdrowid" type="hidden" value="">
+			<input name="aux_lspermis" type="hidden" value="">
+			<input name="aux_cddopcao" type="hidden" value="">
+			<input name="aux_cdcooper" type="hidden" value="">
+			<input name="aux_cdagenci" type="hidden" value="">
+			<input name="aux_cdevento" type="hidden" value="">
+			<input name="aux_nrseqeve" type="hidden" value="">			
+			<!-- Botoes de fechar e imprimir -->
+			<div align="right" id="botoes">
+				<table border="0" cellspacing="0" cellpadding="0" width="100%" >
+					<tr>
+						<td align="right">
+							<img src="/cecred/images/botoes/btn_fechar.gif" alt="Fechar esta janela" style="cursor: hand" onClick="top.close()">
+							<img src="/cecred/images/botoes/btn_imprimir.gif" alt="Imprimir" style="cursor: hand" onClick="document.all.botoes.style.visibility = 'hidden'; print(); document.all.botoes.style.visibility = 'visible';">
+						</td>
+					</tr>
+				</table>
+			</div>
+			<!-- Início do modelo geral -->
+			<table width="100%" border="0" align="left" bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" style="float: left;">
+				<thead>
+					<tr valign="botton" background="/cecred/images/geral/guia_fundo.gif">
+						<th bgcolor="#6B7984" width="11px"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></th>
+						<th align="center" nowrap width="150px" class="linkGuia" bgcolor="#6B7984" valign="middle" >Informa&ccedil;&otilde;es do Evento </th>
+						<th bgcolor="#6B7984" width="1px" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="2" height="21"></th>
+						<th width="798px" bgcolor="#DEE3D6">&nbsp; </th>
+					</tr>
+				</thead>
+			</table>
+			
+			
+				<table width="100%" id="tbevento" border="0" cellpadding="0" cellspacing="0">
+					<!-- INCLUI DADOS -->
+				</table>
+				
+				
+			
+		<!-- Fim do modelo geral -->
+		</form>
+		<script language="JavaScript">
+
+			
+			function mostraDadosEvento() {
+
+			var row; var cell;
+			var cor = '#F7F7F7';
+
+			/*for (var i = document.all.tbevento.rows.length; i > 0; i--)
+				// Apaga todas as linhas, menos a do cabeçalho
+				document.all.tbevento.deleteRow(i - 1);*/
+			if (mdadoseve.length == 0){
+				row = tbevento.insertRow();
+                row.id = 1;
+
+                if (cor == '#FFFFFF')
+                    cor = '#F7F7F7';
+                else
+                    cor = '#FFFFFF';
+
+                row.bgColor = cor;
+
+                // Titulo
+                cell = row.insertCell();
+                cell.className = 'txtNegrito';
+                cell.width = 85;
+                cell.height = 355;
+				cell.style.backgroundColor  = '#FFFFFF';
+				cell.colSpan = 4 ;
+                cell.align = 'center';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Informações não disponíveis';
+			
+			}
+			
+			for (i = 0; i < mdadoseve.length; i++) {
+				row = tbevento.insertRow();
+                row.id = i;
+
+                if (cor == '#FFFFFF')
+                    cor = '#F7F7F7';
+                else
+                    cor = '#FFFFFF';
+
+                row.bgColor = cor; 
+
+                // Titulo
+                cell = row.insertCell();
+                cell.className = 'txtNegrito';
+                cell.width = 85;
+                cell.height = 15;
+				cell.style.backgroundColor  = '#CCCCCC';				
+				cell.colSpan = 4 ;
+                cell.align = 'center';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Dados do Evento';
+				
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.style.backgroundColor  = '#CCCCCC';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				
+				//Eixo
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';				
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Eixo:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '90%';
+                cell.height = 20;
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].cdeixtem;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				
+				//Tema
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';				
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Tema:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '90%';
+                cell.height = 20;
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+				cell.style.borderTop  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].nrseqtem;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				
+				//Nome do Evento
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';				
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Evento:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '90%';
+                cell.height = 20;
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+				cell.style.borderTop  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].nmevento;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				
+				//Objetivo
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Objetivo:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dsobjeti;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Conteudo Programático
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Conte&uacute;do Program&aacute;tico:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dsconteu;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Forma Realização Evento:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';				
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Forma Realização Evento:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].idforrev;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Pré-Requisito:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Pré-Requisito:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].prerequi;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Carga Horária:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Carga Horária:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].qtcarhor.split(",")[0] + ":" + mdadoseve[i].qtcarhor.split(",")[1];
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Qtde Máxima Turma e Qtde Mínima Turma:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Meta do PA:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '25%';
+                cell.height = '100%';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';		
+                cell.align = 'left';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].qtdmaxtu;
+				
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Capacidade M&aacute;xima:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '25%';
+                cell.height = '100%';					
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].qtdmintu;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Metodologia Aplicada: 
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Metodologia Aplicada: ';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dsmetodo;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				//P&uacute;blico Alvo: 
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 40;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'P&uacute;blico-Alvo: ';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = 40;
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].publalvo;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Observações:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Observações:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].observac;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Data In&iacute;cio::
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 40;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Data In&iacute;cio:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = 40;
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dtinieve;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Data Fim:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Data Fim:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderTop  = '1px solid #CCCCCC';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dtfimeve;
+				
+               
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+                // Titulo fornecedor
+				row = tbevento.insertRow();
+                row.id = i;
+                cell = row.insertCell();
+                cell.className = 'txtNegrito';
+                cell.width = 85;
+                cell.height = 15;
+				cell.style.backgroundColor  = '#CCCCCC';
+				cell.colSpan = 4 ;
+                cell.align = 'center';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Dados do Fornecedor';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.style.backgroundColor  = '#CCCCCC';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Dados do Fornecedor:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Dados do Fornecedor:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dsfornec;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Facilitador:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Facilitador:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.border = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].nmfacili;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Curriculum do Facilitador
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Curriculum do Facilitador:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].dscurric;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				//Honor&aacute;rios:
+				row = tbevento.insertRow();
+                row.id = i;
+				row.bgColor = '#FFFFFF';
+				cell = row.insertCell();
+                cell.className = 'campoLabelTbl';
+                cell.width = '25%';
+                cell.height = 20;
+				cell.align = 'right';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = 'Honor&aacute;rios:';
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '75%';
+                cell.height = '100%';
+				cell.colSpan = 3 ;		
+                cell.align = 'left';
+				cell.style.borderTop  = '1px solid #CCCCCC';
+				cell.style.borderLeft  = '1px solid #CCCCCC';
+				cell.style.borderRight  = '1px solid #CCCCCC';
+                cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = mdadoseve[i].honorari;
+				
+				cell = row.insertCell();
+                cell.className = 'campoTextoTbl';
+                cell.width = '10px';
+                cell.height = 20;
+				cell.align = 'left';
+				cell.id = document.all.tbevento.rows.length - 1;
+                cell.innerHTML = '&nbsp;';
+				
+				
+			}
+		}
+      mostraDadosEvento();
+      
+		</script>
+	</body>
+</html>
