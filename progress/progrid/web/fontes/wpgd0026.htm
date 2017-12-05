@@ -16,6 +16,9 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 			
 			23/06/2016 - Retirada do envio do email e inclusão dos dos campos cdoperad e 
 						 cdcopope na seleção do local RF05 - (Vanessa K.)
+            
+            04/12/2017 - Ajustado indice do campo local, para a busca pegar corretamente a agencia.
+                         (Odirlei-AMcom)
 -->
 
 <html>
@@ -479,7 +482,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 cell.width = 320;
                 cell.height = 26;
                 cell.align = 'left';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i;//document.all.tbevento.rows.length - 1;
                 cell.title = mevento[i].enlocali;
 
                 // Assembléias não tem acesso a local
