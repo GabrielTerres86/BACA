@@ -27,6 +27,7 @@
     $ret_nomcampo = (isset($_POST['ret_nomcampo'])) ? $_POST['ret_nomcampo'] : '';
     $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
+    $ret_errofunc = (isset($_POST['ret_errofunc'])) ? $_POST['ret_errofunc'] : '';
     $divanterior  = (isset($_POST['divanterior']))  ? $_POST['divanterior']  : '';
 
     $xml  = "";
@@ -44,10 +45,22 @@
 
     $xmlResult = mensageria($xml, "TELA_GAROPC", "GAROPC_BUSCA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObject = getObjectXML($xmlResult);
-
+	
+	/*
+	$acao = 'fechaRotina($(\'#divUsoGAROPC\')'
+	if ($divanterior != ""){
+		$acao .= ',$(\'#' .$divanterior.'\')';
+		}
+	$acao .= ');';
+	
+	if ($divanterior != ""){
+		$acao .= '$(\'#'.$divanterior.'\').css({\'display\':\'block\'});';
+	}
+	*/
+	
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-        exibirErro('error',$msgErro,'Alerta - Ayllos','', true);
+        exibirErro('error',$msgErro,'Alerta - Ayllos',$ret_errofunc, true);
     }
 
     $registros = $xmlObject->roottag->tags[0];
@@ -87,7 +100,7 @@
                             <tr>
                                 <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
                                 <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><?php echo utf8ToHtml('GARANTIA PARA COBERTURA DA OPERAÇÃO'); ?></td>
-                                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="$('#<?echo $cp_desmensagem?>').val('NOK');fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+                                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="$('#<?echo $cp_desmensagem?>').val('NOK');fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?> return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
                                 <td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
                             </tr>
                         </table>     
@@ -204,7 +217,7 @@
                                         </fieldset>
 
                                         <div id="divBotoes" style="margin-bottom:10px;">
-                                            <a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>); return false;">Voltar</a>
+                                            <a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?>  return false;">Voltar</a>
                                             <?php
                                                 // Se veio da ADITIV em modo Consulta
                                                 if ($gar_nmdatela == 'ADITIV' && $gar_tipaber == 'C') {

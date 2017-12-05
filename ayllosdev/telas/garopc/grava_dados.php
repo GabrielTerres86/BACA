@@ -78,6 +78,6 @@
     $registros = $xmlObject->roottag->tags[0];
 
     echo "$('#".$ret_nomcampo."', '#".$ret_nomformu."').val('".getByTagName($registros->tags,'IDCOBERT')."');";
-    echo $ret_execfunc;
     echo "fechaRotina($('#divUsoGAROPC'));";
+    echo $ret_execfunc;
 ?>
