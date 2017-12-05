@@ -149,6 +149,8 @@ if (cGar_tipaber.val() != 'C') {
             }
             var gar_permingr_new = (gar_vlgarnec_new / gar_vlropera_float) * 100;
             cGar_permingr.val(number_format(gar_permingr_new,2,',','.'));
+
+            mostraImagemGAROPC();
 		});
     }
 }
