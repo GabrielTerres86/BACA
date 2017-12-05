@@ -46,18 +46,6 @@
     $xmlResult = mensageria($xml, "TELA_GAROPC", "GAROPC_BUSCA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObject = getObjectXML($xmlResult);
 	
-	/*
-	$acao = 'fechaRotina($(\'#divUsoGAROPC\')'
-	if ($divanterior != ""){
-		$acao .= ',$(\'#' .$divanterior.'\')';
-		}
-	$acao .= ');';
-	
-	if ($divanterior != ""){
-		$acao .= '$(\'#'.$divanterior.'\').css({\'display\':\'block\'});';
-	}
-	*/
-	
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
         exibirErro('error',$msgErro,'Alerta - Ayllos',$ret_errofunc, true);
