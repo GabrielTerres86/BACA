@@ -434,12 +434,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                            FROM   crapavs
                            WHERE  crapavs.cdcooper = crapass.cdcooper
                            AND    crapavs.nrdconta = crapass.nrdconta)
-        AND   NOT EXISTS ( SELECT 1
-                           FROM   crapfdc
-                           WHERE  crapfdc.cdcooper = crapass.cdcooper
-                           AND    crapfdc.nrdconta = crapass.nrdconta
-                           AND    crapfdc.tpcheque <> 3
-                           AND    crapfdc.incheque = 0)
+-- PJ 364 - Sarah solicitou retirar consitencia de folha de cheque
+--        AND   NOT EXISTS ( SELECT 1
+--                           FROM   crapfdc
+--                           WHERE  crapfdc.cdcooper = crapass.cdcooper
+--                           AND    crapfdc.nrdconta = crapass.nrdconta
+--                           AND    crapfdc.tpcheque <> 3
+--                           AND    crapfdc.incheque = 0)
         AND   NOT EXISTS(  SELECT 1
                            FROM   craplim
                            WHERE  craplim.cdcooper = crapass.cdcooper
@@ -683,15 +684,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       END LOOP;
 
 			-- Carregando as informações de lancamentos automaticos
-      FOR rw_craplau IN cr_craplau( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_craplau(rw_craplau.nrdconta).nrdconta := rw_craplau.nrdconta;
-      END LOOP;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_craplau IN cr_craplau( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_craplau(rw_craplau.nrdconta).nrdconta := rw_craplau.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de seguros ativos/renovados/substituídos
-      FOR rw_crapseg IN cr_crapseg( pr_cdcooper => pr_cdcooper
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
-      END LOOP;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_crapseg IN cr_crapseg( pr_cdcooper => pr_cdcooper
+--                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+--        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de poupanças programadas
       FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
