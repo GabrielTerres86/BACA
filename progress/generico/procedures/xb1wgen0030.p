@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0030.p
    Autor   : Guilherme
-   Data    : Agosto/2008                     Ultima atualizacao: 22/12/2015
+   Data    : Agosto/2008                     Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -35,6 +35,10 @@
                18/12/2015 - Criada procedure para edição de número do contrato de limite 
                             (Lunelli - SD 360072 [M175])
 
+               27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
+                            efetua_liber_anali_bordero. (Jaison/James)
+
+               28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -45,6 +49,8 @@ DEF VAR aux_nrregist AS INTE                                           NO-UNDO.
 DEF VAR aux_cdagenci AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdcaixa AS INTE                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdopcolb AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdopcoan AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                           NO-UNDO.
 DEF VAR aux_nmrotina AS CHAR                                           NO-UNDO.
@@ -63,6 +69,7 @@ DEF VAR aux_inconfi2 AS INTE                                           NO-UNDO.
 DEF VAR aux_inconfi3 AS INTE                                           NO-UNDO.
 DEF VAR aux_inconfi4 AS INTE                                           NO-UNDO.
 DEF VAR aux_inconfi5 AS INTE                                           NO-UNDO.
+DEF VAR aux_inconfi6 AS INTE                                           NO-UNDO.
 DEF VAR aux_indrestr AS INTE                                           NO-UNDO.
 DEF VAR aux_indentra AS INTE                                           NO-UNDO.
 DEF VAR aux_diaratin AS INTE                                           NO-UNDO.
@@ -162,6 +169,8 @@ PROCEDURE valores_entrada:
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
             WHEN "nrdcaixa" THEN aux_nrdcaixa = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
+            WHEN "cdopcolb" THEN aux_cdopcolb = tt-param.valorCampo.
+            WHEN "cdopcoan" THEN aux_cdopcoan = tt-param.valorCampo.
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
             WHEN "nmrotina" THEN aux_nmrotina = tt-param.valorCampo.
@@ -180,6 +189,7 @@ PROCEDURE valores_entrada:
             WHEN "inconfi3" THEN aux_inconfi3 = INTE(tt-param.valorCampo).
             WHEN "inconfi4" THEN aux_inconfi4 = INTE(tt-param.valorCampo).
             WHEN "inconfi5" THEN aux_inconfi5 = INTE(tt-param.valorCampo).
+            WHEN "inconfi6" THEN aux_inconfi6 = INTE(tt-param.valorCampo).
             WHEN "indrestr" THEN aux_indrestr = INTE(tt-param.valorCampo).
             WHEN "indentra" THEN aux_indentra = INTE(tt-param.valorCampo).
             WHEN "diaratin" THEN aux_diaratin = INTE(tt-param.valorCampo).
@@ -492,6 +502,8 @@ PROCEDURE efetua_liber_anali_bordero:
                                            INPUT aux_cdagenci,
                                            INPUT aux_nrdcaixa,
                                            INPUT aux_cdoperad,
+                                           INPUT aux_cdopcoan, /* operador coordenador analise */
+                                           INPUT aux_cdopcolb, /* operador coordenador liberacao */
                                            INPUT aux_nmdatela,
                                            INPUT aux_idorigem,
                                            INPUT aux_nrdconta,
@@ -506,6 +518,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                            INPUT aux_inconfi3,
                                            INPUT aux_inconfi4,
                                            INPUT aux_inconfi5,
+                                           INPUT aux_inconfi6,
                                            INPUT-OUTPUT aux_indrestr,
                                            INPUT-OUTPUT aux_indentra,
                                            INPUT TRUE, /* GERAR LOG */
@@ -773,7 +786,8 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
-                                      OUTPUT TABLE tt-erro).
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-msg-confirma).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -792,6 +806,8 @@ PROCEDURE efetua_inclusao_limite:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagens").
             RUN piXmlSave.
         END.
         
@@ -1190,6 +1206,24 @@ PROCEDURE altera-numero-proposta-limite:
       END.
 
 
+END PROCEDURE.
+
+/*****************************************************************************/
+/*  Buscar titulos com suas restricoes liberada/analisada pelo coordenador   */
+/*****************************************************************************/
+PROCEDURE busca_restricoes_coordenador:
+
+    RUN busca_restricoes_coordenador IN hBO
+                             (INPUT aux_cdcooper,
+                              INPUT aux_nrborder,
+                              INPUT aux_nrdconta,
+                             OUTPUT TABLE tt-dsctit_bordero_restricoes).
+
+    RUN piXmlNew.
+    RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_bordero_restricoes:HANDLE,
+                     INPUT "Restricoes").
+    RUN piXmlSave.
+        
 END PROCEDURE.
 
 /* .......................................................................... */
