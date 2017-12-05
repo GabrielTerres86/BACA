@@ -22,7 +22,9 @@
 	             
 				 20/07/2015 - Ajuste no tratamento de caracteres (Kelvin)
 	             17/06/2016 - M181 - Alterar o CDAGENCI para          
-                             passar o CDPACTRA (Rafael Maciel - RKAM) 
+                             passar o CDPACTRA (Rafael Maciel - RKAM) 		  
+                 
+                 05/12/2017 - Insersão do campo idcobope. Projeto 404 (Lombardi) 
 	
 	************************************************************************/
 	
@@ -49,7 +51,8 @@
 					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","perfatcl","nrctaav1","nmdaval1","nrcpfav1","tpdocav1",
 					"dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1",
 					"nrfonav1","emailav1","vlrenme1","nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2",
-					"tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2","vlrenme2");
+					"tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2","vlrenme2",
+					"idcobope");
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
@@ -116,6 +119,7 @@
 	$vlrenme2 = $_POST["vlrenme2"];
 	$inconcje = $_POST['inconcje'];
 	$dtconbir = $_POST['dtconbir'];
+	$idcobope = $_POST['idcobope'];
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -232,6 +236,11 @@
 		exibeErro("CEP do 2o Avalista inválido.");
 	}
 	
+	// Verifica se número da conta é um inteiro válido
+	if (!validaInteiro($idcobope)) {
+		exibeErro("Garantia inválida.");
+	}
+	
 	$dsobserv = str_replace('"','',str_replace('>','',str_replace('<','',retiraAcentos(removeCaracteresInvalidos(utf8_decode($dsobserv))))));
 	
 	// Monta o xml de requisição
@@ -311,6 +320,7 @@
 	$xmlSetLimite .= "		<vlrenme2>".$vlrenme2."</vlrenme2>";	
 	$xmlSetLimite .= "		<inconcje>".$inconcje."</inconcje>";	
 	$xmlSetLimite .= "		<dtconbir>".$dtconbir."</dtconbir>";
+	$xmlSetLimite .= "		<idcobope>".$idcobope."</idcobope>";
 	$xmlSetLimite .= "	</Dados>";
 	$xmlSetLimite .= "</Root>";
 		

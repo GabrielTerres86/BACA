@@ -58,7 +58,10 @@
 
 			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
 			 
-			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).   
+
+             05/12/2017 - Adicionada div divUsoGAROPC para poder chamar a tela GAROPC.
+                          Projeto 404 (Lombardi).
 
 
 //**************************************************************************/
@@ -191,6 +194,8 @@ setVarSession("rotinasTela", $rotinasTela);
 
                                                                                 <!-- ROTINA -->
                                                                                 <div id="divRotina"></div>
+																				<!-- TELA GAROPC -->
+																				<div id="divUsoGAROPC"></div>
 
                                                                                 <!-- INCLUDE DO CABECALHO  -->
                                                                                 <? include('form_cabecalho.php') ?>							

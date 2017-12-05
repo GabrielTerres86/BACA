@@ -34,7 +34,8 @@
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
- * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438. 
+ * 022: [05/12/2017] Lombardi  (CECRED)  : Gravação do campo idcobope e inserção da tela GAROPC. Projeto 404
  */
  
 var callafterLimiteCred = '';
@@ -407,10 +408,10 @@ function cadastrarNovoLimite() {
             cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
             vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
             flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
-            vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
-            vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlsalari: $("#vlsalari", "#frmNovoLimite").val() > 0 ? $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val() > 0 ? $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vloutras: $("#vloutras", "#frmNovoLimite").val() > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlalugue: $("#vlalugue", "#frmNovoLimite").val() > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
             dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
 			dtconbir: dtconbir,			
@@ -463,6 +464,7 @@ function cadastrarNovoLimite() {
             complen2: $("#complen2", "#frmNovoLimite").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
             vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
+			idcobope: $("#idcobert", "#frmNovoLimite").val(),
 			redirect: "script_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -530,6 +532,60 @@ function checaEnter(campo, e) {
 	else 
 		return true; 
 }
+
+function abrirTelaGAROPC(cddopcao, idcobert, nrctrlim) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+	
+    exibeRotina($('#divUsoGAROPC'));
+    $('#divRotina').css({'display':'none'});
+	
+    var tipaber = '';
+	var idcobert = normalizaNumero($('#idcobert','#frmNovoLimite').val());
+	var codlinha = normalizaNumero($('#cddlinha','#frmNovoLimite').val());
+    var vllimite = $('#vllimite','#frmNovoLimite').val();
+	
+	switch (cddopcao) {
+		case 'N':
+			tipaber = (idcobert > 0) ? 'A' : 'I';
+			break;
+		default:
+			tipaber = 'C';
+			break;
+	}
+	
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            nmdatela     : 'LIMITE_CREDITO',
+            tipaber      : tipaber,
+            nrdconta     : nrdconta,
+            tpctrato     : 1,
+            idcobert     : idcobert,
+            dsctrliq     : cddopcao = 'P' ? nrctrlim : '',
+            codlinha     : codlinha,
+            vlropera     : vllimite,
+            divanterior  : 'divRotina',
+            ret_nomcampo : 'idcobert',
+            ret_nomformu : 'frmNovoLimite',
+            ret_execfunc : 'lcrShowHideDiv(\\\'divDadosObservacoes\\\',\\\'divDadosRenda\\\');$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+            ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+			redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            $('#divUsoGAROPC').html(response);
+            bloqueiaFundo($('#divUsoGAROPC'));
+        }
+    });
+} 
 
 // Função para mostrar div com formulário de dados para digitação ou consulta
 function lcrShowHideDiv(divShow, divHide) {
@@ -623,7 +679,7 @@ function controlaLayout(cddopcao) {
     var rOutras = $('label[for="vloutras"]', '#' + nomeForm + ' .fsDadosRenda');
     var rAlugue = $('label[for="vlalugue"]', '#' + nomeForm + ' .fsDadosRenda');
     var rInconc = $('label[for="inconcje"]', '#' + nomeForm + ' .fsConjuge');
-    var cValores = $('input', '#' + nomeForm + ' .fsDadosRenda');
+    var cValores = $('input type="text"', '#' + nomeForm + ' .fsDadosRenda');
     var cInconcje = $('input', '#' + nomeForm + ' .fsConjuge');
 	
     rSalTit.addClass('rotulo').css({ 'width': '130px' });
@@ -1408,6 +1464,7 @@ function alterarNovoLimite() {
             complen2: $("#complen2", "#frmNovoLimite").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
             vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
+            idcobope: $("#idcobert", "#frmNovoLimite").val(),
 			redirect: "script_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -1470,7 +1527,7 @@ function dadosRenda() {
 	
 }
 
-function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2) {
+function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2, idcobert) {
 	//Nao estava preenchendo corretamente o campo quando retornava um valor decimal
 	//Chamado 364592
     vlsalari = vlsalari.replace(",", ".");
@@ -1488,7 +1545,8 @@ function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrct
     $("#nrctaav2", "#frmNovoLimite").val(nrctaav2);
     $("#nrcpfav1", "#frmNovoLimite").val(nrcpfav1);
     $("#nrcpfav2", "#frmNovoLimite").val(nrcpfav2);
-	
+	$("#idcobert", "#frmNovoLimite").val(idcobert);
+    
 	// Salvar o valor da consulta do conjuge antes de ser alterado pelo usuario
 	ant_inconcje = inconcje;
 	

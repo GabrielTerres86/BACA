@@ -8,7 +8,8 @@
  * ALTERACOES    : 08/04/2015 - Permitir as consultas para o limite de credito (Jonata-RKAM) 
  *				   08/07/2015 - Tratamento de caracteres especiais e remover quebra de linha da observação (Lunelli - SD SD 300819 | 300893) 
  *                 20/07/2015 - Ajuste no tratamento de caracteres (Kelvin)
- *                 19/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                 19/08/2015 - Reformulacao cadastral (Gabriel-RKAM)  
+ *                 05/12/2017 - Gravação do campo idcobope. Projeto 404 (Lombardi)
  */
  
 	session_start();
@@ -104,7 +105,8 @@
 	$tpregist = getByTagName($proposta,"tpregist");	
 	$inconcje = getByTagName($proposta,"inconcje");	
 	$dsobserv = getByTagName($proposta,"dsobser1");	
+	$idcobope = getByTagName($proposta,"idcobope");
 	
-	echo "setDadosProposta('$vlsalari','$vlsalcon','$vloutras','$vlalugue','$nrctaav1','$nrctaav2', '$inconcje', '$nrcpfav1', '$nrcpfav2' );";
+	echo "setDadosProposta('$vlsalari','$vlsalcon','$vloutras','$vlalugue','$nrctaav1','$nrctaav2', '$inconcje', '$nrcpfav1', '$nrcpfav2', '$idcobope' );";
 	echo "setDadosObservacao('$dsobserv');";
 ?>

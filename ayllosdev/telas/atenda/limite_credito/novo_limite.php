@@ -19,6 +19,7 @@
  * 006: [06/04/2015] Jonata            (RKAM) :	Consultas automatizadas.							
  * 007: [01/06/2015] Lucas Reinert	 (CECRED) : Alterado para apresentar mensagem de confirmacao de proposta para menores nao emancipados.
  * 008: [25/07/2016] Carlos R.		 (CECRED) : Corrigi a forma de recuperacao de dados do XML de retorno. SD 479874.
+ * 009: [05/12/2017] Lombardi        (CECRED) : Gravação do campo idcobope. Projeto 404
  */	  
 	session_start();
 	require_once('../../../includes/config.php');
@@ -106,6 +107,7 @@
 	$nrcpfcjg = getByTagName($limite,"nrcpfcjg");
 	$nrctacje = getByTagName($limite,"nrctacje");
 	$dtconbir = getByTagName($limite,"dtconbir");
+	$idcobope = getByTagName($limite,"idcobope");
     
 	// Verifica se existe uma proposta cadastrada
 	$flgProposta = (intval($nrctrlim) > 0 && doubleval($vllimite) > 0) ? true : false;

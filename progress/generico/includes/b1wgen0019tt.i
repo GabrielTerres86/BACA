@@ -62,7 +62,10 @@
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                
-               09/12/2015 - Adicionada nova temp-table da craplim. SD  353115 (Kelvin)
+               09/12/2015 - Adicionada nova temp-table da craplim. SD  353115 (Kelvin)	 
+
+               05/12/2017 - Adicionado campo idcobope na temp-table tt-dados-prp. 
+                            Projeto 404 (Lombardi)
                                                 
 ..............................................................................*/
 
@@ -227,7 +230,8 @@ DEF TEMP-TABLE tt-dados-prp NO-UNDO
     FIELD nrcpfcjg AS DECI
     FIELD nrctacje AS INTE
     FIELD inpesso1 AS INTE
-    FIELD inpesso2 AS INTE.
+    FIELD inpesso2 AS INTE
+    FIELD idcobope AS INTE.
 
 DEF TEMP-TABLE tt-dados-rescisao NO-UNDO
     FIELD nmextcop AS CHAR
