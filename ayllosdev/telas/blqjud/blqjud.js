@@ -20,6 +20,8 @@
 
                   29/07/2016 - Ajuste para controle de permissão sobre as subrotinas de cada opção
                                (Adriano - SD 492902).
+
+                  29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
  * --------------
  */
  
@@ -135,7 +137,8 @@ function controlaLayout() {
     rDtenvdes           = $('label[for="dtenvdes"]' ,'#frmDesbloqueio');
 	rDsinfdes           = $('label[for="dsinfdes"]' ,'#frmDesbloqueio');
 	rFldestrf			= $('label[for="fldestrf"]' ,'#frmDesbloqueio');
-	
+	rVldesblo           = $('label[for="vldesblo"]', '#frmDesbloqueio');
+
 	cNrofides           = $('#nrofides' ,'#frmDesbloqueio');
 	cNrprodes           = $('#nrprodes' ,'#frmDesbloqueio');
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
@@ -172,7 +175,8 @@ function controlaLayout() {
 	$('#divAcaojud').css({'display':'none'});
 	$('#divAssociado').css({'display':'none'});
 	$('#divRegistros').css({'display':'none'});	
-	$('#divDesbloqueio').css({'display':'none'});	
+	$('#divRegistrosOficios').css({ 'display': 'none' });
+	$('#divDesbloqueio').css({ 'display': 'none' });
 	$('#div_tabblqjud').css({'display':'none'});
 	
     cCampos.limpaFormulario();
@@ -195,9 +199,11 @@ function controlaLayout() {
             rDtenvres.addClass('rotulo').css({'width':'170px'});
 			rDsinfadc.addClass('rotulo').css({'width':'170px'});
             rVlbloque.addClass('rotulo').css({'width':'170px'});
-            rVlsaldo.addClass('rotulo-linha').css({'width':'180px'});
+            rVlsaldo.addClass('rotulo-linha').css({ 'width': '180px' });
 			
-			
+            rVlbloque.show();
+            rVlbloque.next().show();
+
             cNroficio.addClass('rotulo').css({'width':'200px'});
             cNrproces.addClass('rotulo').css({'width':'200px'});
             cDsjuizem.addClass('rotulo').css({'width':'350px'});
@@ -230,7 +236,10 @@ function controlaLayout() {
             rNroficon.addClass('rotulo-linha').css({'width':'125px'});
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
-            cNrctacon.addClass('rotulo-linha').css({'width':'110px'}).setMask('INTEGER','zzzzzzzzzzzzz9','','');
+            cNrctacon.addClass('rotulo-linha').css({ 'width': '110px' }).setMask('INTEGER', 'zzzzzzzzzzzzz9', '', '');
+			
+            rVlbloque.hide();
+            rVlbloque.next().hide();
 			
 			cCampos.habilitaCampo();
 			cCamposDesbloqueio.habilitaCampo();
@@ -809,39 +818,63 @@ function atualizaSaldo(chk) {
 
 function layoutConsulta() {
 	
-	altura  = '195px';
-	largura = '425px';
+    altura = '195px';
+    largura = '425px';
 
-	// Configurações da tabela
-	var divRegistro = $('div.divRegistros');		
-	var tabela      = $('table', divRegistro );
-	var linha       = $('table > tbody > tr', divRegistro );
-		
-	divRegistro.css('height','180px');
-		
-	var ordemInicial = new Array();
-	ordemInicial = [[0,0]];			
-		
-		var arrayLargura = new Array();
-		arrayLargura[0] = '79px';
-		arrayLargura[1] = '119px';
-		arrayLargura[2] = '117px';
-		arrayLargura[3] = '113px';
-		
-	var arrayAlinha = new Array();
-		arrayAlinha[0] = 'right';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'right';
-		arrayAlinha[4] = 'center';
-	
-	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );		
-			
-	divRotina.css('width',largura);	
-	$('#divRotina').css({'height':altura,'width':largura});
-	
-	layoutPadrao();
-	removeOpacidade('#divRegistros');
+    // Configurações da tabela
+    var divRegistro = $('div.divRegistros');
+    var divRegistroOficio = $('div.divRegistrosOficios');
+    var tabela = $('table', divRegistro);
+    var tabelaOficio = $('table', divRegistroOficio);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    divRegistro.css('height', '90px');
+    divRegistroOficio.css('height', '90px');
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var ordemInicialOficio = new Array();
+    ordemInicialOficio = [[0, 0]];
+
+    var arrayLargura = new Array();
+        arrayLargura[0] = '79px';
+        arrayLargura[1] = '115px';
+        arrayLargura[2] = '124px';
+        arrayLargura[3] = '60px';
+        arrayLargura[4] = '44px';
+        arrayLargura[5] = '46px';
+
+    var arrayLarguraOficio = new Array();
+        arrayLarguraOficio[0] = '170px';
+        arrayLarguraOficio[1] = '170px';
+        arrayLarguraOficio[2] = '125px';
+
+    var arrayAlinha = new Array();
+        arrayAlinha[0] = 'right';
+        arrayAlinha[1] = 'center';
+        arrayAlinha[2] = 'right';
+        arrayAlinha[3] = 'right';
+        arrayAlinha[4] = 'center';
+        arrayAlinha[5] = 'center';
+
+    var arrayAlinhaOficio = new Array();
+        arrayAlinhaOficio[0] = 'center';
+        arrayAlinhaOficio[1] = 'center';
+        arrayAlinhaOficio[2] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+    tabelaOficio.formataTabela(ordemInicialOficio, arrayLarguraOficio, arrayAlinhaOficio, '');
+
+    divRotina.css('width', largura);
+    $('#divRotina').css({ 'height': altura, 'width': largura });
+
+    layoutPadrao();
+    removeOpacidade('#divRegistros');
+
+    $('form#frmConsultaDadosOficio .divRegistrosOficios table tbody tr:first').click();
+    $('form#frmConsultaDados .divRegistros table tbody tr:first').click();
+
 }
 
 function executaPesquisa() {
@@ -885,7 +918,8 @@ function executaPesquisa() {
 	cNrofides.addClass('rotulo').css({'width':'200px'});
 	cDtenvdes.addClass('data').css({'width':'80px'});
 	cDsinfdes.addClass('rotulo').css({'width':'330px'});
-	cFldestrf.addClass('rotulo').css({'width':'100px'});
+	cFldestrf.addClass('rotulo').css({ 'width': '100px' });
+	rVldesblo.addClass('rotulo').css({ 'width': '200px' });
 		
 	if ( $.browser.msie ) {	
 		cFllauton.addClass('rotulo').css({'width':'18px'});			
@@ -949,7 +983,8 @@ function executaPesquisa() {
 		$("#dtenvdes","#frmDesbloqueio").desabilitaCampo();
 		$("#dsinfdes","#frmDesbloqueio").desabilitaCampo();
 		$("#flgsim","#frmDesbloqueio").desabilitaCampo();		
-		$("#flgnao","#frmDesbloqueio").desabilitaCampo();	
+		$("#flgnao", "#frmDesbloqueio").desabilitaCampo();
+		$("#vldesblo", "#frmDesbloqueio").desabilitaCampo();
 		controlaBotoes(4);												
 				
 	} else if (cdoperac == 'D' ) {
@@ -1268,11 +1303,16 @@ function efetuaDesbloqueio() {
 	var vlbloque = $("#vlbloque","#frmAcaojud").val();
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
-	
+	var cdmodali = $("#cdmodali","#frmAcaojud").val();
+
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
+	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
 
+    // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
+	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
+	
 	var fldestrf = 0;
 
 	if (flgradio == 'true') {
@@ -1323,6 +1363,8 @@ function efetuaDesbloqueio() {
 			dtenvdes: dtenvdes,
 			dsinfdes: dsinfdes,
 			fldestrf: fldestrf,
+			vldesblo: vldesblo,
+			cdmodali: cdmodali,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) { 
@@ -1712,8 +1754,15 @@ function uncheck(){
 	flgradio = 'false';
 }
 
-function selecionaBloqueio(seq){
-	if (arrbloqueios[seq]['flblcrft'] == "yes"){
+function selecionaOficio(oficio, conta) {
+    $('form#frmConsultaDados div.divRegistros table tr.tr_oficio').hide();
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).css('display', 'table-row');
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).first().click();
+}
+
+function selecionaBloqueio(seq, cdmodali) {
+    $('#divDesbloqueio').css({ 'display': 'block' });
+    if (arrbloqueios[seq]['flblcrft'] == "yes") {
 		$('#flblcrft','#frmAcaojud').val(arrbloqueios[seq]['flblcrft']).attr('disabled','true').attr('checked','true');
 	}else{
 		$('#flblcrft','#frmAcaojud').val(arrbloqueios[seq]['flblcrft']).attr('disabled','true');
@@ -1729,12 +1778,15 @@ function selecionaBloqueio(seq){
     $('#nrofides','#frmDesbloqueio').val(arrbloqueios[seq]['nrofides']);
     $('#dtenvdes','#frmDesbloqueio').val(arrbloqueios[seq]['dtenvdes']);
     $('#dsinfdes','#frmDesbloqueio').val(arrbloqueios[seq]['dsinfdes']);
+	$('#cdmodali','#frmAcaojud').val(cdmodali);
 	
-	if (arrbloqueios[seq]['fldestrf'] == "yes"){
-		$('#flgsim','#frmDesbloqueio').prop('checked','true');
-	}else{   
-        $('#flgnao','#frmDesbloqueio').prop('checked','true');
-	}
+    if (arrbloqueios[seq]['fldestrf'] == "yes") {
+        $('#flgsim', '#frmDesbloqueio').prop('checked', 'true');
+        $('legend', '#frmDesbloqueio').html("Dados Judiciais - Ofício Transferência");
+    } else {
+        $('#flgnao', '#frmDesbloqueio').prop('checked', 'true');
+        $('legend', '#frmDesbloqueio').html("Dados Judiciais - Ofício Desbloqueio");
+    }
 	
 	if(cCddopcao.val() == "T"){
 		$('#divDesbloqueio').css({'display':'none'});
