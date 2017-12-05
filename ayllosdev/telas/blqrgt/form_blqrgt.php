@@ -78,7 +78,7 @@
 				<td align="center"><? echo getByTagName($registro->tags,'valbloque') ?></td>
 				<? if ($cddopcao == 'L') { ?>
 					<td align="center" style="text-align:center">
-						<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioCob('<? echo getByTagName($registro->tags,'idcobertura'); ?>', '<? echo getByTagName($registro->tags,'vlopera') ?>');"></img>
+						<img src="../../imagens/geral/servico_nao_ativo.gif" width="16" height="16" title="Remover" style="cursor: pointer;" onclick="confirmaDesbloqueioCob('<? echo getByTagName($registro->tags,'idcobertura'); ?>', '<? echo getByTagName($registro->tags,'valbloque') ?>');"></img>
 					</td>
 				<? } ?>
 			  </tr>

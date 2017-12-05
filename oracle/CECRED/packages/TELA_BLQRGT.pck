@@ -91,6 +91,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
     
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
+      vr_des_reto VARCHAR2(3) := '';
+      vr_tab_erro GENE0001.typ_tab_erro;
     
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
@@ -160,6 +162,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       vr_valbloque  NUMBER       := 0;
       vr_nrcpfcnpj_cobertura NUMBER       := 0;
       vr_tpcontrato VARCHAR2(10) := '';
+      vr_dstextab            craptab.dstextab%TYPE;
+      vr_inusatab            BOOLEAN;
+      vr_valopera_atualizada NUMBER := 0;
+      vr_vltotpre            NUMBER(25,2) := 0;
+      vr_qtprecal            NUMBER(10) := 0;
     
     BEGIN
       
@@ -216,19 +223,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                                                    ||'</bloq>'));
       END LOOP;
       
+      -- Buscar configurações necessárias para busca de saldo de empréstimo
+      -- Verificar se usa tabela juros
+      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'USUARI'
+                                              ,pr_cdempres => 11
+                                              ,pr_cdacesso => 'TAXATABELA'
+                                              ,pr_tpregist => 0);
+      -- Se a primeira posição do campo dstextab for diferente de zero
+      vr_inusatab := SUBSTR(vr_dstextab,1,1) != '0';
       
       FOR rw_cobertura IN cr_cobertura(pr_cdcooper => vr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta) LOOP
         IF rw_cobertura.tpcontrato = 90 THEN
-          -- Buscar empréstimo
-          OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
-                         ,pr_nrdconta => rw_cobertura.nrdconta
-                         ,pr_nrctremp => rw_cobertura.nrcontrato);
-          FETCH cr_crapepr INTO rw_crapepr;
           
-          CLOSE cr_crapepr;
+          -- Buscar o saldo devedor atualizado do contrato
+          EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => vr_cdcooper             --> Cooperativa conectada
+                                        ,pr_cdagenci => 1                       --> Codigo da agencia
+                                        ,pr_nrdcaixa => 0                       --> Numero do caixa
+                                        ,pr_cdoperad => '1'                     --> Codigo do operador
+                                        ,pr_nmdatela => 'ATENDA'                --> Nome datela conectada
+                                        ,pr_idorigem => 1 /*Ayllos*/            --> Indicador da origem da chamada
+                                        ,pr_nrdconta => pr_nrdconta             --> Conta do associado
+                                        ,pr_idseqttl => 1                       --> Sequencia de titularidade da conta
+                                        ,pr_rw_crapdat => rw_crapdat            --> Vetor com dados de parametro (CRAPDAT)
+                                        ,pr_nrctremp => rw_cobertura.nrcontrato --> Numero contrato emprestimo
+                                        ,pr_cdprogra => 'B1WGEN0001'            --> Programa conectado
+                                        ,pr_inusatab => vr_inusatab             --> Indicador de utilizacão da tabela
+                                        ,pr_flgerlog => 'N'                     --> Gerar log S/N
+                                        ,pr_vlsdeved => vr_valopera_atualizada  --> Saldo devedor calculado
+                                        ,pr_vltotpre => vr_vltotpre             --> Valor total das prestacães
+                                        ,pr_qtprecal => vr_qtprecal             --> Parcelas calculadas
+                                        ,pr_des_reto => vr_des_reto             --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro);           --> Tabela com possives erros
+          -- Se houve retorno de erro
+          IF vr_des_reto = 'NOK' THEN
+            -- Extrair o codigo e critica de erro da tabela de erro
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+            -- Limpar tabela de erros
+            vr_tab_erro.DELETE;
+            RAISE vr_exc_saida;
+          END IF;
           
-          vr_valopera := rw_crapepr.vlsdeved;
+          vr_valopera := vr_valopera_atualizada;
           
         ELSE
           -- Buscar limite

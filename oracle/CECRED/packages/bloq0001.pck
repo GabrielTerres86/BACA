@@ -1898,7 +1898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           BEGIN
             UPDATE tbgar_cobertura_operacao
                SET cdoperador_desbloq = pr_cdoperador
-                  ,vldesbloq = pr_vldesbloq
+                  ,vldesbloq = nvl(vldesbloq, 0) + nvl(pr_vldesbloq, 0)
                   ,dtdesbloq = SYSDATE
              WHERE idcobertura = pr_idcobertura
          RETURNING cdcooper
