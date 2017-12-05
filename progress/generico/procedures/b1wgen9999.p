@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 18/11/2017.
+    Data      : Marco/2008                    Ultima Atualizacao: 05/12/2017
     
     Dados referentes ao programa:
 
@@ -288,6 +288,11 @@
                              (Diogo - MoutS - Projeto 410 - RF 43 a 46)             
 
 		       18/11/2017 - Inclusao dos lotes refernte a devolucao de capital (Jonata - RKAM P364).
+			                
+               05/12/2017 - Ajustado para buscar o primeiro endereço e nao utilizar o seq 1.
+                            pois algumas vezes nao existe.
+                            PRJ339-CRM (Odirlei-AMcom) 
+               
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -944,11 +949,14 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc
+                             WHERE crapenc.cdcooper = par_cdcooper     AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
+                                   crapenc.idseqttl = 1
                                    NO-LOCK NO-ERROR.
+                                   
 
                 IF  NOT AVAILABLE crapenc THEN
                     DO:
@@ -1175,10 +1183,11 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1           
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1378,10 +1387,11 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1            
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1653,10 +1663,11 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1             
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -1855,10 +1866,11 @@ PROCEDURE lista_avalistas:
                                 RETURN "NOK".
                             END.
 
-                        FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                        FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                            crapenc.nrdconta = crapass.nrdconta AND
-                                           crapenc.idseqttl = 1                AND
-                                           crapenc.cdseqinc = 1 
+                                           crapenc.idseqttl = 1             
+                                           /* Removido seq. para buscar o pri.
+                                              localizada. */ 
                                            NO-LOCK NO-ERROR.
 
                         IF  NOT AVAILABLE crapenc THEN
@@ -2084,10 +2096,11 @@ PROCEDURE lista_avalistas:
                                 RETURN "NOK".
                             END.
 
-                        FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                        FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                            crapenc.nrdconta = crapass.nrdconta AND
-                                           crapenc.idseqttl = 1                AND
-                                           crapenc.cdseqinc = 1 
+                                           crapenc.idseqttl = 1            
+                                           /* Removido seq. para buscar o pri.
+                                              localizada. */ 
                                            NO-LOCK NO-ERROR.
 
                         IF  NOT AVAILABLE crapenc THEN
@@ -2285,10 +2298,11 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1            
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -2514,10 +2528,11 @@ PROCEDURE lista_avalistas:
                         RETURN "NOK".
                     END.
 
-                FIND crapenc WHERE crapenc.cdcooper = par_cdcooper     AND
+                FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                    crapenc.nrdconta = crapass.nrdconta AND
-                                   crapenc.idseqttl = 1                AND
-                                   crapenc.cdseqinc = 1 
+                                   crapenc.idseqttl = 1           
+                                   /* Removido seq. para buscar o pri.
+                                      localizada. */
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAILABLE crapenc THEN
@@ -2879,10 +2894,12 @@ PROCEDURE consulta-avalista:
                         END.
                 END.
                 
-            FIND crapenc WHERE crapenc.cdcooper = par_cdcooper AND
+            FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                crapenc.nrdconta = par_nrctaava AND
-                               crapenc.idseqttl = 1            AND
-                               crapenc.cdseqinc = 1            NO-LOCK NO-ERROR.
+                               crapenc.idseqttl = 1             
+                               /* Removido seq. para buscar o pri.
+                                  localizada. */           
+                               NO-LOCK NO-ERROR.
      
             IF  NOT AVAILABLE crapenc THEN
                 DO:

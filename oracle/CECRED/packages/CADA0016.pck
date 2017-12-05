@@ -965,7 +965,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.tptelefo   = pr_telefone_old.tptelefone
                  --> validar pelo numero do telefone
                  AND tfc.nrtelefo = pr_telefone_old.nrtelefone
-                 AND tfc.nrdramal = pr_telefone_old.nrramal;
+                 AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_old.nrramal,0);
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao deletar telefone: '||SQLERRM; 
@@ -984,7 +984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      tfc.secpscto = pr_telefone_new.nmsetor_pessoa_contato, 
                      tfc.nrdddtfc = pr_telefone_new.nrddd,
                      tfc.nrtelefo = pr_telefone_new.nrtelefone,     
-                     tfc.nrdramal = pr_telefone_new.nrramal,
+                     tfc.nrdramal = nvl(pr_telefone_new.nrramal,0),
                      tfc.idsittfc = pr_telefone_new.insituacao,             
                      tfc.idorigem = nvl(pr_telefone_new.tporigem_cadastro,0),      
                      tfc.flgacsms = nvl(pr_telefone_new.flgaceita_sms,0)                
@@ -993,7 +993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND tfc.idseqttl = vr_tab_contas(idx).idseqttl
                  --> validar pelo numero do telefone, caso for insert, apenas terá o new
                  AND tfc.nrtelefo = nvl(pr_telefone_old.nrtelefone,pr_telefone_new.nrtelefone)
-                 AND tfc.nrdramal = nvl(pr_telefone_old.nrramal,pr_telefone_new.nrramal);
+                 AND nvl(tfc.nrdramal,0) = nvl(nvl(pr_telefone_old.nrramal,pr_telefone_new.nrramal),0);
             EXCEPTION
               WHEN dup_val_on_index THEN
                 --> Irá atualizar no update abaixo
@@ -1015,7 +1015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        tfc.secpscto = pr_telefone_new.nmsetor_pessoa_contato, 
                        tfc.nrdddtfc = pr_telefone_new.nrddd,
                        tfc.nrtelefo = pr_telefone_new.nrtelefone,     
-                       tfc.nrdramal = pr_telefone_new.nrramal,
+                       tfc.nrdramal = nvl(pr_telefone_new.nrramal,0),
                        tfc.idsittfc = pr_telefone_new.insituacao,             
                        tfc.idorigem = nvl(pr_telefone_new.tporigem_cadastro,0),      
                        tfc.flgacsms = nvl(pr_telefone_new.flgaceita_sms,0)                
@@ -1026,7 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND --testar o numero novo, pois ocorre qnd a alteração partiu dessa propria 
                        -- tabela e numero da esta atualizado
                        tfc.nrtelefo = pr_telefone_new.nrtelefone
-                   AND tfc.nrdramal = pr_telefone_new.nrramal;
+                   AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_new.nrramal,0);
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar telefone:'||SQLERRM; 
@@ -1063,7 +1063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                               pr_telefone_new.tptelefone,             --> tptelefo
                               pr_telefone_new.nmpessoa_contato,       --> nmpescto
                               pr_telefone_new.nrtelefone,             --> nrtelefo
-                              pr_telefone_new.nrramal,                --> nrdramal
+                              nvl(pr_telefone_new.nrramal,0),         --> nrdramal
                               pr_telefone_new.nmsetor_pessoa_contato, --> secpscto
                               pr_telefone_new.insituacao,             --> idsittfc                        
                               nvl(pr_telefone_new.tporigem_cadastro,0), --> idorigem                        
