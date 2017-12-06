@@ -261,6 +261,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            quantidade a completar com espaços baseado no nrdocmto e deveria
                            se basear no cdrefere  (Lucas Ranghetti #769738)
                            
+              16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
+                           a referencia do convenio de acordo com o cadastrado na tabela crapprm 
+                           (Lucas Ranghetti #712492)
                            
               07/11/2017 - Alterar para gravar a versao do layout dinamicamente no header do arquivo 
                            (Lucas Ranghetti #789879)
@@ -336,7 +339,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_dslinreg     VARCHAR2(255);
   vr_nrseqtot     NUMBER;
   vr_vltotarq     NUMBER;
-  
+  vr_nrrefere     VARCHAR2(25);
+  vr_qtdigito     INTEGER;
   ---------------------------------- CURSORES  ----------------------------------
   
   -- Verificar se é conta migrada
@@ -1157,13 +1161,34 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                || ' <dsobserv>'||vr_dsobserv||'</dsobserv>'
                                ||'</lcto>');
         
+        -- Buscar referencia formatada
+        conv0001.pc_retorna_referencia_conv(pr_cdconven => rw_gnconve.cdconven
+                                           ,pr_cdhistor => 0
+                                           ,pr_cdrefere => rw_crapatr.cdrefere
+                                           ,pr_nrrefere => vr_nrrefere
+                                           ,pr_qtdigito => vr_qtdigito
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        
         IF rw_gnconve.nrlayout = 5 THEN
     	
+          -- CERSAD e SANEPAR
+          IF vr_qtdigito <> 0 THEN
+            vr_dslinreg := 'F' 
+                    || vr_nrrefere
+                    || to_char(vr_nragenci,'fm0000')
+                    || RPAD(vr_nrdconta,14,' ')
+                    || TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')                       
+                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                    || '00'                                   
+                    || rpad(rw_craplau.cdseqtel,60,' ') 
+                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
+                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || RPAD(' ',4,' ') || '0';
+
           /* Celesc Distribuicao */  
           /* Aguas Pres.Getulio  */
-		  /* 51 - CERSAD */
-          IF rw_gnconve.cdconven IN (30,45,51) THEN   
-    						
+          ELSIF rw_gnconve.cdconven IN (30,45) THEN       						
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm000000000')
                     || RPAD(' ',16,' ')
@@ -1185,8 +1210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          /* 101 - SANEPAR */
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1363,10 +1387,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
        ELSE
 		
           -- Enviar informações para o arquivo conforme especificidades do convênio
+
+          IF vr_qtdigito <> 0 THEN
+            -- Enviar linha ao arquivo 
+            vr_dslinreg := 'F'
+                        ||vr_nrrefere
+                        ||to_char(vr_nragenci,'fm0000')
+                        ||RPAD(vr_nrdconta,14,' ')
+                        ||TO_CHAR(rw_craplau.dtmvtopg,'rrrrmmdd')
+                        ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                        ||'00'
+                        ||rpad(rw_craplau.cdseqtel,60,' ')
+                        ||RPAD(' ',20,' ')||'0';       
+          
+          
           /* 30 - Celesc Distribuicao */
           /* 45 - Aguas Pres.Getulio  */
-		  /* 51 - CERSAD */
-          IF rw_gnconve.cdconven IN(30,45,51) THEN    
+          ELSIF rw_gnconve.cdconven IN(30,45) THEN    
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm000000000')
@@ -1386,8 +1423,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* 53 - Foz do Brasil */
           /* 54 - AGUAS DE MASSARANDUBA */  
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          /* 101 - SANEPAR */
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1611,7 +1647,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                 ||RPAD(substr(rw_gnconve.nmrescop,1,20),20,' ')
                                 ||vr_dtmvtolt
                                 ||to_char(vr_nrseqarq,'fm000000')
-                                ||'04DEBITO AUTOMATICO'
+                                ||LPAD(rw_gnconve.nrlayout,2,'0')
+                                ||'DEBITO AUTOMATICO'
                                 ||RPAD(' ',52,' ')
                                 ||CHR(10));          
           
@@ -1738,7 +1775,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                                   ||RPAD(substr(rw_gnconve.nmrescop,1,20),20,' ')
                                   ||vr_dtmvtolt
                                   ||to_char(vr_nrseqarq,'fm000000')
-                                  ||'04DEBITO AUTOMATICO'
+                                  ||LPAD(rw_gnconve.nrlayout,2,'0')
+                                  ||'DEBITO AUTOMATICO'
                                   ||RPAD(' ',52,' ')
                                   ||CHR(10));          
             
