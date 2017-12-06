@@ -12229,8 +12229,9 @@ PROCEDURE efetua_liber_anali_bordero:
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                   ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
                                                   ,OUTPUT ""                     /* Valor da taxa de IOF principal */
-                                                  ,OUTPUT ""                  /* Critica */
-                                                  ,OUTPUT ?).
+                                                  ,OUTPUT 0                      /* Flag da imunidade */
+                                                  ,OUTPUT "").                  /* Critica */
+                                                  
               /* Fechar o procedimento para buscarmos o resultado */ 
               CLOSE STORED-PROC pc_calcula_valor_iof_prg
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 

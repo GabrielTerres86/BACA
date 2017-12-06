@@ -2000,7 +2000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_vliofpri NUMBER;
     vr_vliofadi NUMBER;
     vr_vliofcpl NUMBER;
-    vr_flgimune BOOLEAN;
+    vr_flgimune PLS_INTEGER;
     vr_natjurid NUMBER := 0;
     vr_tpregtrb NUMBER := 0;
     vr_vltotoperacao NUMBER := 0;
@@ -2374,9 +2374,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                        ,pr_vliofadi   => vr_vliofadi                        --> Retorno do valor do IOF adicional
                                        ,pr_vliofcpl   => vr_vliofcpl                        --> Retorno do valor do IOF complementar
                                        ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                       ,pr_dscritic   => vr_dscritic
-                                       ,pr_flgimune   => vr_flgimune);                                   
-        IF NOT vr_flgimune THEN
+                                       ,pr_flgimune   => vr_flgimune
+                                       ,pr_dscritic   => vr_dscritic);
+        IF vr_flgimune <= 0 THEN
           vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
         END IF;
         -- Seta os totais
@@ -7348,7 +7348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --vr_dtiniiof         DATE;
 	--vr_dtfimiof         DATE;
   --vr_txccdiof         NUMBER;
-	vr_flgimune         BOOLEAN;
+	vr_flgimune         PLS_INTEGER;
 	vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
 	vr_cdpactra         NUMBER;
@@ -7833,8 +7833,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vliofadi   => vr_vliofadi           --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl           --> Retorno do valor do IOF complementar
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic
-                                   ,pr_flgimune   => vr_flgimune);                                   
+                                   ,pr_flgimune   => vr_flgimune
+                                   ,pr_dscritic   => vr_dscritic);
       
         vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       --Soma os totais de IOF para lançamento na tabela de IOF
@@ -7896,7 +7896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          RAISE vr_exc_erro;
        END IF;               
                        
-			 IF NOT vr_flgimune THEN 
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -7955,7 +7954,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
-       END IF;
               
         BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper              --> Codigo da Cooperativa 
@@ -7972,9 +7970,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                   ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                                   ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                                   ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
+                                  ,pr_flgimune      => vr_flgimune
                                   ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
-                                  ,pr_dscritic      => vr_dscritic
-                                  ,pr_flgimune      => CASE WHEN vr_flgimune THEN 1 ELSE 0 END);
+                                  ,pr_dscritic      => vr_dscritic);
         EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica
@@ -8220,7 +8218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		IF vr_vltotiof > 0 THEN
 
        --Se for imune, somente efetua o lancamento na tabela de IOF
-       IF vr_flgimune THEN
+       IF vr_flgimune > 0 THEN
          BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
                               ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
@@ -8236,9 +8234,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                               ,pr_vliofpri      => vr_vltotiofpri        --> Valor do IOF Principal
                               ,pr_vliofadi      => vr_vltotiofadi        --> Valor do IOF Adicional
                               ,pr_vliofcpl      => vr_vltotiofcpl        --> Valor do IOF Complementar
+                              ,pr_flgimune      => vr_flgimune
                               ,pr_cdcritic      => vr_cdcritic           --> Código da Crítica
-                              ,pr_dscritic      => vr_dscritic
-                              ,pr_flgimune      => CASE WHEN vr_flgimune THEN 1 ELSE 0 END);
+                              ,pr_dscritic      => vr_dscritic);
             EXCEPTION
               WHEN OTHERS THEN      
                 -- Gerar crítica
@@ -8354,9 +8352,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                           ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                           ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                           ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
+                            ,pr_flgimune      => vr_flgimune
                           ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
-                            ,pr_dscritic      => vr_dscritic
-                            ,pr_flgimune      => CASE WHEN vr_flgimune THEN 1 ELSE 0 END);
+                            ,pr_dscritic      => vr_dscritic);
         EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica

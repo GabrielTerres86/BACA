@@ -497,7 +497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
       vr_qtdiaiof     PLS_INTEGER;                          
-      vr_flgimune     BOOLEAN;
+      vr_flgimune     PLS_INTEGER;
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
@@ -1073,15 +1073,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                      ,pr_vliofadi   => vr_vliofadi
                                      ,pr_vliofcpl   => vr_vliofcpl                                     
                                      ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                     ,pr_dscritic   => vr_dscritic
-                                     ,pr_flgimune   => vr_flgimune);
+                                     ,pr_flgimune   => vr_flgimune
+                                     ,pr_dscritic   => vr_dscritic);
 
         -- Condicao para verificar se houve critica
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
         
-        IF (NVL(vr_vliofcpl,0) > 0) AND NOT vr_flgimune THEN          
+        IF (NVL(vr_vliofcpl,0) > 0) AND vr_flgimune <= 0 THEN          
           -- Grava na tabela de lancamentos
           BEGIN
             INSERT INTO craplcm
@@ -1143,7 +1143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               ,pr_nrdolote_lcm => vr_nrdolote_lcm
                               ,pr_nrseqdig_lcm => vr_nrseqdig_lcm
                               ,pr_vliofcpl     => vr_vliofcpl
-                              ,pr_flgimune     => CASE WHEN vr_flgimune THEN 1 ELSE 0 END
+                              ,pr_flgimune     => vr_flgimune
                               ,pr_cdcritic     => vr_cdcritic
                               ,pr_dscritic     => vr_dscritic);
                                 
@@ -1702,7 +1702,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdocmto = pr_nrdocmto
-              AND   crapcob.flgregis = pr_flgregis;
+              AND   crapcob.flgregis = pr_flgregis
+         ORDER BY crapcob.progress_recid ASC;
       rw_crapcob cr_crapcob%ROWTYPE;
       
       --Selecionar Bordero de titulos
@@ -1809,7 +1810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
       vr_qtdiaiof     PLS_INTEGER;                          
-      vr_flgimune     BOOLEAN;
+      vr_flgimune     PLS_INTEGER;
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
       vr_cdbccxlt_lcm craplcm.cdbccxlt%TYPE;
@@ -2323,8 +2324,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                            ,pr_vliofadi   => vr_vliofadi
                                            ,pr_vliofcpl   => vr_vliofcpl
                                            ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                           ,pr_dscritic   => vr_dscritic
-                                           ,pr_flgimune   => vr_flgimune);
+                                           ,pr_flgimune   => vr_flgimune
+                                           ,pr_dscritic   => vr_dscritic);
 
               -- Condicao para verificar se houve critica
               IF vr_dscritic IS NOT NULL THEN
@@ -2332,7 +2333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               END IF;
               
               -- Vamos verificar se o valo do IOF complementar é maior que 0
-              IF NVL(vr_vliofcpl,0) > 0 AND NOT vr_flgimune THEN              
+              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN              
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => vr_dtmvtolt
@@ -2472,7 +2473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                     ,pr_nrdolote_lcm => vr_nrdolote_lcm
                                     ,pr_nrseqdig_lcm => vr_nrseqdig_lcm
                                     ,pr_vliofcpl     => vr_vliofcpl
-                                    ,pr_flgimune     => CASE WHEN vr_flgimune THEN 1 ELSE 0 END
+                                    ,pr_flgimune     => vr_flgimune
                                     ,pr_cdcritic     => vr_cdcritic
                                     ,pr_dscritic     => vr_dscritic);
                                       
