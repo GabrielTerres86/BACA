@@ -2853,7 +2853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
 
       -- Se mes do pagamento for menor ou igual ao da carencia
-      IF TO_CHAR(pr_dtdpagto, 'MM') <= TO_CHAR(pr_dtcarenc, 'MM') THEN
+      IF TO_CHAR(pr_dtdpagto, 'RRRRMM') <= TO_CHAR(pr_dtcarenc, 'RRRRMM') THEN
         vr_dscritic := 'O campo Data de Pagamento nao pode ser menor ou igual ao mes do campo Data Pagto 1a Carencia.';
         RAISE vr_exc_erro;
       END IF;
@@ -4429,8 +4429,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
         
       ELSIF pr_ehmensal THEN
-        
-        
+
+        NULL; -- JFF
+
       END IF;
 
       -- Valor do Juros Remuneratorio
