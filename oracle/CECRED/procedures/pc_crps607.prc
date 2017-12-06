@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps607 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gati - Oliver
-   Data    : Agosto/2011.                  Ultima atualizacao: 23/04/2015
+   Data    : Agosto/2011.                  Ultima atualizacao: 29/11/2017
 
    Dados referentes ao programa:
 
@@ -45,6 +45,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps607 (pr_cdcooper IN crapcop.cdcooper%T
                17/06/2015 - Ajuste para enviar arquivo lst via email, conforme na versão progress
                             SD297992 (Odirlei-Amcom)
                              
+               29/11/2017 - Ajustado o cursor cr_crapseg para que o partition by de situação seja feito
+                            por SEGURADORA e SITUAÇÃO, para que as informações sejam agrupadas 
+                            corretamente (Douglas - Chamado 803460)
     .............................................................................*/          
 
     DECLARE
@@ -129,12 +132,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps607 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,crapseg.nrdconta
                                           ,crapseg.cdagenci) nrseqseg 
               ,count(*) over (partition by crapseg.cdsegura) nrtotseg                                          
-              ,row_number() over (partition by crapseg.cdsitseg                                          
+              ,row_number() over (partition by crapseg.cdsegura, crapseg.cdsitseg                                          
                                   order by crapseg.cdsegura
                                           ,crapseg.cdsitseg
                                           ,crapseg.nrdconta
                                           ,crapseg.cdagenci) nrseqsit 
-              ,count(*) over (partition by crapseg.cdsitseg) nrtotsit 
+              ,count(*) over (partition by crapseg.cdsegura, crapseg.cdsitseg) nrtotsit 
         FROM crapseg      
         WHERE  crapseg.cdcooper = pr_cdcooper     
         AND    crapseg.tpseguro = pr_tpseguro               
@@ -526,4 +529,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps607 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps607;
 /
-
