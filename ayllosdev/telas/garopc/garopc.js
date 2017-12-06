@@ -56,6 +56,9 @@ cGar_ter_nome.addClass('campo').css({'width':'250px'});
 // Bloqueia todos os campos
 $('input[type="text"],input[type="radio"]','#frmGAROPC').desabilitaCampo();
 
+// Esconde imagem
+$('#imgGAROPC', '#frmGAROPC').hide();
+
 // Se NAO for Consulta
 if (cGar_tipaber.val() != 'C') {
 
@@ -67,6 +70,7 @@ if (cGar_tipaber.val() != 'C') {
 
     cGar_ter_ncta.habilitaCampo();
     cGar_campos2.habilitaCampo();
+    $('#imgGAROPC', '#frmGAROPC').show();
 
     // Se estiver parametrizado para alterar ou anteriormente etava marcado como SIM 
     if (gar_inresper == 1 || gar_inresaut == 1) {
