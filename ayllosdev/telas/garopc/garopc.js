@@ -84,7 +84,7 @@ if (cGar_tipaber.val() != 'C') {
 
     // Se foi clicado nos campos de aplicacao/poupanca
     cGar_campos2.unbind('click').bind('click', function (){
-        mostraImagemGAROPC();
+        mostraImagemGAROPC(1);
         limpaCamposGAROPC('T');
     });
 
@@ -95,7 +95,7 @@ if (cGar_tipaber.val() != 'C') {
 
     // Se foi clicado nos campos de aplicacao/poupanca de terceiro
     cGar_campos3.unbind('click').bind('click', function (){
-        mostraImagemGAROPC();
+        mostraImagemGAROPC(1);
         limpaCamposGAROPC('P');
     });
 
@@ -126,6 +126,9 @@ if (cGar_tipaber.val() != 'C') {
                 },
                 success: function (response) {
                     eval(response);
+                    $('#gar_ter_apli_0').prop("checked", true);
+                    $('#gar_ter_poup_0').prop("checked", true);
+                    mostraImagemGAROPC(0);
                 }
             });
 
@@ -154,7 +157,7 @@ if (cGar_tipaber.val() != 'C') {
             var gar_permingr_new = (gar_vlgarnec_new / gar_vlropera_float) * 100;
             cGar_permingr.val(number_format(gar_permingr_new,2,',','.'));
 
-            mostraImagemGAROPC();
+            mostraImagemGAROPC(0);
 		});
     }
 }
@@ -177,9 +180,10 @@ function limpaCamposGAROPC(gar_tipoapli) {
         $('#gar_pro_poup_0').prop("checked", true);
         $('#gar_pro_raut_0').prop("checked", true);
     }
+    mostraImagemGAROPC(0);
 }
 
-function mostraImagemGAROPC() {
+function mostraImagemGAROPC(gar_invalida) {
     var gar_vlselect = 0;
     var gar_urlimage = $('#imgGAROPC', '#frmGAROPC').attr('urlimage');
     var gar_nomimage = 'motor_REPROVAR.png';
@@ -209,8 +213,12 @@ function mostraImagemGAROPC() {
         gar_vlselect = gar_vlselect + converteMoedaFloat($('#gar_ter_poup_sld', '#frmGAROPC').val());
     }
 
-    // Se nao foi informado nenhum valor
-    if (gar_vlselect == 0) {
+    // Se nao foi selecionado nenhuma opcao e for necessario validar
+    if (gar_pro_apli == 0 && 
+        gar_pro_poup == 0 && 
+        gar_ter_apli == 0 && 
+        gar_ter_poup == 0 && 
+        gar_invalida == 1) {
         var gar_vlr_permingr = converteMoedaFloat($('#gar_permingr', '#frmGAROPC').attr('vlr_permingr'));
         var gar_permingr_new = gar_vlropera_float * (gar_vlr_permingr / 100);
         cGar_vlgarnec.val(number_format(gar_permingr_new,2,',','.'));
