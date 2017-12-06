@@ -717,8 +717,6 @@
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
 
-              06/10/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2327,13 +2325,11 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0097 AS HANDLE                                  NO-UNDO.
 
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdmeses AS INTE                                    NO-UNDO.
     DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
-    DEF VAR aux_vlrtarif AS DECI                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-coope.
@@ -2694,20 +2690,6 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                 ELSE
                     ASSIGN aux_dtlibera = crawepr.dtlibera. 
                 
-                RUN sistema/generico/procedures/b1wgen0097.p 
-                  PERSISTENT SET h-b1wgen0097.
-
-                RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  crawepr.cdcooper,
-                               INPUT  crawepr.cdlcremp,
-                               INPUT  crawepr.vlemprst,
-                               INPUT  crawepr.nrdconta,
-                               OUTPUT aux_vlrtarif,
-                               OUTPUT TABLE tt-erro).
-				
-                DELETE PROCEDURE h-b1wgen0097.
-
-                IF  RETURN-VALUE = "NOK" THEN
-                  RETURN "NOK".
 
                 ASSIGN tt-proposta-epr.dtmvtolt = crawepr.dtmvtolt
                        tt-proposta-epr.vlemprst = crawepr.vlemprst
@@ -2735,17 +2717,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.nrseqrrq = crawepr.nrseqrrq
                        tt-proposta-epr.dtlibera = aux_dtlibera
                        tt-proposta-epr.inpessoa = crapass.inpessoa
-                       tt-proposta-epr.insitest = crawepr.insitest
-                       tt-proposta-epr.vlrtarif = aux_vlrtarif
-                       tt-proposta-epr.vliofepr = 0.
-
-				IF  AVAIL crapepr THEN
-                  DO:
-                    ASSIGN tt-proposta-epr.idfiniof = crapepr.idfiniof
-                           tt-proposta-epr.vliofepr = crapepr.vliofepr.
-                  END.
-                    
-                ASSIGN tt-proposta-epr.vlrtotal = (crawepr.vlemprst + tt-proposta-epr.vliofepr + aux_vlrtarif).
+                       tt-proposta-epr.insitest = crawepr.insitest.
 
                 CASE crawepr.idquapro:
                   WHEN 1 THEN ASSIGN tt-proposta-epr.dsquapro = "Operacao Normal".
@@ -2802,9 +2774,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                                   ELSE 1
                        tt-proposta-epr.dtlibera = par_dtmvtolt
                        tt-proposta-epr.qtpromis = INTEGER(craptab.dstextab) WHEN AVAIL craptab
-                       tt-proposta-epr.inpessoa = crapass.inpessoa
-					   tt-proposta-epr.idfiniof = 1
-                       tt-proposta-epr.vliofepr = 0.
+                       tt-proposta-epr.inpessoa = crapass.inpessoa.
             END.
 
        /* Para a exclusao, só as informacoes mais relevantes sao necessarias*/
@@ -5975,9 +5945,7 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         aux_dscritic AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dstransa AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dsorigem AS CHAR                           NO-UNDO.  
-    DEF	 VAR 		 aux_nrdconta_grp AS INTEGER  			            NO-UNDO.
-    DEF	 VAR 		 aux_dsvinculo    AS CHAR						            NO-UNDO.
-    DEF  VAR         aux_flgativo     AS INTEGER                    NO-UNDO.
+    DEF	 VAR 		     aux_mensagens AS CHAR						              NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -6771,27 +6739,23 @@ PROCEDURE grava-proposta-completa:
         /* Verificar se a conta pertence ao grupo economico novo */	
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+        RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                               ,INPUT par_nrdconta
-                                              ,0
-                                              ,0
                                               ,""
                                               ,0
                                               ,"").
 
-        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+        CLOSE STORED-PROC pc_obtem_mensagem_grp_econ_prg
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
         ASSIGN aux_cdcritic      = 0
                aux_dscritic     = ""
-               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
-               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
-               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
-               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
-               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+               aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
+               aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
+               aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
                         
         IF aux_cdcritic > 0 THEN
            DO:
@@ -6802,11 +6766,11 @@ PROCEDURE grava-proposta-completa:
               UNDO Grava, LEAVE Grava.
           END.
 
-        IF aux_flgativo = 1 THEN
+        IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
            DO:
                CREATE tt-msg-confirma.                        
                ASSIGN tt-msg-confirma.inconfir = 4
-                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+                      tt-msg-confirma.dsmensag = aux_mensagens.
            END.
         
     END. /* Fim Grava- Fim TRANSACTION */
@@ -9845,8 +9809,7 @@ PROCEDURE obtem-dados-conta-contrato:
 		   tt-dados-epr.qtimpctr = crapepr.qtimpctr	
            tt-dados-epr.portabil = aux_portabilidade
            tt-dados-epr.liquidia = aux_liquidia
-           tt-dados-epr.dtapgoib = crapepr.dtapgoib
-           tt-dados-epr.vliofcpl = crapepr.vliofcpl.
+           tt-dados-epr.dtapgoib = crapepr.dtapgoib.
            
          
 
@@ -13068,13 +13031,6 @@ PROCEDURE atualiza_dados_avalista_proposta:
                CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                            IF AVAIL crapcpa THEN
-                               DO:
-                                  ASSIGN crawepr.insitapr =  1
-                                         crawepr.cdopeapr = par_cdoperad
-                                         crawepr.dtaprova = par_dtmvtolt
-                                         crawepr.hraprova = TIME
-                                         crawepr.insitest = 3.
 
                ASSIGN aux_contigen = FALSE.
                IF pc_param_sistema.pr_dsvlrprm = "1" then
