@@ -1414,7 +1414,7 @@ create or replace package body cecred.CCET0001 is
       vr_vliofpri NUMBER;
       vr_vliofadi NUMBER;
       vr_vliofcpl NUMBER;
-      vr_flgimune BOOLEAN;
+      vr_flgimune PLS_INTEGER;
       vr_tpproduto NUMBER;
       vr_natjurid NUMBER := 0;
       vr_tpregtrb NUMBER := 0;
@@ -1554,9 +1554,9 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic
-                                   ,pr_flgimune   => vr_flgimune);
-      IF NOT vr_flgimune THEN
+                                   ,pr_flgimune   => vr_flgimune
+                                   ,pr_dscritic   => vr_dscritic);
+      IF vr_flgimune = 0 THEN
         vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       ELSE 
         vr_vliofcpl := 0;
@@ -2273,7 +2273,7 @@ create or replace package body cecred.CCET0001 is
       vr_vliofpri NUMBER;
       vr_vliofadi NUMBER;
       vr_vliofcpl NUMBER;
-      vr_flgimune BOOLEAN;
+      vr_flgimune PLS_INTEGER;
       vr_tpproduto NUMBER;
       vr_natjurid NUMBER := 0;
       vr_tpregtrb NUMBER := 0;
@@ -2364,9 +2364,9 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
                                    ,Pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic
-                                   ,pr_flgimune   => vr_flgimune);
-      IF NOT vr_flgimune THEN
+                                   ,pr_flgimune   => vr_flgimune
+                                   ,pr_dscritic   => vr_dscritic);
+      IF vr_flgimune = 0 THEN
         vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       ELSE
         vr_vliofcpl := 0;

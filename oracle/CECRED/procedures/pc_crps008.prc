@@ -584,7 +584,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
-       vr_flgimune BOOLEAN;
+       vr_flgimune PLS_INTEGER;
        vr_vltaxa_iof_principal NUMBER := 0;
        vr_natjurid crapjur.natjurid%TYPE;
        vr_tpregtrb crapjur.tpregtrb%TYPE;
@@ -2222,8 +2222,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                                             ,pr_vliofadi   => vr_vliofadi
                                             ,pr_vliofcpl   => vr_vliofcpl
                                             ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                            ,pr_dscritic   => vr_dscritic
-                                            ,pr_flgimune   => vr_flgimune);
+                                            ,pr_flgimune   => vr_flgimune
+                                            ,pr_dscritic   => vr_dscritic);
                  
                -- Condicao para verificar se houve critica                             
                IF vr_dscritic IS NOT NULL THEN
@@ -2231,10 +2231,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                END IF;
                
                --Atualizar valor do iof no mes na tabela de saldo
-               IF NOT vr_flgimune THEN
-               rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
+               IF vr_flgimune = 0 THEN
+                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
                ELSE
-                  rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0);
+                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0);
                END IF;
              END IF;
              
