@@ -8,7 +8,10 @@
 //***					                                                                       ***//	 
 //***			  19/10/2017 - Correcao na exibicao do campo Prosseguir na opcao de Alteracao  ***//	 
 //***			               SD 770963 (Carlos Rafael Tanholi).                              ***//	 
-//*********************************************************************************************//
+//***                                                                                          ***//
+//***             05/12/2017 - Correcao na exebicao do campo Prosseguir na opcao de Consulta   ***// 
+//***                          SD 782144 (Carlos Rafael Tanholi)                               ***//
+//************************************************************************************************//
 
 // Definição de algumas variáveis globais 
 var cddopcao = 'C';
@@ -880,7 +883,7 @@ function consultaPlano() {
                         /*habilita campos para alteração*/
 
                         if (cddopcao == "C") {
-                            $('#btSalvar', '#divBotoes').focus();
+                            $('#btSalvar', '#divBotoes').show().focus();
                         } else {
                             cDsmoradaC.focus();
                             $('#btSalvar', '#divBotoes').show();
