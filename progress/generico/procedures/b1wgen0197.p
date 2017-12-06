@@ -537,7 +537,7 @@ PROCEDURE busca_inf_produtos:
 	IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
 									crapcrm.nrdconta  = par_nrdconta AND
 									crapcrm.cdsitcar  = 2            AND
-									crapcrm.dtvalcar  < par_dtmvtolt 
+									crapcrm.dtvalcar  >= par_dtmvtolt 
 									NO-LOCK)
 	THEN DO:
 		ASSIGN tt-inf-produto.flgcrmag = 1.		
