@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 06/10/2015
+   Data    : Agosto/2006                   Ultima Atualizacao: 06/12/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -55,6 +55,9 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                             
                06/10/2015 - Incluindo procedure de validacao de protocolos
                             (Andre Santos - SUPERO).             
+
+               06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
+                            (P285 - Ricardo Linhares).
 ............................................................................. */
 
   /* Objetos de uso comum */
@@ -200,6 +203,23 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                  ,pr_dscritic OUT VARCHAR2              --> Descrição crítica
                                  ,pr_des_erro OUT VARCHAR2);            --> Descrição dos erros de processo
 
+  
+  
+  PROCEDURE pc_lista_protocolos_por_tipos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                 ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                 ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
+                                 ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                                 ,pr_iniconta IN NUMBER                 --> Início da conta
+                                 ,pr_nrregist IN NUMBER                 --> Número de registros
+                                 ,pr_cdtippro IN VARCHAR2                 --> Código protocolo
+                                 ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                 ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
+                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                 ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
+                                 ,pr_protocolo  OUT typ_tab_protocolo       --> PL Table de registros
+                                 ,pr_des_erro OUT VARCHAR2);
+
+  
   /* Listar protocolos gerados */
   PROCEDURE pc_lista_protocolos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
@@ -329,7 +349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 13/03/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 06/12/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -393,6 +413,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                13/03/2017 - Na procedure pc_gera_protocolo foi retirado pr_dscritic 
                             da exception vr_exc_erro pois é um erro tratado 
                             (Lucas Ranghetti #624628)
+
+               06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
+                            (P285 - Ricardo Linhares).
+
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -1307,58 +1331,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     END;
   END pc_gera_protocolo_md5;
 
-  /* Listar protocolos gerados */
-  PROCEDURE pc_lista_protocolos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
-                               ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
-                               ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
-                               ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
-                               ,pr_iniconta IN NUMBER                 --> Início da conta
-                               ,pr_nrregist IN NUMBER                 --> Número de registros
-                               ,pr_cdtippro IN NUMBER                 --> Código protocolo
-                               ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-                               ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
-                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                               ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
-                               ,pr_protocolo  OUT typ_tab_protocolo       --> PL Table de registros
-                               ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+  
+
+  /* Listar protocolos gerados podendo ser filtrado por vários tipos */
+  PROCEDURE pc_lista_protocolos_por_tipos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                 ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                 ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
+                                 ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                                 ,pr_iniconta IN NUMBER                 --> Início da conta
+                                 ,pr_nrregist IN NUMBER                 --> Número de registros
+                                 ,pr_cdtippro IN VARCHAR2               --> Código protocolo
+                                 ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                 ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
+                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                 ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
+                                 ,pr_protocolo  OUT typ_tab_protocolo   --> PL Table de registros
+                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
                                
     -- ..........................................................................
     --
-    --  Programa : pc_lista_protocolos   (Antigo: sistema/generico/procedures/bo_algoritmo_seguranca.p --> lista_protocolos)
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
-    --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: 30/10/2017
+    --  Autor    : Ricardo Linhares
+    --  Data     : Dezembro/2017.                   Ultima atualização: 
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: ---
-    --  Objetivo  : Gera listagem de protocolos.
-    --
-    --   Observação: Parâmetros para Internet: dtinipro, dtfimpro, iniconta, nrregist
-    --              - dtinipro -> para consultar determinado periodo (inicio)
-    --                            fora da internet passar parametro com valor NULL
-    --              - dtfimpro -> para consultar determinado periodo (fim)
-    --                            fora da internet passar parametro com valor NULL
-    --              - iniconta -> a partir do registro nr X, gravar na TEMP-TABLE
-    --                            fora da internet passar parametro com valor "0"
-    --              - nrregist -> número de registros que devem ser gravados na TEMP-TABLE
-    --                            fora da internet passar parametro com valor "0"
-    --
-    --  Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
-  	--               
-	  --              19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
-	  --  			                   PRJ320 - Oferta DebAut (Odirlei-AMcom)          
-    --
-    --              05/10/2016 - Correcao no tratamento de erros retornados pela procedure. 
-    --                           SD 535051 (Carlos Rafael Tanholi).
-    --
-    --              05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
-		--            	             da transação (David).
-    --
-    --              30/10/2017 - Adequação da procedure conforme 
-    --                           generico\procedures\bo_algoritmo_seguranca.p, Prj. 285
-    --                           (Jean Michel).
+    --  Objetivo  : Gera listagem de protocolos podendo filtrar por vários Tipos Protocolos.
+
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1385,7 +1386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                        ,pr_nrdconta IN crappro.nrdconta%TYPE      --> Número da conta
                        ,pr_dtfimpro IN crappro.dtmvtolt%TYPE      --> Data final do protocolo
                        ,pr_dtinipro IN crappro.dttransa%TYPE      --> Data inicial do protocolo
-                       ,pr_cdtippro IN crappro.cdtippro%TYPE) IS  --> Tipo do protocolo
+                       ,pr_cdtippro IN VARCHAR2) IS  --> Tipo do protocolo
         SELECT co.cdtippro
               ,co.nrcpfope
               ,co.dtmvtolt
@@ -1407,7 +1408,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           AND co.nrdconta  = pr_nrdconta          
           AND trunc(co.dttransa) >= pr_dtinipro
           AND trunc(co.dttransa) <= pr_dtfimpro
-          AND (pr_cdtippro = 0 OR co.cdtippro = pr_cdtippro)
+          AND (pr_cdtippro = '0' OR co.cdtippro IN( SELECT regexp_substr(pr_cdtippro, '[^;]+', 1, LEVEL)
+                                    FROM dual
+                                  CONNECT BY LEVEL <= regexp_count(pr_cdtippro, '[^;]+') ))
         ORDER BY co.dttransa DESC
                 ,co.hrautent DESC;
 
@@ -1495,7 +1498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           END IF;
 
           -- Valida protocolo Favorecido
-          IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
+          IF pr_cdtippro <> TO_CHAR(8) AND rw_crappro.cdtippro = 8 THEN
             RAISE vr_exc_iter;
           END IF;
 
@@ -1606,7 +1609,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_dscritic := 'Erro em GENE0006.pc_lista_protocolos: ' || SQLERRM;
         pr_des_erro := 'NOK';
     END;
+  END pc_lista_protocolos_por_tipos;
+
+  /* Listar protocolos gerados */
+  PROCEDURE pc_lista_protocolos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                               ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                               ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
+                               ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                               ,pr_iniconta IN NUMBER                 --> Início da conta
+                               ,pr_nrregist IN NUMBER                 --> Número de registros
+                               ,pr_cdtippro IN NUMBER                 --> Código protocolo
+                               ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                               ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
+                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                               ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
+                               ,pr_protocolo  OUT typ_tab_protocolo   --> PL Table de registros
+                               ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                               
+    -- ..........................................................................
+    --
+    --  Programa : pc_lista_protocolos   (Antigo: sistema/generico/procedures/bo_algoritmo_seguranca.p --> lista_protocolos)
+    --  Sistema  : Processos Genéricos
+    --  Sigla    : GENE
+    --  Autor    : Petter Rafael - Supero
+    --  Data     : Junho/2013.                   Ultima atualização: 06/12/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: ---
+    --  Objetivo  : Gera listagem de protocolos.
+    --
+    --   Observação: Parâmetros para Internet: dtinipro, dtfimpro, iniconta, nrregist
+    --              - dtinipro -> para consultar determinado periodo (inicio)
+    --                            fora da internet passar parametro com valor NULL
+    --              - dtfimpro -> para consultar determinado periodo (fim)
+    --                            fora da internet passar parametro com valor NULL
+    --              - iniconta -> a partir do registro nr X, gravar na TEMP-TABLE
+    --                            fora da internet passar parametro com valor "0"
+    --              - nrregist -> número de registros que devem ser gravados na TEMP-TABLE
+    --                            fora da internet passar parametro com valor "0"
+    --
+    --  Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
+  	--               
+	  --              19/05/2016 - Ajuste para exibir protocolos 15 - pagamento convenio
+	  --  			                   PRJ320 - Oferta DebAut (Odirlei-AMcom)          
+    --
+    --              05/10/2016 - Correcao no tratamento de erros retornados pela procedure. 
+    --                           SD 535051 (Carlos Rafael Tanholi).
+    --
+    --              05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
+	--            	             da transação (David).
+    --
+    --              30/10/2017 - Adequação da procedure conforme 
+    --                           generico\procedures\bo_algoritmo_seguranca.p, Prj. 285
+    --                           (Jean Michel).
+	--
+    --              06/12/2017 - Alterado para chamar rotinapc_lista_protocolos_por_tipos.
+    --                           (p285 - Ricardo Linhares).
+    -- .............................................................................
+  BEGIN
+    DECLARE
+      vr_exc_erro   EXCEPTION;                   --> Controle de execução
+      vr_dtinipro   DATE;                        --> Auxiliar para data inicial do protocolo
+      vr_dtfimpro   DATE;                        --> Auxiliar para data final do protocolo
+      vr_exc_iter   EXCEPTION;                   --> Controle de iteração
+      vr_index      NUMBER;                      --> Indexador para PL Table
+      vr_nmoperad   crapopi.nmoperad%TYPE;       --> Nome operador
+      vr_cdcritic   crapcri.cdcritic%TYPE := 0;  --> Código da crítica
+      vr_dscritic   crapcri.dscritic%TYPE := ''; --> Descrição da crítica
+      vr_cdtippro   VARCHAR2(100);
+    BEGIN
+      
+      IF(pr_cdtippro = 0) THEN
+        vr_cdtippro := '0';
+      ELSE
+        vr_cdtippro := TO_CHAR(pr_cdtippro);
+      END IF;
+        
+      pc_lista_protocolos_por_tipos(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_dtinipro => pr_dtinipro
+                                   ,pr_dtfimpro => pr_dtfimpro
+                                   ,pr_iniconta => pr_iniconta
+                                   ,pr_nrregist => pr_nrregist
+                                   ,pr_cdtippro => vr_cdtippro
+                                   ,pr_cdorigem => pr_cdorigem
+                                   ,pr_dstransa => pr_dstransa
+                                   ,pr_dscritic => pr_dscritic
+                                   ,pr_qttotreg => pr_qttotreg
+                                   ,pr_protocolo => pr_protocolo
+                                   ,pr_des_erro => pr_des_erro);
+     
+    END;
   END pc_lista_protocolos;
+
+  
 
   /* Realiza estorno de protocolos */
   PROCEDURE pc_estorna_protocolo(pr_cdcooper IN crapcop.cdcooper%TYPE      --> Código da cooperativa

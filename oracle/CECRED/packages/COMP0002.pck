@@ -49,7 +49,7 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                  ,pr_iniconta IN NUMBER                 --> Início da conta
                                  ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-																 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
+								 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
                                  ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                  ,pr_dsretorn OUT VARCHAR2 );
 
@@ -397,7 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
    END;
 
   -- Todos
-  PROCEDURE pc_lista_comprovantes(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+    PROCEDURE pc_lista_comprovantes(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                  ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                  ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
@@ -426,13 +426,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
      Observacao: -----
 
-     Alteracoes: Inclusão do campo
+     Alteracoes: 06/12/2017 - Alterado chamada da procedure GENE006.pc_lista_protocolos_por_tipos
+                              (P285 - Ricardo Linhares)
 
      ..................................................................................*/  
     
     DECLARE
     
-      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
 			vr_prot_fltr   gene0006.typ_tab_protocolo;    --> PL Table para filtrar registros (retorno protocolo)
       vr_dstransa    VARCHAR2(400);                 --> Descrição da transação
       vr_qttotreg    PLS_INTEGER;                   --> Quantidade de registros      
@@ -441,9 +441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_xml_temp    VARCHAR2(32726) := '';
       vr_des_erro    VARCHAR2(4000);
       vr_dscritic    crapcri.dscritic%TYPE;
-						    			
-			TYPE array_t IS TABLE OF crappro.cdtippro%TYPE;
-      vr_cdtippro array_t := array_t();
+      vr_dstippro    VARCHAR2(100);
     
     BEGIN					  
 			
@@ -455,7 +453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   ,pr_dtfimpro  => pr_dtfimpro
                                   ,pr_iniconta  => pr_iniconta
                                   ,pr_nrregist  => pr_nrregist
-                                  ,pr_protocolo => vr_protocolo
+                                  ,pr_protocolo => vr_prot_fltr
                                   ,pr_dsretorn  => vr_des_erro);
                                    
         -- Verifica se retornou erro
@@ -465,66 +463,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
         END IF;                          
       ELSE
         IF pr_cdtipmod = 1 THEN -- Pagamento
-
-          vr_cdtippro.extend(8);
-          vr_cdtippro(1) := 2;  -- Pagamento (Tit/Cnv)
-          vr_cdtippro(2) := 11; -- Operações DebAut
-          vr_cdtippro(3) := 13; -- Pagamento/Agendamento GPS
-          vr_cdtippro(4) := 15; -- Pagamento DebAut
-          vr_cdtippro(5) := 16; -- Pagamento DARF
-          vr_cdtippro(6) := 17; -- Agendamento DARF
-          vr_cdtippro(7) := 18; -- Pagamento DAS				
-          vr_cdtippro(8) := 19; -- Agendamento DAS
+          -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
+          vr_dstippro := '2;11;13;15;16;17;18;19'; 
   			
         ELSIF pr_cdtipmod = 2 THEN -- Transferências Realizadas
   				
-          vr_cdtippro.extend(3);
-          vr_cdtippro(1) := 1;  -- Transferência
-          vr_cdtippro(2) := 4;  -- Credito Salario				
-          vr_cdtippro(3) := 9;  -- TED				
+          vr_dstippro := '1;4;9'; --Transferência; Credito Salario; TED
   								
         ELSIF pr_cdtipmod = 4 THEN -- Investimentos
   				
-          vr_cdtippro.extend(3);
-          vr_cdtippro(1) := 3;  -- Capital
-          vr_cdtippro(2) := 10; -- Aplicação Pre/Pos
-          vr_cdtippro(3) := 12; -- Resgate Aplicação Pre/Pos
+          vr_dstippro := '3;10;12'; -- Capital; Aplicação Pre/Pos; Resgate Aplicação Pre/Pos
   									
         ELSIF pr_cdtipmod = 5 THEN -- Recarga de Celular
 
-          vr_cdtippro.extend(1);
-          vr_cdtippro(1) := 20; -- Recarga de Celular
+          vr_dstippro := '20'; -- Recarga de Celular
+
+        ELSIF pr_cdtipmod = 0 THEN -- Todos
   											
+          vr_dstippro := '0';
+
         END IF;
       
-        gene0006.pc_lista_protocolos(pr_cdcooper  => pr_cdcooper
-                                    ,pr_nrdconta  => pr_nrdconta
-                                    ,pr_dtinipro  => pr_dtinipro
-                                    ,pr_dtfimpro  => pr_dtfimpro
-                                    ,pr_iniconta  => pr_iniconta
-                                    ,pr_nrregist  => pr_nrregist
-                                    ,pr_cdtippro  => 0          --> Todos
-                                    ,pr_cdorigem  => pr_cdorigem
-                                    ,pr_dstransa  => vr_dstransa
-                                    ,pr_dscritic  => vr_dscritic
-                                    ,pr_qttotreg  => vr_qttotreg
-                                    ,pr_protocolo => vr_prot_fltr
-                                    ,pr_des_erro  => vr_des_erro);
+        gene0006.pc_lista_protocolos_por_tipos(pr_cdcooper  => pr_cdcooper
+                                      ,pr_nrdconta  => pr_nrdconta
+                                      ,pr_dtinipro  => pr_dtinipro
+                                      ,pr_dtfimpro  => pr_dtfimpro
+                                      ,pr_iniconta  => pr_iniconta
+                                      ,pr_nrregist  => pr_nrregist
+                                      ,pr_cdtippro  => vr_dstippro 
+                                      ,pr_cdorigem  => pr_cdorigem
+                                      ,pr_dstransa  => vr_dstransa
+                                      ,pr_dscritic  => vr_dscritic
+                                      ,pr_qttotreg  => vr_qttotreg
+                                      ,pr_protocolo => vr_prot_fltr
+                                      ,pr_des_erro  => vr_des_erro);
 
         -- Verifica se retornou erro
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           vr_des_erro := 'Não foi possível consultar os comprovantes.';        
           RAISE vr_exc_erro;
         END IF;
-        			
-        -- Filtra retorno pelo tipo de protocolo solicitado
-        FOR vr_ind IN 1..vr_prot_fltr.count LOOP				
-          IF vr_prot_fltr(vr_ind).cdtippro MEMBER OF vr_cdtippro THEN
-            vr_protocolo(vr_protocolo.count + 1) := vr_prot_fltr(vr_ind);
-          END IF;
-        END LOOP;  			
+        
       END IF;
-      
+        
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
        
@@ -533,40 +514,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovantes>');   
       
-      FOR vr_ind IN 1..vr_protocolo.count LOOP
+      FOR vr_ind IN 1..vr_prot_fltr.count LOOP
         
-        vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##2, '#'));      
+        vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, vr_prot_fltr(vr_ind).dsinform##2, '#'));      
       
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
                                ,pr_texto_novo     => 
                                '<Comprovante>'||
-                                  '<nrdocmto>' || vr_protocolo(vr_ind).nrdocmto                                                               || '</nrdocmto>' ||
-                                  '<cdtippro>' || vr_protocolo(vr_ind).cdtippro                                                             	|| '</cdtippro>' ||
-                                  '<dstippro>' || vr_protocolo(vr_ind).dsinform##1                                                           	|| '</dstippro>' ||																																		
-                                  '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
-                                  '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
-                                  '<dsdescri>' || fn_descricao(vr_protocolo(vr_ind),pr_cdtipmod) || '</dsdescri>');     
+                                  '<nrdocmto>' || vr_prot_fltr(vr_ind).nrdocmto                                                               || '</nrdocmto>' ||
+                                  '<cdtippro>' || vr_prot_fltr(vr_ind).cdtippro                                                             	|| '</cdtippro>' ||
+                                  '<dstippro>' || vr_prot_fltr(vr_ind).dsinform##1                                                           	|| '</dstippro>' ||																																		
+                                  '<dttransa>' || to_char(vr_prot_fltr(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<vldocmto>' || to_char(vr_prot_fltr(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+                                  '<dsdescri>' || fn_descricao(vr_prot_fltr(vr_ind),pr_cdtipmod) || '</dsdescri>');     
 												
         IF pr_cdtipmod = 3 THEN			-- Transferências Recebidas
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     =>
-                                  '<cdhistor>' || vr_protocolo(vr_ind).cdhistor   || '</cdhistor>');             
+                                  '<cdhistor>' || vr_prot_fltr(vr_ind).cdhistor   || '</cdhistor>');             
         ELSE
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     => 
-                                  '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc || '</dsprotoc>');
+                                  '<dsprotoc>' || vr_prot_fltr(vr_ind).dsprotoc || '</dsprotoc>');
         END IF;					
         
 				IF pr_cdtipmod = 5 THEN			-- Recarga de celular							
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                  ,pr_texto_completo => vr_xml_temp      
                                  ,pr_texto_novo     =>
-                                  '<nrdddtel>' || TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).nrcelular, ' ')) || '</nrdddtel>' ||
-                                  '<nrtelefo>' || TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).nrcelular, ' ')) || '</nrtelefo>' ||
-                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperadora || '</nmoperad>');   
+                                  '<nrdddtel>' || TRIM(gene0002.fn_busca_entrada(1, vr_prot_fltr(vr_ind).nrcelular, ' ')) || '</nrdddtel>' ||
+                                  '<nrtelefo>' || TRIM(gene0002.fn_busca_entrada(2, vr_prot_fltr(vr_ind).nrcelular, ' ')) || '</nrtelefo>' ||
+                                  '<nmoperad>' || vr_prot_fltr(vr_ind).nmoperadora || '</nmoperad>');   
 				END IF;
 				
 	    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -597,6 +578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     END;
     
   END pc_lista_comprovantes;
+
    
   -- Transferencia
   PROCEDURE pc_detalhe_compr_transferencia(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
