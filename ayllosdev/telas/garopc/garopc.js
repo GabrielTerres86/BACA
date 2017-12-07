@@ -147,6 +147,8 @@ if (cGar_tipaber.val() != 'C') {
         // Se foi alterado valor da garantia necessaria
         cGar_vlgarnec.unbind('blur').bind('blur', function(){
 			var gar_vlgarnec_new = converteMoedaFloat($(this).val());
+            var gar_permingr_new = (gar_vlgarnec_new / gar_vlropera_float) * 100;
+
             // Se zerou marcar como NAO aplicacao e poupanca
             if (gar_vlgarnec_new == 0) {
                 $('#gar_pro_apli_0').prop("checked", true);
@@ -154,7 +156,13 @@ if (cGar_tipaber.val() != 'C') {
                 $('#gar_ter_apli_0').prop("checked", true);
                 $('#gar_ter_poup_0').prop("checked", true);
             }
-            var gar_permingr_new = (gar_vlgarnec_new / gar_vlropera_float) * 100;
+
+            // Calcula os valores
+            gar_permingr_new = Math.round(gar_permingr_new * 100) / 100;
+            gar_vlgarnec_new = (gar_permingr_new / 100) * gar_vlropera_float;
+
+            // Carrega valores nos campos
+            $(this).val(number_format(gar_vlgarnec_new,2,',','.'));
             cGar_permingr.val(number_format(gar_permingr_new,2,',','.'));
 
             mostraImagemGAROPC(0);
