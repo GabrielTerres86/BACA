@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 04/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -87,6 +87,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
   --              Influenciava o valor de resgate superior ao saldo.(Carlos Rafael Tanholi - SD 745032)
+  --
+  -- 04/12/2017 - Remoção do paralelismo nas queries envolvendo as tabelas craptrd e crapmfx nos processos
+  --              online - pc_saldo_rdc_pos (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -4419,8 +4422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                  07/04/2014 - Alterações referente ao novo indexador de poupanca
                               (Jean Michel).
-								 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
-															cr_crapmfx (Jean Michel).
+				 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
+							  cr_crapmfx (Jean Michel).
 
                  24/06/2014 - Retirada leitura da craptab e incluido data de
                               liberacao do projeto do novo indexador de
@@ -4656,7 +4659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper) LOOP
-          -- MOntar a chave do registro com o tipo + data
+          -- Montar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
           vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
@@ -4672,7 +4675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
           -- Buscar os dias uteis
-          FOR rw_craptrd IN (SELECT /*+ PARALLEL(craptrd) */ craptrd.dtiniper
+          FOR rw_craptrd IN (SELECT craptrd.dtiniper
                                    ,craptrd.qtdiaute
                                    ,count(*) over (partition by craptrd.dtiniper
                                                        order by craptrd.progress_recid) registro
@@ -4688,8 +4691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
-        FOR rw_crapmfx IN (SELECT /*+ PARALLEL(CRAPMFX) */
-                                  CRAPMFX.DTMVTOLT
+        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
                                  ,CRAPMFX.TPMOEFIX
                                  ,CRAPMFX.VLMOEFIX 
                              FROM CRAPMFX

@@ -9843,7 +9843,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                 vr_dscritic := 'Erro ao inserir na tabela craplct.' ||SQLERRM;
                 RAISE vr_exc_saida;
             END; 
-               
+            BEGIN
+              INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
+                                           ,nrdconta 
+                                           ,tpdevolucao
+                                           ,vlcapital)
+                                    VALUES (pr_cdcooper
+                                           ,pr_nrdconta      
+                                           ,3 --Sobras Cotas
+                                           ,rw_crapcot.vldcotas);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir 3.1-TBCOTAS_DEVOLUCAO. ' ||SQLERRM;
+                RAISE vr_exc_saida;
+            END; 
        
           END IF;
           
@@ -10013,89 +10026,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                 vr_dscritic := 'Erro ao inserir na tabela craplct.' ||SQLERRM;
                 RAISE vr_exc_saida;
             END;   
-       
+            BEGIN
+              INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
+                                           ,nrdconta 
+                                           ,tpdevolucao
+                                           ,vlcapital)
+                                    VALUES (pr_cdcooper
+                                           ,pr_nrdconta      
+                                           ,3 --Sobras Cotas
+                                           ,rw_crapcot.vldcotas);
+            EXCEPTION
+              WHEN OTHERS THEN
+                 vr_dscritic := 'Erro ao inserir 3.2-TBCOTAS_DEVOLUCAO. ' ||SQLERRM;
+                 RAISE vr_exc_saida;
+            END; 
                    
        END IF;            
        
        
       END IF;             
-                             
-    ELSE  -- Devolução parcial
-        
-      aux_datadevo := vr_datadevo;    
-              
-      FOR i IN 1..pr_qtdparce LOOP      
-            
-        vr_nrdolote := 600038;
-        
-        vr_busca := TRIM(to_char(pr_cdcooper)) || ';' ||
-                    TRIM(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')) || ';' ||
-                    TRIM(to_char(rw_crapass.cdagenci)) || ';' ||
-                    '100;' || --cdbccxlt
-                    vr_nrdolote;
-                     
-        vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', vr_busca);    
-            
-        vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
-                                                        to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'||
-                                                        rw_crapass.cdagenci||
-                                                        ';100;'|| --cdbccxlt
-                                                        vr_nrdolote);   
-            
-        BEGIN 
-              
-          INSERT INTO craplau(cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,cdhistor
-                             ,dtdebito
-                             ,dtmvtolt
-                             ,dtmvtopg
-                             ,insitlau
-                             ,nrdconta
-                             ,nrdctabb
-                             ,cdbccxpg
-                             ,nrseqdig
-                             ,nrseqlan
-                             ,tpdvalor
-                             ,vllanaut
-                             ,cdcooper
-                             ,nrdocmto
-                             ,idseqttl
-                             ,dttransa
-                             ,hrtransa
-                             ,dsorigem)
-                      VALUES (rw_crapass.cdagenci
-                             ,100
-                             ,vr_nrdolote
-                             ,2137
-                             ,NULL
-                             ,rw_crapdat.dtmvtolt
-                             ,aux_datadevo
-                             ,1 --Pendente
-                             ,pr_nrdconta
-                             ,pr_nrdconta
-                             ,0
-                             ,vr_nrseqdig
-                             ,0
-                             ,1            
-                             ,(pr_vldcotas / pr_qtdparce)
-                             ,pr_cdcooper
-                             ,vr_nrdocmto
-                             ,0
-                             ,TRUNC(SYSDATE)
-                             ,to_char(SYSDATE,'sssss')
-                             ,'DEVOLUCAOCOTA');
-                                   
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na tabela craplau.' ||SQLERRM;
-            RAISE vr_exc_saida;
-        END; 
-                                 
-        aux_datadevo := ADD_MONTHS(aux_datadevo,1);                    
-                                 
-      END LOOP;                     
                         
     END IF;
          
@@ -10193,6 +10142,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
+            RAISE vr_exc_saida;
+        END; 
+        
+        BEGIN
+          INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
+                                       ,nrdconta 
+                                        ,tpdevolucao
+                                       ,vlcapital)
+                                VALUES (pr_cdcooper
+                                       ,pr_nrdconta      
+                                       ,4 --Sobras Deposito
+                                       ,NVL(TO_CHAR(vr_vlrsaldo),'0'));
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir 4-TBCOTAS_DEVOLUCAO. ' ||SQLERRM;
             RAISE vr_exc_saida;
         END; 
         
@@ -10507,6 +10471,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         vr_dscritic := 'Erro ao inserir na tabela craplct.' ||SQLERRM;
         RAISE vr_exc_saida;
     END; 
+
+    BEGIN
+      INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
+                                  ,nrdconta 
+                                  ,tpdevolucao
+                                  ,vlcapital)
+                           VALUES (pr_cdcooper
+                                  ,pr_nrdconta      
+                                  ,3 --Sobras Cotas
+                                  ,rw_crapcot.vldcotas);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir 3.3-TBCOTAS_DEVOLUCAO. ' ||SQLERRM;
+        RAISE vr_exc_saida;
+    END; 
+
+
      
     BEGIN
       --Atualiza o valor de cotas do associado                        

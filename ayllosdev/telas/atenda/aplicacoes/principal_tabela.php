@@ -1,7 +1,7 @@
 <? /************************************************************************
 	 Fonte: principal_tabela.php
 	 Autor: Lucas R.                                                  
-	 Data : Junho/2013                Última Alteração: 14/04/2015 
+	 Data : Junho/2013                Última Alteração: 01/12/2017 
 	                                                                  
 	 Objetivo  : Monta tabela de aplicações da tela ATENDA            
 	                                                                  
@@ -18,6 +18,9 @@
 				
 				 14/04/2015 - Adicionado novo campo com a data de carência 
 						      da aplicação SD - 266191 (Kelvin)
+
+		         01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+
 	************************************************************************/	
 ?> 
 
@@ -158,11 +161,19 @@
 
 	<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; text-align: center;">
 	 
-	    <a href="#" class="botao" id="btAplicacao" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="buscaDadosAplicacao(\'I\');return false;"'; } ?>>Aplica&ccedil;&atilde;o</a>
+		<?php if(!($sitaucaoDaContaCrm == '4' || 
+				 $sitaucaoDaContaCrm == '7' || 
+				 $sitaucaoDaContaCrm == '8' )){?>
+
+			<a href="#" class="botao" id="btAplicacao" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="buscaDadosAplicacao(\'I\');return false;"'; } ?>>Aplica&ccedil;&atilde;o</a>
+			
+		<?}?>
+		
 		<a href="#" class="botao" id="btExcluir" <?php if (!in_array("E",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="buscaDadosAplicacao(\'E\');return false;"'; } ?>>Excluir</a>
 		<a href="#" class="botao" id="btResgate" <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoResgate();return false;"'; } ?>>Resgate</a>
 		<a href="#" class="botao" id="btResgateVarias" <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoResgatarVarias();return false;"'; } ?>>Resgatar V&aacute;rias</a>
 		<a href="#" class="botao" id="btAcumula" <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="acessaOpcaoAcumula();return false;"'; } ?>>Acumula</a>
+		
 		
 		<?php 
 			// As cooperativas 4 (CONCREDI) e 15 (CREDIMILSUL) não podem realizar o agendamento de aplicações e resgates

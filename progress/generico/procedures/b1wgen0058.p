@@ -195,6 +195,10 @@
                               
                 03/11/2017 - Correcao no carregamento de bens para procurador na tela CONTAS.
 							 Busca_Dados_Ass SD 778432. (Carlos Rafael Tanholi).
+                
+                24/11/2017 - Ajustado leitura crabenc pois nao precisa ser o seq =1
+                             apenas garantir o tpendass. PRJ339 - CRM(Odirlei-AMcom)  
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -826,7 +830,8 @@ PROCEDURE Busca_Dados_Ass:
                               WHERE crabenc.cdcooper = crabass.cdcooper AND
                                     crabenc.nrdconta = crabass.nrdconta AND
                                     crabenc.idseqttl = 1                AND
-                                    crabenc.cdseqinc = 1                AND
+                                    /* Removido seq, nao precisa ser, apenas ser tp 10
+                                    crabenc.cdseqinc = 1                AND*/
                                     crabenc.tpendass = 10           
                                     NO-LOCK:
 

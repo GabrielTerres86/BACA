@@ -1772,7 +1772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                 vr_flcria_empresa := TRUE;
               END IF;
               -- Atualiza o ID da pessoa juridica
-              rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_juridica.idpessoa;
+              rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa.idpessoa;
             END IF;
             CLOSE cr_pessoa;
 
@@ -4072,6 +4072,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_fisica.tppessoa             := nvl(rw_pessoa_fisica.tppessoa  ,1); -- Fisica
         rw_pessoa_fisica.tpcadastro           := nvl(rw_pessoa_fisica.tpcadastro,1); -- Prospect
         rw_pessoa_fisica.cdoperad_altera      := pr_cdoperad;
+
+        -- Andrino
+        -- Se a empresa de trabalho possuir o mesmo CPF do titular e o nome for diferente,
+        -- deve-se alterar o nome da empresa
+        IF pr_crapttl.nrcpfcgc > 0 AND
+           pr_crapttl.nrcpfcgc = pr_crapttl.nrcpfemp THEN
+           -- Utiliza o nome do titular, e nao o da empresa
+           -- Isso eh necessario, pois se nao fizer isso quando altera o nome do titular
+           -- esta rotina volta ao nome anterior
+          rw_pessoa_fisica.nmpessoa             := pr_crapttl.nmextttl;
+        END IF;
 
         -- Cria a pessoa fisica
         cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fisica,

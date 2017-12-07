@@ -18,6 +18,8 @@
  *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
  *                11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
+ *                05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
+ *                             (Mateus Z - Mouts)
  * --------------
  */
 
@@ -185,6 +187,9 @@ function controlaOperacao(operacao, flgConcluir) {
                 eval(response);
                 controlaFoco(operacao);
             }
+			if(operacao == 'CA' || operacao == 'CAE'){
+                buscaNomePessoa();
+            }
             return false;
         }
     });
@@ -281,10 +286,11 @@ function controlaLayout(operacao) {
     $('#divConteudoOpcao').css('height', altura);
 
     // FIELDSET INF. PROFISSIONAIS
-    var rotulos_1 = $('label[for="cdnatopc"],label[for="tpcttrab"],label[for="nmextemp"]', '#' + nomeForm);
+    var rotulos_1 = $('label[for="cdnatopc"],label[for="tpcttrab"],label[for="nrcpfemp"]', '#' + nomeForm);
     var rColFS1_60 = $('label[for="cdocpttl"],label[for="cdempres"]', '#' + nomeForm);
-    var rColFS1_70 = $('label[for="nrcpfemp"],label[for="cdnvlcgo"]', '#' + nomeForm);
+    var rColFS1_70 = $('label[for="cdnvlcgo"]', '#' + nomeForm);
     var rColFS1_53 = $('label[for="dsproftl"],label[for="dtadmemp"]', '#' + nomeForm);
+    var rColFS1_90 = $('label[for="nmextemp"]', '#' + nomeForm);
     var rLinha_1 = $('label[for="vlsalari"],label[for="nrcadast"]', '#' + nomeForm);
     var rTurno = $('label[for="cdturnos"]', '#' + nomeForm);
     var rOtrsrend = $('label[for="otrsrend"]', '#' + nomeForm);
@@ -294,6 +300,7 @@ function controlaLayout(operacao) {
     rColFS1_60.css('width', '60px');
     rColFS1_70.css('width', '70px');
     rColFS1_53.css('width', '53px');
+    rColFS1_90.css('width', '90px');
     rLinha_1.addClass('rotulo-linha');
     rOtrsrend.addClass('rotulo-linha').css('width', '217px');
     rTurno.addClass('rotulo').css('width', '40px');
@@ -323,7 +330,7 @@ function controlaLayout(operacao) {
     cDescOcupacao.addClass('descricao').css('width', '135px');
     cDescEmpresa.addClass('descricao').css('width', '135px');
     cTpCrtTrb.css('width', '185px');
-    cNomeEmp.css('width', '248px').attr('maxlength', '35').addClass('alphanum');
+    cNomeEmp.css('width', '228px').attr('maxlength', '35').addClass('alphanum');
     cCnpj.addClass('cnpj').css('width', '120px');
     cFuncao.css('width', '117px').attr('maxlength', '20').addClass('alphanum');
     cNivelCargo.css('width', '120px');
@@ -628,11 +635,12 @@ function controlaFoco(operacao) {
     if (in_array(operacao, [''])) {
         $('#btAlterar', '#divBotoes').focus();
     } else if (operacao == 'CAE') {
-        if ((cooperativa == 2 && $('#cdempres', '#' + nomeForm).val() == 88) || $('#cdempres', '#' + nomeForm).val() == 81) {
-            $('#nmextemp', '#' + nomeForm).focus();
-        } else {
-            $('#dsproftl', '#' + nomeForm).focus();
-        }
+        $('#nrcpfemp', '#' + nomeForm).focus();
+        // if ((cooperativa == 2 && $('#cdempres', '#' + nomeForm).val() == 88) || $('#cdempres', '#' + nomeForm).val() == 81) {
+        //     $('#nmextemp', '#' + nomeForm).focus();
+        // } else {
+        //     $('#dsproftl', '#' + nomeForm).focus();
+        // }
     } else {
         $('#cdnatopc', '#' + nomeForm).focus();
     }
@@ -1210,4 +1218,44 @@ function voltarRotina() {
 function proximaRotina() {
     hideMsgAguardo();
     acessaOpcaoAbaDados(3, 1, '@');
+}
+
+function buscaNomePessoa(){
+
+    var nrcpfemp = $('#nrcpfemp').val();
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);
+
+    var nrcpfemp = $('#nrcpfemp').val();
+
+    nrcpfemp = normalizaNumero(nrcpfemp);
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/comercial/busca_nome_pessoa.php',
+        data: {
+            nrcpfemp: nrcpfemp,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }

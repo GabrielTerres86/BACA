@@ -332,7 +332,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
         SELECT crapcrm.nrdconta
         FROM   crapcrm
         WHERE  crapcrm.cdcooper = pr_cdcooper
-        AND    crapcrm.cdsitcar < 3;
+        AND    crapcrm.cdsitcar < 2; -- PJ 364 somente ativos  (sit=2 vencidos não deve impedir)
 
       --Seleciona informacoes do cadastro de controle de cartoes de crédito não cancelados
       CURSOR cr_crawcrd ( pr_cdcooper IN crapass.cdcooper%TYPE) IS
@@ -409,6 +409,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
          AND    craplot.cdbccxlt = 100
          AND    craplot.nrdolote = pr_nrdolote;
       rw_craplot7200  cr_craplot%ROWTYPE;
+      rw_craplot8006  cr_craplot%ROWTYPE;
 
  
 
@@ -433,12 +434,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                            FROM   crapavs
                            WHERE  crapavs.cdcooper = crapass.cdcooper
                            AND    crapavs.nrdconta = crapass.nrdconta)
-        AND   NOT EXISTS ( SELECT 1
-                           FROM   crapfdc
-                           WHERE  crapfdc.cdcooper = crapass.cdcooper
-                           AND    crapfdc.nrdconta = crapass.nrdconta
-                           AND    crapfdc.tpcheque <> 3
-                           AND    crapfdc.incheque = 0)
+-- PJ 364 - Sarah solicitou retirar consitencia de folha de cheque
+--        AND   NOT EXISTS ( SELECT 1
+--                           FROM   crapfdc
+--                           WHERE  crapfdc.cdcooper = crapass.cdcooper
+--                           AND    crapfdc.nrdconta = crapass.nrdconta
+--                           AND    crapfdc.tpcheque <> 3
+--                           AND    crapfdc.incheque = 0)
         AND   NOT EXISTS(  SELECT 1
                            FROM   craplim
                            WHERE  craplim.cdcooper = crapass.cdcooper
@@ -682,15 +684,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       END LOOP;
 
 			-- Carregando as informações de lancamentos automaticos
-      FOR rw_craplau IN cr_craplau( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_craplau(rw_craplau.nrdconta).nrdconta := rw_craplau.nrdconta;
-      END LOOP;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_craplau IN cr_craplau( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_craplau(rw_craplau.nrdconta).nrdconta := rw_craplau.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de seguros ativos/renovados/substituídos
-      FOR rw_crapseg IN cr_crapseg( pr_cdcooper => pr_cdcooper
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
-      END LOOP;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_crapseg IN cr_crapseg( pr_cdcooper => pr_cdcooper
+--                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+--        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de poupanças programadas
       FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
@@ -729,6 +733,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       FETCH cr_craplot INTO rw_craplot7200;
       CLOSE cr_craplot;
 
+      -- Verifica se existe capa de lote para o dia e para o lote 8006
+      OPEN cr_craplot( pr_cdcooper => pr_cdcooper
+                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                      ,pr_nrdolote => 8006);
+      FETCH cr_craplot INTO rw_craplot8006;
+      CLOSE cr_craplot;
 
       -- O parâmetro abaixo é reponsável por retornar:
       -- valor de cotas do associado
@@ -958,6 +968,67 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           IF nvl(rw_crapsld.vlsddisp,0) > 0 THEN
             -- inserindo na tabela de depósistos a vista craplcm
             BEGIN
+              INSERT INTO craplcm( dtmvtolt
+                                  ,cdagenci
+                                  ,cdbccxlt
+                                  ,nrdolote
+                                  ,nrdctabb
+                                  ,nrdctitg
+                                  ,nrdconta
+                                  ,vllanmto
+                                  ,cdhistor
+                                  ,cdpesqbb
+                                  ,nrseqdig
+                                  ,nrdocmto
+                                  ,cdcooper)
+              VALUES( rw_craplot7200.dtmvtolt
+                     ,rw_craplot7200.cdagenci
+                     ,rw_craplot7200.cdbccxlt
+                     ,rw_craplot7200.nrdolote
+                     ,rw_crapass.nrdconta
+                     ,gene0002.fn_mask(rw_crapass.nrdconta,'99999999')
+                     ,rw_crapass.nrdconta
+                     ,rw_crapsld.vlsddisp
+                     ,decode(rw_crapass.inpessoa,1,2061,2062)
+                     ,' '
+                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
+                     ,nvl(rw_craplot7200.nrseqdig,0) + 1
+                     ,pr_cdcooper)
+              RETURNING vllanmto
+              INTO      vr_vllanmto;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir na tabela craplcm para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+
+            -- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
+            BEGIN
+              UPDATE craplot
+              SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
+                 ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
+                 ,qtinfoln = nvl(qtinfoln,0) + 1
+                 ,qtcompln = nvl(qtcompln,0) + 1
+                 ,nrseqdig = nvl(nrseqdig,0) + 1
+              WHERE craplot.ROWID = rw_craplot7200.rowid
+              RETURNING vlinfodb
+                       ,vlcompdb
+                       ,qtinfoln
+                       ,nrseqdig
+              INTO rw_craplot7200.vlinfodb
+                  ,rw_craplot7200.vlcompdb
+                  ,rw_craplot7200.qtinfoln
+                  ,rw_craplot7200.nrseqdig;
+
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+
+            BEGIN
               UPDATE tbcotas_devolucao
                  SET vlcapital = vlcapital + rw_crapsld.vlsddisp
                WHERE cdcooper = pr_cdcooper
@@ -973,7 +1044,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,4 -- DEPOSITO - EQUIVALE HIST 110
                                             ,rw_crapsld.vlsddisp); 
               END IF;
-              vr_vllanmto:= rw_crapsld.vlsddisp;
 
             EXCEPTION
               WHEN OTHERS THEN
@@ -1169,10 +1239,108 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           --  Inicio da baixa dos valores do capital
           --------------------------------------------------------------
           -- se não existir a capa do lote 7200 no dia, o mesmo será criado
+          IF rw_craplot8006.rowid IS NULL THEN
+            -- cadastra a capa do lote 7200 na craplot e retornando as informações para usar abaixo
+            BEGIN
+              INSERT INTO craplot(dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,tplotmov
+                                 ,cdcooper)
+              VALUES ( rw_crapdat.dtmvtolt
+                       ,1
+                       ,100
+                       ,8006
+                       ,2
+                       ,pr_cdcooper)
+              RETURNING cdcooper
+                       ,dtmvtolt
+                       ,cdagenci
+                       ,cdbccxlt
+                       ,nrdolote
+                       ,nrseqdig
+                       ,qtinfoln
+                       ,qtcompln
+                       ,ROWID
+              INTO  rw_craplot8006.cdcooper
+                   ,rw_craplot8006.dtmvtolt
+                   ,rw_craplot8006.cdagenci
+                   ,rw_craplot8006.cdbccxlt
+                   ,rw_craplot8006.nrdolote
+                   ,rw_craplot8006.nrseqdig
+                   ,rw_craplot8006.qtinfoln
+                   ,rw_craplot8006.qtcompln
+                   ,rw_craplot8006.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir lote 8006 na tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+          END IF;
+
 
           -- se o associado possuir cotas, efetua a baixa de capital
           IF nvl(rw_crapcot.vldcotas,0) > 0 THEN -- valor de cotas do associado
             -- Insere lançamento na tabela de lançamentos de cotas de capital
+            BEGIN
+              INSERT INTO craplct( dtmvtolt
+                                  ,cdagenci
+                                  ,cdbccxlt
+                                  ,nrdolote
+                                  ,nrdconta
+                                  ,vllanmto
+                                  ,cdhistor
+                                  ,nrseqdig
+                                  ,nrdocmto
+                                  ,qtlanmfx
+                                  ,cdcooper)
+              VALUES( rw_craplot8006.dtmvtolt
+                     ,rw_craplot8006.cdagenci
+                     ,rw_craplot8006.cdbccxlt
+                     ,rw_craplot8006.nrdolote
+                     ,rw_crapass.nrdconta
+                     ,nvl(rw_crapcot.vldcotas,0)
+                     ,decode(rw_crapass.inpessoa,1,2079,2080)
+                     ,rw_craplot8006.nrseqdig + 1
+                     ,rw_craplot8006.nrseqdig + 1
+                     ,nvl(rw_crapcot.qtcotmfx,0)
+                     ,pr_cdcooper)
+              RETURNING vllanmto
+              INTO      vr_vllanmto;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir na tabela craplct para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+
+			-- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
+            BEGIN
+              UPDATE craplot
+              SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
+                 ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
+                 ,qtinfoln = nvl(qtinfoln,0) + 1
+                 ,qtcompln = nvl(qtcompln,0) + 1
+                 ,nrseqdig = nvl(nrseqdig,0) + 1
+              WHERE craplot.ROWID = rw_craplot8006.rowid
+              RETURNING vlinfodb
+                       ,vlcompdb
+                       ,qtinfoln
+                       ,nrseqdig
+              INTO rw_craplot8006.vlinfodb
+                  ,rw_craplot8006.vlcompdb
+                  ,rw_craplot8006.qtinfoln
+                  ,rw_craplot8006.nrseqdig;
+
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+
             BEGIN
               UPDATE tbcotas_devolucao
                  SET vlcapital = vlcapital + nvl(rw_crapcot.vldcotas,0)
@@ -1189,8 +1357,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,3 -- SOBRAS COTAS - EQUIVALE HIST 112
                                             ,nvl(rw_crapcot.vldcotas,0)); 
                END IF;              
-               vr_vllanmto:= nvl(rw_crapcot.vldcotas,0);
-
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir na tabela tbcotas_devolucao para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;

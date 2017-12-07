@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 29/11/2017
+ Data : Setembro/2009                Última Alteração: 01/12/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -85,6 +85,9 @@
              28/09/2017 - Correcao na simulacao de aplicacoes atraves ATENDA - APLICACOES. SD 685979. (Carlos Rafael Tanholi)
 
 			 29/11/2017 - Validacao sobre valor bloqueado. M460 - BancenJud (Thiago Rodrigues)
+
+             01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -148,6 +151,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         url: UrlSite + "telas/atenda/aplicacoes/principal.php",
         data: {
             nrdconta: nrdconta,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

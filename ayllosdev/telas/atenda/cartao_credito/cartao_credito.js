@@ -60,6 +60,7 @@
  * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
  * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualização do histórico de alteração de limites (P360)
  * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
+ * 044: [01/12/2017] Jonata          (RKAM) : Não permitir acesso a opção de incluir quando conta demitida.
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -122,6 +123,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		data: {
 			nrdconta: nrdconta,
 			inpessoa: inpessoa,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {

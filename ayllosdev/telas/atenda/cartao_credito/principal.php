@@ -3,7 +3,7 @@
 	/************************************************************************
 	  Fonte: principal.php
 	  Autor: Guilherme
-	  Data : Marco/2008                 Última Alteração: 09/12/2016
+	  Data : Marco/2008                 Última Alteração: 01/12/2017
 
 	  Objetivo  : Mostrar opcao Principal da rotina de Cartões de Crédito
 				  da tela ATENDA
@@ -36,7 +36,10 @@
 				  29/11/2016 - P341-Automatização BACENJUD - Alterado a validação 
 					           pelo DSDEPART passando a utilizar o CDDEPART (Renato Darosci)   
 							   
-				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   
+				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
+				  
+				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+				  							   
 	************************************************************************/
 	
 	session_start();
@@ -64,6 +67,7 @@
 
 	$nrdconta = $_POST["nrdconta"];
 	$inpessoa = $_POST["inpessoa"];
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -175,7 +179,14 @@
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
 			
-			<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
+			<?php if(!($sitaucaoDaContaCrm == '4' || 
+				       $sitaucaoDaContaCrm == '7' || 
+				       $sitaucaoDaContaCrm == '8'  )){?>
+
+				<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
+						
+			<?}?>
+			
 			<input type="image" id="btnimpr" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>
 			<input type="image" id="btnentr" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>
 			<input type="image" id="btnaltr" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>

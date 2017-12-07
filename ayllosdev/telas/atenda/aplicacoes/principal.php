@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Setembro/2009                Última Alteração: 26/12/2014 
+	 Data : Setembro/2009                Última Alteração: 01/12/2017 
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Aplicações da   
 	             tela ATENDA                                          
@@ -32,6 +32,8 @@
                               vencimento errada (SD - 237402)		
   						     (Adriano).	
 
+			     01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+		    
 	************************************************************************/
 	
 	session_start();
@@ -55,7 +57,8 @@
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
-
+	
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm']) ? $_POST['sitaucaoDaContaCrm']:'');
 	$nrdconta = $_POST["nrdconta"];
 
 	// Verifica se número da conta é um inteiro válido
