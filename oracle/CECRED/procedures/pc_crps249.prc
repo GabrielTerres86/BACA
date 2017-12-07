@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 03/11/2017
+   Data    : Novembro/98                     Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -591,6 +591,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                03/11/2017 - Melhorias performance, padronização
                             (Ana Volles - Envolti - Chamado 734422)
+                            
+               21/11/2017 - Incluir nrdocmto na clausula do cursor cr_craplcm6 pois
+                            estava retornando registro duplicado caso a conta tivesse 
+                            mais de um lançamento (Lucas Ranghetti #791432 )
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -1711,6 +1715,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       WHERE craplcm.cdcooper = craplau.cdcooper
         AND craplcm.nrdconta = craplau.nrdconta
         AND craplcm.cdhistor = craplau.cdhistor
+        AND craplcm.nrdocmto = craplau.nrdocmto
         AND craplau.dtdebito = craplcm.dtmvtolt
         AND craplau.cdempres = UPPER(crapscn.cdempres)
         AND crapass.nrdconta = craplcm.nrdconta
