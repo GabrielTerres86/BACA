@@ -10170,7 +10170,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          SET cdmotdem = pr_mtdemiss
             ,cdsitdct = 4 -- Encerrada por Demissao na Empresa
             ,dtdemiss = nvl(vr_dtdemiss, rw_crapdat.dtmvtolt)
-            ,dtmvtolt = rw_crapdat.dtmvtolt
        WHERE cdcooper  = pr_cdcooper
          AND nrdconta  = pr_nrdconta
         RETURNING cdsitdct INTO vr_cdsitdct; 
