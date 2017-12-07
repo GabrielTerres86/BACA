@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                                ) IS   
   BEGIN
 
-  /* .............................................................................
+  /* ................................................................................................
 
    Programa: PC_CRPS538_2                      Antigo: PC_CRPS538.PCK
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -27,8 +27,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
      - Geração do arquivo de devolução - pc_gerar_arq_devolucao
 
    Alteracoes: 
-              
-   .............................................................................*/
+       05/12/2017 - Inclusão de validação último dia mês, para buscar arquivos da pasta /win12/salvar/
+                    Retirada da validação com a variável vr_dtleiarq
+                    Ana - Envolti - Chamado 806333
+
+       06/12/2017 - Ajustar data do arquivo de devolução para o próximo dia útil
+                    quando a data do movimento for igual ao último dia do ano. (Rafael)
+
+       06/12/2017 - Substituição do comando pc_set_modulo por pc_informa_acesso, para gerar as casas 
+                    decimais corretamente
+       07/12/2017 - Sustituir o tempo de espera do job de 30 minutos pela função fn_param_sistema
+                    Ana - Envolti - Chamado 804921
+
+   ................................................................................................*/
 
      DECLARE
 
@@ -100,19 +111,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        vr_tab_nmarqtel      GENE0002.typ_split;
        
        --Variaveis locais arquivo
-       vr_setlinha          VARCHAR2(1000);
-       vr_contador          INTEGER;
-       vr_listadir          VARCHAR2(4000);
-       vr_nmarqret          VARCHAR2(100);
-       vr_caminho_puro      VARCHAR2(1000);
-       vr_caminho_salvar    VARCHAR2(1000);
-       vr_comando           VARCHAR2(1000);
-       vr_typ_saida         VARCHAR2(1000);
-       vr_dstipcob          VARCHAR2(6);
-       vr_dtleiaux          VARCHAR2(8);
-       vr_dtleiarq          VARCHAR2(10);
-       vr_intemarq          BOOLEAN;
-       vr_interminocoopers  NUMBER(1);
+       vr_setlinha           VARCHAR2(1000);
+       vr_contador           INTEGER;
+       vr_listadir           VARCHAR2(4000);
+       vr_nmarqret           VARCHAR2(100);
+       vr_caminho_puro       VARCHAR2(1000);
+       vr_caminho_salvar     VARCHAR2(1000);
+       vr_comando            VARCHAR2(1000);
+       vr_typ_saida          VARCHAR2(1000);
+       vr_dstipcob           VARCHAR2(6);
+       vr_dtleiaux           VARCHAR2(8);
+       vr_intemarq           BOOLEAN;
+       vr_interminocoopers   NUMBER(1);
+       --Chamado 806333
+       vr_caminho_salvar_ant VARCHAR2(1000);
        
        -- Variaveis de controle de DBA SCHEDULER JOB LOG      
        vr_dsplsql         VARCHAR2(2000);
@@ -194,8 +206,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
              
      vr_dslobdev      CLOB;
      vr_dsbufdev      VARCHAR2(32700);
+     vr_dtultdia      DATE;
                         
     BEGIN
+
+     --06/12/2017
+     --Rotina para achar o ultimo dia útil do ano
+     vr_dtultdia := add_months(TRUNC(vr_dtmvtpro,'RRRR'),12)-1;    
+     CASE to_char(vr_dtultdia,'d') 
+       WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
+       WHEN '7' THEN vr_dtultdia := vr_dtultdia - 1;
+       ELSE vr_dtultdia := add_months(TRUNC(vr_dtmvtpro,'RRRR'),12)-1;
+     END CASE;        
+
+     -- se a data de devolução for o ultimo dia do ano, entao o arquivo de devolução
+     -- deverá ser com a data do próximo dia útil     
+     IF vr_dtultdia = vr_dtmvtpro THEN
+       vr_dtmvtpro := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
+                                                  pr_dtmvtolt  => vr_dtmvtpro + 1,
+                                                  pr_tipo      => 'P',
+                                                  pr_feriado   => TRUE,
+                                                  pr_excultdia => TRUE);
+     END IF;                                                  
            
      -- Definir sigra do mes
      vr_cddomes := replace(to_char(vr_dtmvtpro,'MM'),'0','');
@@ -211,10 +243,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            NULL;
        END CASE;     
      END IF; 
-           
+
      --> Listar devoluoes da coop
      FOR rw_devolucao IN cr_devolucao (pr_dtmvtolt => pr_dtmvtolt ) LOOP
-             
+
        IF rw_devolucao.nrseqrec = 1 THEN
                  
          vr_nrseqlin := 1;
@@ -250,7 +282,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            -- Inicilizar as informacoes do XML
            gene0002.pc_escreve_xml(vr_dslobdev,vr_dsbufdev,vr_dsdlinha);
            -- Retorna nome do modulo logado
-           GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
+           GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
              
          EXCEPTION
            WHEN OTHERS THEN
@@ -303,7 +335,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          -- incluir linha detalhe
          gene0002.pc_escreve_xml(vr_dslobdev,vr_dsbufdev,vr_dsdlinha);
          -- Retorna nome do modulo logado
-         GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);    
+         GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
        EXCEPTION
          WHEN OTHERS THEN
            -- No caso de erro de programa gravar tabela especifica de log
@@ -316,7 +348,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        IF rw_devolucao.nrseqrec = rw_devolucao.nrqtdrec THEN
          BEGIN 
            vr_nrseqlin := vr_nrseqlin + 1;
-                 
+
            --MONTAR TRAILER
            vr_dsdlinha := lpad('9',47,'9')                || -->  1 001-047   X(047)  Controle do header 
                           'DVC605'                        || -->  2 048-053   X(006)  Nome do arquivo 
@@ -334,11 +366,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                     'fm0000000000')       || --> 11 151-160   9(010)  Sequencial de arquivo 
                           chr(10);
                                                                                              
-                                                                                             
            -- Incluir linha trailer e descarregar buffer
            gene0002.pc_escreve_xml(vr_dslobdev,vr_dsbufdev,vr_dsdlinha,TRUE);
            -- Retorna nome do modulo logado
-           GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);    
+           GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
          EXCEPTION
            WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log
@@ -346,7 +377,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
              vr_dscritic := 'Montar Trailer do arquivo de devolucao - '||SQLERRM;
              RAISE vr_exc_saida; 
          END;
-                 
+
          vr_dsdircop_arq := gene0001.fn_diretorio( pr_tpdireto => 'C', 
                                                    pr_cdcooper => pr_cdcooper, 
                                                    pr_nmsubdir => '/arq');
@@ -354,7 +385,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          vr_dsdirmic_arq := gene0001.fn_diretorio( pr_tpdireto => 'M', 
                                                    pr_cdcooper => pr_cdcooper, 
                                                    pr_nmsubdir => '/abbc');
-                                                           
+
          -- Geracao do arquivo
          GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                             ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
@@ -368,7 +399,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                             ,pr_flappend  => 'N'                      --> Indica que a solicitação irá incrementar o arquivo
                                             ,pr_des_erro  => vr_dscritic);            --> Saída com erro                
           -- Retorna nome do modulo logado
-          GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL); 
+          GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
           -- Testar se houve erro
           IF vr_dscritic IS NOT NULL THEN
             -- Gerar excecao
@@ -383,7 +414,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        END IF;
                
      END LOOP;
-                  
+
     EXCEPTION
      WHEN vr_exc_saida THEN
        pr_dscritic := vr_dscritic;
@@ -435,12 +466,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Inicilizar as informacoes do XML
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="utf-8"?><crrl574><dados dtmvtolt="'||to_char(vr_dtmvtaux,'DD/MM/YYYY')||'">');
       -- Retorna nome do modulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);                 
-                 
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+
       --> Listar devoluoes da coop
       FOR rw_devolucao IN cr_devolucao (pr_cdcooper => pr_cdcooper,
                                      pr_dtmvtolt => pr_dtmvtolt) LOOP
-                 
+                
       CASE rw_devolucao.cdmotdev
        WHEN 53 THEN
          vr_dsmotdev := 'Apresentação indevida';
@@ -457,7 +488,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        ELSE
          vr_dsmotdev := 'Descrição de motivo não encontrada';
       END CASE;    
-               
+
       --Escrever no Arquivo XML
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
        '<dado>
@@ -471,13 +502,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
             '<dsmotdev>'|| gene0007.fn_caract_acento(vr_dsmotdev) ||'</dsmotdev>
         </dado>');        
         -- Retorna nome do modulo logado
-        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);           
+        GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
       END LOOP;
 
       -- Finalizar tag XML
       gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</dados></crrl574>',true);
       -- Retorna nome do modulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);    
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
 
       /*  Salvar copia relatorio para "/rlnsv"  */
       IF pr_nmtelant = 'COMPEFORA' THEN
@@ -504,7 +535,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                  ,pr_dspathcop => vr_caminho_rlnsv    --> Lista sep. por ';' de diretórios a copiar o relatório
                                  ,pr_des_erro  => vr_dscritic);       --> Sa?da com erro
       -- Retorna nome do modulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
       
       -- Testar se houve erro
       IF vr_dscritic IS NOT NULL THEN
@@ -578,7 +609,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                       ,pr_dscritic => vr_dscritic);         --Descricao da critica
 
         -- Retorna nome do modulo logado
-        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
+        GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
@@ -626,7 +657,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                       ,pr_cdcritic  => vr_cdcritic       --> Codigo da critica de erro
                                       ,pr_dscritic  => vr_dscritic);     --> descrição do erro se ocorrer
       -- Retorna nome do modulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);    
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
       pr_qtdexec := vr_qtdexec;                                                               
       --Trata retorno
       IF nvl(vr_cdcritic,0) > 0         OR
@@ -659,10 +690,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       vr_contador       := 0;
       --Filtro arquivo retorno
       vr_nmarqret       := '29999%.RET';
-      --Buscar Diretorio Integracao da Cooperativa
-      vr_caminho_puro   := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                             ,pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsubdir => NULL);   
+
+      --Verifica se é o último dia do mês
+      --Se for último dia do mês, nesse caso deve ler os arquivos da pasta "win12\salvar"
+      IF trunc(sysdate) = trunc(last_day(vr_dtmvtaux)) THEN
+        --Buscar Diretorio Integracao da Cooperativa
+        vr_caminho_puro := gene0001.fn_diretorio(pr_tpdireto => 'W' --> Usr/Coop/Win12
+                                                ,pr_cdcooper => pr_cdcooper
+                                                ,pr_nmsubdir => NULL);   
+      
+      ELSE
+        --Se não, continua lendo os arquivos da pasta "\salvar"
+        --Buscar Diretorio Integracao da Cooperativa
+        vr_caminho_puro   := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsubdir => NULL);   
+
+      END IF;
+      --
+
       -- Buscar o diretorio padrao da cooperativa conectada
       vr_caminho_salvar := vr_caminho_puro||'/salvar';
 
@@ -722,8 +768,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           vr_cdcritic:= 468;
         ELSIF vr_dstipcob <> 'COB615' THEN
           vr_cdcritic:= 181;
-        ELSIF vr_dtleiaux <> vr_dtleiarq THEN
-          vr_cdcritic:= 789;
         END IF;
     
         --Se ocorreu algum erro na validacao
@@ -856,10 +900,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_verifica_ja_executou - '||vr_dscritic;
+        vr_dscritic := 'pc_verifica_ja_executou - CRPS538_1 - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;
-      
+
       IF vr_qtdexec = 0 THEN
         --Levantar Excecao
         vr_dscritic := 'Faltou executar programa anterior crps538_1';
@@ -876,7 +920,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_verifica_ja_executou - '||vr_dscritic;
+        vr_dscritic := 'pc_verifica_ja_executou - '||vr_cdprogra||' - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;                       
       
@@ -886,7 +930,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                             ,pr_nmsubdir => NULL);									  
       -- Buscar o diretorio padrao da cooperativa conectada
       vr_caminho_rl  := vr_caminho_rl||'/rl';		
-            
+
       pc_avalia_execucao(pr_cdcritic => vr_cdcritic
                         ,pr_dscritic => vr_dscritic);
       --Se ocorreu erro
@@ -895,7 +939,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         vr_dscritic := 'pc_avalia_execucao - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;                      
-      
+
       --Gerar relatorio 574
       pc_gera_relatorio_574(pr_cdcooper => pr_cdcooper
                            ,pr_dtmvtolt => vr_dtmvtaux
@@ -907,7 +951,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         vr_dscritic := 'pc_gera_relatorio_574 - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;          
-      
+
       --Gerar arq devolução
       pc_gerar_arq_devolucao(pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => vr_dtmvtaux
@@ -919,7 +963,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         vr_dscritic := 'pc_gerar_arq_devolucao - ' || vr_dscritic;
         RAISE vr_exc_saida;
       END IF;             
-      
+
       pc_controla_log_programa('O'
                               ,4
                               ,'Executou pc_detalhe_execucao, dtmvtaux: ' ||vr_dtmvtaux||' , cdprogra: '||vr_cdprogra
@@ -1127,7 +1171,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           RAISE vr_exc_saida;
         END IF;
       ELSE         
-        vr_qtminutos := 30;
+        --Chamado 809421
+        vr_qtminutos := NVL(gene0001.fn_param_sistema('CRED'
+                                                     ,0
+                                                     ,'TEMPO_ESPERA_CRPS538_2'),5);
+
         pc_cria_job(pr_cdcooperprog => pr_cdcooper
                    ,pr_qtminutos    => vr_qtminutos
                    ,pr_cdcritic     => vr_cdcritic
@@ -1217,7 +1265,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         IF vr_inproces = 1 THEN
           vr_qtminutos := 2;
         ELSE         
-          vr_qtminutos := 30;
+          --Chamado 809421
+          vr_qtminutos := NVL(gene0001.fn_param_sistema('CRED'
+                                                       ,0
+                                                       ,'TEMPO_ESPERA_CRPS538_2'),5); 
+
         END IF;
         
         pc_cria_job(pr_cdcooperprog => rw_crapcop_ativas.cdcooper
@@ -1265,9 +1317,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
 
-      -- Incluir nome do modulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-                             
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+
       --Programa CRPS538_2 iniciado
       pc_controla_log_programa('I', NULL, NULL);
 
@@ -1282,6 +1334,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           RAISE vr_exc_saida;
         END IF;       
       ELSE
+
         pc_controle_coop_especifica(pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
         --Se ocorreu erro
@@ -1291,7 +1344,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           RAISE vr_exc_saida;
         END IF;       
       END IF;      
-        
+
       --Salvar informacoes no banco de dados
       COMMIT;
       
