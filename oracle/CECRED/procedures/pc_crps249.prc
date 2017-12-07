@@ -2157,7 +2157,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND upper(j.cdpesqbb) = 'CRPS249'
        AND j.cdhistor = pr_cdhistor
        AND j.dtmvtolt = pr_dtmvtolt
-       AND j.cdagenci = pr_cdagenci;
+       AND j.cdagenci = pr_cdagenci
+       AND j.nrdocmto <> 0; -- Pra não escrever duas vezes a linha do convenio
              
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -2308,7 +2309,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_tab_receita_cel_pf typ_tab_receita_cel_pf;
   vr_tab_receita_cel_pj typ_tab_receita_cel_pj;  
   
-
   -- Índice para a pl/table
   vr_indice_faturas      varchar2(4);
   vr_indice_hist_cob     varchar2(30);
@@ -7937,7 +7937,7 @@ BEGIN
                                          rw_craprej2.cdagenci) LOOP
         -- cdagenci original
         IF rw_craprej_pa.nrdocmto = 90 THEN -- Internet
-          OPEN cr_crabthi (1,
+          OPEN cr_crabthi (pr_cdcooper,
                            rw_craprej_pa.cdhistor,
                          'INTERNET');
             FETCH cr_crabthi INTO rw_crabthi;
@@ -7946,7 +7946,7 @@ BEGIN
             END IF;
           CLOSE cr_crabthi;
         ELSIF rw_craprej_pa.nrdocmto = 91 THEN -- TAA
-          OPEN cr_crabthi (1,
+          OPEN cr_crabthi (pr_cdcooper,
                            rw_craprej_pa.cdhistor,
                          'CASH');
             FETCH cr_crabthi INTO rw_crabthi;
