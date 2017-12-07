@@ -48,7 +48,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						vr_nm_arquivo VARCHAR(2000);
 				
 						-- Variável de críticas
-						vr_cdcritic crapcri.cdcritic%TYPE;
 						vr_dscritic VARCHAR2(10000);
             vr_typ_said VARCHAR2(50);
 				
@@ -76,6 +75,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						vr_nrdconta     NUMBER;
             vr_stpregtrb    VARCHAR2(3);
 						vr_erros        NUMBER := 0;
+            vr_registros    NUMBER := 0;
+            vr_registros_inexis NUMBER := 0;
 				
 						vr_handle_arq utl_file.file_type;
 				
@@ -121,35 +122,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
             vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                                 ,pr_cdcooper => vr_cdcooper
                                                 ,pr_nmsubdir => 'upload');
-           -- Realizar a cópia do arquivo
-           GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dirarquivo||pr_arquivo||' N'
-                                      ,pr_typ_saida   => vr_typ_said
-                                      ,pr_des_saida   => vr_des_erro);                             
-           -- Testar erro
-           IF vr_typ_said = 'ERR' THEN
-              -- O comando shell executou com erro, gerar log e sair do processo
-              vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
-              --Gera log
-              GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
-                         pr_cdoperad => vr_cdoperad,
-                         pr_dscritic => NVL(pr_dscritic, ' ') || vr_dscritic,
-                         pr_dsorigem => vr_dsorigem,
-                         pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
-                         pr_dttransa => TRUNC(SYSDATE),
-                         --> ERRO/FALSE
-                         pr_flgtrans => 0,
-                         pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-                         pr_idseqttl => 1,
-                         pr_nmdatela => vr_nmdatela,
-                         pr_nrdconta => 0,
-                         pr_nrdrowid => vr_nrdrowid);
-              RAISE vr_exc_erro;
-           END IF;
-           vr_nm_arquivo := vr_dsdireto||'/'||pr_arquivo;
-           IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_nm_arquivo) THEN
-              -- Retorno de erro
-              vr_dscritic := 'Erro no upload do arquivo: '||vr_des_erro;
-								vr_cdcritic := 3;
+            -- Realizar a cópia do arquivo
+            GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dirarquivo||pr_arquivo||' N'
+                                       ,pr_typ_saida   => vr_typ_said
+                                       ,pr_des_saida   => vr_des_erro);                             
+            -- Testar erro
+            IF vr_typ_said = 'ERR' THEN
+                -- O comando shell executou com erro, gerar log e sair do processo
+                vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+                --Gera log
+                GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                                     pr_cdoperad => vr_cdoperad,
+                                     pr_dscritic => NVL(pr_dscritic, ' ') || vr_dscritic,
+                                     pr_dsorigem => vr_dsorigem,
+                                     pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
+                                     pr_dttransa => TRUNC(SYSDATE),
+                                     --> ERRO/FALSE
+                                     pr_flgtrans => 0,
+                                     pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                                     pr_idseqttl => 1,
+                                     pr_nmdatela => vr_nmdatela,
+                                     pr_nrdconta => 0,
+                                     pr_nrdrowid => vr_nrdrowid);
+                RAISE vr_exc_erro;
+            END IF;
+            
+            vr_nm_arquivo := vr_dsdireto||'/'||pr_arquivo;
+            
+            IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_nm_arquivo) THEN
+                -- Retorno de erro
+                vr_dscritic := 'Erro no upload do arquivo: '||vr_des_erro;
 						
 								--Gera log
 								GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -168,8 +170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 								--Levanta excessão
 								RAISE vr_exc_erro;
 						END IF;
-				
-				
+								
 						--Abre o arquivo de saída 
 						gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nm_arquivo,
 																		 pr_tipabert => 'R',
@@ -179,14 +180,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						IF vr_des_erro IS NOT NULL THEN
 								vr_dscritic := 'Erro abertura arquivo de importação! ' || vr_des_erro || ' ' ||
 															 SQLERRM;
-								vr_cdcritic := 4;
 								RAISE vr_exc_erro;
 						END IF;
             
             -- Busca todos os cooperados e armazena na tela temporária
             vr_tab_dados_crapjur.DELETE;
             FOR rw_crapjur IN cr_crapjur LOOP
-                --vr_idx := vr_tab_dados_crapjur.COUNT + 1;
                 vr_idx := rw_crapjur.cdcooper||rw_crapjur.nrdconta;
                 
                 vr_tab_dados_crapjur(vr_idx).cdcooper := rw_crapjur.cdcooper;
@@ -200,117 +199,130 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 								BEGIN
 										--Lê a linha do arquivo
 										gene0001.pc_le_linha_arquivo(vr_handle_arq, vr_linha_arq);
-										vr_linha_arq := TRIM(translate(translate(vr_linha_arq, chr(10), ' '),
-																									 chr(13),
-																									 ' '));
+                    vr_linha_arq := TRIM(vr_linha_arq);
                                                    
-                    IF NVL(vr_linha_arq,' ') <> ' ' THEN
+                    IF NVL(vr_linha_arq,' ') <> ' ' THEN								
+										    --Explode no texto
+										    vr_tabtexto := gene0002.fn_quebra_string(vr_linha_arq, separador);
 								
-										--Explode no texto
-										vr_tabtexto := gene0002.fn_quebra_string(vr_linha_arq, separador);
+                        --Variáveis que serão usadas na atualização
+                        vr_cdcooper_arq := to_number(vr_tabtexto(1));
+                        --Faz o replace da aspa por nada, deixando apenas o número do CNPJ (dúvidas verificar a exportação do arquivo)
+                        vr_nrcpfcgc     := to_number(REPLACE(vr_tabtexto(2), '''', ''));
+                        vr_nrdconta     := to_number(vr_tabtexto(3));
+                        vr_stpregtrb    := upper(SUBSTR(vr_tabtexto(4), 1, 1));
 								
-										--Variáveis que serão usadas na atualização
-										vr_cdcooper_arq := to_number(vr_tabtexto(1));
-                      --Faz o replace da aspa por nada, deixando apenas o número do CNPJ (dúvidas verificar a exportação do arquivo)
-                      vr_nrcpfcgc     := to_number(REPLACE(vr_tabtexto(2), '''', ''));
-										vr_nrdconta     := to_number(vr_tabtexto(3));
-										vr_stpregtrb    := upper(SUBSTR(vr_tabtexto(4), 1, 1));
-								
-										IF vr_stpregtrb IS NULL OR (vr_stpregtrb <> 'S' AND vr_stpregtrb <> 'N') THEN
-												vr_dscritic := 'Campo regime de tributação inválido para a conta: ' ||
-																			 vr_nrdconta || ', cooperativa ' || vr_cdcooper ||
-																			 ' (Valor informado: ' || vr_stpregtrb ||
-																			 ', Valores permitidos: Sim, Não)';
-												vr_cdcritic := 6;
-										
-												--Gera log da conta não localizada
-												GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
-																						 pr_cdoperad => vr_cdoperad,
-																						 pr_dscritic => vr_dscritic,
-																						 pr_dsorigem => vr_dsorigem,
-																						 pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
-																						 pr_dttransa => TRUNC(SYSDATE),
-																						 --> ERRO/FALSE
-																						 pr_flgtrans => 0,
-																						 pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-																						 pr_idseqttl => 1,
-																						 pr_nmdatela => vr_nmdatela,
-																						 pr_nrdconta => 0,
-																						 pr_nrdrowid => vr_nrdrowid);
-										
-												vr_erros := vr_erros + 1;
-												--RAISE vr_exc_erro_negocio;
-										ELSE
-                        vr_idx := vr_cdcooper_arq||vr_nrdconta;
-                        IF vr_tab_dados_crapjur.exists(vr_idx) IS NULL THEN
-                          --Não achou, gera log..
+                        IF vr_stpregtrb IS NULL OR (vr_stpregtrb <> 'S' AND vr_stpregtrb <> 'N') THEN
+                            vr_dscritic := 'Campo regime de tributação inválido para a conta: ' ||
+                                           vr_nrdconta || ', cooperativa ' || vr_cdcooper_arq ||
+                                           ' (Valor informado: ' || vr_stpregtrb ||
+                                           ', Valores permitidos: S, N)';
+    										
+                            --Gera log da conta não localizada
                             GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
-																								 pr_cdoperad => vr_cdoperad,
-																								 pr_dscritic => 'Conta informada inexistente como pessoa jurídica. Conta: ' ||
-																																vr_nrdconta || ' Cooperativa: ' ||
-																																vr_cdcooper_arq,
-																								 pr_dsorigem => vr_dsorigem,
-																								 pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
-																								 pr_dttransa => TRUNC(SYSDATE),
-																								 --> ERRO/FALSE
-																								 pr_flgtrans => 0,
-																								 pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-																								 pr_idseqttl => 1,
-																								 pr_nmdatela => vr_nmdatela,
-																								 pr_nrdconta => 0,
-																								 pr_nrdrowid => vr_nrdrowid);
-														vr_erros := vr_erros + 1;
+                                                 pr_cdoperad => vr_cdoperad,
+                                                 pr_dscritic => vr_dscritic,
+                                                 pr_dsorigem => vr_dsorigem,
+                                                 pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
+                                                 pr_dttransa => TRUNC(SYSDATE),
+                                                 --> ERRO/FALSE
+                                                 pr_flgtrans => 0,
+                                                 pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                                                 pr_idseqttl => 1,
+                                                 pr_nmdatela => vr_nmdatela,
+                                                 pr_nrdconta => 0,
+                                                 pr_nrdrowid => vr_nrdrowid);
+    										
+                            vr_erros := vr_erros + 1;
+                            --RAISE vr_exc_erro_negocio;
                         ELSE
-                            --Achou a conta
-                            IF vr_tab_dados_crapjur(vr_idx).tpregtrb = 1 AND vr_stpregtrb = 'N' THEN
-                                --Nula a situação tributária
-                                UPDATE crapjur a
-                                       SET a.tpregtrb = 0,
-                                       --Projeto 410 - RF 52 / 62
-                                       a.idimpdsn = 1
-                                WHERE a.cdcooper = vr_cdcooper_arq
-                                      AND a.nrdconta = vr_nrdconta;
-                             ELSE
-                               IF vr_stpregtrb = 'S' THEN
-                                   UPDATE crapjur a
-                                       SET a.tpregtrb = 1,
-                                       --Projeto 410 - RF 52 / 62
-                                       a.idimpdsn = 1
-                                   WHERE a.cdcooper = vr_cdcooper_arq
-                                      AND a.nrdconta = vr_nrdconta;
-                                 END IF;                                
-                               END IF;                                
-                             END IF;
+                            vr_idx := vr_cdcooper_arq||vr_nrdconta;
+                            IF NOT vr_tab_dados_crapjur.exists(vr_idx) THEN
+                              --Não achou, gera log..
+                                GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                                                     pr_cdoperad => vr_cdoperad,
+                                                     pr_dscritic => 'Conta informada inexistente como pessoa jurídica. Conta: ' ||
+                                                                    vr_nrdconta || ' Cooperativa: ' ||
+                                                                    vr_cdcooper_arq,
+                                                     pr_dsorigem => vr_dsorigem,
+                                                     pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
+                                                     pr_dttransa => TRUNC(SYSDATE),
+                                                     --> ERRO/FALSE
+                                                     pr_flgtrans => 0,
+                                                     pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                                                     pr_idseqttl => 1,
+                                                     pr_nmdatela => vr_nmdatela,
+                                                     pr_nrdconta => 0,
+                                                     pr_nrdrowid => vr_nrdrowid);
+                                vr_registros_inexis := vr_registros_inexis + 1;
+                            ELSE
+                                --Achou a conta
+                                IF vr_tab_dados_crapjur(vr_idx).tpregtrb = 1 AND vr_stpregtrb = 'N' THEN
+                                    --Nula a situação tributária
+                                    UPDATE crapjur a SET a.tpregtrb = 0
+                                                        ,a.idimpdsn = 1
+                                    WHERE a.cdcooper = vr_cdcooper_arq
+                                          AND a.nrdconta = vr_nrdconta;
+                                ELSE
+                                    IF vr_stpregtrb = 'S' THEN
+                                        UPDATE crapjur a SET a.tpregtrb = 1
+                                                            ,a.idimpdsn = 1
+                                        WHERE a.cdcooper = vr_cdcooper_arq
+                                              AND a.nrdconta = vr_nrdconta;
+                                    END IF;                                
+                                END IF;                                
+                            END IF;
                         END IF;
 										END IF;
+                    
+                    vr_registros := vr_registros + 1;
+                     
+                EXCEPTION
+						         WHEN NO_DATA_FOUND THEN
+                          --Fecha o arquivo se não tem mais linhas para ler
+                          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_arq); --> Handle do arquivo aberto
+                          EXIT;
 								END;
 						END LOOP;
+                        
 						COMMIT;
+            
+            IF (vr_erros + vr_registros_inexis) > 0 THEN
+                -- Retorno não OK          
+                pr_des_erro := 'NOK';
+                -- Erro
+                pr_cdcritic := 0;
+                pr_dscritic := 'Arquivo foi processado, porém com erros de preenchimento. Linhas processadas: ' || vr_registros || 
+                               '. Erros preenchimento: ' || vr_erros || '. Contas inexistentes: ' || vr_registros_inexis || 
+                               '. Para maiores informações, consulte o log.';
+                    
+                GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                                     pr_cdoperad => vr_cdoperad,
+                                     pr_dscritic => pr_dscritic,
+                                     pr_dsorigem => vr_dsorigem,
+                                     pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
+                                     pr_dttransa => TRUNC(SYSDATE),
+                                     --> ERRO/FALSE
+                                     pr_flgtrans => 0,
+                                     pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                                     pr_idseqttl => 1,
+                                     pr_nmdatela => vr_nmdatela,
+                                     pr_nrdconta => 0,
+                                     pr_nrdrowid => vr_nrdrowid);
+								
+                -- Existe para satisfazer exigência da interface. 
+                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                               '<Root><Erro>' || pr_cdcritic || '-' ||
+                                               pr_dscritic || '</Erro></Root>');
+						END IF;
 				
 				EXCEPTION
-						WHEN NO_DATA_FOUND THEN
-								-- Fim das linhas do arquivo
-								IF vr_erros > 0 THEN
-										-- Retorno não OK          
-										pr_des_erro := 'NOK';
-										-- Erro
-										pr_cdcritic := 0;
-										pr_dscritic := 'Arquivo foi processado, porém com erros de preenchimento. Para maiores informações, consulte o log.';
-								
-										-- Existe para satisfazer exigência da interface. 
-										pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-																									 '<Root><Erro>' || pr_cdcritic || '-' ||
-																									 pr_dscritic || '</Erro></Root>');
-								ELSE
-										NULL;
-								END IF;
-						
 						WHEN vr_exc_erro_negocio THEN
 								ROLLBACK;
 								--Log
 								GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
 																		 pr_cdoperad => vr_cdoperad,
-																		 pr_dscritic => vr_dscritic,
+																		 pr_dscritic => nvl(vr_dscritic,' ') || SQLERRM,
 																		 pr_dsorigem => vr_dsorigem,
 																		 pr_dstransa => 'IMPSIM - Importação cadastros cooperados Simples Nacional',
 																		 pr_dttransa => TRUNC(SYSDATE),
@@ -326,7 +338,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 								-- Retorno não OK          
 								pr_des_erro := 'NOK';
 								-- Erro
-								pr_cdcritic := vr_cdcritic;
 								pr_dscritic := vr_dscritic;
 						
 								-- Existe para satisfazer exigência da interface. 
@@ -334,10 +345,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 																							 '<Root><Erro>' || pr_cdcritic || '-' || pr_dscritic ||
 																							 '</Erro></Root>');
 						WHEN vr_exc_erro THEN
+                ROLLBACK;
 								-- Retorno não OK          
 								pr_des_erro := 'NOK';
 								-- Erro
-								pr_cdcritic := vr_cdcritic;
 								pr_dscritic := vr_dscritic;
 						
 								-- Existe para satisfazer exigência da interface. 
@@ -345,6 +356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 																							 '<Root><Erro>' || pr_cdcritic || '-' || pr_dscritic ||
 																							 '</Erro></Root>');
 						WHEN OTHERS THEN
+                ROLLBACK;
 								-- Retorno não OK
 								pr_des_erro := 'NOK';
 						
@@ -372,7 +384,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						vr_nm_arquivo VARCHAR(200);
 				
 						-- Variável de críticas
-						vr_cdcritic crapcri.cdcritic%TYPE;
 						vr_dscritic VARCHAR2(10000);
             vr_typ_said VARCHAR2(50);
 				
@@ -425,7 +436,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						-- Validação do arquivo de saída
 						IF pr_arquivo IS NULL THEN
 								vr_dscritic := 'Arquivo para exportação Simples Nacional não foi informado!';
-								vr_cdcritic := 6;
 						
 								--Gera log
 								GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -461,7 +471,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 						IF vr_des_erro IS NOT NULL THEN
 								vr_dscritic := 'Rotina pc_exportar_arquivo_SIM: Erro abertura arquivo de exportacao ('||vr_nm_arquivo||')!' ||
 															 SQLERRM;
-								vr_cdcritic := 6;
 								RAISE vr_exc_erro;
 						END IF;
 				
@@ -494,7 +503,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 								-- Retorno não OK          
 								pr_des_erro := 'NOK';
 								-- Erro
-								pr_cdcritic := vr_cdcritic;
 								pr_dscritic := vr_dscritic;
 						
 								-- Existe para satisfazer exigência da interface. 
