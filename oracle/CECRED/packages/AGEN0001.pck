@@ -156,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
+     Data    : Julho/17.                    Ultima atualizacao: 06/12/2017
 
      Dados referentes ao programa:
 
@@ -167,13 +167,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Observacao: -----
 
      Alteracoes: 18/10/2017 - Alterado o parametro de consulta de recarga de 3 para 5
-                              (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 (Jean Michel).
+                              (IF pr_cdtipmod = 3 -> IF pr_cdtipmod = 3 -- Recarga de Celular), Prj. 285 
+                              (Jean Michel).
+                              
+                 06/12/2017 - Adicionado filtro por tipo de transação
+                              (p285 - Ricardo Linhares)                              
 
      ..................................................................................*/   
      
    DECLARE
   
-    vr_agendamento PAGA0002.typ_tab_dados_agendamento;    --> PL Table para armazenar registros
 		vr_agendm_fltr PAGA0002.typ_tab_dados_agendamento;    --> PL Table para filtrar registros
 		vr_tab_age_recarga   rcel0001.typ_tab_age_recarga;    --> PL Table para filtrar registros
     vr_exc_erro    EXCEPTION;
@@ -182,9 +185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
     vr_cdcritic    crapcri.cdcritic%TYPE;
     vr_dscritic    crapcri.dscritic%TYPE;
     vr_qttotage    INTEGER;
-		
-		TYPE array_t IS TABLE OF craplau.cdtiptra%TYPE;
-    vr_cdtiptra array_t := array_t();
+    vr_dstiptra    VARCHAR2(100);
                 
     CURSOR cr_crapdat(pr_cdcooper crapdat.cdcooper%TYPE) IS
       SELECT dtmvtolt
@@ -228,18 +229,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 			ELSE -- Pagamento, Transferências
 				
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
-					
-					vr_cdtiptra.extend(2);
-					vr_cdtiptra(1) := 2;  -- Pagamento
-					vr_cdtiptra(2) := 10; -- DARF/DAS
-
-				ELSIF pr_cdtipmod = 2 THEN -- Transferências 
-					
-					vr_cdtiptra.extend(4);
-					vr_cdtiptra(1) := 1; -- Transferencias inter
-					vr_cdtiptra(2) := 3; -- Credito salario
-					vr_cdtiptra(3) := 4; -- TED
-					vr_cdtiptra(4) := 5; -- Transferencias intra
+          vr_dstiptra := '2;10'; -- Pagamento; DARF/DAS
+  			ELSIF pr_cdtipmod = 2 THEN -- Transferências 
+          vr_dstiptra := '1;3;4;5'; --Transferencias inter; Credito salario; TED; Transferencias intra
 
 				END IF;
 						
@@ -254,6 +246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																			,pr_insitlau => pr_insitlau
 																			,pr_iniconta => pr_iniconta
 																			,pr_nrregist => pr_nrregist
+                                      ,pr_cdtiptra => vr_dstiptra
 																			,pr_dstransa => vr_dstransa
 																			,pr_qttotage => vr_qttotage
 																			,pr_tab_dados_agendamento => vr_agendm_fltr
@@ -263,16 +256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 					RAISE vr_exc_erro;
 				END IF;
-				
-				-- Filtra retorno pelo tipo de protocolo solicitado
-				vr_qttotage := 0;
-				FOR vr_ind IN 1..vr_agendm_fltr.count LOOP				
-					IF vr_agendm_fltr(vr_ind).cdtiptra MEMBER OF vr_cdtiptra THEN
-						vr_agendamento(vr_agendamento.count + 1) := vr_agendm_fltr(vr_ind);
-						vr_qttotage := vr_qttotage + 1;
-					END IF;
-				END LOOP;  
-							
+ 							
       END IF;
 			
       -- Verifica se a quantidade de registro é zero
@@ -284,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
 			
-			dbms_output.put_line(vr_agendamento.count);
+			dbms_output.put_line(vr_agendm_fltr.count);
 			dbms_output.put_line(vr_tab_age_recarga.count);
        
        -- Criar cabecalho do XML
@@ -292,23 +276,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Agendamentos>');       
 
-      IF vr_agendamento.count > 0 THEN
-				FOR vr_idx IN vr_agendamento.first..vr_agendamento.last LOOP
+      IF vr_agendm_fltr.count > 0 THEN
+				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP
 	      
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     => 
 																 '<Agendamento>' ||
-																		'<idlancto>' || vr_agendamento(vr_idx).idlancto                                                               || '</idlancto>' ||
-																		'<dtmvtopg>' || TO_CHAR(vr_agendamento(vr_idx).dtmvtopg, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
-																		'<cdtiptra>' || vr_agendamento(vr_idx).cdtiptra                                                               || '</cdtiptra>' ||
-																		'<dstiptra>' || vr_agendamento(vr_idx).dstiptra                                                               || '</dstiptra>' ||
-																		'<dsagenda>' || fn_descricao(vr_agendamento(vr_idx))                                                          || '</dsagenda>' ||
-																		'<insitlau>' || vr_agendamento(vr_idx).insitlau                                                               || '</insitlau>' ||
-																		'<dssitlau>' || vr_agendamento(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
-																		'<vldocmto>' || to_char(vr_agendamento(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
-																		'<incancel>' || vr_agendamento(vr_idx).incancel                                                               || '</incancel>' ||
-																		'<dscritic>' || vr_agendamento(vr_idx).dscritic                                                               || '</dscritic>' ||
+																		'<idlancto>' || vr_agendm_fltr(vr_idx).idlancto                                                               || '</idlancto>' ||
+																		'<dtmvtopg>' || TO_CHAR(vr_agendm_fltr(vr_idx).dtmvtopg, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
+																		'<cdtiptra>' || vr_agendm_fltr(vr_idx).cdtiptra                                                               || '</cdtiptra>' ||
+																		'<dstiptra>' || vr_agendm_fltr(vr_idx).dstiptra                                                               || '</dstiptra>' ||
+																		'<dsagenda>' || fn_descricao(vr_agendm_fltr(vr_idx))                                                          || '</dsagenda>' ||
+																		'<insitlau>' || vr_agendm_fltr(vr_idx).insitlau                                                               || '</insitlau>' ||
+																		'<dssitlau>' || vr_agendm_fltr(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
+																		'<vldocmto>' || to_char(vr_agendm_fltr(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+																		'<incancel>' || vr_agendm_fltr(vr_idx).incancel                                                               || '</incancel>' ||
+																		'<dscritic>' || vr_agendm_fltr(vr_idx).dscritic                                                               || '</dscritic>' ||
 																	'</Agendamento>');																															 
 				END LOOP;
 			END IF;
@@ -337,6 +321,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<nmoperad>' || vr_tab_age_recarga(vr_idx).nmoperadora                                                             || '</nmoperad>' ||
 																		'<dscritic>' || vr_tab_age_recarga(vr_idx).dscritic                                                                || '</dscritic>' ||
 																'</Agendamento>');
+                                
+            IF vr_idx > pr_nrregist THEN
+              EXIT;
+            END IF;
+                                
 				END LOOP;
 			END IF;
 			      

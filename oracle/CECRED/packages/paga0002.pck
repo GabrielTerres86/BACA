@@ -702,6 +702,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
                                  ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
                                  ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_cdtiptra               IN VARCHAR2 DEFAULT NULL              --> Tipo de transação
                                  ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
                                  ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
@@ -8574,6 +8575,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
                                  ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
                                  ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_cdtiptra               IN VARCHAR2 DEFAULT NULL              --> Tipo de transação                                 
                                  ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
                                  ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
@@ -8586,14 +8588,15 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Jean Michel
-    --  Data     : Julho/2016.                   Ultima atualizacao: 28/07/2016
+    --  Data     : Julho/2016.                   Ultima atualizacao: 06/12/2017
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Procedure utilizada para consultar dados de agendamentos
     --
-    --  Alteração  :
+    --  Alteração : 06/12/2017 Adicionado filtro por tipo de transação
+    --                         (p285 - Ricardo Linhares)
     --
     -- ..........................................................................*/
 
@@ -8659,7 +8662,10 @@ create or replace package body cecred.PAGA0002 is
           ,lau.idlancto
           ,lau.nrseqagp
       FROM craplau lau
-    WHERE (lau.cdcooper = pr_cdcooper
+    WHERE (pr_cdtiptra IS NULL OR lau.cdtiptra IN(SELECT regexp_substr(pr_cdtiptra, '[^;]+', 1, LEVEL)
+                                                    FROM dual
+                                        CONNECT BY LEVEL <= regexp_count(pr_cdtiptra, '[^;]+')))
+      AND (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta
       AND  lau.dsorigem = pr_dsorigem
       AND  lau.cdagenci = pr_cdagenci
