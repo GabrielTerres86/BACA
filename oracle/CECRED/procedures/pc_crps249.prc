@@ -1308,7 +1308,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       from craplcx
      where craplcx.cdcooper = pr_cdcooper
        and craplcx.dtmvtolt = pr_dtmvtolt
-       and craplcx.cdhistor not in (718, 731); -- Custódia de cheques
+       and craplcx.cdhistor not in (718, 731, 2063, 2064); -- Custódia de cheques   -- Saque demitidos
   -- Saldo do terminal financeiro
   cursor cr_crapstf (pr_cdcooper in crapstf.cdcooper%type,
                      pr_dtmvtolt in crapstf.dtmvtolt%type) is
@@ -11293,9 +11293,11 @@ BEGIN
                    vr_complinhadet;
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
-    vr_linhadet := to_char(rw_craplcm.cdagenci, 'fm000')||','||
-                   trim(to_char(vr_vllanmto, '999999990.00'));
-    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    if rw_craplcm.cdhistor in (2063,2064) then
+      vr_linhadet := to_char(rw_craplcm.cdagenci, 'fm000')||','||
+                     trim(to_char(vr_vllanmto, '999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    end if;     
   end loop;
   
   -- PROVISAO JUROS CHEQUE ESPECIAL
