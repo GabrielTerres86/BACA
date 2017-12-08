@@ -332,7 +332,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
         SELECT crapcrm.nrdconta
         FROM   crapcrm
         WHERE  crapcrm.cdcooper = pr_cdcooper
-        AND    crapcrm.cdsitcar < 3;
+        AND    crapcrm.cdsitcar < 2; -- PJ 364 somente ativos  (sit=2 vencidos não deve impedir)
 
       --Seleciona informacoes do cadastro de controle de cartoes de crédito não cancelados
       CURSOR cr_crawcrd ( pr_cdcooper IN crapass.cdcooper%TYPE) IS
