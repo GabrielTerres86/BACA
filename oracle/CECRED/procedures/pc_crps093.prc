@@ -1236,6 +1236,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
           --  Inicio da baixa dos valores do capital
           --------------------------------------------------------------
           -- se não existir a capa do lote 7200 no dia, o mesmo será criado
+          IF rw_craplot8006.rowid IS NULL THEN
+            -- cadastra a capa do lote 7200 na craplot e retornando as informações para usar abaixo
+            BEGIN
+              INSERT INTO craplot(dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,tplotmov
+                                 ,cdcooper)
+              VALUES ( rw_crapdat.dtmvtolt
+                       ,1
+                       ,100
+                       ,8006
+                       ,2
+                       ,pr_cdcooper)
+              RETURNING cdcooper
+                       ,dtmvtolt
+                       ,cdagenci
+                       ,cdbccxlt
+                       ,nrdolote
+                       ,nrseqdig
+                       ,qtinfoln
+                       ,qtcompln
+                       ,ROWID
+              INTO  rw_craplot8006.cdcooper
+                   ,rw_craplot8006.dtmvtolt
+                   ,rw_craplot8006.cdagenci
+                   ,rw_craplot8006.cdbccxlt
+                   ,rw_craplot8006.nrdolote
+                   ,rw_craplot8006.nrseqdig
+                   ,rw_craplot8006.qtinfoln
+                   ,rw_craplot8006.qtcompln
+                   ,rw_craplot8006.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir lote 8006 na tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+          END IF;
+
 
           -- se o associado possuir cotas, efetua a baixa de capital
           IF nvl(rw_crapcot.vldcotas,0) > 0 THEN -- valor de cotas do associado
