@@ -210,8 +210,13 @@
 			                da tabela craplfp
 							(Adriano - SD 733103).
 
+			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
 
-             #######################################################
+			   06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)
+			   
+			   24/11/2017 - Alteração no tratamento da mensagem LTR0005R2 e tratamento da mensagem SLC0001 (Mauricio - Mouts)
+
+			   #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -254,6 +259,8 @@ DEF VAR aux_nmarqlog      AS CHAR                                   NO-UNDO.
 DEF VAR aux_contador      AS INT                                    NO-UNDO.
 DEF VAR aux_contado1      AS INT                                    NO-UNDO.
 DEF VAR aux_contado2      AS INT                                    NO-UNDO.
+DEF VAR aux_contado3      AS INT                                    NO-UNDO.
+DEF VAR aux_contado4      AS INT                                    NO-UNDO.
 DEF VAR aux_contlock      AS INT                                    NO-UNDO.
 DEF VAR aux_dscritic      AS CHAR                                   NO-UNDO.
 DEF VAR aux_des_erro      AS CHAR                                   NO-UNDO.
@@ -304,7 +311,29 @@ DEF VAR aux_DtHRBC        AS CHAR                                   NO-UNDO.
 DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
 DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
 DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
-DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
+DEF VAR aux_TpCtDebtd     AS CHAR                                   NO-UNDO.
+DEF VAR aux_CNPJNLiqdant  AS CHAR                                   NO-UNDO.
+DEF VAR aux_FinlddIF      AS CHAR                                   NO-UNDO.
+DEF VAR aux_Hist          AS CHAR                                   NO-UNDO.
+DEF VAR aux_TpPessoaDebtd_Remet AS CHAR                             NO-UNDO.
+DEF VAR aux_FinlddCli     AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlLTR    AS CHAR                                   NO-UNDO.
+DEF VAR aux_ISPBLTR       AS CHAR                                   NO-UNDO.
+DEF VAR aux_IdentdPartCamr AS CHAR                                  NO-UNDO.
+DEF VAR aux_NumCtrlSTR	  AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlSLC    AS CHAR                                   NO-UNDO.
+DEF VAR aux_ISPBIF        AS CHAR                                   NO-UNDO.
+DEF VAR aux_TpInf         AS CHAR                                   NO-UNDO.
+DEF VAR aux_DtHrSLC       AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumSeqCicloLiquid AS CHAR                               NO-UNDO.
+DEF VAR aux_DtLiquid      AS CHAR                                   NO-UNDO.
+DEF VAR aux_IdentdLinhaBilat AS CHAR                                NO-UNDO.
+DEF VAR aux_TpDeb_Cred    AS CHAR                                   NO-UNDO.
+DEF VAR aux_CNPJNLiqdantDebtd AS CHAR                               NO-UNDO.
+DEF VAR aux_CNPJNLiqdantCredtd AS CHAR                              NO-UNDO.
+DEF VAR aux_IdentLinhaBilat AS CHAR                                 NO-UNDO.
+DEF VAR aux_TpDebCred     AS CHAR                                   NO-UNDO.
+DEF VAR aux_insere_msg    AS CHAR                                   NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -378,9 +407,14 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 DEF VAR hDoc              AS HANDLE                                 NO-UNDO.
 DEF VAR hRoot             AS HANDLE                                 NO-UNDO.
 DEF VAR hNode             AS HANDLE                                 NO-UNDO.
+DEF VAR hNode2            AS HANDLE                                 NO-UNDO.
 DEF VAR hSubNode          AS HANDLE                                 NO-UNDO.
 DEF VAR hSubNode2         AS HANDLE                                 NO-UNDO.
+DEF VAR hSubNode3         AS HANDLE                                 NO-UNDO.
+DEF VAR hSubNode4         AS HANDLE                                 NO-UNDO.
+DEF VAR hSubNode5         AS HANDLE                                 NO-UNDO.
 DEF VAR hNameTag          AS HANDLE                                 NO-UNDO.
+DEF VAR hNameTag2         AS HANDLE                                 NO-UNDO.
 DEF VAR hTextTag          AS HANDLE                                 NO-UNDO.
 DEF VAR hTextTag2         AS HANDLE                                 NO-UNDO.
 
@@ -421,7 +455,6 @@ DEF TEMP-TABLE tt-numerario
 
 ASSIGN glb_cdprogra = "crps531"
        glb_cdcooper = 3.  /*CECRED*/
-
 /* INICIO DO ESTADO DE CRISE */
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -503,9 +536,9 @@ IF  aux_flestcri > 0  THEN
 
 /* recebe os parametros de sessao (criterio de separacao) ***/
 ASSIGN aux_idparale = INT(ENTRY(1,SESSION:PARAMETER))
-       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER)) 
-       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).     
-
+       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER))
+       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).
+	   
 /* Cooperativa - CECRED */
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
@@ -516,7 +549,8 @@ IF   NOT AVAILABLE crapcop THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  +
                            glb_dscritic + " >> log/proc_batch.log").
-         RUN finaliza_paralelo.
+         
+		 RUN finaliza_paralelo.
          QUIT.
      END. 
 
@@ -530,6 +564,7 @@ IF   NOT AVAIL crapdat THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  + 
                            glb_dscritic + " >> log/proc_batch.log").
+
          RUN finaliza_paralelo.
          QUIT.
      END. 
@@ -563,7 +598,6 @@ ASSIGN aux_msgspb_mover = 1
 /* Carregar o parametro que identifica as mensagem que 
    nao serao gravadas na nova estrutura */ 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
 RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
    (INPUT "CRED",              /* pr_nmsistem */
     INPUT 0,                   /* pr_cdcooper */
@@ -576,7 +610,6 @@ CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
 ASSIGN aux_msgspb_nao_copiar = ""
        aux_msgspb_nao_copiar = pc_param_sistema.pr_dsvlrprm
                                    WHEN pc_param_sistema.pr_dsvlrprm <> ?.
-
 
 
 INPUT STREAM str_1 THROUGH VALUE( "ls " + aux_nmarquiv + " 2> /dev/null") NO-ECHO.
@@ -592,7 +625,6 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
           crawarq.nmarquiv = aux_nmarquiv.
           
 END.  /*  Fim do DO WHILE TRUE  */
-
 INPUT STREAM str_1 CLOSE.
    
 FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
@@ -601,9 +633,14 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
     CREATE X-DOCUMENT hDoc.
     CREATE X-NODEREF  hRoot.
     CREATE X-NODEREF  hNode. 
+    CREATE X-NODEREF  hNode2. 
     CREATE X-NODEREF  hSubNode. 
     CREATE X-NODEREF  hSubNode2.
+    CREATE X-NODEREF  hSubNode3.
+    CREATE X-NODEREF  hSubNode4.
+    CREATE X-NODEREF  hSubNode5.
     CREATE X-NODEREF  hNameTag.
+    CREATE X-NODEREF  hNameTag2.
     CREATE X-NODEREF  hTextTag.
     CREATE X-NODEREF  hTextTag2.
     
@@ -651,8 +688,33 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_nrctremp      = 0
            aux_tpemprst      = 2
            aux_qtregist      = 0
-           aux_vlsldliq      = 0.
-                              
+           aux_vlsldliq      = 0
+           aux_CNPJNLiqdant  = ""
+		   aux_NumCtrlLTR	 = ""
+		   aux_NumCtrlSTR	 = ""
+		   aux_ISPBLTR		 = ""
+		   aux_ISPBIFDebtd   = ""
+		   aux_ISPBIFCredtd	 = ""
+		   aux_IdentdPartCamr = ""	
+		   aux_Hist			 = ""
+		   aux_FinlddIF		 = ""
+		   aux_TpPessoaDebtd_Remet = ""
+		   aux_FinlddCli	 = ""
+		   aux_DtHrBC		 = ""
+		   aux_NumCtrlSTR    = ""
+		   aux_NumCtrlSLC    = ""
+		   aux_ISPBIF        = ""
+		   aux_TpInf         = ""
+		   aux_DtHrSLC       = ""
+		   aux_NumSeqCicloLiquid = ""
+		   aux_DtLiquid      = ""
+		   aux_IdentdLinhaBilat = ""
+		   aux_TpDeb_Cred    = ""
+		   aux_CNPJNLiqdantDebtd = ""
+		   aux_CNPJNLiqdantCredtd = ""
+		   aux_IdentLinhaBilat = ""
+		   aux_TpDebCred     = "".
+		   
     EMPTY TEMP-TABLE tt-situacao-if.   
 
     RUN importa_xml.
@@ -749,6 +811,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
         
          "STR0005R2,STR0007R2,STR0008R2,PAG0107R2," +
          "STR0025R2,PAG0121R2," + /* Transferencia Judicial - Andrino */
+         "LTR0005R2," + /* Antecipaçao de Recebíveis - LTR - Mauricio */
+         "SLC0001" + /* Requisição de Transferência de cliente para IF - Mauricio */
          "PAG0108R2,PAG0143R2," +     /* TED */
 
          "STR0037R2,PAG0137R2," +     /* TEC */
@@ -769,7 +833,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+		     IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
 			    DO:
 					/* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -806,7 +870,94 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
             RUN deleta_objetos.
          END.
 		 
-    /* VR Boleto */
+    /* Antecipaçao de Recebíveis - LTR - Mauricio */
+    IF  CAN-DO("LTR0005R2",aux_CodMsg) THEN
+        DO:
+         
+			 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+							   " - " + glb_cdprogra + "' --> '"  +
+							   glb_dscritic + " >> log/proc_batch.log"). 
+			 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+							   " - " + "vai inserir LTR valor = " + aux_VlrLanc + "' --> '"  +
+							   glb_dscritic + " >> log/proc_batch.log"). 
+			
+			/* Validar campos sem conteúdo (NULL). Esses campos serão enviados com valor -1 para serem tratados no Oracle */
+			IF	aux_CodMsg = "" THEN
+				DO:
+					UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+								  " - " + glb_cdprogra + "' --> '"  +
+								  " CodMsg em branco. Registro será desconsiderado." + " >> log/proc_batch.log").
+				END.
+			ELSE
+				DO:
+					IF	aux_NumCtrlLTR = "" THEN
+						aux_NumCtrlLTR = "-1".
+					IF	aux_NumCtrlSTR = "" THEN
+						aux_NumCtrlSTR = "-1".
+					IF	aux_ISPBLTR = "" THEN
+						aux_ISPBLTR = "-1".
+					IF	aux_ISPBIFDebtd = "" THEN
+						aux_ISPBIFDebtd = "-1".
+					IF	aux_ISPBIFCredtd = "" THEN
+						aux_ISPBIFCredtd = "-1".
+					IF	aux_CNPJNLiqdant = "" THEN
+						aux_CNPJNLiqdant = "-1".
+					IF	aux_IdentdPartCamr = "" THEN
+						aux_IdentdPartCamr = "-1".
+					IF	aux_AgCredtd = "" THEN
+						aux_AgCredtd = "-1".
+					IF	aux_CtCredtd = "" THEN
+						aux_CtCredtd = "-1".
+					IF	aux_AgDebtd = "" THEN
+						aux_AgDebtd = "-1".
+					IF	aux_Hist = "" THEN
+						aux_Hist = "-1".
+					IF	aux_FinlddIF = "" THEN
+						aux_FinlddIF = "-1".
+					IF	aux_TpPessoaDebtd_Remet = "" THEN
+						aux_TpPessoaDebtd_Remet = "-1".
+					IF	aux_CNPJ_CPFDeb = "" THEN
+						aux_CNPJ_CPFDeb = "-1".
+					IF	aux_NomCliDebtd = "" THEN
+						aux_NomCliDebtd = "-1".
+					IF	aux_FinlddCli = "" THEN
+						aux_FinlddCli = "-1".
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+					/* Efetuar a chamada da rotina Oracle */
+					RUN STORED-PROCEDURE pc_insere_msg_ltr_str
+						  aux_handproc = PROC-HANDLE (INPUT DEC(aux_VlrLanc)	       			/* Valor Lancamento */
+															  ,INPUT aux_CodMsg					/* Codigo da mensagem */
+															  ,INPUT aux_NumCtrlLTR				/* Numero de Controle LTR */	
+															  ,INPUT aux_NumCtrlSTR				/* Numero de Controle STR */
+															  ,INPUT aux_ISPBLTR				/* ISPB LTR */
+															  ,INPUT aux_ISPBIFDebtd			/* ISPB IF Debitada */
+															  ,INPUT aux_ISPBIFCredtd			/* ISPB IF Creditada */
+															  ,INPUT aux_CNPJNLiqdant			/* CNPJ Não Liquidante */
+															  ,INPUT aux_IdentdPartCamr			/* Identificador Participante Câmara */
+															  ,INPUT aux_AgCredtd				/* Agência Creditada */
+															  ,INPUT aux_CtCredtd				/* Conta Creditada */
+															  ,INPUT aux_AgDebtd				/* Agência Debitada */
+															  ,INPUT aux_Hist					/* Histórico */
+															  ,INPUT aux_FinlddIF				/* Finalidade IF */
+															  ,INPUT aux_TpPessoaDebtd_Remet   	/* Tipo Pessoa Debitada ou Remetente */
+															  ,INPUT aux_CNPJ_CPFDeb			/* CNPJ ou CPF Cliente */
+															  ,INPUT aux_NomCliDebtd			/* Nome Cliente Debitado */
+															  ,INPUT aux_FinlddCli				/* Finalidade Cliente */
+															  ,INPUT aux_DtHrBC					/* Data Hora Bacen */
+															  ,INPUT aux_DtMovto				/* Data Movimento */
+															  ,OUTPUT ?).             			/* Retorno do Erro */
+					/* Fechar o procedimento para buscarmos o resultado */
+					CLOSE STORED-PROC pc_insere_msg_ltr_str
+							aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+					RUN salva_arquivo.
+					RUN deleta_objetos.
+					NEXT.
+				END.
+		END.
+		
+	 /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
              
@@ -1844,16 +1995,31 @@ PROCEDURE deleta_objetos.
     IF  VALID-HANDLE (hNameTag)  THEN
         DELETE OBJECT hNameTag.
     
-    IF  VALID-HANDLE (hSubNode2)  THEN
+    IF  VALID-HANDLE (hNameTag2)  THEN
+        DELETE OBJECT hNameTag2.
+
+	IF  VALID-HANDLE (hSubNode5)  THEN
+        DELETE OBJECT hSubNode5.
+		
+	IF  VALID-HANDLE (hSubNode4)  THEN
+        DELETE OBJECT hSubNode4.
+
+	IF  VALID-HANDLE (hSubNode3)  THEN
+        DELETE OBJECT hSubNode3.
+
+	IF  VALID-HANDLE (hSubNode2)  THEN
         DELETE OBJECT hSubNode2.
     
     IF  VALID-HANDLE (hSubNode)  THEN
         DELETE OBJECT hSubNode.
     
+    IF  VALID-HANDLE (hNode2)  THEN
+        DELETE OBJECT hNode2.
+    
     IF  VALID-HANDLE (hNode)  THEN
         DELETE OBJECT hNode.
-    
-    IF  VALID-HANDLE (hRoot)  THEN
+
+		IF  VALID-HANDLE (hRoot)  THEN
         DELETE OBJECT hRoot.
 
     IF  VALID-HANDLE (hDoc)  THEN
@@ -1863,7 +2029,7 @@ END PROCEDURE.
 
 
 PROCEDURE importa_xml.
-     
+
    DEF VAR aux_setlinha AS CHAR                                     NO-UNDO.
    DEF VAR aux_setlinh2 AS CHAR                                     NO-UNDO.
 
@@ -1924,7 +2090,6 @@ PROCEDURE importa_xml.
    
    /** Obtem TAG Root "SISMSG" do XML **/
    hDoc:GET-DOCUMENT-ELEMENT(hRoot).
-   
    /** Le todos os Sub-nodos de SISMSG */
    DO aux_contador = 1 TO hRoot:NUM-CHILDREN:
   
@@ -1970,6 +2135,10 @@ PROCEDURE importa_xml.
       ELSE
       IF  hNode:NAME = "STR0003R2" THEN
           RUN trata_numerario.
+      ELSE
+	  /* Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017 */
+      IF  hNode:NAME = "SLC0001" THEN
+          RUN trata_arquivo_slc.
       ELSE
           RUN trata_dados_transferencia.
             
@@ -3422,7 +3591,6 @@ PROCEDURE trata_dados_transferencia.
 
    /** Efetua leitura dos dados da mensagem **/
    DO  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
-            
        /** Obtem a TAG **/
        hNode:GET-CHILD(hNameTag,aux_contado1).
                   
@@ -3431,7 +3599,6 @@ PROCEDURE trata_dados_transferencia.
                   
        /** Obtem conteudo da Tag  **/
        hNameTag:GET-CHILD(hTextTag,1) NO-ERROR.
-              
        ASSIGN aux_descrica = hTextTag:NODE-VALUE.
 
        IF   hNameTag:NAME = "CodMsg"  THEN
@@ -3567,6 +3734,36 @@ PROCEDURE trata_dados_transferencia.
        ELSE
        IF  hNameTag:NAME = "DtMovto"  THEN
            ASSIGN aux_DtMovto = aux_descrica.
+       ELSE
+       /* CNPJ Liquidante - antecipaçao de recebíveis - Mauricio*/
+       IF  hNameTag:NAME = "CNPJNLiqdant"  THEN
+           ASSIGN aux_CNPJNLiqdant = aux_descrica.
+       ELSE
+		/* Tratamento mensagem LTR0005R2 - Mauricio - 03/11/2017*/
+       IF  hNameTag:NAME = "FinlddIF"  THEN
+           ASSIGN aux_FinlddIF = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "Hist"  THEN
+           ASSIGN aux_Hist = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "DtHrBC"  THEN
+           ASSIGN aux_DtHrBC = aux_descrica.
+	   ElSE
+       IF  hNameTag:NAME = "TpPessoaDebtd_Remet"  THEN
+           ASSIGN aux_TpPessoaDebtd_Remet = aux_descrica.
+	   ElSE
+       IF  hNameTag:NAME = "FinlddCli"  THEN
+           ASSIGN aux_FinlddCli = aux_descrica.
+	   ElSE
+       IF  hNameTag:NAME = "NumCtrlLTR"  THEN
+           ASSIGN aux_NumCtrlLTR = aux_descrica.
+	   ElSE
+       IF  hNameTag:NAME = "ISPBLTR"  THEN
+           ASSIGN aux_ISPBLTR = aux_descrica.
+	   ElSE
+       IF  hNameTag:NAME = "IdentdPartCamr"  THEN
+           ASSIGN aux_IdentdPartCamr = aux_descrica.
+		/* Tratamento mensagem LTR0005R2 - Mauricio - 03/11/2017*/
                    
    END.
 
@@ -3577,9 +3774,285 @@ PROCEDURE trata_dados_transferencia.
    /* Se conta creditada for Conta de Pagamento */
    IF  aux_TpCtCredtd = "PG" THEN
        ASSIGN aux_CtCredtd = aux_CtPgtoCredtd.
+       ASSIGN aux_CtCredtd = aux_CtPgtoCredtd.
 
 END PROCEDURE.
 
+PROCEDURE trata_arquivo_slc.
+
+/** Efetua leitura dos dados da mensagem **/
+REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+    /** Obtem a TAG **/
+	hNode:GET-CHILD(hSubNode,aux_contado1).
+  
+	IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
+		NEXT.           
+
+	/* Numero de Controle do Remetente */
+	IF  hSubNode:NAME = "NumCtrlSLC" THEN 
+		DO:
+			hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+			ASSIGN aux_NumCtrlSLC = hSubNode2:NODE-VALUE.
+		END.
+		
+	IF  hSubNode:NAME = "ISPBIF" THEN 
+		DO:
+			hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+			ASSIGN aux_ISPBIF = hSubNode2:NODE-VALUE.
+		END.
+
+	IF  hSubNode:NAME = "TpInf" THEN 
+		DO:
+			hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+			ASSIGN aux_TpInf = hSubNode2:NODE-VALUE.
+		END.
+
+	IF  hSubNode:NAME = "DtHrSLC" THEN 
+		DO:
+			hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+			ASSIGN aux_DtHrSLC = hSubNode2:NODE-VALUE.
+		END.
+		
+	IF  hSubNode:NAME = "DtMovto" THEN 
+		DO:
+			hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+			ASSIGN aux_DtMovto = hSubNode2:NODE-VALUE.
+		END.
+END. /* REPEAT  aux_contado1 */
+
+   /** Efetua leitura dos dados da mensagem **/
+	ASSIGN aux_insere_msg = 'N'.
+	REPEAT  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+       /** Obtem a TAG **/
+        hNode:GET-CHILD(hSubNode,aux_contado1).
+      
+        IF  hSubNode:SUBTYPE <> 'ELEMENT' THEN
+            NEXT.           
+
+		IF  hSubNode:NAME = "Grupo_SLC0001_Liquid" THEN 
+		DO:
+			REPEAT  aux_contado2 = 1 TO hSubNode:NUM-CHILDREN:
+				/** Obtem a TAG **/
+				hSubNode:GET-CHILD(hSubNode2,aux_contado2).
+			  
+				IF  hSubNode2:SUBTYPE <> 'ELEMENT' THEN
+					NEXT.           
+
+				IF  hSubNode2:NAME = "DtLiquid" THEN 
+				DO:
+					hSubNode2:GET-CHILD(hSubNode3,1) NO-ERROR.
+					ASSIGN aux_DtLiquid = hSubNode3:NODE-VALUE.
+				END.
+			
+				IF  hSubNode2:NAME = "NumSeqCicloLiquid" THEN 
+				DO:
+					hSubNode2:GET-CHILD(hSubNode3,1) NO-ERROR.
+					ASSIGN aux_NumSeqCicloLiquid = hSubNode3:NODE-VALUE.
+				END.
+					
+				IF  hSubNode2:NAME = "Grupo_SLC0001_Prodt" THEN 
+				DO:
+					ASSIGN 	aux_insere_msg = 'N'.
+					REPEAT  aux_contado3 = 1 TO hSubNode2:NUM-CHILDREN:
+					   /** Obtem a TAG **/
+						hSubNode2:GET-CHILD(hSubNode3,aux_contado3).
+					  
+						IF  hSubNode3:SUBTYPE <> 'ELEMENT' THEN
+							NEXT.           
+
+						IF  hSubNode3:NAME = "CodProdt" THEN 
+						DO:
+							hSubNode3:GET-CHILD(hSubNode4,1) NO-ERROR.
+							ASSIGN aux_CodProdt = hSubNode4:NODE-VALUE.
+						END.
+
+						IF  hSubNode3:NAME = "Grupo_SLC0001_LiquidProdt" THEN 
+						DO:
+							ASSIGN 	aux_insere_msg = 'N'.
+							REPEAT  aux_contado4 = 1 TO hSubNode3:NUM-CHILDREN:
+								/** Obtem a TAG **/
+								hSubNode3:GET-CHILD(hSubNode4,aux_contado4).
+							  
+								IF  hSubNode4:SUBTYPE <> 'ELEMENT' THEN
+									NEXT.           
+
+								IF  hSubNode4:NAME = "IdentdLinhaBilat" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_IdentdLinhaBilat = hTextTag:NODE-VALUE.
+								END.
+									
+								IF  hSubNode4:NAME = "TpDeb_Cred" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_TpDeb_Cred = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "ISPBIFCredtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_ISPBIFCredtd = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "ISPBIFDebtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_ISPBIFDebtd = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "VlrLanc" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_VlrLanc = hTextTag:NODE-VALUE.
+									aux_VlrLanc   = REPLACE(aux_VlrLanc,".",",").
+								END.
+								IF  hSubNode4:NAME = "CNPJNLiqdantDebtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_CNPJNLiqdantDebtd = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "NomCliDebtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_NomCliDebtd = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "CNPJNLiqdantCredtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_CNPJNLiqdantCredtd = hTextTag:NODE-VALUE.
+								END.
+								IF  hSubNode4:NAME = "NomCliCredtd" THEN 
+								DO:
+									hSubNode4:GET-CHILD(hTextTag,1) NO-ERROR.
+		 
+								   /* Se nao vier conteudo na TAG */ 
+								   IF ERROR-STATUS:ERROR             OR  
+									  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+									  NEXT.
+				 
+									ASSIGN aux_NomCliCredtd = hTextTag:NODE-VALUE.
+									ASSIGN aux_insere_msg = 'S'.
+								END.
+								IF aux_contado4 = hSubNode3:NUM-CHILDREN THEN
+								DO:
+									IF 	aux_TpInf = "D" AND				/* Apenas para mensagens com tipo = D - Definitiva */
+										aux_insere_msg = 'S' THEN
+									DO:
+										UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+													   " - " + glb_cdprogra + "' --> '"  +
+													   glb_dscritic + " >> log/proc_batch.log"). 
+										IF	aux_NumCtrlSLC = "" THEN
+											aux_NumCtrlSLC = "-1".
+										IF	aux_ISPBIF = "" THEN
+											aux_ISPBIF = "-1".
+										IF	aux_NumSeqCicloLiquid = "" THEN
+											aux_NumSeqCicloLiquid = "-1".
+										IF	aux_CodProdt = "" THEN
+											aux_CodProdt = "-1".
+										IF	aux_IdentLinhaBilat = "" THEN
+											aux_IdentLinhaBilat = "-1".
+										IF	aux_TpDebCred = "" THEN
+											aux_TpDebCred = "-1".
+										IF	aux_ISPBIFCredtd = "" THEN
+											aux_ISPBIFCredtd = "-1".
+										IF	aux_ISPBIFDebtd = "" THEN
+											aux_ISPBIFDebtd = "-1".
+										IF	aux_CNPJNLiqdantDebtd = "" THEN
+											aux_CNPJNLiqdantDebtd = "-1".
+										IF	aux_NomCliDebtd = "" THEN
+											aux_NomCliDebtd = "-1".
+										IF	aux_CNPJNLiqdantCredtd = "" THEN
+											aux_CNPJNLiqdantCredtd = "-1".
+										IF	aux_NomCliCredtd = "" THEN
+											aux_NomCliCredtd = "-1".
+											
+										{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+										/* Efetuar a chamada da rotina Oracle */
+										
+										RUN STORED-PROCEDURE pc_insere_msg_slc
+											  aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)		
+																				  ,INPUT "SLC0001"				
+																				  ,INPUT aux_NumCtrlSLC			
+																				  ,INPUT aux_ISPBIF				
+																				  ,INPUT aux_DtLiquid			
+																				  ,INPUT aux_NumSeqCicloLiquid	
+																				  ,INPUT aux_CodProdt			
+																				  ,INPUT aux_IdentLinhaBilat	
+																				  ,INPUT aux_TpDebCred			
+																				  ,INPUT aux_ISPBIFCredtd		
+																				  ,INPUT aux_ISPBIFDebtd		
+																				  ,INPUT aux_CNPJNLiqdantDebtd	
+																				  ,INPUT aux_NomCliDebtd		
+																				  ,INPUT aux_CNPJNLiqdantCredtd	
+																				  ,INPUT aux_NomCliCredtd		
+																				  ,INPUT aux_DtHrSLC			
+																				  ,INPUT aux_DtMovto			
+																				  ,OUTPUT "").             		
+										
+										/* Fechar o procedimento para buscarmos o resultado */ 
+										
+										CLOSE STORED-PROC pc_insere_msg_slc
+												aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+										{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+										ASSIGN 	aux_insere_msg = 'N'.
+									END.
+								END.
+							END. /* REPEAT  aux_contado4 */
+						END.
+					END. /* REPEAT  aux_contado3 */
+				END.
+			END. /* REPEAT  aux_contado2 */
+		END.
+	END. /* REPEAT  aux_contado1 */
+	/*RUN salva_arquivo.*/
+	/*RUN deleta_objetos.*/
+	
+END PROCEDURE.
 
 PROCEDURE trata_lancamentos.
 
