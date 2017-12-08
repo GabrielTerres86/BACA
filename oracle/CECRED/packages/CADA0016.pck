@@ -6349,7 +6349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             BEGIN              
               
               UPDATE crapepa epa
-                 SET epa.nmprimtl = pr_pessoa_new.nmpessoa,
+                 SET epa.nmprimtl = substr(pr_pessoa_new.nmpessoa,1,40),
                      epa.nrdocsoc = pr_pessoa_new.nrcpfcgc
                WHERE epa.cdcooper = vr_tab_contas(idx).cdcooper
                  AND epa.nrdconta = vr_tab_contas(idx).nrdconta
