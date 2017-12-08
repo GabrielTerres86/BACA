@@ -39,6 +39,9 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
+  --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
+  --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
+
   ---------------------------------------------------------------------------------------------------------------
 
 -- Atualiza as tabelas de controle com as informacoes finais
@@ -534,6 +537,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --              28/09/2017 - Utilização do atributo classe da consulta da Ibratan
   --                           (Marcos-Supero).
   --
+  --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
+  --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
