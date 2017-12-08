@@ -563,8 +563,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             3 numeros (Tiago/Thiago).             
 
                19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
-                            PRJ300-Desconto de cheque(Odirlei-AMcom)	 
-
+                            PRJ300-Desconto de cheque(Odirlei-AMcom)
+                            
                21/06/2017 - Ajuste devido a descontinuação de históricos contábil de capital e depósitos a devolver                              
                             (Jonata - RKAM P364).
 
@@ -1413,6 +1413,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      group by cdagetfn
      order by cdagetfn;
 	 
+  -- Saque Cooperados Demitidos
+  cursor cr_craplcm21 (pr_cdcooper in craplcm.cdcoptfn%type,
+                       pr_dtmvtolt in craplcm.dtmvtolt%type) is
+   select craplcx.cdagenci
+         ,decode(craplcx.cdhistor,2065,decode(crapass.inpessoa,1,2063,2064)
+                                      ,decode(crapass.inpessoa,1,2081,2082)) cdhistor
+         ,sum(craplcx.vldocmto) vllanmto
+     from craplcx
+         ,crapass
+    where craplcx.cdcooper = pr_cdcooper
+      and craplcx.dtmvtolt = pr_dtmvtolt
+      and craplcx.cdhistor in (2065,2083)
+      and craplcx.cdcooper = crapass.cdcooper
+      and craplcx.nrdconta = crapass.nrdconta
+    group by craplcx.cdagenci
+            ,decode(craplcx.cdhistor,2065,decode(crapass.inpessoa,1,2063,2064)
+                                          ,decode(crapass.inpessoa,1,2081,2082))
+    order by craplcx.cdagenci
+            ,decode(craplcx.cdhistor,2065,decode(crapass.inpessoa,1,2063,2064)
+                                          ,decode(crapass.inpessoa,1,2081,2082));
+
    -- FINAME BNDES
   CURSOR cr_craplcm7 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                       pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
@@ -2374,6 +2395,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_tipocob             varchar2(100);
   -- Variável para geração do arquivo texto
   vr_linhadet            varchar2(200);
+  vr_complinhadet        varchar2(50);
   --
   vr_vlpioneiro          number(10,2);
   vr_vlcartao            number(10,2);
@@ -3022,7 +3044,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        where craplem.cdcooper = pr_cdcooper
          and craplem.dtmvtolt = pr_dtmvtolt
          and craplem.cdhistor = 120; -- SOBRAS DE EMPRESTIMOS
-   
+    -- Lançamentos em depósitos à vista
+    cursor cr_craplcm3 (pr_cdcooper in craplcm.cdcooper%type,
+                        pr_dtmvtolt in craplcm.dtmvtolt%type) is
+      select /*+ index (craplcm craplcm##craplcm4)*/
+             craplcm.nrdconta,
+             craplcm.vllanmto
+        from craplcm
+       where craplcm.cdcooper = pr_cdcooper
+         and craplcm.dtmvtolt = pr_dtmvtolt
+         and craplcm.cdhistor in (2061,2062);
     -- Lançamentos de cotas/capital
     cursor cr_craplct (pr_cdcooper in craplcm.cdcooper%type,
                        pr_dtultdma in craplcm.dtmvtolt%type,
@@ -3637,7 +3668,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       END LOOP;
       
     end if;
-    
+/* Pj 364 - Suellen solicitou retirar
+    -- Baixa do saldo do capital dos inativos ..............................
+    vr_vlcompel := 0;
+    for rw_crapass2 in cr_crapass2 (pr_cdcooper) loop
+      open cr_crapcot (pr_cdcooper,
+                       rw_crapass2.nrdconta,
+                       vr_dtmvtolt);
+        fetch cr_crapcot into rw_crapcot;
+        if cr_crapcot%notfound then
+          close cr_crapcot;
+          continue;
+        end if;
+      close cr_crapcot;
+      --
+      if to_char(vr_dtmvtolt, 'yyyy') = to_char(vr_dtmvtopr, 'yyyy') then
+        vr_vlcompel := vr_vlcompel + rw_crapcot.vlcapmes;
+      else
+        vr_vlcompel := vr_vlcompel + rw_crapcot.vlcotant;
+      end if;
+    end loop;  -- Fim do loop na crapass
+    --
+    if vr_vlcompel > 0 then
+      vr_cdestrut := '51';
+      vr_linhadet := trim(vr_cdestrut)||
+                     trim(vr_dtmvtolt_yymmdd)||','||
+                     trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                     '6112,'||
+                     '4782,'||
+                     trim(to_char(vr_vlcompel, '99999999999990.00'))||','||
+                     '5210,'||
+                     '"(crps249) CAPITAL DE ASSOCIADOS INATIVOS."';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      --
+      vr_linhadet := '999,'||trim(to_char(vr_vlcompel, '99999999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      -- Reversao
+      vr_linhadet := trim(vr_cdestrut)||
+                     trim(vr_dtmvtolt_yymmdd)||','||
+                     trim(to_char(vr_dtmvtopr,'ddmmyy'))||','||
+                     '4782,'||
+                     '6112,'||
+                     trim(to_char(vr_vlcompel, '99999999999990.00'))||','||
+                     '5210,'||
+                     '"(crps249) CAPITAL DE ASSOCIADOS INATIVOS."';
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      --
+      vr_linhadet := '999,'||trim(to_char(vr_vlcompel, '99999999999990.00'));
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    end if;
+*/
     -- Contabilizacao para orcamento (Realizado)............................
     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                pr_ind_tipo_log => 2, -- Erro tratado
@@ -4026,6 +4106,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',4191,';
     vr_dshstorc := '"(crps249) REVERSAO DAS SOBRAS DE EMPRESTIMOS."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+    -- Exclusao de cooperados .............................................
+    vr_tab_cratorc.delete;
+    vr_vltotorc := 0;
+    -- Percorrer lancamentos em depositos a vista
+    for rw_craplcm3 in cr_craplcm3 (pr_cdcooper,
+                                    vr_dtmvtolt) loop
+      -- Dados do associado
+      open cr_crapass (pr_cdcooper,
+                       rw_craplcm3.nrdconta);
+        fetch cr_crapass into rw_crapass;
+      close cr_crapass;
+      --
+      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
+      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craplcm3.vllanmto;
+      vr_vltotorc := vr_vltotorc + rw_craplcm3.vllanmto;
+    end loop;
+    --
+    vr_flgrvorc := false; -- Lancamento do dia
+    vr_flgctpas := true;  -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',4113,';
+    vr_dshstorc := '"(crps249) DEBITO EXCLUSAO DISPONIVEL."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+    --
+    vr_flgrvorc := true;  -- Lancamento de reversao
+    vr_flgctpas := true;  -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',4113,';
+    vr_dshstorc := '"(crps249) REVERSAO DEBITO EXCLUSAO DISPONIVEL."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
     
@@ -11137,6 +11249,51 @@ BEGIN
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
     vr_linhadet := to_char(rw_craplcm.cdagetfn, 'fm000')||','||
+                   trim(to_char(vr_vllanmto, '999999990.00'));
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+  end loop;
+  
+ -- DEMETRIUS
+ -- SAQUE DE CAPITAL E DEPOSITOS DE COOPERADOS DEMITIDOS
+  vr_vllanmto := 0;
+  --
+  for rw_craplcm in cr_craplcm21 (pr_cdcooper,
+                                  vr_dtmvtolt)loop
+    vr_vllanmto := rw_craplcm.vllanmto;
+    --
+    --
+    open cr_craphis2 (pr_cdcooper,
+                      rw_craplcm.cdhistor);
+      fetch cr_craphis2 into rw_craphis2;
+      if cr_craphis2%notfound then
+        close cr_craphis2;
+        vr_cdcritic := 526;
+        vr_dscritic := rw_craplcm.cdhistor||' - '||gene0001.fn_busca_critica(526);
+        raise vr_exc_saida;
+      end if;
+    close cr_craphis2;
+    --
+    vr_cdestrut := '50';
+    if rw_craplcm.cdhistor = 2063 then
+      vr_complinhadet := '"(2063) SAQUE DEPOSITO CONTA ENCERRADA PF"';
+    elsif rw_craplcm.cdhistor = 2064 then
+      vr_complinhadet := '"(2064) SAQUE DEPOSITO CONTA ENCERRADA PJ"';
+    elsif rw_craplcm.cdhistor = 2081 then
+      vr_complinhadet := '"(2081) SAQUE CAPITAL DISPONIVEL PF"';
+    else
+      vr_complinhadet := '"(2082) SAQUE CAPITAL DISPONIVEL PJ"';
+    end if;
+    vr_linhadet := trim(vr_cdestrut)||
+                   trim(vr_dtmvtolt_yymmdd)||','||
+                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   trim(to_char(rw_craphis2.nrctadeb))||','||
+                   trim(to_char(rw_craphis2.nrctacrd))||','||
+                   trim(to_char(vr_vllanmto, '999999990.00'))||','||
+                   trim(to_char(rw_craphis2.cdhstctb))||','||
+                   vr_complinhadet;
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    --
+    vr_linhadet := to_char(rw_craplcm.cdagenci, 'fm000')||','||
                    trim(to_char(vr_vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end loop;
