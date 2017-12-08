@@ -202,33 +202,36 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
-		 <input type=hidden name="idfiniof" id="idfiniof">
+		 <input type="hidden" name="idfiniof" id="idfiniof">
         <!--<label for="idfiniof">Financiar IOF e Tarifa:</label>
         <select name="idfiniof" id="idfiniof">
             <option value="1" selected="selected">Sim</option>
             <option value="0">N&atilde;o</option>
         </select>-->
-		
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
-		<br />
 		
+		        
+		<!--<br />
         <label for="vliofepr">IOF:</label>
-        <input name="vliofepr" id="vliofepr" type="text" value=""/>
+        <input name="vliofepr" id="vliofepr" type="text" value=""/>-->
+		<input type="hidden" name="vliofepr" id="vliofepr">
 
                 <label for="dtultpag">Data &uacute;lt. pagto:</label>
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
-        <label for="vlrtarif">Tarifa:</label>
-        <input name="vlrtarif" id="vlrtarif" type="text" value=""/>
+        <!--<label for="vlrtarif">Tarifa:</label>
+        <input name="vlrtarif" id="vlrtarif" type="text" value=""/>-->
+		<input type="hidden" name="vlrtarif" id="vlrtarif">
 
 		<label for="percetop">CET(%a.a.):</label>
 		<input name="percetop" id="percetop" type="text" value="" />
 		<br />
 		
-        <label for="vlrtotal">Valor Total:</label>
-        <input name="vlrtotal" id="vlrtotal" type="text" value=""/>
+		<!--<label for="vlrtotal">Valor Total:</label>
+        <input name="vlrtotal" id="vlrtotal" type="text" value=""/>-->
+		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
 
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">

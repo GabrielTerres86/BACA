@@ -10,6 +10,7 @@
  * 001: [13/04/2012] Incluir campo dtlibera (Gabriel)
  * 002: [08/04/2014] Alterado fluxo do botao Continuar. (Jorge)
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
+ * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
  */	
  ?>
 
@@ -105,6 +106,13 @@
 			<option value="yes" >Imprime</option>
 			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
 		</select>
+		<br />
+		
+		<label for="dsratpro"> <? echo utf8ToHtml("Rat. Pro:"); ?> </label>
+		<input name="dsratpro" id="dsratpro" type="text" value="">				
+
+		<label for="dsratatu"><? echo utf8ToHtml("Rat. Atu:"); ?></label>
+		<input name="dsratatu" id="dsratatu" type="text" value="" />
 		<br />
 		
 		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>

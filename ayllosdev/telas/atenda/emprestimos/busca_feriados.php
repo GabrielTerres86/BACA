@@ -1,18 +1,15 @@
  <?php
 
 	//************************************************************************//
-	//*** Fonte: retorna_feriados.php                                      ***//
-	//*** Autor: Tiago                                                     ***//
-	//*** Data : Abril/2012                  Ultima Alteracao: 05/04/2012  ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Trazer todos os feriados a de ate 1 ano a frente da  ***//
-	//***			  data de movimentacao do sistema (Tiago)              ***//
-	//***                                                                  ***//
-	//***                                                                  ***//	 
-	//*** Alteracoes:                									   ***//
-	//***                                        					       ***//
+	//*** Fonte: retorna_feriados.php                                
+	//*** Autor: Tiago                                                     
+	//*** Data : Abril/2012                  Ultima Alteracao:21/07/2016  
+	//***
+	//*** Objetivo  : Trazer todos os feriados a de ate 1 ano a frente da data de movimentacao do sistema (Tiago)
+	//***                                                                  
+	//*** Alteracoes: 21/07/2016 Correcoes na forma de recuperar parametros $_POST e tratar o retorno do XML. SD 479874. (Carlos R).               								
+	//***                                        					       
 	//************************************************************************//
-	
 	
 	session_start();
 	
@@ -27,8 +24,8 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 	
-	$cdcooper = $_POST["cdcooper"];
-	$dtmvtolt = $_POST["dtmvtolt"];
+	$cdcooper = ( isset($_POST["cdcooper"]) ) ? $_POST["cdcooper"] : 0;
+	$dtmvtolt		= ( isset($_POST["dtmvtolt"])	) ? $_POST["dtmvtolt"] : '';
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -58,7 +55,7 @@
 	$xmlObjFeriados = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjFeriados->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjFeriados->roottag->tags[0]->name) && strtoupper($xmlObjFeriados->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjFeriados->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	

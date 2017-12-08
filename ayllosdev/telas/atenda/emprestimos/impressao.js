@@ -23,7 +23,7 @@ $.getScript(UrlSite + "includes/rating/rating.js");
 
 // Função para Mostrar Div de Impressão
 function mostraDivImpressao( operacao ) {
-	
+
 	showMsgAguardo('Aguarde, abrindo impressão...');
     
     limpaDivGenerica();
@@ -68,7 +68,7 @@ function mostraDivImpressao( operacao ) {
 function validaImpressao( operacao ){
 	
 	showMsgAguardo('Aguarde, carregando...');
-		
+	
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -80,7 +80,7 @@ function validaImpressao( operacao ){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-						
+
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
@@ -121,7 +121,7 @@ function verificaImpressao(par_idimpres){
 	}
 	
 	if ( idimpres >= 1 && idimpres <= 9 ) {
-		
+
 		if ( idimpres == 5 ) {
 			var metodo = '';
 			
@@ -277,7 +277,7 @@ function mostraEmail() {
 
 // Função para envio de formulário de impressao
 function carregarImpresso(){
-
+	
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
 	
 	$('#idimpres','#formEmpres').remove();

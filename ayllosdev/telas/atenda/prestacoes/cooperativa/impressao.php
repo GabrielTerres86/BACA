@@ -20,6 +20,7 @@
 				  09/06/2015  - Contrato nao negociavel (Gabriel-RKAM).			
                   15/03/2016 - Buscar flmail_comite para verificar se deve permitir enviar email 
                                para o comite. PRJ207 - Esteira (Odirlei-AMcom)                  
+                  11/10/2017 - Liberacao melhoria 442 (Heitor - Mouts)							   
 							   
  */	
 
@@ -33,8 +34,10 @@
 	if ($glbvars["cdcooper"] == 3) {
 		$divBloqueia = "blockBackground(parseInt($('#divRotina').css('z-index')))";
 		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Ayllos',".$divBloqueia.");";
+		$imp_rating_proposta = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Ayllos',".$divBloqueia.");";
 	} else {
 		$imp_rating = "verificaImpressao(5);";
+		$imp_rating_proposta = "verificaImpressao(10);";
 	}
     
     // Buscar informacao se deve permitir o envio de email para o comite
@@ -66,7 +69,7 @@
 <table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		
-			<table border="0" cellpadding="0" cellspacing="0" width="700">
+			<table border="0" cellpadding="0" cellspacing="0" width="800">
 				<tr>
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -119,9 +122,11 @@
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(4); return false;">' . utf8ToHtml('Nota Promissória') . '</a>';
                                                 }
                                             ?>
-											<a href="#" class="botao" onClick="<?php echo $imp_rating; ?> return false;">Rating</a>
+											<a href="#" class="botao" onClick="<?php echo $imp_rating; ?> return false;">Rating Atual</a>
 											<a href="#" class="botao" onClick="verificaImpressao(7);return false;">Consultas</a>
+											<a href="#" class="botao" onClick="verificaImpressao(11);return false;"><? echo utf8ToHtml('Política')?></a>
 											<a href="#" class="botao" onClick="verificaAntecipacao(); return false;"><? echo utf8ToHtml('Antecipação')?></a>
+											<a href="#" class="botao" onClick="<?php echo $imp_rating_proposta; ?> return false;">Rating Proposta</a>
 											<a href="#" class="botao" id="btVoltar" onClick="fechaImpressao('fechar');">Voltar</a>
 											
 										</div>

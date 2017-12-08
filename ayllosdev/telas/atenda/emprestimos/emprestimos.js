@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 27/11/2017
+ * FONTE        : emprestimos.js                            Última alteração: 01/12/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -116,6 +116,7 @@
  * 093: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
  * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
+ * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -363,6 +364,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             operacao: operacao,
             inconfir: 1,
 			executandoProdutos: executandoProdutos,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1786,13 +1788,13 @@ function controlaLayout(operacao) {
 
 
         nomeForm = 'frmNovaProp';
-        altura = '330px';
-        largura = '465px';
+        altura = '320px';
+        largura = '445px';
 
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="flgimppr"],label[for="dsctrliq"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
         var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
@@ -1887,16 +1889,16 @@ function controlaLayout(operacao) {
         cVlrtotal.addClass('rotulo moeda').css('width', '90px');
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '97px');
+        rProposta.css('width', '265px'); 
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '137px');
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
-        rPercCET.addClass('').css('width', '97px');
-        rDtPgmento.addClass('').css('width', '104px');
-        rDtUltPag.addClass('').css('width', '97px');
+        rPercCET.addClass('').css('width', '265px');
+        rDtPgmento.addClass('rotulo').css('width', '265px');
+        rDtUltPag.addClass('rotulo').css('width', '265px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
         rNtPromis.addClass('rotulo').css('width', '265px');
         rDiasUteis.addClass('rotulo-linha');

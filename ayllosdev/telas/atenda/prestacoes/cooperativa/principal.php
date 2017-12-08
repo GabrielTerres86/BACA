@@ -126,7 +126,7 @@
 
             $xml .= "  </Dados>";
             $xml .= "</Root>";
-            
+
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
@@ -344,7 +344,7 @@
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 
-			
+
 			var arrayRendimento = new Object();
 			
 			var contRend = <? echo count($rendimento[0]->tags)?>;

@@ -81,7 +81,7 @@
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
 	}
-    
+
 ?>
 <script>
     flmail_comite = "<?php echo $xmlObjDados->roottag->tags[0]->cdata; ?>";
