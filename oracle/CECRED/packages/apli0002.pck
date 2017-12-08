@@ -1291,7 +1291,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
 				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
 
-				30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
+                30/11/2017 - Incluido update na crapsli quando dinheiro para aplicacao nova vem da conta investimento. 
+							 (M460 BACENJUD - Thiago Rodrigues).
+
+                30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5257,14 +5260,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            -- Apenas fechar o cursor
            CLOSE cr_crapsli;
         END IF;
-        
+
         -- Demetrius - Melhoria 460
         BEGIN
           UPDATE crapsli ci
           SET ci.vlsddisp = greatest(0,ci.vlsddisp - pr_vllanmto)
           WHERE ci.cdcooper = pr_cdcooper
             AND ci.nrdconta = pr_nrdconta
-            AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
+           AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
             AND TO_CHAR(ci.dtrefere,'RRRR') = TO_CHAR(last_day(pr_dtmvtolt),'RRRR');
         EXCEPTION
           WHEN others THEN
@@ -9383,12 +9386,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   -- Objetivo  : Retornar o saldo das Cotas do Associado.
   --
   -- Alteracoes: 24/06/2014 - Conversao Progress -> Oracle (Alisson - AMcom).      
-  --       
+  --
   --             14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).			
   --       
   --             19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
-  --
-  --             21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
   -- .......................................................................................
                                      
     -- Selecionar Valor das Cotas
@@ -9400,27 +9401,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       AND   crapcot.nrdconta = pr_nrdconta;
     rw_crapcot cr_crapcot%ROWTYPE;
                                                    
-    CURSOR cr_craplct (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_nrdconta IN crapcot.nrdconta%TYPE) IS
-      SELECT lct.vllanmto
-      FROM craplct lct
-      WHERE lct.cdcooper = pr_cdcooper
-      AND   lct.nrdconta = pr_nrdconta
-      AND   lct.cdhistor IN (2079,2080,2136)
-	    AND   lct.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')
-      AND NOT EXISTS (SELECT 1 FROM craplcm lcm
-                              WHERE lcm.cdcooper = lct.cdcooper
-                                AND lcm.nrdconta = lct.nrdconta
-                                AND lcm.cdhistor IN (2081,2082,2063,2064,2137)
-								AND lcm.dtmvtolt >= to_Date('01/11/2017','dd/mm/yyyy')) --- fixo por causa de performance
-     UNION
-     SELECT D.VLCAPITAL - D.VLPAGO
-       FROM TBCOTAS_DEVOLUCAO D
-      WHERE D.CDCOOPER = pr_cdcooper
-        AND D.NRDCONTA = pr_nrdconta
-        AND d.tpdevolucao=3 ;
-    rw_craplct cr_craplct%ROWTYPE;
-                    
     --Variaveis Locais
     vr_vlblqjud NUMBER:= 0;
     vr_vlresblq NUMBER:= 0;
@@ -9478,25 +9458,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     pr_tab_saldo_cotas(pr_nrdconta).vlblqjud:= vr_vlblqjud;
     
     --Selecionar Devolução de cotas
-    OPEN cr_craplct (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta);
-                    
-    FETCH cr_craplct INTO rw_craplct;                
-    
-    --Se já houve devolução de cotas então deve apresentar o valor devolvido na tela ATENDA
-    IF cr_craplct%FOUND THEN
-        
-      pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_craplct.vllanmto;
-        
-    ELSE
-    
-    pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_crapcot.vldcotas;
+      pr_tab_saldo_cotas(pr_nrdconta).vlsldcap:= rw_crapcot.vldcotas; 
       
-    END IF;
-    
-    --Fechar Cursor
-    CLOSE cr_craplct; 
-    
     
   EXCEPTION
     WHEN vr_exc_erro THEN
