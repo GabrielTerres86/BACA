@@ -19443,7 +19443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2014.                   Ultima atualizacao: 02/05/2014
+    --  Data     : Maio/2014.                   Ultima atualizacao: 08/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -19453,6 +19453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            pois será utilizada tanto para intra quanto para interbancaria.
     --                            PRJ340 - NPC (Odirlei-AMcom)
     -- 
+    --               08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+    --                            (SD#791193 - AJFink)
+    --
     -- .........................................................................
 
   --buscar solicitações pendentes
@@ -19625,6 +19628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END IF;
     --Comitar alterações
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc('PAGA0001_1');
 
     -- Log de fim de execucao
     pc_controla_log_batch(pr_dstiplog => 'F');
@@ -19633,6 +19637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PAGA0001.pc_processa_crapdda: '||SQLErrm;
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('PAGA0001_2');
 
       -- Log de erro de execucao
       pc_controla_log_batch(pr_dstiplog => 'E',

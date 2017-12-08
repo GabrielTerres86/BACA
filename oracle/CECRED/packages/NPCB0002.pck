@@ -129,30 +129,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema : Cobranca - Cooperativa de Credito
       Sigla   : CRED
       Autor   : AJFink SD#791193
-      Data    : Novembro/2017.                     Ultima atualizacao: --/--/----
+      Data    : Novembro/2017.                     Ultima atualizacao: 08/12/2017
       Objetivo: Libera a sessao aberta no SQLSERVER. Implementada devido ao comando
                 select da funcao fn_datamov manter a sessao presa apos o fim
                 do processamento. Deve ser incluída após um commit/rollback.
-                Chamada na cobr0006, npcb0002 e pc_crps618.
 
-      Alteracoes: 
+      Alteracoes: 08/12/2017 - Inclusão do dblink JDNPCBISQL. Tratamento de exceção
+                               individualizado. Rotina deve ser chamada nos programas
+                               que são utilizados com Progress devido ao WebSpeed manter
+                               a sessão aberta e presa no SqlServer (SD#791193 - Ajfink)
 
     ******************************************************************************/
     --
+    dblink_not_open exception;
+    pragma exception_init(dblink_not_open,-2081);
+    --
   begin
     --
-    execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
+    begin
+      --
+      execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
+      --
+    exception
+      when dblink_not_open then
+        null;
+      when others then
+        begin
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCSQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
+        exception
+          when others then
+            null;
+        end; 
+    end;
     --
-  exception
-    when others then
-      begin
-        npcb0001.pc_gera_log_npc( pr_cdcooper => 3,
-                                  pr_nmrotina => 'npcb0002.plssn('||pr_cdprogra_org||')',
-                                  pr_dsdolog  => sqlerrm);
-      exception
-        when others then
-          null;
-      end; 
+    begin
+      --
+      execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCBISQL';
+      --
+    exception
+      when dblink_not_open then
+        null;
+      when others then
+        begin
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCBISQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
+        exception
+          when others then
+            null;
+        end; 
+    end;
+    --
   end pc_libera_sessao_sqlserver_npc;
 
   --> Rotina para consultar os titulos CIP

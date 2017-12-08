@@ -318,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_exclui_convenio             Antigo: b1wgen0082.p/exclui-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 
+    Data    : Fevereiro/2016                 Ultima atualizacao: 08/12/2017
 
     Dados referentes ao programa:
 
@@ -329,6 +329,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Alteracoes: 25/04/2016 - Atualizar convenio na cabine e gerar log cip
                              PRJ318 Plataforma cobrança (Odirlei-AMcom)
                           
+                08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                             (SD#791193 - AJFink)
+
     ..............................................................................*/
     DECLARE
 
@@ -600,6 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END;
       
       COMMIT;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_1');
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -614,6 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_2');
 
         -- Gerar informacoes do log
         GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -638,6 +643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_3');
     END;
 
   END pc_exclui_convenio;
@@ -1099,7 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 13/12/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 08/12/2017
 
     Dados referentes ao programa:
 
@@ -1120,6 +1126,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
         				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
+                17/10/2017 - Utilizar data de abertura da conta (ass.dtabtcct) ao registrar
+                             beneficiario na CIP. (Rafael)
+
+                08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                             (SD#791193 - AJFink)
+
     ..............................................................................*/
     DECLARE
 
@@ -1135,7 +1147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,decode(crapass.inpessoa,1,to_char(crapass.nrcpfcgc)
                                         ,to_char(crapass.nrcpfcgc)) nrcpfcgc
               ,to_char(crapcop.cdagectl) cdagectl
-              ,crapass.dtadmiss
+              ,nvl(crapass.dtabtcct,crapass.dtmvtolt) dtabtcct -- existem casos que a dtabtcct é nula (?)
           FROM crapass,
                crapcop 
          WHERE crapass.cdcooper = crapcop.cdcooper
@@ -1639,7 +1651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                     
       BEGIN
             -- utilizar a data de admissao do cooperado como data de relacionamento
-            vr_dsdtmvto := to_char(nvl(rw_crapass.dtadmiss,rw_crapdat.dtmvtolt),'RRRRMMDD');      
+            vr_dsdtmvto := to_char(nvl(rw_crapass.dtabtcct,rw_crapdat.dtmvtolt),'RRRRMMDD');      
             
             INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
                   ( "ISPB_IF",
@@ -2231,6 +2243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_des_erro => vr_dscritic);
 
       COMMIT;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_4');
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -2245,6 +2258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_5');
 
         -- Gerar informacoes do log
         GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -2277,6 +2291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;
                                        
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_6');
     END;
 
   END pc_habilita_convenio;
@@ -3192,7 +3207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_ativar_convenio          
     Sistema : Ayllos Web
     Autor   : Odirlei Busana - AMcom
-    Data    : Abril/2016                 Ultima atualizacao:
+    Data    : Abril/2016                 Ultima atualizacao: 08/12/2017
 
     Dados referentes ao programa:
 
@@ -3200,7 +3215,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
     Objetivo  : Rotina para ativar convenio.
 
-    Alteracoes:
+    Alteracoes: 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                             (SD#791193 - AJFink)
+
   ..............................................................................*/
     
     ------------> CURSORES <------------
@@ -3530,6 +3547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;                          
     
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_7');
   
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -3548,6 +3566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_8');
 
       -- Gerar informacoes do log
       GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -3576,6 +3595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_ATENDA_COBRAN_9');
   END pc_ativar_convenio;    
   
   --> Retornar lista com os log do convenio ceb

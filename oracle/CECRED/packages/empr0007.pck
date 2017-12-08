@@ -5490,7 +5490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Setembro/15.                    Ultima atualizacao: 20/01/2016
+      Data    : Setembro/15.                    Ultima atualizacao: 08/12/2017
 
       Dados referentes ao programa:
 
@@ -5503,6 +5503,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Alteracoes: 20/01/2016 - Alterado a chamada da procedure pc_inst_pedido_baixa da 
                                PAGA0001 para COBR0007 (Douglas - Importacao de Arquivo CNAB)
+
+                  08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                               (SD#791193 - AJFink)
+
   ..............................................................................*/																								
 		DECLARE
 		
@@ -5650,6 +5654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				END IF;
 
 				COMMIT;
+                npcb0002.pc_libera_sessao_sqlserver_npc('EMPR0007_1');
 				
 			ELSE
 				-- Fecha cursor
@@ -5663,6 +5668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			
 		EXCEPTION	
 		  WHEN vr_exc_saida THEN
+      begin
 				-- Se possui código de crítica e não foi informado a descrição
 				IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					 -- Busca descrição da crítica
@@ -5674,11 +5680,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				pr_dscritic := vr_dscritic;
 
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('EMPR0007_2');
+      end;
 			WHEN OTHERS THEN  				
+      begin
 				-- Atribui exceção para os parametros de crítica				
 				pr_cdcritic := vr_cdcritic;
 				pr_dscritic := 'Erro nao tratado na EMPR0007.pc_inst_baixa_boleto_epr: ' || SQLERRM;			
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('EMPR0007_3');
+      end;
 		END;						
 	END pc_inst_baixa_boleto_epr;
   

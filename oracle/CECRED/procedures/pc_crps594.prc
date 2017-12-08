@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme/Supero
-       Data    : Abril/2011                        Ultima atualizacao: 02/02/2017
+       Data    : Abril/2011                        Ultima atualizacao: 08/12/2017
 
        Dados referentes ao programa:
 
@@ -191,6 +191,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                    18/10/2017 - Alteração em relação ao padrão pc_set_modulo:
                               - Setar o parâmetro pr_module = CRPS594.nome_procedures e pr_action = NULL
                                 (Ana - Envolti - Chamado 743443)
+
+                   08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                                (SD#791193 - AJFink)
+
     ............................................................................ */
 
     DECLARE
@@ -5192,6 +5196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
       -- Salvar informacaes atualizadas
       COMMIT;
+      npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS594_1');
       
     EXCEPTION
       WHEN vr_exc_fimprg THEN
@@ -5238,6 +5243,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                  ,pr_stprogra => pr_stprogra);
         -- Efetuar commit
         COMMIT;
+        npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS594_2');
 
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas codigo
@@ -5251,6 +5257,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
         -- Efetuar rollback
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS594_3');
 
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
@@ -5261,6 +5268,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         -- Efetuar rollback
         ROLLBACK;
+        npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS594_4');
 
     END;
 
