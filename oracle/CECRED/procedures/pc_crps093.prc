@@ -1040,7 +1040,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
                      ,rw_crapass.nrdconta
                                             ,4 -- DEPOSITO - EQUIVALE HIST 110
                                             ,rw_crapsld.vlsddisp); 
-              vr_vllanmto:= rw_crapsld.vlsddisp;
+              END IF;
 
             EXCEPTION
               WHEN OTHERS THEN
@@ -1309,6 +1309,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir na tabela craplct para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
+                --Sair do programa
+                RAISE vr_exc_undo;
+            END;
+
+			-- atualizando a tabela de lotes e retornando oa valores para utilizar na próxima iteração
+            BEGIN
+              UPDATE craplot
+              SET vlinfodb = nvl(vlinfodb,0) + nvl(vr_vllanmto,0)
+                 ,vlcompdb = nvl(vlcompdb,0) + nvl(vr_vllanmto,0)
+                 ,qtinfoln = nvl(qtinfoln,0) + 1
+                 ,qtcompln = nvl(qtcompln,0) + 1
+                 ,nrseqdig = nvl(nrseqdig,0) + 1
+              WHERE craplot.ROWID = rw_craplot8006.rowid
+              RETURNING vlinfodb
+                       ,vlcompdb
+                       ,qtinfoln
+                       ,nrseqdig
+              INTO rw_craplot8006.vlinfodb
+                  ,rw_craplot8006.vlcompdb
+                  ,rw_craplot8006.qtinfoln
+                  ,rw_craplot8006.nrseqdig;
+
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar a tabela craplot para a conta ( '||rw_crapass.nrdconta||' ). '||SQLERRM;
                 --Sair do programa
                 RAISE vr_exc_undo;
             END;
