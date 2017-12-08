@@ -90,13 +90,13 @@
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
   
-               11/10/2016 - Inclusao dos campos de aviso por SMS. 
-                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
-  
 			   29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
 
-               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
-                           (Jaison/Cechet)			  
+               11/10/2016 - Inclusao dos campos de aviso por SMS. 
+                            PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
+
+              22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                           (Jaison/Cechet)
 
 			   02/01/2017 - Melhorias referentes a performance no IB na parte
 			                de cobrança, adicionado campo flprotes na temptable
@@ -214,7 +214,7 @@ DEF TEMP-TABLE tt-consulta-blt
 	FIELD vlmormul_atualizado AS DECI
 	FIELD flg2viab AS INTE
 	FIELD flprotes AS INTE
-    FIELD inavisms AS INTE
+	FIELD inavisms AS INTE
 	FIELD insmsant AS INTE
 	FIELD insmsvct AS INTE
 	FIELD insmspos AS INTE
