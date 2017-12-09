@@ -49,7 +49,7 @@
 			if (date.getMonth() < 9){
 				mes = "0" + (date.getMonth()+1).toString();
 			}else{
-				mes = (date.getMonth()+1).toString();;
+				mes = (date.getMonth()+1).toString();
 			}
 			
 			if (date.getDate() < 10){
@@ -205,7 +205,6 @@
 		
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
-		<br />
 		
                 <label for="dtultpag">Data &uacute;lt. pagto:</label>
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />

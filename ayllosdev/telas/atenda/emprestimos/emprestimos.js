@@ -1872,7 +1872,7 @@ function controlaLayout(operacao) {
 
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '265px');
+        rProposta.css('width', '265px'); 
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '137px');
