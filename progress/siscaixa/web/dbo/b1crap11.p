@@ -293,136 +293,136 @@ PROCEDURE valida-lancamento-capital:
 					   
     IF p-cod-histor = 2083 THEN
        DO:
-									 
-					
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+			
+				
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-					  /* Efetuar a chamada da rotina Oracle */
-					  RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-															  INPUT p-conta, /*Conta*/                    
-															  INPUT 3, /*Cotas*/                    															     
-															 OUTPUT ?, /*Valor do capital*/                       
-															 OUTPUT ?, /*Data de pagemento*/                        
-															 OUTPUT ?, /*Valor pago*/                        
-															 OUTPUT 0, /*Codigo da critica*/                    
-															 OUTPUT ""). /*Descricao da critica*/               
+			  /* Efetuar a chamada da rotina Oracle */
+			  RUN STORED-PROCEDURE pc_buscar_tbcota_devol
+				  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+													  INPUT p-conta, /*Conta*/                    
+													  INPUT 3, /*Cotas*/                    															     
+													 OUTPUT ?, /*Valor do capital*/                       
+													 OUTPUT ?, /*Data de pagemento*/                        
+													 OUTPUT ?, /*Valor pago*/                        
+													 OUTPUT 0, /*Codigo da critica*/                    
+													 OUTPUT ""). /*Descricao da critica*/               
 
-					  /* Fechar o procedimento para buscarmos o resultado */
-					  CLOSE STORED-PROC pc_buscar_tbcota_devol
-							 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+			  /* Fechar o procedimento para buscarmos o resultado */
+			  CLOSE STORED-PROC pc_buscar_tbcota_devol
+					 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-					  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+			  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-					  /* Busca possíveis erros */
-					  ASSIGN i-cod-erro = 0
-							 c-desc-erro = ""
-							 i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
-											WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-							 c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
-											WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-							 aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-											WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-						     aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-											WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-							 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-											WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
+			  /* Busca possíveis erros */
+			  ASSIGN i-cod-erro = 0
+					 c-desc-erro = ""
+					 i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
+									WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
+					 c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
+									WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
+					 aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
+									WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
+					 aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
+									WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
+					 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
+									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-					IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
-						DO:
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-						END.
-					ELSE 
-					IF (aux_vlcapital - aux_vlpago) = 0 THEN
-					   DO:
-					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-					   					   
-					   END.
-					
-					ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
-					       p-origem-devolucao = 1.
+			IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+				DO:
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
+				END.
+			ELSE 
+			IF (aux_vlcapital - aux_vlpago) = 0 THEN
+			   DO:
+					ASSIGN i-cod-erro  = 0
+						   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
+								   
+			   END.
+			
+			ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
+				   p-origem-devolucao = 1.
+						
+	    END.
+	ELSE If p-cod-histor = 2065 THEN
+	   DO:	         
+	        
+				
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+			
+			/* Efetuar a chamada da rotina Oracle */
+			RUN STORED-PROCEDURE pc_buscar_tbcota_devol
+				  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+													  INPUT p-conta, /*Conta*/                    
+													  INPUT 4, /*Deposito a vista*/                    															     
+													 OUTPUT ?, /*Valor do capital*/                       
+													 OUTPUT ?, /*Data de pagemento*/                        
+													 OUTPUT ?, /*Valor pago*/                        
+													 OUTPUT 0, /*Codigo da critica*/                    
+													 OUTPUT ""). /*Descricao da critica*/               
+			
+			  /* Fechar o procedimento para buscarmos o resultado */
+			  CLOSE STORED-PROC pc_buscar_tbcota_devol
+					 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			  /* Busca possíveis erros */
+			  ASSIGN i-cod-erro = 0
+					 c-desc-erro = ""
+					 i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
+									WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
+					 c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
+									WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
+					 aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
+									WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
+					 aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
+									WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
+					 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
+									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
+
+			IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+				DO:
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
 					
 				END.
-	ELSE If p-cod-histor = 2065 THEN
-	   DO:
-									 
-				
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-					
-					  /* Efetuar a chamada da rotina Oracle */
-					  RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-						  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-															  INPUT p-conta, /*Conta*/                    
-															  INPUT 4, /*Deposito a vista*/                    															     
-															 OUTPUT ?, /*Valor do capital*/                       
-															 OUTPUT ?, /*Data de pagemento*/                        
-															 OUTPUT ?, /*Valor pago*/                        
-															 OUTPUT 0, /*Codigo da critica*/                    
-															 OUTPUT ""). /*Descricao da critica*/               
-					
-					  /* Fechar o procedimento para buscarmos o resultado */
-					  CLOSE STORED-PROC pc_buscar_tbcota_devol
-							 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-					  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-					  /* Busca possíveis erros */
-					  ASSIGN i-cod-erro = 0
-							 c-desc-erro = ""
-							 i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
-											WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-							 c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
-											WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-							 aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-											WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-						     aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-											WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-							 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-											WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
-
-					IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
-						DO:
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-					
-						END.
-					ELSE 
-					IF (aux_vlcapital - aux_vlpago) = 0 THEN
-					   DO:
-					        ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-					   
-					   END.
-										
-					ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
-					       p-origem-devolucao = 1.
-					
+			ELSE 
+			IF (aux_vlcapital - aux_vlpago) = 0 THEN
+			   DO:
+					ASSIGN i-cod-erro  = 0
+						   c-desc-erro = "Valor ja pago em " + string(aux_dtinicio_credito,'99/99/9999') + ".".
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
+			   
+			   END.
+								
+			ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
+				   p-origem-devolucao = 1.
+			
 	   END.
 	 ELSE
 	    DO:
@@ -848,162 +848,122 @@ PROCEDURE grava-lancamento-boletim:
                 RETURN "NOK".
 			
 			END.
+	      
+		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+	
+		/* Efetuar a chamada da rotina Oracle */
+		RUN STORED-PROCEDURE pc_buscar_tbcota_devol
+			aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+												INPUT p-conta, /*Conta*/                    
+												INPUT 4, /*Deposito a vista*/                    															     
+												OUTPUT ?, /*Valor do capital*/                       
+												OUTPUT ?, /*Data de pagemento*/                        
+												OUTPUT ?, /*Valor pago*/                        
+												OUTPUT 0, /*Codigo da critica*/                    
+												OUTPUT ""). /*Descricao da critica*/               
+									 
+		/* Fechar o procedimento para buscarmos o resultado */
+		CLOSE STORED-PROC pc_buscar_tbcota_devol
+				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-				{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-			
-				/* Efetuar a chamada da rotina Oracle */
-				RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-					aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-														INPUT p-conta, /*Conta*/                    
-														INPUT 4, /*Deposito a vista*/                    															     
-                                    OUTPUT ?, /*Valor do capital*/                       
-                                    OUTPUT ?, /*Data de pagemento*/                        
-														OUTPUT ?, /*Valor pago*/                        
-														OUTPUT 0, /*Codigo da critica*/                    
-														OUTPUT ""). /*Descricao da critica*/               
-											 
-				/* Fechar o procedimento para buscarmos o resultado */
-				CLOSE STORED-PROC pc_buscar_tbcota_devol
-						aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-				/* Busca possíveis erros */
-					   ASSIGN i-cod-erro = 0
-						c-desc-erro = ""
-						i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
-									WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-						c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
-									WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-						aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-									WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-						aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-									WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-						aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
-
+		/* Busca possíveis erros */
+	    ASSIGN i-cod-erro = 0
+				c-desc-erro = ""
+				i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
+							WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
+				c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
+							WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
+				aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
+							WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
+				aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
+							WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
+				aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
+							WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
+             
 		IF  i-cod-erro <> 0  OR c-desc-erro <> "" THEN
-					DO:
-                IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
-                    ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
-                
-                 
-					   RUN cria-erro (INPUT p-cooper,
-									  INPUT p-cod-agencia,
-									  INPUT p-nro-caixa,
-									  INPUT i-cod-erro,
-									  INPUT c-desc-erro,
-										INPUT YES).
-					   RETURN "NOK".
-					
+			DO:
+				IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
+					ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
+			
+			 
+				RUN cria-erro (INPUT p-cooper,
+								  INPUT p-cod-agencia,
+								  INPUT p-nro-caixa,
+								  INPUT i-cod-erro,
+								  INPUT c-desc-erro,
+									INPUT YES).
+				RETURN "NOK".
+				
 			END.
 		ELSE	
-			DO:
-			    /*Origem da devolucao tbcotas_devolucao*/
+			DO:						
+				/*Origem da devolucao tbcotas_devolucao*/
 				IF p-origem-devolucao = 1 THEN 
 					DO:
-								{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+						{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-								/* Efetuar a chamada da rotina Oracle */
-								RUN STORED-PROCEDURE pc_atualizar_tbcota_devol
-									aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-																		INPUT p-conta, /*Conta*/                    
-																		INPUT 4, /*Deposito a vista*/     
-																		INPUT p-vlr-docto,              															     																             
-																		OUTPUT 0, /*Codigo da critica*/                    
-																		OUTPUT ""). /*Descricao da critica*/               
+						/* Efetuar a chamada da rotina Oracle */
+						RUN STORED-PROCEDURE pc_atualizar_tbcota_devol
+							aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+																INPUT p-conta, /*Conta*/                    
+																INPUT 4, /*Deposito a vista*/     
+																INPUT p-vlr-docto,              															     																             
+																OUTPUT 0, /*Codigo da critica*/                    
+																OUTPUT ""). /*Descricao da critica*/               
 
-								/* Fechar o procedimento para buscarmos o resultado */
-								CLOSE STORED-PROC pc_atualizar_tbcota_devol
-										aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+						/* Fechar o procedimento para buscarmos o resultado */
+						CLOSE STORED-PROC pc_atualizar_tbcota_devol
+								aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-								{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-													 
-								/* Busca possíveis erros */
-							   ASSIGN i-cod-erro = 0
-										c-desc-erro = ""
-										i-cod-erro = pc_atualizar_tbcota_devol.pr_cdcritic
-													WHEN pc_atualizar_tbcota_devol.pr_cdcritic <> ?
-										c-desc-erro = pc_atualizar_tbcota_devol.pr_dscritic
-													WHEN pc_atualizar_tbcota_devol.pr_dscritic <> ?.
+						{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+											 
+						/* Busca possíveis erros */
+						ASSIGN i-cod-erro = 0
+								c-desc-erro = ""
+								i-cod-erro = pc_atualizar_tbcota_devol.pr_cdcritic
+											WHEN pc_atualizar_tbcota_devol.pr_cdcritic <> ?
+								c-desc-erro = pc_atualizar_tbcota_devol.pr_dscritic
+											WHEN pc_atualizar_tbcota_devol.pr_dscritic <> ?.
 
-								IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
-									DO:
-							   RUN cria-erro (INPUT p-cooper,
+						IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+							DO:
+								RUN cria-erro (INPUT p-cooper,
 											  INPUT p-cod-agencia,
 											  INPUT p-nro-caixa,
 											  INPUT i-cod-erro,
 											  INPUT c-desc-erro,
 											  INPUT YES).
-							   RETURN "NOK".
+								RETURN "NOK".
 							END.
-						
+				
 
-			END.
+					END.
 	  
-				 IF crapass.inpessoa = 1 THEN
-					DO:
-                          
-						CREATE craplcm.
-						ASSIGN craplcm.cdcooper = crapcop.cdcooper
-							   craplcm.dtmvtolt = crapdat.dtmvtolt
-							   craplcm.cdagenci = p-cod-agencia
-							   craplcm.cdbccxlt  = 100
-							   craplcm.nrdolote = 600040
-									   craplcm.nrdconta = p-conta
-							   craplcm.nrdocmto = i-nro-docto
-							   craplcm.vllanmto = p-vlr-docto 
-							craplcm.cdhistor = 2063
-							craplcm.nrseqdig = aux_nrseqdig
-									   craplcm.nrdctabb = p-conta
-									   craplcm.nrdctitg = STRING(p-conta,"99999999")
-							craplcm.cdpesqbb = "CRAP54," + p-codigo
-							craplcm.nrautdoc = p-ult-sequencia.
-                          
-				END.                          
-				ELSE
-				DO:
-                          
-					CREATE craplcm.
-					ASSIGN craplcm.cdcooper = crapcop.cdcooper
-							craplcm.dtmvtolt = crapdat.dtmvtolt
-							craplcm.cdagenci = p-cod-agencia
-							craplcm.cdbccxlt  = 100
-									   craplcm.nrdolote = 600040
-									   craplcm.nrdconta = p-conta
-							craplcm.nrdocmto = i-nro-docto
-							craplcm.vllanmto = p-vlr-docto 
-							craplcm.cdhistor = 2064
-							craplcm.nrseqdig = aux_nrseqdig
-									   craplcm.nrdctabb = p-conta
-									   craplcm.nrdctitg = STRING(p-conta,"99999999")
-							craplcm.cdpesqbb = "CRAP54," + p-codigo
-							craplcm.nrautdoc = p-ult-sequencia.
-								  
-							END.
-                          
-			CREATE craplcx.
-			ASSIGN craplcx.cdcooper = crapcop.cdcooper
-					craplcx.cdagenci = p-cod-agencia
-  	 		        craplcx.nrdcaixa = p-nro-caixa
-					craplcx.cdopecxa = p-cod-operador
-					craplcx.dtmvtolt = crapdat.dtmvtolt
-					craplcx.cdhistor = 2065					         
-					   craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
-					craplcx.nrdocmto = i-nro-docto
-					craplcx.nrseqdig = aux_nrseqdig
-					craplcx.vldocmto = p-vlr-docto
-                craplcx.nrdmaqui = crapbcx.nrdmaqui
-                craplcx.nrdconta = p-conta
-				craplcx.nrautdoc = p-ult-sequencia.
-        
-	  END.
+						  
+				CREATE craplcx.
+				ASSIGN craplcx.cdcooper = crapcop.cdcooper
+						craplcx.cdagenci = p-cod-agencia
+						craplcx.nrdcaixa = p-nro-caixa
+						craplcx.cdopecxa = p-cod-operador
+						craplcx.dtmvtolt = crapdat.dtmvtolt
+						craplcx.cdhistor = 2065					         
+						craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
+						craplcx.nrdocmto = i-nro-docto
+						craplcx.nrseqdig = aux_nrseqdig
+						craplcx.vldocmto = p-vlr-docto
+						craplcx.nrdmaqui = crapbcx.nrdmaqui
+						craplcx.nrdconta = p-conta
+						craplcx.nrautdoc = p-ult-sequencia.
+				
+			END.
 			
 	  END.
 	ELSE 
 	IF p-cod-histor = 2083 THEN
 	    DO:
-			  FOR FIRST crapass FIELDS(nrdconta inpessoa) 
+			FOR FIRST crapass FIELDS(nrdconta inpessoa) 
 						  WHERE crapass.cdcooper = crapcop.cdcooper  AND
 								crapass.nrdconta = p-conta 
 								NO-LOCK:
@@ -1024,58 +984,58 @@ PROCEDURE grava-lancamento-boletim:
 					RETURN "NOK".
 				
 				END.
+		
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+			/* Efetuar a chamada da rotina Oracle */
+			RUN STORED-PROCEDURE pc_buscar_tbcota_devol
+				aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+													INPUT p-conta, /*Conta*/                    
+													INPUT 3, /*Capital*/                    															     
+													OUTPUT ?, /*Valor do capital*/                       
+													OUTPUT ?, /*Data de pagemento*/                        
+													OUTPUT ?, /*Valor pago*/                        
+													OUTPUT 0, /*Codigo da critica*/                    
+													OUTPUT ""). /*Descricao da critica*/               
 
-					/* Efetuar a chamada da rotina Oracle */
-					RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-						aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-															INPUT p-conta, /*Conta*/                    
-															INPUT 3, /*Capital*/                    															     
-                                  OUTPUT ?, /*Valor do capital*/                       
-                                  OUTPUT ?, /*Data de pagemento*/                        
-															OUTPUT ?, /*Valor pago*/                        
-															OUTPUT 0, /*Codigo da critica*/                    
-															OUTPUT ""). /*Descricao da critica*/               
+			/* Fechar o procedimento para buscarmos o resultado */
+			CLOSE STORED-PROC pc_buscar_tbcota_devol
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-					/* Fechar o procedimento para buscarmos o resultado */
-					CLOSE STORED-PROC pc_buscar_tbcota_devol
-							aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+										 
+			/* Busca possíveis erros */
+		    ASSIGN i-cod-erro = 0
+					c-desc-erro = ""
+					i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
+								WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
+					c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
+								WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
+					aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
+								WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
+					aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
+								WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
+					aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
+								WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-												 
-					/* Busca possíveis erros */
-						   ASSIGN i-cod-erro = 0
-							c-desc-erro = ""
-							i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
-										WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-							c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
-										WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-							aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-										WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-							aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-										WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-							aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-										WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
-
-              
+           
             IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
-						DO:
-              IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
-                  ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
-              
-
-				   RUN cria-erro (INPUT p-cooper,
+				DO:
+				    IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
+					    ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
+				  
+				   
+				    RUN cria-erro (INPUT p-cooper,
 								  INPUT p-cod-agencia,
 								  INPUT p-nro-caixa,
 								  INPUT i-cod-erro,
 								  INPUT c-desc-erro,
 								  INPUT YES).
-				   RETURN "NOK".
-
+				    RETURN "NOK".
+						
 				END.
-			 ELSE
-			   DO:
+			ELSE	
+				DO:
 					/*Origem da devolucao tbcotas_devolucao*/
 					IF p-origem-devolucao = 1 THEN 
 						DO:
@@ -1116,66 +1076,25 @@ PROCEDURE grava-lancamento-boletim:
 								END.
 								
 								
-							
+										  
 						END.
-                        
-							IF crapass.inpessoa = 1 THEN
-								DO:
-										  
-									CREATE craplcm.
-									ASSIGN craplcm.cdcooper = crapcop.cdcooper
-											craplcm.dtmvtolt = crapdat.dtmvtolt
-											craplcm.cdagenci = p-cod-agencia
-											craplcm.cdbccxlt  = 100
-											craplcm.nrdolote = 600042
-											craplcm.nrdconta = p-conta
-											craplcm.nrdocmto = i-nro-docto
-											craplcm.vllanmto = p-vlr-docto 
-											craplcm.cdhistor = 2081
-											craplcm.nrseqdig = aux_nrseqdig
-											craplcm.nrdctabb = p-conta
-											craplcm.nrdctitg = STRING(p-conta,"99999999")
-											craplcm.cdpesqbb = "CRAP54," + p-codigo
-											craplcm.nrautdoc = p-ult-sequencia.
-										  
-								END.                          
-							ELSE
-								DO:
-										  
-									CREATE craplcm.
-									ASSIGN craplcm.cdcooper = crapcop.cdcooper
-											craplcm.dtmvtolt = crapdat.dtmvtolt
-											craplcm.cdagenci = p-cod-agencia
-											craplcm.cdbccxlt  = 100
-											craplcm.nrdolote = 600042
-											craplcm.nrdconta = p-conta
-											craplcm.nrdocmto = i-nro-docto
-											craplcm.vllanmto = p-vlr-docto 
-											craplcm.cdhistor = 2082
-											craplcm.nrseqdig = aux_nrseqdig
-											craplcm.nrdctabb = p-conta
-											craplcm.nrdctitg = STRING(p-conta,"99999999")
-											craplcm.cdpesqbb = "CRAP54," + p-codigo
-											craplcm.nrautdoc = p-ult-sequencia.
-										  
-								END.
-                  
-							CREATE craplcx.
-							ASSIGN craplcx.cdcooper = crapcop.cdcooper
-									craplcx.cdagenci = p-cod-agencia
-                                    craplcx.nrdcaixa = p-nro-caixa
-									craplcx.cdopecxa = p-cod-operador
-									craplcx.dtmvtolt = crapdat.dtmvtolt
-									craplcx.cdhistor = 2083					         
-									craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
-									craplcx.nrdocmto = i-nro-docto
-									craplcx.nrseqdig = aux_nrseqdig
-									craplcx.vldocmto = p-vlr-docto
-              craplcx.nrdmaqui = crapbcx.nrdmaqui
-              craplcx.nrdconta = p-conta
-			  craplcx.nrautdoc = p-ult-sequencia.
+				         
+				CREATE craplcx.
+				ASSIGN craplcx.cdcooper = crapcop.cdcooper
+						craplcx.cdagenci = p-cod-agencia
+						craplcx.nrdcaixa = p-nro-caixa
+						craplcx.cdopecxa = p-cod-operador
+						craplcx.dtmvtolt = crapdat.dtmvtolt
+						craplcx.cdhistor = 2083					         
+						craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
+						craplcx.nrdocmto = i-nro-docto
+						craplcx.nrseqdig = aux_nrseqdig
+						craplcx.vldocmto = p-vlr-docto
+					    craplcx.nrdmaqui = crapbcx.nrdmaqui
+						craplcx.nrdconta = p-conta
+						craplcx.nrautdoc = p-ult-sequencia.
 				
-	  END.
+				END.
 				
 	  END.
 	ELSE
