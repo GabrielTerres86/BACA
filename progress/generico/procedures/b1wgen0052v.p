@@ -180,6 +180,8 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/b1wgen0006tt.i }
+{ sistema/generico/includes/b1wgen0009tt.i }
+
 
 
 DEF VAR aux_contador AS INTE                                        NO-UNDO.
@@ -1357,8 +1359,10 @@ PROCEDURE Produtos_Servicos_Ativos:
 	DEF VAR aux_dsdmesag AS CHAR                                    NO-UNDO.
 	DEF VAR aux_vlresapl AS DECIMAL INIT 0                          NO-UNDO.
 	DEF VAR aux_vlsrdrpp AS DECIMAL INIT 0                          NO-UNDO.
+	DEF VAR aux_vlborder AS DECIMAL INIT 0                          NO-UNDO.
 
     DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0009 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0082 AS HANDLE                                  NO-UNDO.
 	DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
@@ -1468,6 +1472,27 @@ PROCEDURE Produtos_Servicos_Ativos:
 		   END.
 
 		
+        /***************** Bordero *********************/
+      RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    
+    
+      RUN busca_borderos IN h-b1wgen0009 (INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_dtmvtolt,
+                                          INPUT FALSE,
+                                         OUTPUT TABLE tt-bordero_chq).
+                              
+      DELETE PROCEDURE h-b1wgen0009.
+    
+      FOR EACH tt-bordero_chq NO-LOCK:
+        ASSIGN aux_vlborder = aux_vlborder + tt-bordero_chq.vlcompcr.
+      END.
+	  IF aux_vlborder > 0 THEN
+        DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.nmproser = "Borderos".
+        END.	 
+		   
         /***************** Limite de Desconto de Cheques *********************/
         IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                                         craplim.nrdconta = par_nrdconta AND
