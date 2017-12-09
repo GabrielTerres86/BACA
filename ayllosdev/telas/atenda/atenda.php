@@ -415,6 +415,19 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot31" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
+																						  
+																						  <div class="bloco_full">
+
+																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
+																						     <a tabindex="39 name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <p id="valueRot32" class="txtNormal">&nbsp;</p>
+																							</div>
+																							
+																							<div class="bloco_line" onMouseOver="focoRotina(33, true);" onMouseOut="focoRotina(33, false);">
+																						     <a tabindex="40" name="40" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
+																							</div>
+																						  </div>
 																						  																
 																						</td>
 																					</tr>																			

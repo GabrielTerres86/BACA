@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 27/11/2017
+ * FONTE        : emprestimos.js                            Última alteração: 01/12/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -112,8 +112,11 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
  * 091: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
- * 092: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
- * 093: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 092: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 093: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
+ * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
+ * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
+ * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -361,6 +364,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             operacao: operacao,
             inconfir: 1,
 			executandoProdutos: executandoProdutos,
+			sitaucaoDaContaCrm: sitaucaoDaContaCrm,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -2685,7 +2689,7 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
-
+        
         // Exibe o Fieldset de GARANTIAS
         $('#' + nomeForm + ' fieldset:eq(1)').show();
 
@@ -2743,7 +2747,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-
+		
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -5279,7 +5283,7 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-
+		
 		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
@@ -5324,11 +5328,11 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-
+		
 		if (inobriga == 'N'){
-        if (!validaAnaliseProposta()) {
-            return false;
-        }
+			if (!validaAnaliseProposta()) {
+				return false;
+			}
 		}
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
@@ -6838,7 +6842,7 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-
+    
     inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
     
     // Executa script de confirmação através de ajax
@@ -8667,7 +8671,7 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,            
+            nrdconta: nrdconta,     
             dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },
@@ -9177,7 +9181,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-	arrayLargura[1] = '110px';
+	  arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';

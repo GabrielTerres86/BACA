@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Setembro/2009                Última Alteração: 21/07/2016
+	 Data : Setembro/2009                Última Alteração: 01/12/2017 
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Aplicações da   
 	             tela ATENDA                                          
@@ -31,10 +31,12 @@
                               o cadastro de aplicações com data de    
                               vencimento errada (SD - 237402)		
   						     (Adriano).	
-							  
+
 				 21/07/2016 - Inicializei a varivale $xml, tratei o retorno do XML "ERRO"
 							  consisti os indices do XML retornados. SD 479874 (Carlos R.)
 							  
+			     01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+		    
 	************************************************************************/
 	
 	session_start();
@@ -59,6 +61,7 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm']) ? $_POST['sitaucaoDaContaCrm']:'');
 	$nrdconta = $_POST["nrdconta"];
 
 	// Verifica se número da conta é um inteiro válido
@@ -139,7 +142,7 @@
 	$xmlObjBlqJud = getObjectXML($xmlResult);
 	
 	$vlbloque = $xmlObjBlqJud->roottag->tags[0]->attributes['VLBLOQUE']; 
-	
+  
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjBlqJud->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);

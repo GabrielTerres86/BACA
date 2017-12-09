@@ -20,6 +20,7 @@
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
  * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
+ * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
  */
 ?>
 
@@ -82,7 +83,16 @@
 	<a href="#" class="botao" id="btVoltar"    onclick="encerraRotina(true); return false;">Voltar</a>
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
+	<a href="#" class="botao" id="btExcluir"   onClick="controlaOperacao('TE');">Excluir</a>
+	
+	<?php if(!($sitaucaoDaContaCrm == '4' || 
+			   $sitaucaoDaContaCrm == '7' || 
+			   $sitaucaoDaContaCrm == '8'  )){?>
+
 	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	
+	<?}?>
+	
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
   <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>

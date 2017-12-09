@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 22/11/2017
+	 Data : Julho/2007                   Última Alteração: 01/12/2017
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -111,6 +111,8 @@
 				 14/11/2014 - Ajuste para controlar acesso as rotinas quando cooperado desligado (Jonata - P364)
 
 				 22/11/2017 - Ajuste para permitir apenas consulta, na rotina seguros, de acordo com a situação da conta (Jonata - RKAM p364).
+
+				 01/12/2017 - Permitir acesso a produtos para contas demitidas (Joanta - RKAM P364).
 
  * ********************************************************************************** */
 
@@ -413,7 +415,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Aplica&ccedil;&otilde;es"; 
                 $urlRotina = "aplicacoes";
                 $strValue = ( isset($valores[2]->cdata) ) ? number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "CAPITAL": {
@@ -427,7 +429,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Cart&otilde;es de Cr&eacute;dito";  
                 $urlRotina = "cartao_credito";
                 $strValue = ( isset($valores[14]->cdata) ) ? number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "CONTA INV": {
@@ -462,7 +464,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Empr&eacute;stimos";         
                 $urlRotina = "emprestimos";
                 $strValue = number_format(str_replace(",", ".", $vlemprst), 2, ",", ".");
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			case "FICHA CADASTRAL": {
@@ -504,7 +506,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 $nomeRotina = ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == 1 ) ? "Limite de Cr&eacute;dito" : "Limite Empresarial";
                 $urlRotina = "limite_credito";
                 $strValue = ( isset($valores[6]->cdata) ) ? number_format(str_replace(",", ".", $valores[6]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;		
 			}	
 			case "MAGNETICO": {
@@ -525,7 +527,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$nomeRotina = "Poupan&ccedil;a Programada"; 
                 $urlRotina = "poupanca_programada";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
-				$telaPermitadaAcessoBacen = 0;
+				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}
 			case "PRESTACOES": {
@@ -660,6 +662,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}	
+			case "VALORES A DEVOLVER": {
+				$nomeRotina = "Valores a Devolver";  
+                $urlRotina = "valores_a_devolver";
+                $strValue = ( isset($valores[21]->cdata) ) ? number_format(str_replace(",", ".", $valores[21]->cdata), 2, ",", ".") : '';
+				$telaPermitadaAcessoBacen = 1;
+				break;
+			}
 			default: {
 				$nomeRotina = "";    
                 $urlRotina = "";
@@ -684,31 +693,22 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			  solicitado pela equipe de negócio. Qualquer alteração na lógica abaixo ou com a inclusão de novo produtos
 			  na tela ATENDA, deverá ser verificado junto a área de negócio.
 			*/
-			if(($cdsitdct == '7' || 
-				 $cdsitdct == '8') && 
-				 $telaPermitadaAcessoBacen == 0 ){
+			if(($cdsitdct == '4' || 
+			    $cdsitdct == '7' || 
+				$cdsitdct == '8') && 
+				$telaPermitadaAcessoBacen == 0 ){
 				
-			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
+			    echo '$("#labelRot'.$contRotina.'").unbind("click");';
 				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
 				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
 				
-			}else if(($cdsitdct == '9' || 
-				        $cdsitdct == '9') && 
-				        $telaPermitadaAcessoBacen == 0 ){
-				
-			  echo '$("#labelRot'.$contRotina.'").unbind("click");';
-				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';
-				echo '$("#valueRot'.$contRotina.'").unbind("click");';
-				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Situa&ccedil;&atilde;o n&atilde;o permite contratar produtos ou servi&ccedil;os.", "Alerta - Ayllos", ""); });';	
-				
-      
-      }else{
+			}else{
 			
 				echo '$("#labelRot'.$contRotina.'").unbind("click");';
-			  echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
-		  	echo '$("#valueRot'.$contRotina.'").unbind("click");';
-		  	echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
+				echo '$("#labelRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';
+				echo '$("#valueRot'.$contRotina.'").unbind("click");';
+				echo '$("#valueRot'.$contRotina.'").bind("click",function() { acessaRotina("#labelRot'.$contRotina.'","'.$rotinasTela[$i].'","'.$nomeRotina.'","'.$urlRotina.'","'.$opeProdutos.'"); nmrotina = "'.$nomeRotina.'"; });';		
 				
 			}
 

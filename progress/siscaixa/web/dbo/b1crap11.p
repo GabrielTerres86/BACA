@@ -52,6 +52,9 @@
 				16/11/2017 - Ajuste para chamar rotinas oracle (Jonata - RKAM P364).
 
 				27/11/2017 - Ajuste no layout do compravante para impressao (Jonata - RKAM P364).
+
+				01/12/2017 - Retirado leituras na craplcm e craplct (Jonata - RKAM P364).
+
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -290,14 +293,7 @@ PROCEDURE valida-lancamento-capital:
 					   
     IF p-cod-histor = 2083 THEN
        DO:
-			FIND LAST craplct WHERE craplct.cdcooper = crapcop.cdcooper  AND
-								    craplct.nrdconta = p-conta           AND
-								   (craplct.cdhistor = 2079              OR
-								    craplct.cdhistor = 2080)
-								    NO-LOCK NO-ERROR. 
 									 
-			IF  NOT AVAIL craplct  THEN 
-				DO:
 					
 					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -360,45 +356,11 @@ PROCEDURE valida-lancamento-capital:
 					ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
 					       p-origem-devolucao = 1.
 					
-					
 				END.
-			ELSE
-			    DO:
-					FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-											craplcm.nrdconta = p-conta          AND
-										   (craplcm.cdhistor = 2081  			OR
-											craplcm.cdhistor = 2082)
-											NO-LOCK NO-ERROR. 
-									 
-					IF  AVAIL craplcm  THEN 
-						DO:
-							ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago.".
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-				
-				END.
-				
-				ASSIGN p-valor-capital = craplct.vllanmto.
-			
-	    END.
-				
-	    END.
 	ELSE If p-cod-histor = 2065 THEN
 	   DO:
-	        FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-								    craplcm.nrdconta = p-conta          AND
-								   (craplcm.cdhistor = 2061  			OR
-								    craplcm.cdhistor = 2062)
-									NO-LOCK NO-ERROR. 
 									 
-			IF  NOT AVAIL craplcm  THEN 
-				DO:
+				
 					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 					
 					  /* Efetuar a chamada da rotina Oracle */
@@ -432,7 +394,6 @@ PROCEDURE valida-lancamento-capital:
 							 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
 											WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-
 					IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
 						DO:
 							RUN cria-erro (INPUT p-cooper,
@@ -442,6 +403,7 @@ PROCEDURE valida-lancamento-capital:
 										   INPUT c-desc-erro,
 										   INPUT YES).
 							RETURN "NOK".
+					
 						END.
 					ELSE 
 					IF (aux_vlcapital - aux_vlpago) = 0 THEN
@@ -461,35 +423,6 @@ PROCEDURE valida-lancamento-capital:
 					ASSIGN p-valor-capital = aux_vlcapital - aux_vlpago
 					       p-origem-devolucao = 1.
 					
-					
-				END.
-			ELSE
-				DO:				
-          FIND LAST b-craplcm1 WHERE b-craplcm1.cdcooper = crapcop.cdcooper AND
-											b-craplcm1.nrdconta = p-conta          AND
-										   (b-craplcm1.cdhistor = 2063  			OR
-											b-craplcm1.cdhistor = 2064)
-											NO-LOCK NO-ERROR. 
-									 
-					IF  AVAIL b-craplcm1  THEN 
-						DO:
-							ASSIGN i-cod-erro  = 0
-								   c-desc-erro = "Valor ja pago.".
-							RUN cria-erro (INPUT p-cooper,
-										   INPUT p-cod-agencia,
-										   INPUT p-nro-caixa,
-										   INPUT i-cod-erro,
-										   INPUT c-desc-erro,
-										   INPUT YES).
-							RETURN "NOK".
-				
-				END.
-				
-				ASSIGN p-valor-capital = craplcm.vllanmto.
-			
-	   END.
-							
-			
 	   END.
 	 ELSE
 	    DO:
@@ -916,14 +849,6 @@ PROCEDURE grava-lancamento-boletim:
 			
 			END.
 
-	     FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-		                          craplcm.nrdconta = p-conta         AND
-								 (craplcm.cdhistor = 2061             OR
-								  craplcm.cdhistor = 2062)
-								  NO-LOCK NO-ERROR.
-
-		 IF NOT AVAIL craplcm THEN
-		    DO:
 				{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 			
 				/* Efetuar a chamada da rotina Oracle */
@@ -957,9 +882,7 @@ PROCEDURE grava-lancamento-boletim:
 						aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
 									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
-             END.
-             
-          IF NOT AVAIL craplcm AND (i-cod-erro <> 0  OR c-desc-erro <> "") THEN
+		IF  i-cod-erro <> 0  OR c-desc-erro <> "" THEN
 					DO:
                 IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
                     ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
@@ -970,36 +893,12 @@ PROCEDURE grava-lancamento-boletim:
 									  INPUT p-nro-caixa,
 									  INPUT i-cod-erro,
 									  INPUT c-desc-erro,
-									  INPUT YES).
+										INPUT YES).
 					   RETURN "NOK".
 					
 			END.
 		ELSE	
 			DO:
-			
-				 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-										  craplcm.nrdconta = p-conta         AND
-										 (craplcm.cdhistor = 2063             OR
-								  craplcm.cdhistor = 2064)
-								  NO-LOCK NO-ERROR.
-
-		 IF AVAIL craplcm THEN
-		    DO:
-			   ASSIGN i-cod-erro = 0
-                      c-desc-erro = "Valor ja pago em " + string(craplcm.dtmvtolt,'99/99/9999').
-
-               RUN cria-erro (INPUT p-cooper,
-                              INPUT p-cod-agencia,
-                              INPUT p-nro-caixa,
-                              INPUT i-cod-erro,
-                              INPUT c-desc-erro,
-                              INPUT YES).
-
-               RETURN "NOK".
-
-			END.
-	     ELSE
-		    DO:
 			    /*Origem da devolucao tbcotas_devolucao*/
 				IF p-origem-devolucao = 1 THEN 
 					DO:
@@ -1041,8 +940,7 @@ PROCEDURE grava-lancamento-boletim:
 						
 
 			END.
-	     ELSE
-		    DO:
+	  
 				 IF crapass.inpessoa = 1 THEN
 					DO:
                           
@@ -1084,11 +982,6 @@ PROCEDURE grava-lancamento-boletim:
 								  
 							END.
                           
-				END.
-
-	                END.
-			      END.
-      
 			CREATE craplcx.
 			ASSIGN craplcx.cdcooper = crapcop.cdcooper
 					craplcx.cdagenci = p-cod-agencia
@@ -1105,11 +998,11 @@ PROCEDURE grava-lancamento-boletim:
 				craplcx.nrautdoc = p-ult-sequencia.
         
 	  END.
+			
+	  END.
 	ELSE 
 	IF p-cod-histor = 2083 THEN
 	    DO:
-      
-      
 			  FOR FIRST crapass FIELDS(nrdconta inpessoa) 
 						  WHERE crapass.cdcooper = crapcop.cdcooper  AND
 								crapass.nrdconta = p-conta 
@@ -1132,15 +1025,6 @@ PROCEDURE grava-lancamento-boletim:
 				
 				END.
 
-        FIND LAST craplct WHERE craplct.cdcooper = crapcop.cdcooper  AND
-                                craplct.nrdconta = p-conta           AND
-                               (craplct.cdhistor = 2079              OR
-                                craplct.cdhistor = 2080)
-								     NO-LOCK NO-ERROR.
-
-			  IF NOT AVAIL craplct THEN
-				DO:
-				
 					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 					/* Efetuar a chamada da rotina Oracle */
@@ -1175,37 +1059,11 @@ PROCEDURE grava-lancamento-boletim:
 										WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
 
               
-
-           END.
-           
-       IF NOT AVAIL craplct AND (i-cod-erro <> 0  OR c-desc-erro <> "") THEN
+            IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
 						DO:
               IF i-cod-erro = 0  AND  c-desc-erro = "" THEN
                   ASSIGN c-desc-erro = "Lancamento nao encontrado.".  
               
-               
-						   RUN cria-erro (INPUT p-cooper,
-										  INPUT p-cod-agencia,
-										  INPUT p-nro-caixa,
-										  INPUT i-cod-erro,
-										  INPUT c-desc-erro,
-										  INPUT YES).
-						   RETURN "NOK".
-						
-				END.
-			ELSE	
-				DO:
-				
-					 FIND LAST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-											 craplcm.nrdconta = p-conta          AND
-											(craplcm.cdhistor = 2081             OR
-											 craplcm.cdhistor = 2082             )
-											 NO-LOCK NO-ERROR.
-
-			 IF AVAIL craplcm THEN
-				DO:
-				   ASSIGN i-cod-erro = 0
-						  c-desc-erro = "Valor ja pago em " + string(craplcm.dtmvtolt,'99/99/9999').
 
 				   RUN cria-erro (INPUT p-cooper,
 								  INPUT p-cod-agencia,
@@ -1213,7 +1071,6 @@ PROCEDURE grava-lancamento-boletim:
 								  INPUT i-cod-erro,
 								  INPUT c-desc-erro,
 								  INPUT YES).
-
 				   RETURN "NOK".
 
 				END.
@@ -1222,8 +1079,6 @@ PROCEDURE grava-lancamento-boletim:
 					/*Origem da devolucao tbcotas_devolucao*/
 					IF p-origem-devolucao = 1 THEN 
 						DO:
-                          
-                        
 							{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 							/* Efetuar a chamada da rotina Oracle */
@@ -1263,8 +1118,6 @@ PROCEDURE grava-lancamento-boletim:
 								
 							
 						END.
-					ELSE
-						DO:
                         
 							IF crapass.inpessoa = 1 THEN
 								DO:
@@ -1306,17 +1159,7 @@ PROCEDURE grava-lancamento-boletim:
 											craplcm.nrautdoc = p-ult-sequencia.
 										  
 								END.
-
-                          
-
-									
-						          END.
-					
-                 END.
-						
-				   END.
                   
-        
 							CREATE craplcx.
 							ASSIGN craplcx.cdcooper = crapcop.cdcooper
 									craplcx.cdagenci = p-cod-agencia
@@ -1331,6 +1174,8 @@ PROCEDURE grava-lancamento-boletim:
               craplcx.nrdmaqui = crapbcx.nrdmaqui
               craplcx.nrdconta = p-conta
 			  craplcx.nrautdoc = p-ult-sequencia.
+				
+	  END.
 				
 	  END.
 	ELSE

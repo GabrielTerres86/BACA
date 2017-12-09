@@ -39,6 +39,7 @@
  * 028: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 
  */
 
@@ -83,6 +84,7 @@
 	$qtdialib = (isset($_POST['qtdialib'])) ? $_POST['qtdialib'] : 0;
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : 0;
 	$executandoProdutos = $_POST['executandoProdutos'];
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
 	$dateArray = explode("/", $glbvars["dtmvtolt"]);
 	
