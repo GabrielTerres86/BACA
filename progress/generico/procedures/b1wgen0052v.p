@@ -1463,7 +1463,7 @@ PROCEDURE Produtos_Servicos_Ativos:
 		        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
 				CREATE tt-prod_serv_ativos.
 				ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
-					   tt-prod_serv_ativos.nmproser = "Poupanca Programada".
+					   tt-prod_serv_ativos.nmproser = "Resgate da Poupanca Programada".
 
 		   END.
 
