@@ -6935,8 +6935,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            ,pr_cdcritic         => vr_cdcritic
                            ,pr_dscritic         => vr_dscritic);                             
     
-    
-    
+     
+                                  
     vr_vldevolver := nvl(vr_vlcapital,0) - nvl(vr_vlpago,0);
     
     vr_vlcapital:= 0;
@@ -7350,7 +7350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '</Registro>');                                               
-                                                                     
+
                                                                      
       END LOOP;                                                      
       pc_escreve_xml ('</Valores>');                                 
@@ -11997,6 +11997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                     
   END pc_ib_verif_atualiz_fone;
 
+
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
 																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
@@ -12021,7 +12022,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     OPEN cr_tbcotas_devolucao;
 		FETCH cr_tbcotas_devolucao
      INTO rw_tbcotas_devolucao;
-		CLOSE cr_tbcotas_devolucao;
 
     IF cr_tbcotas_devolucao%NOTFOUND THEN
       pr_cdcritic         := 0;
@@ -12093,7 +12093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        and NRDCONTA    = pr_nrdconta
        and TPDEVOLUCAO = pr_tpdevolucao;
     rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
-
+        
     -- Variáveis
     vr_cdcooper    NUMBER;
     vr_nmdatela    VARCHAR2(25);
