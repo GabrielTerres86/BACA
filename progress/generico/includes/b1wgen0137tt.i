@@ -69,7 +69,10 @@ DEF TEMP-TABLE tt-documento-digitalizado NO-UNDO
     INDEX tt-documento-digitalizado1
           AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
     INDEX tt-documento-digitalizado2 flgencon
-    INDEX tt-documento-digitalizado3 cdcooper nrdconta.
+    INDEX tt-documento-digitalizado3 cdcooper nrdconta
+    INDEX tt-documento-digitalizado4 cdcooper nrcpfcgc
+    INDEX tt-documento-digitalizado5 cdcooper nrdconta nrcpfcgc.
+    
 
 DEF TEMP-TABLE tt-contr_ndigi                                           NO-UNDO
     FIELD cdcooper AS INT
@@ -114,7 +117,8 @@ DEF TEMP-TABLE tt-contr_ndigi_cadastro                                  NO-UNDO
     FIELD tpctrdig AS INT
     FIELD nrcpfcgc AS DECI
     INDEX tt-contr_ndigi_cadastro1 AS PRIMARY cdcooper nrdconta dtmvtolt
-    INDEX tt-contr_ndigi_cadastro2 cdcooper nrdconta dtmvtolt cdagenci tpctrdig.
+    INDEX tt-contr_ndigi_cadastro2 cdcooper nrdconta dtmvtolt cdagenci tpctrdig
+    INDEX tt-contr_ndigi_cadastro3 cdcooper dtmvtolt nrdconta nrcpfcgc cdagenci tpctrdig.
 
 DEF  TEMP-TABLE tt-documentos                                           NO-UNDO
      FIELD nmoperac AS CHAR
