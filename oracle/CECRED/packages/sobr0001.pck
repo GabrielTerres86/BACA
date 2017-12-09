@@ -115,6 +115,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
     TABLE OF typ_reg_crrl048
       INDEX BY PLS_INTEGER;    
 
+
+  PROCEDURE atualiza_tbcotas(pr_cdcooper    IN tbcotas_devolucao.cdcooper%TYPE
+                            ,pr_nrdconta    IN tbcotas_devolucao.nrdconta%TYPE
+                            ,pr_tpdevolucao IN tbcotas_devolucao.tpdevolucao%TYPE 
+                            ,pr_vlcapital   IN tbcotas_devolucao.vlcapital%TYPE
+                            ,pr_cdcritic    OUT crapcri.cdcritic%TYPE
+                            ,pr_dscritic    OUT VARCHAR2) IS
+  BEGIN
+     pr_cdcritic := null;
+     pr_dscritic := null;
+
+     UPDATE tbcotas_devolucao
+        SET vlcapital   = vlcapital + nvl(pr_vlcapital,0)
+      WHERE cdcooper    = pr_cdcooper
+        AND nrdconta    = pr_nrdconta
+        AND tpdevolucao = pr_tpdevolucao; -- 3 CAPITAL e 4 DEPOSITO
+     IF SQL%ROWCOUNT = 0 THEN
+       INSERT INTO tbcotas_devolucao (cdcooper,
+                                      nrdconta, 
+                                      tpdevolucao,
+                                      vlcapital)
+                              VALUES (pr_cdcooper
+                                     ,pr_nrdconta
+                                     ,pr_tpdevolucao -- 3 CAPITAL e 4 DEPOSITO
+                                     ,nvl(pr_vlcapital,0)); 
+     END IF;
+  EXCEPTION
+    WHEN OTHERS THEN
+       pr_cdcritic := 0;
+       pr_dscritic := 'Erro ao inserir na tabela tbcotas_devolucao para a conta ( '||pr_nrdconta||' ). '||SQLERRM;
+  END atualiza_tbcotas;
+
   -- Procedure para calculo e credito do retorno de sobras e juros sobre o capital. Emissao do relatorio CRRL043
   PROCEDURE pc_calculo_retorno_sobras(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE   --> Programa chamador
@@ -1713,6 +1745,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                     vr_dscritic := 'Erro insert da CRAPLCT (4): '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                  ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,3
+                                  ,vr_tab_crrl048(vr_indice).vlretcrd_cot
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
+
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1759,6 +1803,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                     vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,4
+                                    ,vr_tab_crrl048(vr_indice).vlretcrd_cta
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;
+
                 -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1813,6 +1869,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,3
+                                    ,vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;
+
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1859,6 +1927,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,4
+                                    ,vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1911,6 +1990,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                  ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,3
+                                  ,vr_tab_crrl048(vr_indice).vljursdm_cot
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
+
                   -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1957,6 +2048,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                 ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,4
+                                  ,vr_tab_crrl048(vr_indice).vljursdm_cta
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
                   -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2008,6 +2110,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                  ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,3
+                                  ,vr_tab_crrl048(vr_indice).vljurapl_cot
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
+
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2054,6 +2168,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                 ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,4
+                                  ,vr_tab_crrl048(vr_indice).vljurapl_cta
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
                   -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2103,6 +2228,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 vr_dscritic := 'Erro insert da CRAPLCT (5): '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                  ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,3
+                                  ,vr_tab_crrl048(vr_indice).vljurcap
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
+
 
                 -- Atualiza o valor das cotas na conta
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurcap;
@@ -2150,6 +2287,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  atualiza_tbcotas(pr_cdcooper
+                                  ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,3
+                                  ,vr_tab_crrl048(vr_indice).vldeirrf
+                                  ,vr_cdcritic
+                                  ,vr_dscritic);
+                  IF vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
 
                 -- Atualiza o valor das cotas na conta
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas - vr_tab_crrl048(vr_indice).vldeirrf;
@@ -2199,6 +2347,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro insert da CRAPLCT (5): '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                atualiza_tbcotas(pr_cdcooper
+                                ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,3
+                                ,vr_tab_crrl048(vr_indice).vljurtar_cot
+                                ,vr_cdcritic
+                                ,vr_dscritic);
+                IF vr_cdcritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
+              END IF;
+
               -- Incrementar sequencia no lote e quantidades
               rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2245,6 +2405,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                atualiza_tbcotas(pr_cdcooper
+                               ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,4
+                                ,vr_tab_crrl048(vr_indice).vljurtar_cta
+                                ,vr_cdcritic
+                                ,vr_dscritic);
+                IF vr_cdcritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
+              END IF;
               -- Incrementar sequencia no lote e quantidades
               rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2294,6 +2465,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                atualiza_tbcotas(pr_cdcooper
+                                ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,3
+                                ,vr_tab_crrl048(vr_indice).vljuraut_cot
+                                ,vr_cdcritic
+                                ,vr_dscritic);
+                IF vr_cdcritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
+              END IF;
+
               -- Incrementar sequencia no lote e quantidades
               rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2341,6 +2524,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                atualiza_tbcotas(pr_cdcooper
+                                ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,4
+                                ,vr_tab_crrl048(vr_indice).vljuraut_cta
+                                ,vr_cdcritic
+                                ,vr_dscritic);
+                IF vr_cdcritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
+              END IF;
+
               -- Incrementar sequencia no lote e quantidades
               rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
