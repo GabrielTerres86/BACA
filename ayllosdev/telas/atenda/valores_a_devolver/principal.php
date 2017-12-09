@@ -3,11 +3,11 @@
 	/****************************************************************
 	 Fonte: principal.php                                            
 	 Autor: Jonta - RKAM                                                    
-	 Data : Dezembro/2017                 Última Alteração:  
+	 Data : Dezembro/2017                 Última Alteração: 05/12/2017 
 	                                                                 
 	 Objetivo  : Mostrar opcao Principal da rotina de Valores a Devolver da tela ATENDA                                   
 	                                                                 
-	 Alter.:  
+	 Alter.:  05/12/2017 - Retirado tratamento para format de valor (Jonata - RKAM P364).
 																   	 
 	*****************************************************************/
 	
@@ -63,12 +63,12 @@
 <form name="frmValoresDevolver" id="frmValoresDevolver" class="formulario">
 
 	<label for="vlcapital">Capital:</label>
-	<input name="vlcapital" id="vlcapital" type="text" value="<?php echo number_format(str_replace(",",".",$cotas[0]->cdata),2,",","."); ?>" />
+	<input name="vlcapital" id="vlcapital" type="text" value="<?php echo $cotas[0]->cdata; ?>" />
 	
 	<br style="clear:both" />
 	
 	<label for="vldeposito"><? echo utf8ToHtml('Depósito à Vista:') ?></label>
-	<input name="vldeposito" id="vldeposito" type="text" value="<?php echo number_format(str_replace(",",".",$deposito[0]->cdata),2,",","."); ?>" />
+	<input name="vldeposito" id="vldeposito" type="text" value="<?php echo $deposito[0]->cdata; ?>" />
 		
 	<br style="clear:both" />
 		

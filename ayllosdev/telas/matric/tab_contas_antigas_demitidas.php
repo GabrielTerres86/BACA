@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : tab_contas_antigas_demitidas.php						Última alteração:  
+ * FONTE        : tab_contas_antigas_demitidas.php						Última alteração: 05/12/2017  
  * CRIAÇÃO      : Jonata - RKAM
  * DATA CRIAÇÃO : Novembro/2017
  * OBJETIVO     : Tabela que apresenta as contas antigas demitidas da opção "H" da tela MATRIC
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 05/12/2017 - Retirado tratamento para format de valor (Jonata - RKAM P364).
                     
  * --------------
  */ 
@@ -51,7 +51,7 @@
 							
 							<td><span><? echo formataContaDV(getByTagName($registros[$i]->tags,'nrdconta')); ?></span><? echo formataContaDV(getByTagName($registros[$i]->tags,'nrdconta')); ?>
 							<td><span><? echo getByTagName($registros[$i]->tags,'nmprimtl'); ?></span> <? echo getByTagName($registros[$i]->tags,'nmprimtl'); ?> </td>
-							<td><span><?php echo str_replace(",",".",getByTagName($registros[$i]->tags,'vlcapital')); ?></span><?php echo number_format(str_replace(",",".",getByTagName($registros[$i]->tags,'vlcapital')),2,",","."); ?>
+							<td><span><? echo getByTagName($registros[$i]->tags,'vlcapital'); ?></span><? echo getByTagName($registros[$i]->tags,'vlcapital'); ?>
 							<td><span><? echo getByTagName($registros[$i]->tags,'dscdevolucao'); ?></span> <? echo getByTagName($registros[$i]->tags,'dscdevolucao'); ?> </td>
 							<td><input type="checkbox" name="conta<?php echo $i;?>" id="conta<?php echo $i;?>" onchange="selecionaContas('<?php echo $i;?>','2');" ></td>
 							
