@@ -153,7 +153,8 @@
 		<li>Dt.Resg:</li>
 		<li id="tdDtResg"></li>
 		<li id="VlBloq" class="txtNormalBold" align="left" >Valor Bloq. Judicial:</li>
-		<li id="VlBloq"><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></li>	
+		<li id="VlBloq"><? echo number_format(str_replace(",",".", $vlbloque),2,",","."); ?></li>
+		<li id="VlSldCntInvest" style="display: none;"><? echo number_format(str_replace(",",".", $vlsldinv),2,",","."); ?></li>		
 		<li>Numero da Aplicacao:</li>
 		<li id="tdNrApl"></li>	
 	</ul>
