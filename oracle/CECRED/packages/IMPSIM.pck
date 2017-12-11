@@ -414,7 +414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMPSIM AS
 								INNER JOIN crapass a
 								ON a.cdcooper = j.cdcooper
 									 AND a.nrdconta = j.nrdconta
-								WHERE a.inpessoa >= 2
+								WHERE a.inpessoa >= 2 AND a.dtdemiss IS NULL
 								ORDER BY j.cdcooper, a.nrcpfcgc, j.nrdconta;
 				
 						r_crapjur cr_crapjur%ROWTYPE;
