@@ -232,6 +232,12 @@ BEGIN
 
                  02/08/2017 - Inclusão parâmetros nas mensagens de erro de insert e update
                             - Chamado 709894 (Ana Volles - Envolti)
+
+                 21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                              (Ana - Envolti - Chamado 746134)
+
+				 16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
+							  (Mauricio - Mouts)
   ............................................................................................*/
   
   DECLARE
@@ -372,7 +378,8 @@ BEGIN
                                  ,'CAPTACAO'
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
-                                 ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
+                                 ,'ADIOFJUROS'
+                                 ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
        ORDER BY lau.cdagenci
                ,lau.cdbccxlt
@@ -2092,18 +2099,23 @@ BEGIN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
 
-      -- ENVIO CENTRALIZADO DE LOG DE ERRO
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- ERRO TRATADO
-                    					  ,pr_cdprograma   => vr_cdprogra
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '||vr_cdprogra||' --> '|| 
-                                                    'ERRO: '|| vr_dscritic ||
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||vr_dscritic ||
                                                    '. Cdcooper=' || pr_cdcooper ||
-                                                   ' ,Flgresta=' || pr_flgresta ||
-                                                   ' ,Stprogra=' || pr_stprogra ||
-                                                   ' ,Infimsol=' || pr_infimsol );
+                             ','||vr_dsparam;
 
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL,
+                             pr_idprglog      => vr_idprglog);
 
       -- CHAMAMOS A FIMPRG PARA ENCERRARMOS O PROCESSO SEM PARAR A CADEIA
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
@@ -2137,7 +2149,7 @@ BEGIN
                              pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                              pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                             pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                             pr_nmarqlog      => NULL,
                              pr_idprglog      => vr_idprglog);
 
       -- EFETUAR ROLLBACK
@@ -2164,7 +2176,7 @@ BEGIN
                              pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
                              pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                             pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                             pr_nmarqlog      => NULL,
                              pr_idprglog      => vr_idprglog);
 
       --Inclusão na tabela de erros Oracle - Chamado 709894
