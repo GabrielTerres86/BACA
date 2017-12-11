@@ -1097,6 +1097,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                   11/09/2017 - Incluido substr na busca do campo bairro, limitando em 30 posicoes
                                pois o campo na CRAPENC e maior que o campo na CRAPSAB
                                Heitor (Mouts) - Chamado 752022
+
+			      11/12/2017 - Limitar o campo de complemento em 40 posicoes, devido ao tamanho do campo
+				               na tabela CRAPSAB.
+                               Marcelo Coelho (Mouts) - Chamado 785483
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1114,7 +1119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
              enc.nrcepend,
              enc.nmcidade,
              enc.nrendere,
-             enc.complend,
+             substr(enc.complend,1,40) complend,
              enc.cdufende,
              ass.cdcooper
                        
@@ -1586,7 +1591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
     WHEN OTHERS THEN
       pr_cdcritic := 993;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
       pr_dscritic := vr_dscritic;      
       pr_dsdetcri := SQLERRM; 
 	  pc_internal_exception(vr_cdcooper);
