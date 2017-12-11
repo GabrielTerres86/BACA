@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 22/11/2017
+    Data      : Abril/2012                      Ultima Atualizacao: 11/12/2017
     
     Dados referentes ao programa:
 
@@ -297,17 +297,17 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				             Melhoria 310 (Tiago/Thiago).
+	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				                     Melhoria 310 (Tiago/Thiago).
 
-			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
+			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
                 
                 09/06/2017 - Ajuste na rotina retorna_docs_liberados para nao gerar pendencia 
                              para borderos efetuados no IB e com valor menor ou igual a 5 mil.
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
-			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
                      
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
@@ -315,6 +315,8 @@
                      
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
+                             
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
                      
 .............................................................................*/
 
