@@ -16,7 +16,9 @@
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
  *                 09/10/2017 - Tratamento para remover caracteres especiais do campo Justificativa (Andrey - Mouts) - Chamado 749679
- *                 11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
+ *   			   11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
+ *                 05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
+ *                             (Mateus Z - Mouts) 
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -58,11 +60,11 @@
 		<input name="nmresemp" id="nmresemp" type="text" value="<?php echo getByTagName($comercial,'nmresemp') ?>" />
 		<br />
 		
+		<label for="nrcpfemp">C.N.P.J.:</label>
+		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa()" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
+		
 		<label for="nmextemp">Nome Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<?php echo getByTagName($comercial,'nmextemp') ?>" />		
-		
-		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
 		<br />
 		 				
 		<label for="dsproftl"><?php echo utf8ToHtml('Cargo:') ?></label>

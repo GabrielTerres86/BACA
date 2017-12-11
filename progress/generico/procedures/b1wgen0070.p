@@ -1032,6 +1032,10 @@ PROCEDURE gerenciar-telefone:
         /* Realiza a replicacao dos dados p/as contas relacionadas ao coop. */
         IF  par_idseqttl = 1 AND par_nmdatela = "CONTAS" THEN 
             DO:
+               /* Nao é necessario realizar a replicaçao, 
+                  as rotinas de cadastro irao realizar para todos os cadastros que 
+                  possuam o mesmo CPF.
+                  
                IF  NOT VALID-HANDLE(h-b1wgen0077) THEN
                    RUN sistema/generico/procedures/b1wgen0077.p 
                         PERSISTENT SET h-b1wgen0077.
@@ -1057,7 +1061,7 @@ PROCEDURE gerenciar-telefone:
 
                IF  RETURN-VALUE <> "OK" THEN
                    UNDO TRANS_FONE, LEAVE TRANS_FONE.
-
+               */
                FIND FIRST bcrapttl WHERE bcrapttl.cdcooper = par_cdcooper AND
                                          bcrapttl.nrdconta = par_nrdconta AND
                                          bcrapttl.idseqttl = par_idseqttl
