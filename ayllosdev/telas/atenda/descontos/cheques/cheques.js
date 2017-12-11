@@ -176,9 +176,6 @@ function abrirTelaGAROPC(cddopcao) {
 
     showMsgAguardo('Aguarde, carregando ...');
 
-    //exibeRotina($('#divUsoGAROPC'));
-
-    debugger;
     var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
     var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
     var vlropera = $('#vllimite','#'+nomeForm).val();
@@ -210,7 +207,6 @@ function abrirTelaGAROPC(cddopcao) {
         },
         success: function (response) {
             hideMsgAguardo();
-            debugger;
             // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
             $('#divUsoGAROPC').html(response).hide();
             // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
