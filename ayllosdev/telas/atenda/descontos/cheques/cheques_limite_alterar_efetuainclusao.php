@@ -8,6 +8,7 @@
  * ALTERAÇÕES   :
  * --------------
  * 001: [06/05/2011] Rogerius Militao      (DB1) : Adaptação no formulário de avalista genérico
+ * 002: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  */
 ?>
 
@@ -30,7 +31,7 @@
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
-                    "redirect");
+                    "redirect", "idcobope");
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
@@ -92,7 +93,8 @@
 	$emailav2 = $_POST["emailav2"];	
 	$nrender2 = $_POST['nrender2'];	
 	$complen2 = $_POST['complen2'];	
-	$nrcxaps2 = $_POST['nrcxaps2'];	
+	$nrcxaps2 = $_POST['nrcxaps2'];
+  $idcobope = $_POST['idcobope'];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -216,6 +218,7 @@
 	$xmlSetDadosLimIncluir .= "		<nrender2>".$nrender2."</nrender2>";
 	$xmlSetDadosLimIncluir .= "		<complen2>".$complen2."</complen2>";
 	$xmlSetDadosLimIncluir .= "		<nrcxaps2>".$nrcxaps2."</nrcxaps2>";	
+  $xmlSetDadosLimIncluir .= "		<idcobope>".$idcobope."</idcobope>";
 	$xmlSetDadosLimIncluir .= "	</Dados>";
 	$xmlSetDadosLimIncluir .= "</Root>";
 	

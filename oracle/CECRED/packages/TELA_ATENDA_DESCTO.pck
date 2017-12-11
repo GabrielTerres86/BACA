@@ -12,6 +12,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
   --
   -- Alteracoes: 
   --
+  --       11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+  --
   ---------------------------------------------------------------------------
   
   PROCEDURE pc_ren_lim_desc_cheque_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -471,6 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
               ,qtrenova
               ,nrctaav1
               ,nrctaav2
+              ,idcobope
           FROM craplim
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta 
@@ -913,6 +916,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
             RAISE vr_exc_saida;
         END;
         
+        -- Efetuar o bloqueio de possíveis coberturas vinculadas ao limite anterior
+        BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_nmdatela => 'ATENDA'
+                                             ,pr_idcobertura => rw_craplim_ctr.idcobope
+                                             ,pr_inbloq_desbloq => 'B'
+                                             ,pr_cdoperador => vr_cdoperad
+                                             ,pr_flgerar_log => 'S'
+                                             ,pr_dscritic => vr_dscritic);
+       
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+ 
         -- Verifica se ja existe contrato microfilmado
         OPEN cr_crapmcr (pr_cdcooper => vr_cdcooper
                         ,pr_nrdconta => rw_craplim_ctr.nrdconta

@@ -21,6 +21,8 @@
 			      17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
 
 				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC". PRJ300 (Lombardi)
+          
+          11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
 	************************************************************************/
 	
@@ -117,7 +119,14 @@
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
-						<td><? echo $limites[$i]->tags[0]->cdata; ?></td>
+						<td>
+              <?php
+              // Vamos salvar o numero do contrato ativo para usar na tela de garantia
+              if ($limites[$i]->tags[10]->cdata == 2) {
+                echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$limites[$i]->tags[3]->cdata.'"/>';
+              }
+              echo $limites[$i]->tags[0]->cdata; ?>
+            </td>
 						
 						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
 						

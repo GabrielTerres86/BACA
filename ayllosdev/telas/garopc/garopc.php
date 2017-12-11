@@ -211,7 +211,7 @@
                                                 if ($gar_nmdatela == 'ADITIV' && $gar_tipaber == 'C') {
                                                     ?><a href="#" class="botao" id="btImprimir" onClick="Gera_Impressao(); return false;">Imprimir</a><?php
                                                 } else {
-                                                    ?><a href="#" class="botao" id="btConfirmar" onClick="gravarGAROPC('<?php echo $ret_nomcampo; ?>','<?php echo $ret_nomformu; ?>','<?php echo $ret_execfunc; ?>');">Continuar</a><?php
+                                                    ?><a href="#" class="botao" id="btConfirmar" onClick="gravarGAROPC('<?php echo $ret_nomcampo; ?>','<?php echo $ret_nomformu; ?>','<?php echo $ret_execfunc; ?>', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');">Continuar</a><?php
                                                 }
                                             ?>
                                         </div>

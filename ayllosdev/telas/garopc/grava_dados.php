@@ -40,6 +40,7 @@
     $ret_nomcampo = (isset($_POST['ret_nomcampo'])) ? $_POST['ret_nomcampo'] : '';
     $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
+    $err_execfunc = (isset($_POST['err_execfunc'])) ? $_POST['err_execfunc'] : '';
 
     $xml  = "";
     $xml .= "<Root>";
@@ -72,7 +73,8 @@
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-        exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo($(\'#divUsoGAROPC\'))', false);
+        //exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo($(\'#divUsoGAROPC\'))', false);
+        exibirErro('error',$msgErro,'Alerta - Ayllos', $err_execfunc, false);
     }
 
     $registros = $xmlObject->roottag->tags[0];

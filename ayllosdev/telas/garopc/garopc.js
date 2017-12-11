@@ -243,7 +243,7 @@ function mostraImagemGAROPC(gar_invalida) {
     $('#imgGAROPC', '#frmGAROPC').attr('title', gar_altimage);
 }
  
-function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc) {
+function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_err_execfunc) {
 
     var gar_nmdatela = $('#gar_nmdatela', '#frmGAROPC').val();
     var gar_idcobert = normalizaNumero($('#gar_idcobert', '#frmGAROPC').val());
@@ -289,6 +289,7 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc) {
             ret_nomcampo : gar_ret_nomcampo,
             ret_nomformu : gar_ret_nomformu,
             ret_execfunc : gar_ret_execfunc,
+            err_execfunc : gar_err_execfunc,
             redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

@@ -22,6 +22,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                           (ID + Nome) pois estava estourando a variavel.
   --                           Heitor (Mouts) - Chamado 695581
   --
+  --             11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+  --
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
@@ -84,7 +86,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nrpatlvr craplim.nrpatlvr%TYPE,
                   vltotsfn craplim.vltotsfn%TYPE,
                   nrperger craplim.nrperger%TYPE,
-                  perfatcl crapjfn.perfatcl%TYPE);
+                  perfatcl crapjfn.perfatcl%TYPE,
+                  idcobope craplim.idcobope%TYPE);
               
   TYPE typ_tab_dados_limite IS TABLE OF typ_rec_dados_limite       
        INDEX BY PLS_INTEGER;
@@ -1449,7 +1452,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              lim.insitlim,
              lim.dtcancel,
              lim.flgdigit,
-             lim.nrperger
+             lim.nrperger,
+             lim.idcobope
         FROM craplim lim
        WHERE lim.cdcooper = pr_cdcooper
          AND lim.nrdconta = pr_nrdconta
@@ -1681,6 +1685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_tab_dados_limite(vr_idxdados).nrperger := rw_craplim.nrperger;
     --> Faturamento unico cliente - Pessoa Juridica 
     vr_tab_dados_limite(vr_idxdados).perfatcl := rw_crapjfn.perfatcl;
+    vr_tab_dados_limite(vr_idxdados).idcobope := rw_craplim.idcobope;
            
     pr_tab_dados_limite  := vr_tab_dados_limite;
     pr_tab_dados_dsctit        := vr_tab_dados_dsctit;

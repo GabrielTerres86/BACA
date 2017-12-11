@@ -9,6 +9,7 @@
  * --------------
  * 000: [08/06/2010] David           (CECRED) : Adaptação para RATING
  * 001: [06/05/2011] Rogérius Militão   (DB1) : Adaptação no formulário de avalista genérico
+ * 002: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
  */
 ?>
 
@@ -32,7 +33,7 @@
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
-					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl",
+					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl","idcobope",
 					"redirect");
 
 	foreach ($params as $nomeParam) {
@@ -101,8 +102,9 @@
 	$nrliquid = $_POST["nrliquid"];
 	$nrpatlvr = $_POST["nrpatlvr"];
 	$nrperger = $_POST["nrperger"];	
-	$vltotsfn = $_POST["vltotsfn"];	
+	$vltotsfn = $_POST["vltotsfn"];
 	$perfatcl = $_POST["perfatcl"];
+  $idcobope = $_POST["idcobope"];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -268,6 +270,7 @@
 	$xmlSetDadosLimIncluir .= "		<nrperger>".$nrperger."</nrperger>";	
 	$xmlSetDadosLimIncluir .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetDadosLimIncluir .= "		<perfatcl>".$perfatcl."</perfatcl>";
+  $xmlSetDadosLimIncluir .= "		<idcobope>".$idcobope."</idcobope>";
 	$xmlSetDadosLimIncluir .= "	</Dados>";
 	$xmlSetDadosLimIncluir .= "</Root>";
 	

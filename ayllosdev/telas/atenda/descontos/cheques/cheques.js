@@ -32,6 +32,7 @@
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  * 017: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
+ * 013: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -169,6 +170,58 @@ function mostraDadosBorderoDscChq(opcaomostra) {
 			$("#divOpcoesDaOpcao3").html(response);
 		}
 	});
+}
+
+function abrirTelaGAROPC(cddopcao) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    //exibeRotina($('#divUsoGAROPC'));
+
+    debugger;
+    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
+    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
+    var vlropera = $('#vllimite','#'+nomeForm).val();
+    
+    var nrctrlim = '';
+    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
+    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
+      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
+    }
+  
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            tipaber      : cddopcao,
+            idcobert     : idcobert,
+            nrdconta     : nrdconta,
+            tpctrato     : 2,
+            dsctrliq     : nrctrlim,
+            codlinha     : codlinha,
+            vlropera     : vlropera
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            debugger;
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscChq_Limite;divBotoesLimite");
+            bloqueiaFundo($('#divFormGAROPC'));
+            $("#frmDadosLimiteDscChq").css("width", 540);
+        }
+    });
 }
 
 // OPÇÃO CONSULTAR
@@ -805,6 +858,7 @@ function gravaLimiteDscChq(cddopcao) {
 			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscChq").val()),
 			complen2: $("#complen2","#frmDadosLimiteDscChq").val(),
 			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscChq").val()),
+      idcobope: normalizaNumero($("#idcobert","#frmDadosLimiteDscChq").val()),
 
 			// Variáveis globais alimentadas na função validaDadosRating em rating.js
 			nrgarope: nrgarope,
