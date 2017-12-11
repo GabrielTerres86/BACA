@@ -693,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 18/11/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 07/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -783,7 +783,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
   --
-  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).
+  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).	   
+  --
+  --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -9403,7 +9405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : CADA
      Autor   : Jonata - RKAM
-     Data    : Agosto/2017.                  Ultima atualizacao: 18/11/2017
+     Data    : Agosto/2017.                  Ultima atualizacao: 07/12/2017
 
      Dados referentes ao programa:
 
@@ -9415,6 +9417,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Alteracoes: 14/11/2017 - Correcao na geracao dos lancamentos (Joanta - RKAM P364). 
 	 
 				 18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).               
+         
+				 07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).               
+                  
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -9425,10 +9430,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           ,ass.cdsitdct
           ,ass.cdmotdem
           ,ass.inpessoa
+          ,ass.dtdemiss
+          ,ass.flgctitg
+          ,ass.nrdctitg
       FROM crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Cursor para verificar se existe recadastro na conta
+    CURSOR cr_crapalt(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_dtaltera IN crapalt.dtaltera%TYPE)IS
+      SELECT a.dsaltera
+            ,a.progress_recid
+        FROM crapalt a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.dtaltera = pr_dtaltera;
+    rw_crapalt cr_crapalt%ROWTYPE;
                                          
     --Cursor para encontrar o saldo de cotas do cooperado
     CURSOR cr_crapcot (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -9469,6 +9489,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     vr_dstextab craptab.dstextab%TYPE;
     vr_pos      INTEGER;
     vr_vlrsaldo crapcot.vldcotas%TYPE;
+    vr_dsmotdem VARCHAR2(100);
+    vr_flgctitg crapass.flgctitg%TYPE;
       
     --Tabelas de memoria
     vr_tab_erro gene0001.typ_tab_erro;    
@@ -10180,6 +10202,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         RAISE vr_exc_saida;
     END;                               
       
+    /* Se for conta integracao ativa, seta a flag para enviar ao BB */
+    IF  rw_crapass.nrdctitg IS NOT NULL   AND
+        rw_crapass.flgctitg = 2           THEN  /* Ativa */
+      vr_flgctitg := 0;
+    ELSE
+      vr_flgctitg := 3;
+    END IF;
+                                   
+    
+    -- Verifica se a conta esta recadastrada
+    OPEN cr_crapalt(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_dtaltera => rw_crapdat.dtmvtolt);
+                   
+    FETCH cr_crapalt INTO rw_crapalt;
+    
+    IF cr_crapalt%NOTFOUND THEN
+      CLOSE cr_crapalt;
+      
+    -- Insere a tabela de alteracao para nao solicitar recadastro
+    BEGIN
+      INSERT INTO crapalt
+                (nrdconta,
+                 dtaltera,
+                 cdoperad,
+                 dsaltera,
+                 tpaltera,
+                 flgctitg,
+                 cdcooper)
+               VALUES
+                (pr_nrdconta,
+                 rw_crapdat.dtmvtolt,
+                 pr_cdoperad,
+                 'demissao,sit.cta,',
+                 1,
+                 vr_flgctitg,
+                 pr_cdcooper);
+    EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na CRAPALT: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    ELSE
+      CLOSE cr_crapalt;
+        -- Se ja existir, deve-se apenas atualizar
+        BEGIN
+          UPDATE crapalt
+           SET dsaltera = rw_crapalt.dsaltera || 'demissao,sit.cta,' 
+         WHERE crapalt.progress_recid = rw_crapalt.progress_recid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        
+    END IF;
+      
     -- Gerar informações do log
     GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad
@@ -10205,6 +10285,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_nmdcampo => 'cdsitdct'
                              ,pr_dsdadant => trim(to_char(rw_crapass.cdsitdct,'999999'))
                              ,pr_dsdadatu => trim(to_char(vr_cdsitdct,'999999')) );
+                             
+    -- Gerar log do DTDEMISS
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'dtdemiss'
+                             ,pr_dsdadant => to_char(rw_crapass.dtdemiss,'DD/MM/RRRR')
+                             ,pr_dsdadatu => to_char(nvl(vr_dtdemiss, rw_crapdat.dtmvtolt),'DD/MM/RRRR') );      
+
+    -- Buscar configuração na tabela
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => 0
+                                             ,pr_cdacesso => 'MOTIVODEMI'
+                                             ,pr_tpregist => pr_mtdemiss);
+
+    --Se nao encontrou registro
+    IF TRIM(vr_dstextab) IS NULL THEN
+      --Retornar que nao encontrou
+      vr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
+    ELSE
+      --Retornar o motivo encontrado
+      vr_dsmotdem:= pr_mtdemiss || ' - ' || vr_dstextab;
+    END IF;                          
+                             
+    -- Gerar log do CDMOTDEM
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'cdmotdem'
+                             ,pr_dsdadant => ' '
+                             ,pr_dsdadatu => vr_dsmotdem);      
    
     pr_des_erro := 'OK';
 
