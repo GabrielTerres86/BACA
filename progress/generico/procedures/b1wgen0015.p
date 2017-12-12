@@ -20,6 +20,7 @@
   |  obtem_situacao_ura                  |  CADA0004.fn_situacao_senha          |
   |  obtem_situacao_internet             |  CADA0004.fn_situacao_senha          |
   |  valida-inclusao-conta-transferencia |  CADA0002.pc_val_inclui_conta_transf |
+  |  cancelar-senha-internet             |  CADA0003.pc_cancelar_senha_internet |
   +--------------------------------------+--------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -35,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 12/05/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 26/06/2017
     
     Dados referentes ao programa:
 
@@ -404,6 +405,9 @@
               18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			               crapass, crapttl, crapjur 
 						  (Adriano - P339).
+
+			   26/06/2017 - Ajuste para chamar rotina convertida na procedure cancelar-senha-internet
+			                (Jonata - RKAM P364).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -5914,523 +5918,93 @@ PROCEDURE cancelar-senha-internet:
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
-    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
-    DEF VAR aux_flgbolet AS LOGI                                    NO-UNDO.
-    DEF VAR aux_flgexclu AS LOGI                                    NO-UNDO.
-    
-    DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdsitsnh AS INTE                                    NO-UNDO.
-    DEF VAR aux_qttotage AS INTE                                    NO-UNDO.
-
-    DEF VAR aux_dsmensag AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dstrans1 AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
-
-    DEF VAR aux_dtaltsit AS DATE                                    NO-UNDO.
-    
-    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
-    DEF VAR aux_vllbolet AS DECI                                    NO-UNDO.
-    DEF VAR aux_vllimweb AS DECI                                    NO-UNDO.
-    DEF VAR aux_vllimtrf AS DECI                                    NO-UNDO.
-    DEF VAR aux_vllimpgo AS DECI                                    NO-UNDO.
-    DEF VAR aux_vllimted AS DECI                                    NO-UNDO.
-
-    DEF VAR h-b1wgen0016 AS HANDLE                                  NO-UNDO.
-    
-    DEF BUFFER crabass FOR crapass.
-    DEF BUFFER crabsnh FOR crapsnh.
+	/* Variáveis utilizadas para receber clob da rotina no oracle */
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO.
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
-    FOR FIRST crabass WHERE crabass.cdcooper = par_cdcooper
-                        AND crabass.nrdconta = par_nrdconta
-                        NO-LOCK. END.
+    /* Inicializando objetos para leitura do XML */ 
+	CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+	CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+	CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+	CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+	CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
        
-    IF NOT AVAIL crabass THEN
-    DO:
-        ASSIGN aux_cdcritic = 9.
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} } 
                        
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,            /** Sequencia **/
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic). 
+	/* Efetuar a chamada a rotina Oracle */ 
+	RUN STORED-PROCEDURE pc_cancelar_senha_internet_car
+	 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Codigo da Cooperativa */
+										  INPUT par_cdagenci, /* Codigo do agencia */
+										  INPUT par_nrdcaixa, /* Caixa */
+										  INPUT par_cdoperad, /* Operador */
+										  INPUT par_nmdatela, /* Nome da tela */
+										  INPUT par_idorigem, /* Origem */
+										  INPUT par_nrdconta, /* Conta */
+										  INPUT par_idseqttl, /* Titular */
+										  INPUT par_dtmvtolt, /* Data de movimento */
+										  INPUT par_inconfir, /* Confirmacao */
+										  INPUT int(par_flgerlog), /* Gerar log */ 
+										 OUTPUT ?,                 /* XML com informações de LOG */
+										 OUTPUT 0,                 /* Código da crítica */
+										 OUTPUT "").               /* Descrição da crítica */
     
-        RETURN "NOK".
-    END. 
-    
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Cancelar senha de acesso ao InternetBank"
-           aux_flgtrans = FALSE.
-
-    IF  par_inconfir = 1  THEN 
-        DO:
-
-            FIND crapsnh WHERE crapsnh.cdcooper = par_cdcooper AND
-                               crapsnh.nrdconta = par_nrdconta AND
-                               crapsnh.idseqttl = par_idseqttl AND
-                               crapsnh.tpdsenha = 1            NO-LOCK NO-ERROR.
-                       
-            IF  NOT AVAILABLE crapsnh  THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Registro de senha nao encontrado.".
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                              
-                    IF  par_flgerlog  THEN                           
-                        RUN proc_gerar_log (INPUT par_cdcooper,
-                                            INPUT par_cdoperad,
-                                            INPUT aux_dscritic,
-                                            INPUT aux_dsorigem,
-                                            INPUT aux_dstransa,
-                                            INPUT FALSE,
-                                            INPUT par_idseqttl,
-                                            INPUT par_nmdatela,
-                                            INPUT par_nrdconta,
-                                           OUTPUT aux_nrdrowid).
-                                           
-                    RETURN "NOK".                           
-                END.
-                
-            IF  crapsnh.cdsitsnh <> 1  AND   /** ATIVO     **/
-                crapsnh.cdsitsnh <> 2  THEN  /** BLOQUEADO **/
-                DO.
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Senha deve estar ativa ou " +
-                                          "bloqueada para cancelamento.".
-                
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                              
-                    IF  par_flgerlog  THEN                           
-                        RUN proc_gerar_log (INPUT par_cdcooper,
-                                            INPUT par_cdoperad,
-                                            INPUT aux_dscritic,
-                                            INPUT aux_dsorigem,
-                                            INPUT aux_dstransa,
-                                            INPUT FALSE,
-                                            INPUT par_idseqttl,
-                                            INPUT par_nmdatela,
-                                            INPUT par_nrdconta,
-                                           OUTPUT aux_nrdrowid).
-                                           
-                    RETURN "NOK".
-                END.
-            
-            RUN sistema/generico/procedures/b1wgen0016.p 
-                PERSISTENT SET h-b1wgen0016.
-
-            IF  NOT VALID-HANDLE(h-b1wgen0016)  THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Handle invalido para BO " +
-                                          "b1wgen0016.".
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                              
-                    IF  par_flgerlog  THEN                           
-                        RUN proc_gerar_log (INPUT par_cdcooper,
-                                            INPUT par_cdoperad,
-                                            INPUT aux_dscritic,
-                                            INPUT aux_dsorigem,
-                                            INPUT aux_dstransa,
-                                            INPUT FALSE,
-                                            INPUT par_idseqttl,
-                                            INPUT par_nmdatela,
-                                            INPUT par_nrdconta,
-                                           OUTPUT aux_nrdrowid).
-
-                    RETURN "NOK".
-                END.
-                                           
-            RUN obtem-agendamentos IN h-b1wgen0016 (
-                                   INPUT par_cdcooper,
-                                   INPUT 90,
-                                   INPUT 900,
-                                   INPUT par_nrdconta,
-                                   INPUT "INTERNET",
-                                   INPUT par_dtmvtolt,
-                                   INPUT par_dtmvtolt,
-                                   INPUT ?,
-                                   INPUT 1,
-                                   INPUT 0,
-                                   INPUT 1,
-                                  OUTPUT aux_dstrans1,
-                                  OUTPUT aux_dscritic,
-                                  OUTPUT aux_qttotage,
-                                  OUTPUT TABLE tt-dados-agendamento).
-
-            DELETE PROCEDURE h-b1wgen0016.
-
-            IF  RETURN-VALUE = "NOK"  THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0.
-                           
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                              
-                    IF  par_flgerlog  THEN                           
-                        RUN proc_gerar_log (INPUT par_cdcooper,
-                                            INPUT par_cdoperad,
-                                            INPUT aux_dscritic,
-                                            INPUT aux_dsorigem,
-                                            INPUT aux_dstransa,
-                                            INPUT FALSE,
-                                            INPUT par_idseqttl,
-                                            INPUT par_nmdatela,
-                                            INPUT par_nrdconta,
-                                           OUTPUT aux_nrdrowid).
-
-                    RETURN "NOK".
-                END.
-
-            IF  CAN-FIND(FIRST tt-dados-agendamento NO-LOCK)  THEN
-                DO:
-                    ASSIGN aux_dsmensag = "ATENCAO!!! O cooperado possui " +
-                                          "agendamentos programados.".
-
-                    CREATE tt-msg-confirma.
-                    ASSIGN tt-msg-confirma.inconfir = par_inconfir
-                           tt-msg-confirma.dsmensag = aux_dsmensag. 
-
-                    RETURN "OK".
-                END.
-
-              ASSIGN par_inconfir = par_inconfir + 1.
-        END.
-
-    IF  par_inconfir = 2  THEN
-        DO:
-            ASSIGN aux_dsmensag = "Deseja cancelar a senha de acesso a " +
-                                  "internet?".
-            
-            IF  par_idseqttl = 1 AND crabass.idastcjt = 0 THEN
-                DO: 
-                    FIND FIRST crapsnh WHERE 
-                               crapsnh.cdcooper =  par_cdcooper AND
-                               crapsnh.nrdconta =  par_nrdconta AND
-                               crapsnh.idseqttl <> 1            AND
-                               crapsnh.tpdsenha =  1            
-                               NO-LOCK NO-ERROR.
-                                     
-                    IF  AVAILABLE crapsnh  THEN
-                        ASSIGN aux_dsmensag = "ATENCAO! TODOS os titulares " +
-                                              "terao o acesso a internet " +
-                                              "cancelado." + 
-                                             (IF  par_idorigem = 5  THEN
-                                                  "<br>"
-                                              ELSE
-                                                  " ") + 
-                                              aux_dsmensag.
-                END.
-
-            CREATE tt-msg-confirma.
-            ASSIGN tt-msg-confirma.inconfir = par_inconfir
-                   tt-msg-confirma.dsmensag = aux_dsmensag. 
-
-            RETURN "OK".
-        END.
-                            
-    TRANSACAO:
-    
-    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
-    
-        FOR EACH crabsnh WHERE crabsnh.cdcooper  = par_cdcooper  AND
-                               crabsnh.nrdconta  = par_nrdconta  AND
-                               crabsnh.tpdsenha  = 1             AND
-                             ((par_idseqttl     <> 1             AND
-                               crabsnh.idseqttl  = par_idseqttl) OR
-                              (par_idseqttl      = 1             AND
-                               crabsnh.idseqttl >= 1))           AND
-                              (crabsnh.cdsitsnh  = 1             OR
-                               crabsnh.cdsitsnh  = 2)            NO-LOCK:
-             
-            DO aux_contador = 1 TO 10:
-            
-                FIND crapsnh WHERE RECID(crapsnh) = RECID(crabsnh)
-                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                       
-                IF  NOT AVAILABLE crapsnh  THEN
-                    DO:
-                        IF  LOCKED crapsnh  THEN
-                            DO:
-                                ASSIGN aux_dscritic = "Registro de senha esta" +
-                                                      " sendo alterado. Tente" +
-                                                      " novamente.".
-                                PAUSE 1 NO-MESSAGE.
-                                NEXT.
-                            END.
-                        ELSE
-                            ASSIGN aux_dscritic = "Registro de senha nao " +
-                                                  "encontrado.".
-                    END.
-
-                LEAVE.
-            
-            END. /** Fim do DO ... TO **/
-        
-            IF  aux_dscritic <> ""  THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0.
-                       
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic). 
-                                      
-                    UNDO TRANSACAO, LEAVE TRANSACAO.            
-                END.
-
-            /** Armazena dados atuais para gerar log das alteracoes **/
-            ASSIGN aux_cdsitsnh = crapsnh.cdsitsnh
-                   aux_dtaltsit = crapsnh.dtaltsit
-                   aux_nrcpfcgc = crapsnh.nrcpfcgc
-                   aux_flgbolet = crapsnh.flgbolet
-                   aux_vllbolet = crapsnh.vllbolet
-                   aux_vllimweb = crapsnh.vllimweb
-                   aux_vllimtrf = crapsnh.vllimtrf
-                   aux_vllimpgo = crapsnh.vllimpgo
-                   aux_vllimted = crapsnh.vllimted.
-            
-            /** Atualiza dados **/
-            ASSIGN crapsnh.cdsitsnh = 3
-                   crapsnh.dtaltsit = par_dtmvtolt
-                   crapsnh.cdoperad = par_cdoperad
-                   crapsnh.nrcpfcgc = 0 WHEN crabass.idastcjt = 0
-                   crapsnh.cddsenha = ""
-                   crapsnh.dssenweb = ""
-                   crapsnh.flgbolet = FALSE
-                   crapsnh.vllbolet = 0
-                   crapsnh.vllimweb = 0
-                   crapsnh.vllimtrf = 0
-                   crapsnh.vllimpgo = 0
-                   crapsnh.vllimted = 0.
-
-            IF  par_flgerlog  THEN
-                DO:
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT "",
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT TRUE,
-                                        INPUT crapsnh.idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid).
-                       
-                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                             INPUT "cdsitsnh",
-                                             INPUT STRING(aux_cdsitsnh,"9"),
-                                             INPUT STRING(crapsnh.cdsitsnh,
-                                                          "9")).
-                                         
-                    IF  aux_dtaltsit <> crapsnh.dtaltsit  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "dtaltsit",
-                                                 INPUT IF  aux_dtaltsit = ? THEN
-                                                           ""
-                                                       ELSE
-                                                           STRING(aux_dtaltsit,
-                                                                  "99/99/9999"),
-                                                 INPUT STRING(crapsnh.dtaltsit,
-                                                              "99/99/9999")).
-                                                                      
-                    IF  aux_flgbolet <> crapsnh.flgbolet  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "flgbolet",
-                                                 INPUT STRING(aux_flgbolet,
-                                                              "SIM/NAO"),
-                                                 INPUT STRING(crapsnh.flgbolet,
-                                                              "SIM/NAO")).
-                                                              
-                    IF  aux_vllbolet <> crapsnh.vllbolet  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "vllbolet",
-                                                 INPUT TRIM(STRING(aux_vllbolet,
-                                                            "zzz,zzz,zz9.99")),
-                                                 INPUT TRIM(STRING(
-                                                            crapsnh.vllbolet,
-                                                            "zzz,zzz,zz9.99"))).
-                
-                    IF  aux_vllimweb <> crapsnh.vllimweb  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "vllimweb",
-                                                 INPUT TRIM(STRING(aux_vllimweb,
-                                                            "zzz,zzz,zz9.99")),
-                                                 INPUT TRIM(STRING(
-                                                            crapsnh.vllimweb,
-                                                            "zzz,zzz,zz9.99"))).
-                                                           
-                    IF  aux_vllimtrf <> crapsnh.vllimtrf  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "vllimtrf",
-                                                 INPUT TRIM(STRING(aux_vllimtrf,
-                                                            "zzz,zzz,zz9.99")),
-                                                 INPUT TRIM(STRING(
-                                                            crapsnh.vllimtrf,
-                                                            "zzz,zzz,zz9.99"))).
-                                                           
-                    IF  aux_vllimpgo <> crapsnh.vllimpgo  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "vllimpgo",
-                                                 INPUT TRIM(STRING(aux_vllimpgo,
-                                                            "zzz,zzz,zz9.99")),
-                                                 INPUT TRIM(STRING(
-                                                            crapsnh.vllimpgo,
-                                                            "zzz,zzz,zz9.99"))).
-
-                    IF  aux_vllimted <> crapsnh.vllimted  THEN
-                        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                                 INPUT "vllimted",
-                                                 INPUT TRIM(STRING(aux_vllimted,
-                                                            "zzz,zzz,zz9.99")),
-                                                 INPUT TRIM(STRING(
-                                                            crapsnh.vllimted,
-                                                            "zzz,zzz,zz9.99"))).
-                                                            
-                    /* gerar log especifico para PJ */
-                    IF crabass.inpessoa > 1 THEN
-                    DO:
-                        /* Buscar dados do responsavel legal */
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                        RUN STORED-PROCEDURE pc_verifica_rep_assinatura
-                            aux_handproc = PROC-HANDLE NO-ERROR
-                                          (INPUT par_cdcooper, /* Codigo da Cooperativa */
-                                           INPUT par_nrdconta, /* Numero da Conta */
-                                           INPUT par_idseqttl, /* Sequencia Titularidade */
-                                           INPUT par_idorigem, /* Codigo Origem */
-                                          OUTPUT 0,            /* Flag de Assinatura Multipla pr_idastcjt */
-                                          OUTPUT 0,            /* Numero do CPF pr_nrcpfcgc */
-                                          OUTPUT "",           /* Nome do Representante/Procurador pr_nmprimtl */
-                                          OUTPUT 0,            /* Flag de Preposto Cartao Mag. pr_flcartma */
-                                          OUTPUT 0,            /* Codigo da critica */
-                                          OUTPUT "").          /* Descricao da critica */
-                        
-                        CLOSE STORED-PROC pc_verifica_rep_assinatura
+	/* Fechar o procedimento para buscarmos o resultado */ 
+	CLOSE STORED-PROC pc_cancelar_senha_internet_car
                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                        
-                        ASSIGN aux_nrcpfcgc = 0
-                               aux_nmprimtl = ""
-                               aux_cdcritic = 0
-                               aux_dscritic = ""
-                               aux_nrcpfcgc = pc_verifica_rep_assinatura.pr_nrcpfcgc 
-                                              WHEN pc_verifica_rep_assinatura.pr_nrcpfcgc <> ?
-                               aux_nmprimtl = pc_verifica_rep_assinatura.pr_nmprimtl 
-                                              WHEN pc_verifica_rep_assinatura.pr_nmprimtl <> ?
-                               aux_cdcritic = pc_verifica_rep_assinatura.pr_cdcritic 
-                                              WHEN pc_verifica_rep_assinatura.pr_cdcritic <> ?
-                               aux_dscritic = pc_verifica_rep_assinatura.pr_dscritic
-                                              WHEN pc_verifica_rep_assinatura.pr_dscritic <> ?.
-                        
-                        IF aux_cdcritic <> 0   OR
-                           aux_dscritic <> ""  THEN
+	{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
+
+	EMPTY TEMP-TABLE tt-msg-confirma.
+
+	/* Buscar o XML na tabela de retorno da procedure Progress */ 
+	ASSIGN xml_req = pc_cancelar_senha_internet_car.pr_clobxmlc. 
+                       
+	/* Efetuar a leitura do XML*/ 
+	SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+	PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+	IF ponteiro_xml <> ? THEN
                         DO:
-                             IF aux_dscritic = "" THEN
-                                DO:
-                                   FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-                                                      NO-LOCK NO-ERROR.
+			xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+			DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN:
+				xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                                              
+				IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+					NEXT. 
+
+				IF xRoot2:NUM-CHILDREN > 0 THEN               
+                    CREATE tt-msg-confirma.
+
+				DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+					xRoot2:GET-CHILD(xField,aux_cont).
+
+					IF xField:SUBTYPE <> "ELEMENT" THEN 
+                                NEXT.
+                                            
+					xField:GET-CHILD(xText,1).
                         
-                                   IF AVAIL crapcri THEN
-                                      ASSIGN aux_dscritic = crapcri.dscritic.
+					ASSIGN tt-msg-confirma.inconfir = int(xText:NODE-VALUE) WHEN xField:NAME = "inconfir"
+					       tt-msg-confirma.dsmensag = xText:NODE-VALUE WHEN xField:NAME = "dsmensag".
+                            
+					VALIDATE tt-msg-confirma.
                         
                                 END.
                                
-                                RUN gera_erro (INPUT par_cdcooper,
-                                               INPUT par_cdagenci,
-                                               INPUT par_nrdcaixa,
-                                               INPUT 1,            /** Sequencia **/
-                                               INPUT aux_cdcritic,
-                                               INPUT-OUTPUT aux_dscritic).
-                             RETURN "NOK".
-                                            
                         END.
                         
-                        IF  aux_nrcpfcgc > 0 THEN
-                            DO:
-                                /* Gerar o log com CPF do Rep./Proc. */
-                                RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                                        INPUT "CPF Representante/Procurador" ,
-                                                        INPUT "",
-                                                        INPUT STRING(STRING(aux_nrcpfcgc,
-                                                                "99999999999"),"xxx.xxx.xxx-xx")).
-                            END.
-                            
-                        IF aux_nmprimtl <> "" THEN
-                            DO:
-                                /* Gerar o log com Nome do Rep./Proc. */                                
-                                RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                                        INPUT "Nome Representante/Procurador" ,
-                                                        INPUT "",
-                                                        INPUT aux_nmprimtl).
-                            END.
-                        
-                        /* FIM Buscar dados responsavel legal */
-                    END.                                        
-                END.
-
-        END. /** Fim do FOR EACH crabsnh **/
-        
-        ASSIGN aux_flgtrans = TRUE.               
-               
-    END. /** Fim do DO TRANSACTION - TRANSACAO **/               
-                
-    /** Verifica se transacao foi executada com sucesso **/
-    IF  NOT aux_flgtrans  THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-            
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:                
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Erro na transacao. Nao foi " + 
-                                          "possivel cancelar a senha.".
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                END.
-                                                
-            IF  par_flgerlog  THEN                           
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
+			SET-SIZE(ponteiro_xml) = 0.
                    
-            RETURN "NOK".
         END.
 
     RETURN "OK".                       
