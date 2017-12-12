@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 22/11/2017
+    Data      : Abril/2012                      Ultima Atualizacao: 11/12/2017
     
     Dados referentes ao programa:
 
@@ -297,17 +297,17 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				             Melhoria 310 (Tiago/Thiago).
+	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				                     Melhoria 310 (Tiago/Thiago).
 
-			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
+			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
                 
                 09/06/2017 - Ajuste na rotina retorna_docs_liberados para nao gerar pendencia 
                              para borderos efetuados no IB e com valor menor ou igual a 5 mil.
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
-			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
                      
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
@@ -315,6 +315,8 @@
                      
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
+                             
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
                      
 .............................................................................*/
 
@@ -1340,7 +1342,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                
            /* Adicionar intervalo de data, 3 em 3 meses */
            ASSIGN aux_dtinidoc = ADD-INTERVAL(aux_dtfimdoc,01,'days')               
-                  aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,03,'months').
+                  aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
                   
            IF  aux_dtfimdoc >= TODAY THEN
                aux_dtfimdoc = TODAY.
@@ -1407,8 +1409,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                 /* Obs: As matriculas tpdocmto = 8, nao sera necessario gerar neste relatorio
                         os documentos pendentes de matriculas, pois somente iram baixar */
 
-                FIND tt-documentos WHERE tt-documentos.idseqite = aux_conttabs 
-                                         NO-LOCK NO-ERROR.
+                FOR FIRST tt-documentos FIELDS(tpdocmto) WHERE tt-documentos.idseqite = aux_conttabs 
+                                         NO-LOCK : END.
                 
                 IF  AVAIL tt-documentos  THEN
                     ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
@@ -1422,9 +1424,9 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                        USE-INDEX crapdoc3 NO-LOCK:
 
                     /* Se cooperado estiver demitidos nao gera no relatorio */
-                    FIND FIRST crapass WHERE 
+                    FOR FIRST crapass FIELDS(inpessoa cdagenci dtdemiss) WHERE 
                                crapass.cdcooper = crapdoc.cdcooper AND
-                               crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
+                               crapass.nrdconta = crapdoc.nrdconta NO-LOCK: END.
 
                    IF  NOT AVAIL crapass THEN 
                        NEXT.
@@ -1435,23 +1437,21 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         
                     /* Verifica os documentos de cpf e rg  se foram digitalizados*/
                     IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
-                        FIND FIRST tt-documento-digitalizado WHERE
+                            FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
                                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
                                    CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
-                                   tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
-                                   tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     
                                    USE-INDEX tt-documento-digitalizado3
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                       NO-LOCK: END.
                    ELSE /* Verifica se o contrato foi digitalizado */                                    
-                        FIND FIRST tt-documento-digitalizado WHERE
+                            FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
                                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                                    tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
-                                   tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
-                                   tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt 
                                    USE-INDEX tt-documento-digitalizado3 
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                       NO-LOCK: END.
                   
                                    
                   IF  NOT AVAIL tt-documento-digitalizado  THEN
@@ -1459,60 +1459,61 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         
                         /* Verifica os documentos de cpf e rg  se foram digitalizados*/
                         IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
-                            FIND FIRST tt-documento-digitalizado WHERE
+                                FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                        tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
-                                       tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
                                        CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
-                                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     
-                                   USE-INDEX tt-documento-digitalizado3
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                           USE-INDEX tt-documento-digitalizado4
+                                           NO-LOCK: END.
                     ELSE /* Verifica se o contrato foi digitalizado */                                    
-                        FIND FIRST tt-documento-digitalizado WHERE
+                                FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                                    tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
-                                   tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
-                                   USE-INDEX tt-documento-digitalizado3 
-                                   NO-LOCK NO-ERROR NO-WAIT.
+                                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
+                                           tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
+                                           USE-INDEX tt-documento-digitalizado4
+                                           NO-LOCK: END.
                       END.
                  
                   IF  NOT AVAIL tt-documento-digitalizado  THEN
                       DO:           
+                         /* Verifica os documentos de cpf e rg  se foram digitalizados*/
                             IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
-                                FIND FIRST tt-documento-digitalizado WHERE
+                              FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                            tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
                                            CAN-DO("90,91",STRING(tt-documento-digitalizado.tpdocmto)) AND
                                            tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt     AND
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
-                                           USE-INDEX tt-documento-digitalizado3
-                                           NO-LOCK NO-ERROR NO-WAIT.
+                                         USE-INDEX tt-documento-digitalizado5
+                                         NO-LOCK: END.
                             ELSE /* Verifica se o contrato foi digitalizado */                                    
-                                FIND FIRST tt-documento-digitalizado WHERE
+                              FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                            tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                                         tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                                            tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                                            tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
-                                           USE-INDEX tt-documento-digitalizado3 
-                                           NO-LOCK NO-ERROR NO-WAIT.               
+                                         USE-INDEX tt-documento-digitalizado5 
+                                         NO-LOCK: END.
+                      
                       END.
 
 
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
                         DO: 
+                        
                             /*Verifica se documento foi digitalizado*/
-                            FIND b-crapdoc WHERE b-crapdoc.cdcooper = crapdoc.cdcooper AND        
-                                                 b-crapdoc.nrdconta = crapdoc.nrdconta AND
-                                                 b-crapdoc.idseqttl = crapdoc.idseqttl AND
-                                                 b-crapdoc.dtmvtolt = crapdoc.dtmvtolt AND
-                                                 b-crapdoc.tpdocmto = crapdoc.tpdocmto AND
-                                                 b-crapdoc.flgdigit = FALSE            AND
-                                                 b-crapdoc.nrcpfcgc = crapdoc.nrcpfcgc
-                                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                            FIND FIRST b-crapdoc WHERE RECID(b-crapdoc) = RECID(crapdoc) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                             
                             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
                             IF  AVAIL(b-crapdoc)  THEN
+                            DO:
                                 ASSIGN b-crapdoc.flgdigit = TRUE.
+                                RELEASE b-crapdoc NO-ERROR.
+                            END.
 
                             NEXT.
                                 
