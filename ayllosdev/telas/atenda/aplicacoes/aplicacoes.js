@@ -1614,7 +1614,9 @@ function controlaLayout(layout) {
     cDtfimper.setMask("STRING", "99/9999", "/", "");
     cDtfimper.val('');
 
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
         $("#flgdebci", "#frmDadosAplicacaoPos").desabilitaCampo();
+    }
 
     controlaFocoEnter('divConteudoOpcao');
 
@@ -1622,7 +1624,9 @@ function controlaLayout(layout) {
     $('input, select', '#frmDadosAplicacaoPos').habilitaCampo();
     $('input, select', '#frmDadosAplicacao').habilitaCampo();
 
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
         cFlgdebciPos.desabilitaCampo();
+    }
     cDtcarencPos.desabilitaCampo();
     cQtdiacarPos.desabilitaCampo();
     cTxaplicaPos.desabilitaCampo();
@@ -1630,7 +1634,9 @@ function controlaLayout(layout) {
     cDtresgatPos.desabilitaCampo();
 
     $('input, select', '#frmDadosAplicacaoPre').habilitaCampo();
+    if (parseFloat($('#VlBloq').next().html()) == 0 && parseFloat($('#VlSldCntInvest').html()) == 0) {
         cFlgdebciPre.desabilitaCampo();
+    }
     cQtdiacarPre.desabilitaCampo();
     cTxaplicaPre.desabilitaCampo();
     cDsaplicaPre.desabilitaCampo();
