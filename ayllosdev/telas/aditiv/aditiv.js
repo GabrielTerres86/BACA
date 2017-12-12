@@ -2397,6 +2397,7 @@ function abrirTelaGAROPC() {
             ret_nomcampo : 'idcobert',
             ret_nomformu : 'frmCab',
             ret_execfunc : 'manterRotina(\\\'GD\\\');',
+            ret_errofunc : '',
             divanterior  : '',
 			redirect     : 'html_ajax'
         },

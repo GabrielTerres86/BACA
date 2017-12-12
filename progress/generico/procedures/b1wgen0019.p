@@ -1274,13 +1274,14 @@ PROCEDURE confirmar-novo-limite:
 
                     /* Faz a vinculaçao da garantia com a proposta */
                     RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
-                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
-                                                        ,INPUT "D"
-                                                        ,INPUT par_cdoperad
-                                                        ,INPUT ""
-                                                        ,INPUT 0
-                                                        ,INPUT "S"
-                                                        ,"").
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT ""               /* pr_nmdatela */
+                                                        ,INPUT craplim.idcobope /* pr_idcobertura */
+                                                        ,INPUT "D"              /* pr_inbloq_desbloq */
+                                                        ,INPUT par_cdoperad     /* pr_cdoperador */
+                                                        ,INPUT ""               /* pr_cdcoordenador_desbloq */
+                                                        ,INPUT 0                /* pr_vldesbloq */
+                                                        ,INPUT "S"              /* pr_flgerar_log */
+                                                        ,"").                   /* pr_dscritic */
 
                     CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -1443,13 +1444,14 @@ PROCEDURE confirmar-novo-limite:
 
         /* Faz a vinculaçao da garantia com a proposta */
         RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
-                                            ,INPUT "B"
-                                            ,INPUT par_cdoperad
-                                            ,INPUT ""
-                                            ,INPUT 0
-                                            ,INPUT "S"
-                                            ,"").
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT ""               /* pr_nmdatela */
+                                            ,INPUT craplim.idcobope /* pr_idcobertura */
+                                            ,INPUT "B"              /* pr_inbloq_desbloq */
+                                            ,INPUT par_cdoperad     /* pr_cdoperador */
+                                            ,INPUT ""               /* pr_cdcoordenador_desbloq */
+                                            ,INPUT 0                /* pr_vldesbloq */
+                                            ,INPUT "S"              /* pr_flgerar_log */
+                                            ,"").                   /* pr_dscritic */
 
         CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -2468,13 +2470,14 @@ PROCEDURE cancelar-limite-atual:
 
         /* Faz a vinculaçao da garantia com a proposta */
         RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplim.idcobope
-                                            ,INPUT "D"
-                                            ,INPUT par_cdoperad
-                                            ,INPUT ""
-                                            ,INPUT 0
-                                            ,INPUT "S"
-                                            ,"").
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT ""               /* pr_nmdatela */
+                                            ,INPUT craplim.idcobope /* pr_idcobertura */
+                                            ,INPUT "D"              /* pr_inbloq_desbloq */
+                                            ,INPUT par_cdoperad     /* pr_cdoperador */
+                                            ,INPUT ""               /* pr_cdcoordenador_desbloq */
+                                            ,INPUT 0                /* pr_vldesbloq */
+                                            ,INPUT "S"              /* pr_flgerar_log */
+                                            ,"").                   /* pr_dscritic */
 
         CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.

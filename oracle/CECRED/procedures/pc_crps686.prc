@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
-   Data    : Setembro/2014                       Ultima atualizacao: 11/02/2015
+   Data    : Setembro/2014                       Ultima atualizacao: 07/12/2017
   
    Dados referentes ao programa:
   
@@ -22,6 +22,11 @@ BEGIN
   
   
    Alteracoes: 11/02/2015 - Ajustes na leitura de aplicacao a vencer (Jean Michel).
+
+               07/12/2017 - Checar a nova forma de bloqueio e aproveitar o processo que ja
+                            existe para resgate de conta investimento para reaplicacao.
+                            (Jaison/Marcos Martini - PRJ404)
+
   .................................................................................... */
 
   DECLARE
@@ -86,6 +91,7 @@ BEGIN
              rac.vlsldatl,
              rac.dtatlsld,
              rac.qtdiaapl,
+             rac.qtdiaprz,
              rac.rowid,
              cpc.cdprodut,
              cpc.idtippro,
@@ -231,8 +237,10 @@ BEGIN
     vr_exc_fimprg EXCEPTION;
   
     --Variaveis Locais
+    vr_des_erro VARCHAR2(3);
     vr_cdcritic crapcri.cdcritic%TYPE := 0;
     vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_tab_erro GENE0001.typ_tab_erro;
   
     vr_cdprogra VARCHAR2(10);
     vr_dsarquiv VARCHAR2(200) := '/rl/crrl679.lst';
@@ -241,6 +249,8 @@ BEGIN
     vr_tptelefo VARCHAR2(15) := '';
     vr_nrramfon VARCHAR2(100) := '';
     vr_contatel INTEGER := 1;
+    vr_nraplica craprac.nraplica%TYPE;
+    vr_dtvencto DATE;
 
     vr_controle BOOLEAN := FALSE;
 
@@ -760,10 +770,58 @@ BEGIN
                          rw_craprac.nrdconta || ', Apli.: ' ||
                          rw_craprac.nraplica || '.Erro: ' || SQLERRM;
       END;
-    
-      -- Verifica se aplicacao esta bloqueada
-      IF rw_craprac.idblqrgt > 0 THEN
-      
+
+      -- Obter os valores bloqueados de aplicacao
+      APLI0002.pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
+                                         ,pr_cdagenci => 1
+                                         ,pr_nrdcaixa => 1
+                                         ,pr_cdoperad => '1'
+                                         ,pr_nmdatela => 'CRPS686'
+                                         ,pr_idorigem => 5
+                                         ,pr_nrdconta => rw_craprac.nrdconta
+                                         ,pr_nraplica => rw_craprac.nraplica
+                                         ,pr_idseqttl => 1
+                                         ,pr_cdprogra => 'CRPS686'
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_vlresgat => vr_vlsldrgt
+                                         ,pr_flgerlog => 0
+                                         ,pr_innivblq => 2 -- Somente observar Bloqueio Garantia
+                                         ,pr_des_reto => vr_des_erro 
+                                         ,pr_tab_erro => vr_tab_erro); 
+      -- Se houve erro
+      IF vr_des_erro = 'NOK' THEN
+
+        -- Se retornou na tab de erros
+        IF vr_tab_erro.COUNT() > 0 THEN
+          -- Guarda o código e descrição do erro
+          vr_cdcritic := NVL(vr_tab_erro(vr_tab_erro.FIRST).cdcritic,0);
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          -- Definir o código do erro
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel cadastrar o resgate --> '
+                      || 'Erro na busca de Bloqueios';
+        END IF;
+
+        -- Se encontramos a critica 640 significa que há Bloqueio
+        IF vr_cdcritic = 640 THEN
+          --Monta chave da pl table
+          vr_dscchave := LPAD(rw_crapass.cdagenci, 5, '0')
+                      || LPAD(rw_crapass.nrdconta, 10, '0')
+                      || LPAD(rw_craprac.nraplica, 6, '0');
+          vr_tab_aplicacoes(vr_dscchave).nrdconta := rw_craprac.nrdconta; 
+          vr_tab_aplicacoes(vr_dscchave).nraplica := rw_craprac.nraplica; 
+          vr_tab_aplicacoes(vr_dscchave).dscritic := 'Bloqueio Garantia';
+        ELSE
+          -- Senão significa que houve erro não tratado
+          RAISE vr_exc_saida;
+        END IF;
+
+      END IF; -- vr_des_erro = 'NOK'
+
+      -- Verifica se aplicacao esta bloqueada BLQRGT ou Garantia
+      IF rw_craprac.idblqrgt > 0 OR vr_cdcritic = 640 THEN
+
         -- Consulta se existe lote
         OPEN cr_craplot(pr_cdcooper => rw_craprac.cdcooper,
                         pr_dtmvtolt => rw_crapdat.dtmvtopr,
@@ -956,7 +1014,47 @@ BEGIN
             vr_cdcritic := 'Erro ao inserir registro de saldo(CRAPSLI). Erro: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
-      
+
+        -- Bloqueios de Garantia
+        IF vr_cdcritic = 640 THEN
+
+          -- Calculo da data de vencimento
+          vr_dtvencto := rw_crapdat.dtmvtocd + rw_craprac.qtdiaapl;
+          vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                    ,pr_dtmvtolt => vr_dtvencto
+                                                    ,pr_tipo => 'P');
+
+          -- Reaplicação com as mesmas caracteristicas da anterior
+          APLI0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper         -- Código da Cooperativa
+                                    ,pr_cdoperad => '1'                 -- Código do Operador
+                                    ,pr_nmdatela => 'CRPS686'           -- Nome da Tela
+                                    ,pr_idorigem => 1                   -- Identificador de Origem
+                                    ,pr_nrdconta => rw_craprac.nrdconta -- Número da Conta
+                                    ,pr_idseqttl => 1                   -- Titular da Conta
+                                    ,pr_nrdcaixa => 100                 -- Numero de caixa
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd -- Data de Movimento
+                                    ,pr_cdprodut => rw_craprac.cdprodut -- Código do Produto
+                                    ,pr_qtdiaapl => rw_craprac.qtdiaapl -- Dias da Aplicação
+                                    ,pr_dtvencto => vr_dtvencto         -- Data de Vencimento da Aplicação
+                                    ,pr_qtdiacar => rw_craprac.qtdiacar -- Carência da Aplicação
+                                    ,pr_qtdiaprz => rw_craprac.qtdiaprz -- Prazo da Aplicação
+                                    ,pr_vlaplica => vr_vlsldrgt         -- Valor da Aplicação (Valor informado em tela)
+                                    ,pr_iddebcti => 1                   -- Identificador de Débito na Conta Investimento
+                                    ,pr_idorirec => 0                   -- Identificador de Origem do Recurso (Renovação)
+                                    ,pr_idgerlog => 1                   -- Identificador de Log (Fixo no código, 0 – Não / 1 – Sim)
+                                    ,pr_nraplica => vr_nraplica         -- Numero da aplicacao cadastrada
+                                    ,pr_cdcritic => vr_cdcritic         -- Codigo da critica de erro
+                                    ,pr_dscritic => vr_dscritic);       -- Descrição da critica de erro
+          -- Se houve erro
+          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --Monta mensagem de critica
+            vr_cdcritic := vr_cdcritic;
+            vr_dscritic := vr_dscritic;
+            RAISE vr_exc_saida;
+          END IF;
+
+        END IF; -- vr_cdcritic = 640
+
       ELSIF rw_craprac.idblqrgt = 0 THEN
         -- Aplicacao nao bloqueada
       
@@ -1868,4 +1966,3 @@ BEGIN
   END;
 END pc_crps686;
 /
-

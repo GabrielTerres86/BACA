@@ -27,6 +27,7 @@
  | retorna-aplicacoes-resgate-automatico| APLI0005.pc_ret_apl_resg_aut            |
  | retorna-aplicacoes-resgate-manual    | APLI0005.pc_ret_apl_resg_manu           |
  | obtem-resgates-conta                 | APLI0005.pc_obtem_resgates_conta        |
+ | cadastrar-varios-resgates-aplicacao  | APLI0005.pc_cadast_varios_resgat_aplica |
  +--------------------------------------+-----------------------------------------+
 
  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 08/05/2014 DEVERA

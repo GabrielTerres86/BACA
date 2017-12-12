@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 10/11/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 07/12/2017
 
    Dados referentes ao programa:
 
@@ -210,6 +210,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                12/07/2017 - Inclusão no final do programa para execução da procedure
                             empr0002.pc_gerar_carga_vig_crapsda com o objetivo de popular o campo
                             crapsda.vllimcap - Melhoria M441 - Roberto Holz (Mout´s)
+
+               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
+
      ............................................................................. */
 
      DECLARE
@@ -301,7 +304,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        RECORD (nrdconta craplim.nrdconta%TYPE
               ,cddlinha craplim.cddlinha%TYPE
               ,dtinivig craplim.dtinivig%TYPE
-              ,vllimite craplim.vllimite%TYPE);
+              ,vllimite craplim.vllimite%TYPE
+              ,idcobope craplim.idcobope%TYPE);
 
        -- Definicao do tipo de tabela de associados
        TYPE typ_tab_crapass IS
@@ -602,6 +606,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                ,craplim.cddlinha
                ,craplim.dtinivig
                ,craplim.vllimite
+               ,craplim.idcobope
                ,MAX (craplim.progress_recid) OVER (partition by craplim.nrdconta) maior
          FROM craplim craplim
          WHERE  craplim.cdcooper = pr_cdcooper
@@ -722,6 +727,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_tab_erro  GENE0001.typ_tab_erro;
        vr_ingerneg  BOOLEAN := TRUE;
        vr_des_erro  VARCHAR2(100);
+       vr_vlresgat  NUMBER;
 
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
@@ -947,6 +953,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_craplim(rw_craplim.nrdconta).cddlinha:= rw_craplim.cddlinha;
          vr_tab_craplim(rw_craplim.nrdconta).dtinivig:= rw_craplim.dtinivig;
          vr_tab_craplim(rw_craplim.nrdconta).vllimite:= rw_craplim.vllimite;
+         vr_tab_craplim(rw_craplim.nrdconta).idcobope:= rw_craplim.idcobope;
        END LOOP;
 
        --Carregar tabela memoria com as linhas de credito
@@ -2061,6 +2068,37 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            rw_crapsld.vltsallq:= Nvl(rw_crapsld.vltsallq,0) + vr_vltsallq;
            --Atualizar quantidade de lancamentos na tabela de saldos
            rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + vr_qtlanmes;
+
+           -- Se NAO possui saldo
+           IF rw_crapsld.vlsddisp < 0 THEN
+
+             -- Somente se o contrato de limite tem cobertura de operação
+             IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
+
+               -- Tentar resgatar o valor negativo
+               vr_vlresgat := ABS(rw_crapsld.vlsddisp);
+
+               -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+               BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
+                                                    ,pr_flgerlog => 1
+                                                    ,pr_cdoperad => '1'
+                                                    ,pr_idorigem => 5
+                                                    ,pr_cdprogra => vr_cdprogra
+                                                    ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
+                                                    ,pr_vlresgat => vr_vlresgat
+                                                    ,pr_dscritic => vr_dscritic);
+               -- Em caso de erro
+               IF TRIM(vr_dscritic) IS NOT NULL THEN
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+               ELSE
+                 -- Decrementar do saldo negativo o valor resgatado
+                 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp - vr_vlresgat;
+               END IF;
+
+             END IF;
+
+           END IF;
 
            --Valor utilizado recebe:
            --vlsdblfp = valor do saldo bloqueado fora da praca

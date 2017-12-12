@@ -536,6 +536,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                       ,pr_flgerlog         IN BOOLEAN --Erro no Log
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
+                                      ,pr_flrgtcob         IN NUMBER DEFAULT 0 --Flag de resgate
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
@@ -947,6 +948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,crawepr.vlpreemp
           ,crawepr.dtlibera
           ,crawepr.tpemprst
+          ,crawepr.idcobope
       FROM crawepr
      WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -7839,6 +7841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                       ,pr_flgerlog         IN BOOLEAN --Erro no Log
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
+                                      ,pr_flrgtcob         IN NUMBER DEFAULT 0 --Flag de resgate
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
@@ -7852,7 +7855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 16/03/2017
+       Data    : Fevereiro/2014                        Ultima atualizacao: 07/12/2017
     
        Dados referentes ao programa:
     
@@ -7878,6 +7881,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 Prj. 302 (Jean Michel).             
 
                    16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
+
+                   07/12/2017 - Ajustar validacao de saldo em pagamento de emprestimo PP 
+                                para quando nao houver saldo para debito verificar aplicacoes
+                                em garantia e resgata-las. (Jaison/Marcos Martini - PRJ404)
+
     ............................................................................. */
   
     DECLARE
@@ -7918,6 +7926,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_crapope  BOOLEAN;
       vr_difpagto NUMBER;
       vr_flgcrass BOOLEAN;
+      vr_vlresgat NUMBER; 
+      vr_qtdiaatr NUMBER;
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
@@ -7989,7 +7999,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         ELSE
           rw_crawepr.dtlibera := pr_tab_crawepr(vr_index_crawepr).dtlibera;
-          rw_crawepr.tpemprst := pr_tab_crawepr(vr_index_crawepr).tpemprst;
+          rw_crawepr.tpemprst := pr_tab_crawepr(vr_index_crawepr).tpemprst; 
+          rw_crawepr.idcobope := pr_tab_crawepr(vr_index_crawepr).idcobope;
         END IF;
       
         --Tipo de Emprestimo
@@ -8046,7 +8057,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
                                 nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
         END IF;
-      
+
+        -- Somente se o contrato de empréstimo tem cobertura de operação e não há saldo
+        IF nvl(pr_vlapagar, 0) > nvl(pr_vlsomato, 0) AND rw_crawepr.idcobope > 0 THEN
+          -- Tentar resgatar o valor negativo
+          vr_vlresgat := ABS(nvl(pr_vlsomato, 0) - nvl(pr_vlapagar, 0));
+          -- Acionar rotina de calculo de dias em atraso
+          vr_qtdiaatr := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
+                                                          ,pr_nrdconta => pr_nrdconta
+                                                          ,pr_nrctremp => pr_nrctremp
+                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                          ,pr_dtmvtoan => rw_crapdat.dtmvtoan);
+          -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+          BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => rw_crawepr.idcobope
+                                               ,pr_flgerlog => 1
+                                               ,pr_cdoperad => '1'
+                                               ,pr_idorigem => 5
+                                               ,pr_cdprogra => pr_nmdatela
+                                               ,pr_qtdiaatr => vr_qtdiaatr
+                                               ,pr_vlresgat => vr_vlresgat
+                                               ,pr_dscritic => vr_dscritic);
+          -- Em caso de erro
+          IF TRIM(vr_dscritic) IS NOT NULL THEN 
+            --Sair do programa
+            RAISE vr_exc_saida;
+          ELSE 
+            -- Incrementar ao saldo o total resgatado 
+            pr_vlsomato := pr_vlsomato + vr_vlresgat; 
+          END IF;
+        END IF;
+
         --Valor a Pagar Maior Soma total
         IF nvl(pr_vlapagar, 0) > nvl(pr_vlsomato, 0) THEN
           IF pr_idorigem = 5 THEN
@@ -8602,7 +8642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 20/10/2015
+       Data    : Fevereiro/2014                        Ultima atualizacao: 07/12/2017
     
        Dados referentes ao programa:
     
@@ -8618,7 +8658,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    
                    20/10/2015 - Incluir os históricos de ajuste o contrato 
                                 liquidado pode ser reaberto (Oscar).
-    
+
+                   07/12/2017 - Remover possiveis bloqueios de garantia de cobertura
+                                da operacao. (Jaison/Marcos Martini - PRJ404)
+
     ............................................................................. */
   
     DECLARE
@@ -8777,7 +8820,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Apenas fechar o cursor para continuar o processo
           CLOSE cr_crapepr;
         END IF;
-      
+
+        -- Busca dos detalhes da proposta de empréstimo
+        OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta 
+                       ,pr_nrctremp => pr_nrctremp); 
+        FETCH cr_crawepr INTO rw_crawepr;
+        -- Se não encontrar informações
+        IF cr_crawepr%NOTFOUND THEN
+          -- Fechar o cursor pois teremos raise
+          CLOSE cr_crawepr;
+          -- Gerar erro com critica 535
+          vr_cdcritic := 535;
+          vr_dscritic := gene0001.fn_busca_critica(535);
+          RAISE vr_exc_saida;
+        ELSE
+          -- Apenas fechar o cursor para continuar o processo
+          CLOSE cr_crawepr;
+        END IF;
+
         --Zerar lancamentos a debito/credito
         vr_vllancre := 0;
         vr_vllandeb := 0;
@@ -8952,7 +9013,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_des_erro <> 'OK' THEN
           RAISE vr_exc_saida;
         END IF;
-      
+
+        -- Se possui cobertura vinculada
+        IF rw_crawepr.idcobope > 0 THEN
+          -- Chama bloqueio/desbloqueio da garantia
+          BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => rw_crawepr.idcobope
+                                               ,pr_inbloq_desbloq => 'D'
+                                               ,pr_cdoperador     => '1'
+                                               ,pr_vldesbloq      => 0
+                                               ,pr_flgerar_log    => 'S'
+                                               ,pr_dscritic       => vr_dscritic);
+          -- Se houve erro
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        END IF; 
+
         --Marcar que a transacao ocorreu
         vr_flgtrans := TRUE;
       EXCEPTION
@@ -14090,7 +14166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Douglas Quisinski
-        Data     : Novembro/2015                Ultima atualizacao:
+        Data     : Novembro/2015                Ultima atualizacao: 07/12/2017
 
         Dados referentes ao programa:
 
@@ -14098,7 +14174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          Objetivo  : Possui a mesma funcionalidade da rotina pc_valida_pagamentos_geral,
                      para chamadas diretamente atraves de rotinas progress
 
-        Alteração : 
+        Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
     ..........................................................................*/
 
     -- Flag gerar log
@@ -14130,6 +14206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                ,crawepr.nrctremp
                ,crawepr.dtlibera
                ,crawepr.tpemprst
+               ,crawepr.idcobope
          FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -14150,6 +14227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                          lpad(rw_crawepr.nrctremp,10,'0');
       vr_tab_crawepr(vr_index_crawepr).dtlibera:= rw_crawepr.dtlibera;
       vr_tab_crawepr(vr_index_crawepr).tpemprst:= rw_crawepr.tpemprst;
+      vr_tab_crawepr(vr_index_crawepr).idcobope:= rw_crawepr.idcobope;
     END LOOP;
     
     EMPR0001.pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper,

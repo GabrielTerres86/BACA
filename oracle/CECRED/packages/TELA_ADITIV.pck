@@ -43,7 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                    nraditiv crapadt.nraditiv%TYPE,
                    nrdconta crapadt.nrdconta%TYPE,
                    nrctremp crapadt.nrctremp%TYPE,
-                   dsaditiv VARCHAR2(40),
+                   dsaditiv VARCHAR2(50),
                    dtmvtolt crapadt.dtmvtolt%TYPE,
                    nrctagar crapadt.nrctagar%TYPE,
                    nrcpfgar crapadt.nrcpfgar%TYPE,
@@ -2813,7 +2813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                        ,pr_cddopcao IN VARCHAR2) IS
         SELECT wpr.idcobope
               ,lcr.cdlcremp codlinha
-              ,epr.vlsdeved vlropera
+              ,0 vlropera
           FROM crawepr wpr
               ,crapepr epr
               ,craplcr lcr 
@@ -2843,11 +2843,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
            AND craplim.tpctrlim = pr_tpctrlim
            AND craplim.insitlim = DECODE(pr_cddopcao, 'I', 2, craplim.insitlim); -- 2 - Ativo
 
-      rw_dados cr_crapepr%ROWTYPE;
+      rw_dados   cr_crapepr%ROWTYPE;
+      
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
@@ -2863,6 +2867,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       
       -- Variaveis locais
       vr_blnachou BOOLEAN;
+      vr_dstextab craptab.dstextab%TYPE;
+      vr_inusatab BOOLEAN;
+      vr_vltotpre NUMBER(25,2) := 0;
+      vr_qtprecal NUMBER(10) := 0;
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -2890,6 +2898,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         FETCH cr_crapepr INTO rw_dados;
         vr_blnachou := cr_crapepr%FOUND;
         CLOSE cr_crapepr;
+
+        -- Calendario da cooperativa
+        OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        CLOSE BTCH0001.cr_crapdat;
+
+        -- Buscar configurações necessárias para busca de saldo de empréstimo
+        -- Verificar se usa tabela juros
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 11
+                                                 ,pr_cdacesso => 'TAXATABELA'
+                                                 ,pr_tpregist => 0);
+        -- Se a primeira posição do campo dstextab for diferente de zero
+        vr_inusatab := SUBSTR(vr_dstextab,1,1) != '0';
+                    
+        -- Buscar o saldo devedor atualizado do contrato
+        EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => vr_cdcooper       --> Cooperativa conectada
+                                      ,pr_cdagenci => 1                 --> Codigo da agencia
+                                      ,pr_nrdcaixa => 0                 --> Numero do caixa
+                                      ,pr_cdoperad => '1'               --> Codigo do operador
+                                      ,pr_nmdatela => 'ATENDA'          --> Nome datela conectada
+                                      ,pr_idorigem => 1 /*Ayllos*/      --> Indicador da origem da chamada
+                                      ,pr_nrdconta => pr_nrdconta       --> Conta do associado
+                                      ,pr_idseqttl => 1                 --> Sequencia de titularidade da conta
+                                      ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                      ,pr_nrctremp => pr_nrctremp       --> Numero contrato emprestimo
+                                      ,pr_cdprogra => 'B1WGEN0001'      --> Programa conectado
+                                      ,pr_inusatab => vr_inusatab       --> Indicador de utilizacão da tabela
+                                      ,pr_flgerlog => 'N'               --> Gerar log S/N
+                                      ,pr_vlsdeved => rw_dados.vlropera --> Saldo devedor calculado
+                                      ,pr_vltotpre => vr_vltotpre       --> Valor total das prestacães
+                                      ,pr_qtprecal => vr_qtprecal       --> Parcelas calculadas
+                                      ,pr_des_reto => vr_des_reto       --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);     --> Tabela com possives erros
+        -- Se houve retorno de erro
+        IF vr_des_reto = 'NOK' THEN
+          -- Extrair o codigo e critica de erro da tabela de erro
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+          -- Limpar tabela de erros
+          vr_tab_erro.DELETE;
+          RAISE vr_exc_erro;
+        END IF;
       ELSE
         -- Seleciona dados do limite
         OPEN cr_craplim(pr_cdcooper => vr_cdcooper

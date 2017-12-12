@@ -419,7 +419,7 @@ PROCEDURE obtem-resgate:
             DO:
                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                   /* Efetuar a chamada a rotina Oracle */ 
-                  RUN STORED-PROCEDURE pc_ver_val_bloqueio_aplica_prog
+                  RUN STORED-PROCEDURE pc_ver_bloqueio_aplica_prog
                      aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,  /* pr_cdcooper */
                                                          INPUT par_cdagenci,  /* pr_cdagenci */
                                                          INPUT par_nrdcaixa,  /* pr_nrdcaixa */
@@ -429,7 +429,7 @@ PROCEDURE obtem-resgate:
                                                          INPUT par_nrdconta,  /* pr_nrdconta */
                                                          INPUT 0,             /* pr_nraplica */
                                                          INPUT par_idseqttl,  /* pr_idseqttl */
-                                                         INPUT par_cdprogra,  /* pr_cdprogra */
+                                                         INPUT par_nmdatela,  /* pr_cdprogra */
                                                          INPUT par_dtmvtolt,  /* pr_dtmvtolt */
                                                          INPUT par_vlresgat,  /* pr_vlresgat */
                                                          INPUT 0,             /* pr_flgerlog */
@@ -439,7 +439,7 @@ PROCEDURE obtem-resgate:
                                                          OUTPUT "").
 
                   /* Fechar o procedimento para buscarmos o resultado */ 
-                  CLOSE STORED-PROC pc_ver_val_bloqueio_aplica_prog
+                  CLOSE STORED-PROC pc_ver_bloqueio_aplica_prog
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -447,10 +447,10 @@ PROCEDURE obtem-resgate:
                   /* Busca possíveis erros */ 
                   ASSIGN aux_cdcritic = 0
                          aux_dscritic = ""
-                         aux_cdcritic = pc_ver_val_bloqueio_aplica_prog.pr_cdcritic 
-                                        WHEN pc_ver_val_bloqueio_aplica_prog.pr_cdcritic <> ?
-                         aux_dscritic = pc_ver_val_bloqueio_aplica_prog.pr_dscritic 
-                                        WHEN pc_ver_val_bloqueio_aplica_prog.pr_dscritic <> ?.
+                         aux_cdcritic = pc_ver_bloqueio_aplica_prog.pr_cdcritic 
+                                        WHEN pc_ver_bloqueio_aplica_prog.pr_cdcritic <> ?
+                         aux_dscritic = pc_ver_bloqueio_aplica_prog.pr_dscritic 
+                                        WHEN pc_ver_bloqueio_aplica_prog.pr_dscritic <> ?.
                   
                   IF aux_cdcritic <> 0 OR
                      aux_dscritic <> "" THEN

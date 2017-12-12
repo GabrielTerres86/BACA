@@ -1223,6 +1223,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_cdagenci AS INTE                                    NO-UNDO.
 
     DEF VAR aux_flsitgrv AS LOGICAL                                 NO-UNDO.
+    
+    DEF VAR aux_idgaropc_old AS INTE                                NO-UNDO.
 
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
     DEF BUFFER crabbpr FOR crapbpr.
@@ -2529,14 +2531,45 @@ PROCEDURE Grava_Dados:
                                     VALIDATE crapadt.
                                 END.
 
+                            /* Atualizar na proposta o ID da cobertura gravada conforme o tipo de contrato */
+                            IF  par_tpctrato = 90 THEN
+                                DO:
+                                   FIND FIRST crawepr WHERE
+                                              crawepr.cdcooper = par_cdcooper AND
+                                              crawepr.nrdconta = par_nrdconta AND
+                                              crawepr.nrctremp = par_nrctremp
+                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                                   IF  AVAIL crawepr THEN
+                                       DO:
+                                           ASSIGN aux_idgaropc_old = crawepr.idcobope
+                                                  crawepr.idcobope = par_idgaropc.
+                                       END.
+                                END.
+                            ELSE
+                                DO:
+                                   FIND FIRST craplim WHERE
+                                              craplim.cdcooper = par_cdcooper AND
+                                              craplim.nrdconta = par_nrdconta AND
+                                              craplim.nrctrlim = par_nrctremp AND
+                                              craplim.tpctrlim = par_tpctrato
+                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                                   IF  AVAIL craplim THEN
+                                       DO:
+                                           ASSIGN aux_idgaropc_old = craplim.idcobope
+                                                  craplim.idcobope = par_idgaropc.
+                                       END.
+                                END.
+
                             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                             /* Efetuar a chamada a rotina Oracle */
                             RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
-                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0            /* pr_idcobertura_anterior */
-                                                                ,INPUT par_idgaropc /* pr_idcobertura_nova */
-                                                                ,INPUT par_nrctremp /* pr_nrcontrato */
-                                                                ,OUTPUT "").        /* pr_dscritic */
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_idgaropc_old /* pr_idcobertura_anterior */
+                                                                ,INPUT par_idgaropc     /* pr_idcobertura_nova */
+                                                                ,INPUT par_nrctremp     /* pr_nrcontrato */
+                                                                ,OUTPUT "").            /* pr_dscritic */
 
                             /* Fechar o procedimento para buscarmos o resultado */
                             CLOSE STORED-PROC pc_vincula_cobertura_operacao
@@ -2552,40 +2585,12 @@ PROCEDURE Grava_Dados:
                             IF  aux_dscritic <> "" THEN
                                 UNDO Grava, LEAVE Grava.
 
-                            /* Atualizar na proposta o ID da cobertura gravada conforme o tipo de contrato */
-                            IF  par_tpctrato = 90 THEN
-                                DO:
-                                   FIND FIRST crawepr WHERE
-                                              crawepr.cdcooper = par_cdcooper AND
-                                              crawepr.nrdconta = par_nrdconta AND
-                                              crawepr.nrctremp = par_nrctremp
-                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                                   IF  AVAIL crawepr THEN
-                                       DO:
-                                           ASSIGN crawepr.idcobope = par_idgaropc.
-                                       END.
-                                END.
-                            ELSE
-                                DO:
-                                   FIND FIRST craplim WHERE
-                                              craplim.cdcooper = par_cdcooper AND
-                                              craplim.nrdconta = par_nrdconta AND
-                                              craplim.nrctrlim = par_nrctremp AND
-                                              craplim.tpctrlim = par_tpctrato
-                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                                   IF  AVAIL craplim THEN
-                                       DO:
-                                           ASSIGN craplim.idcobope = par_idgaropc.
-                                       END.
-                                END.
-
                             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                             /* Efetuar a chamada a rotina Oracle */
                             RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
-                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_idgaropc /* pr_idcobertura */
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ADITIV"     /* pr_nmdatela */
+                                                                ,INPUT par_idgaropc /* pr_idcobertura */
                                                                 ,INPUT "B"          /* pr_inbloq_desbloq */
                                                                 ,INPUT par_cdoperad /* pr_cdoperador */
                                                                 ,INPUT ""           /* pr_cdcoordenador_desbloq */

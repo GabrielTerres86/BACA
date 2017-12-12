@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007                      Ultima atualizacao: 10/06/2016
+   Data    : Junho/2007                      Ultima atualizacao: 07/12/2017
    
    Dados referentes ao programa:
 
@@ -96,6 +96,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/06/2016 - Ajustado para utilizar a procedure padrao TABE0001.pc_carrega_ctablq
                             para carregar as contas que estao bloqueadas (Douglas - Chamado 454248)
+
+               07/12/2017 - Checar a nova forma de bloqueio e aproveitar o processo que ja
+                            existe para resgate de conta investimento para reaplicacao.
+                            (Jaison/Marcos Martini - PRJ404)
+
      ............................................................................. */
 
      DECLARE
@@ -184,6 +189,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
              ,craprda.vlsltxmm
              ,craprda.vlrgtacu
              ,craprda.vlslfmes
+             ,craprda.qtdiauti
              ,craprda.rowid
        FROM craprda
        WHERE craprda.cdcooper = pr_cdcooper
@@ -294,6 +300,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
          AND cm.nrdctabb = pr_nrdconta
          AND cm.nrdocmto = gene0002.fn_char_para_number(pr_nraplica);
      rw_craplcm cr_craplcm%rowtype;
+     
+     -- Contem as faixas de dias que uma determinada taxa pode alcancar
+     CURSOR cr_crapttx(pr_cdcooper crapcop.cdcooper%TYPE
+                      ,pr_tptaxrdc crapttx.tptaxrdc%TYPE
+                      ,pr_qtdiacar crapttx.qtdiacar%TYPE) IS
+       SELECT ttx.cdperapl
+         FROM crapttx ttx
+        WHERE ttx.cdcooper = pr_cdcooper
+          AND ttx.tptaxrdc = pr_tptaxrdc
+          AND ttx.qtdiacar = pr_qtdiacar; 
+     rw_crapttx cr_crapttx%ROWTYPE;
 
      --Registro do tipo calendario
      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -349,6 +366,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_cdhistorc  craplcm.cdhistor%TYPE; --> Código histórico de controle
      vr_contapli   NUMBER;                --> Conta aplicação
      vr_inaplblq   NUMBER := 0;           --> Indice de bloqueio 
+     vr_nmdcampo   VARCHAR2(45);
+     vr_tab_msg_confirma APLI0002.typ_tab_msg_confirma; 
+     vr_dtvencto   DATE;
      
      --Variaveis dos Indices
      vr_index_craptab   VARCHAR2(30);
@@ -1590,7 +1610,67 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_saida;
              END;
            END IF;
-           
+
+           -- Obter os valores bloqueados de aplicacao
+           APLI0002.pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
+                                              ,pr_cdagenci => 1
+                                              ,pr_nrdcaixa => 1
+                                              ,pr_cdoperad => '1'
+                                              ,pr_nmdatela => pr_nmtelant
+                                              ,pr_idorigem => 5
+                                              ,pr_nrdconta => rw_craprda.nrdconta
+                                              ,pr_nraplica => rw_craprda.nraplica
+                                              ,pr_idseqttl => 1
+                                              ,pr_cdprogra => pr_nmtelant
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              ,pr_vlresgat => vr_vlsldapl
+                                              ,pr_flgerlog => 0
+                                              ,pr_innivblq => 2 -- Somente observar Bloqueio Garantia
+                                              ,pr_des_reto => vr_des_erro 
+                                              ,pr_tab_erro => vr_tab_erro); 
+           -- Se houve erro
+           IF vr_des_erro = 'NOK' THEN
+
+             -- Se retornou na tab de erros
+             IF vr_tab_erro.COUNT() > 0 THEN
+               -- Guarda o código e descrição do erro
+               vr_cdcritic := NVL(vr_tab_erro(vr_tab_erro.FIRST).cdcritic,0);
+               vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+             ELSE
+               -- Definir o código do erro
+               vr_cdcritic := 0;
+               vr_dscritic := 'Nao foi possivel cadastrar o resgate --> '
+                           || 'Erro na busca de Bloqueios';
+             END IF;
+
+             -- Se encontramos a critica 640 significa que há Bloqueio
+             IF vr_cdcritic = 640 THEN
+               --Montar indice Aplicacao
+               vr_index_aplicacao := lpad(rw_craprda.cdageass,10,'0')
+                                  || lpad(rw_craprda.nrdconta,10,'0')
+                                  || lpad(substr(rw_craprda.nraplica,1,7),10,'0');
+               --Se nao existe aplicacao
+               IF NOT vr_tab_aplicacao.EXISTS(vr_index_aplicacao) THEN
+                 --Inserir Aplicacao
+                 vr_tab_aplicacao(vr_index_aplicacao).nrdconta := rw_craprda.nrdconta;
+                 vr_tab_aplicacao(vr_index_aplicacao).nraplica := rw_craprda.nraplica;
+                 vr_tab_aplicacao(vr_index_aplicacao).qtdiaapl := rw_craprda.qtdiaapl;
+                 vr_tab_aplicacao(vr_index_aplicacao).cdagenci := rw_craprda.cdageass;
+                 vr_tab_aplicacao(vr_index_aplicacao).nmextage := vr_tab_crapage(rw_craprda.cdageass);
+                 --Marcar que existe aplicacao
+                 vr_flgaplic := TRUE;
+               END IF;
+               vr_tab_aplicacao(vr_index_aplicacao).vlsldrdc := 0;
+               vr_tab_aplicacao(vr_index_aplicacao).dsobserv := 'Apl. Bloq. Garantia';
+               -- Aplicacao bloqueada
+               vr_inaplblq := 3;
+             ELSE
+               -- Senão significa que houve erro não tratado
+               RAISE vr_exc_saida;
+             END IF;
+
+           END IF; -- vr_des_erro = 'NOK'
+
            -- Após processar as informações da aplicação para a conta de investimento
            -- Testar se a não aplicação possui bloqueio de resgate (BLQRGT)
            vr_index_craptab:= lpad(rw_craprda.nrdconta,12,'0')||lpad(substr(rw_craprda.nraplica,1,7),8,'0');
@@ -1613,6 +1693,64 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                --Levantar Excecao
                RAISE vr_exc_saida;
              END IF;
+
+             -- Bloqueios de Garantia
+             IF vr_inaplblq = 2 THEN
+
+               -- Busca da taxa
+               OPEN cr_crapttx(pr_cdcooper => pr_cdcooper
+                              ,pr_tptaxrdc => rw_crapdtc.tpaplica
+                              ,pr_qtdiacar => rw_craprda.qtdiauti); -- Qtd dias carencia
+               FETCH cr_crapttx INTO rw_crapttx;
+               IF cr_crapttx%NOTFOUND THEN
+                 CLOSE cr_crapttx;
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Taxa de aplicacao nao encontrada!';
+                 RAISE vr_exc_saida;
+               ELSE
+                 CLOSE cr_crapttx;
+               END IF;
+
+               -- Calculo da data de vencimento
+               vr_dtvencto := rw_crapdat.dtmvtocd + rw_craprda.qtdiaapl;
+               vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                         ,pr_dtmvtolt => vr_dtvencto
+                                                         ,pr_tipo => 'P');
+
+               -- Reaplicação com as mesmas caracteristicas da anterior
+               APLI0002.pc_incluir_nova_aplicacao(pr_cdcooper => pr_cdcooper
+                                                 ,pr_cdagenci => rw_craprda.cdageass
+                                                 ,pr_nrdcaixa => 100
+                                                 ,pr_cdoperad => '1'
+                                                 ,pr_nmdatela => 'CRPS481'
+                                                 ,pr_idorigem => 1
+                                                 ,pr_nrdconta => rw_craprda.nrdconta
+                                                 ,pr_idseqttl => 1
+                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                                 ,pr_tpaplica => rw_crapdtc.tpaplica
+                                                 ,pr_qtdiaapl => rw_craprda.qtdiaapl
+                                                 ,pr_dtresgat => vr_dtvencto
+                                                 ,pr_qtdiacar => rw_craprda.qtdiauti
+                                                 ,pr_cdperapl => rw_crapttx.cdperapl
+                                                 ,pr_flgdebci => 1 -- Debitar da Conta Investimento
+                                                 ,pr_vllanmto => vr_vlsldapl
+                                                 ,pr_flgerlog => 1
+                                                 ,pr_nmdcampo => vr_nmdcampo
+                                                 ,pr_nrdocmto => vr_nrdocmto
+                                                 ,pr_tab_msg_confirma => vr_tab_msg_confirma
+                                                 ,pr_cdcritic => vr_cdcritic
+                                                 ,pr_dscritic => vr_dscritic);
+
+               -- Quando houver algum erro na inclusão da aplicação, não esta sendo efetuado um ROLLBACK
+               -- pelo fato de que a procedure de pc_incluir_nova_aplicacao já esta realizando.
+               IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                 --Monta mensagem de critica
+                 vr_cdcritic := vr_cdcritic; 
+                 vr_dscritic := vr_dscritic; 
+                 RAISE vr_exc_saida;
+               END IF;
+
+             END IF; -- vr_inaplblq = 2
 
            ELSE -- Se a aplicacao nao tem bloqueio 
 
