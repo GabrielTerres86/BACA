@@ -50,6 +50,7 @@
  * 041: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
+ * 042: [11/10/2017] Liberacao da melhoria 442 (Heitor - Mouts)
 
  */
 
@@ -753,6 +754,12 @@ function controlaLayout(operacao) {
 		var cNtPromis    = $('#flgimpnp','#'+nomeForm);
 		var cLiquidacoes = $('#dsctrliq','#'+nomeForm);
 
+		var rDsratpro = $('label[for="dsratpro"]','#'+nomeForm);
+		var rDsratatu = $('label[for="dsratatu"]','#'+nomeForm);
+
+		var cDsratpro = $('#dsratpro','#'+nomeForm);
+		var cDsratatu = $('#dsratatu','#'+nomeForm);
+		
 		cNivelRic.addClass('rotulo').css('width','90px');
         cRiscoCalc.addClass('').css('width','108px');
         cVlEmpr.addClass('rotulo moeda').css('width','90px');
@@ -777,6 +784,10 @@ function controlaLayout(operacao) {
 		rRotulos.addClass('rotulo').css('width','75px');
 		rDtLiberar.css('width','305px');
 
+		rDsratpro.addClass('rotulo').css('width','75px');
+		rDsratatu.addClass('rotulo-linha').css('width','115px');
+		cDsratpro.addClass('rotulo').css('width','108px');
+		cDsratatu.addClass('rotulo').css('width','108px');
 
 		rLiberar.css('width','137px');
 		rProposta.css('width','305px');
@@ -1741,6 +1752,8 @@ function atualizaTela(){
 		$('#tpemprst','#frmNovaProp').val( arrayProposta['tpemprst'] );
 		$('#dslcremp','#frmNovaProp').val( arrayProposta['dslcremp'] );
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
+		$('#dsratpro','#frmNovaProp').val( arrayProposta['dsratpro'] );
+		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])){
 
@@ -2487,7 +2500,7 @@ function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
 
-	if ( idimpres >= 1 && idimpres <= 9 ) {
+	if ( idimpres >= 1 && idimpres <= 11 ) {
 	
 		if ( idimpres == 5 ) {
 
@@ -2503,9 +2516,21 @@ function verificaImpressao(par_idimpres){
 
 			fechaRotina($('#divUsoGenerico'),metodo);
 			
+		} else if ( idimpres == 10 ) {
+			var metodo = '';
+
+			imprimirRatingProposta(false,90,nrctremp,"divConteudoOpcao","bloqueiaFundo(divRotina);");
+
+			if ( $('#divAguardo').css('display') == 'block' ){
+				metodo = $('#divAguardo');
+			}else{
+				metodo = $('#divRotina');
+			}
+
+			fechaRotina($('#divUsoGenerico'),metodo);
 		}
 		else
-		if (in_array(idimpres, [7, 8, 9])) { //pre-aprovado
+		if (in_array(idimpres, [7, 8, 9, 11])) { //pre-aprovado
 			carregarImpresso();		
 		}
 		else {
@@ -3451,5 +3476,3 @@ function cancelaLiquidacao(){
 	return false;
 	
 }
-
-
