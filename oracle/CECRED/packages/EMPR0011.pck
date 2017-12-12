@@ -6698,7 +6698,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Parcela a Vencer --
       ----------------------
       ELSIF rw_crappep.dtvencto > vr_dtmvtolt THEN
-        
+
+        -- NAO permitir antecipar
+        vr_dscritic := 'Antecipacao nao permitida.';
+        RAISE vr_exc_erro;
+
         -- Efetua o pagamento da parcela vencer
         pc_efetua_pagamento_vencer(pr_cdcooper  => pr_cdcooper
                                   ,pr_dtcalcul  => vr_dtmvtolt
