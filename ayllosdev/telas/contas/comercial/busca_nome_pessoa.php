@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 05/12/2017
  * OBJETIVO     : Rotina para buscar o nome da pessoa a partir do campo CPF/CNPJ.
  *
- * ALTERACOES   : 
+ * ALTERACOES   :  12/12/2017 - Ajustado rotina para exibir apenas os primeiros 40 caracts
+ *                              pois tamanho da tabela apenas permite.
+ *                              PRJ339 - CRM(Odirlei-AMcom)
  */
 ?>
  
@@ -45,6 +47,8 @@
 
 	$nmpessoa = getByTagName($result,'nmpessoa');
 	$idaltera = getByTagName($result,'idaltera');
+    
+    $nmpessoa = substr($nmpessoa,1,40);
 	
 	if($idaltera == 1){
 		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda');";
