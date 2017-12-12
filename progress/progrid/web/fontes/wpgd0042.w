@@ -31,7 +31,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_flginter AS LOGICAL
        FIELD cdagenci AS CHARACTER FORMAT "X(256)":U 
        FIELD cdcooper AS CHARACTER FORMAT "X(256)":U 
-       FIELD idevento AS CHARACTER FORMAT "X(256)":U .
+       FIELD idevento AS CHARACTER FORMAT "X(256)":U
+			 FIELD aux_nrseqpgm AS CHARACTER.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -89,6 +90,7 @@ DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
 DEFINE VARIABLE vetorevento           AS CHARACTER                      NO-UNDO.
+DEFINE VARIABLE vetorprogra           AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
 
 DEFINE TEMP-TABLE ttEventos 
@@ -115,8 +117,8 @@ DEFINE TEMP-TABLE ttEventos
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsstatus ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ab_unmap.aux_flginter
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsstatus ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ab_unmap.aux_flginter
+&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsstatus ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ab_unmap.aux_flginter ab_unmap.aux_nrseqpgm
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsstatus ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ab_unmap.aux_flginter ab_unmap.aux_nrseqpgm
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -151,6 +153,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.aux_dsstatus AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+		ab_unmap.aux_nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
@@ -316,7 +322,9 @@ PROCEDURE CriaListaEventos :
        FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento            AND
                            crapedp.idevento = crapeap.idevento            AND
                            crapedp.cdcooper = crapeap.cdcooper            AND
-                           crapedp.dtanoage = crapeap.dtanoage            NO-LOCK,
+                           crapedp.dtanoage = crapeap.dtanoage            AND
+													 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm)       OR
+													 INT(ab_unmap.aux_nrseqpgm) = 0)                     NO-LOCK,
         EACH crapadp WHERE crapadp.idevento = crapeap.idevento            AND
                            crapadp.cdcooper = crapeap.cdcooper            AND
                            crapadp.cdagenci = crapeap.cdagenci            AND
@@ -362,65 +370,55 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventosAssemb w-html 
 PROCEDURE CriaListaEventosAssemb :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-    DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
-    DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
-    DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
-        INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                 "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
-    FOR EACH crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)  AND
-                           crapeap.cdcooper = INT(ab_unmap.cdcooper)      AND
-                          (crapeap.cdagenci = INT(ab_unmap.cdagenci)   OR
-                           crapeap.cdagenci = 0)                          AND 
-                           crapeap.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
-                           crapeap.flgevsel = YES                         NO-LOCK, 
-       FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento            AND
-                           crapedp.idevento = crapeap.idevento            AND
-                           crapedp.cdcooper = crapeap.cdcooper            AND
-                           crapedp.dtanoage = crapeap.dtanoage            NO-LOCK,
-        EACH crapadp WHERE crapadp.idevento = crapeap.idevento            AND
-                           crapadp.cdcooper = crapeap.cdcooper            AND
-                           crapadp.cdagenci = crapeap.cdagenci            AND
-                           crapadp.dtanoage = crapeap.dtanoage            AND
-                           crapadp.cdevento = crapeap.cdevento            NO-LOCK
-                           BREAK BY crapadp.cdagenci
-                                    BY crapedp.nmevento
-                                       BY crapadp.nrseqdig:
-    
-        ASSIGN aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0
-               aux_nmevento = crapedp.nmevento.
-                                                                                   
-        IF  crapadp.dtinieve <> ?  THEN
-            aux_nmevento = aux_nmevento + " - " + STRING(crapadp.dtinieve,"99/99/9999").
-        ELSE
-        IF  crapadp.nrmeseve <> 0  AND crapadp.nrmeseve <> ? THEN
-            aux_nmevento = aux_nmevento + " - " + vetormes[crapadp.nrmeseve].
-    
-        IF  crapadp.dshroeve <> "" THEN
-            aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
-    
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                 "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
-    END.
-  
-RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
+	DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
+	DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+	DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
+			INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+							 "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
+
+	RUN RodaJavaScript("var mevento = new Array();").
+	
+	FOR EACH crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)  AND
+												 crapeap.cdcooper = INT(ab_unmap.cdcooper)      AND
+												(crapeap.cdagenci = INT(ab_unmap.cdagenci)   OR
+												 crapeap.cdagenci = 0)                          AND 
+												 crapeap.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
+												 crapeap.flgevsel = YES                         NO-LOCK, 
+		 FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento            AND
+												 crapedp.idevento = crapeap.idevento            AND
+												 crapedp.cdcooper = crapeap.cdcooper            AND
+												 crapedp.dtanoage = crapeap.dtanoage            AND
+												 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm)       OR
+													INT(ab_unmap.aux_nrseqpgm) = 0) 									  NO-LOCK,
+			EACH crapadp WHERE crapadp.idevento = crapeap.idevento            AND
+												 crapadp.cdcooper = crapeap.cdcooper            AND
+												 crapadp.cdagenci = crapeap.cdagenci            AND
+												 crapadp.dtanoage = crapeap.dtanoage            AND
+												 crapadp.cdevento = crapeap.cdevento            NO-LOCK
+												 BREAK BY crapadp.cdagenci
+																	BY crapedp.nmevento
+																		 BY crapadp.nrseqdig:
+	
+			ASSIGN aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0
+						 aux_nmevento = crapedp.nmevento.
+																																								 
+			IF  crapadp.dtinieve <> ?  THEN
+					aux_nmevento = aux_nmevento + " - " + STRING(crapadp.dtinieve,"99/99/9999").
+			ELSE
+			IF  crapadp.nrmeseve <> 0  AND crapadp.nrmeseve <> ? THEN
+					aux_nmevento = aux_nmevento + " - " + vetormes[crapadp.nrmeseve].
+	
+			IF  crapadp.dshroeve <> "" THEN
+					aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
+	
+			RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci) 
+																		+ "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+																		+ "',cdevento:'" +  STRING(crapeap.cdevento) 
+																		+ "',nmevento:'" +  STRING(aux_nmevento)     
+																		+ "',nrseqeve:'" +  STRING(aux_nrseqeve) + "'~});").
+			
+	END.
 
 END PROCEDURE.
 
@@ -429,12 +427,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
 PROCEDURE htmOffsets :
-/*------------------------------------------------------------------------------
-  Purpose:     Runs procedure to associate each HTML field with its
-               corresponding widget name and handle.
-  Parameters:  
-  Notes:       
-------------------------------------------------------------------------------*/
+
   RUN readOffsets ("{&WEB-FILE}":U).
   RUN htmAssociate
     ("aux_cdagenci":U,"ab_unmap.aux_cdagenci":U,ab_unmap.aux_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
@@ -460,6 +453,8 @@ PROCEDURE htmOffsets :
     ("idevento":U,"ab_unmap.idevento":U,ab_unmap.idevento:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_flginter":U,"ab_unmap.aux_flginter":U,ab_unmap.aux_flginter:HANDLE IN FRAME {&FRAME-NAME}).
+	RUN htmAssociate
+    ("aux_nrseqpgm":U,"ab_unmap.aux_nrseqpgm":U,ab_unmap.aux_nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -477,6 +472,15 @@ PROCEDURE outputHeader :
 ------------------------------------------------------------------------*/
 
   output-content-type ("text/html":U).
+  
+END PROCEDURE.
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProgramas w-html 
+PROCEDURE CriaListaProgramas:
+	message "JMD".
+ {includes/wpgd0010.i}
+ ASSIGN ab_unmap.aux_nrseqpgm:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = vetorprogra.
   
 END PROCEDURE.
 
@@ -524,8 +528,8 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
        ab_unmap.cdagenci        = GET-VALUE("cdagenci")
        ab_unmap.cdcooper        = GET-VALUE("cdcooper")
-       ab_unmap.aux_flginter    = IF GET-VALUE("aux_flginter") = "on" THEN YES
-                                  ELSE NO.
+			 ab_unmap.aux_nrseqpgm    = GET-VALUE("aux_nrseqpgm")
+       ab_unmap.aux_flginter    = IF GET-VALUE("aux_flginter") = "on" THEN YES ELSE NO.
 
 RUN outputHeader.
 
@@ -573,13 +577,14 @@ ELSE
 {includes/wpgd0098.i}
 ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
 
+RUN CriaListaProgramas.
 
 /* PROGRID */
 IF   INT(ab_unmap.aux_idevento) = 1   THEN
      DO:
          /* gera lista de pa´s */
          {includes/wpgd0099.i ab_unmap.aux_dtanoage}         
-
+					
          /* gera lista de eventos */
          RUN CriaListaEventos. 
      END.

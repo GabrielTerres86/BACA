@@ -31,6 +31,8 @@
                
                30/11/2015 - Ajustes na variaveis aux_dsantcmp e aux_dsatucmp
                             (Jean Michel).
+                  
+               30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).   
 */
 /*****************************************************************************/
 
@@ -62,6 +64,7 @@ DEFINE VARIABLE aux_nmrescop                 AS CHARACTER.
 DEFINE VARIABLE aux_nmcampos                 AS CHARACTER.
 DEFINE VARIABLE aux_dsantcmp                 AS CHARACTER.
 DEFINE VARIABLE aux_dsatucmp                 AS CHARACTER.
+DEFINE VARIABLE nrseqpgm                 AS INTEGER.
 
 DEFINE BUFFER crabtab FOR craptab.
 
@@ -86,7 +89,7 @@ DEFINE TEMP-TABLE tt_pac                        NO-UNDO
       FIELD cdevento LIKE craphap.cdevento
       FIELD cdagenci LIKE craphap.cdagenci
       FIELD nrseqdig LIKE craphea.nrseqdig.
-    
+   
    FOR EACH progrid._file WHERE progrid._file._file-name = 'CRAPADP' NO-LOCK,
        EACH progrid._field OF progrid._file NO-LOCK:
        FIND tt-dsnome-campos WHERE tt-dsnome-campos.dsnmcampo = TRIM(UPPER(progrid._field._field-name)) NO-LOCK NO-ERROR.
@@ -108,7 +111,7 @@ DEFINE TEMP-TABLE tt_pac                        NO-UNDO
                 tt-dsnome-campos.descricao = progrid._field._desc.
        END.
    END.  
-
+  
   FOR EACH progrid._file WHERE progrid._file._file-name = 'CRAPEAP' NO-LOCK,
        EACH progrid._field OF progrid._file NO-LOCK:
        FIND tt-dsnome-campos WHERE tt-dsnome-campos.dsnmcampo = TRIM(UPPER(progrid._field._field-name)) NO-LOCK NO-ERROR.
@@ -181,10 +184,12 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
                            (crapadp.cdagenci  = cdagenci OR cdagenci = 0) /*TODOS PA'S*/      AND
                            (crapadp.nrseqdig  = nrseqeve OR nrseqeve = 0) /*TODOS EVENTOS*/   NO-LOCK,
         
-        FIRST crapedp WHERE crapedp.idevento = crapadp.idevento                              AND
-                            crapedp.cdcooper = crapadp.cdcooper                              AND
-                            crapedp.dtanoage = crapadp.dtanoage                              AND
-                            crapedp.cdevento = crapadp.cdevento                              NO-LOCK
+        FIRST crapedp WHERE crapedp.idevento = crapadp.idevento AND
+                            crapedp.cdcooper = crapadp.cdcooper AND
+                            crapedp.dtanoage = crapadp.dtanoage AND
+                            crapedp.cdevento = crapadp.cdevento AND
+                            (crapedp.nrseqpgm = INT(nrseqpgm) OR
+                            INT(nrseqpgm) = 0) NO-LOCK
                             BREAK BY crapadp.cdagenci
                                     BY crapedp.nmevento:
 
@@ -216,9 +221,7 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
 
 
         /* Nome do evento com as informações adicionais */
-        aux_nmevento = crapedp.nmevento.
-
-       
+        ASSIGN aux_nmevento = crapedp.nmevento.
         
         IF  crapadp.dtinieve <> ?  THEN
             aux_nmevento = aux_nmevento + " - " + STRING(crapadp.dtinieve,"99/99/9999").
@@ -238,8 +241,8 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
                                                                     craptab.tpregist = 0               NO-LOCK NO-ERROR.
                                                                     
                 aux_dsstatus = ENTRY((crapadp.idstaeve * 2) - 1,craptab.dstextab).      
-
-        {&OUT} '  <tr>' SKIP
+       
+       {&OUT} '  <tr>' SKIP
              '    <td colspan="4"> &nbsp;</td>' SKIP
              '  </tr>' SKIP.
                
@@ -273,7 +276,7 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
                    '  </tr>' SKIP.
         END.
 
-    
+     
    
     
     /*CAMPOS ALTERADOS*/
@@ -315,7 +318,7 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
                              craphev.cdcooper = crapadp.cdcooper AND
                              craphev.dtanoage = crapadp.dtanoage AND
                              craphev.cdevento = crapadp.cdevento NO-LOCK:
-           CREATE tt-historico.
+           CREATE tt-historico.                 
            ASSIGN  tt-historico.dtatuali = craphev.dtatuali
                    tt-historico.hratuali = craphev.hratuali
                    tt-historico.nmdcampo = craphev.nmdcampo
@@ -413,15 +416,15 @@ FUNCTION Relatorio_1 RETURNS LOGICAL ():
          
             IF TRIM(STRING(aux_dsantcmp)) <> TRIM(STRING(aux_dsatucmp)) THEN  
             DO:
-         {&OUT} '  <tr>' SKIP
-                 '    <td class="tdDados" width="15%">' STRING(tt-historico.dtatuali, "99/99/9999" ) ' - ' STRING(tt-historico.hratuali, "HH:MM:SS" ) '</td>' SKIP
-                 '    <td class="tdDados" width="40%">' aux_nmcampos '</td>' SKIP
-                 '    <td class="tdDados" width="25%">' aux_dsantcmp '</td>' SKIP
-                 '    <td class="tdDados" width="25%">' aux_dsatucmp '</td>' SKIP
-                 '  </tr>' SKIP.
+             {&OUT} '  <tr>' SKIP
+                     '    <td class="tdDados" width="15%">' STRING(tt-historico.dtatuali, "99/99/9999" ) ' - ' STRING(tt-historico.hratuali, "HH:MM:SS" ) '</td>' SKIP
+                     '    <td class="tdDados" width="40%">' aux_nmcampos '</td>' SKIP
+                     '    <td class="tdDados" width="25%">' aux_dsantcmp '</td>' SKIP
+                     '    <td class="tdDados" width="25%">' aux_dsatucmp '</td>' SKIP
+                     '  </tr>' SKIP.
+            END.
         END.
-        END.
-
+        
         EMPTY TEMP-TABLE  tt-historico.
         
         {&OUT} '  <tr>' SKIP
@@ -485,10 +488,12 @@ FUNCTION Relatorio_2 RETURNS LOGICAL ():
                            (crapadp.cdagenci  = cdagenci OR cdagenci = 0) /*TODOS PA'S*/      AND
                            (crapadp.nrseqdig  = nrseqeve OR nrseqeve = 0) /*TODOS EVENTOS*/   NO-LOCK,
         
-        FIRST crapedp WHERE crapedp.idevento = crapadp.idevento                              AND
-                            crapedp.cdcooper = crapadp.cdcooper                              AND
-                            crapedp.dtanoage = crapadp.dtanoage                              AND
-                            crapedp.cdevento = crapadp.cdevento                              NO-LOCK
+        FIRST crapedp WHERE crapedp.idevento = crapadp.idevento AND
+                            crapedp.cdcooper = crapadp.cdcooper AND
+                            crapedp.dtanoage = crapadp.dtanoage AND
+                            crapedp.cdevento = crapadp.cdevento AND
+                            (crapedp.nrseqpgm = INT(nrseqpgm)   OR
+                            INT(nrseqpgm) = 0) NO-LOCK
                             BREAK BY crapedp.nmevento:
 
         IF   FIRST-OF(crapedp.nmevento)   THEN
@@ -723,13 +728,14 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
        erroNaValidacaoDoLogin(permiteExecutar).
    ELSE
        DO:
-          ASSIGN idEvento                     = INTEGER(GET-VALUE("parametro1"))
-                 cdCooper                     = INTEGER(GET-VALUE("parametro2"))
-                 cdAgenci                     = INTEGER(GET-VALUE("parametro3"))
-                 dtAnoAge                     = INTEGER(GET-VALUE("parametro4"))
-                 nrseqeve                     = INTEGER(GET-VALUE("parametro5"))
-                 tipoDeRelatorio              = INTEGER(GET-VALUE("parametro6"))
-                 cdevento                     = INTEGER(GET-VALUE("parametro7")) NO-ERROR.          
+          ASSIGN idEvento        = INTEGER(GET-VALUE("parametro1"))
+                 cdCooper        = INTEGER(GET-VALUE("parametro2"))
+                 cdAgenci        = INTEGER(GET-VALUE("parametro3"))
+                 dtAnoAge        = INTEGER(GET-VALUE("parametro4"))
+                 nrseqeve        = INTEGER(GET-VALUE("parametro5"))
+                 tipoDeRelatorio = INTEGER(GET-VALUE("parametro6"))
+                 cdevento        = INTEGER(GET-VALUE("parametro7"))
+                 nrseqpgm        = INTEGER(GET-VALUE("parametro8")) NO-ERROR.          
 
           FIND crapcop WHERE crapcop.cdcooper = cdCooper NO-LOCK NO-ERROR.
 
@@ -758,9 +764,6 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
 /*                                                                           */
 /*****************************************************************************/
 
-PROCEDURE PermissaoDeAcesso :
-
-    {includes/wpgd0009.i}
-
+PROCEDURE PermissaoDeAcesso:
+  {includes/wpgd0009.i}
 END PROCEDURE.
-
