@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0137tt.i                  
     Autor   : Guilherme
-    Data    : Abril/2012                      Ultima atualizacao: 25/10/2016
+    Data    : Abril/2012                      Ultima atualizacao: 11/12/2017
 
    Dados referentes ao programa:
 
@@ -44,10 +44,13 @@
                07/06/2016 - Adicionado TEMP-TABLE tt-tarif-contas-pacote. PRJ218/2
                             (Reinert).
 
-			   11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+               11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                             Projeto 339 - CRM. (Lombardi)
 
-			   25/10/2016 - Ajustes da melhoria 310 (Tiago/Thiago).
+               25/10/2016 - Ajustes da melhoria 310 (Tiago/Thiago).
+               
+               11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar). 
+         
 ............................................................................ */
 
 DEF TEMP-TABLE tt-documento-digitalizado NO-UNDO
@@ -69,7 +72,10 @@ DEF TEMP-TABLE tt-documento-digitalizado NO-UNDO
     INDEX tt-documento-digitalizado1
           AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
     INDEX tt-documento-digitalizado2 flgencon
-    INDEX tt-documento-digitalizado3 cdcooper nrdconta.
+    INDEX tt-documento-digitalizado3 cdcooper nrdconta
+    INDEX tt-documento-digitalizado4 cdcooper nrcpfcgc
+    INDEX tt-documento-digitalizado5 cdcooper nrdconta nrcpfcgc.
+    
 
 DEF TEMP-TABLE tt-contr_ndigi                                           NO-UNDO
     FIELD cdcooper AS INT
@@ -114,7 +120,8 @@ DEF TEMP-TABLE tt-contr_ndigi_cadastro                                  NO-UNDO
     FIELD tpctrdig AS INT
     FIELD nrcpfcgc AS DECI
     INDEX tt-contr_ndigi_cadastro1 AS PRIMARY cdcooper nrdconta dtmvtolt
-    INDEX tt-contr_ndigi_cadastro2 cdcooper nrdconta dtmvtolt cdagenci tpctrdig.
+    INDEX tt-contr_ndigi_cadastro2 cdcooper nrdconta dtmvtolt cdagenci tpctrdig
+    INDEX tt-contr_ndigi_cadastro3 cdcooper dtmvtolt nrdconta nrcpfcgc cdagenci tpctrdig.
 
 DEF  TEMP-TABLE tt-documentos                                           NO-UNDO
      FIELD nmoperac AS CHAR
