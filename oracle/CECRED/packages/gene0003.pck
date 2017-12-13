@@ -212,6 +212,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 17/10/2017 - Ajuste na pc_gerar_mensagem para não obrigar mais o idseqttl, se este vier nulo, então
                              o o programa vai percorrer todos os usuários da conta no ibank (Pablão)
+
+                12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
+                             na leitura dessas mensagens na Conta Online.
+                             Heitor (Mouts) - Chamado 807108
 ..............................................................................*/
 
   /* Saída com erro */
@@ -1420,27 +1424,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
   BEGIN
   
     /* trocando caracteres especiais */
-    vr_dsdmensg := REPLACE(vr_dsdmensg, '<', '%3C');
+    vr_dsdmensg := REPLACE(pr_dsdmensg, '<', '%3C');
     vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
     vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
-    
+
     OPEN cr_usuarios_internet;
    FETCH cr_usuarios_internet BULK COLLECT
     INTO vr_usuarios_internet;
    CLOSE cr_usuarios_internet;
-    
+
     FOR idx IN 1 .. vr_usuarios_internet.count LOOP
-    
+
       -- Obtém o proximo valor da sequence32
     vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
                               ,pr_nmdcampo => 'NRDMENSG'
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
                               ,pr_flgdecre => 'N');
-  
+
     /* trocando "#cooperado#" pelo nome do cooperado,
       trocando #cooperativa# pelo nome fantasia da cooperativa
       trocando #titular# pelo nome do titular da conta */
-      vr_dsdmensg := REPLACE(pr_dsdmensg,'%23cooperado%23',vr_usuarios_internet(idx).nmextttl);
+      vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperado%23',vr_usuarios_internet(idx).nmextttl);
       vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperativa%23',vr_usuarios_internet(idx).nmrescop);
   
     BEGIN
