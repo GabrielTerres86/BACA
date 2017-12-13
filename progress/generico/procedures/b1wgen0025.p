@@ -341,10 +341,6 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
-                             
-                09/08/2017 - Ajustes para inclusao das rotinas de Desligamento, Prj 364 
-                            (Mateus Zimmermann - MoutS).
-                            
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2548,10 +2544,6 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
     DEFINE VARIABLE     h-b1wgen0011    AS HANDLE                   NO-UNDO.
 
-	DEFINE VARIABLE    aux_vlcapital    AS DECIMAL                  NO-UNDO.
-	DEFINE VARIABLE    aux_dtinicio_credito AS DATE                 NO-UNDO.
-	DEFINE VARIABLE    aux_vlpago       AS DECIMAL                  NO-UNDO.
-	
     DEFINE BUFFER crabass FOR crapass.
 
 
@@ -2643,108 +2635,7 @@ PROCEDURE efetua_saque:
                cratlot.vlinfodb = cratlot.vlinfodb + par_vldsaque
                cratlot.vlcompdb = cratlot.vlcompdb + par_vldsaque.
     
-		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-			
-		/* Efetuar a chamada da rotina Oracle */
-		RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-			aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-												INPUT par_nrdconta, /*Conta*/                    
-												INPUT 4, /*Deposito a vista*/                    															     
-												OUTPUT ?, /*Valor do capital*/                       
-												OUTPUT ?, /*Data de pagemento*/                        
-												OUTPUT ?, /*Valor pago*/                        
-												OUTPUT 0, /*Codigo da critica*/                    
-												OUTPUT ""). /*Descricao da critica*/               
-									 
-		/* Fechar o procedimento para buscarmos o resultado */
-		CLOSE STORED-PROC pc_buscar_tbcota_devol
-				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-		/* Busca possíveis erros */
-		ASSIGN aux_cdcritic = 0
-				aux_dscritic = ""
-				aux_cdcritic = pc_buscar_tbcota_devol.pr_cdcritic
-							WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-				par_dscritic = pc_buscar_tbcota_devol.pr_dscritic
-							WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-				aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-							WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-				aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-							WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-				aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-							WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
-
-        IF aux_cdcritic = 0 and aux_dscritic = "" then
-		    do:
-				CREATE craplcx.
-				ASSIGN craplcx.cdcooper = par_cdcooper                             
-					   craplcx.cdagenci = par_cdagetfn
-					   craplcx.dtmvtolt = par_dtmvtocd
-					   craplcx.cdhistor = 2065
-					   craplcx.dsdcompl = "Agencia: " + STRING(par_cdagetfn,"999") + " Conta/DV: " + STRING(par_nrdconta,"99999999")
-					   craplcx.nrdocmto = par_hrtransa
-					   craplcx.nrseqdig = cratlot.nrseqdig
-					   craplcx.vldocmto = par_vldsaque. 
-			
-			
-			end.
-		else
-		   assign aux_cdcritic = 0
-		          aux_dscritic = "".
-				  
-		{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-		/* Efetuar a chamada da rotina Oracle */
-		RUN STORED-PROCEDURE pc_buscar_tbcota_devol
-			aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
-												INPUT par_nrdconta, /*Conta*/                    
-												INPUT 3, /*Capital*/                    															     
-											    OUTPUT ?, /*Valor do capital*/                       
-											    OUTPUT ?, /*Data de pagemento*/                        
-												OUTPUT ?, /*Valor pago*/                        
-												OUTPUT 0, /*Codigo da critica*/                    
-												OUTPUT ""). /*Descricao da critica*/               
-
-		/* Fechar o procedimento para buscarmos o resultado */
-		CLOSE STORED-PROC pc_buscar_tbcota_devol
-				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-									 
-		/* Busca possíveis erros */
-		ASSIGN aux_cdcritic = 0
-				aux_dscritic = ""
-				aux_cdcritic = pc_buscar_tbcota_devol.pr_cdcritic
-							WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
-				aux_dscritic = pc_buscar_tbcota_devol.pr_dscritic
-							WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
-				aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
-							WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
-				aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
-							WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
-				aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
-							WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
-
-        IF aux_cdcritic = 0 and aux_dscritic = "" then
-		    do:
-                  CREATE craplcx.
-                            ASSIGN craplcx.cdcooper = par_cdcooper                             
-                                     craplcx.cdagenci = par_cdagetfn
-                                     craplcx.dtmvtolt = par_dtmvtocd
-                                     craplcx.cdhistor = 2083
-                                     craplcx.dsdcompl = "Agencia: " + STRING(par_cdagetfn,"999") + " Conta/DV: " + STRING(par_nrdconta,"99999999")
-                                     craplcx.nrdocmto = par_hrtransa
-                                     craplcx.nrseqdig = cratlot.nrseqdig
-                                     craplcx.vldocmto = par_vldsaque.
-                                       
-			end.
-		else
-		   assign aux_cdcritic = 0
-		          aux_dscritic = "".
-             
-                EMPTY TEMP-TABLE cratlcm.
+        EMPTY TEMP-TABLE cratlcm.
         CREATE cratlcm.
         ASSIGN cratlcm.cdcooper = par_cdcooper
                cratlcm.dtmvtolt = par_dtmvtocd
@@ -2768,7 +2659,7 @@ PROCEDURE efetua_saque:
                cratlcm.cdhistor = aux_cdhisdeb /* SAQUE CARTAO */
                cratlcm.vllanmto = par_vldsaque
                cratlcm.nrseqdig = cratlot.nrseqdig.
-              
+               
                                                
         RUN sistema/generico/procedures/b1craplcm.p PERSISTENT SET h-b1craplcm.
                
@@ -3801,7 +3692,7 @@ PROCEDURE busca_associado:
 		     ASSIGN par_nmtitula[2] = crapttl.nmextttl.
 
 		  END.
-
+		  
 	   END.
 
     ASSIGN par_nmtitula[1] = crapass.nmprimtl.
