@@ -2115,27 +2115,8 @@ PROCEDURE Criticas_Inclusao PRIVATE :
             /* Conforme solicitaçao do Chamado 269526 esta
                validaçao deve ser executada */
 
-            FOR FIRST crapcot FIELDS(vldcotas)
-                              WHERE crapcot.cdcooper = par_cdcooper AND
-                                    crapcot.nrdconta = crabass.nrdconta 
-                                    NO-LOCK:
+           /* Solicitado pela Sarah retirar essa validacao */
 
-                IF  crapcot.vldcotas > 0 THEN
-                    DO:
-                       /*** Tarefa 31059 Viacredi ***/
-                       IF  crabass.cdcooper = 1 AND
-                           crabass.nrdconta = 859010 THEN.
-                       ELSE 
-                           DO:     
-                              ASSIGN 
-                                  par_nmdcampo = "nrcpfcgc"
-                                  par_cdcritic = 620 
-                                  aux_nrctaass = crabass.nrdconta
-                                  aux_dtdemsoc = ?.
-                              LEAVE CpfCnpj.
-                           END.
-                    END.
-            END.
 
             /* cria o alerta */
             IF  aux_dtdemsoc = ? OR crabass.dtdemiss > aux_dtdemsoc THEN
