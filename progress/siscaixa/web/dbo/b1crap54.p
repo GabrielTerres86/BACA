@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 12/12/2017
 
    Dados referentes ao programa:
 
@@ -54,13 +54,14 @@
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur (Adriano - P339).
                             
-			   23/08/2017 - Alterado para validar as informacoes do operador 
-							pelo AD. (PRJ339 - Reinert)
+               23/08/2017 - Alterado para validar as informacoes do operador 
+                            pelo AD. (PRJ339 - Reinert)
 
+               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -1075,7 +1076,7 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT aux_idtipcar, 
                                  INPUT p-nrdocto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT aux_nrcartao,
+                                 INPUT STRING(aux_nrcartao),
                                  INPUT p-valor,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT 0,

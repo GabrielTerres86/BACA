@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   
    Dados referentes ao programa:
   
@@ -33,6 +33,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
 
+                 12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -515,7 +517,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) 
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -756,7 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -798,6 +800,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --			                crapass, crapttl, crapjur 
   --						   (Adriano - P339).
+  --
+  --                12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+  --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -8424,7 +8429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred)
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -8440,7 +8445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-    --  Data     : Abril/2016.                   Ultima atualizacao: 14/11/2016
+    --  Data     : Abril/2016.                   Ultima atualizacao: 12/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -8455,8 +8460,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           (Douglas - Chamado 454248)
     --
     --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
-    --                           ifs no programa(Odirlei-AMcom)  
-    -- ..........................................................................*/
+    --                           ifs no programa(Odirlei-AMcom) 
+    
+                    12/12/2017 - Alterar para para varchar2 o campo nrcartao
+                                 (Lucas Ranghetti #810576) 
+     ............................................................................*/
 
     -- Cursor para retornar o nome do banco
     CURSOR cr_crapban IS

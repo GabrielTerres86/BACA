@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 23/08/2017
+    Ultima Atualizacao: 12/12/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -226,30 +226,31 @@
                             craptvl sem nrdconta e ajustado a mensagem.
                             (Odirlei-AMcom)
 
-				07/03/2016 - Incluir validacao para agencia zerada (Lucas Ranghetti #411852)
+                07/03/2016 - Incluir validacao para agencia zerada (Lucas Ranghetti #411852)
 
-  			    26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
-			                 comprovantes, melhoria 112 (Tiago/Elton).				
+                26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
+                             comprovantes, melhoria 112 (Tiago/Elton).				
 							 
-				27/04/2016 - Adicionado tratamento para verificar isencao ou nao
+                27/04/2016 - Adicionado tratamento para verificar isencao ou nao
                              de tarifa no envio de DOC/TED. PRJ 218/2 (Reinert).			 
 							 
-			    25/08/2016 - Ajustado para gerar o log de cartão no envio da TED antes de 
-				             chamar a rotina que envia as informações para a Cabine,
-							 para garantir que envie as informacoes para a cabine e posteriormente
-							 aborte o programa. (Odirlei - AMcom)				 		 
+                25/08/2016 - Ajustado para gerar o log de cartão no envio da TED antes de 
+                             chamar a rotina que envia as informações para a Cabine,
+                             para garantir que envie as informacoes para a cabine e posteriormente
+                             aborte o programa. (Odirlei - AMcom)				 		 
 						
-				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
+                17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339). 
+                17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur (Adriano - P339). 
 
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
-									 		 
-			    23/08/2017 - Alterado para validar as informacoes do operador 
-							 pelo AD. (PRJ339 - Reinert)
-									 		 
+									 		  
+                23/08/2017 - Alterado para validar as informacoes do operador 
+                             pelo AD. (PRJ339 - Reinert)
+							
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 -----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
@@ -2207,7 +2208,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                  INPUT p-idtipcar, 
                                  INPUT i-nro-docto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT p-nrcartao,
+                                 INPUT STRING(p-nrcartao),
                                  INPUT aux_vllanmto,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT p-cod-banco,

@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 26/06/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 12/12/2017
     
     Dados referentes ao programa:
 
@@ -399,15 +399,17 @@
                            Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
                            PRJ335 - Analise de fraude. (Odirlei-AMcom).
               
-               12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+              12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 
 
               18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			               crapass, crapttl, crapjur 
-						  (Adriano - P339).
+                          crapass, crapttl, crapjur (Adriano - P339).
 
-			   26/06/2017 - Ajuste para chamar rotina convertida na procedure cancelar-senha-internet
-			                (Jonata - RKAM P364).
+              26/06/2017 - Ajuste para chamar rotina convertida na procedure cancelar-senha-internet
+                           (Jonata - RKAM P364).
+                      
+              12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                           pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -3890,7 +3892,7 @@ PROCEDURE executa_transferencia:
                                  INPUT par_idtipcar,
                                  INPUT par_nrdocdeb,     /* Nrd Documento */               
                                  INPUT par_cdhisdeb,     /* HIST Debito */
-                                 INPUT par_nrcartao,
+                                 INPUT STRING(par_nrcartao),
                                  INPUT par_vllanmto,
                                  INPUT par_cdoperad,     /* Código do Operador */
                                  INPUT 0,

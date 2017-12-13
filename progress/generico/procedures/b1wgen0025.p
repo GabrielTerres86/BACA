@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 30/11/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 12/12/2017
     
     Dados referentes ao programa:
 
@@ -337,13 +337,14 @@
                              magnético de operador. Quando for um cartão de operador,
                              não consultar transferência de conta (Carlos)
 
-			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur (Adriano - P339).
 							
                 30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
-				             Prova de vida nao aparecendo na AV - Andrei - Mouts							
+				                     Prova de vida nao aparecendo na AV - Andrei - Mouts							
 
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2954,7 +2955,7 @@ PROCEDURE efetua_saque:
                                  INPUT IF AVAIL crapcrm THEN 1 ELSE 2,
                                  INPUT par_hrtransa,     /* Nrd Documento */               
                                  INPUT aux_cdhisdeb,     /* SAQUE CARTAO */
-                                 INPUT par_nrcartao,
+                                 INPUT STRING(par_nrcartao),
                                  INPUT par_vldsaque,
                                  INPUT "1",                /* Código do Operador */
                                  INPUT 0,
