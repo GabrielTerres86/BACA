@@ -541,7 +541,7 @@ DO  WHILE TRUE:
             MESSAGE "Aguarde, debitando consorcios ...".
             
             RUN efetua-debito-consorcio(INPUT TRUE,
-			                                  INPUT 3).
+			                                  INPUT 2). /* Segunda execucao */
             
             HIDE MESSAGE NO-PAUSE.
             
