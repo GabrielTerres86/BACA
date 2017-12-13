@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Adriano
-       Data    : Marco/2013                      Ultima atualizacao: 30/10/2015
+       Data    : Marco/2013                      Ultima atualizacao: 24/10/2017
 
        Dados referentes ao programa:
 
@@ -34,6 +34,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                 
                    30/10/2015 - Ajuste no cr_crapris_last pois pegava contratos em prejuizo
                                 indevidamente (Tiago/Gielow #342525).
+
+                   24/10/2017 - Atualizacao do Grupo Economico fora do loop da crapris com valor de arrasto.
+                                (Jaison/James)
 
     ............................................................................ */
 
@@ -99,7 +102,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         AND     crapris.inddocto = 1                
         AND     crapris.vldivida > pr_vlr_arrasto  
         AND     crapris.inindris < 10;
-      
+
       -- cadastro do vencimento do risco
       CURSOR cr_crapvri( pr_cdcooper IN crapris.cdcooper%TYPE
                         ,pr_dtrefere IN crapris.dtrefere%TYPE
@@ -221,8 +224,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             BEGIN
               UPDATE  crapris
               SET     crapris.innivris = rw_crapgrp.innivrge,
-                      crapris.dtdrisco = vr_dtdrisco,
-                      crapris.nrdgrupo = rw_crapgrp.nrdgrupo                      
+                      crapris.dtdrisco = vr_dtdrisco
               WHERE   cdcooper         = rw_crapris.cdcooper       
               AND     nrdconta         = rw_crapris.nrdconta      
               AND     dtrefere         = rw_crapris.dtrefere      
@@ -248,6 +250,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             END;        
           END LOOP;
         END LOOP;
+
+        -- Atualiza Grupo Economico
+        BEGIN          
+          UPDATE crapris
+             SET nrdgrupo = rw_crapgrp.nrdgrupo
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = rw_crapgrp.nrctasoc
+             AND dtrefere = pr_dtrefere;
+        EXCEPTION
+          WHEN OTHERS THEN
+            --gera critica
+            vr_dscritic := 'Erro ao atualizar Grupo Economico das informacoes da central de risco(crapris). '||
+                           'Erro: '||SQLERRM;
+            RAISE vr_exc_fimprg;
+        END;
+
       END LOOP;
       --gera log de sucesso
       vr_dscritic := 'Atualizacao dos riscos efetuada com sucesso.';
@@ -269,4 +287,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
     END;
   END pc_crps635_i;
 /
-
