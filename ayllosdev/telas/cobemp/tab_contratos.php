@@ -6,6 +6,8 @@
 	* OBJETIVO     : Tabela que apresenta a consulta de contratos
 	* --------------
 	* ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *
+ *                01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
 	* --------------
 	*/
 
@@ -33,6 +35,7 @@
                     <th>Valor</th>
                     <th>Valor Atraso</th>
                     <th>Saldo</th>
+                    <th>Saldo Preju&iacute;zo</th>
                 </tr>
             </thead>
 
@@ -60,6 +63,8 @@
                             <input type="hidden" id="vlemprst" name="vlemprst" value="<?php echo number_format(str_replace(",",".",getByTagName($r->tags,'vlemprst')),2,",",".");?>" />
 							<input type="hidden" id="nrcnvcob" name="nrcnvcob" value="<?php echo getByTagName($r->tags,'nrcnvcob') ?>" />
 							<input type="hidden" id="nrctacob" name="nrctacob" value="<?php echo getByTagName($r->tags,'nrctacob') ?>" />
+                            <input type="hidden" id="avalista" name="avalista" value="<?php echo getByTagName($r->tags,'avalista') ?>" />
+                            <input type="hidden" id="vlsdprej" name="vlsdprej" value="<?php echo number_format(str_replace(",",".",getByTagName($r->tags,'vlsdprej')),2,",",".");?>" />
                         </td>
                         <td><?php echo getByTagName($r->tags, 'cdfinemp') ?></td>
                         <td><?php echo formataNumericos("z.zzz.zzz.zzz", getByTagName($r->tags, 'nrctremp'), "."); ?>
@@ -73,7 +78,7 @@
                         <td><?php echo number_format(str_replace(",", ".", getByTagName($r->tags, 'vlpreemp')), 2, ",", "."); ?></td>
                         <td><?php echo number_format(str_replace(",", ".", getByTagName($r->tags, 'vltotpag')), 2, ",", "."); ?></td>
                         <td><?php echo number_format(str_replace(",", ".", getByTagName($r->tags, 'vlsdeved')), 2, ",", "."); ?></td>
-
+                        <td><?php echo number_format(str_replace(",", ".", getByTagName($r->tags, 'vlsdprej')), 2, ",", "."); ?></td>
                     </tr>
                     <?php
                 }
