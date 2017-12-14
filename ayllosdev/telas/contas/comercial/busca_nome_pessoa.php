@@ -52,9 +52,7 @@
 	
 	if($idaltera == 1){
 		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda');";
-		echo "$('#nmextemp', '#frmDadosComercial').focus();";
 	}else{
 		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
 	}
-	echo "bloqueiaFundo(divRotina)";
 ?>	

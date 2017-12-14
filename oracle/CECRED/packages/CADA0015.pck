@@ -1156,234 +1156,282 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_idpessoa := pr_idpessoa;                           
     END IF;
 
-    -- Se o responsavel legal possui conta, busca os dados da conta dele
-    IF pr_crapcrl.nrdconta > 0 THEN
-      rw_crapass := NULL; 
-      OPEN cr_crapass( pr_cdcooper => pr_crapcrl.cdcooper,
-                       pr_nrdconta => pr_crapcrl.nrdconta);
-      FETCH cr_crapass INTO rw_crapass;
-      IF cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
-        vr_dscritic := 'Nao encontrado a conta do responsavel legal';
-        RAISE vr_exc_erro;
-      END IF;
-      CLOSE cr_crapass;
-        
-      -- Verifica se este responsavel ja possui cadastro de pessoa
-      rw_pessoa_resp := NULL;
-      OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
-      FETCH cr_pessoa INTO rw_pessoa_resp;
-      -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
-      IF cr_pessoa%NOTFOUND THEN
-        CLOSE cr_pessoa;
-        -- Efetua a inclusao de pessoa
-        cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapcrl.cdcooper,
-                                          pr_nrdconta => pr_crapcrl.nrdconta,
-                                          pr_idseqttl => 1,
-                                          pr_cdoperad => pr_cdoperad,
-                                          pr_cdcritic => vr_cdcritic,
-                                          pr_dscritic => vr_dscritic);
-        -- Verifica se deu erro
-        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+    -- Se for uma exclusao
+    IF pr_tpoperacao = 3 THEN
+    
+      IF pr_crapcrl.nrdconta > 0 THEN
+        rw_crapass := NULL; 
+        OPEN cr_crapass( pr_cdcooper => pr_crapcrl.cdcooper,
+                         pr_nrdconta => pr_crapcrl.nrdconta);
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%NOTFOUND THEN
+          CLOSE cr_crapass;
+          vr_dscritic := 'Nao encontrado a conta do responsavel legal';
           RAISE vr_exc_erro;
         END IF;
+        CLOSE cr_crapass;
           
-        -- Busca a pessoa que foi cadastrada
+        -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
         FETCH cr_pessoa INTO rw_pessoa_resp;
-          
-      END IF;
-      CLOSE cr_pessoa;
-    
-    ELSE
-    
-      -- Verifica se este responsavel ja possui cadastro de pessoa
-      rw_pessoa_resp := NULL;
-      OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapcrl.nrcpfcgc);
-      FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
-      CLOSE cr_pessoa_fisica;
-      
-      -- Efetua a inclusao de pessoa
-      vr_pessoa := rw_pessoa_fisica;
-      vr_pessoa.nrcpf                := pr_crapcrl.nrcpfcgc;
-      vr_pessoa.nmpessoa             := pr_crapcrl.nmrespon;
-      vr_pessoa.idorgao_expedidor    := pr_crapcrl.idorgexp;
-      vr_pessoa.cduf_orgao_expedidor := TRIM(pr_crapcrl.cdufiden);
-      vr_pessoa.dtemissao_documento  := pr_crapcrl.dtemiden;
-      vr_pessoa.dtnascimento         := pr_crapcrl.dtnascin; 
-      vr_pessoa.tpsexo               := pr_crapcrl.cddosexo; 
-      IF nvl(pr_crapcrl.cdestciv,0) > 0 THEN
-        vr_pessoa.cdestado_civil     := pr_crapcrl.cdestciv; 
-      END IF;
-      vr_pessoa.nrdocumento          := pr_crapcrl.nridenti; 
-      vr_pessoa.tpdocumento          := pr_crapcrl.tpdeiden; 
-      IF nvl(pr_crapcrl.cdnacion,0) > 0 THEN
-        vr_pessoa.cdnacionalidade    := pr_crapcrl.cdnacion; 
-      END IF;
-      vr_pessoa.tppessoa            := nvl(vr_pessoa.tppessoa  ,1); -- Fisica
-      vr_pessoa.tpcadastro          := nvl(vr_pessoa.tpcadastro,2); -- Basico
-      vr_pessoa.cdoperad_altera     := pr_cdoperad;
-
-      -- Trata o municipio
-      IF TRIM(pr_crapcrl.dsnatura) IS NOT NULL THEN
-        -- Busca o ID do municipio
-        CADA0015.pc_trata_municipio
-                          (pr_dscidade => TRIM(pr_crapcrl.dsnatura),
-                           pr_cdestado => NULL,
-                           pr_idcidade => vr_pessoa.cdnaturalidade,
-                           pr_dscritic => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
+        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
+        IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
         END IF;
-      END IF;
           
-      -- Insere o Cadastro de pessoa fisica
-      cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => vr_pessoa,
-                                       pr_cdcritic      => vr_cdcritic,
-                                       pr_dscritic      => vr_dscritic);
-      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-          
-      -- Atualiza o IDPESSOA na variavel de uso
-      rw_pessoa_resp.idpessoa := vr_pessoa.idpessoa;
-
-      -- Buscar dados da pessoa de relacao
-      OPEN cr_pessoa_rel ( pr_idpessoa  => vr_pessoa.idpessoa,
-                           pr_tprelacao => 3); -- Pai
-      FETCH cr_pessoa_rel INTO rw_pessoa_rel;
-      CLOSE cr_pessoa_rel;
+      ELSE
       
-      --> se possia inf do pai, porém agora o campo esta vazio, deve deletar
-      IF rw_pessoa_rel.nrseq_relacao > 0 AND 
-         ( TRIM(pr_crapcrl.nmpairsp) IS NULL OR
-           pr_crapcrl.nmpairsp <> rw_pessoa_rel.nmpessoa ) THEN
-        -- Efetua a exclusao do registro
-        cada0010.pc_exclui_pessoa_relacao ( pr_idpessoa           => vr_pessoa.idpessoa,
-                                            pr_nrseq_relacao      => rw_pessoa_rel.nrseq_relacao,
-                                            pr_cdoperad_altera    => pr_cdoperad,
-                                            pr_cdcritic           => vr_cdcritic,
-                                            pr_dscritic           => vr_dscritic);
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF; 
-      END IF;         
-      
-      -- se possui nome do pai, e é diferente do atual
-      IF TRIM(pr_crapcrl.nmpairsp) IS NOT NULL AND
-         nvl(pr_crapcrl.nmpairsp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
-      
-        CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
-                                          pr_tprelacao=> 3, -- Pai
-                                          pr_nmpessoa => pr_crapcrl.nmpairsp,
-                                          pr_cdoperad => pr_cdoperad,
-                                          pr_cdcritic => vr_cdcritic,
-                                          pr_dscritic => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
+        -- Verifica se este responsavel ja possui cadastro de pessoa
+        rw_pessoa_resp := NULL;
+        OPEN cr_pessoa(pr_nrcpfcgc => pr_crapcrl.nrcpfcgc);
+        FETCH cr_pessoa INTO rw_pessoa_resp;
+        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
+        IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
         END IF;
-      END IF;
-
-      -- Buscar dados da pessoa de relacao
-      rw_pessoa_rel := NULL;
-      OPEN cr_pessoa_rel ( pr_idpessoa  => vr_pessoa.idpessoa,
-                           pr_tprelacao => 4); -- Mae
-      FETCH cr_pessoa_rel INTO rw_pessoa_rel;
-      CLOSE cr_pessoa_rel;
       
-      --> se possia inf do mae, porém agora o campo esta vazio, deve deletar
-      IF rw_pessoa_rel.nrseq_relacao > 0 AND 
-         ( TRIM(pr_crapcrl.nmmaersp) IS  NULL OR
-           pr_crapcrl.nmmaersp <> rw_pessoa_rel.nmpessoa ) THEN
-        -- Efetua a exclusao do registro
-        cada0010.pc_exclui_pessoa_relacao ( pr_idpessoa           => vr_pessoa.idpessoa,
-                                            pr_nrseq_relacao      => rw_pessoa_rel.nrseq_relacao,
-                                            pr_cdoperad_altera    => pr_cdoperad,
-                                            pr_cdcritic           => vr_cdcritic,
-                                            pr_dscritic           => vr_dscritic);
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF; 
-      END IF;    
+      END IF;      
       
-      -- se possui nome do mae, e é diferente do atual
-      IF TRIM(pr_crapcrl.nmmaersp) IS NOT NULL AND
-         nvl(pr_crapcrl.nmmaersp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
+      --> se localizou pessoa, deve excluir registro
+      IF nvl(rw_pessoa_resp.idpessoa,0) > 0  THEN
       
-        CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
-                                          pr_tprelacao=> 4, -- Mae
-                                          pr_nmpessoa => pr_crapcrl.nmmaersp,
-                                          pr_cdoperad => pr_cdoperad,
-                                          pr_cdcritic => vr_cdcritic,
-                                          pr_dscritic => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-
-      -- Efetua a tratativa de endereco
-      -- Verificar se existe endereco
-      OPEN cr_pessoa_endereco(pr_idpessoa   => pr_idpessoa,
-                              pr_tpendereco => 10); --Residencial
-      FETCH cr_pessoa_endereco INTO rw_pessoa_endereco;
-      CLOSE cr_pessoa_endereco;
-      
-      vr_pessoa_endereco                 := rw_pessoa_endereco;
-      vr_pessoa_endereco.idpessoa        := vr_pessoa.idpessoa;
-      vr_pessoa_endereco.tpendereco      := 10; --Residencial
-      vr_pessoa_endereco.nrcep           := pr_crapcrl.cdcepres; 
-      vr_pessoa_endereco.nmlogradouro    := pr_crapcrl.dsendres; 
-      vr_pessoa_endereco.nrlogradouro    := pr_crapcrl.nrendres; 
-      vr_pessoa_endereco.dscomplemento   := pr_crapcrl.dscomres; 
-      vr_pessoa_endereco.nmbairro        := pr_crapcrl.dsbaires; 
-      vr_pessoa_endereco.cdoperad_altera := pr_cdoperad;
-
-      -- Trata o municipio
-      IF TRIM(pr_crapcrl.dscidres) IS NOT NULL THEN
-        -- Busca o ID do municipio
-        CADA0015.pc_trata_municipio
-                          (pr_dscidade => TRIM(pr_crapcrl.dscidres),
-                           pr_cdestado => TRIM(pr_crapcrl.dsdufres),
-                           pr_idcidade => vr_pessoa_endereco.idcidade,
-                           pr_dscritic => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-          
-      -- Efetua a inclusao
-      cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => vr_pessoa_endereco
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-    END IF; -- Fim da verificacao se o responsavel legal ja possui cadastro como pessoa         ;        
-    
-    -- Busca os dados responsavel legal
-    OPEN cr_fisica_resp( pr_idpessoa      => vr_idpessoa,
-                         pr_idpessoa_resp => rw_pessoa_resp.idpessoa);
-    
-    FETCH cr_fisica_resp INTO rw_fisica_resp;
-    CLOSE cr_fisica_resp;
+        -- Busca os dados responsavel legal
+        rw_fisica_resp := NULL;
+        OPEN cr_fisica_resp( pr_idpessoa      => vr_idpessoa,
+                             pr_idpessoa_resp => rw_pessoa_resp.idpessoa);
         
-    -- Se for uma exclusao
-    IF pr_tpoperacao = 3 THEN
-      -- Se encontrou registro na busca
-      IF rw_fisica_resp.nrseq_resp_legal IS NOT NULL THEN
-        -- Efetua a exclusao do registro
-        cada0010.pc_exclui_pessoa_fisica_resp ( pr_idpessoa           => vr_idpessoa,
-                                                pr_nrseq_resp_legal   => rw_fisica_resp.nrseq_resp_legal,
-                                                pr_cdoperad_altera    => pr_cdoperad,
-                                                pr_cdcritic           => vr_cdcritic,
-                                                pr_dscritic           => vr_dscritic);
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
+        FETCH cr_fisica_resp INTO rw_fisica_resp;
+        CLOSE cr_fisica_resp;    
+      
+        -- Se encontrou registro na busca
+        IF rw_fisica_resp.nrseq_resp_legal IS NOT NULL THEN
+          -- Efetua a exclusao do registro
+          cada0010.pc_exclui_pessoa_fisica_resp ( pr_idpessoa           => vr_idpessoa,
+                                                  pr_nrseq_resp_legal   => rw_fisica_resp.nrseq_resp_legal,
+                                                  pr_cdoperad_altera    => pr_cdoperad,
+                                                  pr_cdcritic           => vr_cdcritic,
+                                                  pr_dscritic           => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
         END IF;
       END IF;
    
     ELSE -- Se for alteracao ou inclusao
+
+      -- Se o responsavel legal possui conta, busca os dados da conta dele
+      IF pr_crapcrl.nrdconta > 0 THEN
+        rw_crapass := NULL; 
+        OPEN cr_crapass( pr_cdcooper => pr_crapcrl.cdcooper,
+                         pr_nrdconta => pr_crapcrl.nrdconta);
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%NOTFOUND THEN
+          CLOSE cr_crapass;
+          vr_dscritic := 'Nao encontrado a conta do responsavel legal';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapass;
+        
+        -- Verifica se este responsavel ja possui cadastro de pessoa
+        rw_pessoa_resp := NULL;
+        OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+        FETCH cr_pessoa INTO rw_pessoa_resp;
+        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
+        IF cr_pessoa%NOTFOUND THEN
+          CLOSE cr_pessoa;
+          -- Efetua a inclusao de pessoa
+          cada0011.pc_insere_pessoa_crapass(pr_cdcooper => pr_crapcrl.cdcooper,
+                                            pr_nrdconta => pr_crapcrl.nrdconta,
+                                            pr_idseqttl => 1,
+                                            pr_cdoperad => pr_cdoperad,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+          -- Verifica se deu erro
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Busca a pessoa que foi cadastrada
+          rw_pessoa_resp := NULL;
+          OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+          FETCH cr_pessoa INTO rw_pessoa_resp;
+          
+        END IF;
+        CLOSE cr_pessoa;
+    
+      ELSE
+    
+        -- Verifica se este responsavel ja possui cadastro de pessoa
+        rw_pessoa_resp := NULL;
+        OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapcrl.nrcpfcgc);
+        FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
+        CLOSE cr_pessoa_fisica;
+      
+        -- Efetua a inclusao de pessoa
+        vr_pessoa := rw_pessoa_fisica;
+        vr_pessoa.nrcpf                := pr_crapcrl.nrcpfcgc;
+        vr_pessoa.nmpessoa             := pr_crapcrl.nmrespon;
+        vr_pessoa.idorgao_expedidor    := pr_crapcrl.idorgexp;
+        vr_pessoa.cduf_orgao_expedidor := TRIM(pr_crapcrl.cdufiden);
+        vr_pessoa.dtemissao_documento  := pr_crapcrl.dtemiden;
+        vr_pessoa.dtnascimento         := pr_crapcrl.dtnascin; 
+        vr_pessoa.tpsexo               := pr_crapcrl.cddosexo; 
+        IF nvl(pr_crapcrl.cdestciv,0) > 0 THEN
+          vr_pessoa.cdestado_civil     := pr_crapcrl.cdestciv; 
+        END IF;
+        vr_pessoa.nrdocumento          := pr_crapcrl.nridenti; 
+        vr_pessoa.tpdocumento          := pr_crapcrl.tpdeiden; 
+        IF nvl(pr_crapcrl.cdnacion,0) > 0 THEN
+          vr_pessoa.cdnacionalidade    := pr_crapcrl.cdnacion; 
+        END IF;
+        vr_pessoa.tppessoa            := nvl(vr_pessoa.tppessoa  ,1); -- Fisica
+        vr_pessoa.tpcadastro          := nvl(vr_pessoa.tpcadastro,2); -- Basico
+        vr_pessoa.cdoperad_altera     := pr_cdoperad;
+
+        -- Trata o municipio
+        IF TRIM(pr_crapcrl.dsnatura) IS NOT NULL THEN
+          -- Busca o ID do municipio
+          CADA0015.pc_trata_municipio
+                            (pr_dscidade => TRIM(pr_crapcrl.dsnatura),
+                             pr_cdestado => NULL,
+                             pr_idcidade => vr_pessoa.cdnaturalidade,
+                             pr_dscritic => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+          
+        -- Insere o Cadastro de pessoa fisica
+        cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => vr_pessoa,
+                                         pr_cdcritic      => vr_cdcritic,
+                                         pr_dscritic      => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+          
+        -- Atualiza o IDPESSOA na variavel de uso
+        rw_pessoa_resp.idpessoa := vr_pessoa.idpessoa;
+
+        -- Buscar dados da pessoa de relacao
+        OPEN cr_pessoa_rel ( pr_idpessoa  => vr_pessoa.idpessoa,
+                             pr_tprelacao => 3); -- Pai
+        FETCH cr_pessoa_rel INTO rw_pessoa_rel;
+        CLOSE cr_pessoa_rel;
+      
+        --> se possia inf do pai, porém agora o campo esta vazio, deve deletar
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+           ( TRIM(pr_crapcrl.nmpairsp) IS NULL OR
+             pr_crapcrl.nmpairsp <> rw_pessoa_rel.nmpessoa ) THEN
+          -- Efetua a exclusao do registro
+          cada0010.pc_exclui_pessoa_relacao ( pr_idpessoa           => vr_pessoa.idpessoa,
+                                              pr_nrseq_relacao      => rw_pessoa_rel.nrseq_relacao,
+                                              pr_cdoperad_altera    => pr_cdoperad,
+                                              pr_cdcritic           => vr_cdcritic,
+                                              pr_dscritic           => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF; 
+        END IF;         
+      
+        -- se possui nome do pai, e é diferente do atual
+        IF TRIM(pr_crapcrl.nmpairsp) IS NOT NULL AND
+           nvl(pr_crapcrl.nmpairsp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
+        
+          CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
+                                            pr_tprelacao=> 3, -- Pai
+                                            pr_nmpessoa => pr_crapcrl.nmpairsp,
+                                            pr_cdoperad => pr_cdoperad,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+
+        -- Buscar dados da pessoa de relacao
+        rw_pessoa_rel := NULL;
+        OPEN cr_pessoa_rel ( pr_idpessoa  => vr_pessoa.idpessoa,
+                             pr_tprelacao => 4); -- Mae
+        FETCH cr_pessoa_rel INTO rw_pessoa_rel;
+        CLOSE cr_pessoa_rel;
+      
+        --> se possia inf do mae, porém agora o campo esta vazio, deve deletar
+        IF rw_pessoa_rel.nrseq_relacao > 0 AND 
+           ( TRIM(pr_crapcrl.nmmaersp) IS  NULL OR
+             pr_crapcrl.nmmaersp <> rw_pessoa_rel.nmpessoa ) THEN
+          -- Efetua a exclusao do registro
+          cada0010.pc_exclui_pessoa_relacao ( pr_idpessoa           => vr_pessoa.idpessoa,
+                                              pr_nrseq_relacao      => rw_pessoa_rel.nrseq_relacao,
+                                              pr_cdoperad_altera    => pr_cdoperad,
+                                              pr_cdcritic           => vr_cdcritic,
+                                              pr_dscritic           => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF; 
+        END IF;    
+      
+        -- se possui nome do mae, e é diferente do atual
+        IF TRIM(pr_crapcrl.nmmaersp) IS NOT NULL AND
+           nvl(pr_crapcrl.nmmaersp,' ') <> nvl(rw_pessoa_rel.nmpessoa,' ') THEN      
+        
+          CADA0011.pc_trata_pessoa_relacao( pr_idpessoa => vr_pessoa.idpessoa,
+                                            pr_tprelacao=> 4, -- Mae
+                                            pr_nmpessoa => pr_crapcrl.nmmaersp,
+                                            pr_cdoperad => pr_cdoperad,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+
+        -- Efetua a tratativa de endereco
+        -- Verificar se existe endereco
+          OPEN cr_pessoa_endereco(pr_idpessoa   => vr_pessoa.idpessoa,
+                                pr_tpendereco => 10); --Residencial
+        FETCH cr_pessoa_endereco INTO rw_pessoa_endereco;
+        CLOSE cr_pessoa_endereco;
+        
+        vr_pessoa_endereco                 := rw_pessoa_endereco;
+        vr_pessoa_endereco.idpessoa        := vr_pessoa.idpessoa;
+        vr_pessoa_endereco.tpendereco      := 10; --Residencial
+        vr_pessoa_endereco.nrcep           := pr_crapcrl.cdcepres; 
+        vr_pessoa_endereco.nmlogradouro    := pr_crapcrl.dsendres; 
+        vr_pessoa_endereco.nrlogradouro    := pr_crapcrl.nrendres; 
+        vr_pessoa_endereco.dscomplemento   := pr_crapcrl.dscomres; 
+        vr_pessoa_endereco.nmbairro        := pr_crapcrl.dsbaires; 
+        vr_pessoa_endereco.cdoperad_altera := pr_cdoperad;
+
+        -- Trata o municipio
+        IF TRIM(pr_crapcrl.dscidres) IS NOT NULL THEN
+          -- Busca o ID do municipio
+          CADA0015.pc_trata_municipio
+                            (pr_dscidade => TRIM(pr_crapcrl.dscidres),
+                             pr_cdestado => TRIM(pr_crapcrl.dsdufres),
+                             pr_idcidade => vr_pessoa_endereco.idcidade,
+                             pr_dscritic => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+            
+        -- Efetua a inclusao
+        cada0010.pc_cadast_pessoa_endereco(pr_pessoa_endereco => vr_pessoa_endereco
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF; -- Fim da verificacao se o responsavel legal ja possui cadastro como pessoa         ;        
+    
+      -- Busca os dados responsavel legal
+      OPEN cr_fisica_resp( pr_idpessoa      => vr_idpessoa,
+                           pr_idpessoa_resp => rw_pessoa_resp.idpessoa);
+      
+      FETCH cr_fisica_resp INTO rw_fisica_resp;
+      CLOSE cr_fisica_resp;
+        
       --> Carregar informações existentes, para garantir que informações
       --> que não existam nesta estrutura sejam perdidas.  
       vr_pessoa_resp     := rw_fisica_resp; 

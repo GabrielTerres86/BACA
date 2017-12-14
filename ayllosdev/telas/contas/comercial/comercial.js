@@ -1226,6 +1226,12 @@ function buscaNomePessoa(){
 
     hideMsgAguardo();
 
+    if (nrcpfemp == ""){
+        $('#nmextemp').val("");
+        return false;
+    }
+    
+    
     var mensagem = '';
 
     mensagem = 'Aguarde, buscando nome da pessoa ...';

@@ -60,7 +60,7 @@
 		<br />
 		
 		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa()" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
+		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa(); $('#nmextemp', '#frmDadosComercial').focus();" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
 		
 		<label for="nmextemp">Nome Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<?php echo getByTagName($comercial,'nmextemp') ?>" />		
