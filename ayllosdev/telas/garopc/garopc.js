@@ -9,8 +9,8 @@
 
 $(document).ready(function() {
 
-	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 8px 0px 8px'});
-	$('fieldset').css({'clear':'both','border':'1px solid #969FA9','margin':'8px','padding':'10px 3px 5px 3px'});
+	$('fieldset > legend', "#frmGAROPC").css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 8px 0px 8px'});
+	$('fieldset', "#frmGAROPC").css({'clear':'both','border':'1px solid #969FA9','margin':'8px','padding':'10px 3px 5px 3px'});
     
     $('#divUsoGAROPC').css({'width':'575px','position':'absolute','display':'inline','z-index':'110'});
     $('#divUsoGAROPC').centralizaRotinaH();
@@ -53,11 +53,14 @@ cGar_permingr.addClass('campo').css({'width':'50px','text-align':'right'});
 cGar_ter_ncta.addClass('campo conta').css({'width':'80px'});
 cGar_ter_nome.addClass('campo').css({'width':'250px'});
 
+$('#frmGAROPC a').css({'padding':'3px 6px'});
+
 // Bloqueia todos os campos
 $('input[type="text"],input[type="radio"]','#frmGAROPC').desabilitaCampo();
 
-// Esconde imagem
+// Esconde imagem e reseta o link da lupa
 $('#imgGAROPC', '#frmGAROPC').hide();
+$('#btLupaAssociado', '#frmGAROPC').attr('onClick','return false;');
 
 // Se NAO for Consulta
 if (cGar_tipaber.val() != 'C') {
@@ -71,6 +74,7 @@ if (cGar_tipaber.val() != 'C') {
     cGar_ter_ncta.habilitaCampo();
     cGar_campos2.habilitaCampo();
     $('#imgGAROPC', '#frmGAROPC').show();
+    $('#btLupaAssociado', '#frmGAROPC').attr('onClick','pesquisaAssociadoGAROPC(); return false;');
 
     // Se estiver parametrizado para alterar ou anteriormente etava marcado como SIM 
     if (gar_inresper == 1 || gar_inresaut == 1) {

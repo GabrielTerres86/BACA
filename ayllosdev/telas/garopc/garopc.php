@@ -27,6 +27,7 @@
     $ret_nomcampo = (isset($_POST['ret_nomcampo'])) ? $_POST['ret_nomcampo'] : '';
     $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
+    $ret_voltfunc = (isset($_POST['ret_voltfunc'])) ? $_POST['ret_voltfunc'] : '';
     $ret_errofunc = (isset($_POST['ret_errofunc'])) ? $_POST['ret_errofunc'] : '';
     $divanterior  = (isset($_POST['divanterior']))  ? $_POST['divanterior']  : '';
 
@@ -88,7 +89,7 @@
                             <tr>
                                 <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
                                 <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><?php echo utf8ToHtml('GARANTIA PARA COBERTURA DA OPERAÇÃO'); ?></td>
-                                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="$('#<?echo $cp_desmensagem?>').val('NOK');fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?> return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+                                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="$('#<?echo $cp_desmensagem?>').val('NOK');fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?> <? echo $ret_voltfunc; ?> return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
                                 <td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
                             </tr>
                         </table>     
@@ -186,7 +187,7 @@
 
                                             <label for="gar_ter_ncta">Conta:</label>
                                             <input name="gar_ter_ncta" id="gar_ter_ncta" type="text" value="<?php echo $gar_nrctater?>" />
-                                            <a style="margin-top:5px;" href="#" onClick="pesquisaAssociadoGAROPC(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+                                            <a style="margin-top:5px;" href="#" id="btLupaAssociado"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
                                             <input name="gar_ter_nome" id="gar_ter_nome" type="text" value="<?php echo $gar_nmctater?>" />
                                             <br />
 
@@ -205,7 +206,7 @@
                                         </fieldset>
 
                                         <div id="divBotoes" style="margin-bottom:10px;">
-                                            <a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?>  return false;">Voltar</a>
+                                            <a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGAROPC')<?if ($divanterior != ""){?>,$('#<?echo $divanterior;?>')<?}?>);<?if ($divanterior != ""){?>$('#<?echo $divanterior;?>').css({'display':'block'});<?}?> <? echo $ret_voltfunc; ?> return false;">Voltar</a>
                                             <?php
                                                 // Se veio da ADITIV em modo Consulta
                                                 if ($gar_nmdatela == 'ADITIV' && $gar_tipaber == 'C') {

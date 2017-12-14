@@ -41,6 +41,7 @@
  * 031: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
  * 032: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
+ * 033: [13/12/2017] Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
  */
 ?>
 
@@ -344,6 +345,7 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
+			arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
 
 			var arrayRendimento = new Object();
 			

@@ -11,6 +11,7 @@
  * 002: [08/04/2014] Alterado fluxo do botao Continuar. (Jorge)
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
+ * 005: [13/12/2017] Alteracao da chamada da operacao C_DADOS_AVAL para C_GAROPC. (Jaison/Marcos Martini - PRJ404)
  */	
  ?>
 
@@ -126,6 +127,6 @@
 <div id="divBotoes">
 	<? if (($operacao == 'C_NOVA_PROP') || ($operacao == 'C_NOVA_PROP_V') ) { ?>
 		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"   onClick="controlaOperacao('TC'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_DADOS_AVAL'); return false;" />
+		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_GAROPC'); return false;" />
 	<? } ?>
 </div>
