@@ -23,6 +23,9 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 
             14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital (Jonata - RKAM P364).
+			
+			11/12/2017 - Alterado para desabilitar o botão de estorno para os tipos 
+						 de operação Devolução de Capital e Devolução de Disponível. (Reinert)
 ------------------------------------------------------------------------------->
 
 <html>
@@ -94,6 +97,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
                     
 						 document.form1.v_hist.value="";
 						 document.form1.v_aux_hist.value="";
+						 $('#estorno').css('display', 'block');
 						 
 					 }else if(document.form1.v_tpoperacao[i].value == "2"){
 					 
@@ -103,6 +107,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 						 document.form1.v_hist.disabled=true;
 						 document.form1.v_hist.value="2083";
 						 document.form1.v_aux_hist.value="2083";
+						 $('#estorno').css('display', 'none');
 						 document.form1.submit();
 						 
 					 }else if(document.form1.v_tpoperacao[i].value == "3"){
@@ -112,6 +117,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 						document.form1.v_hist.disabled=true;
 						document.form1.v_hist.value="2065";
 						document.form1.v_aux_hist.value="2065";
+						$('#estorno').css('display', 'none');
 						document.form1.submit();
 
 					}
@@ -123,7 +129,6 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
         
         function escondeCampo(){
         
-           
            for (var i=0;i< document.form1.v_tpoperacao.length;i++) {            
               
               if (document.form1.v_tpoperacao[i].checked) {
@@ -131,13 +136,14 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
                    $('#v_conta').css('display','none');
                    $('#v_conta2').css('display','none');
                    $('#v_nome').css('display','none');
+                   $('#estorno').css('display', 'block');
                    
                    document.form1.v_conta.disabled=true;
                    document.form1.v_valor.disabled=false;
                    document.form1.v_hist.disabled=false;
-                    
                  }else {
                                   
+                    $('#estorno').css('display', 'none'); 
                     $('#v_dscomplem').css('display','none');
 
                 }
@@ -317,7 +323,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
  <table width="100%">
        <tr>
           <td align="right" class="linhaform">
-          <input type="button" value="Estorno" name="estorno" class="button" onClick="JavaScript:redir_login('crap010.w')">
+          <input type="button" value="Estorno" name="estorno" id="estorno" class="button" onClick="JavaScript:redir_login('crap010.w')">
           <input type="button" value="Consulta" name="consul" class="button" onClick="location='crap009.p'"></td>
        </tr>
  </table>
