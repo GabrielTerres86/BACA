@@ -5,7 +5,10 @@
  * DATA CRIAÇÃO : 26/09/2013 
  * OBJETIVO     : Responsável por fazer a impressao do cartao assinatura de pessoa física.
  *
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 07/12/2017 - Realizado ajuste onde o relatório completo para contas menores de idade
+							   com dois responsaveis legais sem conta na viacredi não estava abrindo. 
+							   SD 802764. (Kelvin)
+							 
  */	 
 	require_once('../../../includes/funcoes.php');
 	require_once('../../../class/xmlfile.php');
@@ -53,6 +56,7 @@
 		
 	$intQtdRegistros = 0;
 	
+	$nrdctaprt = 0;
 	
 	foreach($registrosTtl as $registroTtl){		
 		$intQtdRegistros = $intQtdRegistros + 1;
@@ -61,7 +65,8 @@
 	if ($intQtdRegistros > 0){
 	
 		foreach($registrosTtl as $registroTtl){
-		
+			if (getByTagName($registroTtl->tags,'nrdconta') <> "")
+				$nrdctaprt = formataContaDVsimples(getByTagName($registroTtl->tags,'nrdconta'));
 			echo "<p>&nbsp;</p>";
 			$GLOBALS['numPagina']++;
 			$GLOBALS['numLinha'] = 0;
@@ -73,7 +78,7 @@
 			pulaLinha(1);
 			escreveLinha("===========================================================================");
 			pulaLinha(2);
-			escreveLinha("Filiada: ".getByTagName($registroTtl->tags,'nmrescop')."   PA: ".getByTagName($registroTtl->tags,'cdagenci')."     Conta Corrente: ".formataContaDVsimples(getByTagName($registroTtl->tags,'nrdconta'))."   Titular: ".getByTagName($registroTtl->tags,'idseqttl'));
+			escreveLinha("Filiada: ".getByTagName($registroTtl->tags,'nmrescop')."   PA: ".getByTagName($registroTtl->tags,'cdagenci')."     Conta Corrente: ".$nrdctaprt."   Titular: ".getByTagName($registroTtl->tags,'idseqttl'));
 			pulaLinha(1);
 			escreveLinha("Nome: ".getByTagName($registroTtl->tags,'nmextttl')."    CPF: ".formatar(getByTagName($registroTtl->tags,'nrcpfcgc'),"cpf"));
 			pulaLinha(1);

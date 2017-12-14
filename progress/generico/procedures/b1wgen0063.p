@@ -2,7 +2,7 @@
 
     Programa: b1wgen0063.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 12/06/2017
+    Data    : Marco/2010                   Ultima atualizacao: 07/12/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSOES
 
@@ -54,6 +54,10 @@
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)  
+				
+				07/12/2017 - Realizado ajuste onde o relatório completo para contas menores de idade
+							 com dois responsaveis legais sem conta na viacredi não estava abrindo. 
+						     SD 802764. (Kelvin)
 
 .......................................................................................*/
 
@@ -3005,7 +3009,7 @@ PROCEDURE busca-titulares-impressao:
         ELSE
                 ASSIGN tt-crapttl.nmextttl = crapcrl.nmrespon
                        tt-crapttl.nrcpfcgc = crapcrl.nrcpfcgc
-                       tt-crapttl.nrdconta = crapcrl.nrdconta
+                       tt-crapttl.nrdconta = ?
                        tt-crapttl.cdagenci = 0. /*Passado 0 conforme pedido do analista Gielow*/
     END.
 
