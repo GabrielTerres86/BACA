@@ -9,6 +9,7 @@
  * 001: [03/06/2016] Lucas Ranghetti  (CECRED): Incluir validação de agencia e de conta migrada (Lucas Ranghetti #449707)
  * 002: [24/06/2016] Lucas Ranghetti  (CECRED): Ajustado para chamar formulario de impressão para Opcao "A" (#448006 )
  * 003: [04/11/2017] Jonata           (RKAM)  : Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
+ * 004: [15/12/2017] Jonata           (RKAM)  : Correção controle de acesso a tela quando vinda da tela CONTAS > IMPEDIMETNOS (P364)
  * --------------
  */
 
@@ -776,16 +777,19 @@ function formataCabecalho() {
 
 	});		
 	
-	if (nrdconta != '') {
+	if (executandoImpedimentos){
 		
-		cTipo.val('0');
-		cOpcao.val('E').desabilitaCampo();
-		$("#nrdconta","#frmCab").val(nrdconta);
-		
-	}else{
-		nrdconta = 0;
-		cOpcao.val('I');
-		cTipo.val('0');
+		if (nrdconta != '') {
+			
+			cTipo.val('0');
+			cOpcao.val('E').desabilitaCampo();
+			$("#nrdconta","#frmCab").val(nrdconta);
+			
+		}else{
+			nrdconta = 0;
+			cOpcao.val('I');
+			cTipo.val('0');
+		}
 	}
 	
 	layoutPadrao();
