@@ -1360,14 +1360,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
     BEGIN
       
       vr_vet_liquida.delete;
-      vr_split := gene0002.fn_quebra_string(pr_string => pr_dsctrliq
-                                                 ,pr_delimit => ';');
-      
-      --> Carregar temptable como os numeros de contrato
-      IF vr_split.count > 0 THEN
-        FOR i IN vr_split.first..vr_split.last LOOP
-          vr_vet_liquida(vr_split(i)) := vr_split(i);        
-        END LOOP;        
+      IF trim(pr_dsctrliq) IS NOT NULL THEN 
+        vr_split := gene0002.fn_quebra_string(pr_string => pr_dsctrliq
+                                             ,pr_delimit => ';');
+        
+        --> Carregar temptable como os numeros de contrato
+        IF vr_split.count > 0 THEN
+          FOR i IN vr_split.first..vr_split.last LOOP
+            vr_vet_liquida(vr_split(i)) := vr_split(i);        
+          END LOOP;        
+        END IF;  
       END IF;
       
       --Verificar se usa tabela juros
