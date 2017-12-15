@@ -4559,6 +4559,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     ---------------> CURSORES <-----------------       
     rw_pessoa_jur  cr_pessoa_jur%ROWTYPE;     
        
+    -- Cursor sobre a tabela de associados
+    CURSOR cr_crapass IS
+      SELECT nmttlrfb,
+             dtcnsspc,
+             dtcnscpf,
+             cdsitcpf,
+             inconrfb,
+             dtcnsscr,
+             nvl(cdclcnae,0) cdclcnae
+        FROM crapass
+       WHERE cdcooper = pr_crapjur.cdcooper
+         AND nrdconta = pr_crapjur.nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+       
     ---------------> VARIAVEIS <----------------- 
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -4618,6 +4632,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       
       ELSE
         
+        -- Busca os dados na tabela de associado
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
+        CLOSE cr_crapass;
+      
         -- Atualiza os dados de pessoa juridica
         rw_pessoa_jur.nmpessoa               := pr_crapjur.nmextttl;
         rw_pessoa_jur.dtatualiza_telefone    := pr_crapjur.dtatutel;
@@ -4652,6 +4671,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_jur.dtvalidade_licenca_amb := pr_crapjur.dtvallic;
         rw_pessoa_jur.dsorgao_registro       := pr_crapjur.orregemp;
         rw_pessoa_jur.tpregime_tributacao    := pr_crapjur.tpregtrb;
+        
+        -- Atualiza tambem os dados que estao na CRAPASS
+        rw_pessoa_jur.nmpessoa_receita       := rw_crapass.nmttlrfb;          
+        rw_pessoa_jur.dtconsulta_spc         := rw_crapass.dtcnsspc;
+        rw_pessoa_jur.dtconsulta_rfb         := rw_crapass.dtcnscpf;
+        rw_pessoa_jur.cdsituacao_rfb         := rw_crapass.cdsitcpf;
+        IF rw_crapass.inconrfb = 0 THEN
+          rw_pessoa_jur.tpconsulta_rfb       := 2; -- Manual
+        ELSE
+          rw_pessoa_jur.tpconsulta_rfb       := 1; -- Automatica
+        END IF;
+        rw_pessoa_jur.dtconsulta_scr         := rw_crapass.dtcnsscr;          
+        IF rw_crapass.cdclcnae > 0 THEN
+          rw_pessoa_jur.cdcnae               := rw_crapass.cdclcnae;
+        END IF;
+
         
         -- Insere o Cadastro de pessoa juridica
         cada0010.pc_cadast_pessoa_juridica(pr_pessoa_juridica => rw_pessoa_jur,
@@ -4887,8 +4922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               atl.insit_atualiza = 4  --> pendente processo online
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
-                --> Ordenacao priorizando as tabelas ass e ttl 
-                decode(atl.nmtabela,'CRAPASS',0,'CRAPTTL',1,2); 
+                --> Ordenacao priorizando as tabelas jur, ass e ttl 
+                decode(atl.nmtabela,'CRAPJUR',0,'CRAPASS',1,'CRAPTTL',2,3); 
        
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,
