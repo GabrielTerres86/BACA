@@ -23,7 +23,7 @@
 
    Programa: b1wgen0003.p
    Autora  : Junior.
-   Data    : 20/10/2005                     Ultima atualizacao: 28/06/2016 
+   Data    : 20/10/2005                     Ultima atualizacao: 09/08/2017
    
 
    Dados referentes ao programa:
@@ -208,6 +208,8 @@
 
 			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
 			                (Marcos-Supero #477843)
+
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
 ............................................................................ */
 
@@ -1598,8 +1600,8 @@ PROCEDURE consulta-lancamento-periodo.
         IF   par_indebcre = "C"    THEN
              NEXT.
 
-        /* Emprestimo novo */
-        IF tt-dados-epr.tpemprst = 1 THEN
+        IF tt-dados-epr.tpemprst = 1 OR   /* PP */
+           tt-dados-epr.tpemprst = 2 THEN /* POS */
            DO:
                /* Valor da parcela vencida */
                IF tt-dados-epr.vlprvenc > 0 THEN
@@ -1655,7 +1657,7 @@ PROCEDURE consulta-lancamento-periodo.
 
                   END. /* END IF tt-dados-epr.vlpraven > 0 */
               
-           END. /* END IF tt-dados-epr.tpemprst = 1 */
+           END. /* END IF tt-dados-epr.tpemprst = 1 ou 2 */
         ELSE
            DO:
               /**  Magui quando a pessoa estava em atraso nao mostrava tudo */

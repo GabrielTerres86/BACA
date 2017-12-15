@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -737,7 +737,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 
+        Data     : Maio/2017.                    Ultima atualizacao: 28/09/2017
       
         Dados referentes ao programa:
       
@@ -745,7 +745,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
                     e das operações da conta parametrizada.
       
-        Alteração : 
+        Alteração : 28/09/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
           
     ..........................................................................*/
     DECLARE
@@ -3014,8 +3014,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         END IF;
       
         -- Calculo de Parcelas conforme tipo de empréstimo 
-        IF vr_tab_dados_epr(vr_idxempr).tpemprst = 1 THEN
-          -- Para PP, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
+        IF vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2) THEN
+          -- Para PP ou POS, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
           OPEN cr_crappep_atraso(rw_crapdat.dtmvtolt
 					                      ,vr_tab_dados_epr(vr_idxempr).nrctremp
 																,vr_qthisemp);
@@ -3624,14 +3624,14 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 09/05/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 28/09/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteração : 
+      Alteração : 28/09/2017 - Exibir o tipo de emprestimo Pos-Fixado. (Jaison/James - PRJ298)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -3681,7 +3681,11 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
             ,lcr.cdlcremp
             ,lcr.dslcremp
             ,wpr.tpemprst
-            ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
+            ,CASE wpr.tpemprst
+               WHEN 0 THEN 'TR'
+               WHEN 1 THEN 'PP'
+               WHEN 2 THEN 'POS'
+             END tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
             ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc

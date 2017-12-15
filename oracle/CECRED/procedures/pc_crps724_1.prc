@@ -271,14 +271,10 @@ BEGIN
         IF vr_tab_controle_lcto_juros.EXISTS(vr_index_controle) THEN
           CONTINUE;
         END IF;
-        
-        IF rw_epr_pep.nrctremp = 212897 THEN
-          NULL;
-        END IF;
-        
+
         -- Tab de controle para somente lancar juros para uma parcela por contrato
         vr_tab_controle_lcto_juros(vr_index_controle) := TRUE;       
-      
+
         vr_diarefju := rw_epr_pep.diarefju;
         vr_mesrefju := rw_epr_pep.mesrefju;
         vr_anorefju := rw_epr_pep.anorefju;          
@@ -640,6 +636,13 @@ BEGIN
         pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
       END IF;
 
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
+
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
@@ -654,6 +657,13 @@ BEGIN
       IF vr_dscritic IS NOT NULL THEN
         pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
       END IF;
+
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
 
   END;
 

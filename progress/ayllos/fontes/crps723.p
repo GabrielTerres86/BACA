@@ -94,4 +94,3 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
 RUN fontes/fimprg.p.
 
 /* .......................................................................... */
-

@@ -53,6 +53,8 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                 13/01/2016 - Incluir lotes 44000 estorno TED analise de fraude.
                              PRJ335 - Analise de fraudes (Odirlei-AMcom)
 
+                18/07/2017 - Incluir o lote 650003 e 650004. (Jaison/James - PRJ298)
+
 				30/08/2017 - Ajuste para incluir o lote 7600
 					         (Adriano - SD 746815).
 ............................................................................. */
@@ -151,7 +153,9 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
 	 {1}nrdolote = 10119  OR   /* Lote devolução - Melhoria 69 */ 
      {1}nrdolote = 44000  OR   /* Lote Estorno TED analise de fraude */    
 	 ({1}nrdolote >= 8482  AND      /* TEDS Sicredi */
-     {1}nrdolote <= 8486) THEN
+     {1}nrdolote <= 8486) OR
+     {1}nrdolote = 650003 OR        /* Pagamento de contrato do Price Pos-Fixado */
+     {1}nrdolote = 650004 THEN      /* Pagamento de contrato do Price Pos-Fixado */
 	 
 	 
      glb_cdcritic = 261.

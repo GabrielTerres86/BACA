@@ -1329,7 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : TELA
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 01/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 09/08/2017
 
       Dados referentes ao programa:
 
@@ -1340,6 +1340,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Observacao: -----
 
       Alteracoes: 01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
+
+                  09/08/2017 - Nao permitir geracao para produto Pos-Fixado. (Jaison/James - PRJ298)
     ..............................................................................*/
 			DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -1555,7 +1557,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
 						LOOP
-              
+
+              -- Se for Pos-Fixado, vai para proximo
+              IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 2 THEN
+                -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
+                EXIT WHEN (vr_ind_cde = vr_tab_dados_epr.LAST OR vr_ind_cde = (pr_nriniseq + pr_nrregist) - 1);
+                vr_ind_cde := vr_tab_dados_epr.NEXT(vr_ind_cde);
+                CONTINUE;
+              END IF;
+
               vr_dstipcob := '';
               vr_vlsdeved := 0;
               vr_vlsdeved := (vr_tab_dados_epr(vr_ind_cde).vlsdeved + 

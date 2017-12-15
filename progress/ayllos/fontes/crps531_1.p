@@ -206,6 +206,8 @@
                14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
                             valido para que seja excluido (Douglas - Chamado 524133)
 
+               09/08/2017 - Inclusao da verificacao do produto TR. (Jaison/James - PRJ298)
+
 			   18/08/2017 - Ajuste para efetuar o controle de lock ao realizar a atualizacao
 			                da tabela craplfp
 							(Adriano - SD 733103).
@@ -216,7 +218,7 @@
 			   
 			   24/11/2017 - Alteração no tratamento da mensagem LTR0005R2 e tratamento da mensagem SLC0001 (Mauricio - Mouts)
 
-			   #######################################################
+             #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -536,9 +538,9 @@ IF  aux_flestcri > 0  THEN
 
 /* recebe os parametros de sessao (criterio de separacao) ***/
 ASSIGN aux_idparale = INT(ENTRY(1,SESSION:PARAMETER))
-       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER))
-       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).
-	   
+       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER)) 
+       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).     
+
 /* Cooperativa - CECRED */
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
@@ -550,7 +552,7 @@ IF   NOT AVAILABLE crapcop THEN
                            " - " + glb_cdprogra + "' --> '"  +
                            glb_dscritic + " >> log/proc_batch.log").
          
-		 RUN finaliza_paralelo.
+         RUN finaliza_paralelo.
          QUIT.
      END. 
 
@@ -714,7 +716,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 		   aux_CNPJNLiqdantCredtd = ""
 		   aux_IdentLinhaBilat = ""
 		   aux_TpDebCred     = "".
-		   
+                              
     EMPTY TEMP-TABLE tt-situacao-if.   
 
     RUN importa_xml.
@@ -833,7 +835,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-		     IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
 			    DO:
 					/* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -954,10 +956,10 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 					RUN salva_arquivo.
 					RUN deleta_objetos.
 					NEXT.
-				END.
+         END.
 		END.
-		
-	 /* VR Boleto */
+		 
+    /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
              
@@ -2007,7 +2009,7 @@ PROCEDURE deleta_objetos.
 	IF  VALID-HANDLE (hSubNode3)  THEN
         DELETE OBJECT hSubNode3.
 
-	IF  VALID-HANDLE (hSubNode2)  THEN
+    IF  VALID-HANDLE (hSubNode2)  THEN
         DELETE OBJECT hSubNode2.
     
     IF  VALID-HANDLE (hSubNode)  THEN
@@ -2018,8 +2020,8 @@ PROCEDURE deleta_objetos.
     
     IF  VALID-HANDLE (hNode)  THEN
         DELETE OBJECT hNode.
-
-		IF  VALID-HANDLE (hRoot)  THEN
+    
+    IF  VALID-HANDLE (hRoot)  THEN
         DELETE OBJECT hRoot.
 
     IF  VALID-HANDLE (hDoc)  THEN
@@ -2029,7 +2031,7 @@ END PROCEDURE.
 
 
 PROCEDURE importa_xml.
-
+     
    DEF VAR aux_setlinha AS CHAR                                     NO-UNDO.
    DEF VAR aux_setlinh2 AS CHAR                                     NO-UNDO.
 
@@ -5379,7 +5381,7 @@ PROCEDURE trata_lancamentos.
                                 END. 
                         END.
                     /* TR */
-                    ELSE
+                    ELSE IF  aux_tpemprst = 0 THEN
                         DO:
                             RUN liquida_contrato_emprestimo_antigo
                                    (INPUT b-crabcop.cdcooper,

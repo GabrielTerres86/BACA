@@ -364,7 +364,7 @@ BEGIN
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
       ROLLBACK;
-      
+
       -- Novamente tenta encerrar o JOB
       GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => pr_cdagenci
@@ -373,6 +373,13 @@ BEGIN
       IF vr_dscritic IS NOT NULL THEN
         pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
       END IF;
+
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
@@ -388,6 +395,13 @@ BEGIN
       IF vr_dscritic IS NOT NULL THEN
         pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
       END IF;
+
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
 
   END;
 

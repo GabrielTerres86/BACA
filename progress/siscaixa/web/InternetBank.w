@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 04/05/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 21/08/2017
 
    Dados referentes ao programa:
 
@@ -671,7 +671,10 @@
                               
                               
                  21/03/2017 - Segunda fase projeto Boleto SMS
-                              PRJ319.2 - SMS Cobrança(Ricardo Linhares)                             
+                              PRJ319.2 - SMS Cobrança(Ricardo Linhares)
+
+                 21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
+                              proc_operacao14. (Jaison/James - PRJ298)
 
 ------------------------------------------------------------------------------*/
 
@@ -2896,6 +2899,8 @@ PROCEDURE proc_operacao14:
                xml_operacao14b.vldebito
                xml_operacao14b.vlcredit
                xml_operacao14b.cdorigem
+               xml_operacao14b.qtdiacal
+               xml_operacao14b.vlrdtaxa
                xml_operacao14b.dscabfim.
 
     END.

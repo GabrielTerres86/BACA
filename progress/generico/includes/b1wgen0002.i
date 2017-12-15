@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.i                  
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 15/05/2015
+   Data    : 14/09/2005                        Ultima atualizacao: 26/07/2017
     
    Dados referentes ao programa:
 
@@ -56,6 +56,8 @@
 
                15/05/2015 - Projeto 158 - Servico Folha de Pagto
                             (Andre Santos - SUPERO)
+
+               26/07/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
                             
 ..............................................................................*/
 
@@ -77,11 +79,119 @@ DEF VAR lem_vlrpgmes LIKE crapepr.vlpreemp EXTENT 30                   NO-UNDO.
                                                     
 DEF        VAR lem_flctamig AS LOG                                     NO-UNDO.
 
-IF  crapepr.tpemprst = 1 THEN
+IF  crapepr.tpemprst = 1 THEN  /* Price Pre-Fixada */
     DO:
        { sistema/generico/includes/b1wgen0002a.i } 
     END.
-ELSE
+ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
+    DO:
+       FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+       /* Efetuar a chamada a rotina Oracle  */
+       RUN STORED-PROCEDURE pc_busca_prest_pago_mes_pos
+           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                INPUT crapepr.nrdconta,
+                                                INPUT crapepr.nrctremp,
+                                                INPUT STRING(par_dtmvtolt),
+                                               OUTPUT 0,   /* pr_vllanmto */
+                                               OUTPUT 0,   /* pr_cdcritic */
+                                               OUTPUT ""). /* pr_dscritic */  
+
+       /* Fechar o procedimento para buscarmos o resultado */ 
+       CLOSE STORED-PROC pc_busca_prest_pago_mes_pos
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+       ASSIGN aux_vlpreemp = crapepr.vlpreemp /* Valor da Prestacao do Emprestimo */
+              aux_qtprecal = crapepr.qtprecal /* Prestacao Pagas */
+              aux_vlprepag = 0
+              aux_cdcritic = 0
+              aux_dscritic = ""
+              aux_vlprepag = pc_busca_prest_pago_mes_pos.pr_vllanmto
+                             WHEN pc_busca_prest_pago_mes_pos.pr_vllanmto <> ?
+              aux_cdcritic = INT(pc_busca_prest_pago_mes_pos.pr_cdcritic) 
+                             WHEN pc_busca_prest_pago_mes_pos.pr_cdcritic <> ?
+              aux_dscritic = pc_busca_prest_pago_mes_pos.pr_dscritic
+                             WHEN pc_busca_prest_pago_mes_pos.pr_dscritic <> ?.
+
+       IF   aux_cdcritic <> 0    OR
+            aux_dscritic <> ""   THEN
+            DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                
+                RETURN "NOK".
+            END.
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+       /* Efetuar a chamada a rotina Oracle  */
+       RUN STORED-PROCEDURE pc_busca_pagto_parc_pos_prog
+           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                INPUT STRING(par_dtmvtolt),
+                                                INPUT STRING(crapdat.dtmvtoan),
+                                                INPUT crapepr.nrdconta,
+                                                INPUT crapepr.nrctremp,
+                                                INPUT crapepr.cdlcremp,
+                                                INPUT crapepr.qttolatr,
+                                               OUTPUT 0,   /* pr_vlpreapg */
+                                               OUTPUT 0,   /* pr_vlprvenc */
+                                               OUTPUT 0,   /* pr_vlpraven */
+                                               OUTPUT 0,   /* pr_vlmtapar */
+                                               OUTPUT 0,   /* pr_vlmrapar */
+                                               OUTPUT 0,   /* pr_cdcritic */
+                                               OUTPUT ""). /* pr_dscritic */  
+
+       /* Fechar o procedimento para buscarmos o resultado */ 
+       CLOSE STORED-PROC pc_busca_pagto_parc_pos_prog
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+       ASSIGN aux_vlpreapg = 0
+              aux_vlprvenc = 0
+              aux_vlpraven = 0
+              aux_vlmtapar = 0
+              aux_vlmrapar = 0
+              aux_cdcritic = 0
+              aux_dscritic = ""
+              aux_vlpreapg = pc_busca_pagto_parc_pos_prog.pr_vlpreapg
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlpreapg <> ?
+              aux_vlprvenc = pc_busca_pagto_parc_pos_prog.pr_vlprvenc
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlprvenc <> ?
+              aux_vlpraven = pc_busca_pagto_parc_pos_prog.pr_vlpraven
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlpraven <> ?
+              aux_vlmtapar = pc_busca_pagto_parc_pos_prog.pr_vlmtapar
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlmtapar <> ?
+              aux_vlmrapar = pc_busca_pagto_parc_pos_prog.pr_vlmrapar
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlmrapar <> ?
+              aux_cdcritic = INT(pc_busca_pagto_parc_pos_prog.pr_cdcritic) 
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_cdcritic <> ?
+              aux_dscritic = pc_busca_pagto_parc_pos_prog.pr_dscritic
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_dscritic <> ?.
+
+       IF   aux_cdcritic <> 0    OR
+            aux_dscritic <> ""   THEN
+            DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                
+                RETURN "NOK".
+            END.
+
+    END.
+ELSE IF crapepr.tpemprst = 0 THEN /* Price TR */
 DO:
     
         

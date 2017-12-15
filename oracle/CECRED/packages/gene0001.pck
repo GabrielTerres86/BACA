@@ -371,6 +371,35 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
 
+  /* Verificacao do controle do batch por agencia ou convenio */
+  PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                      ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                      ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                      ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                      ,pr_cdrestart  OUT tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+
+  /* Grava o controle do batch por agencia ou convenio */
+  PROCEDURE pc_grava_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                   ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                   ,pr_cdrestart   IN tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+
+  /* Finaliza o controle do batch por agencia ou convenio */
+  PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE);              -- Descricao da critica
+
   -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
   -- Chamado 665812
   TYPE typ_reg_crapcri IS
@@ -2898,6 +2927,175 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   	  END LOOP;
     END;
   END pc_lista_cooperativas;
+
+  /* Verificacao do controle do batch por agencia ou convenio */
+  PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                      ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                      ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                      ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                      ,pr_cdrestart  OUT tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_verifica_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Verifica o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    DECLARE
+      -- Busca a existencia do registro
+      CURSOR cr_controle IS
+        SELECT tbc.cdrestart
+              ,tbc.insituacao
+          FROM tbgen_batch_controle tbc
+         WHERE tbc.cdcooper    = pr_cdcooper
+           AND tbc.cdprogra    = pr_cdprogra
+           AND tbc.dtmvtolt    = pr_dtmvtolt
+           AND tbc.tpagrupador = pr_tpagrupador
+           AND tbc.cdagrupador = pr_cdagrupador
+           AND tbc.nrexecucao  = pr_nrexecucao;
+      rw_controle cr_controle%ROWTYPE;
+
+      -- Variavel
+      vr_flgachou BOOLEAN;
+
+    BEGIN
+      -- Inicializa
+      pr_cdrestart  := 0;
+      pr_insituacao := 1;
+
+      -- Leitura do controle
+      OPEN cr_controle;
+      FETCH cr_controle INTO rw_controle;
+      vr_flgachou := cr_controle%FOUND;
+      CLOSE cr_controle;
+
+      -- Se achou
+      IF vr_flgachou THEN
+        pr_cdrestart  := NVL(rw_controle.cdrestart,0);
+        pr_insituacao := NVL(rw_controle.insituacao,1);
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_verifica_batch_controle: ' || SQLERRM;
+    END;
+
+  END pc_verifica_batch_controle;
+
+  /* Grava o controle do batch por agencia ou convenio */
+  PROCEDURE pc_grava_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                   ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                   ,pr_cdrestart   IN tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_grava_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Grava o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    BEGIN
+      -- Atualiza registro na tabela de controle
+      UPDATE tbgen_batch_controle tbc
+         SET tbc.cdrestart   = pr_cdrestart
+       WHERE tbc.cdcooper    = pr_cdcooper
+         AND tbc.cdprogra    = pr_cdprogra
+         AND tbc.dtmvtolt    = pr_dtmvtolt
+         AND tbc.tpagrupador = pr_tpagrupador
+         AND tbc.cdagrupador = pr_cdagrupador
+         AND tbc.nrexecucao  = pr_nrexecucao
+   RETURNING tbc.idcontrole 
+        INTO pr_idcontrole;
+
+      -- Caso NAO tenha alterado, inclui
+      IF SQL%ROWCOUNT = 0 THEN
+        -- Insere registro na tabela de controle
+        INSERT INTO tbgen_batch_controle tbc
+                   (tbc.cdcooper
+                   ,tbc.cdprogra
+                   ,tbc.dtmvtolt
+                   ,tbc.tpagrupador
+                   ,tbc.cdagrupador
+                   ,tbc.cdrestart
+                   ,tbc.insituacao
+                   ,tbc.nrexecucao)
+             VALUES(pr_cdcooper
+                   ,pr_cdprogra
+                   ,pr_dtmvtolt
+                   ,pr_tpagrupador
+                   ,pr_cdagrupador
+                   ,0
+                   ,1 -- Executado com erro
+                   ,pr_nrexecucao)
+          RETURNING tbc.idcontrole 
+               INTO pr_idcontrole;
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_grava_batch_controle: ' || SQLERRM;
+    END;
+
+  END pc_grava_batch_controle;
+
+  /* Finaliza o controle do batch por agencia ou convenio */
+  PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS            -- Descricao da critica
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_finaliza_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Finaliza o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+
+    BEGIN
+      -- Atualiza registro na tabela de controle
+      UPDATE tbgen_batch_controle tbc
+         SET tbc.insituacao = 2 -- Executado com sucesso
+            ,tbc.cdrestart  = 0
+       WHERE tbc.idcontrole = pr_idcontrole;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_finaliza_batch_controle: ' || SQLERRM;
+    END;
+  END pc_finaliza_batch_controle;
 
 /* Retorno do cadastro de critica crapcri */
   PROCEDURE pc_le_crapcri 

@@ -285,6 +285,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
                                          ,pr_lstipfin  IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
+                                         ,pr_cdlcrhab  IN craplch.cdlcrhab%TYPE -- Codigo da linha de credito habilitada
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -3484,6 +3485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      ,pr_dsfinemp IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                      ,pr_flgstfin IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
                                      ,pr_lstipfin IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
+                                     ,pr_cdlcrhab IN craplch.cdlcrhab%TYPE DEFAULT 0 -- Codigo da linha de credito habilitada
                                      ,pr_nrregist IN INTEGER               -- Número de registro
                                      ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
                                      ,pr_qtregist OUT INTEGER              -- Quantidade de registro
@@ -3505,31 +3507,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo
     
-    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+    Alterações : 01/02/2017 - Adicao de filtro por Linha de Credito. (Jaison/James - PRJ298)
+
+                 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
                               PRJ343 - Cessao de credito. (Odirlei-Amcom)
     -------------------------------------------------------------------------------------------------------------*/                                    
   
   CURSOR cr_crapfin(pr_cdcooper IN crapfin.cdcooper%TYPE
                    ,pr_cdfinemp IN crapfin.cdfinemp%TYPE
                    ,pr_flgstfin IN crapfin.flgstfin%TYPE
-                   ,pr_dsfinemp IN crapfin.dsfinemp%TYPE) IS
-  SELECT crapfin.cdfinemp
-        ,crapfin.dsfinemp
-        ,crapfin.flgstfin
-        ,crapfin.tpfinali
-   FROM crapfin
-  WHERE crapfin.cdcooper = pr_cdcooper
-    AND(pr_cdfinemp = 0 
-     OR crapfin.cdfinemp = pr_cdfinemp)
-    AND(pr_flgstfin = 3 --Todas as situações
-     OR crapfin.flgstfin = pr_flgstfin)
-    AND (pr_lstipfin IS NULL OR 
-         'S' = gene0002.fn_existe_valor(pr_base  => pr_lstipfin, 
-                                        pr_busca => crapfin.tpfinali, 
-                                        pr_delimite => ',')
-         ) 
-    AND UPPER(crapfin.dsfinemp) LIKE '%' || pr_dsfinemp || '%';
-  rw_crapfin cr_crapfin%ROWTYPE;
+                   ,pr_dsfinemp IN crapfin.dsfinemp%TYPE
+                   ,pr_cdlcrhab IN craplch.cdlcrhab%TYPE) IS
+    SELECT fin.cdfinemp
+          ,fin.dsfinemp
+          ,fin.flgstfin
+          ,fin.tpfinali
+      FROM crapfin fin
+          ,craplch lch
+     WHERE fin.cdcooper = lch.cdcooper(+)
+       AND fin.cdfinemp = lch.cdfinemp(+)
+       AND fin.cdcooper = pr_cdcooper
+       AND(pr_cdfinemp = 0 
+        OR fin.cdfinemp = pr_cdfinemp)
+       AND(pr_flgstfin = 3 -- Todas as situacoes
+        OR fin.flgstfin = pr_flgstfin)
+       AND(pr_lstipfin IS NULL OR 
+           'S' = gene0002.fn_existe_valor(pr_base  => pr_lstipfin, 
+                                          pr_busca => fin.tpfinali, 
+                                          pr_delimite => ',')
+           )
+       AND UPPER(fin.dsfinemp) LIKE '%' || pr_dsfinemp || '%'
+       AND(pr_cdlcrhab = 0 
+        OR lch.cdlcrhab = pr_cdlcrhab)
+  GROUP BY fin.cdfinemp
+          ,fin.dsfinemp
+          ,fin.flgstfin
+          ,fin.tpfinali;
+    rw_crapfin cr_crapfin%ROWTYPE;
   
   vr_nrregist INTEGER := pr_nrregist;
   
@@ -3546,7 +3560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     FOR rw_crapfin IN cr_crapfin(pr_cdcooper => pr_cdcooper
                                 ,pr_cdfinemp => pr_cdfinemp
                                 ,pr_flgstfin => pr_flgstfin
-                                ,pr_dsfinemp => pr_dsfinemp) LOOP
+                                ,pr_dsfinemp => pr_dsfinemp
+                                ,pr_cdlcrhab => pr_cdlcrhab) LOOP
       
       --Indice para a temp-table
       vr_index:= pr_tab_finalidades_empr.COUNT + 1;
@@ -3589,6 +3604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
                                          ,pr_lstipfin  IN VARCHAR2              -- lista com os tipo de finalidade ou nulo para todas
+                                         ,pr_cdlcrhab  IN craplch.cdlcrhab%TYPE -- Codigo da linha de credito habilitada
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -3611,9 +3627,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo para WEB, apenas chama a pc_busca_finalidades_empr.
     
-    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+    Alterações : 01/02/2017 - Adicao de filtro por Linha de Credito. (Jaison/James - PRJ298)
+
+                 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
                               PRJ343 - Cessao de credito. (Odirlei-Amcom)
-                               
+
     -------------------------------------------------------------------------------------------------------------*/                                    
    --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -3681,6 +3699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                              ,pr_dsfinemp => UPPER(pr_dsfinemp) -- Descrição da finalidade
                              ,pr_flgstfin => pr_flgstfin        -- Situação da finalidade
                              ,pr_lstipfin => pr_lstipfin        -- lista com os tipo de finalidade ou nulo para todas
+                             ,pr_cdlcrhab => nvl(pr_cdlcrhab,0) -- Codigo da linha de credito habilitada
                              ,pr_nrregist => pr_nrregist        -- Número de registro
                              ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
                              ,pr_qtregist => vr_qtregist        -- Quantidade de registro

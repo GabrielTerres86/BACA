@@ -175,7 +175,9 @@
                            
               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
                            (Jaison/Marcos Martini - PRJ337)
-                           
+
+              05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
               
@@ -200,7 +202,8 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD flgsaldo AS LOGICAL INITIAL TRUE
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
-    FIELD cdorigem AS INTE.
+    FIELD cdorigem AS INTE
+    FIELD qtdiacal LIKE craplem.qtdiacal.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
@@ -361,7 +364,9 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
-    FIELD inobriga AS CHAR.
+    FIELD inobriga AS CHAR
+    FIELD idcarenc LIKE crawepr.idcarenc
+    FIELD dtcarenc LIKE crawepr.dtcarenc.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

@@ -105,6 +105,9 @@
 			              e transforma em positivo se necessario, em alguns casos estava duplicando o valor.
 						  Andrey (Mouts) - Chamado 568416
 
+			 30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
+						  (Jaison/James - PRJ298)
+
              16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
                           
 ............................................................................. */
@@ -592,6 +595,14 @@ DO WHILE TRUE:
                              aux_indebcre = "C"     THEN
                              DO:
                                  glb_cdcritic = 358.
+                                 NEXT-PROMPT tel_nrctremp WITH FRAME f_lanemp.
+                                 NEXT.
+                             END.
+
+                        /* Nao permite efetuar lancamento para o produto Pos-Fixado */
+						IF   crapepr.tpemprst = 2   THEN
+                             DO:
+                                 glb_cdcritic = 946.
                                  NEXT-PROMPT tel_nrctremp WITH FRAME f_lanemp.
                                  NEXT.
                              END.

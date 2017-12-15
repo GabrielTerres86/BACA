@@ -16,6 +16,7 @@
  * 007: [29/06/2015] James: Ajuste para carregar o Nivel Risco quando for refinanciamento
  * 008: [10/07/2015] Reinert: Adicionado parametro cdmodali
  * 009: [11/09/2015] James: Ajuste para carregar a data de liberação
+ * 010: [04/04/2017] Jaison/James: Adicionado parametros de carencia do produto Pos-Fixado.
  */
 ?>
 <?
@@ -54,6 +55,8 @@
 	$inconfi2 = (isset($_POST['inconfi2'])) ? $_POST['inconfi2'] : '';
 	$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : 0;
 	$cdmodali = (isset($_POST['cdmodali'])) ? $_POST['cdmodali'] : '0';
+	$idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : 0;
+	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 	$cddopcao = 'A';
 	
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
@@ -107,6 +110,8 @@
 	$xml .= "		<inconfi2>".$inconfi2."</inconfi2>";
     $xml .= "		<nrcpfope>0</nrcpfope>";
 	$xml .= "		<cdmodali>".$cdmodali."</cdmodali>";
+    $xml .= "		<idcarenc>".$idcarenc."</idcarenc>";
+    $xml .= "		<dtcarenc>".$dtcarenc."</dtcarenc>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

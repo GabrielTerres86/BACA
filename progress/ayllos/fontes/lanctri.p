@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                      Ultima atualizacao: 13/01/2017
+   Data    : Janeiro/94.                      Ultima atualizacao: 17/02/2017
 
    Dados referentes ao programa:
 
@@ -229,7 +229,10 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
-                            
+
+               30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
+                            (Jaison/James - PRJ298)
+
                17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                             de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                             liberaçao do projeto (Renato - Supero)
@@ -612,6 +615,14 @@ DO WHILE TRUE:
             DO:
                 MESSAGE "A proposta nao pode ser efetivada,"
                         + " analise nao finalizada".
+                NEXT.            
+            END.
+
+            /* Nao permite efetuar lancamento para o produto Pos-Fixado */
+			IF crawepr.tpemprst = 2 THEN
+            DO:
+                ASSIGN glb_cdcritic = 946.
+                NEXT-PROMPT tel_nrctremp WITH FRAME f_lanctr.
                 NEXT.            
             END.
           

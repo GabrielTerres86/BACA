@@ -27,7 +27,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Junho/2004.                         Ultima atualizacao: 07/03/2014
+   Data    : Junho/2004.                         Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -51,11 +51,15 @@
                            
                 07/03/2014 - Incluir variaveis necessarias para utilizacao
                              da include b1wgen0002a.i (James)
+
+                08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 ............................................................................. */
 
 { includes/var_online.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0084att.i }
+{ sistema/generico/includes/var_oracle.i }
 
   
 DEF INPUT  PARAM par_nrdconta AS INT                                   NO-UNDO.
@@ -235,7 +239,7 @@ IF   tab_inusatab           AND
 ELSE
      aux_txdjuros = crapepr.txjuremp.
 
-IF   crapepr.tpemprst = 0   THEN
+IF   crapepr.tpemprst = 0 THEN /* TR */
      DO:
          ASSIGN aux_nrdconta = crapepr.nrdconta
                 aux_nrctremp = crapepr.nrctremp
@@ -252,7 +256,7 @@ IF   crapepr.tpemprst = 0   THEN
          ASSIGN par_vlsdeved = aux_vlsdeved
                 par_qtprecal = lem_qtprecal.
      END.
-ELSE
+ELSE IF crapepr.tpemprst = 1 THEN /* PP */
      DO:
          ASSIGN par_cdcooper = glb_cdcooper
                 par_cdoperad = glb_cdoperad
@@ -266,6 +270,66 @@ ELSE
 
          ASSIGN par_vlsdeved = aux_vlsdeved
                 par_qtprecal = aux_qtprecal.
+     END.
+ELSE IF crapepr.tpemprst = 2 THEN /* POS */
+     DO:
+         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+         /* Efetuar a chamada a rotina Oracle  */
+         RUN STORED-PROCEDURE pc_busca_pagto_parc_pos_prog
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper,
+                                                  INPUT STRING(glb_dtmvtolt),
+                                                  INPUT STRING(glb_dtmvtoan),
+                                                  INPUT par_nrdconta,
+                                                  INPUT par_nrctremp,
+                                                  INPUT crapepr.cdlcremp,
+                                                  INPUT crapepr.qttolatr,
+                                                 OUTPUT 0,   /* pr_vlpreapg */
+                                                 OUTPUT 0,   /* pr_vlprvenc */
+                                                 OUTPUT 0,   /* pr_vlpraven */
+                                                 OUTPUT 0,   /* pr_vlmtapar */
+                                                 OUTPUT 0,   /* pr_vlmrapar */
+                                                 OUTPUT 0,   /* pr_cdcritic */
+                                                 OUTPUT ""). /* pr_dscritic */  
+
+         /* Fechar o procedimento para buscarmos o resultado */ 
+         CLOSE STORED-PROC pc_busca_pagto_parc_pos_prog
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+         ASSIGN aux_vlpreapg = 0
+                aux_vlprvenc = 0
+                aux_vlpraven = 0
+                aux_vlmtapar = 0
+                aux_vlmrapar = 0
+                aux_cdcritic = 0
+                aux_dscritic = ""
+                aux_vlpreapg = pc_busca_pagto_parc_pos_prog.pr_vlpreapg
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlpreapg <> ?
+                aux_vlprvenc = pc_busca_pagto_parc_pos_prog.pr_vlprvenc
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlprvenc <> ?
+                aux_vlpraven = pc_busca_pagto_parc_pos_prog.pr_vlpraven
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlpraven <> ?
+                aux_vlmtapar = pc_busca_pagto_parc_pos_prog.pr_vlmtapar
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlmtapar <> ?
+                aux_vlmrapar = pc_busca_pagto_parc_pos_prog.pr_vlmrapar
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlmrapar <> ?
+                aux_cdcritic = INT(pc_busca_pagto_parc_pos_prog.pr_cdcritic) 
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_cdcritic <> ?
+                aux_dscritic = pc_busca_pagto_parc_pos_prog.pr_dscritic
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_dscritic <> ?.
+
+         IF   aux_cdcritic <> 0    OR
+              aux_dscritic <> ""   THEN
+              DO:
+                  glb_cdcritic = aux_cdcritic.
+                  glb_dscritic = aux_dscritic.
+                  RETURN.
+              END.
+
+         ASSIGN par_vlsdeved = aux_vlpreapg
+                par_qtprecal = crapepr.qtprecal.
      END.
 
 /* .......................................................................... */

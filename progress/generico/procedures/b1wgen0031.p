@@ -194,6 +194,9 @@
                 22/09/2016 - Alterado rotina obtem-mensagens-alerta 
                              para buscar o qtd dias de renovacao da tabela craprli
 								  			     PRJ300 - Desconto de cheque (Odirlei-AMcom)             
+                
+                30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
+                             (Jaison/James - PRJ298)
 
 							
                 30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
@@ -730,7 +733,8 @@ PROCEDURE obtem-mensagens-alerta:
 
         ASSIGN aux_dsmensag = "".
 
-        IF tt-dados-epr.tpemprst = 1   THEN
+        IF tt-dados-epr.tpemprst = 1   OR
+		   tt-dados-epr.tpemprst = 2   THEN
            DO:
               IF tt-dados-epr.flgatras   THEN 
                  DO:
@@ -921,7 +925,8 @@ PROCEDURE obtem-mensagens-alerta:
                 
         ASSIGN aux_dsmensag = "".
                 
-        IF tt-dados-epr.tpemprst = 1   THEN
+        IF tt-dados-epr.tpemprst = 1   OR
+		   tt-dados-epr.tpemprst = 2   THEN
            DO:
               IF tt-dados-epr.flgatras   THEN 
                  DO:

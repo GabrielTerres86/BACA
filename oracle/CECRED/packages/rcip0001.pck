@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Marcos Martini - SUPERO
-  --  Data     : Fevereiro/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Fevereiro/2016.                   Ultima atualizacao: 08/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -329,6 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   -- Alteracoes: 23/12/2016 - Indicador 3 deve considerar a quantidade de liquidações
   --                          realizadas no período. (AJFink - SD#578135)
   --
+  --             08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Variáveis genéricas
@@ -661,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
 		  --Se Retornou Dados
 		  WHILE vr_index_epr IS NOT NULL LOOP
              			  
-			  IF vr_tab_dados_epr(vr_index_epr).tpemprst = 1 THEN
+			  IF vr_tab_dados_epr(vr_index_epr).tpemprst IN (1,2) THEN -- PP ou POS
 					-- Somar saldo devedor de emprestimo
 					vr_retorno := nvl(vr_retorno,0) + nvl(vr_tab_dados_epr(vr_index_epr).vlsdeved,0);
         END IF;				
