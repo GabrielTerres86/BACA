@@ -124,6 +124,14 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                                   ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo a ser enviado
                                   ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
   
+  PROCEDURE pc_copia_arq_para_download(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
+                                      ,pr_dsdirecp IN VARCHAR2                  --> Diretório do arquivo a ser copiado
+                                      ,pr_nmarqucp IN VARCHAR2                  --> Arquivo a ser copiado
+                                      ,pr_flgcopia IN NUMBER DEFAULT 1          --> Indica se deve ser feita copia (TRUE = Copiar / FALSE = Mover)
+                                      ,pr_dssrvarq OUT VARCHAR2                 --> Nome do servidor onde o arquivo foi postado                                        
+                                      ,pr_dsdirarq OUT VARCHAR2                 --> Nome do diretório onde o arquivo foi postado
+                                      ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
+                                      
   --> Publicar arquivo de controle na intranet
   PROCEDURE pc_publicar_arq_intranet;   
   
@@ -1341,6 +1349,84 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Retornando a critica para o programa chamdador
       pr_des_erro := 'Erro na rotina GENE0002.pc_efetua_copia_pdf_ib. '||sqlerrm;
   END pc_efetua_copia_arq_ib;
+  
+  PROCEDURE pc_copia_arq_para_download(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
+                                      ,pr_dsdirecp IN VARCHAR2                  --> Diretório do arquivo a ser copiado
+                                      ,pr_nmarqucp IN VARCHAR2                  --> Arquivo a ser copiado
+                                      ,pr_flgcopia IN NUMBER DEFAULT 1          --> Indica se deve ser feita copia (TRUE = Copiar / FALSE = Mover)
+                                      ,pr_dssrvarq OUT VARCHAR2                 --> Nome do servidor onde o arquivo foi postado                                        
+                                      ,pr_dsdirarq OUT VARCHAR2                 --> Nome do diretório onde o arquivo foi postado
+                                      ,pr_des_erro OUT VARCHAR2) IS             --> Saída com erro
+  /*..............................................................................
+
+       Programa: pc_copia_arq_para_download
+       Autor   : David G Kistner
+       Data    : Dezembro/2017                      Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo  : Procedure para copiar/mover arquivo para diretorio que possibilita 
+                   o download através de request HTTP
+
+       Alteração:
+
+    ..............................................................................*/
+
+    ------------------------------- VARIAVEIS -------------------------------
+
+    -- controle de criticas
+    vr_exc_saida     EXCEPTION;
+    vr_dsc_erro      VARCHAR2(4000);
+
+    vr_cmdcopia  VARCHAR2(2000);
+    vr_srvib     VARCHAR2(200);
+    -- Saída do Shell
+    vr_typ_saida VARCHAR2(3);
+
+  BEGIN
+    -- Buscar dsdircop
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    
+    IF cr_crapcop%FOUND THEN      
+      CLOSE cr_crapcop;
+    ELSE
+      CLOSE cr_crapcop;
+      vr_des_erro := 'Cooperativa não cadastrada.';
+      RAISE vr_exc_saida;
+    END IF;
+      
+    pr_dssrvarq := gene0001.fn_param_sistema('CRED',0,'SRV_DOWNLOAD_ARQUIVO');
+    pr_dsdirarq := '/'||rw_crapcop.dsdircop||'/';      
+    
+    IF pr_flgcopia = 1 THEN  
+      vr_cmdcopia := 'cp '; -- Copiar
+    ELSE
+      vr_cmdcopia := 'mv '; -- Mover
+    END IF;    
+    
+    vr_cmdcopia := vr_cmdcopia||pr_dsdirecp||pr_nmarqucp||' '||gene0001.fn_diretorio('C',0)||gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO')||pr_dsdirarq||'/'||pr_nmarqucp;
+
+    -- Efetuar a execução do comando montado
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_cmdcopia
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_des_erro);
+
+    -- Se retornou erro
+    IF vr_typ_saida = 'ERR' OR vr_des_erro NOT LIKE 'Arquivo recebido!%' THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_des_erro := vr_des_erro;
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+      -- Retornando a critica para o programa chamdador
+      pr_des_erro := 'Erro na rotina GENE0002.pc_copia_arq_para_download. '||sqlerrm;
+  END pc_copia_arq_para_download;
   
   /*****************************************************
   **   Publicar arquivo de controle na intranet       **

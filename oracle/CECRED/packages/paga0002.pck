@@ -245,7 +245,8 @@ create or replace package cecred.PAGA0002 is
            ,gps_cdidenti NUMBER
            ,gps_vlrdinss NUMBER
            ,gps_vlrouent NUMBER
-           ,gps_vlrjuros NUMBER);
+           ,gps_vlrjuros NUMBER
+           ,idlstdom NUMBER);
            
   --Tipo de tabela de memoria para dados de agendamentos
   TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;
@@ -8866,6 +8867,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrtotal tbpagto_agend_darf_das.vlprincipal%TYPE := 0;
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
+    vr_idlstdom NUMBER := 0;
 
     -- GPS
     vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
@@ -9052,13 +9054,29 @@ create or replace package body cecred.PAGA0002 is
         IF rw_craplau.cdtiptra = 1 OR
            rw_craplau.cdtiptra = 5 THEN
           vr_dstiptra := 'Transferencia';
+          
+          IF rw_craplau.cdtiptra = 1 THEN 
+            vr_idlstdom := 5; -- Transf. Intracooperativa
+          ELSE
+            vr_idlstdom := 6; -- Transf. Intercooperativa
+          END IF;
         ELSIF rw_craplau.cdtiptra = 2 THEN
           vr_dstiptra := 'Pagamento';
+          
+          IF NVL(rw_craplau.nrseqagp,0) <> 0 THEN 
+            vr_idlstdom := 9; -- GPS
+          ELSIF LENGTH(NVL(rw_craplau.dslindig,'')) = 55 THEN
+            vr_idlstdom := 2; -- Convênio
+          ELSE
+            vr_idlstdom := 1; -- Título
+          END IF;
         ELSIF rw_craplau.cdtiptra = 3 THEN
           vr_dstiptra := 'Credito de Salario';
+          vr_idlstdom := 3; -- Crédito Salário
         ELSIF rw_craplau.cdtiptra = 4 THEN
           vr_dstiptra := 'TED';
-        ELSE
+          vr_idlstdom := 4; -- TED         
+        ELSE          
           vr_dstiptra := '';
         END IF;
 
@@ -9178,6 +9196,7 @@ create or replace package body cecred.PAGA0002 is
           vr_vlrrecbr := rw_darf_das.vlreceita_bruta;
           vr_vlrperce := rw_darf_das.vlpercentual;
           vr_dstiptra := (CASE WHEN rw_darf_das.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END);
+          vr_idlstdom := (CASE WHEN rw_darf_das.tppagamento = 1 THEN 7 ELSE '8' END);
 
         END IF;
 
@@ -9253,6 +9272,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).nrctadst := vr_nrctadst;
         vr_tab_dados_agendamento(vr_cdindice).cdtiptra := rw_craplau.cdtiptra;
         vr_tab_dados_agendamento(vr_cdindice).dstiptra := vr_dstiptra;
+        vr_tab_dados_agendamento(vr_cdindice).idlstdom := vr_idlstdom;
         vr_tab_dados_agendamento(vr_cdindice).dtmvtage := rw_craplau.dtmvtolt;
         vr_tab_dados_agendamento(vr_cdindice).incancel := NVL(vr_incancel,0);
         vr_tab_dados_agendamento(vr_cdindice).nmprimtl := vr_nmprimtl;

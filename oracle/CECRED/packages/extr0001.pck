@@ -3611,7 +3611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Chama rotina que gera-registro-extrato na temp-table
         pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
                                 ,pr_rowid        => rw_craplcm_ign.rowid --> Registro buscado da craplcm
-                                ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                 ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                 ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                 ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato
@@ -3721,7 +3721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             -- Chama rotina que gera-registro-extrato na temp-table
             pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
                                     ,pr_rowid        => rw_craplcm_olt.rowid --> Registro buscado da craplcm
-                                    ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                    ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                     ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                     ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato

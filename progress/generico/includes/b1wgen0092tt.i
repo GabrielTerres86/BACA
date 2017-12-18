@@ -110,7 +110,8 @@ DEF TEMP-TABLE tt-autorizacoes-cadastradas NO-UNDO
     FIELD inaltera AS LOGICAL
     FIELD cdhistor AS INTEGER
     FIELD insituac AS INTEGER
-    FIELD dssituac AS CHAR.
+    FIELD dssituac AS CHAR
+    FIELD dssegmto AS CHAR.
 
 DEF TEMP-TABLE tt-autorizacoes-suspensas NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon

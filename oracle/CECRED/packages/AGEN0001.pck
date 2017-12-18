@@ -244,7 +244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																			,pr_dtageini => pr_dtageini
 																			,pr_dtagefim => pr_dtagefim
 																			,pr_insitlau => pr_insitlau
-																			,pr_iniconta => pr_iniconta
+																			,pr_iniconta => pr_iniconta - 1 /* Necessário subtrair pois o controle de paginação interno é realizado com posição inicial 0 */
 																			,pr_nrregist => pr_nrregist
                                       ,pr_cdtiptra => vr_dstiptra
 																			,pr_dstransa => vr_dstransa
@@ -277,8 +277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                              ,pr_texto_novo     => '<Agendamentos>');       
 
       IF vr_agendm_fltr.count > 0 THEN
-				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP
-	      
+				FOR vr_idx IN vr_agendm_fltr.first..vr_agendm_fltr.last LOOP          
+          
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																 ,pr_texto_completo => vr_xml_temp      
 																 ,pr_texto_novo     => 
@@ -287,6 +287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<dtmvtopg>' || TO_CHAR(vr_agendm_fltr(vr_idx).dtmvtopg, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
 																		'<cdtiptra>' || vr_agendm_fltr(vr_idx).cdtiptra                                                               || '</cdtiptra>' ||
 																		'<dstiptra>' || vr_agendm_fltr(vr_idx).dstiptra                                                               || '</dstiptra>' ||
+																		'<idlstdom>' || vr_agendm_fltr(vr_idx).idlstdom                                                               || '</idlstdom>' ||                                    
 																		'<dsagenda>' || fn_descricao(vr_agendm_fltr(vr_idx))                                                          || '</dsagenda>' ||
 																		'<insitlau>' || vr_agendm_fltr(vr_idx).insitlau                                                               || '</insitlau>' ||
 																		'<dssitlau>' || vr_agendm_fltr(vr_idx).dssitlau                                                               || '</dssitlau>' ||                                  
@@ -308,6 +309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<dtmvtopg>' || TO_CHAR(vr_tab_age_recarga(vr_idx).dtrecarga, 'DD/MM/RRRR')                                        || '</dtmvtopg>' ||
 																		'<cdtiptra>20</cdtiptra>' ||
 																		'<dstiptra>Recarga de celular</dstiptra>' ||
+                                    '<idlstdom>20</idlstdom>' ||
 																		'<dsagenda>AGENDAMENTO DE RECARGA DE CELULAR</dsagenda>' ||
 																		'<insitlau>' || CASE WHEN vr_tab_age_recarga(vr_idx).insit_operacao = 4 THEN 3
 																												 WHEN vr_tab_age_recarga(vr_idx).insit_operacao = 5 THEN 4

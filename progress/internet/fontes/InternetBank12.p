@@ -163,7 +163,9 @@ IF  par_flglsext  THEN
                                    TRIM(STRING(tt-extrato_conta.cdhistor)) +
                                    "</cdhistor><nrseqlmt>" +
                                    TRIM(STRING(tt-extrato_conta.nrseqlmt)) +
-                                   "</nrseqlmt></DADOS>".
+                                   "</nrseqlmt><dsidenti>" +
+                                   tt-extrato_conta.dsidenti +
+                                   "</dsidenti></DADOS>".
         
         END. /** Fim do FOR EACH tt-extrato_conta **/
     END.

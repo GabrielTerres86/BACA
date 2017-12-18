@@ -997,8 +997,11 @@ PROCEDURE gera-impressao-empr:
     DEF VAR  par_vltotccr AS DECI                                   NO-UNDO.
     DEF VAR  par_vltotpre AS DECI                                   NO-UNDO.
     DEF VAR  aux_flimpcet AS LOG                                    NO-UNDO.
-    DEF VAR aux_nmdoarqv AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtlibera AS DATE                                    NO-UNDO.
+    
+    DEF VAR  aux_nmdoarqv AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dtlibera AS DATE                                   NO-UNDO.
+    DEF VAR  aux_dssrvarq AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dsdirarq AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_nrpagina = par_nrpagina
            aux_flgentra = par_flgentra
@@ -1009,7 +1012,7 @@ PROCEDURE gera-impressao-empr:
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_nrdevias = 1
            aux_retorno = "NOK".
-
+    
     Gera: DO ON ERROR UNDO Gera, LEAVE Gera:
         EMPTY TEMP-TABLE tt-erro.
 
@@ -1261,7 +1264,7 @@ PROCEDURE gera-impressao-empr:
                     ASSIGN aux_dtlibera = crapepr.dtmvtolt.
                 ELSE
                     ASSIGN aux_dtlibera = crawepr.dtlibera. 
-
+                
                 RUN imprime_cet (INPUT par_cdcooper,     
                                  INPUT par_dtmvtolt, 
                                  INPUT par_cdprogra, 
@@ -1282,7 +1285,7 @@ PROCEDURE gera-impressao-empr:
                                  INPUT crawepr.dtdpagto, 
                                 OUTPUT aux_nmdoarqv,
                                 OUTPUT aux_dscritic).
-
+                
                 IF  RETURN-VALUE <> "OK" THEN
                     DO: 
                         RUN gera_erro (INPUT par_cdcooper,
@@ -1428,10 +1431,9 @@ PROCEDURE gera-impressao-empr:
                 
            (par_idorigem = 5 OR     /** Ayllos Web **/
             par_idorigem = 3 OR     /** InternetBank **/
-			par_idorigem = 9) THEN  /** Esteira de credito **/ 
+			      par_idorigem = 9) THEN  /** Esteira de credito **/ 
             DO:
-                Email: DO WHILE TRUE:
-    
+                Email: DO WHILE TRUE:                    
                     RUN sistema/generico/procedures/b1wgen0024.p PERSISTENT
                         SET h-b1wgen0024.
     
@@ -1445,7 +1447,7 @@ PROCEDURE gera-impressao-empr:
                       
                             LEAVE Gera.
                         END.
-                    
+                     
                     RUN gera-pdf-impressao IN h-b1wgen0024 (INPUT aux_nmarqimp,
                                                             INPUT aux_nmarqpdf). 
                    
@@ -1469,7 +1471,7 @@ PROCEDURE gera-impressao-empr:
                             '/temp/" 2>/dev/null').
                         END.
 
-					/** Copiar pdf para visualizacao no Internet Bank **/
+					          /** Copiar pdf para visualizacao no Internet Bank **/
                     ELSE IF par_idorigem = 3 THEN
                     DO:
             
@@ -1483,31 +1485,90 @@ PROCEDURE gera-impressao-empr:
                             
                             LEAVE Gera.                      
                         END.
-              
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    
-                        RUN STORED-PROCEDURE pc_efetua_copia_arq_ib 
-                            aux_handproc = PROC-HANDLE NO-ERROR
-                                             (INPUT par_cdcooper, /* Cooperativa */
-                                              INPUT aux_nmarqpdf, /* Arquivo PDF */
-                                             OUTPUT "").
-    
-                        CLOSE STORED-PROC pc_efetua_copia_arq_ib 
-                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-                        ASSIGN aux_dscritic = ""
-                               aux_dscritic = pc_efetua_copia_arq_ib.pr_des_erro 
-                                              WHEN pc_efetua_copia_arq_ib.pr_des_erro <> ?.
-    
-                        IF  aux_dscritic <> ""  THEN
-                        DO:                                
-                           IF  VALID-HANDLE(h-b1wgen0024)  THEN
-                               DELETE PROCEDURE h-b1wgen0024.    
+                        
+                        /* Regra para permitir a liberacao do piloto do novo IB 
+                           Barramento SOA fara o download o PDF */
+                        IF  par_cdprogra = "" THEN DO:              
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+                            RUN STORED-PROCEDURE pc_efetua_copia_arq_ib 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT par_cdcooper, /* Cooperativa */
+                                                  INPUT aux_nmarqpdf, /* Arquivo PDF */
+                                                 OUTPUT "").
+        
+                            CLOSE STORED-PROC pc_efetua_copia_arq_ib 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                            ASSIGN aux_dscritic = ""
+                                   aux_dscritic = pc_efetua_copia_arq_ib.pr_des_erro 
+                                                  WHEN pc_efetua_copia_arq_ib.pr_des_erro <> ?.
+        
+                            IF  aux_dscritic <> ""  THEN
+                            DO:                                
+                               IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                   DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                LEAVE Gera.
+                            END.            
+                        END.
+                        ELSE DO:
+                            FOR FIRST crapprm WHERE crapprm.cdcooper = 0              AND
+                                                    crapprm.nmsistem = "CRED"         AND
+                                                    crapprm.cdacesso = "ROOT_DIRCOOP" NO-LOCK. END.
+                                                    
+                            IF  NOT AVAIL crapprm  THEN
+                                DO:
+                                    ASSIGN aux_dscritic = "Diretorio da cooperativa nao parametrizado.".
+                                    
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                    LEAVE Gera.
+                                END.
+                                
+                            /* Separar nome do arquivo do diretorio.
+                               Diretorio ROOT /usr/coop/ deve ser substituido pelo parametrizado pois o comando sera executado em PLSQL. */
+                            ASSIGN aux_dsdirarq = REPLACE(SUBSTR(aux_nmarqpdf,1,R-INDEX(aux_nmarqpdf,"/")),"/usr/coop/",crapprm.dsvlrprm)
+                                   aux_nmdoarqv = SUBSTR(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1).
                             
-                            LEAVE Gera.
-                        END.            
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                                                                               
+                            
+                            RUN STORED-PROCEDURE pc_copia_arq_para_download 
+                                aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT par_cdcooper, /* Cooperativa                       */
+                                                  INPUT aux_dsdirarq, /* Diretorio do arquivo              */
+                                                  INPUT aux_nmdoarqv, /* Nome do arquivo                   */
+                                                  INPUT 0,        /* Mover arquivo para novo diretorio */
+                                                 OUTPUT "",
+                                                 OUTPUT "",
+                                                 OUTPUT "").
+        
+                            CLOSE STORED-PROC pc_copia_arq_para_download 
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                            ASSIGN aux_dscritic = ""
+                                   aux_dssrvarq = ""
+                                   aux_dsdirarq = ""
+                                   aux_dscritic = pc_copia_arq_para_download.pr_des_erro 
+                                                  WHEN pc_copia_arq_para_download.pr_des_erro <> ?
+                                   aux_dssrvarq = pc_copia_arq_para_download.pr_dssrvarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dssrvarq <> ?
+                                   aux_dsdirarq = pc_copia_arq_para_download.pr_dsdirarq 
+                                                  WHEN pc_copia_arq_para_download.pr_dsdirarq <> ?.
+        
+                            IF  aux_dscritic <> ""  THEN
+                            DO:                                
+                               IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                   DELETE PROCEDURE h-b1wgen0024.    
+                                
+                                LEAVE Gera.
+                            END.                           
+                        END.
                     
                     END.
 
@@ -1566,24 +1627,30 @@ PROCEDURE gera-impressao-empr:
                         IF  aux_nmarquiv <> "" THEN
                             UNIX SILENT VALUE ("rm " + aux_nmarquiv + "* 2>/dev/null").
                     END.
+                ELSE				  
+                IF  par_idorigem = 9  THEN
+                    DO:
+                        UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
+                    END.
                 ELSE
-				  IF par_idorigem = 9  THEN
-				    DO:
-					  UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
-				    END.
-                  ELSE
                     UNIX SILENT VALUE ("rm " + aux_nmarqpdf + " 2>/dev/null").
-         END. 
+        END. 
          
-		 /* Para esteira deve enviar tambem o caminho */
-		 IF par_idorigem = 9 THEN
-		   ASSIGN par_nmarqpdf = aux_nmarqpdf.
-		 ELSE
-		   ASSIGN par_nmarqpdf = 
-                          ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
+        /* Para esteira deve enviar tambem o caminho */        
+        IF  par_idorigem = 3 AND par_cdprogra = "INTERNETBANK"  THEN
+            ASSIGN par_nmarqpdf = aux_dsdirarq + aux_nmdoarqv
+                   par_nmarqimp = aux_dssrvarq
+                   par_flgentrv = aux_flgentra.
+        ELSE
+            DO:
+                IF  par_idorigem = 9 THEN
+                    ASSIGN par_nmarqpdf = aux_nmarqpdf.
+                ELSE
+                    ASSIGN par_nmarqpdf = ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
 
-         ASSIGN par_nmarqimp = aux_nmarqimp
-                par_flgentrv = aux_flgentra.
+                ASSIGN par_nmarqimp = aux_nmarqimp
+                       par_flgentrv = aux_flgentra.
+            END.
 
     END. /* Gera */
 

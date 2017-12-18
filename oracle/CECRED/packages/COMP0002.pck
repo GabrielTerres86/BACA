@@ -488,7 +488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       ,pr_nrdconta  => pr_nrdconta
                                       ,pr_dtinipro  => pr_dtinipro
                                       ,pr_dtfimpro  => pr_dtfimpro
-                                      ,pr_iniconta  => pr_iniconta
+                                      ,pr_iniconta  => pr_iniconta - 1 /* Necessário subtrair pois o controle de paginação interno é realizado com posição inicial 0 */
                                       ,pr_nrregist  => pr_nrregist
                                       ,pr_cdtippro  => vr_dstippro 
                                       ,pr_cdorigem  => pr_cdorigem
@@ -1902,7 +1902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
 																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
-                                  '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
+                                  '<dttransa>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                                               || '</hrautent>' ||
                                   '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                                                      || '</dsprotoc>' ||
@@ -4389,7 +4389,7 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nrsequen => 0
                                   ,pr_nriniseq => 0
-                                  ,pr_nrregist => 9999999
+                                  ,pr_nrregist => 999999999
                                   ,pr_inestcri => 0
                                   ,pr_cdifconv => 3
                                   ,pr_vlrdated => 0
@@ -4432,8 +4432,8 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
         
         vr_qtregist := vr_qtregist + 1; 
         
-        IF (vr_qtregist < pr_iniconta) OR (vr_qtregist > (pr_iniconta + pr_nrregist)) THEN
-          vr_idx := vr_tab_logspb_detalhe.NEXT(vr_idx);
+        IF (vr_qtregist < pr_iniconta) OR (vr_qtregist >= (pr_iniconta + pr_nrregist)) THEN
+          vr_idx := vr_filtro_trf.NEXT(vr_idx);
           CONTINUE;
         END IF;   
         

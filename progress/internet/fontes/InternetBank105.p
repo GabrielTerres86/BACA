@@ -94,7 +94,9 @@ DO:
                                        STRING(tt-autorizacoes-cadastradas.insituac) +
                                        "</insituac><dssituac>" +
                                        tt-autorizacoes-cadastradas.dssituac +
-                                       "</dssituac></AUTORIZACAO>".
+                                       "</dssituac><dssegmto>" +
+                                       tt-autorizacoes-cadastradas.dssegmto +
+                                       "</dssegmto></AUTORIZACAO>".
         
     END.
 
