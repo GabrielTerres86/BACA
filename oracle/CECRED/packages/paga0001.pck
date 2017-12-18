@@ -1551,7 +1551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
-                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)      
+                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
                     
        12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                     pc_gera_log_ope_cartao (Lucas Ranghetti #810576)         
@@ -3983,10 +3983,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --               04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
     --                            De 30 seg. para 10 min. (Jorge/David) - SD 397867 
-	  --
+	--
 	  --    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
     --                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
-  	--
+	--
     --               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
     --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
     -- ..........................................................................
@@ -18981,6 +18981,198 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_gera_arq_cooperado;
 
+  /* Procedure para verificar o tipo de retorno do arquivo do cooperado */
+  PROCEDURE pc_verifica_ret_arq_coop(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                    ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
+                                    ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --Data pagamento
+                                    ,pr_idorigem IN INTEGER                 --Identificador Origem
+                                    ,pr_flgproce IN INTEGER                 --Flag Processo
+                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE   --Nome Programa
+                                    ,pr_tab_arq_cobranca  OUT PAGA0001.typ_tab_arq_cobranca --Tabela Cobranca
+                                    ,pr_cdcritic OUT INTEGER                --Codigo da Critica
+                                    ,pr_dscritic OUT VARCHAR2) IS           --Descricao Erro
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_verifica_ret_arq_coop              Antigo:
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas Quisinski
+    Data     : Dezembro/2017                          Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Procedure para verificar o tipo de retorno do arquivo do cooperado
+
+    Alterações :
+
+  ---------------------------------------------------------------------------------------------------------------*/
+
+    -- Tipo de retorno do cooperado
+    vr_inenvcob INTEGER;
+
+    -- PL SQL para gerar o JOB
+    vr_dsplsql        VARCHAR2(30000);
+    vr_jobname        VARCHAR2(100);
+    
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+    vr_exc_saida EXCEPTION;
+    
+    -- Dados do convenio do cooperado
+    CURSOR cr_crapceb(pr_cdcooper INTEGER
+                     ,pr_nrdconta INTEGER
+                     ,pr_nrconven INTEGER ) IS
+      SELECT ceb.inenvcob
+        FROM crapceb ceb
+       WHERE ceb.cdcooper = pr_cdcooper
+         AND ceb.nrdconta = pr_nrdconta
+         AND ceb.nrconven = pr_nrconven;
+    rw_crapceb cr_crapceb%ROWTYPE;
+  
+    BEGIN
+      -- Buscar os dados do CEB do cooperado
+      OPEN cr_crapceb(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrconven => pr_nrcnvcob) ;
+      FETCH cr_crapceb INTO rw_crapceb;
+      
+      -- Por padrao o retorno do cooperado é 0
+      vr_inenvcob := 0;
+
+      -- Verificar se encontrou a informação do convenio
+      IF cr_crapceb%FOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crapceb;
+        -- Se encontrou vamos utilizar a informação cadastrada
+        vr_inenvcob := rw_crapceb.inenvcob;
+      ELSE 
+        -- Fechar o cursor
+        CLOSE cr_crapceb;
+      END IF;
+      
+      -- Verificar o tipo de retorno do convenio do cooperado
+      IF vr_inenvcob  = 1 THEN
+        -- Se o retorno é pelo Internet Bank, o processo continua o mesmo
+        PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
+                                      ,pr_nrcnvcob => pr_nrcnvcob   --Numero Convenio
+                                      ,pr_nrdconta => pr_nrdconta   --Numero da Conta
+                                      ,pr_dtmvtolt => pr_dtmvtolt   --Data pagamento
+                                      ,pr_idorigem => pr_idorigem   --Identificador Origem
+                                      ,pr_flgproce => pr_flgproce   --Flag Processo
+                                      ,pr_cdprogra => pr_cdprogra   --Nome Programa
+                                      ,pr_tab_arq_cobranca  => pr_tab_arq_cobranca --Tabela Cobranca
+                                      ,pr_cdcritic => vr_cdcritic   --Codigo da Critica
+                                      ,pr_dscritic => vr_dscritic); --Descricao da critica
+
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Se nao tem a descricao do erro
+          IF vr_cdcritic = 0 AND vr_dscritic IS NULL THEN
+            vr_dscritic:= 'Nao foi possivel gerar o arquivo.';
+          END IF;
+
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+        
+      ELSIF vr_inenvcob = 2 THEN
+        -- Se o retorno do cooperado é pelo FTP, vamos devolver uma mensagem de alerta
+        -- e criar um job para gerar o arquivo e disponibilizar no FTP
+        vr_jobname := 'JBRET_'||pr_nrdconta||'$';
+        vr_dsplsql := 
+'declare 
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+
+  vr_tab_arq_cobranca PAGA0001.typ_tab_arq_cobranca;
+begin
+  -- Se o retorno é pelo Internet Bank, o processo continua o mesmo
+  PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => ' || pr_cdcooper || '
+                                ,pr_nrcnvcob => ' || pr_nrcnvcob || '
+                                ,pr_nrdconta => ' || pr_nrdconta || '
+                                ,pr_dtmvtolt => to_date(''' || to_char(pr_dtmvtolt,'DD/MM/YYYY') || ''',''DD/MM/YYYY'')
+                                ,pr_idorigem => 7 -- FTP
+                                ,pr_flgproce => ' || pr_flgproce || '
+                                ,pr_cdprogra => ''' || pr_cdprogra || '''
+                                ,pr_tab_arq_cobranca  => vr_tab_arq_cobranca 
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+                                                      
+  IF NVL(vr_cdcritic,0) > 0 OR
+    TRIM(vr_dscritic) IS NOT NULL THEN
+    btch0001.pc_gera_log_batch(pr_cdcooper     => ' || pr_cdcooper || '
+                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_nmarqlog     => ''JBCOBRAN_ARQ_RET.log''
+                              ,pr_des_log      => to_char(sysdate,''hh24:mi:ss'') || '' - '' ||
+                                                  ''JBCOBRAN_ARQ_RET.pc_gera_arq_cooperado'' || '' --> ATENCAO !! '' ||
+                                                  ''Erro: ''|| vr_cdcritic || ''-'' || vr_dscritic);
+  END IF;
+  
+  COMMIT;
+
+exception
+  when others then
+    btch0001.pc_gera_log_batch(pr_cdcooper     => ' || pr_cdcooper || '
+                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_nmarqlog     => ''JBCOBRAN_ARQ_RET.log''
+                              ,pr_des_log      => to_char(sysdate,''hh24:mi:ss'') || '' - '' ||
+                                                  ''JBCOBRAN_ARQ_RET.pc_gera_arq_cooperado'' || '' --> ATENCAO !! '' ||
+                                                  ''Erro: '' || SQLERRM);
+                        
+    rollback;
+end;';
+    
+        gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper, 
+                               pr_cdprogra => 'PAGA0001', 
+                               pr_dsplsql  => vr_dsplsql, 
+                               pr_dthrexe  => NULL, 
+                               pr_interva  => NULL, 
+                               pr_jobname  => vr_jobname, 
+                               pr_des_erro => vr_dscritic );
+                                       
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        vr_cdcritic := 0;
+        vr_dscritic := 'INFORM: Geração iniciada, em instantes o arquivo será disponibilizado no FTP';
+        RAISE vr_exc_saida;
+        
+      ELSE
+        vr_cdcritic := 0;
+        vr_dscritic := 'Retorno do arquivo de cobranca inválido!#' || 
+                       'O retorno permitido é 1 (Internet Bank) ou 2 (FTP), ' ||
+                       'e o retorno atual é ' || vr_inenvcob || '.#' ||
+                       'Entre em contato com o seu PA.';
+        RAISE vr_exc_erro;
+        
+      END IF;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        --Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+
+      WHEN vr_exc_erro THEN
+
+        --Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+
+      WHEN OTHERS THEN
+        pr_cdcritic:= 0;
+        -- Chamar rotina de gravação de erro
+        pr_dscritic:= 'Erro na PAGA0001.pc_verifica_ret_arq_coop --> '|| SQLERRM;
+
+  END pc_verifica_ret_arq_coop;
+
+
   /* Procedure para Gerar arquivo para cooperado */
   PROCEDURE pc_gera_arq_cooperado_car(pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                      ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --Numero Convenio
@@ -19000,14 +19192,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Adriano
-    Data     : Outubro/2015                           Ultima atualizacao:
+    Data     : Outubro/2015                           Ultima atualizacao: 13/12/2017
 
     Dados referentes ao programa:
 
     Frequencia: -----
     Objetivo   : Procedure para gerar arquivo cobranca cooperado
 
-    Alterações :
+    Alterações : 13/12/2017 - Ajuste para chamar a rotina pc_verifica_ret_arq_coop que vai
+                              validar se o cooperado possui retorno para o FTP, ou Internet 
+                              Bank, pois se o retorno é por FTP, devolvemos apenas uma mensagem
+                              informando que o processo foi iniciado e o arquivo será 
+                              disponibilizado no FTP (Douglas - Chamado 756030)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -19041,7 +19237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       vr_dscritic:= null;
 
-      PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
+      PAGA0001.pc_verifica_ret_arq_coop(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
                                     ,pr_nrcnvcob => pr_nrcnvcob   --Numero Convenio
                                     ,pr_nrdconta => pr_nrdconta   --Numero da Conta
                                     ,pr_dtmvtolt => pr_dtmvtolt   --Data pagamento
