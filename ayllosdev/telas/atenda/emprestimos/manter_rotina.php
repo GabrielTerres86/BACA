@@ -29,7 +29,8 @@
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
- * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)	
+ * 023: [12/05/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  */
 ?>
 
@@ -152,6 +153,7 @@
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
 	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
+	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
@@ -460,6 +462,7 @@
 		$xml .= '		<dsjusren>'.$dsjusren.'</dsjusren>';
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
+	$xml .= '		<idcobope>'.$idcobope.'</idcobope>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

@@ -36,7 +36,8 @@
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
  * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
  * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
- * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)	
+ * 029: [17/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  */
 
 	session_start();
@@ -254,7 +255,8 @@
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>';
 			arrayProposta['flgcescr'] = '<? echo ((getByTagName($proposta,'flgcescr') == 'yes') ? true : false); ?>';
 			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
-
+			arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
+			
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];

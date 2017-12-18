@@ -177,7 +177,10 @@
                            (Jaison/Marcos Martini - PRJ337)
                            
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                           PRJ339 - CRM (Odirlei-AMcom)
+                           PRJ339 - CRM (Odirlei-AMcom)	   
+			  
+              15/12/2017 - Inserção do campo idcobope nas TEMP-TABLE tt-dados-epr
+                           e tt-proposta-epr. PRJ404 (Lombardi)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -281,7 +284,8 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD liquidia AS INTE
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
-    FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
+    FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
+    FIELD idcobope AS INTE.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -361,7 +365,8 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
-    FIELD inobriga AS CHAR.
+    FIELD inobriga AS CHAR
+    FIELD idcobope AS INTE.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

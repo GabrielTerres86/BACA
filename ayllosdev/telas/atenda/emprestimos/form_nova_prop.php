@@ -20,6 +20,7 @@
  * 009: [07/04/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 010: [30/07/2014] Ajustado ordem dos labels para ficar de acordo com Projeto CET (Lucas R./Gielow).
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data últ. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
+ * 012: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
  */
  ?> 
 
@@ -134,6 +135,7 @@
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	<input id="portabilidade" name="portabilidade" type="hidden" value="" />
 	<input id="tpfinali" name="tpfinali" type="hidden" value="" />
+	<input id="idcobope" name="idcobope" type="hidden" value="" />
 	
 	<fieldset>
 		<legend><? echo utf8ToHtml('Nova Proposta de Empréstimo') ?></legend>
@@ -242,7 +244,7 @@
 <div id="divBotoes">
 	<? if ( $operacao == 'A_NOVA_PROP' || $operacao == 'A_INICIO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('AT'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('A_DADOS_AVAL'); return false;">Continuar</a>	
+		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('A_GAROPC'); return false;">Continuar</a>	
 	<? }else if ( $operacao == 'A_VALOR' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('AT'); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaDadosAlterarSomenteValorProposta(); return false;">Concluir</a>	
@@ -252,12 +254,12 @@
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'TC' || $operacao == 'CF') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_DADOS_AVAL'); return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_GAROPC'); return false;">Continuar</a>
 	<? } else if ($operacao == 'TE') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('E_COMITE_APROV'); return false;">Continuar</a>
 	<? } else if ($operacao == 'TI' || $operacao == 'I_INICIO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('IT'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('I_DADOS_AVAL'); return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('I_GAROPC'); return false;">Continuar</a>
 	<? } ?>
 </div>

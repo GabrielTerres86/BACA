@@ -95,7 +95,9 @@
 
                 13/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							 (Adriano - P339).
+							 (Adriano - P339).		
+
+                15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
                 
 ..............................................................................*/
 
@@ -1091,6 +1093,7 @@ PROCEDURE grava_dados:
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
                                                    INPUT par_dtmvtolt,
+                                                   INPUT 0, /* idcobope */
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,

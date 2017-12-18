@@ -124,7 +124,9 @@
 
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
-			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)		
+
+              15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 
 ..............................................................................*/
 
@@ -368,6 +370,8 @@ DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
 
+DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
+
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
 { sistema/generico/includes/b1wgen0043tt.i }
@@ -595,6 +599,7 @@ PROCEDURE valores_entrada:
             WHEN "uflicenc" THEN aux_uflicenc = tt-param.valorCampo.      
             WHEN "dstipbem" THEN aux_dstipbem = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
+            WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
 
         END CASE.
     
@@ -1595,6 +1600,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT TRUE,
                                 INPUT aux_dsjusren,
                                 INPUT aux_dtlibera,
+                                INPUT aux_idcobope,
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,

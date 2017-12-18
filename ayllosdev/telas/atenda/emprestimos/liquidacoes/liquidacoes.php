@@ -6,6 +6,7 @@
  * OBJETIVO     : Mostra rotina de Liquidacoes
  
    ALTERACOES   : 10/07/2012 - Validar sempre os contratos a serem liquidados (Gabriel).
+                  15/12/2017 - Alteração para chamar a tela GAROPC PRJ404 (Lombardi).
  
  */	 
 ?>
@@ -18,7 +19,7 @@
 	require_once("../../../../includes/funcoes.php");
 	
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
-	$prox_tela = ($operacao == "TI" || $operacao ==  'I_INICIO' ) ? "I_DADOS_AVAL" : "A_DADOS_AVAL";
+	$prox_tela = ($operacao == "TI" || $operacao ==  'I_INICIO' ) ? "I_GAROPC" : "A_GAROPC";
 	
 ?>
 <table id="tbliq" cellpadding="0" cellspacing="0" border="0" >

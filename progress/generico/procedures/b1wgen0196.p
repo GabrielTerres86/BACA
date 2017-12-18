@@ -12,6 +12,8 @@
 
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
+               
+               15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 
  ..............................................................................*/
 
@@ -603,7 +605,7 @@ PROCEDURE grava_dados:
                         INPUT aux_flgerlog,              /* par_flgerlog LOGI */
                         INPUT aux_dsjusren,              /* par_dsjusren CHAR */
                         INPUT par_dtmvtolt,              /* par_dtlibera DATE */
-     
+                        INPUT 0, /* idcobope */
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,

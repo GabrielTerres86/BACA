@@ -717,7 +717,9 @@
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
 
-              31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+              31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)	 
+
+              15/12/2017 - Inserção do campo idcobope. Inclusão do vinculo com a cobertura. PRJ404 (Lombardi)
 
  ..............................................................................*/
 
@@ -2177,7 +2179,8 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.portabil = aux_portabilidade
                tt-proposta-epr.inobriga = aux_inobriga
                tt-proposta-epr.insitapr = crawepr.insitapr
-               tt-proposta-epr.err_efet = aux_err_efet.
+               tt-proposta-epr.err_efet = aux_err_efet
+               tt-proposta-epr.idcobope = crawepr.idcobope.
 
                            
 				CASE crawepr.insitest:
@@ -2719,7 +2722,8 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.nrseqrrq = crawepr.nrseqrrq
                        tt-proposta-epr.dtlibera = aux_dtlibera
                        tt-proposta-epr.inpessoa = crapass.inpessoa
-                       tt-proposta-epr.insitest = crawepr.insitest.
+                       tt-proposta-epr.insitest = crawepr.insitest
+                       tt-proposta-epr.idcobope = crawepr.idcobope.
 
                 CASE crawepr.idquapro:
                   WHEN 1 THEN ASSIGN tt-proposta-epr.dsquapro = "Operacao Normal".
@@ -5907,6 +5911,7 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsjusren AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
     DEF OUTPUT PARAM par_recidepr AS INTE                           NO-UNDO.
@@ -6396,8 +6401,30 @@ PROCEDURE grava-proposta-completa:
                crawepr.qttolatr = aux_qttolatr
                            /* Agencia de que operador cadastrou a proposta*/
                            crawepr.cdagenci = par_cdpactra when crawepr.cdagenci = 0  
-                           crawepr.hrinclus = TIME WHEN crawepr.hrinclus = 0.
+                           crawepr.hrinclus = TIME WHEN crawepr.hrinclus = 0.					 
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcobope
+                                              ,INPUT par_idcobope
+                                              ,INPUT crawepr.nrctremp
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           UNDO Grava, LEAVE Grava.
+        
+        ASSIGN crawepr.idcobope = par_idcobope.
+        
         RUN atualiza_dados_avalista_proposta 
             (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
@@ -7916,6 +7943,26 @@ PROCEDURE altera-numero-proposta:
         ASSIGN aux_nrctremp     = crawepr.nrctremp
                crawepr.nrctremp = par_nrctremp.
 
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
+                                              ,INPUT crawepr.idcobope
+                                              ,INPUT crawepr.nrctremp
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           UNDO, LEAVE.
+        
         /* Avalistas terceiros, intervenientes anuentes */
         FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper        AND
                                crapavt.nrdconta = par_nrdconta        AND
@@ -8776,14 +8823,16 @@ PROCEDURE excluir-proposta:
         
         FOR EACH crapadt WHERE crapadt.cdcooper = par_cdcooper   AND
                                crapadt.nrdconta = par_nrdconta   AND
-                               crapadt.nrctremp = par_nrctremp   NO-LOCK:
+                               crapadt.nrctremp = par_nrctremp   AND
+                               crapadt.tpctrato = 90             NO-LOCK:
 
             DO aux_contador = 1 TO 10:
 
                 FIND crabadt WHERE crabadt.cdcooper = crapadt.cdcooper   AND
                                    crabadt.nrdconta = crapadt.nrdconta   AND
                                    crabadt.nrctremp = crapadt.nrctremp   AND
-                                   crabadt.nraditiv = crapadt.nraditiv
+                                   crabadt.nraditiv = crapadt.nraditiv   AND 
+                                   crabadt.tpctrato = crapadt.tpctrato
                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                 IF   NOT AVAIL crabadt   THEN
@@ -8817,7 +8866,8 @@ PROCEDURE excluir-proposta:
             FOR EACH crapadi WHERE crapadi.cdcooper = crapadt.cdcooper AND
                                    crapadi.nrdconta = crapadt.nrdconta AND
                                    crapadi.nrctremp = crapadt.nrctremp AND
-                                   crapadi.nraditiv = crapadt.nraditiv NO-LOCK:
+                                   crapadi.nraditiv = crapadt.nraditiv AND
+                                   crapadi.tpctrato = crapadt.tpctrato NO-LOCK:
 
 
                 IF  crapadi.tpproapl = 1 THEN /* Produto Novo */
@@ -8856,7 +8906,8 @@ PROCEDURE excluir-proposta:
                                        crabadi.nrdconta = crapadi.nrdconta   AND
                                        crabadi.nrctremp = crapadi.nrctremp   AND
                                        crabadi.nraditiv = crapadi.nraditiv   AND
-                                       crabadi.nrsequen = crapadi.nrsequen
+                                       crabadi.nrsequen = crapadi.nrsequen   AND
+                                       crabadi.tpctrato = crapadt.tpctrato
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF   NOT AVAIL crabadi   THEN
@@ -8959,11 +9010,29 @@ PROCEDURE excluir-proposta:
                   UNDO, LEAVE.
               END. 
         END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+        RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcobope
+                                              ,INPUT 0
+                                              ,INPUT 0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_vincula_cobertura_operacao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_dscritic  = ""
+               aux_dscritic  = pc_vincula_cobertura_operacao.pr_dscritic 
+               WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+                        
+        IF aux_dscritic <> "" THEN
+           UNDO, LEAVE.
+        
         /* Excluir proposta */
         DELETE crawepr.
-
-
 
         LEAVE.
 

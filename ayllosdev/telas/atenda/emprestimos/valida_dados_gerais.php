@@ -15,7 +15,8 @@
  * 006: [18/11/2014] Jaison: Inclusao do parametro nrcpfope.
  * 007: [29/06/2015] James: Ajuste para carregar o Nivel Risco quando for refinanciamento
  * 008: [10/07/2015] Reinert: Adicionado parametro cdmodali
- * 009: [11/09/2015] James: Ajuste para carregar a data de liberação
+ * 009: [11/09/2015] James: Ajuste para carregar a data de liberação		 
+ * 010: [15/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  */
 ?>
 <?
@@ -51,6 +52,7 @@
 	$inmatric = (isset($_POST['inmatric'])) ? $_POST['inmatric'] : '';
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
 	$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
+	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '';
 	$inconfi2 = (isset($_POST['inconfi2'])) ? $_POST['inconfi2'] : '';
 	$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : 0;
 	$cdmodali = (isset($_POST['cdmodali'])) ? $_POST['cdmodali'] : '0';
@@ -223,6 +225,7 @@
 	echo "arrayProposta['dtdpagto'] = '".$dtdpagto."';";	
 	echo "arrayProposta['nivrisco'] = '".$nivrisco."';";
 	echo "arrayProposta['dtlibera'] = '".$dtlibera."';";	
+	echo "arrayProposta['idcobope'] = '".$idcobope."';";	
 	echo "aDadosPropostaFinalidade['dsnivris'] = arrayProposta['nivrisco'];";
 	
 	echo "$('#vlpreemp','#frmNovaProp').val('".$vlpreemp."');";
@@ -233,4 +236,5 @@
 	echo "$('#dtdpagto','#frmNovaProp').val('".$dtdpagto."');";
 	echo "$('#nivrisco','#frmNovaProp').val('".$nivrisco."');";
 	echo "$('#dtlibera','#frmNovaProp').val('".$dtlibera."');";
+	echo "$('#idcobope','#frmNovaProp').val('".$idcobope."');";
 ?>

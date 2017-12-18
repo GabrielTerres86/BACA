@@ -444,7 +444,9 @@
       
 	        14/03/2016 - Incluir campo cdpactra na chamada da rotina 
 			             grava-proposta-completa. PRJ207 - Esteira 
-						 (Odirlei-AMcom)
+						 (Odirlei-AMcom)	
+
+            15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 						 						                  
 ........................................................................... */
 
@@ -1897,6 +1899,7 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+                                INPUT 0, /* idcobope */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,
