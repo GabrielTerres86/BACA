@@ -7,6 +7,7 @@
  * ALTERAÇÕES   : 26/05/2014 - Adicionado parametro cddopcao para buscar as informacoes das aplicacoes (Douglas - Chamado 77209)
  *				  28/10/2014 - Inclusão do parametro idtipapl para novos produtos de captacao(Jean Michel).	 
  *				  16/11/2017 - Tela remodelada para o projeto 404 (Lombardi).
+ *          18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  *				  
  * --------------
  */
@@ -88,8 +89,10 @@ function controlaFoco() {
 	});
 	
 	$('#nrdconta','#frmCab').unbind('keypress').bind('keypress', function(e) {
+      var val = normalizaNumero(e.target.value);
 			if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
-			if ( $('#nmprimtl','#frmCab').val() == '' ) {
+			if ($('#nmprimtl','#frmCab').val() == '' || nrdconta != val) {
+        nrdconta = val;
 				controlaPesquisaConta();
 				return false;
 			} else {
@@ -163,18 +166,22 @@ function LiberaCampos() {
 
 function btnContinuar() {
 
-	nrdconta = normalizaNumero( cNrdconta.val() );
+	var val = normalizaNumero( cNrdconta.val() );
 	
 	cddopcao = cCddopcao.val();
 	
 	nmprimtl = $('#nmprimtl','#frmCab').val();
 	
 	// Verifica se o número da conta é vazio
-	if ( nrdconta === '' || nmprimtl == '') { return false; }
+	if ( val == '' ) { return false; }
+  if ( nmprimtl == '' || val != nrdconta ) {
+    nrdconta = val;
+		controlaPesquisaConta();
+  }
 
 	// Verifica se a conta é válida
-	if ( !validaNroConta(nrdconta) ) { 
-		showError('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\''+ frmCab +'\');'); 
+	if ( !validaNroConta(val) ) { 
+		showError('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'val\',\''+ frmCab +'\');'); 
 		return false; 
 	}
 	
@@ -273,6 +280,7 @@ function controlaPesquisaConta() {
 	} else {
 		cddopcao = "V"; //Verificação de Conta/dv
 		realizaOperacao();
+    $('#divBloqueios').empty();
 	}
 
 	return false;

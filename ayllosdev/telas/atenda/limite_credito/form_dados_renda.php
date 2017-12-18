@@ -6,7 +6,8 @@
  * OBJETIVO     : Formulário da rotina LIMITE DE CREDITO
  *
  * ALTERACOES   : 06/04/2015 - Consultas automatizadas (Jonata-RKAM).	 
- *                05/12/2017 - Inserção do campo idcobope e chamada para a tela GAROPC. Projeto 404 (Lombardi)
+ *              : 05/12/2017 - Inserção do campo idcobope e chamada para a tela GAROPC. Projeto 404 (Lombardi)
+ *              : 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  */	
 ?>
 	
@@ -41,5 +42,5 @@
 
 <div id="divBotoes">
 	<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="lcrShowHideDiv('divDadosLimite','divDadosRenda');return false;">
-	<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="trataObservacao('<? echo $cddopcao; ?>');abrirTelaGAROPC('<? echo $cddopcao; ?>', '<? echo $idcobope; ?>', '<? echo $nrctrlim; ?>');return false;">
+	<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="trataObservacao('<? echo $cddopcao; ?>');trataGAROPC('<? echo $cddopcao; ?>', '<? echo $nrctrlim; ?>');return false;">
 </div>

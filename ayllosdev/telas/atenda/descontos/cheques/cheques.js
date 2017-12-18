@@ -185,6 +185,11 @@ function abrirTelaGAROPC(cddopcao) {
     if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
       nrctrlim = normalizaNumero($('#nrcontratoativo').val());
     }
+    
+    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
+    if (cddopcao == 'A' && idcobert == '') {
+      cddopcao = 'I';
+    }
   
 
     // Carrega conteúdo da opção através do Ajax

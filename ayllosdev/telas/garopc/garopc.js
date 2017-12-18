@@ -4,7 +4,7 @@
  * DATA CRIACAO : Novembro/2017
  * OBJETIVO     : Biblioteca de funcoes da tela
 
-   Alteracoes   : 
+   Alteracoes   : 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  */
 
 $(document).ready(function() {
@@ -126,7 +126,7 @@ if (cGar_tipaber.val() != 'C') {
                 },
                 error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#frmGAROPC\'))');
                 },
                 success: function (response) {
                     eval(response);
@@ -138,7 +138,7 @@ if (cGar_tipaber.val() != 'C') {
 
             cGar_campos3.habilitaCampo();
             limpaCamposGAROPC('P');
-            setTimeout('bloqueiaFundo($(\'#divUsoGAROPC\'));', 550);
+            setTimeout('bloqueiaFundo($(\'#frmGAROPC\'));', 550);
 
         } else {
             limpaCamposGAROPC('T');
@@ -175,8 +175,8 @@ if (cGar_tipaber.val() != 'C') {
 }
 
 function pesquisaAssociadoGAROPC() {
-    mostraPesquisaAssociado('gar_ter_ncta|gar_ter_nome', 'frmGAROPC', '', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');
-    $('#divPesquisaAssociado').css('z-index', 250);
+    mostraPesquisaAssociado('gar_ter_ncta|gar_ter_nome', 'frmGAROPC', 'frmGAROPC', '');
+    $('#divPesquisaAssociado').css('z-index', 150);
     bloqueiaFundo($('#divPesquisaAssociado'));
 }
 
@@ -298,7 +298,7 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#frmGAROPC\'))');
         },
         success: function (response) {
             eval(response);

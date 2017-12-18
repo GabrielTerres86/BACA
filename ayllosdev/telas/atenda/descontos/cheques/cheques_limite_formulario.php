@@ -314,7 +314,7 @@
 	});
 	
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmDadosLimiteDscChq','dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscChq").css("width", 515);');
+    gravarGAROPC('idcobert','frmDadosLimiteDscChq','dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscChq").css("width", 515);bloqueiaFundo($("#divDscChq_Renda"));');
     return false;
 	});
   

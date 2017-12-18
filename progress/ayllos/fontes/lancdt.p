@@ -48,12 +48,16 @@
                22/07/2014 - Inclusao da include b1wgen0138tt para uso da
                            temp-table tt-grupo ao invés da tt-ge-ocorrencias.
                            (Chamado 130880) - (Tiago Castro - RKAM)
+
+              18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações
+                           de Crédito (Augusto / Marcos (Supero))
 ............................................................................ */
 
 { includes/var_online.i }
 { sistema/generico/includes/b1wgen0030tt.i }
 { sistema/generico/includes/b1wgen0138tt.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR tel_dtmvtolt        AS DATE FORMAT "99/99/9999"                NO-UNDO.
 DEF VAR tel_cdagenci        AS INTE FORMAT "zz9"                       NO-UNDO.
@@ -734,6 +738,33 @@ DO WHILE TRUE:
                    craplim.insitlim = 1
                    craplim.dtinivig = ?
                    craplim.dtfimvig = ?.
+                   
+                  /* Efetuar o desbloqueio de possíveis coberturas vinculadas ao mesmo */
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "LANCDT"
+                                                        ,INPUT craplim.idcobope
+                                                        ,INPUT "D"
+                                                        ,INPUT glb_cdoperad
+                                                        ,INPUT ""
+                                                        ,INPUT 0
+                                                        ,INPUT "S"
+                                                        ,"").
+
+                  CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN glb_dscritic  = ""
+                         glb_dscritic = pc_bloq_desbloq_cob_operacao.pr_dscritic WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+                                  
+                  IF glb_dscritic <> "" THEN
+                     DO:
+                         MESSAGE glb_dscritic.
+                                    PAUSE 3 NO-MESSAGE.
+                                    UNDO, NEXT EXCLUSAO.
+                     END.
 
             /* Voltar atras o Rating criado */
             IF NOT VALID-HANDLE(h-b1wgen0043) THEN
@@ -1291,6 +1322,33 @@ DO WHILE TRUE:
                          craplim.qtrenova = 0
                          craplim.dtinivig = glb_dtmvtolt
                          craplim.dtfimvig = glb_dtmvtolt + craplim.qtdiavig.
+                         
+                  /* Efetuar o desbloqueio de possíveis coberturas vinculadas ao mesmo */
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "LANCDT"
+                                                        ,INPUT craplim.idcobope
+                                                        ,INPUT "B"
+                                                        ,INPUT glb_cdoperad
+                                                        ,INPUT ""
+                                                        ,INPUT 0
+                                                        ,INPUT "S"
+                                                        ,"").
+
+                  CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN glb_dscritic  = ""
+                         glb_dscritic  = pc_bloq_desbloq_cob_operacao.pr_dscritic WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+                                  
+                  IF glb_dscritic <> "" THEN
+                     DO:
+                         MESSAGE glb_dscritic.
+                                    PAUSE 3 NO-MESSAGE.
+                                    UNDO, NEXT.
+                     END.
 
                   FIND crapmcr WHERE crapmcr.cdcooper = glb_cdcooper     AND
                                      crapmcr.nrdconta = craplim.nrdconta AND

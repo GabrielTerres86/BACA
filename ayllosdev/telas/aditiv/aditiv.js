@@ -35,6 +35,8 @@
  *                                               devido ao keycode nao diferenciar maiusculos e minusculos (Odirlei-AMcom SD378702)
  *
  * 011: 31/10/2017 - Jaison (CECRED)           : Ajustes conforme inclusao do campo tipo de contrato. (Jaison/Marcos Martini - PRJ404)
+ *
+ * 012: 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  * --------------
  *
  */
@@ -2391,7 +2393,7 @@ function abrirTelaGAROPC() {
             nrdconta     : nrdconta,
             tpctrato     : tpctrato,
             idcobert     : idcobert,
-            dsctrliq     : '',
+            dsctrliq     : nrctremp,
             codlinha     : codlinha,
             vlropera     : vlropera,
             ret_nomcampo : 'idcobert',

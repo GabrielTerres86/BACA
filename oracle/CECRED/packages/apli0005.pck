@@ -35,6 +35,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             12/07/2017 - #706116 Melhoria na pc_lista_aplicacoes_web, utilizando pc_escreve_xml no 
   --                          lugar de gene0007.pc_insere_tag pois a mesma fica lenta para xmls muito grandes (Carlos)
+  --
+  --             18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -13888,6 +13890,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+
+      -- obter os valores Bloqueados Judicialmente
+      apli0002.pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_cdoperad => Pr_cdoperad
+                               ,pr_nmdatela => pr_nmdatela
+                               ,pr_idorigem => pr_idorigem
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_nraplica => pr_nraplica
+                               ,pr_idseqttl => pr_idseqttl
+                               ,pr_cdprogra => pr_cdprogra
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_vlresgat => pr_vltotrgt
+                               ,pr_flgerlog => pr_flgerlog
+                               ,pr_des_reto => vr_des_reto
+                               ,pr_tab_erro => vr_tab_erro);
+
+      -- Verifica se houve retorno de erros
+      IF NVL(vr_des_reto,'OK') = 'NOK' THEN
+        -- Se retornou na tab de erros
+        IF vr_tab_erro.COUNT() > 0 THEN
+          -- Guarda o código e descrição do erro
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          -- Definir o código do erro
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel cadastrar o resgate.';
+        END IF;
+
+        -- Levantar excecao
+        RAISE vr_exc_saida;
+
+      END IF;
+
 
       -- Procedure para filtrar aplicações para resgate automatico
       APLI0002.pc_filtra_aplic_resg_auto(pr_cdcooper =>             pr_cdcooper             --> Codigo Cooperativa

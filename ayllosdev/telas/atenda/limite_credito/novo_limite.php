@@ -131,7 +131,7 @@
 		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
 	}
 
-	$voltaAvalista  = "lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 
+	$voltaAvalista  = "$('#frmNovoLimite').css('width', 515);lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 
 	$metodoAvanca   = "validaDadosRating();";
 
 	if ($cddopcao != 'N') { // Consulta
@@ -145,9 +145,9 @@
 	var metodoBlock     = "blockBackground(parseInt($('#divRotina').css('z-index')))";		
 	var metodoCancel    = "lcrShowHideDiv('divDadosObservacoes','divDadosRating');";
 	var metodoContinue  = "<?php echo $metodoContinue; ?>";
-	var metodoAvanca	= "<?php echo $metodoAvanca; ?>";
+	var metodoAvanca	  = "<?php echo $metodoAvanca; ?>";
 	var metodoSucesso   = "<?php echo $fncImpressao; ?>";
-	    flgProposta		= "<?php echo $flgProposta;  ?>";
+	var flgProposta		  = "<?php echo $flgProposta;  ?>";
 	var nrgarope        = "<?php echo $nrgarope;  ?>";
 	var nrinfcad        = "<?php echo $nrinfcad;  ?>";		
 	var nrliquid        = "<?php echo $nrliquid;  ?>";
@@ -178,10 +178,13 @@
 				<?php include('form_limite_credito.php') ?>
 			</div>
 			
-			
 			<div id="divDadosRenda">
 				<?php include('form_dados_renda.php') ?>
 			</div>
+      
+      <div id="divUsoGAROPC"></div>
+  
+      <div id="divFormGAROPC"></div>      
 			
 			<div id="divDadosObservacoes">
 				<?php include('form_observacoes.php') ?>
@@ -227,18 +230,40 @@
 				<input type="hidden" name="flgemail" id="flgemail" value="">
 				<input type="hidden" name="flgimpnp" id="flgimpnp" value="">
 				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">		
-			</form>		
+			</form>
+      
+      <div id="divBotoesGAROPC">
+        <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
+        <input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
+      </div>
 			
 		</td>
 	</tr>			
 </table>
 <script type="text/javascript">
 	$("#divDadosRenda").css("display","none");
+  $("#divFormGAROPC").css("display","none");
+  $("#divBotoesGAROPC").css("display", "none");
 	$("#divDadosObservacoes").css("display","none");
 	$("#divDadosAvalistas").css("display","none");
 
 	$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
 	$("#divDadosLimite").css("display","block");
+  
+  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    $("#divUsoGAROPC").empty();
+    $("#divFormGAROPC").empty();
+    $("#frmNovoLimite").css("width", 515);
+    $("#divDadosRenda").css("display", "block");
+    $("#divFormGAROPC").css("display", "none");
+    $("#divBotoesGAROPC").css("display", "none");
+		return false;
+	});
+  
+  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    gravarGAROPC('idcobert','frmNovoLimite','$("#divDadosObservacoes").css("display", "block");$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
+    return false;
+	});
 
 	// Se for inclusao/alteracao, habilitar avalista
 	habilitaAvalista(<? echo ($cddopcao == 'N') ?>);

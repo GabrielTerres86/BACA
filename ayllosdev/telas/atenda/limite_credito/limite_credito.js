@@ -36,6 +36,7 @@
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
  * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438. 
  * 022: [05/12/2017] Lombardi  (CECRED)  : Gravação do campo idcobope e inserção da tela GAROPC. Projeto 404
+ * 023: [18/12/2017] Augusto / Marcos (Supero): P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
  */
  
 var callafterLimiteCred = '';
@@ -118,7 +119,6 @@ function trataRatingSingulares(qtdTotalTopicos) {
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
-
 	var flpropos;
 	
 	if (cddopcao == "@") {	// Opção Principal
@@ -533,26 +533,36 @@ function checaEnter(campo, e) {
 		return true; 
 }
 
-function abrirTelaGAROPC(cddopcao, idcobert, nrctrlim) {
+function trataGAROPC(cddopcao, nrctrlim) {
+  if (cddopcao == 'N' || (cddopcao == 'A' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0) || (cddopcao == 'P' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0)) {
+    abrirTelaGAROPC(cddopcao, nrctrlim);
+  } else {
+    lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
+    $('#divRotina').css({'display':'block'});
+    bloqueiaFundo($('#divRotina'));
+  }
+}
+
+function abrirTelaGAROPC(cddopcao, nrctrlim) {
 
     showMsgAguardo('Aguarde, carregando ...');
 	
-    exibeRotina($('#divUsoGAROPC'));
-    $('#divRotina').css({'display':'none'});
+    //exibeRotina($('#divFormGAROPC'));
+    //$('#divRotina').css({'display':'none'});
 	
     var tipaber = '';
-	var idcobert = normalizaNumero($('#idcobert','#frmNovoLimite').val());
-	var codlinha = normalizaNumero($('#cddlinha','#frmNovoLimite').val());
+    var idcobert = normalizaNumero($('#idcobert','#frmNovoLimite').val());
+    var codlinha = normalizaNumero($('#cddlinha','#frmNovoLimite').val());
     var vllimite = $('#vllimite','#frmNovoLimite').val();
 	
-	switch (cddopcao) {
-		case 'N':
-			tipaber = (idcobert > 0) ? 'A' : 'I';
-			break;
-		default:
-			tipaber = 'C';
-			break;
-	}
+    switch (cddopcao) {
+      case 'N':
+        tipaber = (idcobert > 0) ? 'A' : 'I';
+        break;
+      default:
+        tipaber = 'C';
+        break;
+    }
 	
     // Carrega conteúdo da opção através do Ajax
     $.ajax({
@@ -581,8 +591,20 @@ function abrirTelaGAROPC(cddopcao, idcobert, nrctrlim) {
         },
         success: function (response) {
             hideMsgAguardo();
-            $('#divUsoGAROPC').html(response);
-            bloqueiaFundo($('#divUsoGAROPC'));
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            
+            $("#divDadosRenda").css("display", "none");
+            $("#divFormGAROPC").css("display", "block");
+            $("#divBotoesGAROPC").css("display", "block");
+            
+            bloqueiaFundo($('#divFormGAROPC'));
+            blockBackground(parseInt($("#divRotina").css("z-index")));
+            $("#frmNovoLimite").css("width", 540);
         }
     });
 } 
@@ -682,8 +704,8 @@ function controlaLayout(cddopcao) {
     var cValores = $('input type="text"', '#' + nomeForm + ' .fsDadosRenda');
     var cInconcje = $('input', '#' + nomeForm + ' .fsConjuge');
 	
-    rSalTit.addClass('rotulo').css({ 'width': '130px' });
-    rOutras.addClass('rotulo').css({ 'width': '130px' });
+    rSalTit.addClass('rotulo').css({ 'width': '70px' });
+    rOutras.addClass('rotulo').css({ 'width': '70px' });
     rSalCjg.addClass('rotulo-linha').css({ 'width': '80px' });
     rAlugue.addClass('rotulo-linha').css({ 'width': '80px' });
     rInconc.addClass('rotulo-linha').css({ 'width': '130px' });
@@ -1649,7 +1671,7 @@ function controlaOperacao(operacao) {
 		case 'C_INICIO': 
 		case 'I_INICIO': {
 			idSocio = 0;
-            lcrShowHideDiv('divDadosRating', 'frmOrgaos');
+      lcrShowHideDiv('divDadosRating', 'frmOrgaos');
 			return false;
 		}
 	
@@ -1732,19 +1754,21 @@ function controlaOperacao(operacao) {
 		}	
 		
 		case 'A_COMITE_APROV': {
-            validaItensRating(operacao, true);
+      validaItensRating(operacao, true);
 			return false;
 		}
 		
 		case 'A_AVAIS': {
 			$("#frmOrgaos").remove();	
-            $("#divDadosAvalistas").css('display', 'block');
+      $("#frmNovoLimite").css("width", 530);
+      $("#divDadosAvalistas").css('display', 'block');
 			return false;
 		}
 		
 		case 'C_COMITE_APROV': {
 			$("#frmOrgaos").remove();	
-            $("#divDadosAvalistas").css('display', 'block');
+      $("#frmNovoLimite").css("width", 530);
+      $("#divDadosAvalistas").css('display', 'block');
 			return false;
 		}	
 
@@ -1767,8 +1791,8 @@ function controlaOperacao(operacao) {
 	}
 		
 	// Esconde div do RATING e AVAIS e remover o das consultas automatizadas
-    $("#divDadosRating").css("display", "none");
-    $("#divDadosAvalistas").css("display", "none");
+  $("#divDadosRating").css("display", "none");
+  $("#divDadosAvalistas").css("display", "none");
 	$("#frmOrgaos").remove();
 	
 	showMsgAguardo('Aguarde, abrindo consultar ...');
@@ -1802,6 +1826,7 @@ function controlaOperacao(operacao) {
             if (response.indexOf('showError("error"') == -1) {
 								
 				$('#frmNovoLimite').append(response);
+        $('fieldset', '#frmOrgaos').css('height', 'auto');
 									
 				dsinfcad = (operacao == 'I_PROTECAO_TIT') ? "" : dsinfcad;
 										
@@ -1828,7 +1853,8 @@ function controlaSocios(operacao, cdcooper, idSocio, qtSocios) {
     if (idSocio > qtSocios) { // Nao tem mais socios, mostrar avais
 	
 		$("#frmOrgaos").remove();	
-        $("#divDadosAvalistas").css('display', 'block');
+    $("#frmNovoLimite").css("width", 530);
+    $("#divDadosAvalistas").css('display', 'block');
 		
 	}
 	else { // Proximo socio

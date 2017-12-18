@@ -86,6 +86,7 @@
              
              27/11/2017 - Inclusao do valor de bloqueio em garantia.
                           PRJ404 - Garantia Empr.(Odirlei-AMcom) 
+      18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -2615,6 +2616,7 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
     var camposPc = '';
     var dadosPrc = '';
     var cdopera2 = $("#cdopera2", "#frmResgateVarias").val();
+    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");;
 
     if (formaResgate == "automatica") {
         camposPc = retornaCampos(lstDadosResgate, '|');
@@ -2644,6 +2646,7 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
             camposPc: camposPc,
             dadosPrc: dadosPrc,
             formargt: formaResgate,
+            tdTotSel: tdTotSel,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

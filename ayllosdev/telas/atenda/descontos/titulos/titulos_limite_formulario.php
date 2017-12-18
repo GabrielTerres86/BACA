@@ -313,13 +313,13 @@
 	});
 	
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);');
+    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Renda"));');
     return false;
 	});
 	
 	$('#btnVoltarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
     <? if ($cddopcao == "C") { ?>
-      <? if ($dados[33]->cdata > 0) { ?>
+      <? if ($dados[30]->cdata > 0) { ?>
         dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
         $("#frmDadosLimiteDscTit").css("width", 540);
       <? } else { ?>
