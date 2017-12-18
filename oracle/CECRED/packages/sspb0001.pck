@@ -350,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 27/06/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 19/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -4071,7 +4071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 30/06/2017
+      Data     : Dezembro/2006.                   Ultima atualizacao: 07/12/2017
 
 
       Dados referentes ao programa:
@@ -4090,6 +4090,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   22/09/2016 - Arrumar validacao para horario limite de envio de ted (Lucas Ranghetti #500917)
                   
                   30/06/2017 - Logar possiveis erros saindo da proc_envia_tec_ted. (Fabricio)
+                  
+                  07/12/2017 - Contabilizado lote e feito update apenas no fim da rotina fora do loop 
+                              (Tiago/Adriano #745339)
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4110,6 +4113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           AND craplot.cdbccxlt = 100
           AND craplot.nrdolote = pr_nrdolote;
     rw_craplot cr_craplot%ROWTYPE;
+    
+    rw_craplot_rowid lote0001.cr_craplot%ROWTYPE;
     
     /* Seleciona os registros para enviar o arquivo */
     CURSOR cr_crapccs(pr_cdcooper crapemp.cdcooper%TYPE,
@@ -4219,6 +4224,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_vlcompdb   craplot.vlcompdb%TYPE;
     vr_vlinfodb   craplot.vlinfodb%TYPE;
     vr_nrdolote   craplot.nrdolote%TYPE;
+    
+    vr_qtcompln2  craplot.qtcompln%TYPE;
+    vr_qtinfoln2  craplot.qtinfoln%TYPE;
+    vr_vlcompdb2  craplot.vlcompdb%TYPE;
+    vr_vlinfodb2  craplot.vlinfodb%TYPE;
+    
     flg_doctobb   BOOLEAN := FALSE;
     vr_contador   PLS_INTEGER := 0;
     vr_idxtbtem   PLS_INTEGER := 0;
@@ -4358,6 +4369,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtinfoln := rw_craplot.qtinfoln;
     vr_vlcompdb := rw_craplot.vlcompdb;
     vr_vlinfodb := rw_craplot.vlinfodb;
+    vr_qtcompln2 := 0;
+    vr_qtinfoln2 := 0;
+    vr_vlcompdb2 := 0;
+    vr_vlinfodb2 := 0;
+
 
     -- fecha cursor de lote
     CLOSE cr_craplot;
@@ -4402,9 +4418,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                         ,pr_idseqttl => 1                      --> Sequencial do titular
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt    --> Data do movimento
                                         ,pr_flgerlog => FALSE
+                                                 ,pr_rw_craplot => rw_craplot_rowid
                                         /* parametros de saida */
                                         ,pr_cdcritic => vr_cdcritic            --> Codigo da critica
                                         ,pr_dscritic => vr_dscritic);
+
+           --Acumular os valores do lote para fazer update apos o loop 
+           vr_qtcompln2 := vr_qtcompln2 + 1;
+           vr_qtinfoln2 := vr_qtinfoln2 + 1;
+           vr_vlcompdb2 := vr_vlcompdb2 + rw_crapccs.vllanmto;
+           vr_vlinfodb2 := vr_vlinfodb2 + rw_crapccs.vllanmto;
 
            IF rw_crapccs.nrridlfp > 0 THEN
               IF vr_cdcritic IS NULL THEN
@@ -4589,6 +4612,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END;
     END LOOP; /* Fim do loop rw_craplcs */
 
+
+
+
     vr_idxtbtem := vr_tab_crattem.first;
 
     WHILE vr_idxtbtem IS NOT NULL LOOP
@@ -4668,6 +4694,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           vr_idxtbtem := vr_tab_crattem.next(vr_idxtbtem);
 
      END LOOP;
+     
+     IF rw_craplot_rowid.rowid IS NOT NULL THEN
+     
+        BEGIN
+           UPDATE craplot
+              SET qtcompln = qtcompln + vr_qtcompln2,
+                  qtinfoln = qtinfoln + vr_qtinfoln2,
+                  vlcompdb = vlcompdb + vr_vlcompdb2,
+                  vlinfodb = vlinfodb + vr_vlinfodb2
+            WHERE ROWID = rw_craplot_rowid.rowid;
+        EXCEPTION
+           WHEN OTHERS THEN
+             vr_cdcritic := 9999;
+             vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
+             -- Executa a exceção
+             RAISE vr_exc_erro;
+        END;
+     
+     END IF;
+     
      btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper,
                                  pr_nmarqlog     => 'TRFSAL',
                                  pr_ind_tipo_log => 2,
@@ -5575,6 +5621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				ROLLBACK;
 	  END;
 	END pc_proc_pag0101;
+
   
 	PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
 														 ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
