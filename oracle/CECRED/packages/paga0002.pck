@@ -304,6 +304,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2);        --> Retorno de critica (OK ou NOK)
@@ -691,6 +692,24 @@ create or replace package cecred.PAGA0002 is
   /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
   PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                        ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
+                                      
+  PROCEDURE pc_obtem_agendamentos(pr_cdcooper               IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                 ,pr_cdagenci               IN crapage.cdagenci%TYPE              --> Código do PA
+                                 ,pr_nrdcaixa               IN craplot.nrdcaixa%TYPE              --> Numero do Caixa
+                                 ,pr_nrdconta               IN crapass.nrdconta%TYPE              --> Numero da Conta
+                                 ,pr_dsorigem               IN VARCHAR2                           --> Descricao da Origem
+                                 ,pr_dtmvtolt               IN crapdat.dtmvtolt%TYPE              --> Data de Movimentacao Atual
+                                 ,pr_dtageini               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Inicial
+                                 ,pr_dtagefim               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Final
+                                 ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
+                                 ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
+                                 ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
+                                 ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
+                                 ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
+                                 ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
+                                 ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
+                                                                       
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -2307,6 +2326,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+							   ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2) IS      --> Retorno de critica (OK ou NOK)
@@ -2360,6 +2380,9 @@ create or replace package body cecred.PAGA0002 is
 
                   03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2).                  
 
+				  01/11/2017 - Adicionada validação de pagamento em lote.
+							   PRJ356.4 - DDA (Ricardo Linhares)
+
 
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
@@ -2377,7 +2400,6 @@ create or replace package body cecred.PAGA0002 is
 
     vr_dstransa  VARCHAR2(500) := NULL;
     vr_dstrans1  VARCHAR2(500) := NULL;
-    vr_vllanmto  NUMBER;
     vr_nrdrowid  ROWID;
     vr_dtvencto  DATE;
     vr_nmconban  VARCHAR2(100);
@@ -2407,6 +2429,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vlabatim  NUMBER;
     vr_vloutdeb  NUMBER;
     vr_vloutcre  NUMBER;
+	vr_vlapagar  NUMBER;
 
     vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
@@ -2422,7 +2445,6 @@ create or replace package body cecred.PAGA0002 is
     FROM dual;
 
     -- inicializar variaveis
-    vr_vllanmto := pr_vllanmto;
     vr_lindigi1 := pr_lindigi1;
     vr_lindigi2 := pr_lindigi2;
     vr_lindigi3 := pr_lindigi3;
@@ -2430,6 +2452,12 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
+
+	IF (pr_vlapagar > 0) THEN
+		vr_vlapagar := pr_vlapagar;
+	ELSE
+		vr_vlapagar := pr_vllanmto;
+	END IF;
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -2469,7 +2497,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_dtmvtolt     => pr_dtmvtolt         --> Data Movimento
                          ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                          ,pr_dtmvtopg     => pr_dtmvtopg         --> Data Pagamento
-                         ,pr_vllanmto     => vr_vllanmto         --> Valor Lancamento
+						 ,pr_vllanmto     => vr_vlapagar         --> Valor Lancamento
                          ,pr_cddbanco     => 0                   --> Codigo banco
                          ,pr_cdageban     => 0                   --> Codigo Agencia
                          ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia
@@ -8052,6 +8080,9 @@ create or replace package body cecred.PAGA0002 is
        Alterações:  28/08/2016 - M360 - Ajustes no continue para verificação do dia util
                                (Marcos-Supero)
 
+                    27/09/2017 - Ajuste no SQL para contagem dos registros de debito automatico
+                                 para nao repetir registros. Inclusao dos historicos de
+                                 pagamento de fatura de cartao de credito (Anderson SD 644304 e 764559).
   ............................................................................. */
     DECLARE
       -- Códigos de operação
@@ -8109,17 +8140,42 @@ create or replace package body cecred.PAGA0002 is
       -- Pagamentos via DEBAUT
       CURSOR cr_debaut(pr_cdcooper crapcop.cdcooper%TYPE
                       ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+    SELECT nrdconta
+          ,sum(qtdregis) qtdregis
+     FROM (
         SELECT lcm.nrdconta
               ,COUNT(1) qtdregis
           FROM craplcm lcm
-              ,crapatr atr
          WHERE lcm.cdcooper = pr_cdcooper /* Cooperativa do Laço */
            AND lcm.cdagenci = 1           /* Debitos Automáticos geram cdagenci = 1 */
            AND lcm.dtmvtolt = pr_dtmvtolt /* Dia anterior*/
-           AND lcm.cdcooper = atr.cdcooper
-           AND lcm.nrdconta = atr.nrdconta
-           AND lcm.cdhistor = atr.cdhistor
-         GROUP BY lcm.nrdconta;
+           /* Caso for necessario recalcular os registros dessa tabela para periodos passados,
+              utilizar os historicos do craphis (inautori = 1), pois a tabela crapatr eh apagada
+              depois de um tempo que a autorizacao for cancelada. */
+           AND lcm.cdhistor IN (SELECT atr.cdhistor
+                                  FROM crapatr atr
+                                 WHERE atr.cdcooper = lcm.cdcooper
+                                   AND atr.nrdconta = lcm.nrdconta)
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 1545          -- PG.FAT.CARTAO
+      GROUP BY lcm.nrdconta
+     UNION ALL
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdhistor = 658          -- PGT.CARTAO BB
+      GROUP BY lcm.nrdconta
+    ) ORIGEM
+    GROUP BY nrdconta;
+    
     BEGIN
       -- A rotina só pode ser executada em dias uteis
       IF gene0005.fn_valida_dia_util(3,trunc(SYSDATE)) <> trunc(SYSDATE) OR to_char(SYSDATE,'d') IN(1,7) THEN
