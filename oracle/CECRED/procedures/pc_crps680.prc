@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps680(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Marco/2014.                  Ultima atualizacao: 30/06/2017
+   Data    : Marco/2014.                  Ultima atualizacao: 20/11/2017
    Dados referentes ao programa:
 
    Frequencia: Diario.
@@ -33,6 +33,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps680(pr_cdcooper IN crapcop.cdcooper%TY
                30/06/2017 - Adicionar order by no cursor da crapddc, para que a 
                             ordenacao dos registros seja a mesma do partition
                             (Douglas - Chamado 703575)
+                            
+               20/11/2017 - Ajuste no formato da data no header e no trailer do arquivo,
+                            conforme solicitado no chamado 786061. (Kelvin).
+                              
   ............................................................................ */
 
 
@@ -233,7 +237,7 @@ BEGIN -- Principal
                      '2'                                  || -- Troca=1 Devolucao=2 
                      '000'                                ||
                      '0001'                               ||
-                     TO_CHAR(vr_dtmvtolt,'DDMMRRRR')      ||
+                     TO_CHAR(vr_dtmvtolt,'RRRRMMDD')      ||
                      TO_CHAR(SYSDATE,'HHMM')              ||
                      LPAD(' ',8,' ')                      || -- Filler x(8)
                      ' '                                  ||
@@ -334,7 +338,7 @@ BEGIN -- Principal
                      '2'                                  ||  -- Troca=1 Devolucao=2 
                      '000'                                ||
                      '0001'                               ||
-                     TO_CHAR(vr_dtmvtolt,'DDMMRRRR')      ||
+                     TO_CHAR(vr_dtmvtolt,'RRRRMMDD')      ||
                      TO_CHAR(SYSDATE,'HHMM')              ||
                      LPAD(' ',8,' ')                      ||  -- Filler x(8)
                      ' '                                  ||
