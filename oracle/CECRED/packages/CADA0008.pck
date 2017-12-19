@@ -669,7 +669,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     -- Cursor para buscar o ID_PESSOA da conta
     CURSOR cr_busca_idpessoa IS
 
-      SELECT tps.idpessoa
+      SELECT tps.idpessoa,
+             ttl.cdestcvl
         FROM tbcadast_pessoa tps
             ,crapass         ass
             ,crapttl         ttl
@@ -806,6 +807,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
          WHERE idpessoa = r_busca_idpessoa.idpessoa;
 
         w_nmtabela := 'TBCADAST_PESSOA_RELACAO';
+        -- Se o estado civil nao tiver conjuge, exclui o mesmo
+        IF nvl(r_busca_idpessoa.cdestcvl,0) IN (1,5,6,7) THEN
+          DELETE TBCADAST_PESSOA_RELACAO
+           WHERE idpessoa = r_busca_idpessoa.idpessoa
+             AND tprelacao = 1; -- Conjuge
+        END IF;
+          
         UPDATE TBCADAST_PESSOA_RELACAO
            SET idpessoa = idpessoa
          WHERE idpessoa = r_busca_idpessoa.idpessoa;
