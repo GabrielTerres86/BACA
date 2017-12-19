@@ -7,9 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 09/02/2017 - Adicionar a funcao utf8_decode para as informacoes do cheque 
  * --------------			   conforme ja faz pro endereço (Lucas Ranghetti #610360)
- *
+ *  
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *  
+ *				  08/08/2017 - Adicionado novo parametro flgutcrm para a ação CADPAC_GRAVA. (Reinert - Projeto 339)
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -38,6 +39,7 @@
     $cdagedoc = (isset($_POST['cdagedoc'])) ? $_POST['cdagedoc'] : '';
     $flgdsede = (isset($_POST['flgdsede'])) ? $_POST['flgdsede'] : '';
     $cdagepac = (isset($_POST['cdagepac'])) ? $_POST['cdagepac'] : '';
+    $flgutcrm = (isset($_POST['flgutcrm'])) ? $_POST['flgutcrm'] : '';
     $dsendcop = (isset($_POST['dsendcop'])) ? $_POST['dsendcop'] : '';
     $nrendere = (isset($_POST['nrendere'])) ? $_POST['nrendere'] : '';
     $nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
@@ -91,7 +93,9 @@
     $nmpasite = (isset($_POST['nmpasite'])) ? $_POST['nmpasite'] : '';
     $dstelsit = (isset($_POST['dstelsit'])) ? $_POST['dstelsit'] : '';
     $dsemasit = (isset($_POST['dsemasit'])) ? $_POST['dsemasit'] : '';
-    $dshorsit = (isset($_POST['dshorsit'])) ? $_POST['dshorsit'] : '';
+    $hrinipaa = (isset($_POST['hrinipaa'])) ? $_POST['hrinipaa'] : '';
+    $hrfimpaa = (isset($_POST['hrfimpaa'])) ? $_POST['hrfimpaa'] : '';
+    $indspcxa = (isset($_POST['indspcxa'])) ? $_POST['indspcxa'] : '';	
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '';
@@ -124,6 +128,7 @@
     $xml .= "   <cdagedoc>".$cdagedoc."</cdagedoc>";
     $xml .= "   <flgdsede>".$flgdsede."</flgdsede>";
     $xml .= "   <cdagepac>".$cdagepac."</cdagepac>";
+    $xml .= "   <flgutcrm>".$flgutcrm."</flgutcrm>";
     $xml .= "   <dsendcop>".utf8_decode($dsendcop)."</dsendcop>";
     $xml .= "   <nrendere>".$nrendere."</nrendere>";
     $xml .= "   <nmbairro>".utf8_decode($nmbairro)."</nmbairro>";
@@ -177,10 +182,12 @@
     $xml .= "   <nmpasite>".utf8_decode($nmpasite)."</nmpasite>";
     $xml .= "   <dstelsit>".$dstelsit."</dstelsit>";
     $xml .= "   <dsemasit>".$dsemasit."</dsemasit>";
-    $xml .= "   <dshorsit><![CDATA[".utf8_decode($dshorsit)."]]></dshorsit>";
+	$xml .= "   <hrinipaa>".$hrinipaa."</hrinipaa>";
+	$xml .= "   <hrfimpaa>".$hrfimpaa."</hrfimpaa>";	
+	$xml .= "   <indspcxa>".$indspcxa."</indspcxa>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
-	
+
 	if ($cddopcao == 'B') { // Cadastramento de Caixa
         $nmdeacao = 'CADPAC_CAIXA';
         $dsmensag = 'Caixa gravado com sucesso!';
