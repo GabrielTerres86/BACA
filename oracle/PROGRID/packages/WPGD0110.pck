@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -20,6 +20,9 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   --              31/05/2016 - Alteracao da procedure pc_lista_evento_dtsugest para 
   --                           carregar eventos apenas por Cooperativa e Ano.
   --                           (Carlos Rafael Tanholi).  
+	--
+	--							31/08/2017 - Incluído parametro pr_nrseqpgm em todas as procedures, Prj. 322 (Jean Michel)
+	--
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
@@ -53,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --  Sistema  : Rotinas para Sugestao de Eventos do Progrid
   --  Sigla    : WPGD
   --  Autor    : Carlos Rafael Tanholi (CECRED)
-  --  Data     : Dezembro/2015.                   Ultima atualizacao:  13/04/2016
+  --  Data     : Dezembro/2015.                   Ultima atualizacao:  31/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -70,6 +73,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   --                           (Carlos Rafael Tanholi).	            
   --
   --              05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+	--
+	--							31/08/2017 - Incluído parametro pr_nrseqpgm, Prj. 322 (Jean Michel)
+	--
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
@@ -92,7 +98,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     Sistema : Progrid
     Sigla   : WPGD
     Autor   : Carlos Rafael Tanholi
-    Data    : Dezembro/15.                    Ultima atualizacao: 07/12/2015
+    Data    : Dezembro/15.                    Ultima atualizacao: 31/08/2017
 
     Dados referentes ao programa:
 
@@ -103,6 +109,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     Observacao: -----
 
     Alteracoes: 05/07/2016 - Exibir ministrantes - PRJ229 - Melhorias OQS (Odirlei-AMcom)
+		
+		
+	 							31/08/2017 - Incluído parametro pr_nrseqpgm, Prj. 322 (Jean Michel)
+	
     ..............................................................................*/   
                 
     DECLARE
@@ -285,7 +295,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Retornar a lista de eventos do sistema.
     --
-    --
+    --	Alterações: 31/08/2017 - Incluído parametro pr_nrseqpgm, Prj. 322 (Jean Michel)
+		--
     -- .............................................................................
   BEGIN
     DECLARE
