@@ -9597,6 +9597,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 23/05/2016 - Ajuste para utilizar rotina genérico para buscar registros na craptab
                             (Adriano - 452932).
 
+                19/12/2017 - adicionada chamada para a procedure pc_ver_val_bloqueio_aplica para 
+                             Validar bloqueios para resgate de aplicacao. PRJ404 (Lombardi)
+                             
   .......................................................................................*/
   PROCEDURE pc_valida_limite_internet(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                      ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -9639,15 +9642,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND snh.tpdsenha = 1;
       rw_crapsnh cr_crapsnh%ROWTYPE;
 
+      --Registro do tipo calendario
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+      
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
+
+      -- Erro em chamadas da pc_gera_erro
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
 
       -- Variáveis locais
       vr_vllimmax NUMBER(20,2);
       vr_vllimmin NUMBER(20,2);
       vr_tpregist INTEGER;
       vr_dstextab craptab.dstextab%TYPE;
+      vr_vlblqjud NUMBER(20,2);
+      vr_vlresblq NUMBER(20,2);
+      vr_vlblqapl NUMBER(20,2) := 0;
+      vr_vlblqpou NUMBER(20,2) := 0;
 
       -- Valor de limite para WEB
       vllimweb crapsnh.vllimweb%TYPE;
@@ -9662,6 +9676,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+      
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+        -- Gera exceção
+        RAISE vr_exc_erro;
+
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+
+      END IF;
+      
       -- Encontra registro do associado
       OPEN cr_crapass(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
@@ -9779,6 +9818,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         CLOSE cr_crapsnh;
 
+        -- Validar bloqueios para resgate de aplicacao
+        pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_nrdcaixa => pr_nrdcaixa
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_nmdatela => pr_nmdatela
+                                  ,pr_idorigem => pr_idorigem
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nraplica => 1
+                                  ,pr_idseqttl => pr_idseqttl
+                                  ,pr_cdprogra => pr_nmdatela
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_vlresgat => pr_vlaplica
+                                  ,pr_flgerlog => 0
+                                  ,pr_innivblq => 0
+                                  ,pr_vlsldinv => 0
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+        
+        -- Verifica se houve erro recuperando informacoes de log                              
+        IF vr_des_reto = 'NOK' THEN
+          -- Tenta buscar o erro no vetor de erro
+          IF vr_tab_erro.COUNT > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Retorno "NOK" na APLI0002.pc_ver_val_bloqueio_aplica e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
+      END IF;
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+          
       END IF;
 
       IF pr_vlaplica > vr_vllimmax THEN
