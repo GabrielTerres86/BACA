@@ -430,10 +430,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
         AND   crapass.cdsitdtl < 5
         AND   crapass.dtdemiss < pr_dtlimite
         AND   crapass.nrdconta > pr_nrctares
-        AND   NOT EXISTS ( SELECT 1
-                           FROM   crapavs
-                           WHERE  crapavs.cdcooper = crapass.cdcooper
-                           AND    crapavs.nrdconta = crapass.nrdconta)
+--Pj 364 - Sarah solicitou retirar essa restricao
+--        AND   NOT EXISTS ( SELECT 1
+--                           FROM   crapavs
+--                           WHERE  crapavs.cdcooper = crapass.cdcooper
+--                           AND    crapavs.nrdconta = crapass.nrdconta)
 -- PJ 364 - Sarah solicitou retirar consitencia de folha de cheque
 --        AND   NOT EXISTS ( SELECT 1
 --                           FROM   crapfdc
@@ -441,11 +442,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
 --                           AND    crapfdc.nrdconta = crapass.nrdconta
 --                           AND    crapfdc.tpcheque <> 3
 --                           AND    crapfdc.incheque = 0)
-        AND   NOT EXISTS(  SELECT 1
-                           FROM   craplim
-                           WHERE  craplim.cdcooper = crapass.cdcooper
-                           AND    craplim.nrdconta = crapass.nrdconta
-                           AND    craplim.insitlim = 2)
+--Pj 364 - Sarah solicitou retirar essa restricao
+--        AND   NOT EXISTS(  SELECT 1
+--                           FROM   craplim
+--                           WHERE  craplim.cdcooper = crapass.cdcooper
+--                           AND    craplim.nrdconta = crapass.nrdconta
+--                           AND    craplim.insitlim = 2)
         AND   NOT EXISTS(  SELECT 1
                            FROM   crapsli
                            WHERE  crapsli.cdcooper = crapass.cdcooper
@@ -668,15 +670,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       -- Limpando as tabelas de memória
       pc_limpa_tabela;
 
+--Pj 364 - Sarah solicitou retirar essa restricao
 			-- Carregando dos contratos de limites de crédito não cancelados
-      FOR rw_craplim03 IN cr_craplim03( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_craplim03(rw_craplim03.nrdconta).nrdconta := rw_craplim03.nrdconta;
-      END LOOP;
+--      FOR rw_craplim03 IN cr_craplim03( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_craplim03(rw_craplim03.nrdconta).nrdconta := rw_craplim03.nrdconta;
+--      END LOOP;
 
+--Pj 364 - Sarah solicitou retirar essa restricao
 			-- Carregando as informações do cadastro de autorizações de débitos em conta
-      FOR rw_crapatr IN cr_crapatr( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_crapatr(rw_crapatr.nrdconta).nrdconta := rw_crapatr.nrdconta;
-      END LOOP;
+--      FOR rw_crapatr IN cr_crapatr( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_crapatr(rw_crapatr.nrdconta).nrdconta := rw_crapatr.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de poupanças programadas
       FOR rw_craprpp IN cr_craprpp( pr_cdcooper => pr_cdcooper) LOOP
@@ -696,10 +700,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
 --        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
 --      END LOOP;
 
-			-- Carregando as informações do cadastro de poupanças programadas
-      FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_craplat(rw_craplat.nrdconta).nrdconta := rw_craplat.nrdconta;
-      END LOOP;
+			-- Carregando as informações do cadastro de lançamentos de tarifas
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_craplat(rw_craplat.nrdconta).nrdconta := rw_craplat.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de cartoes magneticos solicitados e ativos (1,2)
 --Pj 364 - Sarah solicitou retirar essa restricao
@@ -712,10 +717,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
         vr_tab_crawcrd(rw_crawcrd.nrdconta).nrdconta := rw_crawcrd.nrdconta;
       END LOOP;
 
+--Pj 364 - Sarah solicitou retirar essa restricao
 			-- Carregando as informações de lançamentos automáticos
-      FOR rw_crapepr IN cr_crapepr( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_crapepr(rw_crapepr.nrdconta).nrdconta := rw_crapepr.nrdconta;
-      END LOOP;
+--      FOR rw_crapepr IN cr_crapepr( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_crapepr(rw_crapepr.nrdconta).nrdconta := rw_crapepr.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de aplicações RDCA
       FOR rw_craprda IN cr_craprda( pr_cdcooper => pr_cdcooper) LOOP
@@ -795,13 +801,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
              vr_tab_craprpp.EXISTS(rw_crapass.nrdconta) OR -- poupanças programadas
              vr_tab_craplau.EXISTS(rw_crapass.nrdconta) OR -- lancamentos automaticos
              vr_tab_crapseg.EXISTS(rw_crapass.nrdconta) OR -- seguros
-             vr_tab_craplat.EXISTS(rw_crapass.nrdconta) OR -- poupanças programadas
+             vr_tab_craplat.EXISTS(rw_crapass.nrdconta) OR -- lançamentos tarifas
 						 vr_tab_craprac.EXISTS(rw_crapass.nrdconta) THEN -- aplicações captação
 
             -- vai para a próxima iteração
             CONTINUE;
           END IF;
 
+-- Pj 364 Sarah solicitou retirar
+/*
           -- seleciona os avalistas do associado
           OPEN cr_crapavl( pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => rw_crapass.nrdconta);
@@ -835,7 +843,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             -- Fecha o cursor
             CLOSE cr_crapavl;
           END IF; --IF cr_crapavl%FOUND THEN
-
+*/
           -- Verifica se existe cartão magnético solicitado e ativo para a conta do associado
           IF vr_tab_crapcrm.EXISTS(rw_crapass.nrdconta) THEN
             -- Vai para a próxima iteração
@@ -912,13 +920,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             CLOSE cr_crapcot;
           END IF;
 
-          -- se possui saldo em um dos campos abaixo, vai para a proxima iteração e não efetua a baixa da conta
-          IF nvl(rw_crapcot.qtjurmfx,0) > 0 OR -- juros pagos sobre c/c e emprestimos em moeda fixa
-             nvl(rw_crapcot.qtraimfx,0) > 0 OR -- quantidade de retorno a incorporar
-             nvl(rw_crapcot.qtrsjmfx,0) > 0 THEN -- quantidade de residuos da incorporação
-            -- vai para a proxima iteração
-            CONTINUE;
-          END IF;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--          -- se possui saldo em um dos campos abaixo, vai para a proxima iteração e não efetua a baixa da conta
+--          IF nvl(rw_crapcot.qtjurmfx,0) > 0 OR -- juros pagos sobre c/c e emprestimos em moeda fixa
+--             nvl(rw_crapcot.qtraimfx,0) > 0 OR -- quantidade de retorno a incorporar
+--             nvl(rw_crapcot.qtrsjmfx,0) > 0 THEN -- quantidade de residuos da incorporação
+--            -- vai para a proxima iteração
+--            CONTINUE;
+--          END IF;
 
           --------------------------------------------------------------
           --  Inicio da baixa dos valores do conta-corrente
