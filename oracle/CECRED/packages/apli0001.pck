@@ -5386,6 +5386,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
+    
+    -- Qtde parametrizada de Jobs
+    vr_qtdjobs          number;
 
     -- Informações da poupança programada
     cursor cr_craprpp (pr_rowid in varchar2) is
@@ -5584,18 +5587,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_des_erro := gene0001.fn_busca_critica(427)||
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
-      end if;
-
-      -- Atualiza o indicador de cálculo
-      begin
-        update craptrd
-           set incalcul = decode(vr_cdprogra,'CRPS148',2,1)
-         where rowid = rw_craptrd.rowid;
-      exception
-        when others then
-          vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
-          raise vr_exc_erro;
-      end;
+      end if;      
+      
+      -- Buscar quantidade parametrizada de Jobs
+      -- Se o programa fizer paralelismo não atualiza informação
+      -- Ela será atualizada posteriormente quando todos os Job´s forem executados
+      vr_qtdjobs := null;
+      vr_qtdjobs := gene0001.fn_retorna_qt_paralelo( pr_cdcooper --pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                                   , vr_cdprogra --pr_cdprogra  IN crapprg.cdprogra%TYPE    --> Código do programa
+                                                   ); 
+      if vr_qtdjobs = 0 then 
+        -- Atualiza o indicador de cálculo
+        begin
+          update craptrd
+             set incalcul = decode(vr_cdprogra,'CRPS148',2,1)
+           where rowid = rw_craptrd.rowid;
+        exception
+          when others then
+            vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
+            raise vr_exc_erro;
+        end;
+      end if;        
     end if;
 
     --
