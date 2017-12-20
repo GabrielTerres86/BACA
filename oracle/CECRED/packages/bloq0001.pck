@@ -3045,6 +3045,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
               ,inresgate_automatico 
               ,insituacao 
               ,qtdias_atraso_permitido
+              ,nrconta_terceiro
+              ,inaplicacao_propria
           FROM tbgar_cobertura_operacao
          WHERE idcobertura = pr_idcobope;
 
@@ -3062,14 +3064,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       -- Variaveis locais
       vr_cdcooper       NUMBER := 0;
       vr_nrdconta       NUMBER := 0;
+      vr_nrconta_terceira NUMBER := 0;
       vr_tpcontrato     NUMBER := 0;
       vr_nrcontrato     NUMBER := 0;
       vr_inresgat       NUMBER := 0;
       vr_insituacao     NUMBER := 0;
       vr_qtdias_atraso  NUMBER := 0;
+      vr_inaplicacao_propria NUMBER := 0;
 
       vr_vlcobert       NUMBER := 0;
+      vr_vlresgat       NUMBER := 0;
       vr_vlroriginal    NUMBER;
+      vr_vlratualiza    NUMBER;
       vr_nrcpfcnpj      NUMBER;
 
       vr_vlsaldo_aplica NUMBER := 0;
@@ -3099,6 +3105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
       -- Guardar valor solicitado e re-inicializar valor resgatado
       vr_vlcobert := pr_vlresgat;
+      vr_vlresgat := pr_vlresgat;
       pr_vlresgat := 0;
       vr_tab_erro.DELETE;
       
@@ -3114,17 +3121,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
              ,vr_nrcontrato
              ,vr_inresgat
              ,vr_insituacao
-             ,vr_qtdias_atraso;
+             ,vr_qtdias_atraso
+             ,vr_nrconta_terceira
+             ,vr_inaplicacao_propria;
         CLOSE cr_cobert;
 
         -- Somente continuar se cobertura permite resgate, esta ativa
         -- E a quantidade de dias em atraso for superior ao maximo permitido
-        IF vr_inresgat = 1 AND vr_insituacao = 1 AND vr_qtdias_atraso <= pr_qtdiaatr THEN
+        -- E não foi selecionado conta terceiro
+        IF vr_inresgat = 1 AND vr_insituacao = 1 
+        AND vr_qtdias_atraso <= pr_qtdiaatr 
+        AND vr_nrconta_terceira = 0 
+        AND vr_inaplicacao_propria = 1 THEN
 
           -- Retornar valor atualizado de cobertura da operacao
           pc_bloqueio_garantia_atualizad(pr_idcobert            => pr_idcobope 
                                         ,pr_vlroriginal         => vr_vlroriginal 
-                                        ,pr_vlratualizado       => vr_vlcobert 
+                                        ,pr_vlratualizado       => vr_vlratualiza 
                                         ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
                                         ,pr_dscritic            => vr_dscritic);
           -- Se houve erro
@@ -3133,7 +3146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           END IF;
 
           -- Valor solicitado deve ser inferior ao valor maximo de bloqueio
-          vr_vlcobert := LEAST(vr_vlcobert,pr_vlresgat);
+          vr_vlcobert := LEAST(vr_vlcobert,vr_vlratualiza);
 
           -- Chamar rotina que devolve o saldo da conta, enviaremos tambem o tipo e numero do contrato
           -- atual para que ele nao seja considerado e nao desconte do saldo disponivel, ou seja,
@@ -3153,6 +3166,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
           -- Permitiremos o resgate somente do saldo disponivel
           vr_vlcobert := LEAST(vr_vlcobert,vr_vlsaldo_aplica);
+
+          -- Se o valor de cobertura for menor que o do resgate, não resgatar
+          IF vr_tpcontrato = 90 AND vr_vlcobert < vr_vlresgat THEN
+             RETURN;
+          END IF;
 
           -- Buscar calendario
           OPEN BTCH0001.cr_crapdat(vr_cdcooper);
@@ -3199,7 +3217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
               FOR ind_dados IN vr_resgate_dados.FIRST..vr_resgate_dados.LAST LOOP
                 CASE ind_dados
                   WHEN 1 THEN vr_aux_nraplica := vr_resgate_dados(ind_dados);
-                  WHEN 2 THEN vr_aux_dtmvtolt := vr_resgate_dados(ind_dados);
+                  WHEN 2 THEN vr_aux_dtmvtolt := TO_DATE(vr_resgate_dados(ind_dados),'dd/mm/RRRR');
                   WHEN 3 THEN vr_aux_dshistor := vr_resgate_dados(ind_dados);
                   WHEN 4 THEN vr_aux_nrdocmto := vr_resgate_dados(ind_dados);
                   WHEN 5 THEN vr_aux_dtvencto := vr_resgate_dados(ind_dados);

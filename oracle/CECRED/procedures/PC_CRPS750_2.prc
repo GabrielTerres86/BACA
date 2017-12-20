@@ -470,7 +470,7 @@ BEGIN
                                              ,pr_cdagenci => pr_cdagenci                   --> Codigo Agencia
                                              ,pr_nrdcaixa => 0                             --> Codigo Caixa
                                              ,pr_cdoperad => vr_cdoperad                   --> Operador
-                                             ,pr_nmdatela => pr_nmdatela                   --> Nome da Tela
+                                             ,pr_nmdatela => vr_cdprogra                   --> Nome da Tela
                                              ,pr_idorigem => 7 /*Batch*/                   --> Identificador origem
                                              ,pr_nrdconta => rw_crappep.nrdconta           --> Numero da Conta
                                              ,pr_nrctremp => rw_crappep.nrctremp           --> Numero Contrato

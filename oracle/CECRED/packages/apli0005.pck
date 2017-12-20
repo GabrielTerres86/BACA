@@ -13764,6 +13764,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       aux_idtipapl VARCHAR2(1);
       aux_resposta VARCHAR2(1000);
 
+      vr_innivbloq Number := 0;
+
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -13891,7 +13893,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       END IF;
 
-      -- obter os valores Bloqueados Judicialmente
+      -- Se o resgate for oriundo das rotinas crps750 ou crps001
+      -- então não faremos validação de bloqueio de garantia, pois
+      -- estas rotinas estao solicitando um resgate para cobrir o 
+      -- propria bloqueio de garantia
+      IF UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001' THEN
+        vr_innivbloq := 1; --> Checar somente Bloqueio Judicial
+      END IF;
+      
+    
+      -- obter os valores Bloqueados Judicialmente e Garantia
       apli0002.pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cdagenci
                                ,pr_nrdcaixa => pr_nrdcaixa
@@ -13905,6 +13916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                ,pr_dtmvtolt => pr_dtmvtolt
                                ,pr_vlresgat => pr_vltotrgt
                                ,pr_flgerlog => pr_flgerlog
+                               ,pr_innivblq => vr_innivbloq
                                ,pr_des_reto => vr_des_reto
                                ,pr_tab_erro => vr_tab_erro);
 

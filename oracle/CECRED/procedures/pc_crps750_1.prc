@@ -1357,8 +1357,13 @@ BEGIN
             -- Somente se o contrato de empréstimo tem cobertura de operação
             IF rw_crapepr.idcobope > 0 THEN
 
+              
               -- Tentar resgatar o valor negativo
+              IF (vr_vlsldtot < 0) THEN
+                 vr_vlresgat := TRUNC((vr_vldescto * (1+ vr_txcpmfcc)),2);
+              ELSE
               vr_vlresgat := ABS(vr_vlsldtot - (TRUNC((vr_vldescto * (1+ vr_txcpmfcc)),2)));
+              END IF;                
 
               -- Acionar rotina de calculo de dias em atraso
               IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
