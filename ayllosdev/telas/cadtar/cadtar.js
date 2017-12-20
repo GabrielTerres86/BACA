@@ -670,7 +670,11 @@ function carregaDetalhamento(){
 	return false;		
 }
 
-function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq = 1, flgCarregando = false){
+function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq, flgCarregando){
+
+	// Parametros default
+	nriniseq = (typeof nriniseq !== 'undefined') ? nriniseq : 1;
+	flgCarregando = (typeof flgCarregando !== 'undefined') ? flgCarregando : false;
 
 	if(flgCarregando == true){
 		showMsgAguardo("Aguarde, carregando...");
