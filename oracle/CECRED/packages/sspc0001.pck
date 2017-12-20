@@ -539,6 +539,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
   --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
+  --
+  --             20/12/2017 - Ajuste de desempenho na procedure pc_consulta_adimistrador onde adicionei a chave
+  --                          correta no cursor principal, conforme solicitado no chamado 808164. (Kelvin)            
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -8896,7 +8899,8 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
              crapcbd.dtatuadm,
              crapcbd.inpessoa
         FROM crapcbd
-       WHERE crapcbd.nrcbrsoc = pr_nrconbir
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcbrsoc = pr_nrconbir
          AND crapcbd.nrsdtsoc = pr_nrseqdet
          AND crapcbd.intippes = 5; -- Somente administrador
     
