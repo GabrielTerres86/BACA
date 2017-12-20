@@ -4216,6 +4216,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
     --   
+    --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
+    --
+    --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
+    --                           de cartao de credito em atraso (Anderson).
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4727,6 +4731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
 
     vr_flgativo INTEGER := 0;
+    vr_qtdiaatr INTEGER := 0;
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -5801,11 +5806,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
     
+    --> Busca parametro de qtd dias em atraso de fatura de cartao em atraso para apresentacao da mensagem.
+    BEGIN
+      vr_qtdiaatr := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                               pr_cdcooper => 0,
+                                               pr_cdacesso => 'QTD_DIAS_FAT_CRD_ATRASO');
+    EXCEPTION
+     WHEN OTHERS THEN
+        vr_qtdiaatr := 0;
+    END;
+    
     --> Buscar alerta de atraso do cartao
     FOR rw_crdatraso IN cr_crdatraso( pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta) LOOP
       
-      IF rw_crdatraso.qtdias_atraso > 0 THEN
+      IF (rw_crdatraso.qtdias_atraso > 0) AND (rw_crdatraso.qtdias_atraso > vr_qtdiaatr) THEN
         vr_dsmensag := 'Cooperado com fatura de cartão de crédito em atraso há '||
                        rw_crdatraso.qtdias_atraso ||
                        ' dias no valor de R$ '|| to_char(rw_crdatraso.vlsaldo_devedor,'FM999G999G999G990D00');
@@ -7350,7 +7365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '</Registro>');                                               
-
+                                                                  
                                                                      
       END LOOP;                                                      
       pc_escreve_xml ('</Valores>');                                 
@@ -11996,7 +12011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
                                     
   END pc_ib_verif_atualiz_fone;
-
+        
 
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
