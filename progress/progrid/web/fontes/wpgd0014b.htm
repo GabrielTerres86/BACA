@@ -27,7 +27,7 @@
   <input type="hidden" name="aux_cdcopope" value="">
   <input type="hidden" name="aux_cdoperad" value="">
   
-    <table width="100%"  border="0" cellspacing="0" cellpadding="0">
+  <table width="100%"  border="0" cellspacing="0" cellpadding="0">
     <tr>
       <td>
 	    <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
@@ -44,7 +44,7 @@
 	    </table>
 	  </td>
 	  <td align="right" class="txtTituloHid">
-	    <a href="#." onClick="onclick=CustomizaEvento();">Características do Evento</a>
+	    <a href="#." onClick="CustomizaEvento();">Características do Evento</a>
 	  </td>
     </tr>
     <tr>
@@ -168,7 +168,7 @@ function seta_obrig(linha){
 
 function CustomizaEvento(){
   VarURL = document.form.aux_dsendurl.value  + "/wpgd0008.htm?aux_idevento=" + document.form.aux_idevento.value + "&aux_cdorigem=3&LinkRowid=" + document.form.aux_nrdrowid.value;
-  window.open(VarURL,"Evento","toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=790,height=490,top=10,left=10");
+  window.open(VarURL,"Evento","toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=860,height=560,top=10,left=10");
 }
   
 function mostraPACS(){
@@ -177,7 +177,11 @@ function mostraPACS(){
   var cell;  
 
   // Coloca o nome do Evento
-  document.form.nmevento.value = document.form.aux_cdevento.value + ' - ' + mpacs[0].nmevento;
+  if(mpacs.length > 0){
+    document.form.nmevento.value = document.form.aux_cdevento.value + ' - ' + mpacs[0].nmevento;
+  }else{
+      document.form.nmevento.value = document.form.aux_cdevento.value + ' - SEM NOME DE EVENTO';
+  }
   document.form.nmevento.style.background = '';
   document.form.nmevento.style.border = 'none';
   
