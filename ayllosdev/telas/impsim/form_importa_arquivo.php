@@ -1,11 +1,11 @@
 <?php
     /*
      * FONTE        : form_importa_arquivo.php
-     * CRIAÇÃO      : Lucas Lombardi
-     * DATA CRIAÇÃO : 19/07/2016
+     * CRIAÃ‡ÃƒO      : Diogo Carlassara
+     * DATA CRIAÃ‡ÃƒO : 11/10/2017
      * OBJETIVO     : Formulario de Regras.
      * --------------
-     * ALTERAÇÕES   :
+     * ALTERAÃ‡Ã•ES   :
      * --------------
      */
 
@@ -29,9 +29,9 @@
 
     <fieldset style="font-weight: bold;">
         <div>Exemplo layout arquivo .CSV</div><br />
-        <div>Cooper; Conta; CNPJ; Simples Nacional?</div>
-        <div><? echo $glbvars["cdcooper"]; ?>; 10847; 99999999999999; N</div>
-        <div><? echo $glbvars["cdcooper"]; ?>; 20210; 99999999999999; S</div>
+        <div>Cooper; CNPJ; Conta; Simples Nacional?</div>
+        <div><? echo $glbvars["cdcooper"]; ?>; 99999999999999; 10847; N</div>
+        <div><? echo $glbvars["cdcooper"]; ?>; 99999999999999; 20210; S</div>
     </fieldset>
 
 	<div id="divBotoes" class="rotulo-linha" style="margin-top:25px; margin-bottom :10px; text-align: center;">
