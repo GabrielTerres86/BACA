@@ -17,6 +17,7 @@
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
  * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
  * 010: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
+ * 011: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'tpregtrb' (Projeto 410) 
  * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
  *                                          Documentos Cadastrais e Documentos de Conta.
  */
@@ -53,6 +54,16 @@
 	</select>		
 	<br />
 	
+	<? if ((int)getByTagName($identificacao,'inpessoa') >= 2): ?>
+    <label for="tpregtrb" class="rotulo-90">Regime tribut.:</label>
+	<select id="tpregtrb" name="tpregtrb">
+		<option value=""> - </option>
+		<option value="1" <? if (getByTagName($identificacao,'tpregtrb') == "1"){ echo " selected"; } ?>> 1 - Simples Nacional</option>
+		<option value="2" <? if (getByTagName($identificacao,'tpregtrb') == "2"){ echo " selected"; } ?>> 2 - Lucro Real</option>
+		<option value="3" <? if (getByTagName($identificacao,'tpregtrb') == "3"){ echo " selected"; } ?>> 3 - Lucro Presumido</option>
+	</select>		
+	<br />
+	<? endif; ?>
 	<label for="qtfilial" class="rotulo rotulo-90">Qt. Filiais:</label>
 	<input name="qtfilial" id="qtfilial" type="text" class="inteiro"  maxlength="3" value="<? echo getByTagName($identificacao,'qtfilial') ?>" />
 	

@@ -21,7 +21,7 @@
                21/08/2013 - Incluir tt-listal (André E / Supero)
                
                06/06/2014 - Incluso campos inpessoa e dtnascto na
-                            TEMP-TABLE tt-dados-avais (Daniel/Thiago).  
+                            TEMP-TABLE tt-dados-avais (Daniel/Thiago).             
                             
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-cooper (Oscar).                             
                             
@@ -76,6 +76,8 @@ DEF TEMP-TABLE tt-iof NO-UNDO
     FIELD dtiniiof AS DATE
     FIELD dtfimiof AS DATE
     FIELD txccdiof AS DECI.
+
+DEF TEMP-TABLE tt-iof-sn LIKE tt-iof.
 
 DEF TEMP-TABLE tt-listal NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper

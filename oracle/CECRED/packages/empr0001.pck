@@ -34,6 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             04/04/2017 - Criacao da procedure pc_gera_arq_saldo_devedor para utilizacao na tela RELSDV
   --                          Jean (Mouts)
   --
+  --             11/10/2017 - Adicionado campo vliofcpl no XML de retorno da pc_obtem_dados_empresti (Diogo - Mouts - Projeto 410)
   --             11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
   --
   --             17/10/2017 - No processo noturno, considerar tambem os valores bloqueados e que foram liberados
@@ -135,7 +136,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,dsorgrec craplcr.dsorgrec%TYPE
     ,dtinictr DATE
     ,dsratpro VARCHAR2(30)
-    ,dsratatu VARCHAR2(30));
+    ,dsratatu VARCHAR2(30)
+	,vliofcpl crapepr.vliofcpl%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -806,7 +808,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_tpemprst  IN crawepr.tpemprst%TYPE
                              ,pr_valoriof OUT craplcm.vllanmto%TYPE
                              ,pr_dscritic OUT VARCHAR2);
-
+                                                                   
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -890,6 +892,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
   --                          "Valor informado para pagamento maior que valor da parcela" informar
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
+  --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
+  --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -4499,6 +4503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
 
+                    19/10/2017 - Inclusão campo vliofcpl no XML de retorno (Diogo - MoutS - Proj. 410 - RF 41/42)
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4549,6 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vlpgjmpr
               ,cdorigem
               ,qtimpctr
+			  ,vliofcpl
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5255,6 +5261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
         
+          pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
             -- Enviar a taxa do empréstimo
@@ -5982,6 +5989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
                         '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                       '</inf>' );

@@ -40,7 +40,8 @@
  * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  * 031: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
- * 032: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
+ * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formulário (Projeto 410 - RF 23)
+ * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
  */
 ?>
 
@@ -251,6 +252,7 @@
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
 			
+			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
 			</script><?
 			
 		} else if (in_array($operacao,array('C_NOVA_PROP'))) {

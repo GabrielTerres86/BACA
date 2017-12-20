@@ -9,8 +9,7 @@ ALTERACOES     : 30/03/2012 - Incluir campo %CET (Gabriel).
                  05/09/2012 - Mudar para layout padrao (Gabriel)	 
                  04/08/2014 - Ajustes referentes ao projeto CET (Lucas R./Gielow)
                  30/06/2015 - Ajustes referentes Projeto 215 DV 3 (Daniel)
-
-
+                 20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
 */	
 
 $retorno = array();
@@ -82,9 +81,34 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="dtdpagto" id="dtdpagto" type="text" value="" />
             <br />
 
+		    <input type=hidden name = "idfiniof" id = "idfiniof">
+			<!--
+            <label for="idfiniof">Financiar IOF e Tarifa:</label>
+            <select display=none name="idfiniof" id="idfiniof" class="campo" >
+                <option value="1" selected="selected">Sim</option>
+                <option value="0">N&atilde;o</option>
+            </select> -->
+            <br />
+
             <label for="percetop"> <? echo utf8ToHtml('CET(%a.a.):') ?> </label>
             <input name="percetop" id="percetop" type="text" value="" />
+            <br />
+			<input name="vliofepr" id="vliofepr" type="hidden" value=""/>
+			<input name="vlrtarif" id="vlrtarif" type="hidden" value=""/>
+			<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
+			<!--
+            <label for="vliofepr">IOF:</label>
+            <input name="vliofepr" id="vliofepr" type="text" value=""/>
+            <br/>
 
+            <label for="vlrtarif">Tarifa:</label>
+            <input name="vlrtarif" id="vlrtarif" type="text" value=""/>
+            <br/>
+
+            <label for="vlrtotal">Valor Total:</label>
+            <input name="vlrtotal" id="vlrtotal" type="text" value=""/>
+
+			-->
         </fieldset>
     </form>
     <div id="divProcParcelasTabela" style="display:none">

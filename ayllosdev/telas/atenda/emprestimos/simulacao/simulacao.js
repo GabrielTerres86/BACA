@@ -14,6 +14,7 @@
  * 005: [21/11/2012] Arrumar listagem das prestacoes ao incluir/alterar no firefox e deixar de esconder a msg de aguarde quando sao chamadas duas procedures (Gabriel)
  * 006: [04/08/2014] Ajustes referentes ao projeto CET (Lucas R./Gielow)
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
+ * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  */
 
 //******************************
@@ -144,6 +145,11 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     var cPercetop = $('#percetop', '#frmSimulacao');
     var cCdmodali = $('#cdmodali', '#frmSimulacao');
 
+    //Diogo
+    var cValorIof = $('#vliofepr', '#frmSimulacao');
+    var cValorTarifa = $('#vlrtarif', '#frmSimulacao');
+    var cValorTotal = $('#vlrtotal', '#frmSimulacao');
+
     var cFinalidade = $('#cdfinemp', '#frmSimulacao');
     var cDescFinali = $('#dsfinemp', '#frmSimulacao');
 
@@ -162,6 +168,10 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     cDescFinali.css('width', '230px').desabilitaCampo();
     cCdmodali.css('width', '288px').desabilitaCampo();
 
+    //Diogo
+    cValorIof.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
+    cValorTarifa.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
+    cValorTotal.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
 
     if (operacao == 'C_SIMULACAO' || operacao == "E_SIMULACAO") {
         $('#divProcSimulacoesTabela').css('display', 'none');
@@ -253,7 +263,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
         });
 
         // Formata o tamanho do Formulário
-        $('#divProcSimulacoesFormulario').css({'height': '260px', 'width': '560px'});
+        $('#divProcSimulacoesFormulario').css({'height': '300px', 'width': '560px'});
 
         // Adicionando as classes
         cTodos.removeClass('campoErro').habilitaCampo();
@@ -352,6 +362,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     // Campos de uso da PORTABILIDADE
     var tpfinali = $("#tpfinali", "#divProcSimulacoesFormulario").val();
     var cdmodali = $("#cdmodali option:selected", "#divProcSimulacoesFormulario").val();
+    var idfiniof = $("#idfiniof option:selected", "#divProcSimulacoesFormulario").val();
 	
     if ( tpfinali == 2 && cdmodali == 0 ) {
         showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");        
@@ -389,6 +400,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
             nrsimula: nrsimula,
             percetop: percetop,
             cdfinemp: cdfinemp,
+            idfiniof: idfiniof,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
@@ -470,8 +482,7 @@ function carregarImpressaoSimulacao(nrsimula) {
 }
 
 function ajustaTela() {
-
-    $('#divProcSimulacoesFormulario').css({'height': '435px'});
+    $('#divProcSimulacoesFormulario').css({'height': '545px'});
     return false;
 }
 

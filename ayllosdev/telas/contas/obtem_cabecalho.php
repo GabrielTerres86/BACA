@@ -20,8 +20,9 @@
  * 011: [29/07/2015] Lucas Ranghetti (CECRED): Alterado logica rotina de procuradores para $cabecalho[6]->cdata > 1(inpessoa > 1).
  * 012: [01/09/2015] Gabriel (RKAM)       : Reformulacao Cadastral. 
  * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
- * 014: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico
- * 015: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364).
+ * 014: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364). 
+ * 015: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico 
+ * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo tpregtrb no formulário principal da contas (Projeto 410).
  */ 
 
 	session_start();	
@@ -123,6 +124,8 @@
 		echo '    strHTML += \'<label for="cdsitdct">Situa&ccedil;&atilde;o:</label>\';';
 		echo '    strHTML += \'<input name="cdsitdct" id="cdsitdct" type="text" /><br />\';';
 	
+        echo '    strHTML += \'<input name="tpregtrb" id="tpregtrb" type="hidden" />\';';
+	
 		// Coloca conteúdo HTML no div e exibe
 		echo '$("#divRotinaPJ").html(strHTML);';
 		echo '$("#divRotinaPJ").css("display","block");';
@@ -168,6 +171,7 @@
 	echo '$("#cdtipcta","#frmCabContas").val("'.$cabecalho[12]->cdata.' - '.$cabecalho[13]->cdata.'");'; //pos.12 descricao tp.conta
 	echo '$("#cdsitdct","#frmCabContas").val("'.$cabecalho[14]->cdata.' - '.$cabecalho[15]->cdata.'");'; //pos.14 descricao
     echo '$("#nrdctitg","#frmCabContas").val("'.$cabecalho[16]->cdata.'").formataDado("STRING","9.999.999-9",".-",false);';	
+	echo '$("#tpregtrb","#frmCabContas").val("'.$cabecalho[20]->cdata.'");';
 	
 	echo 'var strHTMLTTL = \'\';'; 
 	// PJ
@@ -461,6 +465,7 @@
 	echo 'cpfprocu = "'.$cabecalho[8]->cdata.'";';
 	echo 'dtdenasc = "'.$cabecalho[18]->cdata.'";';
 	echo 'cdhabmen = "'.$cabecalho[19]->cdata.'";';
+	echo 'tpregtrb = "'.$cabecalho[20]->cdata.'";';
 	
 	if ( $opbackgr == 'true' ) echo 'hideMsgAguardo();';
 		
