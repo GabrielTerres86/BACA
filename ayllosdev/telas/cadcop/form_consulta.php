@@ -583,7 +583,7 @@
 
         <br />
 
-        <label for="vlrtrfib"><?php echo utf8ToHtml("Tarifa GPS Internet Banking:"); ?></label>
+        <label for="vlrtrfib"><?php echo utf8ToHtml("Tarifa GPS Internet Banking/Mobile:"); ?></label>
         <input type="text" id="vlrtrfib" name="vlrtrfib" value="<?php echo getByTagName($cooperativa->tags,'vlrtrfib');?>" >
 
         <label for="hrinigps"><?php echo utf8ToHtml("Hor&aacute;rio Pagamento GPS:"); ?></label>
