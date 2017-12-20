@@ -101,6 +101,13 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
                             
                06/04/2017 - Forçar o índice do cursor cr_craplcm para 
                             INDEX(lcm craplcm##craplcm2) (Carlos)
+
+               24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+			                Heitor (Mouts) - Melhoria 440
+
+               19/12/2017 - Desconsiderar do valor pendente o que foi debitado no mes
+                            Demetrius (Mouts) - Chamado 813105
+							 
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -376,7 +383,7 @@ BEGIN
         vr_vlsldtot := vr_vlsldtot - TRUNC((rw_craplcm.vllanmto * vr_txcpmfcc),2);
       end if;
       --
-      if vr_inhistor in (1, 3, 4, 5) then
+      if vr_inhistor in (1) then
         -- 1  credito no vlsddisp
         -- 3  credito no vlsdbloq
         -- 4  credito no vlsdblpr
@@ -391,7 +398,7 @@ BEGIN
         end if;
       end if;
         --
-        if vr_inhistor in (11, 13, 14, 15) then
+        if vr_inhistor in (11) then
           -- 11  debito no vlsddisp
           -- 13  debito no vlsdbloq
           -- 14  debito no vlsdblpr
@@ -724,7 +731,7 @@ BEGIN
          set crappla.dtdpagto = vr_dtdpagto,
              crappla.indpagto = vr_indpagto,
              crappla.vlpenden = decode(vr_flgrejei,
-                                       1, crappla.vlprepla,
+                                       1, greatest(crappla.vlprepla - crappla.vlpagmes,0),
                                        0),
              crappla.flgatupl = vr_indatupl
        where crappla.rowid = rw_crappla.rowid;
