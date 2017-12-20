@@ -308,8 +308,8 @@
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
 			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)	  
-
+                             Projeto 339 - CRM. (Lombardi)
+                     
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
                              requisicao-lista-documentos. Projeto 339 - CRM. (Lombardi)
                      
@@ -1435,8 +1435,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         NEXT.
                  
                         
-                   /* Verifica os documentos de cpf e rg  se foram digitalizados*/
-                   IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
+                    /* Verifica os documentos de cpf e rg  se foram digitalizados*/
+                    IF  CAN-DO("1,2",STRING(crapdoc.tpdocmto)) THEN
                             FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
                                    tt-documento-digitalizado.cdcooper = crapdoc.cdcooper      AND
                                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta      AND
@@ -1466,10 +1466,10 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
                                            USE-INDEX tt-documento-digitalizado4
                                            NO-LOCK: END.
-                        ELSE /* Verifica se o contrato foi digitalizado */                                    
+                    ELSE /* Verifica se o contrato foi digitalizado */                                    
                                 FOR FIRST tt-documento-digitalizado FIELDS(cdcooper) WHERE
-                                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                                            tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt AND
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
                                            USE-INDEX tt-documento-digitalizado4
@@ -1499,7 +1499,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                          NO-LOCK: END.
 
                       END.
-                     
+
 
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
@@ -1575,7 +1575,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                         WHEN 12 THEN 
                                             IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
                                         WHEN 40 THEN 
-                                            IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSAS*/
+										    IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSAS*/
                                         WHEN 45 THEN
                                             ASSIGN tt-contr_ndigi_cadastro.tpdocidp = " X". /*CONTRATO ABERTURA DE CONTA PF*/
                                         WHEN 46 THEN
@@ -3311,13 +3311,13 @@ PROCEDURE efetua_batimento_ged_termos:
 					        
         IF NOT AVAIL tt-documento-digitalizado  THEN
            DO:
-            /* Verifica se a declaracao de pep foi digitalizada */
-            FIND FIRST tt-documento-digitalizado WHERE
-                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                       tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
-                           tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
-                           tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
-                           NO-LOCK NO-ERROR NO-WAIT.               
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+                       tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                       tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
+                   NO-LOCK NO-ERROR NO-WAIT.
                        
            END.
 
