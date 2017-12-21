@@ -12,12 +12,15 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 
             31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
 			
-            29/06/2016 - Ajuste na função DetEventos e DetEventos2 para trazer o PA do evento (Vanessa)
+			29/06/2016 - Ajuste na função DetEventos e DetEventos2 para trazer o PA do evento (Vanessa)
 			
-            23/06/2016 - Retirada do envio do email e inclusão dos dos campos cdoperad e 
-                         cdcopope na seleção do local RF05 - (Vanessa K.)
+			23/06/2016 - Retirada do envio do email e inclusão dos dos campos cdoperad e 
+						 cdcopope na seleção do local RF05 - (Vanessa K.)
                          
             03/02/2017 - Alterado label de coluna,Prj. 229-5 (Jean Michel)             
+            
+            04/12/2017 - Ajustado indice do campo local, para a busca pegar corretamente a agencia.
+                         (Odirlei-AMcom)
 -->
 
 <html>
@@ -186,28 +189,28 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                     </td>
                                                                     <td height="10" colspan="3" class="linkMenuAdmin"></td>
                                                                 </tr>
-                                                                <tr>																	
-																																	<td width="115" height="25" align="right" class="NomeCampo">Eixo:</td>
-																																	<td width="300" height="25">
-																																			<select style="width:380px" name="aux_cdeixtem" class="Campo" onchange="aguarde(); document.form.aux_nrseqtem.value='-1';
-																																																	 document.form.aux_cdevento_pa.value='-1';
-																																																	 document.form.aux_nrcpfcgc.value='-1';
-																																																	 document.form.aux_cdevento.value='-1';  Recarrega();;"></select>
-																																	</td>
-																																	<td width="453" colspan="5">
-																																		<table border="0">
-																																																						<tr>
-																																				<td width="400" height="25" align="right" class="NomeCampo">Tema:</td>
-																																				<td width="400" height="25">
-																																					<select style="width:380px" name="aux_nrseqtem" class="Campo" onchange="aguarde(); document.form.aux_cdevento_pa.value='-1';
-																																												 document.form.aux_nrcpfcgc.value='-1';
-																																												 document.form.aux_cdevento.value='-1'; Recarrega();
-																																													"></select>
-																																				</td>
-																																			</tr>																			
-																																		</table>
-																																	</td>
-																																	<td height="10" colspan="2" class="linkMenuAdmin"></td>
+                                                                <tr>
+                                                                    <td width="115" height="25" align="right" class="NomeCampo">Eixo:</td>
+                                                                    <td width="300" height="25">
+                                                                        <select style="width:380px" name="aux_cdeixtem" class="Campo" onchange="aguarde(); document.form.aux_nrseqtem.value='-1';
+                                                                                                     document.form.aux_cdevento_pa.value='-1';
+                                                                                                     document.form.aux_nrcpfcgc.value='-1';
+                                                                                                     document.form.aux_cdevento.value='-1';  Recarrega();;"></select>
+                                                                    </td>
+																	<td width="453" colspan="5">
+																		<table border="0">
+                                                                            <tr>
+																				<td width="400" height="25" align="right" class="NomeCampo">Tema:</td>
+																				<td width="400" height="25">
+																					<select style="width:380px" name="aux_nrseqtem" class="Campo" onchange="aguarde(); document.form.aux_cdevento_pa.value='-1';
+																												 document.form.aux_nrcpfcgc.value='-1';
+																												 document.form.aux_cdevento.value='-1'; Recarrega();
+																												  "></select>
+																				</td>
+																			</tr>																			
+																		</table>
+																	</td>
+                                                                     <td height="10" colspan="2" class="linkMenuAdmin"></td>
 
                                                                 </tr>
                                                                 <!--<div id="SelPac">  -->
@@ -225,7 +228,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 																																												 document.form.aux_cdevento.value='-1'; Recarrega();
 																																													"></select>
 																																				</td>
-																																			</tr>																			
+                                                                </tr>
 																																		</table>
 																																		</td>
                                                                 </tr>
@@ -297,7 +300,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 																																							<table width="98.5%" border="0" cellpadding="0" id="tbevento" name="tbevento" cellspacing="0" >
 																																								<thead>
 																																									<tr>
-																																											<td width="5" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                                                                                    <td width="5" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
 																																											<td id="tbevento_col1" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Evento</td>
 																																											<td id="separador1" name="separador1" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
 																																											<td id="tbevento_col2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >PA</td>
@@ -317,9 +320,9 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 																																											<td id="tbevento_col9" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Conf.</td>
 																																											<td id="separador9" name="separador9" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15">
 																																											<td id="tbevento_col10" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Status</td>
-																																									</tr>
+                                                                                </tr>
 																																								</thead>	
-																																							</table>
+                                                                            </table>
                                                                             </div>
                                                                         </div>
                                                                         <div id="divConfirma" align="left">
@@ -389,7 +392,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
     }else{
         mostraPACsEve();
 		}
-		
+
     function mostraEventos() {
 
         var row; var cell;
@@ -493,10 +496,10 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 //cell.width = document.all.tbevento_col4.width;
                 cell.height = 26;
                 cell.align = 'left';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i;//document.all.tbevento.rows.length - 1;
                 cell.title = mevento[i].enlocali;
 
-								// Assembléias não tem acesso a local
+                // Assembléias não tem acesso a local
                 if (mevento[i].tpevento != '7') {
                     // Agnaldo 25/11 - Mostrar link somente quando não tem endereço
                     if (mevento[i].dslocali == '') { 
@@ -511,7 +514,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 else
                     cell.innerHTML = mevento[i].dslocali;
 
-								// Separador
+                // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
                 cell.width = document.all.separador4.width;
@@ -920,7 +923,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 cell.align = 'left';
                 cell.title = mevento[i].enlocali;
                 cell.innerText = mevento[i].dslocali;
-								
+
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
