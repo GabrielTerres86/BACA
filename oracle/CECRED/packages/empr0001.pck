@@ -536,9 +536,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                       ,pr_flgerlog         IN BOOLEAN --Erro no Log
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
-                                      ,pr_flrgtcob         IN NUMBER DEFAULT 0 --Flag de resgate
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
+                                      ,pr_vlresgat         OUT NUMBER --Soma
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
                                       ,pr_des_reto         OUT VARCHAR --> Retorno OK / NOK
                                       ,pr_tab_msg_confirma OUT typ_tab_msg_confirma); --Tabela Confirmacao
@@ -7841,9 +7841,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                       ,pr_flgerlog         IN BOOLEAN --Erro no Log
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
-                                      ,pr_flrgtcob         IN NUMBER DEFAULT 0 --Flag de resgate
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
+                                      ,pr_vlresgat         OUT NUMBER --Soma
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
                                       ,pr_des_reto         OUT VARCHAR --> Retorno OK / NOK
                                       ,pr_tab_msg_confirma OUT typ_tab_msg_confirma) IS --Tabela Confirmacao
@@ -8076,14 +8076,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                ,pr_cdprogra => pr_nmdatela
                                                ,pr_qtdiaatr => vr_qtdiaatr
                                                ,pr_vlresgat => vr_vlresgat
+                                               ,pr_flefetiv => 'N'
                                                ,pr_dscritic => vr_dscritic);
           -- Em caso de erro
           IF TRIM(vr_dscritic) IS NOT NULL THEN 
             --Sair do programa
             RAISE vr_exc_saida;
           ELSE 
-            -- Incrementar ao saldo o total resgatado 
-            pr_vlsomato := pr_vlsomato + vr_vlresgat; 
+            -- Incrementar ao saldo o total resgatado
+            pr_vlresgat := vr_vlresgat;
           END IF;
         END IF;
 
@@ -14196,6 +14197,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
     vr_tab_erro         GENE0001.typ_tab_erro;
     vr_tab_msg_confirma EMPR0001.typ_tab_msg_confirma;
+    
+    vr_vlresgat  NUMBER;
 
     --Selecionar Detalhes Emprestimo
     CURSOR cr_crawepr (pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -14245,6 +14248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         pr_vlapagar    => pr_vlapagar,
                                         pr_tab_crawepr => vr_tab_crawepr,
                                         pr_vlsomato    => pr_vlsomato,
+                                        pr_vlresgat    => vr_vlresgat,
                                         pr_tab_erro    => vr_tab_erro,
                                         pr_des_reto    => pr_des_reto,
                                         pr_tab_msg_confirma => vr_tab_msg_confirma);

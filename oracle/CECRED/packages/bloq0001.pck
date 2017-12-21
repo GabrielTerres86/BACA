@@ -152,6 +152,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLOQ0001 AS
                                         ,pr_cdprogra     IN VARCHAR2
                                         ,pr_qtdiaatr     IN NUMBER
                                         ,pr_vlresgat IN OUT NUMBER
+                                        ,pr_flefetiv     IN VARCHAR2 DEFAULT 'S'
                                         ,pr_dscritic    OUT VARCHAR2);
 
   PROCEDURE pc_remove_cobertura_sem_vinc;
@@ -3018,6 +3019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                         ,pr_cdprogra     IN VARCHAR2
                                         ,pr_qtdiaatr     IN NUMBER
                                         ,pr_vlresgat IN OUT NUMBER
+                                        ,pr_flefetiv     IN VARCHAR2 DEFAULT 'S'
                                         ,pr_dscritic    OUT VARCHAR2) IS
   /*.............................................................................
 
@@ -3029,7 +3031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
     Dados referentes ao programa:
 
-    Objetivo  : Receber ID de um bloqueio, valor necessário para cobrir, e devolver o valor resgatado, caso possível.
+    Objetivo  : Receber ID de um bloqueio, valor necessário para cobrir, e devolver o valor resgatado, caso possivel.
 
     Alteracoes: 
 
@@ -3200,6 +3202,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           -- Se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_erro;
+          END IF;
+
+          -- Se NAO for para efetivar resgate
+          IF pr_flefetiv = 'N' THEN
+            -- Devolver o valor simulado de resgate
+            pr_vlresgat := vr_vlcobert;
+            RETURN;
           END IF;
 
           -- Converter a lista de resgates retornadas pela rotina para pltable */ 
