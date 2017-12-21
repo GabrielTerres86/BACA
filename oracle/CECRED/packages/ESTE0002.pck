@@ -907,7 +907,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 19/10/2017
+        Data     : Maio/2017.                    Ultima atualizacao: 21/12/2017
       
         Dados referentes ao programa:
       
@@ -918,6 +918,9 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
                                  Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
           
+                    21/12/2017 - Ajustar tratamento de erro, para que a mensagem seja exibida em tela
+                               - Ajustar passagem de parametro cdcritic e dscritic 
+                               (Douglas - Chamado 819146)
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -3023,8 +3026,8 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
                                      ,pr_vldctitu           => rw_craplim_tit.vllimite /* Valor Limite Titulos */
                                      ,pr_vlutitit           => rw_craptdb.vltitulo /* Valor utilizado Titulos */
                                      ,pr_tab_co_responsavel => vr_tab_co_responsavel
-                                     ,pr_dscritic           => vr_cdcritic
-                                     ,pr_cdcritic           => vr_dscritic);
+                                     ,pr_dscritic           => vr_dscritic
+                                     ,pr_cdcritic           => vr_cdcritic);
     
       -- Testar possíveis erros no retorno prevendo já o formato convertido… 
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -3555,10 +3558,28 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+      
       WHEN OTHERS THEN
+        IF SQLCODE < 0 THEN
+          -- Caso ocorra exception gerar o código do erro com a linha do erro
+          vr_dscritic:= vr_dscritic ||
+                        dbms_utility.format_error_backtrace;
+                       
+        END IF;  
+
+        -- Montar a mensagem final do erro 
+        vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (1): ' ||
+                       vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: ' ||
-                       SQLERRM;
+        pr_dscritic := vr_dscritic;
     END;
   END pc_gera_json_pessoa_ass;
 
@@ -4995,8 +5016,27 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN 
+      IF SQLCODE < 0 THEN
+        -- Caso ocorra exception gerar o código do erro com a linha do erro
+        vr_dscritic:= vr_dscritic ||
+                      dbms_utility.format_error_backtrace;
+                       
+      END IF;  
+
+      -- Montar a mensagem final do erro 
+      vr_dscritic:= 'Erro na montagem dos dados para análise automática da proposta (2): ' ||
+                     vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+      -- Remover as ASPAS que quebram o texto
+      vr_dscritic:= replace(vr_dscritic,'"', '');
+      vr_dscritic:= replace(vr_dscritic,'''','');
+      -- Remover as quebras de linha
+      vr_dscritic:= replace(vr_dscritic,chr(10),'');
+      vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: '||sqlerrm;
+      pr_dscritic := vr_dscritic;
+
   END pc_gera_json_analise;
     
   
