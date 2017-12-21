@@ -1174,11 +1174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
-        FETCH cr_pessoa INTO rw_pessoa_resp;
-        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
-        IF cr_pessoa%NOTFOUND THEN
-          CLOSE cr_pessoa;
-        END IF;
+        FETCH cr_pessoa INTO rw_pessoa_resp;        
+        CLOSE cr_pessoa;
           
       ELSE
       
@@ -1186,11 +1183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => pr_crapcrl.nrcpfcgc);
         FETCH cr_pessoa INTO rw_pessoa_resp;
-        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
-        IF cr_pessoa%NOTFOUND THEN
-          CLOSE cr_pessoa;
-        END IF;
-      
+        CLOSE cr_pessoa;
+        
       END IF;      
       
       --> se localizou pessoa, deve excluir registro
