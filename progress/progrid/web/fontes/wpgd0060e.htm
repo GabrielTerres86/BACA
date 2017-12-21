@@ -1,0 +1,284 @@
+<!--
+	Alterações:
+-->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="wsoptions" content="no-output">
+		<title>Recursos (wpgd0060e)</title>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+	</head>
+	<body bgcolor="#FFFFFF">
+		<form action="#." method="POST" name="form">
+		<input type="hidden" name="aux_cddopcao" value="">
+		<input type="hidden" name="aux_lspermis" value="">
+		<input type="hidden" name="aux_nrdrowid" value="">
+		<input type="hidden" name="aux_dsretorn" value="">
+		<input type="hidden" name="aux_stdopcao" value="">
+		<input type="hidden" name="aux_dsendurl" value="">
+		<input type="hidden" name="aux_idevento" value="">
+		<input type="hidden" name="aux_lslocali" value="">
+		<input type="hidden" name="aux_cdcooper" value="">
+		<input type="hidden" name="aux_cdagenci" value="">
+		<input type="hidden" name="aux_cdevento" value="">
+		<input type="hidden" name="aux_dtanoage" value="">
+		<input type="hidden" name="aux_nrseqeve" value="">
+		<input type="hidden" name="aux_nrsdirec" value="">
+		<input type="hidden" name="aux_cdoperad" value="">
+		<input type="hidden" name="aux_cdcopope" value="">
+				
+		<table width="99%" height="96%"  border="0" align="center" cellpadding="0" cellspacing="0">
+			<tr valign="botton">
+				<td height="20">
+					<table width="100%" border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td width="25%" >
+								<table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+									<tr>
+										<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+										<td align="center" nowrap width="150" class="linkGuia">Recursos</td>
+										<td align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+									</tr>
+								</table>
+							</td>
+							<td  width="75%"  align="right" class="txtTituloHid" style="text-align:right;">                                                
+								<div id="adicionar" style="text-align:right; width:100%;"> <a href="#." onclick="AdRecurso(0);">Adicionar</a></div>
+							</td>
+						</tr>
+					</table>
+				</td>	   
+			</tr>
+			<tr>
+				<td>
+				  <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td height="27"><table width="100%"  border="0" cellpadding="0" cellspacing="0">
+								<tr>
+									<td height="1"><img src="/cecred/images/geral/spacer.gif" width="21" height="1"></td>
+								</tr>
+								<tr>
+									<td height="27" align="left">
+										<table border="0" style="height:290px; width:100%;">
+											<tr>
+												<td>
+													<table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+														<tr>
+															<td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+															<td id="tbrecurso_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Recurso</td>
+															<td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td id="tbrecurso_col2" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
+															<td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+															<td id="tbrecurso_col3" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
+														</tr>
+													</table>
+													<div style="overflow: auto; height:240px;">
+														<table id="tbrecurso" width="100%" border="0" cellpadding="0" cellspacing="0" class="">
+																<!-- Linhas removidas, para não aparecer nada em branco. -->
+														</table>
+													</div>
+												</td>
+											</tr>
+                      
+                      <tr>
+                        <td style="text-align: center;">
+                          <img style="cursor:hand;" src="/cecred/images/botoes/btn_fechar.gif" width="60" height="20" onClick="window.opener.Recarrega(); self.close();">
+                        </td>
+                      </tr>
+                      
+										</table>
+									</td>
+								</tr>
+							</table>
+							</td>              
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>		
+	</body>
+
+	<script LANGUAGE="JAVASCRIPT">
+		NomeDoProgramaPrincipal  = '/wpgd0060e.w';
+		NomeDoProgramaDeListagem = '/wpgd0060es.w';
+		NomeDoProgramaDeAjuda    = '/wpgd0060eaj.w';
+		NomeDoProgramaDeZoom     = '/zoom/zwpgd0060e.w';
+
+		NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+		document.form.action = NomeDoProgramaPrincipal;
+
+		function Salvar(){
+			 //ZeraModoExclusao();
+			 var vaux = document.form.aux_lspermis.value; 
+			 if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')){ 
+					document.form.aux_cddopcao.value='sa'; 
+					document.form.aux_stdopcao.value='al';
+					status = 'Salvando. Por favor, aguarde ...';			
+					armazenaLocal();
+					document.form.submit();
+					return true;
+			 }else { 
+						 alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+						 return false;
+			 }
+		}
+	
+		function AdRecurso(nrsdirec) {
+			document.form.aux_nrsdirec.value = nrsdirec;
+			document.form.aux_cddopcao.value = 'sa';
+      
+		  if(nrsdirec != 0){
+			document.form.aux_stdopcao.value = 'al';        
+				}else{
+			document.form.aux_stdopcao.value = 'i';
+		  }
+      
+			VarURL = document.form.aux_dsendurl.value + '/wpgd0060f.htm' + '?aux_idevento=' + document.form.aux_idevento.value
+																							+ '&aux_cdcopope=' + document.form.aux_cdcopope.value 
+																							+ '&cdcooper=' 		 + document.form.aux_cdcooper.value
+																							+ '&aux_cdcooper=' + document.form.aux_cdcooper.value
+																							+ '&aux_cdagenci=' + document.form.aux_cdagenci.value
+																							+ '&aux_cdoperad=' + document.form.aux_cdoperad.value
+																							+ '&aux_cdevento=' + document.form.aux_cdevento.value
+																							+ '&aux_nrsdirec=' + document.form.aux_nrsdirec.value
+																							+ '&aux_stdopcao=' + document.form.aux_stdopcao.value
+																							+ '&aux_cddopcao=' + document.form.aux_cddopcao.value
+																							+ '&aux_dtanoage=' + document.form.aux_dtanoage.value
+																							+ '&aux_nrseqeve=' + document.form.aux_nrseqeve.value
+																							+ '&aux_origem=agenda';
+																		
+			window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=550,height=180,top=10,left=10');
+			
+		}
+				
+		function mostraRecurso(){
+
+			var row; 
+			var cell;
+			var cor = '#F7F7F7';
+
+			// limpa a tabela de Local, menos a 1ª linha - linha do cabecalho
+			for (var i=document.all.tbrecurso.rows.length; i>2; i--){
+				document.all.tbrecurso.deleteRow(i-1);
+			}
+			
+			if(mrecurso.length > 0){
+				for(i=0;i<mrecurso.length;i++){
+					row = tbrecurso.insertRow();
+					row.id=i;
+
+					if (cor == '#FFFFFF'){
+						cor = '#F7F7F7';
+					}else{
+						cor = '#FFFFFF';
+					}
+					 
+					 row.bgColor = cor;
+					 row.style.cursor = 'hand';
+					 
+					 // Separador
+					 cell=row.insertCell();
+					 cell.className = 'txtPequeno';
+					 cell.width= document.all.separador1.width;
+					 cell.height = 30;
+					 cell.align = 'left';
+					 cell.innerText='';
+					 
+					 // Recurso
+					 cell=row.insertCell();      
+					 cell.className = 'txtPequeno';
+					 cell.align = 'left';
+					 linky=mrecurso[i].dsrecurs;1
+					 cell.width= document.all.tbrecurso_col1.width;
+					 cell.height = 30;
+					 cell.innerHTML=linky;
+
+					 // Separador
+					 cell=row.insertCell();
+					 cell.className = 'txtPequeno';
+					 cell.width= document.all.separador1.width;
+					 cell.height = 30;
+					 cell.align = 'left';
+					 cell.innerText='';
+
+					 // Alterar
+					 cell=row.insertCell();      
+					 cell.className = 'txtPequeno';
+					 cell.align = 'center';
+					 cell.width= document.all.tbrecurso_col2.width;
+					 cell.height = 30;
+					 linky = '<a href="#" onClick="AdRecurso(' + mrecurso[i].nrsdirec + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" border="0" title="Alterar"></a>';
+					 cell.innerHTML = linky;
+					 
+					 // Separador
+					 cell=row.insertCell();
+					 cell.className = 'txtPequeno';
+					 cell.width= document.all.separador1.width;
+					 cell.height = 30;
+					 cell.align = 'left';
+					 cell.innerText='';
+
+					 // Excluir
+					 cell=row.insertCell();      
+					 cell.className = 'txtPequeno';
+					 cell.align = 'center';
+					 cell.width= document.all.tbrecurso_col3.width;
+					 cell.height = 30;
+					 linky = '<a href="#" onClick="ExRecurso(' + mrecurso[i].nrsdirec + ');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+					 cell.innerHTML = linky;
+				}
+			}else{
+				cor = '#FFFFFF';
+				//Sem recurso cadastrado
+				row = tbrecurso.insertRow();
+				row.bgColor = cor;
+				row.style.cursor = 'hand';
+				
+				cell=row.insertCell();      
+				cell.className = 'txtTituloHid';
+				cell.align = 'center';
+				cell.colspan = 5;
+				cell.height = 30;
+				linky = 'Sem Recurso Cadastrado';
+				cell.innerHTML = linky;
+			}
+		}
+
+		function armazenaLocal(){
+			var i;
+			// se for mais de um registro de local
+			if (mlocal.length > 1){
+				 for(i=0;i<document.form.aux_nrlocali.length;i++)
+					 if(document.form.aux_nrlocali[i].checked)
+					 {
+							document.form.aux_lslocali.value = document.form.aux_nrlocali[i].value;
+					 } 
+				 }
+			// se for somente um registro de local
+			else{
+				 if(document.form.aux_nrlocali.checked)
+					document.form.aux_lslocali.value = document.form.aux_nrlocali.value;
+			}
+
+			if (document.form.aux_lslocali.value == '') {
+				 document.form.aux_lslocali.value = '0,';
+			}
+
+		}
+
+		function Recarrega(){ 
+			history.go(0);				
+		}
+		
+		function ExRecurso(nrsdirec){
+      if(confirm("Confirma a exclusao do Recurso?")){
+        document.form.aux_nrsdirec.value = nrsdirec;
+        document.form.aux_stdopcao.value = 'ex';
+        document.form.aux_cddopcao.value = 'ex';
+        document.form.submit();
+      }
+		}
+		
+		mostraRecurso();
+
+	</script>
+</html>
