@@ -1226,12 +1226,6 @@ function buscaNomePessoa(){
 
     hideMsgAguardo();
 
-    if (nrcpfemp == ""){
-        $('#nmextemp').val("");
-        return false;
-    }
-    
-    
     var mensagem = '';
 
     mensagem = 'Aguarde, buscando nome da pessoa ...';
@@ -1241,6 +1235,13 @@ function buscaNomePessoa(){
     var nrcpfemp = $('#nrcpfemp').val();
 
     nrcpfemp = normalizaNumero(nrcpfemp);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrcpfemp == "" || nrcpfemp == "0" ){        
+        hideMsgAguardo();
+        return false;
+    }
+    
 
     // Carrega conteúdo da opção através de ajax
     $.ajax({

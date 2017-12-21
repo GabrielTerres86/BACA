@@ -48,7 +48,7 @@
 	$nmpessoa = getByTagName($result,'nmpessoa');
 	$idaltera = getByTagName($result,'idaltera');
     
-    $nmpessoa = substr($nmpessoa,1,40);
+    $nmpessoa = substr($nmpessoa,0,40);
 	
 	if($idaltera == 1){
 		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda');";
