@@ -4440,7 +4440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 06/10/2017
+       Data    : Abril/2013.                         Ultima atualizacao: 21/12/2017
     
        Dados referentes ao programa:
     
@@ -4499,6 +4499,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo
 					             convertida (Marcos-Supero)
 
+                    21/12/2017 - Ajuste no carregamento dos dados do avalista, pois o campo possui
+                                 50 caracteres e a tabela de memória também, porém quando o valor
+                                 é adicionado na tabela de memória são concatenados três caracteres
+                                 (" - ") que acabam estourando o tamanho do campo.
+                                 (Douglas - Chamado 819534)
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -5086,7 +5091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               FOR vr_ind IN 1..2 LOOP
                 IF NOT vr_tab_avalist.exists(vr_ind) THEN
                   vr_tab_avalist(vr_ind).nrgeneri := rw_crapavt.nrcpfcgc;
-                  vr_tab_avalist(vr_ind).nmdavali := ' - ' ||rw_crapavt.nmdavali;
+                  vr_tab_avalist(vr_ind).nmdavali := rw_crapavt.nmdavali;
                   EXIT;
                 END IF;
               END LOOP;
@@ -5100,14 +5105,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               -- Na primeira interação
               IF vr_ind_avalist = 1 THEN
                 -- Utilizar o campo vr_dsdaval1
-                vr_dsdaval1 := vr_tab_avalist(vr_ind_avalist).nrgeneri || vr_tab_avalist(vr_ind_avalist)
-                               .nmdavali;
+                vr_dsdaval1 := vr_tab_avalist(vr_ind_avalist).nrgeneri || ' - ' || 
+                               vr_tab_avalist(vr_ind_avalist).nmdavali;
                 -- Preencher o campo avalistas por extenso
                 vr_dsdavali := 'Aval ' || TRIM(vr_tab_avalist(vr_ind_avalist).nrgeneri);
               ELSIF vr_ind_avalist = 2 THEN
                 -- Utilizar o campo vr_dsdaval2
-                vr_dsdaval2 := vr_tab_avalist(vr_ind_avalist).nrgeneri || vr_tab_avalist(vr_ind_avalist)
-                               .nmdavali;
+                vr_dsdaval2 := vr_tab_avalist(vr_ind_avalist).nrgeneri || ' - ' ||
+                               vr_tab_avalist(vr_ind_avalist).nmdavali;
                 -- Preencher o campo avalistas por extenso
                 vr_dsdavali := vr_dsdavali||'/Aval ' || vr_tab_avalist(vr_ind_avalist).nrgeneri;
               END IF;
@@ -5637,9 +5642,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       WHEN OTHERS THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
+        
+        
+        IF SQLCODE < 0 THEN
+          -- Caso ocorra exception gerar o código do erro com a linha do erro
+          vr_dscritic:= vr_dscritic ||
+                        dbms_utility.format_error_backtrace;
+                       
+        END IF;  
+
         -- Montar descrição de erro não tratado
         vr_dscritic := 'Erro não tratado na EMPR0001.pc_obtem_dados_empresti --> ' ||
-                       sqlerrm;
+                       vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
+      
+        
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
