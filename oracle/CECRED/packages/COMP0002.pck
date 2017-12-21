@@ -1246,18 +1246,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
     
     DECLARE
     
-      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
-      vr_dsinfor2    VARCHAR2(400);                 --> Descrição do Convenio
-      vr_dsconven    VARCHAR2(100);                 --> Descrição do Convenio
-      vr_dsinstit    VARCHAR2(100);                 --> Descrição do Banco
-      vr_dscedent    VARCHAR2(100);                 --> Descrição do Cedente      
-			vr_cdtippag    INTEGER;
-      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_protocolo gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
+      vr_dsinfor2 VARCHAR2(400);                 --> Descrição do Convenio
+      vr_dsconven VARCHAR2(100);                 --> Descrição do Convenio
+      vr_dsinstit VARCHAR2(100);                 --> Descrição do Banco
+      vr_dscedent VARCHAR2(100);                 --> Descrição do Cedente      
+      vr_nmpagado VARCHAR2(100);
+      vr_nrcpfpag VARCHAR2(100);
+      vr_nrcpfben VARCHAR2(100);
+      vr_vltitulo VARCHAR2(100);
+      vr_vlencarg VARCHAR2(100);
+      vr_vldescto VARCHAR2(100);
+      vr_dtvencto VARCHAR2(100);     
+			vr_cdtippag INTEGER;
+      vr_exc_erro EXCEPTION;       --> Controle de exceção 
+      vr_contador NUMBER;     
       vr_xml_temp VARCHAR2(32726) := '';
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_info_sac typ_reg_info_sac;
-      vr_des_erro  VARCHAR2(4000);   
+      vr_des_erro VARCHAR2(4000); 
+      vr_split    gene0002.typ_split := gene0002.typ_split();  
     
     BEGIN
     
@@ -1318,6 +1327,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           vr_dscedent := vr_protocolo(vr_ind).dscedent;
           vr_dsconven := '';          
 					vr_cdtippag := 2;
+          
+          vr_split := gene0002.fn_quebra_string(pr_string  => vr_protocolo(vr_ind).dsinform##3 
+                                               ,pr_delimit => '#');
+          
+          vr_contador := vr_split.last;
+          
+          IF vr_contador > 3 THEN
+            vr_nmpagado := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(4)), ':')),'');
+            vr_nrcpfpag := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(5)), ':')),'');
+            vr_nrcpfben := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(10)), ':')),'');
+            vr_vltitulo := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(7)), ':')),'0,00');
+            vr_vlencarg := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(8)), ':')),'0,00');
+            vr_vldescto := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(9)), ':')),'0,00');
+            vr_dtvencto := NVL(TRIM(gene0002.fn_busca_entrada(2, TRIM(vr_split(6)), ':')),'');
+          ELSE
+            vr_nmpagado := '';
+            vr_nrcpfpag := '';
+            vr_nrcpfben := '';
+            vr_vltitulo := '0,00';
+            vr_vlencarg := '0,00';
+            vr_vldescto := '0,00';
+            vr_dtvencto := '';
+          END IF;            
         END IF;
         
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -1344,6 +1376,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  '<nrcpfpre>' || vr_protocolo(vr_ind).nrcpfpre                                                                                      || '</nrcpfpre>' ||
                                  '<nmoperad>' || vr_protocolo(vr_ind).nmoperad                                                                                      || '</nmoperad>' ||
                                  '<nrcpfope>' || vr_protocolo(vr_ind).nrcpfope                                                                                      || '</nrcpfope>' ||
+                                 '<nmpagado>' || vr_nmpagado                                                                                                        || '</nmpagado>' ||
+                                 '<nrcpfpag>' || vr_nrcpfpag                                                                                                        || '</nrcpfpag>' ||
+                                 '<nrcpfben>' || vr_nrcpfben                                                                                                        || '</nrcpfben>' ||
+                                 '<vltitulo>' || vr_vltitulo                                                                                                        || '</vltitulo>' ||
+                                 '<vlencarg>' || vr_vlencarg                                                                                                        || '</vlencarg>' ||
+                                 '<vldescto>' || vr_vldescto                                                                                                        || '</vldescto>' ||
+                                 '<dtvencto>' || vr_dtvencto                                                                                                        || '</dtvencto>' ||
                                  '<infosac>'  ||
                                       '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                       '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 

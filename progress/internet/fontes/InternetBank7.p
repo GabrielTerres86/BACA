@@ -570,9 +570,7 @@ PROCEDURE proc_ir_juridica:
                                    STRING(STRING(crapass.nrcpfcgc,
                                          "99999999999999"),
                                          "xx.xxx.xxx/xxxx-xx") + 
-                                   "</nrcpfcgc><nrtelcop>" +
-                                   crapcop.nrtelvoz +
-                                   "</nrtelcop><DADOSIR>".
+                                   "</nrcpfcgc><DADOSIR>".
                      
     /* pegar descricao do codigo retencao 3426 */
     FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3426 NO-ERROR.
@@ -945,7 +943,9 @@ PROCEDURE proc_ir_juridica:
            "</vlrendim>".
 
     ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml +
-                                   "</INFOCOMP></IRJURIDICA>".
+                                   "</INFOCOMP><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop></IRJURIDICA>".
     
     RETURN "OK".
     
