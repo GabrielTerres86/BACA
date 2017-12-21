@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
@@ -45,6 +45,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de credito
 
       Alteracoes: 12/09/2017 - Ajuste nacionalidade e orgao emissor. PRJ339 - CRM (Odirlei-AMcom)
+
+                  25/10/2017 - Removida verificacao de tipo de telefone do conjuge, registros com DDD
+                               na frente ocasionam problemas devido ao parenteses.
+                               Heitor (Mouts) - Chamado 778505
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -681,6 +685,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       RETURN NULL;
   END fn_des_incadpos;
   
+  --> Rotina para remover caracteres do telefone
+  FUNCTION fn_somente_numeros_telefone(pr_nrtelefo VARCHAR2) RETURN VARCHAR2 IS
+  
+  BEGIN
+    RETURN replace(replace(replace(replace(replace(pr_nrtelefo,' ',''),'-',''),'.',''),')',''),'(','');
+  END;
+  
   --> Rotina para retornar descrição de atraso
   FUNCTION fn_des_pontualidade (pr_qtdiaatr  IN NUMBER) --> qtd dias de atraso
                                 RETURN VARCHAR2 IS 
@@ -719,6 +730,165 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       RETURN NULL;
   END fn_des_pontualidade;
   
+    /* Rotina de calculo de dias do ultimo pagamento de emprestimos em atraso*/
+  PROCEDURE pc_calc_dias_atraso(pr_cdcooper   IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                               ,pr_nrdconta   IN crapepr.nrdconta%TYPE --> Numero da conta do emprestimo
+                               ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
+                               ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data Movimento
+                               ,pr_dtmvtoan   IN crapdat.dtmvtoan%TYPE --> Data Movimento Anterior
+                               ,pr_dtmvtopr   IN crapdat.dtmvtopr%TYPE --> Data Movimento Próximo
+                               ,pr_tpemprst   IN crapepr.tpemprst%TYPE --> Tipo do Empréstimo
+                               ,pr_qtmesdec   IN crapepr.qtmesdec%TYPE --> Meses decorridos
+                               ,pr_dtdpagto   IN crapepr.dtdpagto%TYPE --> Data de pagamento
+                               ,pr_qtprecal   IN crapepr.qtprecal%TYPE --> Quantidade parcelas calculadas
+                               ,pr_flgpagto   IN crapepr.flgpagto%TYPE --> TIpo de pagamento
+                               ,pr_qtdiaatr   OUT NUMBER --> Quantidade de dias em atraso
+                               ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código de critica encontrada
+                               ,pr_des_erro   OUT VARCHAR2) IS --> Retorno de erro
+  BEGIN
+    DECLARE
+    
+      --Selecionar informacoes dos emprestimos
+      CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT crapepr.qtlcalat
+              ,crapepr.qtpcalat
+          FROM crapepr crapepr
+         WHERE crapepr.cdcooper = pr_cdcooper
+               AND crapepr.nrdconta = pr_nrdconta
+               AND crapepr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;
+    
+      --Variaveis Locais
+      vr_qtdias   INTEGER := 0;
+      vr_qtmesdec crapepr.qtmesdec%TYPE;
+      vr_qtprecal crapepr.qtprecal%TYPE;
+    
+      --Variaveis de Excecao
+      vr_exc_erro  EXCEPTION;
+      vr_exc_saida EXCEPTION;
+    
+      --Variavel para tratar mensagem erro
+      vr_des_erro VARCHAR2(4000);
+    
+    BEGIN
+      --Inicializar variavel de erro
+      pr_des_erro := NULL;
+      --Zerar variaveis de retorno
+      pr_qtdiaatr := 0;
+    
+      --Se o tipo de emprestimo for anual
+      IF pr_tpemprst = 0 THEN
+        
+        --Quantidade de meses recebe o valor passado como parametro
+        vr_qtmesdec := pr_qtmesdec;
+        
+        --Se a data de pagamento nao for nula
+        IF pr_dtdpagto IS NOT NULL THEN
+          /* Verif. final mes(dia nao util) */
+          -- Se o dia do pagamento > dia movimento para o mesmo mês e ano
+          IF to_number(to_char(pr_dtdpagto, 'DD')) >
+             to_number(to_char(pr_dtmvtolt, 'DD'))
+             AND to_char(pr_dtdpagto, 'YYYYMM') =
+             to_char(pr_dtmvtolt, 'YYYYMM') THEN
+            --Reduzir a Quantidade meses em 1
+            vr_qtmesdec := Nvl(vr_qtmesdec, 0) - 1;
+          END IF;
+        END IF;
+        --Quantidade dias recebe quantidade meses menos quantidade parcelas * 30
+        vr_qtdias := (vr_qtmesdec - pr_qtprecal) * 30;
+      
+        --Se estiver em dia
+        IF vr_qtdias < 0 THEN
+          --Levantar Exceção
+          RAISE vr_exc_saida;
+        END IF;
+      
+        --Se quantidade dias for negativa e a data de pagamento nao for nula e nao tiver pago e data pagamento maior data movimento
+        IF vr_qtdias <= 0
+           AND pr_dtdpagto IS NOT NULL
+           AND pr_flgpagto = 0
+           AND /* Conta Corrente */
+           pr_dtdpagto >= pr_dtmvtolt THEN
+          --Levantar excecao
+          RAISE vr_exc_saida;
+        END IF;
+      ELSE
+        --Buscar a quantidade de dias em atraso
+        vr_qtdias := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => pr_nrdconta
+                                                      ,pr_nrctremp => pr_nrctremp
+                                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                                      ,pr_dtmvtoan => pr_dtmvtoan);
+        --Se a quantidade de dias for inferior ou igual a zero
+        IF vr_qtdias <= 0 THEN
+          --Levantar Excecao
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+    
+      --Zerar Variaveis para chamada calculo
+      vr_qtprecal := 0;
+    
+      --Se o mes da data de movimento for igual do mes da proxima data de movimento
+      IF to_char(pr_dtmvtolt, 'MM') = to_char(pr_dtmvtopr, 'MM') THEN
+        --Se o tipo de emprestimo for anual
+        IF pr_tpemprst = 0 THEN
+          --Quantidade de parcelas calculada recebe qdade. lancamentos atualizados
+          vr_qtprecal := nvl(rw_crapepr.qtlcalat, 0);
+        ELSE
+          --Quantidade de parcelas calculada recebe qdade. prestacoes calculadas
+          vr_qtprecal := nvl(rw_crapepr.qtpcalat, 0);
+        END IF;
+      END IF;
+    
+      -- Se o tipo de emprestimo for TR
+      IF pr_tpemprst = 0 THEN
+        --Incrementar no parametro de retorno a quantidade de parcelas calculada
+        vr_qtprecal := pr_qtprecal + Nvl(vr_qtprecal, 0);
+        --Quantidade de dias recebe a quantidade de meses menos parcelas calculadas * 30
+        vr_qtdias := (vr_qtmesdec - Nvl(vr_qtprecal, 0)) * 30;
+      
+        --Se a quantidade de dias for menor zero
+        IF vr_qtdias < 0 THEN
+          --Levantar Excecao
+          RAISE vr_exc_saida;
+        END IF;
+        --Se quantidade dias for negativa e a data de pagamento nao for nula e nao tiver pago e data pagamento maior data movimento
+        IF vr_qtdias <= 0
+           AND pr_dtdpagto IS NOT NULL
+           AND pr_flgpagto = 0
+           AND /* Conta Corrente */
+           pr_dtdpagto >= pr_dtmvtolt THEN
+          --Levantar excecao
+          RAISE vr_exc_saida;
+        END IF;
+        --Se quantidade dias for negativa e nao tiver pago
+        IF vr_qtdias <= 0 AND pr_flgpagto = 0 THEN
+          /* Conta Corrente */
+          --Quantidade de dias recebe dias entre a data movimento e data de pagamento do emprestimo
+          vr_qtdias := pr_dtmvtolt - pr_dtdpagto;
+        END IF;
+      END IF;
+    
+      --Retornar dias em atraso
+      pr_qtdiaatr := vr_qtdias;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := nvl(pr_cdcritic, 0);
+        pr_des_erro := vr_des_erro;
+      WHEN vr_exc_saida THEN
+        --Retornar dias em atraso
+        pr_qtdiaatr := vr_qtdias;
+      WHEN OTHERS THEN
+        pr_cdcritic := nvl(pr_cdcritic, 0);
+        pr_des_erro := 'Erro na rotina EMPR0001.pc_calc_dias_atraso. ' ||
+                       sqlerrm;
+    END;
+  END;
+  
   PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
@@ -737,7 +907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 28/09/2017
+        Data     : Maio/2017.                    Ultima atualizacao: 19/10/2017
       
         Dados referentes ao programa:
       
@@ -745,7 +915,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
                     e das operações da conta parametrizada.
       
-        Alteração : 28/09/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+        Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
+                                 Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
           
     ..........................................................................*/
     DECLARE
@@ -830,6 +1001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_dtiniest DATE;
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
+      vr_maior_nratrmai NUMBER(25,10);
       
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
@@ -1712,10 +1884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         END IF;
       
         vr_obj_generic2.put('ddd', rw_craptfc.nrdddtfc);
-        vr_obj_generic2.put('numero'
-                           ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', ''),'(',''),')','')
-                                   ,'.'
-                                   ,''));
+        vr_obj_generic2.put('numero',fn_somente_numeros_telefone(rw_craptfc.nrtelefo));
         -- Adicionar telefone na lista
         vr_lst_generic2.append(vr_obj_generic2.to_json_value());
       END LOOP;
@@ -2976,6 +3145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_qtpclpag := 0;
       vr_tot_qtpclatr := 0;
       vr_tot_qtpclpag := 0;
+      vr_maior_nratrmai := 0;
     
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
@@ -2983,15 +3153,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Para aqueles com saldo devedor
         IF vr_tab_dados_epr(vr_idxempr).vlsdeved > 0 THEN
           -- Chamar calculo de dias em atraso
-          empr0001.pc_calc_dias_atraso(pr_cdcooper   => pr_cdcooper
-                                      ,pr_cdprogra   => 'ATENDA'
+          pc_calc_dias_atraso(pr_cdcooper => pr_cdcooper  
                                       ,pr_nrdconta   => pr_nrdconta
-                                      ,pr_nrctremp   => vr_tab_dados_epr(vr_idxempr)
-                                                        .nrctremp
-                                      ,pr_rw_crapdat => rw_crapdat
-                                      ,pr_inusatab   => TRUE
-                                      ,pr_vlsdeved   => vr_vlsdeved
-                                      ,pr_qtprecal   => vr_qtprecal
+                             ,pr_nrctremp => vr_tab_dados_epr(vr_idxempr).nrctremp  
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             ,pr_dtmvtoan => rw_crapdat.dtmvtoan
+                             ,pr_dtmvtopr => rw_crapdat.dtmvtopr
+                             ,pr_tpemprst => vr_tab_dados_epr(vr_idxempr).tpemprst   
+                             ,pr_qtmesdec => vr_tab_dados_epr(vr_idxempr).qtmesdec   
+                             ,pr_dtdpagto => vr_tab_dados_epr(vr_idxempr).dtdpagto   
+                             ,pr_qtprecal => vr_tab_dados_epr(vr_idxempr).qtprecal   
+                             ,pr_flgpagto => vr_tab_dados_epr(vr_idxempr).flgpagto   
                                       ,pr_qtdiaatr   => vr_dias
                                       ,pr_cdcritic   => vr_cdcritic
                                       ,pr_des_erro   => vr_dscritic);
@@ -3003,6 +3175,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         
           -- Se há atraso
           IF vr_dias > 0 THEN
+            
+            IF vr_dias > vr_maior_nratrmai THEN
+              vr_maior_nratrmai := vr_dias;
+            END IF;
             -- Acumular saldo em atraso
             vr_vltotatr := vr_vltotatr + vr_tab_dados_epr(vr_idxempr).vlpreapg
                                        + vr_tab_dados_epr(vr_idxempr).vlmrapar
@@ -3014,8 +3190,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         END IF;
       
         -- Calculo de Parcelas conforme tipo de empréstimo 
-        IF vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2) THEN
-          -- Para PP ou POS, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
+        IF vr_tab_dados_epr(vr_idxempr).tpemprst = 1 THEN
+          -- Para PP, buscaremos no cadastro de parcelas a quantidade de parcelas pagas em atraso
           OPEN cr_crappep_atraso(rw_crapdat.dtmvtolt
 					                      ,vr_tab_dados_epr(vr_idxempr).nrctremp
 																,vr_qthisemp);
@@ -3079,10 +3255,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Enviar informações do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest'
                          ,este0001.fn_decimal_ibra(vr_vltotatr));
-      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_nratrmai);
+      vr_obj_generic2.put('quantDiasMaiorAtrasoEmprest', vr_nratrmai);
+      
       vr_obj_generic2.put('quantParcelPagas', vr_tot_qtpclpag);
       vr_obj_generic2.put('quantParcelPagasAtraso', vr_tot_qtpclatr);
       vr_obj_generic2.put('quantParcelAtraso', vr_qtpclven);
+      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_maior_nratrmai);
 			 
       -- Data de Vigência Procuração
       IF pr_dtvigpro IS NOT NULL THEN 
@@ -3499,7 +3677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_obj_generic2.put('tipo', 'MOVEL');
       END IF;*/
-      vr_obj_generic2.put('numero', replace(replace(replace(pr_rw_crapavt.nrfonres,' ',''),'-',''),'.','')); 
+      vr_obj_generic2.put('numero', fn_somente_numeros_telefone(pr_rw_crapavt.nrfonres)); 
       -- Adicionar telefone na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
       -- Adicionar o array telefone no objeto
@@ -3624,14 +3802,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 28/09/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 19/10/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteração : 28/09/2017 - Exibir o tipo de emprestimo Pos-Fixado. (Jaison/James - PRJ298)
+      Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -3681,11 +3859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,lcr.cdlcremp
             ,lcr.dslcremp
             ,wpr.tpemprst
-            ,CASE wpr.tpemprst
-               WHEN 0 THEN 'TR'
-               WHEN 1 THEN 'PP'
-               WHEN 2 THEN 'POS'
-             END tpproduto
+            ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
             ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
@@ -3912,6 +4086,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 				 AND prp.tpctrato = 90;
 		rw_crapprp cr_crapprp%ROWTYPE;
    
+    CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%TYPE
+                      ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                      ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+      SELECT nvl(vlpreemp,0)
+        FROM crapepr
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctremp = pr_nrctremp;
+
+  
     --Tipo de registro do tipo data
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
      
@@ -3950,6 +4134,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+    vr_tab_split     gene0002.typ_split;
+    vr_dsliquid      VARCHAR2(1000);
+    vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
+    vr_vlpreemp      crapepr.vlpreemp%TYPE;
       
   BEGIN
   
@@ -4149,6 +4337,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;  
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
+    
+    IF rw_crawepr.dsliquid <> '0,0,0,0,0,0,0,0,0,0' THEN
+      vr_tab_split := gene0002.fn_quebra_string(rw_crawepr.dsliquid, ',');
+      
+      vr_dsliquid := vr_tab_split.FIRST;
+          
+      vr_sum_vlpreemp := 0;
+      
+      WHILE vr_dsliquid IS NOT NULL LOOP
+        
+        IF vr_tab_split(vr_dsliquid) <> '0' THEN
+          
+          OPEN cr_crapepr (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctremp => vr_tab_split(vr_dsliquid));
+          FETCH cr_crapepr INTO vr_vlpreemp;
+          CLOSE cr_crapepr;
+          vr_sum_vlpreemp := vr_sum_vlpreemp + vr_vlpreemp;
+          
+        END IF;
+        vr_dsliquid := vr_tab_split.NEXT(vr_dsliquid);    
+      END LOOP;
+    END IF;
+    
+    vr_obj_generico.put('valorPrestLiquidacao', ESTE0001.fn_decimal_ibra(vr_sum_vlpreemp));
+    
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
     pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
@@ -4238,13 +4452,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             -- Criar objeto só para este telefone
             vr_obj_generico := json();
             vr_obj_generico.put('especie', 'COMERCIAL');
+            /*
             IF SUBSTR(rw_crapcje.nrfonemp,1,1) < 8 THEN 
               vr_obj_generico.put('tipo', 'FIXO');
             ELSE
               vr_obj_generico.put('tipo', 'MOVEL');
             END IF;
+			*/
             
-            vr_obj_generico.put('numero', replace(replace(REPLACE(rw_crapcje.nrfonemp,' ',''),'-',''),'.',''));
+            vr_obj_generico.put('numero', fn_somente_numeros_telefone(rw_crapcje.nrfonemp));
             -- Adicionar telefone na lista
             vr_lst_generic2.append(vr_obj_generico.to_json_value());
             -- Adicionar o array telefone no objeto Conjuge
