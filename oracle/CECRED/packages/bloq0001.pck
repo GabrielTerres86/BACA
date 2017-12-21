@@ -3220,7 +3220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                   WHEN 2 THEN vr_aux_dtmvtolt := TO_DATE(vr_resgate_dados(ind_dados),'dd/mm/RRRR');
                   WHEN 3 THEN vr_aux_dshistor := vr_resgate_dados(ind_dados);
                   WHEN 4 THEN vr_aux_nrdocmto := vr_resgate_dados(ind_dados);
-                  WHEN 5 THEN vr_aux_dtvencto := vr_resgate_dados(ind_dados);
+                  WHEN 5 THEN vr_aux_dtvencto := TO_DATE(vr_resgate_dados(ind_dados),'dd/mm/RRRR');
                   WHEN 6 THEN vr_aux_sldresga := vr_resgate_dados(ind_dados);
                   WHEN 7 THEN vr_aux_vllanmto := vr_resgate_dados(ind_dados);
                   WHEN 8 THEN vr_aux_tpresgat := vr_resgate_dados(ind_dados);

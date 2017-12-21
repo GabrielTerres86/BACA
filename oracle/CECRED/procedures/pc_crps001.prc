@@ -1014,6 +1014,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              rw_craplim.dtinivig:= vr_tab_craplim(rw_crapsld.nrdconta).dtinivig;
              --Valor do limite recebe valor do cursor
              rw_craplim.vllimite:= vr_tab_craplim(rw_crapsld.nrdconta).vllimite;
+             --Valor do idcobope recebe valor do cursor
+             rw_craplim.idcobope := vr_tab_craplim(rw_crapsld.nrdconta).idcobope;
              --Atribuir verdadeiro para flag existe craplim
              vr_flglimite:= TRUE;
            ELSE
