@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 13/09/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 21/12/2017
 
   Dados referentes ao programa:
 
@@ -154,6 +154,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               13/09/2017 - Atribuir ao nome resumido o nome completo limitando em 20
                            caracteres. (Jaison/Aline - #744121)
 
+              21/12/2017 - Tratamento para verificar o ultimo dia util do ano,
+                           caso for o ultimo vamos pegar o proximo dia util 
+                           (Lucas Ranghetti #809954)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -240,6 +243,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_texto_email VARCHAR2(4000);
   vr_emaildst VARCHAR2(1000);
   vr_nrdocmto_int craplau.nrdocmto%TYPE; 
+  vr_dtdialim DATE; -- ultimo dia util do ano
+  vr_dtultdia DATE; 
+  vr_dtmvtopr DATE; -- para crapndb
   
   -- Comandos no OS
   vr_typsaida varchar2(3);
@@ -389,14 +395,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
        AND nrdolote = vr_nrdolote;      
   rw_craplot cr_craplot%ROWTYPE;
   
+  
+  FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, 
+                               pr_dtrefere  IN DATE) RETURN DATE IS  BEGIN
+                               
+      --Buscar ultimo dia não util do ano
+      vr_dtultdia:= To_Date('31/12/'||To_Char(pr_dtrefere,'YYYY'),'DD/MM/YYYY');
+      
+      vr_dtultdia:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                               ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
+                                               ,pr_tipo     => 'A'         --> Dia Anterior
+                                               ,pr_feriado  => FALSE);
+
+      RETURN vr_dtultdia;
+  END fn_verifica_ult_dia;    
+  
   -- Subrotina para validação padrão dos registros das linhas CDE 
   PROCEDURE pc_valida_linha_cde(pr_cdcritic OUT NUMBER 
                                ,pr_dscritic OUT VARCHAR2) IS
   BEGIN    
     -- Inicializar retorno 
     pr_cdcritic := 0;
-    -- Separar cdrefere
+    -- Separar cdrefere    
     vr_cdrefere := trim(substr(vr_dslinharq,2,25));
+    
     -- Buscar empresa conveniadas
     vr_cdempres := ' ';
     vr_nmempres := ' ';
@@ -453,7 +475,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                               ,flgproce
                               ,dstexarq)
                        values (pr_cdcooper
-                              ,rw_crapdat.dtmvtopr
+                              ,vr_dtmvtopr
                               ,vr_nrdconta
                               ,vr_cdhistor
                               ,0
@@ -599,7 +621,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                             ,flgproce
                             ,dstexarq)
                      values (pr_cdcooper
-                            ,rw_crapdat.dtmvtopr
+                            ,vr_dtmvtopr
                             ,vr_nrdconta
                             ,vr_cdhistor
                             ,0
@@ -765,6 +787,20 @@ BEGIN
   FOR rw_crapass IN cr_crapass LOOP 
     vr_tab_crapass(rw_crapass.nrctacns) := rw_crapass;
   END LOOP;
+  
+  --Buscar ultimo dia util do ano
+  vr_dtdialim:= fn_verifica_ult_dia(pr_cdcooper, rw_crapdat.dtmvtopr);
+  
+  -- Se ultimo dia util do ano for igual a data(dtmvtopr) que vamos gravar na crapndb
+  -- entao vamos buscar a proxima data util do proximo ano, caso contrario vamos continuar
+  -- a usar a mesma data(dtmvtopr)
+  IF vr_dtdialim = rw_crapdat.dtmvtopr THEN
+    vr_dtmvtopr:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
+                                              pr_dtmvtolt => TRUNC(add_months(rw_crapdat.dtmvtopr,1),'MONTH'),
+                                              pr_tipo     => 'P');
+  ELSE
+    vr_dtmvtopr:= rw_crapdat.dtmvtopr;
+  END IF;
     
   -- Efetuar laço para processamento das linhas do arquivo 
   BEGIN 
@@ -1017,6 +1053,17 @@ BEGIN
               vr_cdcritic := 13;
               RAISE vr_exc_saida; 
           END;
+          
+          --Buscar ultimo dia util do ano
+          vr_dtdialim:= fn_verifica_ult_dia(pr_cdcooper, vr_dtrefere);
+          
+          /* somente para o ultimo dia util do ano */
+          IF vr_dtdialim = vr_dtrefere THEN
+            vr_dtrefere:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
+                                                      pr_dtmvtolt => TRUNC(add_months(vr_dtrefere,1),'MONTH'),
+                                                      pr_tipo     => 'P');
+          END IF;
+          
           -- Acionar rotina padrão de validação 
           pc_valida_linha_cde(vr_cdcritic,vr_dscritic);
           -- Sair se houve erro critico, a dscritic terá informação e temos de abortar
@@ -1027,12 +1074,15 @@ BEGIN
           IF vr_cdcritic > 0 THEN 
             CONTINUE;
           END IF;
+          
           -- Caso enviado debito anterior a 30 dias
           IF (vr_dtrefere + 30) < rw_crapdat.dtmvtolt THEN
             -- Gerar critica 13 
             vr_cdcrindb := '13';
             vr_cdcritic := 13;
           ELSE 
+          
+            
             -- Continuar conforme o tipo do movimento 
             IF SUBSTR(vr_dslinharq,158,1) = 0 THEN
             
@@ -1239,8 +1289,8 @@ BEGIN
                                         ,dttransa
                                         ,hrtransa
                                         ,nrcrcard)
-                                 VALUES(pr_cdcooper                                          -- cdcooper
-                                       ,gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtrefere) -- dtmvtopg
+                                 VALUES(pr_cdcooper                                        -- cdcooper
+                                       ,vr_dtrefere                                        -- dtmvtopg
                                        ,rw_craplot.cdagenci                                -- cdagenci
                                        ,rw_craplot.cdbccxlt                                -- cdbccxlt
                                        ,rw_craplot.cdbccxpg                                -- cdbccxpg
@@ -1285,7 +1335,7 @@ BEGIN
                                                         ,pr_nrdconta      => vr_nrdconta
                                                         ,pr_nrdocmto      => vr_cdrefere
                                                         ,pr_nmconven      => vr_dsnomsms
-                                                        ,pr_dtmvtopg      => gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtrefere)
+                                                        ,pr_dtmvtopg      => vr_dtrefere
                                                         ,pr_vllanaut      => vr_vllanmto
                                                         ,pr_vlrmaxdb      => rw_crapatr.vlrmaxdb
                                                         ,pr_cdrefere      => rw_crapatr.cdrefere
@@ -1305,7 +1355,7 @@ BEGIN
                    SET dtdebito = rw_crapdat.dtmvtolt
                       ,insitlau = 3 
                  WHERE cdcooper = pr_cdcooper       
-                   AND dtmvtopg = vr_dtrefere       
+                   AND dtmvtopg = vr_dtrefere     
                    AND nrdconta = vr_nrdconta       
                    AND (nrdocmto = vr_cdrefere
                     OR nrcrcard = vr_cdrefere)
@@ -1339,7 +1389,7 @@ BEGIN
                                   ,flgproce
                                   ,dstexarq)
                            values (pr_cdcooper
-                                  ,rw_crapdat.dtmvtopr
+                                  ,vr_dtmvtopr
                                   ,vr_nrdconta
                                   ,vr_cdhistor
                                   ,0

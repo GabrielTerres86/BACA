@@ -403,7 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 17/07/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 18/12/2017
 
    Dados referentes ao programa:
 
@@ -445,6 +445,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
                08/09/2017 - Implementação GPS para Mobile.
 				    		(P 356.2 - Ricardo Linhares)
+                
+               18/12/2017 - Buscar data anterior antes da chamada da verifica_operacao na
+                            procedure pc_gps_validar_sicredi (Lucas Ranghetti #809954)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1246,7 +1249,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           vr_nrcpfcgc := rw_crapsnh.nrcpfcgc;
         END LOOP;      
       END IF;
-      --
+      
+      -- Buscar data anterior para a validacao correta nos finais de semana 
+      -- e final de ano
+      vr_dtdebito := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
+																							   pr_dtmvtolt => vr_dtdebito, 
+																							   pr_tipo     => 'A');
       --Verificar Operacao
       INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
                                     ,pr_cdagenci => pr_cdagenci          --Agencia do Associado
@@ -1268,8 +1276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_nrcpfope => pr_nrcpfope                 --CPF operador
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
-								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
-									,pr_dstransa => vr_dstransa          --Descricao da transacao
+                                    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
+                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro
