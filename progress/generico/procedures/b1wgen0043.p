@@ -208,7 +208,7 @@
               26/06/2015 - Ajuste na procedure "obtem_emprestimo_risco" para
                            o projeto de provisao. (James)  
 
-                          03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
+			  03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
                            Ajuste nos codigos de natureza juridica para o
                            existente na receita federal (Tiago Castro - RKAM)           
                            
@@ -224,9 +224,9 @@
               21/12/2015 - Alterada data permitida pra recalculo do rating para
                            permitir na data 29/12 (Lucas Lunelli)
                            
-                          03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
-                                       assumir a nota referente ao risco A.
-                                                   Chamado 431839 (Andrey - RKAM)
+			  03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
+			               assumir a nota referente ao risco A.
+						   Chamado 431839 (Andrey - RKAM)
 
               21/03/2017 - Alterado rotina obtem_emprestimo_risco, para definir menor
                            risco como Risco E aux_innivris = 6.
@@ -241,6 +241,8 @@
                            
               25/07/2017 - Alterado para ignorar algumas validacoes para os emprestimos de
                            cessao da fatura de cartao de credito (Anderson).
+
+              11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
 .............................................................................*/
   
   
@@ -265,6 +267,8 @@ DEF VAR aux_flgefeti AS LOGI                                         NO-UNDO.
 
 /* Variavel para as procedures do rating */
 DEF VAR aux_nrseqite AS INTE                                         NO-UNDO.
+DEF VAR aux_dsvalite AS CHAR                                         NO-UNDO.
+DEF VAR aux_flghisto AS LOGI                                         NO-UNDO.
  
 DEF VAR h-b1wgen0002 AS HANDLE                                       NO-UNDO.
 DEF VAR h-b1wgen0027 AS HANDLE                                       NO-UNDO.   
@@ -331,7 +335,8 @@ PROCEDURE gera_rating:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Gerar rating do cooperado".
+           aux_dstransa = "Gerar rating do cooperado"
+		   aux_flghisto = par_flgcriar.
     
     RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT SET h-b1wgen9999.
 
@@ -1557,10 +1562,53 @@ PROCEDURE calcula-rating:
                      END. /* Fim efetivacao */
 
             END.  /* Fim Criacao */
-
+       ELSE
+         DO TRANSACTION:
+           FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR. 
+           IF NOT AVAIL tt-impressao-risco  THEN
+             DO:
+               aux_dscritic = "Risco da operacao nao encontrado.".
        LEAVE.
+             END.
 
-         
+           FIND FIRST tt-impressao-risco-tl NO-LOCK NO-ERROR. 
+           IF NOT AVAIL tt-impressao-risco-tl  THEN
+             DO:
+               aux_dscritic = "Risco do cooperado nao encontrado.".
+       LEAVE.
+             END.
+		   IF aux_flghisto THEN
+		     DO:
+			   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+				/* Efetuar a chamada a rotina Oracle */ 
+				RUN STORED-PROCEDURE pc_grava_his_crapnrc
+				 aux_handproc = PROC-HANDLE NO-ERROR 
+							 ( INPUT par_cdcooper                   /* pr_cdcooper --> Codigo da cooperativa */
+							  ,INPUT par_nrdconta                   /* pr_nrdconta --> Numero da conta */
+							  ,INPUT par_nrctrato                   /* pr_nrctrrat --> Numero do contrato */
+							  ,INPUT par_tpctrato                   /* pr_tpctrrat --> Tipo do contrato */
+							  ,INPUT tt-impressao-risco.dsdrisco    /* pr_indrisco --> Indicador de risco */
+							  ,INPUT par_dtmvtolt                   /* pr_dtmvtolt --> */
+							  ,INPUT par_cdoperad                   /* pr_cdoperad --> */
+							  ,INPUT tt-impressao-risco.vlrtotal    /* pr_nrnotrat --> */
+							  ,INPUT aux_vlutiliz                   /* pr_vlutlrat --> */
+							  ,INPUT tt-impressao-risco-tl.vlrtotal /* pr_nrnotatl --> */
+							  ,INPUT tt-impressao-risco-tl.dsdrisco /* pr_inrisctl --> */
+							  ,OUTPUT 0                             /* pr_cdcritic --> Codigo da critica).     */
+							  ,OUTPUT "" ).                         /* pr_dscritic --> Descriçao da critica    */
+				/* Fechar o procedimento para buscarmos o resultado */ 
+				CLOSE STORED-PROC pc_grava_his_crapnrc
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+				ASSIGN aux_cdcritic = pc_grava_his_crapnrc.pr_cdcritic
+										 WHEN pc_grava_his_crapnrc.pr_cdcritic <> ?
+					   aux_dscritic = pc_grava_his_crapnrc.pr_dscritic
+										 WHEN pc_grava_his_crapnrc.pr_dscritic <> ?.
+				IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+				  RETURN "NOK".
+		     END.
+         END.
+       LEAVE.
 
     END. /* Fim do DO WHILE TRUE para tratamento de criticas */
                
@@ -4094,27 +4142,27 @@ PROCEDURE obtem_emprestimo_risco:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                            NO-UNDO.
-    
+
     DEF VAR aux_dsctrliq AS CHAR                                     NO-UNDO.
     DEF VAR aux_contador AS INTE                                     NO-UNDO.
-    
+
     /* Usar contratos enviados */    
     IF TRIM(par_dsctrliq) <> "" AND UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN    
        ASSIGN aux_dsctrliq = par_dsctrliq.  
-    
+
     /* Percorre todos os contratos enviados */
-    DO aux_contador = 1 TO EXTENT(par_nrctrliq):
-       IF par_nrctrliq[aux_contador] = 0 THEN
-           NEXT.
-              
+        DO aux_contador = 1 TO EXTENT(par_nrctrliq):
+           IF par_nrctrliq[aux_contador] = 0 THEN
+              NEXT.
+
        IF aux_dsctrliq <> "" THEN
           ASSIGN aux_dsctrliq = aux_dsctrliq + ",".
-       
+    
        ASSIGN aux_dsctrliq = aux_dsctrliq + STRING(par_nrctrliq[aux_contador]).
-    END.
+        END.
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+                            
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_obtem_emprestimo_risco
      aux_handproc = PROC-HANDLE NO-ERROR 
@@ -4134,31 +4182,31 @@ PROCEDURE obtem_emprestimo_risco:
                   ,OUTPUT ""          /* pr_nivrisco --> Retorna nivel do risco  */
                   ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
                   ,OUTPUT 0 ).        /* pr_cdcritic --> Codigo da critica).     */
-    
+                                        
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_obtem_emprestimo_risco
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
+                            
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+            
 
     ASSIGN aux_cdcritic = pc_obtem_emprestimo_risco.pr_cdcritic
                              WHEN pc_obtem_emprestimo_risco.pr_cdcritic <> ?
            aux_dscritic = pc_obtem_emprestimo_risco.pr_dscritic
                              WHEN pc_obtem_emprestimo_risco.pr_dscritic <> ?.
-
+        
     IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-      DO:
+             DO:
          RUN gera_erro (INPUT par_cdcooper,
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
                         INPUT 1, /*sequencia*/
                         INPUT aux_cdcritic,
                         INPUT-OUTPUT aux_dscritic).  
-      
+
          RETURN "NOK".
-      END.    
-      
+              END.
+              
     ASSIGN par_nivrisco = pc_obtem_emprestimo_risco.pr_nivrisco
                           WHEN pc_obtem_emprestimo_risco.pr_nivrisco <> ?.
 
@@ -4675,6 +4723,7 @@ PROCEDURE calcula_rating_fisica:
                           ELSE
                                3. 
 
+    ASSIGN aux_dsvalite = STRING(round(aux_anodcoop,2)) + " anos".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4682,7 +4731,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  1,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
     
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -4729,6 +4779,7 @@ PROCEDURE calcula_rating_fisica:
                        ASSIGN aux_nrseqite = 3.
          END.
 
+    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4736,7 +4787,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  2,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -4768,6 +4820,7 @@ PROCEDURE calcula_rating_fisica:
                                         3.
          END.
     
+    ASSIGN aux_dsvalite = STRING(round(aux_anodexpe,2)) + " anos de experiencia".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4775,7 +4828,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  3,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -4814,7 +4868,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  4,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".   
@@ -4843,7 +4898,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  5,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -4851,18 +4907,18 @@ PROCEDURE calcula_rating_fisica:
     /**********************************************************************
      Item 1_6 - Tipo de residencia.
     **********************************************************************/ 
-    
+     
     IF AVAIL crapenc THEN
        DO:
-          CASE crapenc.incasprp:
-          
-              WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
-              WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
-              WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
-              WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
+    CASE crapenc.incasprp:
+    
+        WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
+        WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
+        WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
+        WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
               WHEN 0           THEN   aux_nrseqite = 4.    /*  Alugado */
 
-          END CASE. 
+    END CASE. 
        END.
     ELSE
        ASSIGN aux_nrseqite = 4. /* Alugado */
@@ -4874,7 +4930,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  6,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
     
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -4943,24 +5000,28 @@ PROCEDURE calcula_rating_fisica:
          crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
          aux_vlsalari) > 0 THEN
           DO:
-				/* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
-				ASSIGN aux_vltotpre = aux_vltotpre / 
-									  (crapttl.vlsalari + 
-									   crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
-									   crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
-									   crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
-									   aux_vlsalari)
+    /* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
+    ASSIGN aux_vltotpre = aux_vltotpre / 
+                          (crapttl.vlsalari + 
+                           crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
+                           crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
+                           crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
+                           aux_vlsalari)
            
-					   aux_nrseqite = IF   aux_vltotpre <=  0.20   THEN /* Ate 20% */
-										   1
-									  ELSE
-									  IF   aux_vltotpre <= 0.30   THEN /* Ate 30 % */
-										   2
-									  ELSE 
-										   3.  /* Mais do que 30 % */ 
+           aux_nrseqite = IF   aux_vltotpre <=  0.20   THEN /* Ate 20% */
+                               1
+                          ELSE
+                          IF   aux_vltotpre <= 0.30   THEN /* Ate 30 % */
+                               2
+                          ELSE 
+                               3.  /* Mais do que 30 % */ 
+            ASSIGN aux_dsvalite = STRING(round((aux_vltotpre * 100),2)) + "% de comprometimento".
           END.
     ELSE
+      DO:
+          ASSIGN aux_dsvalite = " ".
           ASSIGN aux_nrseqite = 3.  /* Mais do que 30 % */ 
+      END.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -4969,7 +5030,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  7,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).  
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).  
     
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5009,7 +5071,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  8,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5096,23 +5159,27 @@ PROCEDURE calcula_rating_fisica:
          crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
          aux_vlsalari) > 0 THEN
           DO:
-				/* Dividir pelo salario mais os rendimentos */
-				ASSIGN aux_vlendivi = (aux_vlendivi / 
-									   (crapttl.vlsalari    + crapttl.vldrendi[1] +
-										crapttl.vldrendi[2] + crapttl.vldrendi[3] + 
-										crapttl.vldrendi[4] + crapttl.vldrendi[5] + 
-										crapttl.vldrendi[6] + aux_vlsalari))
+    /* Dividir pelo salario mais os rendimentos */
+    ASSIGN aux_vlendivi = (aux_vlendivi / 
+                           (crapttl.vlsalari    + crapttl.vldrendi[1] +
+                            crapttl.vldrendi[2] + crapttl.vldrendi[3] + 
+                            crapttl.vldrendi[4] + crapttl.vldrendi[5] + 
+                            crapttl.vldrendi[6] + aux_vlsalari))
     
-					   aux_nrseqite = IF   aux_vlendivi <= 7   THEN
-										   1
-									  ELSE
-									  IF   aux_vlendivi <= 14   THEN
-										   2
-									  ELSE
-										   3.
+           aux_nrseqite = IF   aux_vlendivi <= 7   THEN
+                               1
+                          ELSE
+                          IF   aux_vlendivi <= 14   THEN
+                               2
+                          ELSE
+                               3.
+            ASSIGN aux_dsvalite = STRING(round(aux_vlendivi,2)) + " vezes a renda bruta".
           END.
     ELSE
+      DO:
+          ASSIGN aux_dsvalite = " ".
           ASSIGN aux_nrseqite = 3.
+      END.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5121,7 +5188,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  9,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
  
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5171,25 +5239,29 @@ PROCEDURE calcula_rating_fisica:
     IF crapcot.vldcotas > 0 OR 
 	    (aux_vlendivi = 0 AND crapcot.vldcotas = 0) THEN
        DO:
-			/* aux_vlutiliz vem do saldo utiliza. Dividir pelas cotas */
-			ASSIGN aux_vlendiv2 = (aux_vlendivi / crapcot.vldcotas)
+    /* aux_vlutiliz vem do saldo utiliza. Dividir pelas cotas */
+    ASSIGN aux_vlendiv2 = (aux_vlendivi / crapcot.vldcotas)
         
-				   /* Se sem endividamento e sem cotas considera como 1 */ 
-				   aux_nrseqite = IF  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) OR
-									  (aux_vlendiv2 <= 4)  THEN
-									   1
-								  ELSE
-								  IF   aux_vlendiv2 <= 8   THEN
-									   2
-								  ELSE
-								  IF   aux_vlendiv2 <= 12   THEN
-									   3
-								  ELSE 
-									   4.
+           /* Se sem endividamento e sem cotas considera como 1 */ 
+           aux_nrseqite = IF  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) OR
+                              (aux_vlendiv2 <= 4)  THEN
+                               1
+                          ELSE
+                          IF   aux_vlendiv2 <= 8   THEN
+                               2
+                          ELSE
+                          IF   aux_vlendiv2 <= 12   THEN
+                               3
+                          ELSE 
+                               4.
+    
+         ASSIGN aux_dsvalite = STRING(round(aux_vlendiv2,2)) + " vezes o valor de cotas".
        END.
     ELSE
-       ASSIGN aux_nrseqite = 4.
-    
+      DO:
+        ASSIGN aux_dsvalite = " ".
+        ASSIGN aux_nrseqite = 4.
+      END.
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5197,7 +5269,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  1,
                            INPUT  10,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5240,7 +5313,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  2,
                            INPUT  1,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
     
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5265,7 +5339,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  2,
                            INPUT  2,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).  
+                           INPUT  par_flgcriar,
+                           INPUT  " ").  
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5290,7 +5365,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  2,
                            INPUT  3,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).   
+                           INPUT  par_flgcriar,
+                           INPUT  " ").   
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5319,6 +5395,7 @@ PROCEDURE calcula_rating_fisica:
                           ELSE
                                3.
 
+    ASSIGN aux_dsvalite = STRING(aux_qtdiapra) + " dias de prazo da operacao".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5326,7 +5403,8 @@ PROCEDURE calcula_rating_fisica:
                            INPUT  2,
                            INPUT  4,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).  
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).  
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5452,6 +5530,7 @@ PROCEDURE calcula_rating_juridica:
                           ELSE
                                4.
 
+    ASSIGN aux_dsvalite = STRING(round(aux_nranoope,2)) + " anos de operacao".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5459,7 +5538,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  1,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5489,7 +5569,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  2,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5529,7 +5610,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  3,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5568,6 +5650,7 @@ PROCEDURE calcula_rating_juridica:
                           ELSE 
                                5.
 
+    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5575,7 +5658,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  4,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5602,7 +5686,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  5,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5660,6 +5745,7 @@ PROCEDURE calcula_rating_juridica:
                                         
          END.
 
+    ASSIGN aux_dsvalite = STRING(round(aux_qtanosoc,2)) + " anos dos socios na empresa".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5667,7 +5753,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  6,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5688,6 +5775,7 @@ PROCEDURE calcula_rating_juridica:
                           ELSE 
                                1.
 
+    ASSIGN aux_dsvalite = STRING(crapjfn.perfatcl) + "% faturamento unico cliente".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5695,7 +5783,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  7,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5786,21 +5875,25 @@ PROCEDURE calcula_rating_juridica:
 
     IF aux_vlmedfat > 0 THEN
        DO:
-          ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
+    ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
 
-                 aux_nrseqite = IF   aux_vlendivi <= 3   THEN
-                                   1
-                                ELSE
-                                IF   aux_vlendivi <= 8   THEN
-                                   2
-                                ELSE
-                                IF   aux_vlendivi <= 20  THEN
-                                   3
-                                ELSE
-                                   4. 
+           aux_nrseqite = IF   aux_vlendivi <= 3   THEN
+                               1
+                          ELSE
+                          IF   aux_vlendivi <= 8   THEN
+                               2
+                          ELSE
+                          IF   aux_vlendivi <= 20  THEN
+                               3
+                          ELSE
+                               4. 
+         ASSIGN aux_dsvalite = STRING(round(aux_vlendivi,2)) + " vezes o faturamento".
        END.
     ELSE
-       ASSIGN aux_nrseqite = 4.
+      DO:
+        ASSIGN aux_dsvalite = " ".
+        ASSIGN aux_nrseqite = 4.
+      END.
     
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5809,7 +5902,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  8,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5849,7 +5943,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  9,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5904,21 +5999,24 @@ PROCEDURE calcula_rating_juridica:
 
     IF aux_vlmedfat > 0 THEN
        DO:
-			/* Divide pelo faturamento medio */
-			ASSIGN aux_vltotpre = (aux_vltotpre / aux_vlmedfat)
+    /* Divide pelo faturamento medio */
+    ASSIGN aux_vltotpre = (aux_vltotpre / aux_vlmedfat)
             
-				   aux_nrseqite = IF   aux_vltotpre <= 0.07  THEN
-									   1
-								  ELSE
-								  IF   aux_vltotpre <= 0.1   THEN
-									   2
-								  ELSE
-									   3.
+           aux_nrseqite = IF   aux_vltotpre <= 0.07  THEN
+                               1
+                          ELSE
+                          IF   aux_vltotpre <= 0.1   THEN
+                               2
+                          ELSE
+                               3.
+
+         ASSIGN aux_dsvalite = STRING(round(aux_vltotpre * 100,2)) + "% de endividamento".
        END.
     ELSE
-       ASSIGN aux_nrseqite = 3.
-
-
+      DO:
+        ASSIGN aux_dsvalite = " ".
+        ASSIGN aux_nrseqite = 3.
+      END.
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5926,7 +6024,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  10,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -5966,7 +6065,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  3,
                            INPUT  11,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -6021,7 +6121,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  4,
                            INPUT  1,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -6047,7 +6148,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  4,
                            INPUT  2,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -6072,7 +6174,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  4,
                            INPUT  3,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  " ").
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -6105,6 +6208,7 @@ PROCEDURE calcula_rating_juridica:
                           ELSE
                                4.
 
+    ASSIGN aux_dsvalite = STRING(aux_qtdiapra) + " dias de prazo da operacao".
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -6112,7 +6216,8 @@ PROCEDURE calcula_rating_juridica:
                            INPUT  4,
                            INPUT  4,
                            INPUT  aux_nrseqite,
-                           INPUT  par_flgcriar).
+                           INPUT  par_flgcriar,
+                           INPUT  aux_dsvalite).
 
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
@@ -6162,7 +6267,8 @@ PROCEDURE calcula_singulares:
                                INPUT tt-rating-singulares.nrtopico,
                                INPUT tt-rating-singulares.nritetop,
                                INPUT tt-rating-singulares.nrseqite,
-                               INPUT par_flgcriar).
+                               INPUT par_flgcriar,
+                               INPUT " ").
 
         IF   RETURN-VALUE <> "OK"   THEN
              RETURN "NOK".
@@ -6471,7 +6577,7 @@ PROCEDURE criticas_rating_fis:
                                          INPUT aux_nrsequen,
                                          INPUT 484,
                                          INPUT-OUTPUT aux_dscritic).
-                      END.                    
+         END.
              END.
     END.
 
@@ -6568,7 +6674,7 @@ PROCEDURE criticas_rating_fis:
                                      INPUT-OUTPUT aux_dscritic).                 
                   END.             
          END.
-
+    
     IF   CAN-FIND (FIRST tt-erro) THEN
          RETURN "NOK".
 
@@ -6615,9 +6721,9 @@ PROCEDURE criticas_rating_jur:
              DO:
                  FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
                                     crawepr.nrdconta = par_nrdconta   AND
-                                    crawepr.nrctremp = par_nrctrrat   
+                                    crawepr.nrctremp = par_nrctrrat 
                                     NO-LOCK NO-ERROR.
-
+    
                  IF   NOT AVAILABLE crawepr   THEN
                       DO: 
                           FIND crapprp WHERE crapprp.cdcooper = par_cdcooper AND
@@ -6639,13 +6745,13 @@ PROCEDURE criticas_rating_jur:
                           END.
 
                       END.
-                 ELSE
+                 ELSE 
                       DO:
                           FIND craplcr WHERE 
                                craplcr.cdcooper = par_cdcooper   AND
                                craplcr.cdlcremp = crawepr.cdlcrem
                                NO-LOCK NO-ERROR.
-
+                                    
                           IF   NOT AVAILABLE craplcr   THEN
                                DO:
                                    aux_nrsequen = aux_nrsequen + 1.
@@ -6656,7 +6762,7 @@ PROCEDURE criticas_rating_jur:
                                                   INPUT aux_nrsequen,
                                                   INPUT 363,
                                                   INPUT-OUTPUT aux_dscritic).
-                               END.
+                               END.                     
 
 						  /* Condicao para caso a Finalidade for Cessao de Credito */
                           FOR FIRST crapfin FIELDS(tpfinali)
@@ -6666,27 +6772,27 @@ PROCEDURE criticas_rating_jur:
 
                           IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
                              ASSIGN aux_flgcescr = TRUE.
-                      END.
+                      END.                   
              END.
         ELSE
              DO:                       /* Descontos / Limite rotativo */   
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
                                     craplim.nrdconta = par_nrdconta   AND
                                     craplim.tpctrlim = par_tpctrrat   AND
-                                    craplim.nrctrlim = par_nrctrrat
+                                    craplim.nrctrlim = par_nrctrrat   
                                     NO-LOCK NO-ERROR.
-
+           
                  IF   NOT AVAILABLE craplim   THEN
                       DO:
                           aux_nrsequen = aux_nrsequen + 1.
-
+    
                           RUN gera_erro (INPUT par_cdcooper,
                                          INPUT par_cdagenci,
                                          INPUT par_nrdcaixa,
                                          INPUT aux_nrsequen,
-                                         INPUT 484, 
-                                         INPUT-OUTPUT aux_dscritic).                      
-                      END.      
+                                         INPUT 484,
+                                         INPUT-OUTPUT aux_dscritic).
+                      END.                    
              END.
     END.
 
@@ -6694,8 +6800,8 @@ PROCEDURE criticas_rating_jur:
     IF aux_flgcescr THEN
         DO:
           IF CAN-FIND (FIRST tt-erro) THEN
-            RETURN "NOK".
-          RETURN "OK".
+         RETURN "NOK".
+    RETURN "OK".         
         END.
 
     /* Registro da empresa */
@@ -6877,9 +6983,9 @@ PROCEDURE criticas_rating_jur:
                                      INPUT aux_nrsequen, 
                                      INPUT 830, 
                                      INPUT-OUTPUT aux_dscritic).    
-                      
-                  END.
-         END.
+
+             END.
+    END.
 
     IF   CAN-FIND (FIRST tt-erro) THEN
          RETURN "NOK".
@@ -6904,6 +7010,7 @@ PROCEDURE grava_item_rating:
     DEF  INPUT PARAM par_nritetop AS INTE                            NO-UNDO.
     DEF  INPUT PARAM par_nrseqite AS INTE                            NO-UNDO.
     DEF  INPUT PARAM par_flgcriar AS LOGI                            NO-UNDO.
+    DEF  INPUT PARAM par_dsvalite AS CHAR                            NO-UNDO.
                                 
     DEF VAR         aux_contador  AS INTE                            NO-UNDO.
 
@@ -6942,14 +7049,15 @@ PROCEDURE grava_item_rating:
                                 crapras.tpctrrat = par_tpctrato
                                 crapras.nrtopico = par_nrtopico
                                 crapras.nritetop = par_nritetop
-                                crapras.nrseqite = par_nrseqite.
+                                crapras.nrseqite = par_nrseqite
+                                crapras.dsvalite = par_dsvalite.
                          VALIDATE crapras.
 
                      END.
                 ELSE                              /* Atualizacao Rating */
                      DO:
-                         ASSIGN crapras.nrseqite = par_nrseqite.
-                         
+                         ASSIGN crapras.nrseqite = par_nrseqite
+                                crapras.dsvalite = par_dsvalite.
 
                      END.
 
@@ -6963,7 +7071,34 @@ PROCEDURE grava_item_rating:
                
          END.  /* Fim Transaction */
     ELSE     /* Temp-table soh para impressao */
+         DO TRANSACTION: 
+		   IF aux_flghisto THEN
          DO: 
+				 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+				/* Efetuar a chamada a rotina Oracle */ 
+				RUN STORED-PROCEDURE pc_grava_his_crapras
+				 aux_handproc = PROC-HANDLE NO-ERROR 
+							 ( INPUT par_cdcooper /* pr_cdcooper --> Codigo da cooperativa */
+							  ,INPUT par_nrdconta /* pr_nrdconta --> Numero da conta */
+							  ,INPUT par_nrctrato /* pr_nrctrrat --> Numero do contrato */
+							  ,INPUT par_tpctrato /* pr_tpctrrat --> Tipo do contrato */
+							  ,INPUT par_nrtopico /* pr_nrtopico --> Numero do topico */
+							  ,INPUT par_nritetop /* pr_nritetop --> Numero item topico */
+							  ,INPUT par_nrseqite /* pr_nrseqite --> Numero nota item */
+							  ,INPUT par_dsvalite /* pr_dsvalite --> Valor exato item */
+							  ,OUTPUT 0           /* pr_cdcritic --> Codigo da critica).     */
+							  ,OUTPUT "" ).       /* pr_dscritic --> Descriçao da critica    */
+				/* Fechar o procedimento para buscarmos o resultado */ 
+				CLOSE STORED-PROC pc_grava_his_crapras
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+				ASSIGN aux_cdcritic = pc_grava_his_crapras.pr_cdcritic
+										 WHEN pc_grava_his_crapras.pr_cdcritic <> ?
+					   aux_dscritic = pc_grava_his_crapras.pr_dscritic
+										 WHEN pc_grava_his_crapras.pr_dscritic <> ?.
+				IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+				  RETURN "NOK".
+			 END.
              CREATE tt-crapras.
              ASSIGN tt-crapras.nrtopico = par_nrtopico
                     tt-crapras.nritetop = par_nritetop
@@ -7245,7 +7380,7 @@ PROCEDURE nivel_comprometimento:
                                                     OUTPUT par_qtprecal,
                                                     OUTPUT TABLE tt-erro).
              DELETE PROCEDURE h-b1wgen0002.
-             
+                          
              IF   RETURN-VALUE <> "OK"   THEN
                   DO:
                       FIND FIRST tt-erro NO-LOCK NO-ERROR.
@@ -7484,6 +7619,7 @@ PROCEDURE historico_cooperado:
                            crapneg.cdobserv = 12) NO-LOCK) THEN
             ASSIGN par_nrseqite = 4.
     END.     
+    ASSIGN aux_dsvalite = STRING(aux_qtestour) + " est., " + STRING(aux_qtdiaatr) + " dias atr., " + STRING(aux_qtdiasav) + " dias ch. esp.".
     
     RETURN "OK".
 
