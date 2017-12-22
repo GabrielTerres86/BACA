@@ -7,7 +7,7 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Outubro/2003.                   Ultima atualizacao:  30/08/2017
+   Data    : Outubro/2003.                   Ultima atualizacao: 22/12/2017
    
    Dados referentes ao programa:
 
@@ -28,7 +28,7 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                              
                 21/07/2014 - Incluido lote 50001, 50002 e 50003. (James).
                 
-				11/08/2014 - Incluido lotes:
+                11/08/2014 - Incluido lotes:
                              * 8500: Credito de nova aplicacao
                              * 8501: Debito de nova aplicacao
                              * 8502: Debito de resgate de aplicacao
@@ -53,8 +53,13 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                 13/01/2016 - Incluir lotes 44000 estorno TED analise de fraude.
                              PRJ335 - Analise de fraudes (Odirlei-AMcom)
 
-				30/08/2017 - Ajuste para incluir o lote 7600
-					         (Adriano - SD 746815).
+                30/08/2017 - Ajuste para incluir o lote 7600 (Adriano - SD 746815).
+
+                18/11/2017 - Inclusao dos lotes refernte a devolucao de capital (Jonata - RKAM P364).
+                
+                22/12/2017 - Adicionar novos números de lote para restriçao de
+                             criaçao dos usuários, Prj. 402 (Jean Michel).
+                             
 ............................................................................. */
 
 IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
@@ -83,7 +88,7 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
     ({1}nrdolote > 7099   AND       /* Transf. de cheque salario p/vala */
      {1}nrdolote < 7200)  OR
      {1}nrdolote = 7200   OR        /* Baixa de saldo de c/c dos demitidos */
-	 {1}nrdolote = 7600   OR        /* Lote devolucao contra-ordem */
+	   {1}nrdolote = 7600   OR          /* Lote devolucao contra-ordem */
      {1}nrdolote = 8001   OR        /* Capital Inicial */
      {1}nrdolote = 8002   OR        /* Transferencia de capital */
      {1}nrdolote = 8003   OR        /* Correcao monetaria */
@@ -137,22 +142,26 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
      {1}nrdolote = 6651   OR        /* Debitos que nao foram efetuados no proc. not.*/
      {1}nrdolote = 6650   OR        /* Numero do lote reservado para o sistema.*/
      {1}nrdolote = 6400   OR        /* Agendamento de debito automatico */
-	 {1}nrdolote = 8500   OR        /* Crédito de nova aplicação            */
+     {1}nrdolote = 8500   OR        /* Crédito de nova aplicação            */
      {1}nrdolote = 8501   OR        /* Débito de nova aplicação             */
      {1}nrdolote = 8502   OR        /* Débito de resgate de aplicação       */
      {1}nrdolote = 8503   OR        /* Crédito de resgate de aplicação      */
      {1}nrdolote = 8504   OR        /* Débito de vencimento de aplicação    */
      {1}nrdolote = 8505   OR        /* Crédito de vencimento de aplicação   */
      {1}nrdolote = 8506   OR        /* Crédito de provisão de aplicação     */
-     {1}nrdolote = 6651   OR   /*Debitos nao efetuados no processo noturno (e efetuados pela DEBCON)*/
-     {1}nrdolote = 7050   OR   /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
-	 {1}nrdolote = 650001 OR		/* Acordos do CYBER */
-	 {1}nrdolote = 650002 OR		/* Acordos do CYBER */
-	 {1}nrdolote = 10119  OR   /* Lote devolução - Melhoria 69 */ 
-     {1}nrdolote = 44000  OR   /* Lote Estorno TED analise de fraude */    
-	 ({1}nrdolote >= 8482  AND      /* TEDS Sicredi */
-     {1}nrdolote <= 8486) THEN
-	 
-	 
+     {1}nrdolote = 6651   OR        /*Debitos nao efetuados no processo noturno (e efetuados pela DEBCON)*/
+     {1}nrdolote = 7050   OR        /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
+     {1}nrdolote = 650001 OR		    /* Acordos do CYBER */
+     {1}nrdolote = 650002 OR		    /* Acordos do CYBER */
+     {1}nrdolote = 10119  OR        /* Lote devolução - Melhoria 69 */ 
+     {1}nrdolote = 44000  OR        /* Lote Estorno TED analise de fraude */    
+    ({1}nrdolote >= 8482  AND       /* TEDS Sicredi */
+     {1}nrdolote <= 8486)  OR       /* Cash Dispenser */
+	  ({1}nrdolote >= 600038 AND      /*Devolucao de capital*/      
+     {1}nrdolote <= 600043) OR     
+     {1}nrdolote = 650005  OR     /* REPASSE CDC COMPARTILHADO */
+     {1}nrdolote = 650006  OR     /* RENOVACAO DE TARIFA CONVENIO CDC */
+     {1}nrdolote = 650007  OR     /* ADESAO DE TARIFA CONVENIO CDC */ 
+     {1}nrdolote = 650008 THEN	   /* REPASSE CDC COMPARTILHADO CECRED X COOPERATIVAS */
      glb_cdcritic = 261.
 

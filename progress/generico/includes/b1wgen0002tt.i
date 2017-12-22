@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 14/12/2017
 
    Dados referentes ao programa:
 
@@ -167,19 +167,25 @@
               17/11/2015 - Incluso novo campo dtapgoib na tt-dados-epr e
 			               cdorigem na tt-extrato_epr (Daniel) 
 
-			  22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
-			               (Projeto Esteira de Credito - Daniel/Oscar) 	
+              22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
+			                     (Projeto Esteira de Credito - Daniel/Oscar) 	
                            
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).    
                            
               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
-                           (Jaison/Marcos Martini - PRJ337)
+                           (Jaison/Marcos Martini - PRJ337)	 
+
+			  05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+
               20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
                            tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
 
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
+              
+              14/12/2017 - Inclusao de campos na tt tt-proposta-epr, campos
+                           flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -202,7 +208,8 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD flgsaldo AS LOGICAL INITIAL TRUE
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
-    FIELD cdorigem AS INTE.
+    FIELD cdorigem AS INTE
+    FIELD qtdiacal LIKE craplem.qtdiacal.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
@@ -284,7 +291,8 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
-	FIELD vliofcpl LIKE crapepr.vliofcpl.
+	FIELD vliofcpl LIKE crapepr.vliofcpl
+    FIELD idcobope AS INTE.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -361,14 +369,20 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD portabil AS CHAR
     FIELD insitapr LIKE crawepr.insitapr
     FIELD err_efet AS INTE
-	FIELD dssitest AS CHAR
+    FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
     FIELD inobriga AS CHAR
-	FIELD idfiniof AS INTE
+	FIELD idcarenc LIKE crawepr.idcarenc
+    FIELD dtcarenc LIKE crawepr.dtcarenc
+    FIELD idfiniof AS INTE
     FIELD vliofepr LIKE crapepr.vliofepr
     FIELD vlrtarif AS DECI
-    FIELD vlrtotal AS DECI.
+    FIELD vlrtotal AS DECI
+    FIELD idcobope AS INTE
+    FIELD flintcdc LIKE crapcop.flintcdc
+    FIELD inintegra_cont AS INT
+    FIELD tpfinali LIKE crapfin.tpfinali.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

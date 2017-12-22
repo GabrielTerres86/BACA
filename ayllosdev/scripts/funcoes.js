@@ -102,7 +102,10 @@
  * 086: [24/03/2017] JOnata           (RKAM)   : Ajuste devido a inclusão da include para soliticar senha do cartão magnético (M294).
  * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
  * 090: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
- * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
+ * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad. 
+ * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
+ * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
+ * 094: [15/12/2017] Jean Michel  (CECRED) : Inclusão da classe coordenadas para campo.
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -426,7 +429,7 @@ $(document).ready(function () {
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
 	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');
@@ -1397,7 +1400,7 @@ function layoutPadrao() {
     $('input.data').setMask("DATE", "", "", "");
     $('input.taxa').attr('alt', 'p2p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.monetario').attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
-    $('input.moeda').attr('alt', 'p9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+		$('input.moeda').attr('alt', 'p9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.moeda_6').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.moeda_15').attr('alt', 'p0p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
     $('input.porcento').attr('alt', 'p3x0c2a').autoNumeric().trigger('blur');
@@ -1411,7 +1414,6 @@ function layoutPadrao() {
 	$('input.alpha'			).css({'text-transform':'uppercase'});
 	$('input.alphanum'		).css({'text-transform':'uppercase'});		
 	$('input.alphanumlower'	).css({'text-transform':'lowercase'});		
-	
 	$('input.alpha'			).alpha({ichars: caracAcentuacao+caracEspeciais});
 	$('input.alphanum'		).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
 	$('input.alphanumlower'	).alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao});
@@ -1424,9 +1426,10 @@ function layoutPadrao() {
 	$('label'				).addClass("txtNormalBold");
 	$('input.codigo'		).attr('maxlength','4');	
 	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
-
+	$('input.coordenadas').attr('alt', 'n2x0c9a').css('text-align', 'right').autoNumeric().trigger('blur');
+	
 	// Alinhando os campos para direita
-	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');	
+	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual,.coordenadas').css('text-align','right');	
 	
 	/*!
 	 * ALTERAÇÃO  : 023
@@ -2323,6 +2326,11 @@ function controlaFocoEnter(frmName) {
 				
 				// Desconsiderar os que estao bloqueados
 				if (jQuery(cTodos[indice]).hasClass('campoTelaSemBorda')) {
+					continue;
+				}
+
+				//Desconsiderar os que estao com display none
+				if (jQuery(cTodos[indice]).css('display') == 'none') {					
 					continue;
 				}
 

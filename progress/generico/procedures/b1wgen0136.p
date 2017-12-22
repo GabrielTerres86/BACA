@@ -24,16 +24,11 @@
 
 *******************************************************************************/
 
-
-
-
-
-
 /* ............................................................................
 
    Programa: sistema/generico/procedures/b1wgen0136.p
    Autor   : Gabriel
-   Data    : Maio/2012                           Ultima atualizacao: 20/11/2015
+   Data    : Maio/2012                           Ultima atualizacao: 20/12/2017
 
    Dados referentes ao programa:
 
@@ -85,8 +80,8 @@
                
                20/10/2015 - Incluir os históricos de ajuste o contrato liquidado pode ser reaberto (Oscar).
                
-			   05/11/2015 - Incluso novo parametro "par_cdorigem" na procedure 
-                            "grava_liquidacao_empr" (Daniel)   
+               05/11/2015 - Incluso novo parametro "par_cdorigem" na procedure 
+                            "grava_liquidacao_empr" (Daniel)
  
 ............................................................................ */
 
@@ -312,7 +307,7 @@ PROCEDURE grava_liquidacao_empr:
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllancre = aux_vllancre + craplem.vllanmto.
            ELSE /* Debitos */
-           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040",
+           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014",
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllandeb = aux_vllandeb + craplem.vllanmto.
           

@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
-                                      ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
-                                      ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
-                                      ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                      ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
+                                             ,pr_flgresta IN PLS_INTEGER            --> Indicador para utilização de restart
+                                             ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
+                                             ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
+                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                             ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   /* ............................................................................
    Programa: PC_CRPS149 (Antigo Fontes/crps149.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -232,13 +232,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                
                21/11/2017 - Remover o lançamento da tarifa de alienação nas propostas de CDC,
                             Prj. 402 (Jean Michel)
+
+               20/12/2017 - Criar lançamento de valor de repasse para o Lojista de forma automática,
+                            criar fluxo contábil para os lançamentos de empréstimos e conta corrente,
+                            Prj. 402 (Jean Michel).
+               
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
   -- Busca dos dados da cooperativa
-  CURSOR cr_crapcop IS
+  CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT cop.nmrescop
           ,cop.nmextcop
+          ,cop.nrctactl
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
@@ -276,12 +282,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.nrdolote
           ,epr.cdbccxlt
           ,epr.dtmvtolt
+          ,DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                             ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper 
         AND epr.dtmvtolt = pr_dtmvtolt
         AND epr.inprejuz <> 1
         AND epr.cdorigem NOT IN (3,4)
         AND epr.nrdconta > pr_nrctares
+        AND EMPR0001.fn_tipo_finalidade(epr.cdcooper, epr.cdfinemp) != 3 -- CDC Prj. 402
         ORDER BY epr.nrdconta,epr.tpemprst,epr.nrctremp;
 
   -- Cursor de Emprestimos
@@ -365,6 +374,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
         ,lot.cdoperad
         ,lot.tpdmoeda
         ,lot.rowid
+        ,lot.progress_recid
     FROM craplot lot
    WHERE lot.cdcooper = pr_cdcooper
      AND lot.dtmvtolt = pr_dtmvtolt
@@ -417,7 +427,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.vlpreemp
           ,epr.dtdpagto
           ,epr.ROWID
-          , fn_tipo_finalidade( epr.inlcrdc
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper
         AND epr.nrdconta = pr_nrdconta
@@ -485,6 +494,66 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
          AND nrctrpro = pr_nrctremp
          AND flgalien = 1; -- TRUE;
     --rw_crapbpr cr_crapbpr%ROWTYPE;
+
+    -- CDC Prj. 402
+    CURSOR cr_rapassecdc(pr_cdcooper crapepr.cdcooper%TYPE
+                        ,pr_dtmvtolt crapepr.dtmvtolt%TYPE) IS
+      SELECT wepr.cdcoploj
+            ,wepr.nrdccloj
+            ,epr.cdlcremp 
+            ,epr.tpemprst 
+            ,(epr.vlemprst - epr.VLTARIFA - epr.VLTARIOF) as valor_liquido 
+            ,epr.vlemprst 
+            ,epr.nrctremp 
+            ,epr.qtpreemp 
+            ,epr.rowid 
+            ,epr.nrdolote 
+            ,epr.cdbccxlt 
+            ,epr.dtmvtolt 
+        FROM crapepr epr 
+            ,crawepr wepr 
+      WHERE epr.dtmvtolt = pr_dtmvtolt 
+        AND wepr.cdcooper = epr.cdcooper 
+        AND wepr.nrdconta = epr.nrdconta 
+        AND wepr.nrctremp = epr.nrctremp 
+        AND wepr.cdcoploj = pr_cdcooper 
+        AND EMPR0001.fn_tipo_finalidade(wepr.cdcoploj, epr.cdfinemp) = 3; -- Prj. 402 CDC 
+
+     rw_rapassecdc cr_rapassecdc%ROWTYPE;
+
+    CURSOR cr_rapassecdc_compartilhado(pr_cdcooper IN crapepr.cdcooper%TYPE
+                                      ,pr_dtmvtolt IN crapepr.dtmvtolt%TYPE) IS
+
+      SELECT epr.cdcooper -- proponente
+            ,epr.nrdconta -- proponente
+            ,epr.cdlcremp 
+            ,epr.tpemprst 
+            ,epr.vlemprst 
+            ,epr.vlpreemp 
+            ,(epr.vlemprst - epr.VLTARIFA - epr.VLTARIOF) AS valor_liquido -- valor_repasse
+            ,epr.nrctremp 
+            ,epr.dtdpagto 
+            ,epr.qtpreemp 
+            ,epr.rowid 
+            ,epr.nrdolote 
+            ,epr.cdbccxlt 
+            ,epr.dtmvtolt 
+            ,epr.idfiniof 
+            ,wepr.cdcoploj -- lojista
+            ,wepr.nrdccloj -- lojista
+            FROM crapepr epr 
+                ,crawepr wepr 
+            WHERE epr.dtmvtolt = pr_dtmvtolt 
+              AND epr.inprejuz != 1
+              AND epr.cdorigem NOT IN(3,4) 
+              AND DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper, pr_cdfinemp => epr.cdfinemp),3,1,0)=1 -- somente CDC
+              AND wepr.cdcooper = epr.cdcooper 
+              AND wepr.nrdconta = epr.nrdconta
+              AND wepr.nrctremp = epr.nrctremp 
+              AND wepr.cdcoploj != 0 -- somente quando tiver lojista
+              AND wepr.cdcooper != wepr.cdcoploj; -- somente CDC compartilhado
+
+  rw_rapassecdc_compartilhado cr_rapassecdc_compartilhado%ROWTYPE;
 
   ------------------------------- VARIAVEIS -------------------------------
   -- Código do programa
@@ -924,7 +993,7 @@ BEGIN
                             ,pr_action => NULL);
                               
   -- Verifica se a cooperativa esta cadastrada
-  OPEN cr_crapcop;
+  OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
   FETCH cr_crapcop INTO rw_crapcop;
   -- Se não encontrar
   IF cr_crapcop%NOTFOUND THEN 
@@ -952,7 +1021,7 @@ BEGIN
     -- Apenas fechar o cursor
     CLOSE BTCH0001.cr_crapdat;
   END IF;
-  
+
   -- Validações iniciais do programa
   BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
@@ -1484,8 +1553,12 @@ BEGIN
             -- Se for carro, moto ou caminhao
             IF (rw_crapbpr.dscatbem LIKE '%AUTOMOVEL%'
             OR rw_crapbpr.dscatbem LIKE '%MOTO%'
-            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%')
-            AND rw_crabepr.inlcrcdc = 0 THEN 
+            OR rw_crapbpr.dscatbem LIKE '%CAMINHAO%') THEN 
+
+              IF rw_crabepr.inlcrcdc = 1 THEN -- Se for CDC não gera tarifa de alienação
+                CONTINUE;
+              END IF;
+
               -- Criar Lançamento automatico tarifa
               TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
                                               ,pr_nrdconta      => rw_crabepr.nrdconta
@@ -2152,8 +2225,7 @@ BEGIN
                       , craplot.nrseqdig
                    INTO rw_craplot.qtinfoln
                       , rw_craplot.qtcompln
-                      , rw_craplot.nrseqdig;
-                   
+                      , rw_craplot.nrseqdig;                   
               
             EXCEPTION
               WHEN OTHERS THEN
@@ -2741,21 +2813,23 @@ BEGIN
         vr_vlemprst := GREATEST(rw_crabepr.vlemprst - vr_totliqui, 0);
       END IF;
     
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => rw_crabepr.nrdconta
-                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                 ,pr_inpessoa => rw_crapass.inpessoa
-                                 ,pr_cdlcremp => rw_crabepr.cdlcremp
-                                 ,pr_qtpreemp => rw_crabepr.qtpreemp
-                                 ,pr_vlpreemp => rw_crabepr.vlpreemp
-                                 ,pr_vlemprst => vr_vlemprst
-                                 ,pr_dtdpagto => rw_crabepr.dtdpagto
-                                 ,pr_dtlibera => rw_crapdat.dtmvtolt
-                                 ,pr_tpemprst => rw_crabepr.tpemprst
-                                 ,pr_valoriof => vr_vliofaux
-                                 ,pr_dscritic => vr_dscritic);
-                                
-      IF vr_dscritic IS NOT NULL THEN
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
+                                 ,pr_nrdconta => rw_crabepr.nrdconta          
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
+                                 ,pr_inpessoa => rw_crapass.inpessoa          
+                                 ,pr_cdlcremp => rw_crabepr.cdlcremp          
+                                 ,pr_qtpreemp => rw_crabepr.qtpreemp          
+                                 ,pr_vlpreemp => rw_crabepr.vlpreemp          
+                                 ,pr_vlemprst => vr_vlemprst                  
+                                 ,pr_dtdpagto => rw_crabepr.dtdpagto          
+                                 ,pr_dtlibera => rw_crapdat.dtmvtolt          
+                                 ,pr_tpemprst => rw_crabepr.tpemprst          
+                                 ,pr_dtcarenc => SYSDATE --pr_dtcarenc                JMD
+                                 ,pr_qtdias_carencia => 99 -- pr_qtdias_carencia JMD
+                                 ,pr_valoriof => vr_vliofaux                  
+                                 ,pr_dscritic => vr_dscritic);                
+                                                                             
+      IF vr_dscritic IS NOT NULL THEN                                        
         RAISE vr_exc_saida;
       END IF;
       
@@ -2957,6 +3031,296 @@ BEGIN
       
     END IF;    
   END LOOP; --  Fim do FOR EACH e da transacao
+
+  -- CDC Prj. 402
+  FOR rw_rapassecdc IN cr_rapassecdc(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+    
+    --Selecionar Associado
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => rw_rapassecdc.nrdccloj);
+
+    FETCH cr_crapass INTO rw_crapass;             
+    vr_crapass:= cr_crapass%FOUND;
+    CLOSE cr_crapass;                
+    
+    -- Nao encontrou cooperado
+    IF NOT vr_crapass THEN
+      vr_cdcritic:= 9; -- 009 - Associado nao cadastrado.
+      vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic) || ' - ' ||
+                    gene0002.fn_mask(rw_rapassecdc.nrdccloj,'zzzz.zzz.9');
+      
+      -- Gera Log
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro Tratado
+                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
+                                                    ' -' || vr_cdprogra || ' --> '  ||
+                                                    vr_dscritic);
+      
+      
+      -- Finaliza Execução do Programa
+      RAISE vr_exc_saida;
+    END IF;
+
+    --Criar os Lotes usados pelo Programa 
+    pc_cria_lote (pr_cdcooper => pr_cdcooper
+                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                 ,pr_nrdolote => 650004
+                 ,pr_des_reto => vr_des_erro
+                 ,pr_dscritic => vr_dscritic);
+
+    --Se ocorreu erro
+    IF vr_des_erro = 'NOK' THEN
+      -- Finaliza Execução do Programa
+      RAISE vr_exc_saida;
+    END IF;
+
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => 1
+                   ,pr_cdbccxlt => 100
+                   ,pr_nrdolote => 650004);
+
+    FETCH cr_craplot INTO rw_craplot;
+
+    -- Apenas Fecha Cursor
+    CLOSE cr_craplot;
+        
+    --Inserir Lancamento
+    BEGIN
+      INSERT INTO craplcm
+         (cdcooper
+         ,dtmvtolt
+         ,cdagenci
+         ,cdbccxlt
+         ,nrdolote
+         ,nrdconta
+         ,nrdctabb
+         ,nrdctitg
+         ,nrdocmto
+         ,cdhistor
+         ,nrseqdig
+         ,cdpesqbb
+         ,vllanmto)
+      VALUES  
+         (pr_cdcooper
+         ,rw_craplot.dtmvtolt
+         ,rw_craplot.cdagenci
+         ,rw_craplot.cdbccxlt
+         ,rw_craplot.nrdolote
+         ,rw_rapassecdc.nrdccloj
+         ,rw_rapassecdc.nrdccloj
+         ,GENE0002.fn_mask(rw_rapassecdc.nrdccloj,'99999999')
+         ,rw_rapassecdc.nrctremp
+         ,2469 -- CR.EMPRESTIMO
+         ,nvl(rw_craplot.nrseqdig,0) + 1
+         ,GENE0002.fn_mask(rw_rapassecdc.nrctremp,'99999999')
+         ,rw_rapassecdc.valor_liquido);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir na tabela craplcm (CDC) . ' || SQLERRM;
+       --Sair do programa
+       RAISE vr_exc_saida;
+    END;
+          
+    --Atualizar capa do Lote
+    BEGIN
+      UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + rw_rapassecdc.valor_liquido
+                        ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + rw_rapassecdc.valor_liquido
+                        ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                        ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
+                        ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
+      WHERE craplot.ROWID = rw_craplot.ROWID;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar tabela craplot(CDC). ' || SQLERRM;
+        --Sair do programa
+        RAISE vr_exc_saida;
+    END; 
+
+  END LOOP;
+  -- Fim CDC Prj. 402
+
+  -- CDC Prj. 402
+
+  IF pr_cdcooper = 3 THEN
+    FOR rw_rapassecdc_compartilhado IN cr_rapassecdc_compartilhado(pr_cdcooper => pr_cdcooper
+                                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+      
+      --Selecionar Associado
+      OPEN cr_crapass (pr_cdcooper => rw_rapassecdc_compartilhado.cdcooper
+                      ,pr_nrdconta => rw_rapassecdc_compartilhado.nrdconta);
+
+      FETCH cr_crapass INTO rw_crapass;             
+      vr_crapass:= cr_crapass%FOUND;
+      CLOSE cr_crapass;                
+          
+      -- Nao encontrou cooperado
+      IF NOT vr_crapass THEN
+        vr_cdcritic:= 9; -- 009 - Associado nao cadastrado.
+        vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic) || ' - ' ||
+                      gene0002.fn_mask(rw_rapassecdc_compartilhado.nrdconta,'zzzz.zzz.9');
+            
+        -- Gera Log
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                   pr_ind_tipo_log => 2, -- Erro Tratado
+                                   pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  || ' -' || vr_cdprogra || ' --> '  || vr_dscritic);
+            
+            
+        -- Finaliza Execução do Programa
+        RAISE vr_exc_saida;
+      END IF;
+
+    END LOOP;
+
+    --Criar os Lotes usados pelo Programa 
+    pc_cria_lote (pr_cdcooper => pr_cdcooper
+                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                 ,pr_nrdolote => 650008
+                 ,pr_des_reto => vr_des_erro
+                 ,pr_dscritic => vr_dscritic);
+
+    --Se ocorreu erro
+    IF vr_des_erro = 'NOK' THEN
+      -- Finaliza Execução do Programa
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- CRÉDITO
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => 1
+                   ,pr_cdbccxlt => 100
+                   ,pr_nrdolote => 650008);
+
+    FETCH cr_craplot INTO rw_craplot;
+    -- Apenas Fecha Cursor
+    CLOSE cr_craplot;
+       
+    OPEN cr_crapcop(pr_cdcooper => rw_rapassecdc_compartilhado.cdcoploj);
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN 
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;            
+ 
+    --Inserir Lancamento
+    BEGIN
+      INSERT INTO craplcm
+         (cdcooper
+         ,dtmvtolt
+         ,cdagenci
+         ,cdbccxlt
+         ,nrdolote
+         ,nrdconta
+         ,nrdctabb
+         ,nrdctitg
+         ,nrdocmto
+         ,cdhistor
+         ,nrseqdig
+         ,cdpesqbb
+         ,vllanmto)
+      VALUES  
+         (pr_cdcooper
+         ,rw_craplot.dtmvtolt
+         ,rw_craplot.cdagenci
+         ,rw_craplot.cdbccxlt
+         ,rw_craplot.nrdolote
+         ,rw_crapcop.nrctactl
+         ,rw_crapcop.nrctactl
+         ,GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
+         ,rw_rapassecdc_compartilhado.nrctremp
+         ,1155 -- CREDITO CDC
+         ,nvl(rw_craplot.nrseqdig,0) + 1
+         ,GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
+         ,rw_rapassecdc_compartilhado.valor_liquido);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir na tabela craplcm (CDC) . ' || SQLERRM;
+       --Sair do programa
+       RAISE vr_exc_saida;
+    END;
+      
+    -- DÉBITO 
+    OPEN cr_crapcop(pr_cdcooper => rw_rapassecdc_compartilhado.cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN 
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;
+ 
+    --Inserir Lancamento
+    BEGIN
+      INSERT INTO craplcm
+         (cdcooper
+         ,dtmvtolt
+         ,cdagenci
+         ,cdbccxlt
+         ,nrdolote
+         ,nrdconta
+         ,nrdctabb
+         ,nrdctitg
+         ,nrdocmto
+         ,cdhistor
+         ,nrseqdig
+         ,cdpesqbb
+         ,vllanmto)
+      VALUES  
+         (pr_cdcooper
+         ,rw_craplot.dtmvtolt
+         ,rw_craplot.cdagenci
+         ,rw_craplot.cdbccxlt
+         ,rw_craplot.nrdolote
+         ,rw_crapcop.nrctactl
+         ,rw_crapcop.nrctactl
+         ,GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
+         ,rw_rapassecdc_compartilhado.nrctremp
+         ,1148 -- DEBITO CDC
+         ,NVL(rw_craplot.nrseqdig,0) + 1
+         ,GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
+         ,rw_rapassecdc_compartilhado.valor_liquido);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir na tabela craplcm (CDC) . ' || SQLERRM;
+       --Sair do programa
+       RAISE vr_exc_saida;
+    END;
+          
+    --Atualizar capa do Lote
+    BEGIN
+      -- Atualiza o lote
+      
+      UPDATE craplot lot
+         SET lot.qtcompln = lot.qtcompln + 1
+            ,lot.vlcompdb = lot.vlcompdb + rw_rapassecdc_compartilhado.valor_liquido
+            ,lot.vlcompcr = lot.vlcompcr + rw_rapassecdc_compartilhado.valor_liquido
+            ,lot.nrseqdig = lot.nrseqdig + 1
+            ,lot.vlinfodb = lot.vlinfodb + rw_rapassecdc_compartilhado.valor_liquido
+            ,lot.vlinfocr = lot.vlinfocr + rw_rapassecdc_compartilhado.valor_liquido
+            ,lot.qtinfoln = lot.qtinfoln + 1
+       WHERE lot.progress_recid = rw_craplot.progress_recid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar tabela craplot(CDC). ' || SQLERRM;
+        --Sair do programa
+        RAISE vr_exc_saida;
+    END;
+
+  END IF;
 
   -- Processo OK, devemos chamar a fimprg
   BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper

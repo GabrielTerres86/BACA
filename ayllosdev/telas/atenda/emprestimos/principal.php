@@ -35,9 +35,12 @@
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
  * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
- * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
- * 028: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
- * 029: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 027: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 028: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
+ * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+ * 032: [14/12/2017] Inclusão dos campos: flintcdc e inintegra_cont no array de propostas, Prj. 402 (Jean Michel).
  */
 
 	session_start();
@@ -80,6 +83,8 @@
 	$qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : 0;
 	$qtdialib = (isset($_POST['qtdialib'])) ? $_POST['qtdialib'] : 0;
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : 0;
+	$executandoProdutos = $_POST['executandoProdutos'];
+	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
 	$dateArray = explode("/", $glbvars["dtmvtolt"]);
 	
@@ -255,11 +260,14 @@
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>';
 			arrayProposta['flgcescr'] = '<? echo ((getByTagName($proposta,'flgcescr') == 'yes') ? true : false); ?>';
 			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
-			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof'); ?>';
+			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '1'; ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr') != '' ? getByTagName($proposta,'vliofepr') : '0'; ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif') != '' ? getByTagName($proposta,'vlrtarif') : '0'; ?>';
 			arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal') != '' ? getByTagName($proposta,'vlrtotal') : '0'; ?>';
-
+			arrayProposta['flintcdc'] = '<? echo getByTagName($proposta,'flintcdc'); ?>';
+			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
+			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
+	
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
@@ -881,6 +889,14 @@
 	else if( operacao == 'E_COMITE_APROV' ){ controlaOperacao('EV'); }
 	else if( flgImp == '1' ){ validaImpressao(); }
 	else if( operacao == 'D_EFETIVA'){ controlaOperacao('E_EFETIVA'); }
+
+	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+    if (executandoProdutos && operacao == '' ) {
+	  
+		controlaOperacao('I');
+		
+    }
+	  
 
 </script>
 

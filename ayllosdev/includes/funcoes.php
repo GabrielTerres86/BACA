@@ -1472,24 +1472,18 @@ function dbProcedure($xml){
  */
 function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $idorigem, $cdoperad, $tag){
 
-    $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
-    $endereco = dirname(dirname(__FILE__)) . '/xml';
+	$xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
+	$endereco = dirname(dirname(__FILE__)) . '/xml';
 
-	//valida a existencia do arquivo
-	if (file_exists($endereco."/in.xml")) {
-		$arquivo = fopen($endereco."/in.xml","w");
-		fwrite($arquivo, $xml);
-		fclose($arquivo);
-	}
+	$arquivo = fopen($endereco."/in.xml","w");
+	fwrite($arquivo, $xml);
+	fclose($arquivo);
 		
 	$retXML = dbProcedure($xml);
 
-	//valida a existencia do arquivo
-	if (file_exists($endereco."/out.xml")) {
-		$arquivo = fopen($endereco."/out.xml", "w");
-		fwrite($arquivo, $retXML);
-		fclose($arquivo);
-	}
+	$arquivo = fopen($endereco."/out.xml", "w");
+	fwrite($arquivo, $retXML);
+	fclose($arquivo);
 
 	return $retXML;
 }

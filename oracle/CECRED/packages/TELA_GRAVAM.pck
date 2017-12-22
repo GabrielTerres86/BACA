@@ -443,8 +443,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
   
     CURSOR cr_propostas(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
-    SELECT crawepr.nrdconta
-          ,crapbpr.nrctrpro
+
+      SELECT crawepr.nrdconta
+            ,crapbpr.nrctrpro
       FROM crawepr
           ,craplcr
           ,crapbpr
@@ -462,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             crapbpr.dscatbem LIKE '%MOTO%'      OR
             crapbpr.dscatbem LIKE '%CAMINHAO%')
        GROUP BY crawepr.nrdconta
-               ,crapbpr.nrctrpro;          
+               ,crapbpr.nrctrpro;  
                        
     --Variaveis de Criticas
     vr_cdcritic INTEGER;

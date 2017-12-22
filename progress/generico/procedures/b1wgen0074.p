@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/09/2017
+    Data    : Maio/2010                   Ultima atualizacao: 13/12/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -152,8 +152,8 @@
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)
                   
-				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
-							 crapass.idastcjt (Jean Michel) 
+                27/10/2015 - Inclusao de novo campo para a tela CONTAS,
+                             crapass.idastcjt (Jean Michel) 
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
@@ -167,8 +167,8 @@
                 22/12/2015 - Ajuste na data de abertura da conta
                              Chamado 373200 (Heitor - RKAM)
 
-				01/04/2016 - Retiradas consistências para exclusão de ITG na
-							 Credimilsul - SD 417127 (Rodrigo)
+                01/04/2016 - Retiradas consistências para exclusão de ITG na
+							               Credimilsul - SD 417127 (Rodrigo)
 
                 12/01/2016 - Remoção da manutenção do campo flgcrdpa e cdoplcpa
                              (Anderson).
@@ -183,22 +183,27 @@
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
 
-	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
-				             estiver em execucao (Andrino - Chamado 495821)
+	              01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+				                     estiver em execucao (Andrino - Chamado 495821)
                      
                 11/11/2016 - #511290 Correcao de como o sistema verifica se eh
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
-				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
-				             (Incorporacao Transposul). (Fabricio)
+				       
+				        02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+				                     (Incorporacao Transposul). (Fabricio)
 
-               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                            PRJ339 - CRM (Odirlei-AMcom)  
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
                              
-				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+				        20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
+
+                19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+                             "Desligamento por determinação do BACEN" 
+							               (Jonata - RKAM P364).			
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)
@@ -207,6 +212,21 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
+                21/09/2017 - Sempre que houver a exclusao de titulares da Conta 
+                             Corrente as pendencias registradas para ele devem ser 
+                             baixadas do relatório 620_cadastro (Lucas Ranghetti #746857).
+                16/10/2017 - Remocao de Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Jaison/Elton - M459)
+
+				        14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
+				                     ja estiver com situacao = 4
+							               (Jonata - RKAM P364).		
+
+                13/12/2017 - Alterado procedure grava-dados, colocado envio de email
+                             quando conta for encerrada por demissao e possuir convenio
+                             CDC, Prj. 402 (Jean Michel).
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -483,7 +503,7 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
-
+/*
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
         IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
@@ -500,8 +520,7 @@ PROCEDURE Busca_Dados:
                ASSIGN tt-conta-corr.btencitg = NO
                       tt-conta-corr.btsolitg = NO.
             END.
-        
-
+*/
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
                 PERSISTENT SET h-b1wgen0060.
@@ -1107,7 +1126,31 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 
-                   END.
+                   END.				   
+				   
+				/*Se for demissao BACEN, deve informar que nao ha reversao ao prosseguir 
+				  com a alteracao da situacao para 8 (Processo demissa BACEN)*/
+				IF par_cdsitdct = 8 THEN 
+				   ASSIGN par_tipconfi = 3 
+                          par_msgconfi = "Esta alteração será irreversível.".
+				
+				IF crapass.cdsitdct = 8 THEN
+				   DO:
+				      ASSIGN par_dscritic = "Conta em processo de demissao BACEN."
+					         par_nmdcampo = "cdsitdct".
+
+                      LEAVE ValidaAltera.
+				   
+				   END.   
+				ELSE IF crapass.cdsitdct = 4 THEN
+				   DO:
+				      ASSIGN par_dscritic = "Conta ja encerrada por demissao."
+					         par_nmdcampo = "cdsitdct".
+
+                      LEAVE ValidaAltera.
+
+				   END.
+
             END.
 
         /*  Mudou o tipo de conta  */
@@ -2002,6 +2045,9 @@ PROCEDURE Grava_Dados:
                       INPUT par_cdagenci,
                       INPUT par_cdoperad,
                       INPUT par_dtmvtolt,  
+                      INPUT par_idorigem,
+                      INPUT par_nrdcaixa,
+                      INPUT par_nmdatela,					  
                       INPUT 2, /*tpaltera*/
                       INPUT par_cdtipcta,  
                       INPUT par_cdsitdct,  
@@ -2616,6 +2662,9 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmdatela AS CHAR							NO-UNDO.
     DEF  INPUT PARAM par_tpaltera AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitdct AS INTE                           NO-UNDO.
@@ -3020,6 +3069,49 @@ PROCEDURE Grava_Dados_Altera:
 
         IF par_cdsitdct <> crabass.cdsitdct THEN
            DO:
+		   
+		      IF par_cdsitdct = 8 THEN
+			     DO:
+				    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl}}
+                               
+				   /* Efetuar a chamada da rotina Oracle */ 
+				   RUN STORED-PROCEDURE pc_efetuar_desligamento_bacen 
+							 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+																  INPUT par_nrdconta,
+																  INPUT par_idorigem,
+																  INPUT par_cdoperad,
+																  INPUT par_nrdcaixa,
+																  INPUT par_nmdatela,
+																  INPUT par_cdagenci,
+																  OUTPUT 0, /*Código da crítica*/
+																  OUTPUT "", /*Descrição da crítica*/
+																  OUTPUT "", /*Nome do Campo*/
+																  OUTPUT ""). /*Saida OK/NOK*/
+				   				   
+				   /* Fechar o procedimento para buscarmos o resultado */ 
+				   CLOSE STORED-PROC pc_efetuar_desligamento_bacen
+						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				   
+				   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+				   
+				   /* Busca possíveis erros */ 
+				   ASSIGN par_cdcritic = 0
+						  par_dscritic = ""
+						  par_cdcritic = pc_efetuar_desligamento_bacen.pr_cdcritic 
+										 WHEN pc_efetuar_desligamento_bacen.pr_cdcritic <> ?
+						  par_dscritic = pc_efetuar_desligamento_bacen.pr_dscritic 
+										 WHEN pc_efetuar_desligamento_bacen.pr_dscritic <> ?.
+				   
+				   IF par_cdcritic <> 0  OR
+					  par_dscritic <> "" THEN
+					  DO:	 
+					
+						 UNDO GravaAltera, LEAVE GravaAltera.
+					
+					  END.
+				 
+				 END.
+			  
               ASSIGN crabass.dtasitct = par_dtmvtolt.
 
               ContadorNeg: DO aux_contador = 1 TO 10:
@@ -3674,7 +3766,7 @@ PROCEDURE Grava_Dados_Altera:
                crabass.cdtipcta = par_cdtipcta
                crabass.cdbcochq = par_cdbcochq
                crabass.cdsitdct = par_cdsitdct
-               crabass.flgiddep = par_flgiddep
+			   crabass.flgiddep = par_flgiddep
                crabass.tpavsdeb = par_tpavsdeb
                crabass.tpextcta = par_tpextcta
                crabass.cdsecext = par_cdsecext
@@ -3956,6 +4048,7 @@ PROCEDURE Grava_Dados_Exclui:
     DEF BUFFER crabcem FOR crapcem.
     DEF BUFFER crabcra FOR crapcra.
     DEF BUFFER crabcrl FOR crapcrl.
+    DEF BUFFER crabdoc FOR crapdoc.
 
     ASSIGN aux_returnvl = "NOK".
 
@@ -4429,6 +4522,46 @@ PROCEDURE Grava_Dados_Exclui:
                 IF  par_cdcritic <> 0 THEN
                     UNDO GravaExclui, LEAVE GravaExclui.
             END. /* FOR EACH crapavt  */
+            
+            /* Atualizar pendencias dos titulares secundarios da conta */
+            FOR EACH crapdoc WHERE crapdoc.cdcooper = crabttl.cdcooper 
+                               AND crapdoc.nrdconta = crabttl.nrdconta
+                               AND crapdoc.idseqttl = crabttl.idseqttl
+                               AND crapdoc.flgdigit = FALSE
+                               NO-LOCK:
+                               
+                ContadorDoc: DO aux_contador = 1 TO 10:
+                
+                  FIND crabdoc WHERE ROWID(crabdoc) = ROWID(crapdoc)
+                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                    IF  NOT AVAILABLE crabdoc THEN
+                        DO:
+                           IF  LOCKED(crabdoc) THEN
+                               DO:
+                                  IF  aux_contador = 10 THEN
+                                      DO:
+                                         ASSIGN par_cdcritic = 72.
+                                         LEAVE ContadorDoc.
+                                      END.
+                                  ELSE 
+                                      DO:
+                                         PAUSE 1 NO-MESSAGE.
+                                         NEXT ContadorDoc.
+                                      END.
+                               END.
+                        END.
+                    ELSE 
+                        DO:
+                           DELETE crabdoc.
+                           LEAVE ContadorDoc.
+                        END.
+                
+                END. /* ContadorDoc */
+                
+                IF  par_cdcritic <> 0 THEN
+                    UNDO GravaExclui, LEAVE GravaExclui.                               
+            END.
             
             ContadorTtl: DO aux_contador = 1 TO 10:
 

@@ -25,15 +25,20 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
                           ,pr_des_erro       OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_grava_dados(pr_cdcooper           IN crapcop.cdcooper%TYPE --> Cód da cooperativa
-                          ,pr_cdoperad           IN crapope.cdoperad%TYPE --> Operador
-                          ,pr_idorigem           IN INTEGER               --> Origem
-                          ,pr_nmdatela           IN VARCHAR2              -- Nome da tela
-                          ,pr_nrdconta           IN crapcdr.nrdconta%TYPE --> Numero da conta
+		                      ,pr_cdoperad           IN crapope.cdoperad%TYPE --> Operador
+													,pr_idorigem           IN INTEGER               --> Origem
+													,pr_nmdatela           IN VARCHAR2              -- Nome da tela
+		                      ,pr_nrdconta           IN crapcdr.nrdconta%TYPE --> Numero da conta
                           ,pr_inpessoa           IN crapass.inpessoa%TYPE --> Tipo de pessoa
                           ,pr_idmatriz           IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador da Matriz
                           ,pr_idcooperado_cdc    IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador do cooperado no CDC
                           ,pr_flgconve           IN crapcdr.flgconve%TYPE --> Indicador se cooperado possui convenio CDC
                           ,pr_dtinicon           IN VARCHAR2 --> Data de inicio de convenio
+                          ,pr_inmotcan           IN crapcdr.inmotcan%TYPE --> Motivo do Cancelamento
+                          ,pr_dtcancon           IN VARCHAR2 --> Data de Cancelamento
+                          ,pr_dsmotcan           IN crapcdr.dsmotcan%TYPE --> Motivo do Cancelamento
+                          ,pr_dtrencon           IN VARCHAR2 --> Data de Renovação
+                          ,pr_dttercon           IN VARCHAR2 --> Data de Término
                           ,pr_nmfantasia         IN tbsite_cooperado_cdc.nmfantasia%TYPE --> Nome fantasia
                           ,pr_cdcnae             IN tbsite_cooperado_cdc.cdcnae%TYPE --> Codigo da classificacao CNAE
                           ,pr_dslogradouro       IN tbsite_cooperado_cdc.dslogradouro%TYPE --> Descricao do logradouro
@@ -44,7 +49,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
                           ,pr_idcidade           IN tbsite_cooperado_cdc.idcidade%TYPE --> Codigo da cidade da localizacao
                           ,pr_dstelefone         IN tbsite_cooperado_cdc.dstelefone%TYPE --> Telefone do conveniado CDC
                           ,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
-                          ,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
+                          ,pr_nrlatitude         IN tbsite_cooperado_cdc.nrlatitude %TYPE --> Latitude
+                          ,pr_nrlongitude        IN tbsite_cooperado_cdc.nrlongitude%TYPE --> Longitude
                           ,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
                           ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
@@ -56,6 +62,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 															,pr_idcooperado_cdc    IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador do cooperado no CDC
 															,pr_flgconve           IN crapcdr.flgconve%TYPE --> Indicador se cooperado possui convenio CDC
 															,pr_dtinicon           IN VARCHAR2 --> Data de inicio de convenio
+                              ,pr_inmotcan           IN crapcdr.inmotcan%TYPE --> Motivo do Cancelamento
+                              ,pr_dtcancon           IN VARCHAR2 --> Data de Cancelamento
+                              ,pr_dsmotcan           IN crapcdr.dsmotcan%TYPE --> Motivo do Cancelamento
+                              ,pr_dtrencon           IN VARCHAR2 --> Data de Renovação
+                              ,pr_dttercon           IN VARCHAR2 --> Data de Término
 															,pr_nmfantasia         IN tbsite_cooperado_cdc.nmfantasia%TYPE --> Nome fantasia
 															,pr_cdcnae             IN tbsite_cooperado_cdc.cdcnae%TYPE --> Codigo da classificacao CNAE
 															,pr_dslogradouro       IN tbsite_cooperado_cdc.dslogradouro%TYPE --> Descricao do logradouro
@@ -66,7 +77,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 															,pr_idcidade           IN tbsite_cooperado_cdc.idcidade%TYPE --> Codigo da cidade da localizacao
 															,pr_dstelefone         IN tbsite_cooperado_cdc.dstelefone%TYPE --> Telefone do conveniado CDC
 															,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
-															,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
+															,pr_nrlatitude         IN tbsite_cooperado_cdc.nrlatitude %TYPE --> Latitude
+                              ,pr_nrlongitude        IN tbsite_cooperado_cdc.nrlongitude%TYPE --> Longitude
 															,pr_xmllog             IN VARCHAR2 --> XML com informacoes de LOG
 															,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
 															,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
@@ -121,6 +133,44 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
 																				 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 																				 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
+  PROCEDURE pc_lista_subsegmentos(pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE --> Código Subsegmento
+                                 ,pr_dssubsegmento IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
+		                             ,pr_xmllog   IN VARCHAR2                                      --> XML com informacoes de LOG
+																 ,pr_cdcritic OUT PLS_INTEGER                                  --> Codigo da critica
+																 ,pr_dscritic OUT VARCHAR2                                     --> Descricao da critica
+																 ,pr_retxml   IN OUT NOCOPY xmltype                            --> Arquivo de retorno do XML
+																 ,pr_nmdcampo OUT VARCHAR2                                     --> Nome do campo com erro
+																 ,pr_des_erro OUT VARCHAR2);                                   --> Erros do processo
+
+  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                        --> Opção da Tela
+                                  ,pr_idcooperado_cdc IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
+                                  ,pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE   --> Código Subsegmento
+ 		                              ,pr_xmllog   IN VARCHAR2                                        --> XML com informacoes de LOG
+																  ,pr_cdcritic OUT PLS_INTEGER                                    --> Codigo da critica
+																  ,pr_dscritic OUT VARCHAR2                                       --> Descricao da critica
+																  ,pr_retxml   IN OUT NOCOPY xmltype                              --> Arquivo de retorno do XML
+																  ,pr_nmdcampo OUT VARCHAR2                                       --> Nome do campo com erro
+																  ,pr_des_erro OUT VARCHAR2);                                     --> Erros do processo
+
+  PROCEDURE pc_lista_subsegmentos_coop(pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Código Subsegmento
+                                      ,pr_xmllog   IN VARCHAR2                                         --> XML com informacoes de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER                                     --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2                                        --> Descricao da critica
+                                      ,pr_retxml   IN OUT NOCOPY xmltype                               --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2                                        --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);                                      --> Erros do processo
+
+  PROCEDURE pc_manter_tarifa_adesao_cdc(pr_cdcooper  IN crapcop.cdcooper%TYPE   -- Código da cooperativa do lojista 
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE   -- Número da conta do lojista 
+                                       ,pr_flgconve  IN crapcdr.flgconve%TYPE   -- Flag de convenio (1-Sim, 0-Não) 
+                                       ,pr_flcnvold  IN crapcdr.flgconve%TYPE   -- Flag de convenio anterior (1-Sim, 0-Não) 
+                                       ,pr_cdoperad  IN crapope.cdoperad%TYPE   -- Operador
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE   -- Código de erro 
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE); -- Descrição de erro
+
+  PROCEDURE pc_manter_tarifa_renovacao_cdc(pr_cdcritic OUT crapcri.cdcritic%TYPE   -- Código de erro 
+                                          ,pr_dscritic OUT crapcri.dscritic%TYPE); -- Descrição de erro
+
 END TELA_ATENDA_CVNCDC;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
@@ -136,7 +186,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
   -- Objetivo  : Centralizar rotinas relacionadas a tela Convenio CDC
   --
   -- Alteracoes: 19/01/2016 - Adicionadas procedures para replicação dos dados
-  --						  cadastrais do cooperado para o CDC. (Reinert)
+  --						              cadastrais do cooperado para o CDC. (Reinert)
+  --
+  --             15/12/2017 - Inclusão de parâmetros pr_nrlatitude e pr_nrlongitude
+  --                          nas procedures pc_grava_dados e pc_grava_dados_web,
+  --                          Prj. 402 (Jean Michel).
   --
   ---------------------------------------------------------------------------
   
@@ -144,6 +198,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
   TYPE typ_reg_cdr_cdc IS
   RECORD (flgconve           crapcdr.flgconve%TYPE
          ,dtinicon           crapcdr.dtinicon%TYPE
+         ,inmotcan           crapcdr.inmotcan%TYPE
+         ,dtcancon           crapcdr.dtcancon%TYPE
+         ,dsmotcan           crapcdr.dsmotcan%TYPE
+         ,dtrencon           crapcdr.dtrencon%TYPE
+         ,dttercon           crapcdr.dttercon%TYPE
          ,idcooperado_cdc    tbsite_cooperado_cdc.idcooperado_cdc%TYPE
          ,nmfantasia         tbsite_cooperado_cdc.nmfantasia%TYPE
          ,cdcnae             tbsite_cooperado_cdc.cdcnae%TYPE
@@ -155,7 +214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
          ,nrcep              tbsite_cooperado_cdc.nrcep%TYPE
          ,dstelefone         tbsite_cooperado_cdc.dstelefone%TYPE
          ,dsemail            tbsite_cooperado_cdc.dsemail%TYPE
-         ,dslink_google_maps tbsite_cooperado_cdc.dslink_google_maps%TYPE);
+         ,nrlatitude         tbsite_cooperado_cdc.nrlatitude%TYPE
+         ,nrlongitude        tbsite_cooperado_cdc.nrlongitude%TYPE);
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_cdr_cdc IS TABLE OF typ_reg_cdr_cdc INDEX BY PLS_INTEGER;
@@ -200,6 +260,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                        ,pr_nrdconta IN crapcdr.nrdconta%TYPE) IS
         SELECT crapcdr.flgconve
               ,crapcdr.dtinicon
+              ,crapcdr.inmotcan
+              ,crapcdr.dtcancon              
+              ,crapcdr.dsmotcan
+              ,crapcdr.dtrencon
+              ,crapcdr.dttercon
           FROM crapcdr
          WHERE crapcdr.cdcooper = pr_cdcooper
            AND crapcdr.nrdconta = pr_nrdconta;
@@ -221,7 +286,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
               ,t.nrcep
               ,t.dstelefone
               ,t.dsemail
-              ,t.dslink_google_maps
+              ,t.nrlatitude
+              ,t.nrlongitude
           FROM tbsite_cooperado_cdc t
          WHERE t.cdcooper = pr_cdcooper
            AND t.nrdconta = pr_nrdconta
@@ -251,6 +317,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         -- Carrega os dados na PLTRABLE
         pr_tab_cdr_cdc(pr_nrdconta).flgconve := rw_crapcdr.flgconve;
         pr_tab_cdr_cdc(pr_nrdconta).dtinicon := rw_crapcdr.dtinicon;
+        pr_tab_cdr_cdc(pr_nrdconta).inmotcan := rw_crapcdr.inmotcan;
+        pr_tab_cdr_cdc(pr_nrdconta).dtcancon := rw_crapcdr.dtcancon;
+        pr_tab_cdr_cdc(pr_nrdconta).dsmotcan := rw_crapcdr.dsmotcan;
+        pr_tab_cdr_cdc(pr_nrdconta).dtrencon := rw_crapcdr.dtrencon;
+        pr_tab_cdr_cdc(pr_nrdconta).dttercon := rw_crapcdr.dttercon;
 
         -- Selecionar os dados para o site da cooperativa
         OPEN cr_tbsite_cooperado_cdc(pr_cdcooper	      => pr_cdcooper
@@ -278,8 +349,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
           pr_tab_cdr_cdc(pr_nrdconta).nrcep              := rw_tbsite_cooperado_cdc.nrcep;
           pr_tab_cdr_cdc(pr_nrdconta).dstelefone         := rw_tbsite_cooperado_cdc.dstelefone;
           pr_tab_cdr_cdc(pr_nrdconta).dsemail            := rw_tbsite_cooperado_cdc.dsemail;
-          pr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps := rw_tbsite_cooperado_cdc.dslink_google_maps;
-
+          pr_tab_cdr_cdc(pr_nrdconta).nrlatitude         := rw_tbsite_cooperado_cdc.nrlatitude;
+          pr_tab_cdr_cdc(pr_nrdconta).nrlongitude        := rw_tbsite_cooperado_cdc.nrlongitude;
+          
         END IF;
 
       END IF;
@@ -432,6 +504,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
+                              ,pr_tag_nova => 'inmotcan'
+                              ,pr_tag_cont => NVL(vr_tab_cdr_cdc(pr_nrdconta).inmotcan,0)
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dtcancon'
+                              ,pr_tag_cont => TO_CHAR(vr_tab_cdr_cdc(pr_nrdconta).dtcancon, 'DD/MM/RRRR')
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dsmotcan'
+                              ,pr_tag_cont => NVL(vr_tab_cdr_cdc(pr_nrdconta).dsmotcan,'')
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dtrencon'
+                              ,pr_tag_cont => TO_CHAR(vr_tab_cdr_cdc(pr_nrdconta).dtrencon, 'DD/MM/RRRR')
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dttercon'
+                              ,pr_tag_cont => TO_CHAR(vr_tab_cdr_cdc(pr_nrdconta).dttercon, 'DD/MM/RRRR')
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
                               ,pr_tag_nova => 'idcooperado_cdc'
                               ,pr_tag_cont => vr_tab_cdr_cdc(pr_nrdconta).idcooperado_cdc
                               ,pr_des_erro => vr_dscritic);
@@ -494,8 +601,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
-                              ,pr_tag_nova => 'dslink_google_maps'
-                              ,pr_tag_cont => vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps
+                              ,pr_tag_nova => 'nrlatitude'
+                              ,pr_tag_cont => vr_tab_cdr_cdc(pr_nrdconta).nrlatitude
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'nrlongitude'
+                              ,pr_tag_cont => vr_tab_cdr_cdc(pr_nrdconta).nrlongitude
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -601,6 +715,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                           ,pr_idcooperado_cdc    IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador do cooperado no CDC
                           ,pr_flgconve           IN crapcdr.flgconve%TYPE --> Indicador se cooperado possui convenio CDC
                           ,pr_dtinicon           IN VARCHAR2 --> Data de inicio de convenio
+                          ,pr_inmotcan           IN crapcdr.inmotcan%TYPE --> Motivo do Cancelamento
+                          ,pr_dtcancon           IN VARCHAR2 --> Data de Cancelamento
+                          ,pr_dsmotcan           IN crapcdr.dsmotcan%TYPE --> Motivo do Cancelamento
+                          ,pr_dtrencon           IN VARCHAR2 --> Data de Renovação
+                          ,pr_dttercon           IN VARCHAR2 --> Data de Término
                           ,pr_nmfantasia         IN tbsite_cooperado_cdc.nmfantasia%TYPE --> Nome fantasia
                           ,pr_cdcnae             IN tbsite_cooperado_cdc.cdcnae%TYPE --> Codigo da classificacao CNAE
                           ,pr_dslogradouro       IN tbsite_cooperado_cdc.dslogradouro%TYPE --> Descricao do logradouro
@@ -611,7 +730,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                           ,pr_idcidade           IN tbsite_cooperado_cdc.idcidade%TYPE --> Codigo da cidade da localizacao
                           ,pr_dstelefone         IN tbsite_cooperado_cdc.dstelefone%TYPE --> Telefone do conveniado CDC
                           ,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
-                          ,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
+                          ,pr_nrlatitude         IN tbsite_cooperado_cdc.nrlatitude%TYPE --> Latitude
+                          ,pr_nrlongitude        IN tbsite_cooperado_cdc.nrlongitude%TYPE --> Longitude
                           ,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
                           ,pr_nmdcampo          OUT VARCHAR2 --> Nome do campo com erro
@@ -654,7 +774,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       vr_nrcep              tbsite_cooperado_cdc.nrcep%TYPE;
       vr_idcidade           tbsite_cooperado_cdc.idcidade%TYPE;
       vr_cdcnae             tbsite_cooperado_cdc.cdcnae%TYPE;
-      vr_dslink_google_maps tbsite_cooperado_cdc.dslink_google_maps%TYPE;
       vr_dscnae_new         tbgen_cnae.dscnae%TYPE;
       vr_dscnae_old         tbgen_cnae.dscnae%TYPE;
       vr_dscidade_new       crapmun.dscidade%TYPE;
@@ -701,11 +820,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                    ,nrdconta
                    ,flgconve
                    ,dtinicon
+                   ,inmotcan
+                   ,dtcancon
+                   ,dsmotcan
+                   ,dtrencon
+                   ,dttercon
                    ,cdoperad)
              VALUES(pr_cdcooper
                    ,pr_nrdconta
                    ,pr_flgconve
                    ,TO_DATE(pr_dtinicon, 'DD/MM/RRRR')
+                   ,pr_inmotcan                   
+                   ,TO_DATE(pr_dtcancon, 'DD/MM/RRRR')
+                   ,pr_dsmotcan
+                   ,TO_DATE(pr_dtrencon, 'DD/MM/RRRR')
+                   ,TO_DATE(pr_dttercon, 'DD/MM/RRRR')
                    ,pr_cdoperad);
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
@@ -713,6 +842,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
           UPDATE crapcdr
              SET crapcdr.flgconve = pr_flgconve
                 ,crapcdr.dtinicon = TO_DATE(pr_dtinicon, 'DD/MM/RRRR')
+                ,crapcdr.inmotcan = pr_inmotcan
+                ,crapcdr.dtcancon = TO_DATE(pr_dtcancon, 'DD/MM/RRRR')
+                ,crapcdr.dsmotcan = pr_dsmotcan
+                ,crapcdr.dtrencon = TO_DATE(pr_dtrencon, 'DD/MM/RRRR')
+                ,crapcdr.dttercon = TO_DATE(pr_dttercon, 'DD/MM/RRRR')
                 ,crapcdr.cdoperad = pr_cdoperad
            WHERE crapcdr.cdcooper = pr_cdcooper
              AND crapcdr.nrdconta = pr_nrdconta;
@@ -742,9 +876,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                  INTO vr_idcooperado_cdc;
         END IF;
 
-        -- Remove o CDATA da String
-        vr_dslink_google_maps := GENE0007.fn_remove_cdata(pr_dslink_google_maps);
-
         -- Grava os demais dados
         UPDATE tbsite_cooperado_cdc t
            SET t.nmfantasia = pr_nmfantasia
@@ -757,7 +888,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
               ,t.nrcep = vr_nrcep
               ,t.dstelefone = pr_dstelefone
               ,t.dsemail = pr_dsemail
-              ,t.dslink_google_maps = vr_dslink_google_maps
+              ,t.nrlatitude = pr_nrlatitude 
+              ,t.nrlongitude = pr_nrlongitude
          WHERE t.idcooperado_cdc = vr_idcooperado_cdc;
 
       EXCEPTION
@@ -774,6 +906,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                            || ''' para '''
                            || (CASE WHEN pr_flgconve = 0 THEN 'Não' ELSE 'Sim' END)
                            || '''<br>';
+
+        -- Tarifa de Convênio
+        TELA_ATENDA_CVNCDC.pc_manter_tarifa_adesao_cdc(pr_cdcooper => pr_cdcooper                                    -- Código da cooperativa do lojista 
+                                                      ,pr_nrdconta => pr_nrdconta                                    -- Número da conta do lojista 
+                                                      ,pr_flgconve => NVL(pr_flgconve, '0')                          -- Flag de convenio (1-Sim, 0-Não) 
+                                                      ,pr_flcnvold => NVL(vr_tab_cdr_cdc(pr_nrdconta).flgconve, '0') -- Flag de convenio anterior (1-Sim, 0-Não) 
+                                                      ,pr_cdoperad => pr_cdoperad                                    -- Operador
+                                                      ,pr_cdcritic => vr_cdcritic                                    -- Código de erro 
+                                                      ,pr_dscritic => vr_dscritic);                                  -- Descrição de erro
+
+        -- Se retornou erro
+        IF TRIM(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+          RAISE vr_exc_erro;
+        END IF;
+
       END IF;
 
       vr_dtinicon_old := TO_CHAR(vr_tab_cdr_cdc(pr_nrdconta).dtinicon, 'DD/MM/RRRR');
@@ -896,10 +1043,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                            || ''' para ''' || pr_dsemail || '''<br>';
       END IF;
 
-      IF NVL(vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps, ' ') <> NVL(vr_dslink_google_maps, ' ') THEN
+      IF NVL(vr_tab_cdr_cdc(pr_nrdconta).nrlatitude,0) <> NVL(pr_nrlatitude,0) THEN
         vr_dsconteudo_mail := vr_dsconteudo_mail
-                           || '<b>Link Google Maps:</b> de ''' || vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps
-                           || ''' para ''' || vr_dslink_google_maps || '''<br>';
+                           || '<b>Latitude:</b> de ''' || vr_tab_cdr_cdc(pr_nrdconta).nrlatitude
+                           || ''' para ''' || TO_CHAR(pr_nrlatitude) || '''<br>';
+      END IF;
+
+      IF NVL(vr_tab_cdr_cdc(pr_nrdconta).nrlongitude,0) <> NVL(pr_nrlongitude,0) THEN
+        vr_dsconteudo_mail := vr_dsconteudo_mail
+                           || '<b>Longitude:</b> de ''' || vr_tab_cdr_cdc(pr_nrdconta).nrlongitude
+                           || ''' para ''' || TO_CHAR(pr_nrlongitude) || '''<br>';
       END IF;
 
       -- Caso algum campo foi alterado
@@ -1003,11 +1156,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                                    ,pr_dsdadatu => pr_dsemail);
         END IF;
 
-        IF NVL(vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps, ' ') <> NVL(vr_dslink_google_maps, ' ') THEN
+        IF NVL(vr_tab_cdr_cdc(pr_nrdconta).nrlatitude,0) <> NVL(pr_nrlatitude,0) THEN
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid
-                                   ,pr_nmdcampo => 'dslink_google_maps' 
-                                   ,pr_dsdadant => vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps
-                                   ,pr_dsdadatu => vr_dslink_google_maps);
+                                   ,pr_nmdcampo => 'nrlatitude' 
+                                   ,pr_dsdadant => vr_tab_cdr_cdc(pr_nrdconta).nrlatitude
+                                   ,pr_dsdadatu => pr_nrlatitude);
+        END IF;
+
+        IF NVL(vr_tab_cdr_cdc(pr_nrdconta).nrlongitude,0) <> NVL(pr_nrlongitude,0) THEN
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid
+                                   ,pr_nmdcampo => 'nrlongitude' 
+                                   ,pr_dsdadant => vr_tab_cdr_cdc(pr_nrdconta).nrlongitude
+                                   ,pr_dsdadatu => pr_nrlongitude);
         END IF;
         
         -- Busca o nome
@@ -1068,6 +1228,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 															,pr_idcooperado_cdc    IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Identificador do cooperado no CDC
 															,pr_flgconve           IN crapcdr.flgconve%TYPE --> Indicador se cooperado possui convenio CDC
 															,pr_dtinicon           IN VARCHAR2 --> Data de inicio de convenio
+                              ,pr_inmotcan           IN crapcdr.inmotcan%TYPE --> Motivo do Cancelamento
+                              ,pr_dtcancon           IN VARCHAR2 --> Data de Cancelamento
+                              ,pr_dsmotcan           IN crapcdr.dsmotcan%TYPE --> Motivo do Cancelamento
+                              ,pr_dtrencon           IN VARCHAR2 --> Data de Renovação
+                              ,pr_dttercon           IN VARCHAR2 --> Data de Término
 															,pr_nmfantasia         IN tbsite_cooperado_cdc.nmfantasia%TYPE --> Nome fantasia
 															,pr_cdcnae             IN tbsite_cooperado_cdc.cdcnae%TYPE --> Codigo da classificacao CNAE
 															,pr_dslogradouro       IN tbsite_cooperado_cdc.dslogradouro%TYPE --> Descricao do logradouro
@@ -1078,7 +1243,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 															,pr_idcidade           IN tbsite_cooperado_cdc.idcidade%TYPE --> Codigo da cidade da localizacao
 															,pr_dstelefone         IN tbsite_cooperado_cdc.dstelefone%TYPE --> Telefone do conveniado CDC
 															,pr_dsemail            IN tbsite_cooperado_cdc.dsemail%TYPE --> E-mail de contato
-															,pr_dslink_google_maps IN tbsite_cooperado_cdc.dslink_google_maps%TYPE --> Link da localizacao no google maps
+															,pr_nrlatitude         IN tbsite_cooperado_cdc.nrlatitude %TYPE --> Latitude
+                              ,pr_nrlongitude        IN tbsite_cooperado_cdc.nrlongitude%TYPE --> Longitude
 															,pr_xmllog             IN VARCHAR2 --> XML com informacoes de LOG
 															,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
 															,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
@@ -1126,7 +1292,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       vr_nrcep              tbsite_cooperado_cdc.nrcep%TYPE;
       vr_idcidade           tbsite_cooperado_cdc.idcidade%TYPE;
       vr_cdcnae             tbsite_cooperado_cdc.cdcnae%TYPE;
-      vr_dslink_google_maps tbsite_cooperado_cdc.dslink_google_maps%TYPE;
       vr_dscnae_new         tbgen_cnae.dscnae%TYPE;
       vr_dscnae_old         tbgen_cnae.dscnae%TYPE;
       vr_dscidade_new       crapmun.dscidade%TYPE;
@@ -1186,6 +1351,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcooperado_cdc => pr_idcooperado_cdc
 										,pr_flgconve => pr_flgconve
 										,pr_dtinicon => pr_dtinicon
+                    ,pr_inmotcan => pr_inmotcan
+                    ,pr_dtcancon => pr_dtcancon
+                    ,pr_dsmotcan => pr_dsmotcan
+                    ,pr_dtrencon => pr_dtrencon
+                    ,pr_dttercon => pr_dttercon
 										,pr_nmfantasia => pr_nmfantasia
 										,pr_cdcnae => pr_cdcnae
 										,pr_dslogradouro => pr_dslogradouro
@@ -1196,7 +1366,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcidade => pr_idcidade
 										,pr_dstelefone => pr_dstelefone
 										,pr_dsemail => pr_dsemail
-										,pr_dslink_google_maps => pr_dslink_google_maps 
+										,pr_nrlatitude  => pr_nrlatitude     
+                    ,pr_nrlongitude => pr_nrlongitude    
 										,pr_cdcritic => vr_cdcritic
 										,pr_dscritic => vr_dscritic
 										,pr_nmdcampo => pr_nmdcampo
@@ -1989,6 +2160,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcooperado_cdc => nvl(rw_cooperado_cdc.idcooperado_cdc,0)
 										,pr_flgconve => vr_tab_cdr_cdc(pr_nrdconta).flgconve
 										,pr_dtinicon => to_char(vr_tab_cdr_cdc(pr_nrdconta).dtinicon, 'DD/MM/RRRR')
+                    ,pr_inmotcan => vr_tab_cdr_cdc(pr_nrdconta).inmotcan
+                    ,pr_dtcancon => to_char(vr_tab_cdr_cdc(pr_nrdconta).dtcancon, 'DD/MM/RRRR')
+                    ,pr_dsmotcan => vr_tab_cdr_cdc(pr_nrdconta).dsmotcan
+                    ,pr_dtrencon => to_char(vr_tab_cdr_cdc(pr_nrdconta).dtrencon, 'DD/MM/RRRR') 
+                    ,pr_dttercon => to_char(vr_tab_cdr_cdc(pr_nrdconta).dttercon, 'DD/MM/RRRR')
 										,pr_nmfantasia => vr_info_cdc.nmfansia
 										,pr_cdcnae => rw_cooperado_cdc.cdcnae
 										,pr_dslogradouro => vr_info_cdc.dsendere
@@ -1999,7 +2175,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 										,pr_idcidade => vr_info_cdc.idcidade
 										,pr_dstelefone => vr_info_cdc.nrtelefo
 										,pr_dsemail => vr_info_cdc.dsdemail
-										,pr_dslink_google_maps => '<![CDATA[' || vr_tab_cdr_cdc(pr_nrdconta).dslink_google_maps || ']]>'
+										,pr_nrlatitude => vr_tab_cdr_cdc(pr_nrdconta).nrlatitude
+										,pr_nrlongitude => vr_tab_cdr_cdc(pr_nrdconta).nrlongitude
 										,pr_cdcritic => vr_cdcritic
 										,pr_dscritic => vr_dscritic
 										,pr_nmdcampo => vr_nmdcampo
@@ -2270,5 +2447,699 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
     END;
 	END pc_busca_informacoes_cadastro;
   	
+  PROCEDURE pc_lista_subsegmentos(pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE --> Código Subsegmento
+                                 ,pr_dssubsegmento IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
+		                             ,pr_xmllog   IN VARCHAR2                                      --> XML com informacoes de LOG
+																 ,pr_cdcritic OUT PLS_INTEGER                                  --> Codigo da critica
+																 ,pr_dscritic OUT VARCHAR2                                     --> Descricao da critica
+																 ,pr_retxml   IN OUT NOCOPY xmltype                            --> Arquivo de retorno do XML
+																 ,pr_nmdcampo OUT VARCHAR2                                     --> Nome do campo com erro
+																 ,pr_des_erro OUT VARCHAR2) IS                                 --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_lista_subsegmentos
+    Sistema : Ayllos Web
+    Autor   : Jean Michel
+    Data    : 30/11/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar os dados.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Consultar Subsegmentos
+      CURSOR cr_subsegmento(pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE
+                           ,pr_dssubsegmento IN tbepr_cdc_subsegmento.dssubsegmento%TYPE) IS
+
+        SELECT sub.cdsubsegmento
+              ,sub.dssubsegmento
+              ,seg.dssegmento
+          FROM tbepr_cdc_subsegmento sub
+              ,tbepr_cdc_segmento seg
+         WHERE seg.cdsegmento = sub.cdsegmento
+           AND (sub.cdsubsegmento = pr_cdsubsegmento OR NVL(pr_cdsubsegmento,0) = 0)
+           AND (UPPER(sub.dssubsegmento) LIKE '%' || UPPER(pr_dssubsegmento) || '%' OR pr_dssubsegmento IS NULL);
+    
+      rw_subsegmento cr_subsegmento%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_contador INTEGER := 0;
+
+    BEGIN
+
+      FOR rw_subsegmento IN cr_subsegmento(pr_cdsubsegmento => pr_cdsubsegmento, pr_dssubsegmento => pr_dssubsegmento) LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao  => vr_contador, pr_tag_nova => 'cdsubsegmento', pr_tag_cont => rw_subsegmento.cdsubsegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao  => vr_contador, pr_tag_nova => 'dssubsegmento', pr_tag_cont => rw_subsegmento.dssubsegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao  => vr_contador, pr_tag_nova => 'dssegmento', pr_tag_cont => rw_subsegmento.dssegmento, pr_des_erro => vr_dscritic);
+        vr_contador := vr_contador + 1;
+        
+      END LOOP;
+
+      GENE0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'qtdregis', pr_tag_cont => vr_contador , pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_lista_subsegmentos): ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_lista_subsegmentos;
+
+  PROCEDURE pc_mantem_subsegmentos(pr_cddopcao IN VARCHAR2                                        --> Opção da Tela
+                                  ,pr_idcooperado_cdc IN tbepr_cdc_subsegmento.dssubsegmento%TYPE --> Descrição Subsegmento
+                                  ,pr_cdsubsegmento IN tbepr_cdc_subsegmento.cdsubsegmento%TYPE   --> Código Subsegmento
+                                  ,pr_xmllog   IN VARCHAR2                                        --> XML com informacoes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER                                    --> Codigo da critica
+                                  ,pr_dscritic OUT VARCHAR2                                       --> Descricao da critica
+                                  ,pr_retxml   IN OUT NOCOPY xmltype                              --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2                                       --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS                                   --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_mantem_subsegmentos
+    Sistema : Ayllos Web
+    Autor   : Jean Michel
+    Data    : 30/11/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gravar, excluir dados de subsegmentos
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+  
+      IF pr_cddopcao = 'I' THEN
+        BEGIN
+          INSERT INTO tbepr_cdc_lojista_subseg(idcooperado_cdc, cdsubsegmento) VALUES(pr_idcooperado_cdc, pr_cdsubsegmento);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir registro de subsegmento. Erro: ' || SQLERRM || ', ID: ' || pr_idcooperado_cdc || ', SUB: ' || pr_cdsubsegmento;
+            RAISE vr_exc_erro;
+        END;
+      ELSIF pr_cddopcao = 'E' THEN
+        BEGIN
+          DELETE tbepr_cdc_lojista_subseg WHERE tbepr_cdc_lojista_subseg.idcooperado_cdc = pr_idcooperado_cdc
+                                            AND tbepr_cdc_lojista_subseg.cdsubsegmento = pr_cdsubsegmento;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao excluir registro de subsegmento. Erro: ' || SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      ELSE   
+        vr_dscritic := 'Opção inválida.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_mantem_subsegmentos): ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_mantem_subsegmentos;
+
+  PROCEDURE pc_lista_subsegmentos_coop(pr_idcooperado_cdc IN tbsite_cooperado_cdc.idcooperado_cdc%TYPE --> Código Subsegmento
+                                      ,pr_xmllog   IN VARCHAR2                                         --> XML com informacoes de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER                                     --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2                                        --> Descricao da critica
+                                      ,pr_retxml   IN OUT NOCOPY xmltype                               --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2                                        --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS                                    --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_lista_subsegmentos_coop
+    Sistema : Ayllos Web
+    Autor   : Jean Michel
+    Data    : 30/11/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar os dados.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Consultar Subsegmentos
+      CURSOR cr_subsegmento(pr_idcooperado_cdc IN tbepr_cdc_lojista_subseg.idcooperado_cdc%TYPE) IS
+
+        SELECT seg.cdsegmento
+              ,seg.dssegmento
+              ,sub.cdsubsegmento
+              ,sub.dssubsegmento
+              ,sub.nrmax_parcela
+              ,TRIM(TO_CHAR(sub.vlmax_financ,'FM999G900D00')) AS vlmax_financ
+          FROM tbepr_cdc_lojista_subseg loj
+              ,tbepr_cdc_subsegmento sub
+              ,tbepr_cdc_segmento seg
+        WHERE loj.cdsubsegmento = sub.cdsubsegmento
+          AND sub.cdsegmento = seg.cdsegmento
+          AND loj.idcooperado_cdc = 703;
+    
+      rw_subsegmento cr_subsegmento%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_contador INTEGER := 0;
+
+    BEGIN
+
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'subsegmentos', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+
+      FOR rw_subsegmento IN cr_subsegmento(pr_idcooperado_cdc => pr_idcooperado_cdc) LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmentos', pr_posicao  => 0, pr_tag_nova => 'subsegmento', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'cdsegmento', pr_tag_cont => rw_subsegmento.cdsegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'dssegmento', pr_tag_cont => rw_subsegmento.dssegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'cdsubsegmento', pr_tag_cont => rw_subsegmento.cdsubsegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'dssubsegmento', pr_tag_cont => rw_subsegmento.dssubsegmento, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'nrmax_parcela', pr_tag_cont => rw_subsegmento.nrmax_parcela, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'vlmax_financ ', pr_tag_cont => rw_subsegmento.vlmax_financ , pr_des_erro => vr_dscritic);
+        vr_contador := vr_contador + 1;
+        
+      END LOOP;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_lista_subsegmentos): ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_lista_subsegmentos_coop;
+
+  PROCEDURE pc_manter_tarifa_adesao_cdc(pr_cdcooper  IN crapcop.cdcooper%TYPE     -- Código da cooperativa do lojista 
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE     -- Número da conta do lojista 
+                                       ,pr_flgconve  IN crapcdr.flgconve%TYPE     -- Flag de convenio (1-Sim, 0-Não) 
+                                       ,pr_flcnvold  IN crapcdr.flgconve%TYPE     -- Flag de convenio anterior (1-Sim, 0-Não) 
+                                       ,pr_cdoperad  IN crapope.cdoperad%TYPE     -- Operador
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Código de erro 
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição de erro
+    BEGIN                                   
+    /* .............................................................................
+
+    Programa: pc_manter_tarifa_adesao_cdc
+    Sistema : Ayllos Web
+    Autor   : Jean Michel
+    Data    : 11/12/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Controlar adesão da tarifa CDC
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      
+      -- Consultar tipo de cooperado
+      CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+
+        SELECT ass.inpessoa
+              ,ass.cdagenci
+              ,ass.nrdctitg
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+           
+      rw_crapass cr_crapass%ROWTYPE;
+       
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+      -- Variáveis de Erro          
+      vr_exc_erro EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+      -- PLTABLE de erro generica
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      -- Variáveis locais
+      vr_inpessoa crapass.inpessoa%TYPE := 0;
+      vr_rowid_lat ROWID;
+      vr_cdbattar VARCHAR2(50) := '';
+      vr_cdhistor INTEGER;
+      vr_cdhisest NUMBER;
+      vr_vlrtarif NUMBER;
+      vr_dtdivulg DATE;
+      vr_dtvigenc DATE;
+      vr_cdfvlcop INTEGER;
+      vr_cdprogra VARCHAR2(50) := 'ATENDA_CVNCDC';
+
+    BEGIN
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+
+      FETCH cr_crapass INTO rw_crapass;
+
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic := 9;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapass;
+        vr_inpessoa := rw_crapass.inpessoa;
+      END IF;
+
+      IF vr_inpessoa = 1 THEN -- PF
+        vr_cdbattar := 'CADCDCLJPF'; -- Cadastro CDC Pessoa Fisica
+        vr_cdhistor := 1437;
+      ELSE -- PJ
+        vr_cdbattar := 'CADCDCLJPJ'; -- Cadastro CDC Pessoa Juridica
+        vr_cdhistor := 1461;
+      END IF;
+
+      IF pr_flgconve = 1 AND pr_flcnvold  = 0 THEN -- Possui CDC
+            
+        TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper -- IN cooperativa 
+                                             ,pr_cdbattar => vr_cdbattar -- IN nome da tarifa 
+                                             ,pr_vllanmto => 1 -- IN 0 ou 1 -- valor do movimento 
+                                             ,pr_cdprogra => vr_cdprogra -- IN 
+                                             ,pr_cdhistor => vr_cdhistor -- OUT 
+                                             ,pr_cdhisest => vr_cdhisest -- OUT 
+                                             ,pr_vltarifa => vr_vlrtarif -- OUT 
+                                             ,pr_dtdivulg => vr_dtdivulg -- OUT 
+                                             ,pr_dtvigenc => vr_dtvigenc -- OUT 
+                                             ,pr_cdfvlcop => vr_cdfvlcop -- OUT 
+                                             ,pr_cdcritic => vr_cdcritic -- OUT 
+                                             ,pr_dscritic => vr_dscritic -- OUT 
+                                             ,pr_tab_erro => vr_tab_erro); -- OUT 
+
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro no lancamento de tarifa CDC.';
+          END IF;
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa 
+                                        ,pr_nrdconta => pr_nrdconta -- Numero da Conta 
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Lancamento 
+                                        ,pr_cdhistor => vr_cdhistor -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo Historico 
+                                        ,pr_vllanaut => vr_vlrtarif -- retornado na chamada pc_carrega_dados_tar_vigente -- Valor lancamento automatico 
+                                        ,pr_cdoperad => pr_cdoperad -- Codigo Operador 
+                                        ,pr_cdagenci => rw_crapass.cdagenci -- PEGAR DA TABELA E COLUNA CITADA -- Codigo Agencia 
+                                        ,pr_cdbccxlt => 100 -- valor fixo -Codigo banco caixa 
+                                        ,pr_nrdolote => 10127 -- valor fixo -Numero do lote 
+                                        ,pr_tpdolote => 1 -- valor fixo -Tipo do lote 
+                                        ,pr_nrdocmto => 0 -- valor fixo -numero do documento 
+                                        ,pr_nrdctabb => pr_nrdconta -- numero da conta 
+                                        ,pr_nrdctitg => rw_crapass.nrdctitg -- PEGAR DA TABELA E COLUNA CITADA -- Numero da conta integraca 
+                                        ,pr_cdpesqbb => 'Fato gerador tarifa: ' || vr_cdbattar -- Codigo pesquisa 
+                                        ,pr_cdbanchq => 0 -- Codigo Banco Cheque 
+                                        ,pr_cdagechq => 0 -- Codigo Agencia Cheque 
+                                        ,pr_nrctachq => 0 -- Numero Conta Cheque 
+                                        ,pr_flgaviso => FALSE --Flag aviso 
+                                        ,pr_tpdaviso => 0 -- Tipo aviso 
+                                        ,pr_cdfvlcop => vr_cdfvlcop -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo cooperativa 
+                                        ,pr_inproces => rw_crapdat.inproces --Indicador processo 
+                                        ,pr_rowid_craplat => vr_rowid_lat -- Rowid do lancamento tarifa 
+                                        ,pr_tab_erro => vr_tab_erro 
+                                        ,pr_cdcritic => vr_cdcritic 
+                                        ,pr_dscritic => vr_dscritic);
+
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro no lancamento de tarifa CDC.';
+          END IF;
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+      ELSE -- Não possui CDC
+
+        BEGIN
+          DELETE craplat WHERE craplat.cdcooper = pr_cdcooper
+                           AND craplat.nrdconta = pr_nrdconta
+                           AND craplat.dtmvtolt = rw_crapdat.dtmvtolt
+                           AND craplat.cdhistor = vr_cdhistor
+                           AND craplat.insitlat = 1;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := '';
+            RAISE vr_exc_erro;
+        END;        
+
+      END IF;
+
+      -- Efetua o commit
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_manter_tarifa_adesao_cdc): ' || SQLERRM;
+        ROLLBACK;
+    END;
+
+  END pc_manter_tarifa_adesao_cdc;
+  
+  PROCEDURE pc_manter_tarifa_renovacao_cdc(pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Código de erro 
+                                          ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição de erro
+    BEGIN                                   
+    /* .............................................................................
+
+    Programa: pc_manter_tarifa_renovacao_cdc
+    Sistema : Ayllos Web
+    Autor   : Jean Michel
+    Data    : 11/12/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Controlar adesão da tarifa CDC
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      -- Consultar tipo de cooperado
+      CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+
+        SELECT ass.inpessoa
+              ,ass.cdagenci
+              ,ass.nrdctitg
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+           
+      rw_crapass cr_crapass%ROWTYPE;
+
+      CURSOR cr_crapcdr IS
+        SELECT trunc(SYSDATE) AS dtrencon -- data de renovacao do convenio 
+              ,cdr.cdcooper 
+              ,cdr.nrdconta 
+              ,cdr.dttercon 
+              ,add_months(trunc(SYSDATE), 12) as proxima_dttercon -- proxima data de ter-mino 
+              ,ass.inpessoa
+          FROM crapcdr cdr
+              ,crapass ass 
+         WHERE cdr.flgconve = 1 -- cdc ativo 
+           AND cdr.dttercon < trunc(SYSDATE) -- contratos vencidos
+           AND cdr.cdcooper = ass.cdcooper
+           AND cdr.nrdconta = cdr.nrdconta;
+      
+      rw_crapcdr cr_crapcdr%ROWTYPE;
+
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+      -- Variáveis de Erro          
+      vr_exc_erro EXCEPTION;
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
+      vr_dscritic crapcri.dscritic%TYPE := '';
+      -- PLTABLE de erro generica
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      -- Variáveis locais
+      vr_assunto  VARCHAR2(4000) := '';     
+      vr_conteudo VARCHAR2(4000) := '';
+
+      vr_inpessoa crapass.inpessoa%TYPE := 0;
+      vr_rowid_lat ROWID;
+      vr_cdbattar VARCHAR2(50) := '';
+      vr_cdhistor INTEGER;
+      vr_cdhisest NUMBER;
+      vr_vlrtarif NUMBER;
+      vr_dtdivulg DATE;
+      vr_dtvigenc DATE;
+      vr_cdfvlcop INTEGER;
+      vr_cdprogra VARCHAR2(50) := 'ATENDA_CVNCDC';
+      vr_cdcooper crapcop.cdcooper%TYPE := 0;
+    BEGIN
+
+      FOR rw_crapcdr IN cr_crapcdr LOOP
+        
+        IF vr_cdcooper <> rw_crapcdr.cdcooper THEN
+          vr_cdcooper := rw_crapcdr.cdcooper;
+
+          -- Leitura do calendário da cooperativa
+          OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcdr.cdcooper);
+
+          FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+          -- Se não encontrar
+          IF btch0001.cr_crapdat%NOTFOUND THEN
+            -- Fechar o cursor pois efetuaremos raise
+            CLOSE btch0001.cr_crapdat;
+            -- Montar mensagem de critica
+            vr_cdcritic := 1;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+            RAISE vr_exc_erro;
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE btch0001.cr_crapdat;
+          END IF;
+
+        END IF;
+
+        OPEN cr_crapass(pr_cdcooper => rw_crapcdr.cdcooper
+                       ,pr_nrdconta => rw_crapcdr.nrdconta);
+
+        FETCH cr_crapass INTO rw_crapass;
+
+        IF cr_crapass%NOTFOUND THEN
+          CLOSE cr_crapass;
+          vr_cdcritic := 9;
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crapass;
+          vr_inpessoa := rw_crapass.inpessoa;
+        END IF;
+
+        IF vr_inpessoa = 1 THEN -- PF
+          vr_cdbattar := 'RENCDCLJPF'; -- Cadastro CDC Pessoa Fisica
+          vr_cdhistor := 1439;
+        ELSE -- PJ
+          vr_cdbattar := 'RENCDCLJPJ'; -- Cadastro CDC Pessoa Juridica
+          vr_cdhistor := 1463;
+        END IF;
+
+        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => rw_crapcdr.cdcooper -- Codigo Cooperativa 
+                                        ,pr_nrdconta => rw_crapcdr.nrdconta -- Numero da Conta 
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt -- Data Lancamento 
+                                        ,pr_cdhistor => vr_cdhistor -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo Historico 
+                                        ,pr_vllanaut => vr_vlrtarif -- retornado na chamada pc_carrega_dados_tar_vigente -- Valor lancamento automatico 
+                                        ,pr_cdoperad => '1' -- Codigo Operador 
+                                        ,pr_cdagenci => rw_crapass.cdagenci -- PEGAR DA TABELA E COLUNA CITADA -- Codigo Agencia 
+                                        ,pr_cdbccxlt => 100 -- valor fixo -Codigo banco caixa 
+                                        ,pr_nrdolote => 10127 -- valor fixo -Numero do lote 
+                                        ,pr_tpdolote => 1 -- valor fixo -Tipo do lote 
+                                        ,pr_nrdocmto => 0 -- valor fixo -numero do documento 
+                                        ,pr_nrdctabb => rw_crapcdr.nrdconta -- numero da conta 
+                                        ,pr_nrdctitg => rw_crapass.nrdctitg -- PEGAR DA TABELA E COLUNA CITADA -- Numero da conta integraca 
+                                        ,pr_cdpesqbb => 'Fato gerador tarifa: ' || vr_cdbattar -- Codigo pesquisa 
+                                        ,pr_cdbanchq => 0 -- Codigo Banco Cheque 
+                                        ,pr_cdagechq => 0 -- Codigo Agencia Cheque 
+                                        ,pr_nrctachq => 0 -- Numero Conta Cheque 
+                                        ,pr_flgaviso => FALSE --Flag aviso 
+                                        ,pr_tpdaviso => 0 -- Tipo aviso 
+                                        ,pr_cdfvlcop => vr_cdfvlcop -- retornado na chamada pc_carrega_dados_tar_vigente -- Codigo cooperativa 
+                                        ,pr_inproces => rw_crapdat.inproces --Indicador processo 
+                                        ,pr_rowid_craplat => vr_rowid_lat -- Rowid do lancamento tarifa 
+                                        ,pr_tab_erro => vr_tab_erro 
+                                        ,pr_cdcritic => vr_cdcritic 
+                                        ,pr_dscritic => vr_dscritic);
+
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro no lancamento de tarifa CDC.';
+          END IF;
+
+          vr_assunto := '';
+          vr_conteudo := '';
+
+          --Enviar Email
+          GENE0003.pc_solicita_email(pr_cdcooper        => rw_crapcdr.cdcooper    --> Cooperativa conectada
+                                    ,pr_cdprogra        => 'JBEPR_RENOVARTARIFACDC'    --> Programa conectado
+                                    ,pr_des_destino     => 'CECRED - CDC <cdc@cecred.coop.br>' --> Um ou mais detinatários separados por ';' ou ','
+                                    ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
+                                    ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
+                                    ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
+                                    ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
+                                    ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
+                                    ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
+                                    ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
+                                    ,pr_flg_log_batch   => 'N'            --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
+          --Se ocorreu erro
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic:= 0;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+
+        END IF;
+
+      END LOOP;
+
+      -- Efetua o commit
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CVNCDC(pc_manter_tarifa_renovacao_cdc): ' || SQLERRM;
+        ROLLBACK;
+    END;
+
+  END pc_manter_tarifa_renovacao_cdc;
+
 END TELA_ATENDA_CVNCDC;
 /

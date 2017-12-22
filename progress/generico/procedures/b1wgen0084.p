@@ -23,15 +23,11 @@
 
 *******************************************************************************/
 
-
-
-
-
 /*............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 21/11/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 20/12/2017
 
     Dados referentes ao programa:
 
@@ -292,6 +288,11 @@
                            grava_efetivacao_proposta, incluido leitura da crawepr
                            na procedure desfaz_efetivacao_emprestimo 
                            (Jean Michel - Prj. 402).
+                           
+              20/12/2017 - Criados novos históricos(2013,2014) para demonstraçao da
+                           parte contábil dos lançamentos de CDC, alteraçao nas
+                           procedures desfaz_efetivacao_emprestimo, busca_desfazer_efetivacao_emprestimo
+                           e grava_efetivacao_proposta, Prj. 402 (Jean Michel).
 
 ............................................................................. */
 
@@ -3182,6 +3183,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltottar AS DECI                                      NO-UNDO.
     DEF VAR aux_vltariof AS DECI                                      NO-UNDO.
     DEF VAR aux_flcaliof AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_tpfinali AS INTE                                      NO-UNDO.
 
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
@@ -3398,12 +3400,30 @@ PROCEDURE grava_efetivacao_proposta:
            END.
        ELSE
            DO:
-       IF   aux_floperac   THEN             /* Financiamento*/
-            ASSIGN aux_cdhistor = 1059
-                   aux_nrdolote = 600030.
-       ELSE                                 /* Emprestimo */
-            ASSIGN aux_cdhistor = 1036
-                   aux_nrdolote = 600005.
+              FIND crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
+                             AND crapfin.cdfinemp = crawepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
+           
+              IF AVAILABLE crapfin THEN
+                ASSIGN aux_tpfinali = crapfin.tpfinali.                
+           
+              IF aux_floperac THEN /* Financiamento*/
+                DO:
+                  IF aux_tpfinali = 3 THEN /* CDC */
+                    ASSIGN aux_cdhistor = 2014.
+                  ELSE
+                    ASSIGN aux_cdhistor = 1059.
+                    
+                  ASSIGN  aux_nrdolote = 600030.
+                END.
+             ELSE /* Emprestimo */
+               DO:
+                IF aux_tpfinali = 3 THEN /* CDC */
+                  ASSIGN aux_cdhistor = 2013.
+                ELSE
+                  ASSIGN aux_cdhistor = 1036.
+                
+                ASSIGN aux_nrdolote = 600005.
+               END.
            END.
 
        RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
@@ -3912,7 +3932,7 @@ PROCEDURE grava_efetivacao_proposta:
 END PROCEDURE. /*   grava efetivacao proposta */
 
 
-PROCEDURE busca_desfazer_efetivacao_emprestimo:
+PROCEDURE busca_desfazer_efetivacao_emprestimo: 
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
@@ -4094,7 +4114,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                            craplem.nrdconta = par_nrdconta     AND
                            craplem.nrctremp = par_nrctremp     NO-LOCK:
 
-        IF   NOT CAN-DO("1036,1059,2326,2327",STRING(craplem.cdhistor)) THEN
+        IF   NOT CAN-DO("1036,1059,2013,2014,2326,2327",STRING(craplem.cdhistor)) THEN
              DO:
                  ASSIGN aux_cdcritic = 368
                         aux_dscritic = "".
@@ -4210,6 +4230,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
     DEF VAR aux_flgtrans          AS LOGI                           NO-UNDO.
     DEF VAR aux_idcarga           AS INTE                           NO-UNDO.
+    DEF VAR aux_tpfinali          AS INTE                           NO-UNDO.
 
     DEF VAR h-b1wgen0134          AS HANDLE                         NO-UNDO.
     DEF VAR h-b1craplot           AS HANDLE                         NO-UNDO.
@@ -4399,13 +4420,31 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
            END. /* END IF AVAIL crappre THEN */
 
-       IF   aux_floperac   THEN             /* Financiamento*/
-            ASSIGN aux_cdhistor = 1059
-                   aux_nrdolote = 600030.
-       ELSE                                 /* Emprestimo */
-            ASSIGN aux_cdhistor = 1036
-                   aux_nrdolote = 600005.
-
+        FIND crapfin WHERE crapfin.cdcooper = crapepr.cdcooper
+                       AND crapfin.cdfinemp = crapepr.cdfinemp NO-LOCK NO-ERROR NO-WAIT.
+           
+        IF AVAILABLE crapfin THEN
+          ASSIGN aux_tpfinali = crapfin.tpfinali. 
+        
+        IF aux_floperac THEN /* Financiamento*/
+          DO:
+            IF aux_tpfinali = 3 THEN /* CDC */
+              ASSIGN aux_cdhistor = 2014.
+            ELSE
+              ASSIGN aux_cdhistor = 1059.
+              
+            ASSIGN  aux_nrdolote = 600030.
+          END.
+        ELSE /* Emprestimo */
+         DO:
+          IF aux_tpfinali = 3 THEN /* CDC */
+            ASSIGN aux_cdhistor = 2013.
+          ELSE
+            ASSIGN aux_cdhistor = 1036.
+          
+          ASSIGN aux_nrdolote = 600005.
+         END.
+        
         RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
 
         /* Lançamento de Liberar valor de Emprestimo  */

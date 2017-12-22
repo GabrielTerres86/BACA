@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                         Ultima atualizacao: 01/09/2017
+   Data    : Novembro/98                         Ultima atualizacao: 20/12/2017
 
    Dados referentes ao programa:
 
@@ -75,6 +75,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
                             P307 - (Jonatas - Supero)	
 
                01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
+
+               20/12/2017 - Inclusão de novos históricos(2013,2014), Prj. 402 (Jean Michel)
 
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
@@ -764,7 +766,7 @@ BEGIN
       -- Inicializa variável de crédito em conta corrente
       vr_flgcrcta := true;
       --
-      if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (99,1036,1059) then
+      if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (99,1036,1059,2013,2014) then
         -- Verifica se tem empréstimo. Se não tiver, descarta.
         open cr_crapepr (pr_cdcooper,
                          vr_nrdconta,

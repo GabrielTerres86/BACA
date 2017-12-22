@@ -657,7 +657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
 																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
 																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
-                                          ,pr_flpreapv    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -688,7 +688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  16/06/2016 - Ajustes para não estourar variavel dsobscmt.             
                               PRJ207 - Esteira (Odirlei-AMcom)
 
-                 21/11/2017 - Inclusão do parametro pr_flpreapv, Prj. 402 (Jean Michel)             
+                 21/11/2017 - Inclusão do parametro pr_flgpreap, Prj. 402 (Jean Michel)             
 
      ..............................................................................*/
     DECLARE
@@ -951,7 +951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                           ,crawepr.dsnivris)
                 ,crawepr.dtdscore = NVL(pr_dtdscore,nvl(crawepr.dtdscore,trunc(SYSDATE)))
                 ,crawepr.dsdscore = NVL(pr_dsdscore,crawepr.dsdscore)
-                ,crawepr.flpreapv = pr_flpreapv
+                ,crawepr.flgpreap = pr_flgpreap
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -1543,7 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,aci.nrdconta    
               ,aci.nrctrprp    nrctremp
               ,aci.dsprotocolo dsprotoc
-          FROM tbepr_acionamento aci
+          FROM tbgen_webservice_aciona aci
          WHERE aci.dsprotocolo   = pr_dsprotoc
            AND aci.tpacionamento = 1; /*Envio*/
       rw_aciona cr_aciona%ROWTYPE;
@@ -1588,7 +1588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
       vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
       vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
-      vr_flpreapv INTEGER := 0;
+      vr_flgpreap INTEGER := 0;
 
       -- Bloco PLSQL para chamar a execução paralela do pc_crps414
       vr_dsplsql VARCHAR2(4000);
@@ -1743,14 +1743,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         WHEN 'reprovar'     THEN vr_dssitret := 'REJEITADA AUTOM.';
         WHEN 'derivar'      THEN vr_dssitret := 'ANALISAR MANUAL';
         WHEN 'erro'         THEN vr_dssitret := 'ERRO';
-        WHEN 'aprovar_auto' THEN vr_dssitret := 'APROVADO PRE APROVADO';
+        WHEN 'aprovar_auto' THEN vr_dssitret := 'APROVADO PRE APROVADO'; vr_flgpreap := 1;
         ELSE vr_dssitret := 'DESCONHECIDA';
       END CASE;
-		
-      IF lower(pr_dsresana) = 'aprovar_auto' THEN
-        vr_flpreapv := 1; 
-      END IF;
-      
+		      
       -- Se o acionamento ainda não foi gravado
       IF vr_nrtransacao = 0 THEN 				
         -- Gravar o acionamento 
@@ -1931,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																		,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
 																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
 																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
-                                    ,pr_flpreapv    => vr_flpreapv    --> Indicador de Pré Aprovado
+                                    ,pr_flgpreap    => vr_flgpreap    --> Indicador de Pré Aprovado
 																		,pr_status      => vr_status      --> Status
 																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
 																		,pr_dscritic    => vr_dscritic    --> Descricao da critica

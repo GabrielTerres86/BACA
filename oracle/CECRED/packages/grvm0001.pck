@@ -357,6 +357,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660356 e 660394
+  --
+  --             18/12/2017 - Inclusão da procedure pc_consulta_situacao_cdc, Prj. 402 (Jean Michel)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -632,8 +635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND pr_dscritic IS NULL THEN
           -- Buscar a descrição
-          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);END IF;
 
         --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
         --Padronização - Chamado 660394
@@ -2701,6 +2703,99 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
    
   END pc_busca_valida_contrato;  
 
+  -- Prj. 402
+  PROCEDURE pc_consulta_situacao_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE      -- Código da Cooperativa
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE      -- Número da conta
+                                    ,pr_nrctrpro IN crawepr.nrctremp%TYPE      -- Número do contrato 
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Código da crítica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição da crítica
+                                      
+                            
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_consulta_situacao_cdc                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jean Michel
+    Data     : 15/12/2017                          Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Busca contratos
+    
+    --   Alteracoes: 
+    --               
+    -------------------------------------------------------------------------------------------------------------*/                               
+    
+    --Cursor para encotrato o contrato de empréstimo 
+    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE)IS
+    SELECT cop.flintcdc
+          ,cdc.inintegra_cont
+          ,fin.tpfinali
+      FROM crapcop cop
+          ,crawepr epr
+          ,tbepr_cdc_parametro cdc
+          ,crapfin fin
+     WHERE epr.cdcooper = pr_cdcooper
+       AND epr.nrdconta = pr_nrdconta
+       AND epr.nrctremp = pr_nrctremp
+       AND epr.cdcooper = cop.cdcooper
+       AND cop.cdcooper = cdc.cdcooper
+       AND cdc.cdcooper = fin.cdcooper
+       AND fin.cdfinemp = epr.cdfinemp;
+
+    rw_crawepr cr_crawepr%ROWTYPE;                      
+                     
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION; 
+  
+    
+  BEGIN
+    
+      OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctrpro);
+                     
+      FETCH cr_crawepr INTO rw_crawepr;
+              
+      IF cr_crawepr%FOUND THEN
+        CLOSE cr_crawepr; 
+
+        IF rw_crawepr.tpfinali = 3 AND rw_crawepr.flintcdc = 1 AND rw_crawepr.inintegra_cont = 0 THEN
+          vr_dscritic := 'Ação não permitida, cooperativa possui integração CDC habilitada! Esta ação deve ser realizada junto ao Autorizador CDC.';
+          RAISE vr_exc_erro;
+        END IF;
+
+      ELSE
+        CLOSE cr_crawepr;
+        vr_dscritic := 'Registro de contrato não encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); -- Buscar a descrição
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN   
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_consulta_situacao_cdc: '|| SQLERRM;
+    
+  END pc_consulta_situacao_cdc;
+  -- Prj. 402
+
   PROCEDURE pc_gravames_consultar_bens(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
                                       ,pr_cddopcao IN VARCHAR2              --Opção
                                       ,pr_nrctrpro IN crawepr.nrctremp%TYPE --Número do contrato 
@@ -2909,6 +3004,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF;    
        
+    /**/
+    pc_consulta_situacao_cdc(pr_cdcooper => vr_cdcooper  -- Código da Cooperativa
+                            ,pr_nrdconta => pr_nrdconta  -- Número da conta
+                            ,pr_nrctrpro => pr_nrctrpro  -- Número do contrato 
+                            ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                            ,pr_dscritic => vr_dscritic); -- Descrição do Erro
+
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    /**/
+
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
                                    ,pr_nrdconta => pr_nrdconta  -- Numero da conta do associado
                                    ,pr_nrctrpro => pr_nrctrpro  -- Numero do contrato
@@ -7181,5 +7288,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     END;
   END pc_gravames_processa_retorno;
   
+
 END GRVM0001;
 /

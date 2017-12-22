@@ -19,8 +19,10 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
- * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
- */
+ * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert) 
+ * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
+ * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
+ */                                         
 ?>
 
 <div id="divEmpres" class="divRegistros">
@@ -53,14 +55,18 @@
 						<input type="hidden" id="dsctrliq" name="dsctrliq" value="<? echo getByTagName($registro->tags,'dsctrliq') ?>" />
 						<input type="hidden" id="flgimppr" name="flgimppr" value="<? echo getByTagName($registro->tags,'flgimppr') ?>" />
 						<input type="hidden" id="flgimpnp" name="flgimpnp" value="<? echo getByTagName($registro->tags,'flgimpnp') ?>" />
-                        <input type="hidden" id="cdorigem" name="cdorigem" value="<? echo getByTagName($registro->tags,'cdorigem') ?>" />
-                        <input type="hidden" id="portabil" name="portabil" value="<? echo getByTagName($registro->tags,'portabil') ?>" />
-                        <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
+						<input type="hidden" id="cdorigem" name="cdorigem" value="<? echo getByTagName($registro->tags,'cdorigem') ?>" />
+						<input type="hidden" id="portabil" name="portabil" value="<? echo getByTagName($registro->tags,'portabil') ?>" />
+						<input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
-                    </td>
+						
+						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
+						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($registro->tags,'inintegra_cont') ?>" />
+						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($registro->tags,'tpfinali') ?>" />
+					</td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>
 					<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlemprst')) ?></span>
@@ -82,7 +88,15 @@
 	<a href="#" class="botao" id="btVoltar"    onclick="encerraRotina(true); return false;">Voltar</a>
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
-	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	
+	<?php if(!($sitaucaoDaContaCrm == '4' || 
+			   $sitaucaoDaContaCrm == '7' || 
+			   $sitaucaoDaContaCrm == '8'  )){?>
+
+			<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	
+	<?}?>
+	
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
   <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>

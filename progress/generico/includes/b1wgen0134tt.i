@@ -3,7 +3,7 @@
    Programa: Includes/var_hisopcr.i
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2012.                   Ultima atualizacao: 06/10/2016
+   Data    : Fevereiro/2012.                   Ultima atualizacao: 20/12/2017
 
    Dados referentes ao programa:
   
@@ -15,11 +15,16 @@
                
                11/08/2015 - Adicionado novos historicos. (Reinert)
                 
-			   06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
-							Prj. 302. (Jean Michel)
+               06/10/2016 - Adicionado novos historicos(2193, 2194, 2180, 2181, 2182),
+                            Prj. 302. (Jean Michel)
                 
+			         19/11/2017 - Incusao do historico 354 (Jonata - RKAM P364).
+                
+               20/12/2017 - Inclusao dos historicos 2013 e 2014, Prj. 402 (Jean Michel). 
+               
 ............................................................................*/
-DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
+DEF VAR aux_histcred  AS INT EXTENT INIT [ 354, /* credito cotas */
+                                          1032,	/* Contrato Empr */
                                           1033,	/* Contrato Fina */
                                           1034,	/* Juros Apr Emp */
                                           1035,	/* Juros Apr Fin */
@@ -46,6 +51,7 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1056,	/* EstDescAntFin */
                                           1057,	/* Pg. Aval.Fina */
                                           1058,	/* Pg. Fina Cotas */
+                                          1059, /* LIBER.DO CRED */
                                           1060,	/* Multa Empr. */
                                           1070,	/* Multa Fin. */
                                           1071,	/* Jur. Mora Emp. */
@@ -55,17 +61,16 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1075,	/* EstTrfCotasFin */
                                           1076,	/* Multa Financ. */
                                           1077,	/* Jur. Mora Emp. */
-                                          1078, /* Jur. Mora Fin. */
-                                          1618, /* Pg. Aval. Multa Fin. */
-                                          1619, /* Pg. Aval. Jur. Mora Emp. */
-                                          1620, /* Pg. Aval. Jur. Mora Fin. */
+                                          1078, /* Jur. Mora Fin. */                                          
+                                          1539, /* Pg. Parc. Tx.*/
                                           1540, /* Pg. Aval. Multa Emp. */
                                           1541,	/* Aval. Multa Emp. */
                                           1542,	/* Aval. Multa Fin. */
                                           1543,	/* Aval. Jur. Mora Emp. */
                                           1544, /* Aval. Jur. Mora Fin.*/
-                                          1539, /* Pg. Parc. Tx.*/
-                                          1059, /* LIBER.DO CRED */
+                                          1618, /* Pg. Aval. Multa Fin. */
+                                          1619, /* Pg. Aval. Jur. Mora Emp. */
+                                          1620, /* Pg. Aval. Jur. Mora Fin. */                                          
                                           1705, /* EST.PARC.EMP. */
                                           1707, /* EST.PARC.FIN. */
                                           1708, /* EST.MULTA EMP */
@@ -80,10 +85,12 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1734, /* MULTA TR.PREJ */
                                           1735, /* JUR.MORA PREJ */
                                           1736, /* JUR.MORA PREJ */ 
-										  2193, /* DB.BLOQ.ACORD */
-										  2194, /* CR.DESB.ACORD */
-										  2180, /* CRED.COB.ACOR */
-										  2181, /* ABAT.CONC.ACO */
-										  2182  /* PAG.DESP.ACOR */ ] NO-UNDO. 
+                                          2013, /* Empréstimo CDC */
+                                          2014, /* Financiamento CDC */
+                                          2180, /* CRED.COB.ACOR */
+                                          2181, /* ABAT.CONC.ACO */
+                                          2182, /* PAG.DESP.ACOR */
+                                          2193, /* DB.BLOQ.ACORD */
+                                          2194] /* CR.DESB.ACORD */ NO-UNDO.
                         
                                             

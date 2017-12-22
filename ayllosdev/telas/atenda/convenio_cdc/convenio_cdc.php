@@ -1,17 +1,20 @@
 <?
-/*!
- * FONTE        : convenio_cdc.php
- * CRIAÇÃO      : Andre Santos (SUPERO)
- * DATA CRIAÇÃO : Janeiro/2015
- * OBJETIVO     : Mostrar rotina de Convenio CDC da tela CONTAS
- * --------------
- * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
- *                             (Jaison/Anderson)
- * --------------
- * 25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM).
- */	
-?>
-<?
+	/*!
+	 * FONTE        : convenio_cdc.php
+	 * CRIAÇÃO      : Andre Santos (SUPERO)
+	 * DATA CRIAÇÃO : Janeiro/2015
+	 * OBJETIVO     : Mostrar rotina de Convenio CDC da tela CONTAS
+	 * --------------
+	 * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
+	 *                             (Jaison/Anderson)
+	 * --------------
+	 * 								25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação 
+	 *														 com teclado - (Evandro - RKAM).
+	 *
+	 * 								29/11/2017 - Adicionado aba de SEGMENTOS, Prj. 402(Jean Michel).
+	 *
+	 */
+
 	session_start();
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
@@ -19,11 +22,11 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();	
 	
-    // Se parâmetros necessários nao foram informados
-    if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"]))
-       exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	// Se parâmetros necessários nao foram informados
+	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"]))
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
 
-    $labelRot = $_POST['labelRot'];	
+	$labelRot = $_POST['labelRot'];	
 
 	// Carrega permissões do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -63,9 +66,12 @@
 									<table border="background-color: #F4F3F0;" cellspacing="0" cellpadding="0" >
 										<tr>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq0"></td>
-										<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba()" class="txtNormalBold">Principal</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba('P',0);" class="txtNormalBold">Principal</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq1"></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" onClick="acessaOpcaoAba('S',1);" class="txtNormalBold">Segmentos</a></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir1"></td>
 										</tr>
 									</table>
 								</td>
@@ -91,5 +97,5 @@
 	exibeRotina(divRotina);
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
-	acessaOpcaoAba();	
+	acessaOpcaoAba('P',0);	
 </script>

@@ -1,29 +1,52 @@
 <?php
-/*!
- * FONTE        : form_convenio_cdc.php
- * CRIAÇÃO      : Andre Santos (SUPERO)
- * DATA CRIAÇÃO : Janeiro/2015
- * OBJETIVO     : Formulário da rotina Convenio CDC da tela de CONTAS 
- * --------------
- * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
- *                             (Jaison/Anderson)
- *
- *                19/01/2017 - Alterado layout do form de convenio e adicionado lupa para o CEP. (Reinert)
- *					
- *				  27/03/2017 - Adicionado o botão "Dossie DigiDOC". (Projeto 357 - Reinert)
- * --------------
- */	
+	/*!
+	 * FONTE        : form_convenio_cdc.php
+	 * CRIAÇÃO      : Andre Santos (SUPERO)
+	 * DATA CRIAÇÃO : Janeiro/2015
+	 * OBJETIVO     : Formulário da rotina Convenio CDC da tela de CONTAS 
+	 * --------------
+	 * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
+	 *                             (Jaison/Anderson)
+	 *
+	 *                19/01/2017 - Alterado layout do form de convenio e adicionado lupa para o CEP. (Reinert)
+	 *					
+	 *				  			27/03/2017 - Adicionado o botão "Dossie DigiDOC". (Projeto 357 - Reinert)
+	 *					
+	 *				  			29/11/2017 - Inclusão de novas funcionalidades, Prj.402 (Jean Michel)
+	 *
+	 * --------------
+	 */
 ?>
 <form name="frmConvenioCdc" id="frmConvenioCdc" class="formulario">
     <input type="hidden" id="idcooperado_cdc" name="idcooperado_cdc" value="<?php echo $idcooperado_cdc ; ?>" />
     <input type="hidden" id="cdestado" name="cdestado" value="<?php echo ($cdestado ? $cdestado : $cdufende); ?>" />
     <label for="flgconve" class="clsCampos">Possui Convênio CDC:</label>
-	<select id="flgconve" name="flgconve" class="clsCampos">
-        <option value="1" <?php echo ($flgconve == 1 ? 'selected' : ''); ?>>Sim</option>
-		<option value="0" <?php echo ($flgconve == 0 ? 'selected' : ''); ?>>Não</option>
-	</select>
-    <label for="dtinicon" class="clsCampos">Data Início Convênio:</label>
+		<select id="flgconve" name="flgconve" class="clsCampos">
+					<option value="1" <?php echo ($flgconve == 1 ? 'selected' : ''); ?>>Sim</option>
+			<option value="0" <?php echo ($flgconve == 0 ? 'selected' : ''); ?>>Não</option>
+		</select>
+    <label for="dtinicon" class="clsCampos">Data Início:</label>
     <input name="dtinicon" id="dtinicon" type="text" value="<?php echo $dtinicon ; ?>" autocomplete="off" class="clsCampos" />
+		</br>
+		<label for="inmotcan" class="clsCampos">Mot. Cancelamento:</label>
+		<select id="inmotcan" name="inmotcan" class="clsCampos">
+			<option value="1" <?php echo ($inmotcan == 1 ? 'selected' : ''); ?>>Inadimplência</option>
+			<option value="2" <?php echo ($inmotcan == 2 ? 'selected' : ''); ?>>Não Utiliza CDC</option>
+			<option value="3" <?php echo ($inmotcan == 3 ? 'selected' : ''); ?>>Empresa Inativa</option>
+			<option value="4" <?php echo ($inmotcan == 4 ? 'selected' : ''); ?>>Conta Demitida</option>
+			<option value="5" <?php echo ($inmotcan == 5 ? 'selected' : ''); ?>>Outros</option>
+		</select>
+    <label for="dtcancon" class="clsCampos">Data Cancelamento:</label>
+    <input name="dtcancon" id="dtcancon" type="text" value="<?php echo $dtcancon ; ?>" autocomplete="off" class="clsCampos" />
+		</br>
+		<label for="dsmotcan">Outro:</label>
+		<input type="text" id="dsmotcan" name="dsmotcan" value="<?php echo $dsmotcan; ?>" />
+		<label for="dtrencon" class="clsCampos">Data Renovação:</label>
+    <input name="dtrencon" id="dtrencon" type="text" value="<?php echo $dtrencon ; ?>" autocomplete="off" class="clsCampos" />
+		</br>
+		<label for="dttercon" class="clsCampos">Data Término:</label>
+    <input name="dttercon" id="dttercon" type="text" value="<?php echo $dttercon ; ?>" autocomplete="off" class="clsCampos" />
+		
     <fieldset style="padding: 5px">
         <legend style="margin-top: 10px; padding: 2px 10px 2px 10px">Dados para o Site da Cooperativa</legend>
         <label for="nmfantasia">Nome fantasia:</label>
@@ -53,8 +76,17 @@
         <input type="text" id="dstelefone" name="dstelefone" value="<?php echo $dstelefone; ?>" />
         <label for="dsemail">E-mail:</label>
         <input type="text" id="dsemail" name="dsemail" value="<?php echo $dsemail; ?>" />
-        <label for="dslink_google_maps">Link Google Maps:</label>
-        <textarea name="dslink_google_maps" id="dslink_google_maps"><?php echo $dslink_google_maps; ?></textarea>
+        
+				<label for="nrlatitude">Latitude:</label>
+        <input type="text" id="nrlatitude" name="nrlatitude" maxlength="15" value="<?php echo $nrlatitude; ?>" />
+				<br/>
+				<label for="nrlongitude">Longitude:</label>
+        <input type="text" id="nrlongitude" name="nrlongitude" maxlength="15" value="<?php echo $nrlongitude; ?>" />
+				
+				
+				
+				 
+				
 	</fieldset>
 </form>
 

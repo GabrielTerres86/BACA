@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para buscar os bens
  * --------------
  * ALTERAÇÕES   : 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES. Projeto 369 (Lombardi).
+ *
+ *								18/12/2017 - Inclusão de tratamento(utf8_encode) na mensagem de erro da ação "BUSCABENS", Prj. 402 (Jean Michel).
+ *
  */
 ?> 
 
@@ -56,7 +59,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
-		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);		
 					
 	}
