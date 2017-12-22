@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 07/12/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 20/12/2017
 
    Dados referentes ao programa:
 
@@ -454,6 +454,10 @@
                07/12/2017 - Carregar o valor dos campos dtvctori, dtvencto, dtmvtatu e flgvenci
                             (Douglas - Chamado 805008)
 
+               20/12/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
+                            do periodo, sem essa validacao esta sendo feito um loop
+                            entre duas datas vazias, com isso o loop nao para de 
+                            executar (Douglas - Chamado 807531)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -2190,6 +2194,40 @@ PROCEDURE consulta-bloqueto.
          WHEN 7 THEN                             /* Por Periodo */
                 DO:
                     
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     FOR EACH crapcco WHERE 
                              crapcco.cdcooper = p-cdcooper
                              NO-LOCK
@@ -2541,11 +2579,34 @@ PROCEDURE consulta-bloqueto.
          WHEN 9 THEN      /* Por Vencimento 1 - Em Aberto */
                 DO:
 
-                    /* Validar Data Emissao */
-                    IF p-ini-emissao = ? OR p-fim-emissao = ? THEN
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
                     DO:
-                        ASSIGN i-cod-erro = 13 
-                               c-dsc-erro = " ".
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
 
                         {sistema/generico/includes/b1wgen0001.i}
 
@@ -2618,6 +2679,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 10 THEN      /* Por Data de Baixa - 2 - Baixado */
                 DO:
+                
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.                
+                
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2678,6 +2774,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 11 THEN      /* Por Data de Liquidacao - 3 - Liquidado */
                 DO:
+                    
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     ASSIGN aux_nrregist = 0.
                     
                         FOR EACH crapcco WHERE 
@@ -2741,6 +2872,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 12 THEN      /* Por Data de Emissao - 4 - Rejeitado */
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                
+                
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2804,6 +2970,40 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 13 THEN      /* Por Data de Movimentacao Cartoraria - 5 - Cartoraria*/
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2861,6 +3061,40 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 14 THEN  /* Relatorio Francesa - Com Registro */
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                
 					
                     ASSIGN aux_nrregist = 0.
 
