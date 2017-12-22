@@ -3721,7 +3721,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para verificar vencimento titulo
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 17/03/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3737,6 +3737,13 @@ END pc_gera_titulos_iptu_prog;
   --                          processo ainda estiver rodando, no qual a dtmvtoan esta ainda defazada SD329517 (Odirlei)
   --
   --             17/03/2017 - Removido validacao de pagador vip (Chamado 629635)
+  --
+  --             20/12/2017 - Alterada validação da data de agendamento e data de vencimento.
+  --                          Retirar validação do último dia do ano e incluir chamada da
+  --                          função npcb0001.fn_titulo_vencimento_pagamento que recebe
+  --                          a data de vencimento do título e retorna o prazo máximo
+  --                          para pagamento sem ser considerado vencido (SD#818552 - AJFink)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -3746,6 +3753,7 @@ END pc_gera_titulos_iptu_prog;
       vr_dt_dia_util DATE;
       vr_dt_feriado  DATE;
       vr_libepgto    BOOLEAN;
+      vr_dtvencto date := null;
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
@@ -3863,53 +3871,17 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= FALSE;
         END IF;
       ELSE
-        /** Agendamento de Pagamento **/
-        --Verificar se a data de vencimento eh dia util
-        vr_dt_feriado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
-                                                   ,pr_dtmvtolt => pr_dt_vencto
-                                                   ,pr_tipo     => 'P');
-        --Se nao for dia util
-        IF vr_dt_feriado >= pr_dt_agendamento THEN
-          --Sair
-          RAISE vr_exc_saida;
-        END IF;
-        --Marcar para criticar a data
-        pr_critica_data:= TRUE;
-        
-        /** Aceita agendamento de titulo com vencimento no ultimo dia **/
-        /** util do ano somente no primeiro dia util do proximo ano   **/
-        /** Exemplo: VENCIMENTO 31/12/2009 - AGENDAMENTO - 04/01/2010 **/
 
-        IF to_number(To_Char(pr_dt_agendamento,'YYYY')) -
-           To_Number(to_char(pr_dt_vencto,'YYYY')) = 1  THEN
-          --Montar o dia util
-          vr_dt_dia_util:= TO_DATE('01/01/'||To_Char(pr_dt_agendamento,'YYYY'),'DD/MM/YYYY');
-          --Verficar se eh dia util
-          vr_dt_dia_util:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cod_cooper
-                                                      ,pr_dtmvtolt => vr_dt_dia_util
-                                                      ,pr_tipo     => 'P');
-          --Se data agendamento igual ao dia util encontrado
-          IF pr_dt_agendamento = vr_dt_dia_util THEN
-            --Data dia util
-            vr_dt_dia_util:= TO_DATE('31/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            /** Se dia 31/12 for segunda-feira obtem data do sabado **/
-            /** para aceitar vencidos do ultimo final de semana     **/
-            IF To_Number(to_char(vr_dt_dia_util,'D')) = 2  THEN
-              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 1  THEN
-              /** Se dia 31/12 for domingo, o ultimo dia util e 29/12 **/
-              vr_dt_dia_util:= TO_DATE('29/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            ELSIF To_Number(to_char(vr_dt_dia_util,'D')) = 7  THEN
-              /** Se dia 31/12 for sabado, o ultimo dia util e 30/12 **/
-              vr_dt_dia_util:= TO_DATE('30/12/'||to_char(pr_dt_vencto,'YYYY'),'DD/MM/YYYY');
-            END IF;
-            /** Verifica se pode aceitar o titulo vencido **/
-            IF  pr_dt_vencto >= vr_dt_dia_util THEN
-              --Retorna false
-              pr_critica_data:= FALSE;
-            END IF;
-          END IF;
-        END IF;
+        vr_dtvencto := npcb0001.fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cod_cooper
+                                                              ,pr_dtvencto => pr_dt_vencto);
+
+        -- se a data de agendamento é maior que o prazo de vencimento
+        -- então a data é criticada pois o título estará vencido
+        pr_critica_data:= FALSE;
+        if trunc(pr_dt_agendamento) > trunc(vr_dtvencto) then
+          pr_critica_data:= TRUE;
+        end if;
+
       END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN

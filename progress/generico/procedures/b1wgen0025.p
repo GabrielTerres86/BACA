@@ -341,10 +341,6 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
-                             
-                09/08/2017 - Ajustes para inclusao das rotinas de Desligamento, Prj 364 
-                            (Mateus Zimmermann - MoutS).
-                            
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2639,165 +2635,7 @@ PROCEDURE efetua_saque:
                cratlot.vlinfodb = cratlot.vlinfodb + par_vldsaque
                cratlot.vlcompdb = cratlot.vlcompdb + par_vldsaque.
     
-         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                            crapass.nrdconta = par_nrdconta
-                            NO-LOCK NO-ERROR.
-			   
-        IF AVAIL crapass THEN
-            DO:
-            IF crapass.cdsitdct = 7 AND crapass.cdmotdem > 0 THEN
-                DO:
-                
-                    IF crapass.inpessoa = 1 THEN
-              DO:
         EMPTY TEMP-TABLE cratlcm.
-                CREATE cratlcm.
-                ASSIGN cratlcm.cdcooper = par_cdcooper
-                    cratlcm.dtmvtolt = par_dtmvtocd
-                    cratlcm.cdagenci = par_cdagetfn
-                    cratlcm.cdbccxlt = aux_cdbccxlt
-                    cratlcm.nrdolote = 600040
-                    cratlcm.dtrefere = par_dtmvtocd
-                    cratlcm.hrtransa = par_hrtransa
-                    cratlcm.cdoperad = ""
-                    cratlcm.nrdconta = par_nrdconta
-                    cratlcm.nrdctabb = par_nrdconta
-                    cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                    cratlcm.nrdocmto = par_hrtransa
-                    cratlcm.nrautdoc = par_nrsequni
-                    cratlcm.nrsequni = par_nrsequni
-                    /* Dados do TAA */
-                    cratlcm.cdcoptfn = par_cdcoptfn
-                    cratlcm.cdagetfn = par_cdagetfn
-                    cratlcm.nrterfin = par_nrterfin
-                    cratlcm.cdpesqbb = 'CASH DISPENSER ' + STRING(par_nrterfin,"9999")
-                    cratlcm.cdhistor = 2081
-                    cratlcm.vllanmto = par_vldsaque
-                    cratlcm.nrseqdig = cratlot.nrseqdig.
-              END.
-                      
-                    ELSE
-              DO:
-                      
-                EMPTY TEMP-TABLE cratlcm.
-                CREATE cratlcm.
-                ASSIGN cratlcm.cdcooper = par_cdcooper
-                                 cratlcm.dtmvtolt = par_dtmvtocd
-                                 cratlcm.cdagenci = par_cdagetfn
-                                 cratlcm.cdbccxlt = aux_cdbccxlt
-                                 cratlcm.nrdolote = 600040
-                                 cratlcm.dtrefere = par_dtmvtocd
-                                 cratlcm.hrtransa = par_hrtransa
-                                 cratlcm.cdoperad = ""
-                                 cratlcm.nrdconta = par_nrdconta
-                                 cratlcm.nrdctabb = par_nrdconta
-                                 cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                                 cratlcm.nrdocmto = par_hrtransa
-                                 cratlcm.nrautdoc = par_nrsequni
-                                 cratlcm.nrsequni = par_nrsequni
-                                 /* Dados do TAA */
-                                 cratlcm.cdcoptfn = par_cdcoptfn
-                                 cratlcm.cdagetfn = par_cdagetfn
-                                 cratlcm.nrterfin = par_nrterfin
-                                 cratlcm.cdpesqbb = 'CASH DISPENSER ' + STRING(par_nrterfin,"9999")
-                                 cratlcm.cdhistor = 2082
-                                 cratlcm.vllanmto = par_vldsaque
-                                 cratlcm.nrseqdig = cratlot.nrseqdig.
-                      
-              END.
-              
-                DO:
-                  CREATE craplcx.
-                            ASSIGN craplcx.cdcooper = par_cdcooper                             
-                                     craplcx.cdagenci = par_cdagetfn
-                                     craplcx.dtmvtolt = par_dtmvtocd
-                                     craplcx.cdhistor = 2083
-                                     craplcx.dsdcompl = "Agencia: " + STRING(par_cdagetfn,"999") + " Conta/DV: " + STRING(par_nrdconta,"99999999")
-                                     craplcx.nrdocmto = par_hrtransa
-                                     craplcx.nrseqdig = cratlot.nrseqdig
-                                     craplcx.vldocmto = par_vldsaque.
-                END.
-                                 
-                                       
-                END.
-            ELSE
-          DO:
-            IF (crapass.cdsitdct = 3 OR crapass.cdsitdct = 4 OR crapass.cdsitdct = 7 OR crapass.cdsitdct = 8) AND crapass.cdmotdem > 0 THEN
-              DO:
-              
-                IF crapass.inpessoa = 1 THEN
-                  DO:
-                    EMPTY TEMP-TABLE cratlcm.
-                    CREATE cratlcm.
-                    ASSIGN cratlcm.cdcooper = par_cdcooper
-                         cratlcm.dtmvtolt = par_dtmvtocd
-                         cratlcm.cdagenci = par_cdagetfn
-                         cratlcm.cdbccxlt = aux_cdbccxlt
-                         cratlcm.nrdolote = 600042
-                         cratlcm.dtrefere = par_dtmvtocd
-                         cratlcm.hrtransa = par_hrtransa
-                         cratlcm.cdoperad = ""
-                         cratlcm.nrdconta = par_nrdconta
-                         cratlcm.nrdctabb = par_nrdconta
-                         cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                         cratlcm.nrdocmto = par_hrtransa
-                         cratlcm.nrautdoc = par_nrsequni
-                         cratlcm.nrsequni = par_nrsequni
-                         /* Dados do TAA */
-                         cratlcm.cdcoptfn = par_cdcoptfn
-                         cratlcm.cdagetfn = par_cdagetfn
-                         cratlcm.nrterfin = par_nrterfin
-                         cratlcm.cdpesqbb = 'CASH DISPENSER ' + STRING(par_nrterfin,"9999")
-                         cratlcm.cdhistor = 2063
-                         cratlcm.vllanmto = par_vldsaque
-                         cratlcm.nrseqdig = cratlot.nrseqdig.
-                  END.
-                            
-                ELSE
-                  DO:
-                            
-        EMPTY TEMP-TABLE cratlcm.
-        CREATE cratlcm.
-        ASSIGN cratlcm.cdcooper = par_cdcooper
-               cratlcm.dtmvtolt = par_dtmvtocd
-               cratlcm.cdagenci = par_cdagetfn
-               cratlcm.cdbccxlt = aux_cdbccxlt
-                         cratlcm.nrdolote = 600042
-                         cratlcm.dtrefere = par_dtmvtocd
-                         cratlcm.hrtransa = par_hrtransa
-                         cratlcm.cdoperad = ""
-                         cratlcm.nrdconta = par_nrdconta
-                         cratlcm.nrdctabb = par_nrdconta
-                         cratlcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                         cratlcm.nrdocmto = par_hrtransa
-                         cratlcm.nrautdoc = par_nrsequni
-                         cratlcm.nrsequni = par_nrsequni
-                         /* Dados do TAA */
-                         cratlcm.cdcoptfn = par_cdcoptfn
-                         cratlcm.cdagetfn = par_cdagetfn
-                         cratlcm.nrterfin = par_nrterfin
-                         cratlcm.cdpesqbb = 'CASH DISPENSER ' + STRING(par_nrterfin,"9999")
-                         cratlcm.cdhistor = 2064
-                         cratlcm.vllanmto = par_vldsaque
-                         cratlcm.nrseqdig = cratlot.nrseqdig.
-                            
-                  END.
-                  DO:          
-                    CREATE craplcx.
-                      ASSIGN craplcx.cdcooper = par_cdcooper                             
-                           craplcx.cdagenci = par_cdagetfn
-                           craplcx.dtmvtolt = par_dtmvtocd
-                           craplcx.cdhistor = 2065
-                           craplcx.dsdcompl = "Agencia: " + STRING(par_cdagetfn,"999") + " Conta/DV: " + STRING(par_nrdconta,"99999999")
-                           craplcx.nrdocmto = par_hrtransa
-                           craplcx.nrseqdig = cratlot.nrseqdig
-                           craplcx.vldocmto = par_vldsaque.  
-                  END.   
-              END.
-            ELSE
-              DO:
-             
-                EMPTY TEMP-TABLE cratlcm.
         CREATE cratlcm.
         ASSIGN cratlcm.cdcooper = par_cdcooper
                cratlcm.dtmvtolt = par_dtmvtocd
@@ -2821,9 +2659,7 @@ PROCEDURE efetua_saque:
                cratlcm.cdhistor = aux_cdhisdeb /* SAQUE CARTAO */
                cratlcm.vllanmto = par_vldsaque
                cratlcm.nrseqdig = cratlot.nrseqdig.
-              END.
-          END.
-       END. 
+               
                                                
         RUN sistema/generico/procedures/b1craplcm.p PERSISTENT SET h-b1craplcm.
                
@@ -3856,7 +3692,7 @@ PROCEDURE busca_associado:
 		     ASSIGN par_nmtitula[2] = crapttl.nmextttl.
 
 		  END.
-
+		  
 	   END.
 
     ASSIGN par_nmtitula[1] = crapass.nmprimtl.
