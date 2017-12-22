@@ -504,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 15/12/2017
     
       Dados referentes ao programa:
     
@@ -514,7 +514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 15/12/2017 - P337 - SM - Tratar campos de envio Motor e Esteira 
+                               separadamente (Marcos-Supero)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -522,6 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
     
+      vr_dtenvest DATE;
       vr_hrenvest VARCHAR2(10);
     
       -- Tratamento de erros
@@ -548,9 +550,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                       ,
                        DECODE(pac.instatus, 1, 'Baixo@Risco', 2, 'Medio@Risco', 3, 'Alto@Risco') parecer_ayllos,
                        epr.dtenvest,
-                       epr.hrenvest
+                       epr.hrenvest,
+                       epr.dtenvmot,
+                       epr.hrenvmot,
+                       
                        -- Situação Ayllos
-                      ,
                        DECODE(epr.insitest,0,'Nao enviada'
 														 ,1,'Env. p/@Analise@Autom.'
 														 ,2,'Env. p/@Analise@Manual'
@@ -728,13 +732,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawepr.dtmvtolt, 'DD/MM/YYYY');
         pr_tab_crawepr(vr_ind_crawepr).hrmvtolt := gene0002.fn_calc_hora(rw_crawepr.hrinclus);
       
+        -- Enviar data e hora do ultimo envio (Motor ou Esteira)
+        IF to_date(to_char(rw_crawepr.dtenvest,'ddmmrrrr')||to_char(rw_crawepr.hrenvest,'fm00000'),'ddmmrrrrsssss')
+         > to_date(to_char(rw_crawepr.dtenvmot,'ddmmrrrr')||to_char(rw_crawepr.hrenvmot,'fm00000'),'ddmmrrrrsssss') THEN 
+          -- Envio Esteira foi o ultimo 
+          vr_dtenvest := rw_crawepr.dtenvest;
         IF rw_crawepr.hrenvest > 0 THEN
           vr_hrenvest := gene0002.fn_calc_hora(rw_crawepr.hrenvest);
         ELSE
           vr_hrenvest := ' ';
         END IF;
       
-        pr_tab_crawepr(vr_ind_crawepr).dtenvest := LPAD(to_char(rw_crawepr.dtenvest, 'DD/MM/YYYY'),
+        ELSE
+          -- Envio Motor foi o ultimo 
+          vr_dtenvest := rw_crawepr.dtenvmot;
+          IF rw_crawepr.hrenvmot > 0 THEN
+            vr_hrenvest := gene0002.fn_calc_hora(rw_crawepr.hrenvmot);
+          ELSE
+            vr_hrenvest := ' ';
+          END IF;
+        END IF;
+        pr_tab_crawepr(vr_ind_crawepr).dtenvest := LPAD(to_char(vr_dtenvest, 'DD/MM/YYYY'),
                                                         10,
                                                         ' ');
         pr_tab_crawepr(vr_ind_crawepr).hrenvest := LPAD(vr_hrenvest, 8, ' ');

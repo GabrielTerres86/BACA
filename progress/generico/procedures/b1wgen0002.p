@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 10/07/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 14/12/2017
 
    Dados referentes ao programa:
 
@@ -715,6 +715,12 @@
                            de cessao da fatura do cartao de credito (Anderson).
 
 			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
+			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
+			               Alterar Somente Avalista (Marcos-Supero)
+              
+			  14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
+			  
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -7085,7 +7091,7 @@ PROCEDURE altera-valor-proposta:
     DEF VAR          aux_idcarga  AS INTE                           NO-UNDO.
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_insitest LIKE crawepr.insitest             NO-UNDO.
-    DEF VAR          aux_flcancel AS LOGI                           NO-UNDO.
+    DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
     DEF VAR          aux_inobriga AS CHAR                           NO-UNDO.
     DEF VAR          aux_qtdias_carencia AS INTE                    NO-UNDO.
 
@@ -7106,7 +7112,7 @@ PROCEDURE altera-valor-proposta:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Alterar o valor da proposta de credito"
-           aux_flcancel = FALSE
+           aux_interrup = FALSE
            aux_inobriga = "N".
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
@@ -7390,13 +7396,9 @@ PROCEDURE altera-valor-proposta:
 
                                                     /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                                     IF NOT aux_contigen AND aux_inobriga = "S" 
-                                                                        AND (   crawepr.insitest = 2 
-                                                                             OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                                                                                  AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
-                                                                             OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                                                             OR ( crawepr.insitest = 4 ) ) THEN  
+                                                    AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                                     DO:
-                                                       ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                                                       ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                                     END.
 
                                         ASSIGN crawepr.insitapr = 0
@@ -7434,13 +7436,9 @@ PROCEDURE altera-valor-proposta:
 
                                          /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                          IF NOT aux_contigen AND aux_inobriga = "S" 
-                                                             AND (   crawepr.insitest = 2 
-                                                                   OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                                                                        AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
-                                                                   OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                                                   OR ( crawepr.insitest = 4 ) ) THEN 
+                                         AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                          DO:
-                                             ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                                             ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                          END.   
 
                        ASSIGN crawepr.insitapr = 0
@@ -7460,13 +7458,9 @@ PROCEDURE altera-valor-proposta:
                      
                       /* Se nao estiver em contigencia e a proposta estava na Esteira */
                       IF NOT aux_contigen AND aux_inobriga = "S" 
-                                          AND (   crawepr.insitest = 2 
-                                               OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                                                    AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
-                                               OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                               OR ( crawepr.insitest = 4 ) ) THEN 
+                      AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                       DO:
-                          ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                          ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                       END.
                  
                       ASSIGN crawepr.insitapr = 0
@@ -7496,13 +7490,9 @@ PROCEDURE altera-valor-proposta:
                  
                  /* Se nao estiver em contigencia e a proposta estava na Esteira */
                  IF NOT aux_contigen AND aux_inobriga = "S" 
-                                     AND (   crawepr.insitest = 2 
-                                         OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                                              AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )                                     
-                                         OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                         OR ( crawepr.insitest = 4 ) ) THEN 
+                 AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                  DO:
-                     ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                     ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                  END.
                  
                  ASSIGN crawepr.insitapr = 0
@@ -7531,12 +7521,10 @@ PROCEDURE altera-valor-proposta:
               
                   /* Se a proposta estava na Esteira */
                   IF aux_inobriga = "S" 
-                  AND (   crawepr.insitest = 2 
-                       OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                            AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
-                     OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                     OR ( crawepr.insitest = 4 ) ) THEN 
-                      ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                  AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                  
+                      ASSIGN aux_interrup = true. /* Interromper na Esteira*/
+                  
                   
                                                                    ASSIGN crawepr.insitapr = 0
                                           crawepr.cdopeapr = ""
@@ -7811,7 +7799,7 @@ PROCEDURE altera-valor-proposta:
     END. /* Tratamento de criticas */
         
     /* Se devemos cancelar a proposta na Esteira */
-    IF aux_flcancel THEN
+    IF aux_interrup THEN
     DO:
       
       FIND FIRST crapope  
@@ -7822,7 +7810,7 @@ PROCEDURE altera-valor-proposta:
       RUN sistema/generico/procedures/b1wgen0195.p
                        PERSISTENT SET h-b1wgen0195.
                
-      /* Enviar Cancelamento na Esteira */
+      /* Enviar Interrupção na Esteira */
       RUN Enviar_proposta_esteira IN h-b1wgen0195        
                         ( INPUT par_cdcooper,
                           INPUT crapope.cdpactra,
@@ -7837,7 +7825,7 @@ PROCEDURE altera-valor-proposta:
                           INPUT 0,            /* nrctremp_novo */
                           INPUT "",           /* dsiduser */
                           INPUT 0,            /* flreiflx */
-                          INPUT "C",          /* tpenvest */
+                          INPUT "P",          /* tpenvest */
                          OUTPUT aux_dsmensag,                          
                          OUTPUT aux_cdcritic, 
                          OUTPUT aux_dscritic).
@@ -13232,7 +13220,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
     DEF VAR          aux_percamnt AS DECI                           NO-UNDO.
     
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
-    DEF VAR          aux_flcancel AS LOGI                           NO-UNDO.
+    DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
+    DEF VAR          aux_avlalter AS LOGI                           NO-UNDO.
     DEF VAR          aux_inobriga AS CHAR                           NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -13242,7 +13231,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Alterar os avalistas da proposta de credito"
-           aux_flcancel = FALSE
+           aux_interrup = FALSE
+           aux_avlalter = FALSE
            aux_inobriga = "N".
 
     Grava_valor:
@@ -13278,6 +13268,14 @@ PROCEDURE atualiza_dados_avalista_proposta:
             aux_dscritic <> ""   THEN
             LEAVE.
 
+        /* Se houve alteraçao dos avalistas */
+        IF crawepr.nrctaav1 <> par_nrctaava OR 
+           crawepr.nrctaav2 <> par_nrctaav2 THEN
+        DO: 
+           ASSIGN aux_avlalter = TRUE.
+        END.
+        
+        
         ASSIGN crawepr.nrctaav1    = par_nrctaava
                crawepr.nrctaav2    = par_nrctaav2
                
@@ -13377,6 +13375,39 @@ PROCEDURE atualiza_dados_avalista_proposta:
 
                DELETE PROCEDURE h-b1wgen9999.
 
+               /* Para Alterar Somente Avalista e Proposta já aprovada */
+               IF par_dsdopcao = "ASA" AND crawepr.insitapr = 1 THEN 
+                  DO:
+                  
+                     VALIDATE crawepr.
+               
+                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     
+                     /* Acionar rotina para atualizar as respostas do Rating  */
+                     /* referente a Garantia e Liquidez conforme a quantidade */
+                     /* e tipo dos avalistas informados                       */
+                     RUN STORED-PROCEDURE pc_atuali_garant_liquid_epr
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                           INPUT par_nrdconta, /* Conta da Proposta */
+                                                           INPUT par_nrctremp, /* Numero da Proposta */
+                                                          OUTPUT "").          /* Descrição da crítica */
+                     
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_atuali_garant_liquid_epr
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                     ASSIGN aux_dscritic = pc_atuali_garant_liquid_epr.pr_dscritic
+                                              WHEN pc_atuali_garant_liquid_epr.pr_dscritic <> ?.
+
+                     IF aux_dscritic <> "" THEN
+                        LEAVE.
+                  END.
+                 
+               ELSE DO:
+                   
+                  /* Quando não aprovada, devemos verificar se temos o Motor na Cooperativa */ 
                
                FIND FIRST crapass 
                     WHERE crapass.cdcooper = par_cdcooper   
@@ -13436,7 +13467,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                
                /* Incluir checagem para perca da aprovacao devido 
                   mudanca nos avalistas, somente se analise auto obrigatoria */
-               IF aux_inobriga = "S" THEN
+                 IF aux_avlalter AND aux_inobriga = "S" THEN
                  DO:                
                    ASSIGN  aux_insitapr = crawepr.insitapr
                            aux_cdopeapr = crawepr.cdopeapr
@@ -13510,15 +13541,12 @@ PROCEDURE atualiza_dados_avalista_proposta:
                              
                                /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                IF NOT aux_contigen AND aux_inobriga = "S" 
-                                                   AND (   crawepr.insitest = 2 
-                                                       OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
-                                                            AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
-                                                       OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                                       OR ( crawepr.insitest = 4 ) ) THEN 
+                                 AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                DO:
-                                  ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                                  ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                END.
                              
+                                 /* Perder a aprovaçao */
                                ASSIGN crawepr.insitapr = 0
                                       crawepr.cdopeapr = ""
                                       crawepr.dtaprova = ?
@@ -13533,64 +13561,68 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                                           ELSE
                                                             "Avalistas Alterados - A proposta devera ser " +
                                                             " enviada para Analise de Credito".      
+                               
+                                /* Soh devemos interromper a proposta na Esteira */
+                                IF aux_interrup THEN
+                                DO:
+                                  
+                                  FIND FIRST crapope  
+                                   WHERE crapope.cdcooper = par_cdcooper             
+                                     AND crapope.cdoperad = par_cdoperad
+                                         NO-LOCK NO-ERROR.
+                                  
+                                  RUN sistema/generico/procedures/b1wgen0195.p
+                                                   PERSISTENT SET h-b1wgen0195.
+                                           
+                                  /* Enviar Interrupção na Esteira */
+                                  RUN Enviar_proposta_esteira IN h-b1wgen0195        
+                                                    ( INPUT par_cdcooper,
+                                                      INPUT crapope.cdpactra,
+                                                      INPUT par_nrdcaixa,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_cdoperad,
+                                                      INPUT par_idorigem,
+                                                      INPUT par_nrdconta,
+                                                      INPUT par_dtmvtolt,
+                                                      INPUT par_dtmvtolt,
+                                                      INPUT par_nrctremp, /* nrctremp */
+                                                      INPUT 0,            /* nrctremp_novo */
+                                                      INPUT "",           /* dsiduser */
+                                                      INPUT 0,            /* flreiflx */
+                                                      INPUT "P",          /* tpenvest */
+                                                     OUTPUT aux_dsmensag,
+                                                     OUTPUT aux_cdcritic, 
+                                                     OUTPUT aux_dscritic).
+                                  
+                                  DELETE OBJECT h-b1wgen0195.
+                                   
+                                  /* Ignorar erro de "%Proposta nao encontrada" */ 
+                                  IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
+                                      DO:
+                                          IF aux_cdcritic = 0 AND 
+                                             aux_dscritic = "" THEN
+                                          DO:
+                                            ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
+                                                                  "proposta para Analise de Credito.".
                              END.
                       END. 
+                                  ELSE
+                                      DO:
+                                          ASSIGN aux_cdcritic = 0
+                                                 aux_dscritic = "".
                  END.  
+                                 END.
+                               
+                               END.
+                      END. 
+                 END.  
+              END.     
+
         LEAVE.
 
     END. /* DO WHILE TRUE TRANSACTION */
 
-    /* Soh devemos cancelar a proposta na Esteira quando chamada */
-    /* for ASA - Alterar Somente Avalistas */
-    IF aux_flcancel AND par_dsdopcao = "ASA" THEN
-    DO:
-      
-      FIND FIRST crapope  
-       WHERE crapope.cdcooper = par_cdcooper             
-         AND crapope.cdoperad = par_cdoperad
-             NO-LOCK NO-ERROR.
-      
-      RUN sistema/generico/procedures/b1wgen0195.p
-                       PERSISTENT SET h-b1wgen0195.
-               
-      /* Enviar Cancelamento na Esteira */
-      RUN Enviar_proposta_esteira IN h-b1wgen0195        
-                        ( INPUT par_cdcooper,
-                          INPUT crapope.cdpactra,
-                          INPUT par_nrdcaixa,
-                          INPUT par_nmdatela,
-                          INPUT par_cdoperad,
-                          INPUT par_idorigem,
-                          INPUT par_nrdconta,
-                          INPUT par_dtmvtolt,
-                          INPUT par_dtmvtolt,
-                          INPUT par_nrctremp, /* nrctremp */
-                          INPUT 0,            /* nrctremp_novo */
-                          INPUT "",           /* dsiduser */
-                          INPUT 0,            /* flreiflx */
-                          INPUT "C",          /* tpenvest */
-                         OUTPUT aux_dsmensag,
-                         OUTPUT aux_cdcritic, 
-                         OUTPUT aux_dscritic).
-      
-      DELETE OBJECT h-b1wgen0195.
-       
-      /* Ignorar erro de "%Proposta nao encontrada" */ 
-      IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
-          DO:
-              IF aux_cdcritic = 0 AND 
-                 aux_dscritic = "" THEN
-              DO:
-                ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
-                                      "proposta para Analise de Credito.".
-              END.
-          END.
-      ELSE
-          DO:
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = "".
-          END.
-    END.
+    
     
     IF   aux_cdcritic <> 0    OR
          aux_dscritic <> ""   THEN
