@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 11/07/2017
+    Data    : Fevereiro/2013                Ultima Atualizacao: 21/11/2017
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -148,7 +148,10 @@
                 07/11/2017 - Adicionados campos para comportar o cadastro de 
                              tarifas por porcentual na ALTTAR.
                              Everton (Mouts) - Melhoria 150.
-
+			   
+                21/11/2017 - Setado ordenacao na tabela crapcop na procedure carrega-atribuicao-detalhamento
+                             pois estava pegando um indice diferente alterando o resultado em tela
+                            (Tiago #782313) 
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -6635,7 +6638,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     IF par_cdtipcat <> 3 THEN /* Credito */
     DO:
     
-        FOR EACH crapcop NO-LOCK:
+        FOR EACH crapcop NO-LOCK BY cdcooper:
     
             ASSIGN aux_qtregist = 0.
     
@@ -6728,7 +6731,7 @@ PROCEDURE carrega-atribuicao-detalhamento:
     END.
     ELSE
     DO:
-        FOR EACH crapcop NO-LOCK:
+        FOR EACH crapcop NO-LOCK BY cdcooper:
     
             ASSIGN aux_qtregist = 0.
     
