@@ -686,7 +686,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craphis.tpctbcxa,
            craprej.cdbccxlt,
            craprej.nraplica,
-           craprej.vlsdapli
+           craprej.vlsdapli,
+           craprej.nrdocmto
       from craprej,
            craphis
      where craprej.cdcooper = pr_cdcooper
@@ -2448,6 +2449,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_vltarifa_ib         NUMBER := 0;
   vr_agencia_prox        INTEGER:= 0;
   vr_agencia_ant         INTEGER:= 0;
+  vr_cdageori            INTEGER;
 
   --Váriaveis arquivo prejuizo
   vr_nmarqdat_prejuizo      VARCHAR2(100);
@@ -7693,10 +7695,17 @@ BEGIN
       if rw_craprej.ingercre = 2 then
         vr_vldtotal := rw_craprej.vllanmto;
       end if;
-    else
+    ELSE
+      
+      IF rw_craprej.nrdocmto = 0 THEN
+        vr_cdageori:= rw_craprej.cdagenci;
+      ELSE
+        vr_cdageori:= rw_craprej.nrdocmto;
+      END IF;
+    
       if rw_craprej.ingercre = 3 or
          rw_craprej.ingerdeb = 3 then
-        vr_linhadet := to_char(vr_tab_agencia2(rw_craprej.cdagenci).vr_cdccuage,'fm000')||','||
+        vr_linhadet := to_char(vr_tab_agencia2(vr_cdageori).vr_cdccuage,'fm000')||','||
                         trim(to_char(rw_craprej.vllanmto, '999999990.00'));
         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
@@ -7705,7 +7714,7 @@ BEGIN
           vr_linhadet := trim(vr_cdestrut)||
                          trim(vr_dtmvtolt_yymmdd)||','||
                          trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                         trim(to_char(vr_tab_agencia2(rw_craprej.cdagenci).vr_cdcxaage, 'fm0000'))||','||
+                         trim(to_char(vr_tab_agencia2(vr_cdageori).vr_cdcxaage, 'fm0000'))||','||
                          trim(to_char(vr_nrctacrd))||','||
                          trim(to_char(rw_craprej.vllanmto, '99999999999990.00'))||','||
                          trim(to_char(rw_craprej.cdhstctb))||','||
@@ -7714,7 +7723,7 @@ BEGIN
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
           --
-          vr_linhadet := to_char(rw_craprej.cdagenci,'fm000')||','||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
+          vr_linhadet := to_char(vr_cdageori,'fm000')||','||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
           --
@@ -7730,7 +7739,7 @@ BEGIN
                          trim(vr_dtmvtolt_yymmdd)||','||
                          trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                          trim(to_char(vr_nrctadeb))||','||
-                         trim(to_char(vr_tab_agencia2(rw_craprej.cdagenci).vr_cdcxaage, 'fm0000'))||','||
+                         trim(to_char(vr_tab_agencia2(vr_cdageori).vr_cdcxaage, 'fm0000'))||','||
                          trim(to_char(rw_craprej.vllanmto, '99999999999990.00'))||','||
                          trim(to_char(rw_craprej.cdhstctb))||','||
                          '"('||trim(to_char(rw_craprej.cdhistor,'0000'))||
@@ -7744,7 +7753,7 @@ BEGIN
 
           end if;
           --
-          vr_linhadet := to_char(rw_craprej.cdagenci,'fm000')||','||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
+          vr_linhadet := to_char(vr_cdageori,'fm000')||','||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
         end if;

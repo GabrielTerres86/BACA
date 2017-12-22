@@ -58,8 +58,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_2(pr_cdcooper  IN crapcop.cdcooper
  WHERE lft.cdcooper = pr_cdcooper
    AND lft.dtmvtolt = pr_dtmvtolt
    AND lft.cdhistor = pr_cdhistor
-   AND ass.cdcooper = lft.cdcooper
-   AND ass.nrdconta = lft.nrdconta
+   AND ass.cdcooper(+) = lft.cdcooper
+   AND ass.nrdconta(+) = lft.nrdconta
    GROUP BY DECODE(lft.cdagenci,
                   90, NVL(ass.cdagenci, lft.cdagenci),
                   91, NVL(DECODE(lft.cdagetfn,0,NULL,lft.cdagetfn), ass.cdagenci),
