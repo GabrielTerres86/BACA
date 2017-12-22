@@ -31,6 +31,7 @@
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 023: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 024: [21/11/2017] Projeto 402 - Incluir campos cdcoploj e nrcntloj. (Reinert)
  */
 ?>
 
@@ -463,6 +464,8 @@
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
 	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
+	$xml .= '		<cdcoploj>0</cdcoploj>';
+	$xml .= '		<nrcntloj>0</nrcntloj>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

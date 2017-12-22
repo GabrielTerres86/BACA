@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 14/03/2016
+   Data    : Outubro/96.                     Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -409,8 +409,13 @@
                          valor do emprestimo. (James)        
 						 
             14/03/2016 - Incluir campo cdpactra na chamada da rotina 
-			             grava-proposta-completa. PRJ207 - Esteira 
-						 (Odirlei-AMcom)						                  
+                         grava-proposta-completa. PRJ207 - Esteira 
+                         (Odirlei-AMcom)						                  
+                         
+            21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
+                         grava-proposta-completa. PRJ402 - Integracao CDC
+                         (Reinert)						                  
+                         
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -1977,7 +1982,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
    RUN grava-proposta-completa IN h-b1wgen0002
                                (INPUT glb_cdcooper,
                                 INPUT 0,
-								INPUT crapope.cdpactra,
+                                INPUT crapope.cdpactra,
                                 INPUT 0,
                                 INPUT glb_cdoperad,
                                 INPUT glb_nmdatela,
@@ -2099,6 +2104,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+                                INPUT 0, /* cdcoploj */
+                                INPUT 0, /* nrcntloj */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

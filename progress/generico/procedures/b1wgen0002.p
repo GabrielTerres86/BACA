@@ -622,10 +622,10 @@
                           das propostas de Portabilidade nao sendo alterado com a 
                           aprovacao automatica.(SD 432942 - Carlos Rafael Tanholi)	
 
-             11/05/2016 - Calculo vlatraso na chamada pc_calcula_atraso_tr.
+			 11/05/2016 - Calculo vlatraso na chamada pc_calcula_atraso_tr.
                           Criacao da leitura_lem. (Jaison/James)
 						   							
-             09/06/2016 - Ajuste na rotina obtem-dados-conta-contrato para retirar a leitura da 
+		     09/06/2016 - Ajuste na rotina obtem-dados-conta-contrato para retirar a leitura da 
                           tabela craplcm, a rotina em Progress nao e chamada pelo emprestimo novo,
                           dessa forma nao sera mais necessario verificar se o credito do emprestimo foi efetuado
                           efetuado para permitir a liquidação no dia.
@@ -636,12 +636,12 @@
                            portabilidade conforme solicitado no chamado 466077. (Kelvin)
 
               06/07/2016 - Ajuste para ao inves de olhar apenas o codigo da finalidade
-                           ver na tabela de finalidade se eh realmente uma
-                           portabilidade de credito para ai entao bloquear
-                           a alteracao do numero da proposta (Tiago/Thiago SD466077)
+			               ver na tabela de finalidade se eh realmente uma
+						   portabilidade de credito para ai entao bloquear
+						   a alteracao do numero da proposta (Tiago/Thiago SD466077)
               
-              13/07/2016 - Ajuste na validaçao da Linha de credito na procedure valida-dados-gerais. Agora
-                           valida pelo metodo EMPR0002.pc_busca_linha_credito_prog.
+             13/07/2016 - Ajuste na validaçao da Linha de credito na procedure valida-dados-gerais. Agora
+                          valida pelo metodo EMPR0002.pc_busca_linha_credito_prog.
 
               07/09/2016 - Alterada forma de calculo do atraso na rotina proc_qualif_operacao
                            pois estava somando 2x o numero calculado de parcelas, impactando
@@ -651,21 +651,21 @@
               23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
                            do PDF para envio da esteira (Oscar).
 
-              23/09/2016 - Inclusao de validacao de contratos de acordos,
+			  23/09/2016 - Inclusao de validacao de contratos de acordos,
                            Prj. 302 (Jean Michel).
 
-              25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
+			  25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
 
-              19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
-                           o valor do emprestimo, SD-507761 (Jean Michel).
+			  19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
+						   o valor do emprestimo, SD-507761 (Jean Michel).
 						  	               
               26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.(Gil - MOUTS)
 
-              20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
-                           Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
-                           (Daniel - Chamado 581906).
+			  20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
+			               Nao permitir utilizacao de Capital de Giro por pessoa fisica. 
+						   (Daniel - Chamado 581906).
              
-              22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
+        22/03/2017 - Incluido tratamento para emprestimos PP quando a carencia da linha de credito for nula.
                      Nesses casos ira seguir as mesmas regras de carencia = 0 dias.
                      Hoje esta considerando fixo 60 dias nesses casos.
                      Heitor (Mouts) - Chamado 629653.
@@ -716,14 +716,14 @@
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
 
-              06/10/2017 - Projeto 410 - Incluir campo Indicador de 
-                           financiamento do IOF (Diogo - Mouts)
-			  
+        06/10/2017 - Projeto 410 - Incluir campo Indicador de 
+                     financiamento do IOF (Diogo - Mouts)
+
               31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
 			  21/11/2017 - Inclusão do campo flgpreap na procedure altera-valor-proposta,
 						         Prj. 402 (Jean Michel)
-                     
+
               14/12/2017 - Inclusão dos campo flintcdc, inintegra_cont na tt tt-proposta-epr
                            utilizada nas procedures obtem-propostas-emprestimo e 
                            obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel).                     
@@ -2191,9 +2191,9 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.err_efet = aux_err_efet	
 		           tt-proposta-epr.idcobope = crawepr.idcobope
                tt-proposta-epr.flintcdc = crapcop.flintcdc.
-                       
+
                /*FIND tbepr_cdc_parametro WHERE tbepr_cdc_parametro.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
-               
+                           
                IF AVAILABLE tbepr_cdc_parametro THEN
                  ASSIGN tt-proposta-epr.inintegra_cont = tbepr_cdc_parametro.inintegra_cont.
                ELSE*/
@@ -2782,7 +2782,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
              ASSIGN tt-proposta-epr.tpfinali = crapfin.tpfinali.
            ELSE
              ASSIGN tt-proposta-epr.tpfinali = 0.
-             
+
 				IF  AVAIL crapepr THEN
                   DO:
                     ASSIGN tt-proposta-epr.idfiniof = crapepr.idfiniof
@@ -5158,6 +5158,7 @@ PROCEDURE valida-dados-alienacao:
                NO-LOCK NO-ERROR.
                 
             IF  NOT AVAIL crapbpr THEN DO:
+
                 ASSIGN aux_cdcritic = 77
                        aux_dscritic = ""
                        par_nmdcampo = "dsbemfin".
@@ -5977,6 +5978,11 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsjusren AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
+    
+    /** -------------------- Parametros Lojista CDC ---------------------**/
+    DEF  INPUT PARAM par_cdcoploj AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcntloj AS DECI                           NO-UNDO.
+    
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -5990,7 +5996,7 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         aux_contbem1 AS INTE                           NO-UNDO.
     DEF  VAR         reg_dsdregis AS CHAR                           NO-UNDO.
     DEF  VAR         reg_dsdregi1 AS CHAR                           NO-UNDO.
-    DEF  VAR         aux_idchsdup AS LOG                           NO-UNDO.
+    DEF  VAR         aux_idchsdup AS LOG                            NO-UNDO.
     DEF  VAR         aux_nmdcampo AS CHAR                           NO-UNDO.
     DEF  VAR         aux_nrcpfcgc AS CHAR                           NO-UNDO.
     DEF  VAR         par_idseqbem AS INTE                           NO-UNDO.
@@ -6403,7 +6409,9 @@ PROCEDURE grava-proposta-completa:
                                 crawepr.nrdconta = par_nrdconta
                                 crawepr.nrctremp = par_nrctremp
                                 crawepr.dtmvtolt = par_dtmvtolt
-                                crawepr.cdoperad = par_cdoperad.
+                                crawepr.cdoperad = par_cdoperad
+                                crawepr.cdcoploj = par_cdcoploj
+                                crawepr.nrdccloj = par_nrcntloj.
                          VALIDATE crawepr.
 
                      END.  /* Fim Inclusao de proposta */
@@ -6936,7 +6944,9 @@ PROCEDURE grava-proposta-completa:
 
              ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|").
 			 
-			 if ENTRY(16,reg_dsdregis,";") <> "0" AND
+             IF (NUM-ENTRIES(reg_dsdregis, ";") >= 16) THEN
+                DO:
+                 IF ENTRY(16,reg_dsdregis,";") <> "0" AND
 				ENTRY(16,reg_dsdregis,";") <> "" THEN
 				DO:
 			      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -6945,6 +6955,7 @@ PROCEDURE grava-proposta-completa:
                                            INPUT "Aprovado Coordenador: " + ENTRY(16,reg_dsdregis,";")).
 		        END.
 	       END.	
+        END.                   
         END.                   
     
     RETURN "OK".

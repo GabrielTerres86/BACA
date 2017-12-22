@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 06/10/2017
+   Data    : Junho/2007                     Ultima atualizacao: 02/05/2017
 
    Dados referentes ao programa:
 
@@ -125,9 +125,6 @@
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
 			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
-
-21/09/2017 - Projeto 410 - Incluir campo Indicador de 
-                            financiamento do IOF (Diogo - Mouts)
 
 ..............................................................................*/
 
@@ -370,10 +367,10 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
-DEF VAR aux_idfiniof AS INTE                                           NO-UNDO.
-DEF VAR aux_vliofepr LIKE crapepr.vliofepr                             NO-UNDO.
-DEF VAR aux_vlrtarif AS DECI                                           NO-UNDO.
-DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
+
+/** ------------------------- Variaveis Lojista CDC ---------------------- **/
+DEF VAR aux_cdcoploj AS INTE                                           NO-UNDO.
+DEF VAR aux_nrcntloj AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
@@ -402,7 +399,7 @@ PROCEDURE valores_entrada:
 
             WHEN "cdcooper" THEN aux_cdcooper = INTE(tt-param.valorCampo).
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
-			WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
+            WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
             WHEN "nrdcaixa" THEN aux_nrdcaixa = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
@@ -602,11 +599,9 @@ PROCEDURE valores_entrada:
             WHEN "uflicenc" THEN aux_uflicenc = tt-param.valorCampo.      
             WHEN "dstipbem" THEN aux_dstipbem = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
-
-            WHEN "idfiniof" THEN aux_idfiniof = INTE(tt-param.valorCampo).
-            WHEN "vliofepr" THEN aux_vliofepr = DECI(tt-param.valorCampo).
-            WHEN "vlrtarif" THEN aux_vlrtarif = DECI(tt-param.valorCampo).
-            WHEN "vlrtotal" THEN aux_vlrtotal = DECI(tt-param.valorCampo).
+            
+            WHEN "cdcoploj" THEN aux_cdcoploj = INTE(tt-param.valorCampo).
+            WHEN "nrcntloj" THEN aux_nrcntloj = DECI(tt-param.valorCampo).
 
         END CASE.
     
@@ -1490,7 +1485,7 @@ PROCEDURE grava-proposta-completa:
     RUN grava-proposta-completa IN hBO
                                (INPUT aux_cdcooper,
                                 INPUT aux_cdagenci,
-								INPUT aux_cdpactra,
+                                INPUT aux_cdpactra,
                                 INPUT aux_nrdcaixa,
                                 INPUT aux_cdoperad,
                                 INPUT aux_nmdatela,
@@ -1607,6 +1602,8 @@ PROCEDURE grava-proposta-completa:
                                 INPUT TRUE,
                                 INPUT aux_dsjusren,
                                 INPUT aux_dtlibera,
+                                INPUT aux_cdcoploj,
+                                INPUT aux_nrcntloj,
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,

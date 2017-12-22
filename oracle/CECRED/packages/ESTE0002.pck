@@ -1900,8 +1900,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('liberaPreAprovad'
                          ,(nvl(vr_flglibera_pre_aprv,0)=1));
 
-      vr_obj_generic2.put('valorPreAprovad',nvl(vr_vllimdis,0));
-    
+      vr_obj_generic2.put('limitePreAprovado',este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
+      vr_obj_generic2.put('valorEmprestimoPendente',este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
+			    
       -- Data Ultima Revisão Cadastral      
       OPEN cr_revisa;
       FETCH cr_revisa
@@ -3693,7 +3694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,decode(wpr.tpemprst,1,'PP','TR') tpproduto
             ,lcr.tpctrato
             -- Indica que am linha de credito eh CDC ou C DC
-            ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+            ,fin.tpfinali
             ,fin.cdfinemp
             ,fin.dsfinemp
             ,wpr.inconcje
@@ -3707,6 +3708,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,ass.inpessoa
              ,DECODE(wpr.flgpagto,0,'CONTA','FOLHA') despagto
              ,lcr.txminima
+						 ,wpr.percetop
+						 ,wpr.dtdpagto
+						 ,wpr.dtlibera
+						 ,wpr.dtcarenc
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -3955,6 +3960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+		vr_valoriof      NUMBER;
       
   BEGIN
   
@@ -4031,7 +4037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_obj_generico.put('agenci', pr_cdagenci);
 
     -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN  
+    IF rw_crawepr.tpfinali = 3 THEN  
       vr_obj_generico.put('segmentoCodigo'    ,0); 
       vr_obj_generico.put('segmentoDescricao' ,'CDC Diversos');  
       vr_obj_generico.put('linhaCreditoCodigo'    ,'');
@@ -4153,7 +4159,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
     END IF;  
 
+    -- Buscar IOF
+    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+		                           ,pr_nrdconta => pr_nrdconta
+															 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+															 ,pr_inpessoa => rw_crawepr.inpessoa
+															 ,pr_cdlcremp => rw_crawepr.cdlcremp
+															 ,pr_qtpreemp => rw_crawepr.qtpreemp
+															 ,pr_vlpreemp => rw_crawepr.vlpreemp
+															 ,pr_vlemprst => rw_crawepr.vlemprst
+															 ,pr_dtdpagto => rw_crawepr.dtdpagto
+															 ,pr_dtlibera => rw_crawepr.dtlibera
+															 ,pr_tpemprst => rw_crawepr.tpemprst
+															 ,pr_dtcarenc => rw_crawepr.dtcarenc
+															 ,pr_qtdias_carencia => 0
+															 ,pr_valoriof => vr_valoriof
+															 ,pr_dscritic => vr_dscritic);
+
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
+    vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0))); 		
+    vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0))); 				
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
     pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper

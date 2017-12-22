@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 26/01/2016
+   Data    : Outubro/96.                     Ultima atualizacao: 21/11/2017
 
    Dados referentes ao programa:
 
@@ -442,9 +442,13 @@
                          caso o valor do bem for superior a 5 vezes ao 
                          valor do emprestimo. (James)        
       
-	        14/03/2016 - Incluir campo cdpactra na chamada da rotina 
-			             grava-proposta-completa. PRJ207 - Esteira 
-						 (Odirlei-AMcom)
+            14/03/2016 - Incluir campo cdpactra na chamada da rotina 
+                         grava-proposta-completa. PRJ207 - Esteira 
+                         (Odirlei-AMcom)
+                         
+            21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
+                         grava-proposta-completa. PRJ402 - Integracao CDC
+                         (Reinert)						                  
 						 						                  
 ........................................................................... */
 
@@ -1773,7 +1777,7 @@ RUN monta_registros_dinamicos.
 RUN grava-proposta-completa IN h-b1wgen0002
                                (INPUT glb_cdcooper,
                                 INPUT 0,
-								INPUT crapope.cdpactra,
+                                INPUT crapope.cdpactra,
                                 INPUT 0,
                                 INPUT glb_cdoperad,
                                 INPUT glb_nmdatela,
@@ -1897,6 +1901,8 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+                                INPUT 0, /* cdcoploj */
+                                INPUT 0, /* nrcntloj */                                
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,
