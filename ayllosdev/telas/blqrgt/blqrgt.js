@@ -174,10 +174,12 @@ function btnContinuar() {
 	
 	// Verifica se o número da conta é vazio
 	if ( val == '' ) { return false; }
-  if ( nmprimtl == '' || val != nrdconta ) {
-    nrdconta = val;
+	
+	if ( nmprimtl == '' || val != nrdconta ) {
+		nrdconta = val;
 		controlaPesquisaConta();
-  }
+		return false;
+	}
 
 	// Verifica se a conta é válida
 	if ( !validaNroConta(val) ) { 
