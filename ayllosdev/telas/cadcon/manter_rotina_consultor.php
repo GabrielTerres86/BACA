@@ -5,8 +5,8 @@
 	 * DATA CRIAÇÃO : 08/10/2015
 	 * OBJETIVO     : Rotina para manter as operações da tela de Consultores
 	 * --------------
-	 * ALTERAÇÕES   : 
-	 * -------------- 
+	 * ALTERAÇÕES   : 21/11/2017 - Quando aparecer mensagem de usuario nao tem permissao na opcao VA	 
+	 * --------------              voltar ao estadoInicial() (Tiago #786010)
 	 */		
 
 	session_cache_limiter("private");
@@ -318,7 +318,7 @@
 		case "VA":
 			foreach($xmlObjeto->operador as $operador){
 				if ($operador->nvoperad == 1 || $operador->nvoperad == 0) {
-					exibirErro("error","Usu&aacute;rio n&atilde;o possui permiss&atilde;o para utilizar essa op&ccedil;&atilde;o.","Alerta - Ayllos","",false);
+					exibirErro("error","Usu&aacute;rio n&atilde;o possui permiss&atilde;o para utilizar essa op&ccedil;&atilde;o.","Alerta - Ayllos","estadoInicial()",false);
 				}
 			}
 		break;
