@@ -2628,8 +2628,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
+    -- Se não houve erro
+    IF vr_dscritic IS NULL THEN 
+  
+      --> Atualizar proposta
+      BEGIN
+        UPDATE crawepr epr 
+           SET epr.insitest = 2, -->  2 – Reenviado para Analise
+               epr.dtenvest = trunc(SYSDATE), 
+               epr.hrenvest = to_char(SYSDATE,'sssss'),
+               epr.cdopeste = pr_cdoperad,
+               epr.dsprotoc = nvl(vr_dsprotocolo,' '),
+               epr.insitapr = 0,
+               epr.cdopeapr = NULL,
+               epr.dtaprova = NULL,
+               epr.hraprova = 0
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;      
+      EXCEPTION    
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
+      END;         
+
+    
     -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
-    IF lower(vr_dscritic) LIKE '%proposta nao encontrada%' THEN
+    ELSIF lower(vr_dscritic) LIKE '%proposta nao encontrada%' THEN
 
       -- Tentaremos enviar inclusão novamente na Esteira
       pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
@@ -2651,19 +2675,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       RAISE vr_exc_erro;
     END IF; 
     
-    --> Atualizar proposta
-    BEGIN
-      UPDATE crawepr epr 
-         SET epr.insitest = 2, -->  2 – Reenviado para Analise
-             epr.cdopeste = pr_cdoperad
-       WHERE epr.cdcooper = pr_cdcooper
-         AND epr.nrdconta = pr_nrdconta
-         AND epr.nrctremp = pr_nrctremp;      
-    EXCEPTION    
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;         
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
