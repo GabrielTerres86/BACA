@@ -9905,7 +9905,8 @@ PROCEDURE obtem-dados-conta-contrato:
                    tt-dados-epr.flgimpnp = crawepr.flgimpnp
                    tt-dados-epr.nrdrecid = INTE(RECID(crawepr))
                    tt-dados-epr.qtpromis = crawepr.qtpromis
-                   tt-dados-epr.dtpripgt = crawepr.dtdpagto.
+                   tt-dados-epr.dtpripgt = crawepr.dtdpagto
+                   tt-dados-epr.idcobope = crawepr.idcobope.
                    /*tt-dados-epr.nrseqrrq = */
         END.
 

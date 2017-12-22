@@ -9290,7 +9290,7 @@ function abrirTelaGAROPC(operacao) {
 	
 	switch (operacao) {
 		case 'I_GAROPC':
-			tipaber = (idcobert > 0) ? 'A' : 'I';
+			tipaber = (idcobert > 0) ? 'AI' : 'I';
 			opera = 'I';
 			break;
 		case 'A_GAROPC':
@@ -9329,7 +9329,7 @@ function abrirTelaGAROPC(operacao) {
             divanterior  : 'divRotina',
             ret_nomcampo : 'idcobope',
             ret_nomformu : 'frmNovaProp',
-            ret_execfunc : (tipaber == 'I' ? 'arrayProposta[\\\'idcobope\\\'] = $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() > 0 ? $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() : 0;' : '') + 
+            ret_execfunc : (tipaber == 'I' || tipaber == 'A' ? 'arrayProposta[\\\'idcobope\\\'] = $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() > 0 ? $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() : 0;' : '') + 
 						   ' $(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});' + 
 						   ' bloqueiaFundo($(\\\'#divRotina\\\'));' + 
 						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',

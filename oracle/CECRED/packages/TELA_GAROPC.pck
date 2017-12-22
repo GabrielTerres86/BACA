@@ -234,13 +234,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                               ,pr_dscritic => vr_dscritic);
 
       -- Se NAO for Consulta, Alteracao ou Inclusao
-      IF NOT pr_tipaber IN ('C','A','I') THEN
+      IF NOT pr_tipaber IN ('C','A','I','AI') THEN
         vr_dscritic := 'Tipo de Abertura inválido, favor verificar!';
         RAISE vr_exc_erro;
       END IF;
 
       -- Se for Consulta ou Alteracao e NAO possui ID
-      IF pr_tipaber IN ('C','A') AND NVL(pr_idcobert,0) = 0 THEN
+      IF pr_tipaber IN ('C','A','AI') AND NVL(pr_idcobert,0) = 0 THEN
         vr_dscritic := 'ID da configuração anterior não foi enviado, favor verificar!';
         RAISE vr_exc_erro;
       END IF;
@@ -357,7 +357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       END IF;
 
       -- Se for Consulta ou Alteracao
-      IF pr_tipaber IN ('C','A') THEN
+      IF pr_tipaber IN ('C','A','AI') THEN
 
         -- Seleciona garantias para operacoes de credito
         OPEN cr_cobertura(pr_idcobert => pr_idcobert);
@@ -875,7 +875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       -- Se ja existe cadastro
       IF vr_idcobert > 0 THEN
         -- Se for inclusao
-        IF pr_tipaber = 'I' THEN
+        IF pr_tipaber IN('I','AI') THEN
             vr_blupdate := TRUE;
         ELSE
           -- Seleciona garantias para operacoes de credito
