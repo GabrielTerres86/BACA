@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 18/08/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 19/12/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -217,6 +217,8 @@
 			   06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)
 			   
 			   24/11/2017 - Alteração no tratamento da mensagem LTR0005R2 e tratamento da mensagem SLC0001 (Mauricio - Mouts)
+
+			   19/12/2017 - Efetuado alteracao para validar corretamente o tipo de pessoa e conta (Jonata - MOUTS).
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -2515,73 +2517,50 @@ PROCEDURE verifica_conta.
                
 				   /*-----  FIM CONTA MIGRADA -------*/
 				END.
+
+				/*Verifica se o problema esta na conta*/
+				FIND crapass WHERE crapass.cdcooper = val_cdcooper AND
+								   crapass.nrdconta = val_nrdconta
+								   NO-LOCK NO-ERROR.
+					   
+				IF NOT AVAIl crapass THEN
+			      ASSIGN aux_codierro = 2  /*Conta invalida*/
+						 aux_dsdehist = "Conta informada invalida.".       			   
+				ELSE IF crapass.dtelimin <> ? THEN
+				  ASSIGN aux_codierro = 1.  /* Conta encerrada */	
+				ELSE
+					DO:
+						IF crapass.inpessoa = 1 THEN
+							DO:
+							    /*Verifica se o problema esta no CPF*/
+								FIND FIRST crapttl WHERE crapttl.cdcooper = val_cdcooper AND
+														 crapttl.nrdconta = val_nrdconta AND
+														 crapttl.nrcpfcgc = val_nrcpfcgc
+														 NO-LOCK NO-ERROR.
+			   
+								IF NOT (val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)) OR 
+								   NOT AVAIL crapttl                                                    THEN
+								   ASSIGN aux_codierro = 3.  /*CPF divergente*/								 
+				
+							END.
+						ELSE
+							DO:
+								/*Verifica se o problema esta no CPF*/
+								FIND crapass WHERE crapass.cdcooper = val_cdcooper AND
+												   crapass.nrdconta = val_nrdconta AND
+												   crapass.nrcpfcgc = val_nrcpfcgc AND
+												   crapass.inpessoa > 1
+												   NO-LOCK NO-ERROR.
+									   
+								IF val_tppessoa <> "J" or 
+								   NOT AVAIL crapass  THEN 
+								   ASSIGN aux_codierro = 3.  /*CPF divergente*/
+				
+							END.
+								
+		
+					END.               
                
-               /* Pessoa Fisica */
-           IF   val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg) THEN
-                DO:                                                   
-                    FIND FIRST crapttl WHERE crapttl.cdcooper = val_cdcooper AND
-                                             crapttl.nrdconta = val_nrdconta AND
-                                             crapttl.nrcpfcgc = val_nrcpfcgc
-                                             NO-LOCK NO-ERROR.
-               
-                    IF   NOT AVAIL crapttl  THEN
-                         DO:
-                             /* Verifica se o problema esta na conta ou CPF */
-                             FIND FIRST crapttl WHERE 
-                                        crapttl.cdcooper = val_cdcooper AND
-                                        crapttl.nrdconta = val_nrdconta
-                                        NO-LOCK NO-ERROR.
-                                       
-                             IF   NOT AVAIL crapttl  THEN
-                                  ASSIGN aux_codierro = 2 /*Conta invalida*/
-                                         aux_dsdehist = "Conta informada invalida.".  
-                             ELSE
-                                  ASSIGN aux_codierro = 3.  /*CPF divergente*/
-                         END.
-                    ELSE
-                         DO:
-                             FIND crapass WHERE 
-                                  crapass.cdcooper = val_cdcooper      AND
-                                  crapass.nrdconta = val_nrdconta 
-                                  NO-LOCK NO-ERROR.
-                                       
-                             IF   AVAIL crapass  AND  crapass.dtelimin <> ?  THEN 
-                                  ASSIGN aux_codierro = 1.  /* Conta encerrada */
-                         END.
-           
-                END.
-           ELSE       
-                DO: /* Pessoa Juridica */ 
-                    FIND crapass WHERE crapass.cdcooper = val_cdcooper AND
-                                       crapass.nrdconta = val_nrdconta AND
-                                       crapass.nrcpfcgc = val_nrcpfcgc AND
-                                       crapass.inpessoa > 1
-                                       NO-LOCK NO-ERROR.
-                                       
-                    IF   NOT AVAIL crapass  THEN 
-                         DO:
-                             /* Verifica se o problema esta na conta ou CNPJ */
-                             FIND crapass WHERE
-                                  crapass.cdcooper = val_cdcooper AND
-                                  crapass.nrdconta = val_nrdconta AND
-                                  crapass.inpessoa > 1
-                                  NO-LOCK NO-ERROR.
-           
-                             IF   NOT AVAIL crapass THEN
-                                  ASSIGN aux_codierro = 2  /*Conta invalida*/
-                                         aux_dsdehist = "Conta informada invalida.".                       
-                             ELSE
-                                  IF   aux_CodMsg = "STR0047R2"  THEN 
-                                       /* Portabilidade nao trata codigo de devolucao
-                                          por divergencia de CNPJ */
-                                       ASSIGN aux_codierro = 0. 
-                                  ELSE
-                                       ASSIGN aux_codierro = 3.  /*CNPJ divergente*/
-                         END.
-                    ELSE
-                         IF   crapass.dtelimin <> ?  THEN
-                              ASSIGN aux_codierro = 1.  /* Conta encerrada */
-                END.
         END.
 
     RETURN "OK".   
