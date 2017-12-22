@@ -9542,6 +9542,7 @@ PROCEDURE aprova_trans_pend:
                                                          ,OUTPUT 0
                                                          ,OUTPUT 0
                                                          ,OUTPUT 0
+                                                         ,OUTPUT 0
                                                          ,OUTPUT "").
 
                                 CLOSE STORED-PROC pc_horario_limite aux_statproc = PROC-STATUS

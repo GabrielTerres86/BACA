@@ -174,6 +174,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                  OUTPUT 0,
                                  OUTPUT 0,
                                  OUTPUT 0,
+                                 OUTPUT 0,
                                  OUTPUT "").
     
     CLOSE STORED-PROC pc_horario_limite 

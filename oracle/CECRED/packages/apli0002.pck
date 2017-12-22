@@ -551,6 +551,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                      ,pr_flgerlog IN INTEGER               --> Gera log
                                      ,pr_nmdcampo OUT VARCHAR2             --> Campo para foco
                                      ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE --> Número documento do protocolo
+																		 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Protocolo
                                      ,pr_tab_msg_confirma OUT typ_tab_msg_confirma --> Mensagens para confirmação
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição do erro
@@ -575,8 +576,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                     ,pr_flgdebci IN INTEGER               --> Débito em CI
                                     ,pr_vllanmto IN craprda.vlaplica%TYPE --> Valor de lançamento
                                     ,pr_flgerlog IN INTEGER               --> Gera log
+																		,pr_idtipapl IN VARCHAR2              --> Indicador tipo aplicação
                                     ,pr_nmdcampo OUT VARCHAR2             --> Campo para foco
                                     ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE --> Número documento do protocolo
+                                    ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição do erro                                                                           
 
@@ -726,6 +729,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                              ,pr_tpvalida IN INTEGER                  --> Valida horario = 1, busca horario = 2
                              ,pr_hrlimini OUT INTEGER                 --> Horario limite incial
                              ,pr_hrlimfim OUT INTEGER                 --> Horario limite final                             
+														 ,pr_idesthor OUT INTEGER                 --> Estouro de horário limite (1 – Fora do limite / 2 – Dentro do limite).
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código do erro
                              ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição do erro                                     
                                      
@@ -3239,6 +3243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_nraplica INTEGER;
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
+			vr_idesthor INTEGER;
       
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
@@ -3377,6 +3382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_tpvalida => 1 -- Valida horario
                              ,pr_hrlimini => vr_hrlimini
                              ,pr_hrlimfim => vr_hrlimfim
+														 ,pr_idesthor => vr_idesthor
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
                                
@@ -3839,6 +3845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_tpvalida => 1 -- Valida horario
                              ,pr_hrlimini => vr_hrlimini
                              ,pr_hrlimfim => vr_hrlimfim
+														 ,pr_idesthor => vr_idesthor
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
                              
@@ -4147,6 +4154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                      ,pr_flgerlog IN INTEGER
                                      ,pr_nmdcampo OUT VARCHAR2      
                                      ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE
+																		 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
                                      ,pr_tab_msg_confirma OUT typ_tab_msg_confirma
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -6137,6 +6145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       -- Devolve o número de documento do protocolo  
       pr_nrdocmto := vr_nrdocmto;
+			-- e o protocolo
+			pr_dsprotoc := vr_dsprotoc;
       
       --Gerar log                                                  
       IF pr_flgerlog = 1 THEN
@@ -6361,8 +6371,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                     ,pr_flgdebci IN INTEGER
                                     ,pr_vllanmto IN craprda.vlaplica%TYPE
                                     ,pr_flgerlog IN INTEGER
+																		,pr_idtipapl IN VARCHAR2 
                                     ,pr_nmdcampo OUT VARCHAR2 
                                     ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE                                            
+                                    ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
                                      
@@ -6398,6 +6410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_flgerlog => pr_flgerlog
                              ,pr_nmdcampo => pr_nmdcampo     
                              ,pr_nrdocmto => pr_nrdocmto
+														 ,pr_dsprotoc => pr_dsprotoc
                              ,pr_tab_msg_confirma => vr_tab_msg_confirma
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic);
@@ -9791,6 +9804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_tpvalida IN INTEGER                  --> Valida horario = 1, busca horario = 2
                              ,pr_hrlimini OUT INTEGER                 --> Horario limite incial
                              ,pr_hrlimfim OUT INTEGER                 --> Horario limite final                             
+														 ,pr_idesthor OUT INTEGER                 --> Estouro de horário limite (1 – Fora do limite / 2 – Dentro do limite).
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código do erro
                              ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro      
   BEGIN
@@ -9829,6 +9843,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         RAISE vr_exc_erro;
       END IF;
       
+			pr_idesthor := 2; --Dentro do limite (padrão)
+
       -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
       -- em questão e utilizada para restringir o horário mínimo para utilização de operações
       -- referentes a aplicação.
@@ -9843,24 +9859,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                       ,pr_dstext  => vr_dstextab
                                                       ,pr_delimitador => ' '));
                                                       
-      -- Verifica se o processo ainda esta rodando e valida os horarios limites
-      IF pr_tpvalida = 1 THEN
-        
-        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR 
-           TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
-                
-          -- Monta critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Horario esgotado para acesso as operacoes de aplicacao.'; 
-                
-          -- Gera exceção
-          RAISE vr_exc_erro;
-              
-        END IF;
-              
-        -- Verifica se a cooperativa esta cadastrada
+		  -- Busca dados da execução do processo
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-        
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
         
         -- Se não encontrar
@@ -9879,6 +9879,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ELSE
           -- Apenas fechar o cursor
           CLOSE BTCH0001.cr_crapdat;
+			END IF;
+			
+			IF (rw_crapdat.inproces >= 3) OR -- processo rodando
+				 (TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini)  OR
+					TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
+					pr_idesthor := 1; -- fora do limite
+			END IF;
+
+      -- Verifica se o processo ainda esta rodando e valida os horarios limites
+      IF pr_tpvalida = 1 THEN
+
+        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR
+           TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
+
+          -- Monta critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Horario esgotado para acesso as operacoes de aplicacao.';
+
+          -- Gera exceção
+          RAISE vr_exc_erro;
           
         END IF;
         
@@ -19381,6 +19401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_vlparaar crapaar.vlparaar%TYPE;
       vr_hrlimini INTEGER;
       vr_hrlimfim INTEGER;
+			vr_idesthor INTEGER;
       vr_dstpapli VARCHAR2(1);
 
       -- Selecionar cooperado
@@ -19510,6 +19531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                            ,pr_tpvalida => 1
                            ,pr_hrlimini => vr_hrlimini
                            ,pr_hrlimfim => vr_hrlimfim
+													 ,pr_idesthor => vr_idesthor
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
 

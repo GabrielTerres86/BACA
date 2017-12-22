@@ -5385,6 +5385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                ,pr_tpvalida => 0 -- Não Valida horario
                                ,pr_hrlimini => vr_hrlimini
                                ,pr_hrlimfim => vr_hrlimfim
+                               ,pr_idesthor => vr_idesthor
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
     -- Se ocorreu erro

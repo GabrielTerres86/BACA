@@ -46,6 +46,7 @@ DEF INPUT PARAM par_cdperapl AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_flgdebci AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_flgerlog AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_flgvalid AS LOGICAL                                NO-UNDO.
+DEF INPUT PARAM par_idtipapl AS CHAR                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -54,6 +55,7 @@ DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dslinxml AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdocmto AS DEC                                            NO-UNDO.
+DEF VAR aux_dsprotoc AS CHAR                                           NO-UNDO.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -143,8 +145,10 @@ ELSE
                                    INPUT par_flgdebci,
                                    INPUT par_vllanmto,
                                    INPUT par_flgerlog,
+                                   INPUT par_idtipapl,
                                    OUTPUT "",   
                                    OUTPUT 0,
+                                   OUTPUT "",
                                    OUTPUT 0,
                                    OUTPUT "").
       
@@ -161,7 +165,9 @@ ELSE
              aux_dscritic = pc_incluir_nova_aplic_wt.pr_dscritic
                                 WHEN pc_incluir_nova_aplic_wt.pr_dscritic <> ?
              aux_nrdocmto = pc_incluir_nova_aplic_wt.pr_nrdocmto
-                                WHEN pc_incluir_nova_aplic_wt.pr_nrdocmto <> ?. 
+                                WHEN pc_incluir_nova_aplic_wt.pr_nrdocmto <> ?
+             aux_dsprotoc = pc_incluir_nova_aplic_wt.pr_dsprotoc
+                                WHEN pc_incluir_nova_aplic_wt.pr_dsprotoc <> ?.
 
       IF aux_cdcritic <> 0   OR
          aux_dscritic <> ""  THEN
@@ -185,6 +191,8 @@ ELSE
              RETURN "NOK".
              
          END.
+         
+      ASSIGN aux_dslinxml = "<dsprotoc>" + aux_dsprotoc + "</dsprotoc>". 
 
    END.
 
