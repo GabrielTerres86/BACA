@@ -15,6 +15,9 @@
 				  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 
 				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
+				  
+				  12/12/2017 - Correção de merge efetuado erroneamente (Jonata - RKAM p364).
+				  
  */
 session_start();
 
