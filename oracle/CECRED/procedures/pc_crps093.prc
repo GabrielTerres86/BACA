@@ -706,9 +706,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
       END LOOP;
 
 			-- Carregando as informações do cadastro de cartoes magneticos solicitados e ativos (1,2)
-      FOR rw_crapcrm IN cr_crapcrm( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_crapcrm(rw_crapcrm.nrdconta).nrdconta := rw_crapcrm.nrdconta;
-      END LOOP;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_crapcrm IN cr_crapcrm( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_crapcrm(rw_crapcrm.nrdconta).nrdconta := rw_crapcrm.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de controle de cartoes de crédito não cancelados
       FOR rw_crawcrd IN cr_crawcrd( pr_cdcooper => pr_cdcooper) LOOP
