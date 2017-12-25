@@ -700,10 +700,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
 --        vr_tab_crapseg(rw_crapseg.nrdconta).nrdconta := rw_crapseg.nrdconta;
 --      END LOOP;
 
-			-- Carregando as informações do cadastro de poupanças programadas
-      FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
-        vr_tab_craplat(rw_craplat.nrdconta).nrdconta := rw_craplat.nrdconta;
-      END LOOP;
+			-- Carregando as informações do cadastro de lançamentos de tarifas
+--Pj 364 - Sarah solicitou retirar essa restricao
+--      FOR rw_craplat IN cr_craplat( pr_cdcooper => pr_cdcooper) LOOP
+--        vr_tab_craplat(rw_craplat.nrdconta).nrdconta := rw_craplat.nrdconta;
+--      END LOOP;
 
 			-- Carregando as informações do cadastro de cartoes magneticos solicitados e ativos (1,2)
 --Pj 364 - Sarah solicitou retirar essa restricao
@@ -800,7 +801,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
              vr_tab_craprpp.EXISTS(rw_crapass.nrdconta) OR -- poupanças programadas
              vr_tab_craplau.EXISTS(rw_crapass.nrdconta) OR -- lancamentos automaticos
              vr_tab_crapseg.EXISTS(rw_crapass.nrdconta) OR -- seguros
-             vr_tab_craplat.EXISTS(rw_crapass.nrdconta) OR -- poupanças programadas
+             vr_tab_craplat.EXISTS(rw_crapass.nrdconta) OR -- lançamentos tarifas
 						 vr_tab_craprac.EXISTS(rw_crapass.nrdconta) THEN -- aplicações captação
 
             -- vai para a próxima iteração
@@ -919,13 +920,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps093 (pr_cdcooper IN crapcop.cdcooper%T
             CLOSE cr_crapcot;
           END IF;
 
-          -- se possui saldo em um dos campos abaixo, vai para a proxima iteração e não efetua a baixa da conta
-          IF nvl(rw_crapcot.qtjurmfx,0) > 0 OR -- juros pagos sobre c/c e emprestimos em moeda fixa
-             nvl(rw_crapcot.qtraimfx,0) > 0 OR -- quantidade de retorno a incorporar
-             nvl(rw_crapcot.qtrsjmfx,0) > 0 THEN -- quantidade de residuos da incorporação
-            -- vai para a proxima iteração
-            CONTINUE;
-          END IF;
+--Pj 364 - Sarah solicitou retirar essa restricao
+--          -- se possui saldo em um dos campos abaixo, vai para a proxima iteração e não efetua a baixa da conta
+--          IF nvl(rw_crapcot.qtjurmfx,0) > 0 OR -- juros pagos sobre c/c e emprestimos em moeda fixa
+--             nvl(rw_crapcot.qtraimfx,0) > 0 OR -- quantidade de retorno a incorporar
+--             nvl(rw_crapcot.qtrsjmfx,0) > 0 THEN -- quantidade de residuos da incorporação
+--            -- vai para a proxima iteração
+--            CONTINUE;
+--          END IF;
 
           --------------------------------------------------------------
           --  Inicio da baixa dos valores do conta-corrente
