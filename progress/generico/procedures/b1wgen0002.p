@@ -3653,6 +3653,7 @@ PROCEDURE valida-dados-gerais:
                  LEAVE.
              END.
 
+/*
         /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
         IF   par_cdlcremp = 100  THEN
              DO:
@@ -3692,6 +3693,7 @@ PROCEDURE valida-dados-gerais:
                            LEAVE.
              END.
              END.
+             */
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper   AND
                            craplcr.cdlcremp = par_cdlcremp
