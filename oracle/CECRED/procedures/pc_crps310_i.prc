@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 25/08/2016
+     Data    : Maio/2001                       Ultima atualizacao: 26/12/2017
      
      Dados referentes ao programa:
 
@@ -269,6 +269,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               (Odirlei-AMcom)                
 
                  16/05/2017 - Acionamento da criação do Risco para Cartões Credito BB (Andrei-Mouts)
+                 
+                 26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP após a transferência para prejuizo. (Oscar)
 
   ............................................................................ */
 
@@ -629,7 +631,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,MIN(dtvencto) dtvencto
           FROM crappep
          WHERE cdcooper = pr_cdcooper
-           AND inliquid = 0
+           AND (inliquid = 0 OR inprejuz = 1)
            AND dtvencto <= pr_rw_crapdat.dtmvtoan
          GROUP BY nrdconta
                  ,nrctremp;
@@ -2596,7 +2598,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_difmespr         PLS_INTEGER;           --> Diferença de meses em prejuízo
         vr_vldivida_acum    NUMBER;                --> Valor da divida acumulada
         vr_aux_nivel        PLS_INTEGER;           --> Nível do risco        
-        
+        vr_qtdiaatr         PLS_INTEGER;            --> Var auxiliar para manter o atraso        
       BEGIN
         -- Inicializa as variaveis
         vr_vlrpagos     := 0;
@@ -2605,6 +2607,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlprjant     := 0;
         vr_vlsrisco     := 0;
         vr_aux_nivel    := 10;
+        vr_qtdiaatr     := 0;
+        
+        -- Buscar a parcela com maior atraso        
+        vr_dtvencto := NULL;
+        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0');
+        IF vr_tab_crappep_maior.exists(vr_idxpep) THEN
+          vr_dtvencto := vr_tab_crappep_maior(vr_idxpep); 
+        END if; 
+         
+        -- Se encontrou
+        IF vr_dtvencto IS NOT NULL THEN
+          -- Calcular a quantidade de dias em atraso
+           vr_qtdiaatr := pr_rw_crapdat.dtmvtolt - vr_dtvencto;
+        END IF;        
         
         -- Busca os pagamentos de prejuízo
         vr_index_prejuz := lpad(pr_rw_crapepr.nrdconta, 10, '0') ||
