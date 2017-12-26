@@ -302,8 +302,8 @@ function controlaLayout(operacao) {
 	cCodigo_2.addClass('codigo pesquisa');
 	
 // FIELDSET INF. PROFISSIONAIS	
-	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
-	var rColuna_2	= $('label[for="nmextemp"],label[for="dsproftl"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
+	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="dsproftl"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
+	var rColuna_2	= $('label[for="nmextemp"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
 	var rLinha_3   	= $('label[for="nrramemp"],label[for="vlsalari"]','#'+nomeForm );
 	var cColuna_1  	= $('#tpcttrab,#nrdocnpj,#cdturnos,#cdnvlcgo','#'+nomeForm );
 	var cCNPJ		= $('#nrdocnpj','#'+nomeForm );
@@ -409,8 +409,13 @@ function controlaLayout(operacao) {
 					camposGrupo2.habilitaCampo();	
 					controlaInfProfissionais();	
 					cNome.focus();
-					return false; 								
+					 								
 				}	
+                
+                // Validar empresa de trabalho, se pode ser alterada
+                buscaNomePessoa();
+                return false;
+            
 			}			
 		});	
 
@@ -683,4 +688,52 @@ function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
 	acessaRotina('CONTATOS','Contatos','contatos_pf');				
+}			   
+
+function buscaNomePessoa(){
+
+    var nrdocnpj = $('#nrdocnpj','#'+nomeForm ).val();
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);
+
+    var nrdocnpj = $('#nrdocnpj','#'+nomeForm).val();
+
+    nrdocnpj = normalizaNumero(nrdocnpj);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrdocnpj == "" || nrdocnpj == "0" ){   
+        $('#nmextemp','#'+nomeForm ).habilitaCampo();     
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/conjuge/busca_nome_pessoa.php',
+        data: {
+            nrdocnpj: nrdocnpj,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }
