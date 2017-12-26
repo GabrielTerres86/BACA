@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 16/02/2017
+   Data    : Janeiro/94.                         Ultima atualizacao: 26/12/2017
 
    Dados referentes ao programa:
 
@@ -106,6 +106,9 @@
 						  Andrey (Mouts) - Chamado 568416
 
              16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
+
+			 26/12/2017 - Retirado critica de boleto em aberto ou boleto de acordo
+			              quando efetuado transferencia para prejuizo (Daniel)
                           
 ............................................................................. */
 
@@ -198,22 +201,27 @@ DO WHILE TRUE:
                NO-LOCK    
                BY tbepr_cobranca.nrboleto DESC:
           
-              /* verificar se o boleto do contrato está em aberto */
-              FOR FIRST crapcob FIELDS (dtvencto vltitulo)
-                  WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                    AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                    AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                    AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
-                    AND crapcob.incobran = 0 NO-LOCK:
-     
-                  ASSIGN glb_cdcritic = 0
-                         glb_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
-                                        " em aberto." +      
-                                        " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
-                                        " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
-                  LEAVE.    
+              
+			  IF tel_cdhistor <> 349 THEN
+			  DO:
 
-              END.          
+			      /* verificar se o boleto do contrato está em aberto */ 
+				  FOR FIRST crapcob FIELDS (dtvencto vltitulo)
+					  WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
+						AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
+						AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
+						AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+						AND crapcob.incobran = 0 NO-LOCK:
+     
+					  ASSIGN glb_cdcritic = 0
+							 glb_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+											" em aberto." +      
+											" Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
+											" R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
+					  LEAVE.    
+
+				  END.  
+			  END.    
      
               /* verificar se o boleto do contrato está em pago, pendente de processamento */
               FOR FIRST crapcob FIELDS (dtvencto vltitulo dtdpagto)
@@ -508,7 +516,7 @@ DO WHILE TRUE:
         END.
       /* Fim verifica se ha contratos de acordo */
       
-      IF aux_flgretativo = 1 THEN
+      IF aux_flgretativo = 1 AND tel_cdhistor <> 349 THEN
          DO:
              ASSIGN flg_next = TRUE.
              MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
