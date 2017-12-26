@@ -2265,6 +2265,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                     (Douglas - Importacao de Arquivos CNAB)
     --							
     --        19/05/2016 - Incluido upper em cmapos de index utilizados em cursores (Andrei - RKAM).
+    --
+    --        27/09/2017 - Adicionar validação para não permitir Protestar um Titulo que já
+    --                     tenha sido negativado no Serasa (Douglas - Chamado 754911)
     -- ...........................................................................................
   BEGIN
     DECLARE
@@ -2345,6 +2348,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         RAISE vr_exc_erro;
       END IF;
       ------ VALIDACOES PARA RECUSAR ------
+      
+      --- Verificar se possui SERASA --- 
+      IF rw_crapcob_ret.flserasa = 1    AND
+         (rw_crapcob_ret.qtdianeg <> 0  OR
+          rw_crapcob_ret.inserasa <> 0) THEN
+        -- Verificar situacao no Serasa
+        vr_dscritic := 'Titulo nao pode ser protestado';
+        IF rw_crapcob_ret.inserasa IN (1,2) THEN -- 1-Pendente de envio, 2-Solicitacao Enviada
+          vr_dscritic := vr_dscritic || ' - Solicitacao de inclusao enviada a Serasa.';
+        ELSIF rw_crapcob_ret.inserasa IN (3,4) THEN -- 3-Pendente de envio Cancel, 2-Solicitacao Cancel Enviada
+          vr_dscritic := vr_dscritic || ' - Solicitacao de cancelamento enviada a Serasa.';      
+        ELSIF rw_crapcob_ret.inserasa = 5 THEN -- Negativado
+          vr_dscritic := vr_dscritic || ' - Boleto ja negativado na Serasa.';
+        ELSIF rw_crapcob_ret.inserasa = 7 THEN -- Acao Judicial
+          vr_dscritic := vr_dscritic || ' - Boleto ja negativado na Serasa (Acao Judicial).';
+        ELSE 
+          vr_dscritic := vr_dscritic || ' - Titulo possui instrucao de negativacao Serasa';
+        END IF;
+        --Retornar
+        RAISE vr_exc_erro;
+      END IF;
 
       --- Titulo ainda nao venceu ---
       IF rw_crapcob_ret.dtvencto >= SYSDATE THEN
@@ -8174,7 +8198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2017
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 29/09/2017
     --
     --  Dados referentes ao programa:
     --
@@ -8187,6 +8211,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            de um titulo DDA ao cancelar protesto (P340 - NPC - Rafael)
     --
     --               09/06/2017 - Ajustar para tratar as negativacoes do serasa (Douglas - Melhoria 271.2)
+    --
+    --               29/09/2017 - Ajustado com UPPER para remover a mensagem "** SERVICO DE PROTESTO 
+    --                            SERA EFETUADO PELO BANCO DO BRASIL **" quando cancelar a 
+    --                            instrução de protesto (Douglas - Chamado 754911)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -8753,7 +8781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-
+    
     --Se tem remesssa dda na tabela
     IF vr_tab_remessa_dda.COUNT > 0 THEN
       rw_crapcob.idopeleg:= vr_tab_remessa_dda(vr_tab_remessa_dda.LAST).idopeleg;
@@ -8832,8 +8860,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     -- permitir boleto de qualquer IF (Rafael)
     rw_crapcob.flgdprot := 0;
     rw_crapcob.qtdiaprt := 0;
-    rw_crapcob.dsdinstr := REPLACE(rw_crapcob.dsdinstr, 
-                                   '** Servico de protesto sera efetuado pelo Banco do Brasil **', '');
+    rw_crapcob.dsdinstr := NVL(TRIM(REPLACE(UPPER(rw_crapcob.dsdinstr), 
+                                            UPPER('** Servico de protesto sera efetuado pelo Banco do Brasil **'), '')), ' ');
     --Atualizar Cobranca
     BEGIN
       UPDATE crapcob SET crapcob.flgdprot = rw_crapcob.flgdprot,
@@ -8962,7 +8990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
