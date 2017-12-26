@@ -2598,7 +2598,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_difmespr         PLS_INTEGER;           --> Diferença de meses em prejuízo
         vr_vldivida_acum    NUMBER;                --> Valor da divida acumulada
         vr_aux_nivel        PLS_INTEGER;           --> Nível do risco        
-        vr_qtdiaatr         PLS_INTEGER;            --> Var auxiliar para manter o atraso        
+        vr_qtdiaatr         PLS_INTEGER;            --> Var auxiliar para manter o atraso 
+        vr_dtvencto         DATE;
+               
       BEGIN
         -- Inicializa as variaveis
         vr_vlrpagos     := 0;
