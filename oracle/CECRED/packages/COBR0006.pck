@@ -550,6 +550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   SELECT ass.nrdconta,
          ass.nrcpfcgc,
          ass.inpessoa,
+         decode(ass.inpessoa,1,1,2) inpessoa_vld,
          ass.cdcooper
     FROM crapass ass
    WHERE ass.cdcooper = pr_cdcooper
@@ -4543,6 +4544,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
        
                    29/12/2016 - P340 - Ajustes para pagamentos divergentes (Ricardo Linhares)
+
+                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4674,7 +4678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Arquivo incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
@@ -4818,6 +4822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquicvo Header do lote
 
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
+
+                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4909,7 +4916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF rw_crapass.nrcpfcgc <> pr_tab_linhas('NRCPFCGC').numero THEN       
         vr_dscritic := 'CPF/CNPJ Informado Header Lote Invalido.';
         RAISE vr_exc_erro;
-      ELSIF rw_crapass.inpessoa <> pr_tab_linhas('INPESSOA').numero THEN
+      ELSIF rw_crapass.inpessoa_vld <> pr_tab_linhas('INPESSOA').numero THEN
         vr_dscritic := 'CPF/CNPJ Informado Header Lote incompativel com Tipo de Inscricao.';
         RAISE vr_exc_erro;
       END IF;      
@@ -9182,6 +9189,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 			       13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -9961,6 +9971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                             
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_1');
     
     pr_des_reto := 'OK';
     
@@ -9992,6 +10003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_2');
       
     WHEN vr_exc_erro THEN
       
@@ -10022,6 +10034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_3');
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -10046,6 +10059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_4');
       
   END pc_intarq_remes_cnab240_001;
   
@@ -10090,6 +10104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
                    13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
 
     ............................................................................ */   
     
@@ -10953,6 +10970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
                         
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_5');
     
     pr_des_reto := 'OK';
     
@@ -10984,6 +11002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_6');
       
     WHEN vr_exc_erro THEN
       
@@ -11014,6 +11033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_7');
     WHEN OTHERS THEN
     
       -- Efetuar retorno do erro não tratado
@@ -11038,6 +11058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_8');
   END pc_intarq_remes_cnab240_085;
   
   --> Integrar/processar arquivo de remessa CNAB400
@@ -11078,6 +11099,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    04/04/2017 - Inclusão da busca do parâmetro DIASVCTOCEE, pois fazia atribuição
                                 da variável vr_diasvcto sem buscar o parâmetro (AJFink-SD#643179). 
+
+                   09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
+                                (SD#791193 - AJFink)
 
     ............................................................................ */   
     
@@ -11856,6 +11880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF; 
                         
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_9');
     
     pr_des_reto := 'OK';
     
@@ -11887,6 +11912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_10');
       
     WHEN vr_exc_erro THEN
       
@@ -11917,6 +11943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_11');
       
     WHEN OTHERS THEN
     
@@ -11942,6 +11969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       -- Efetuar rollback
       ROLLBACK;  
+      npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_12');
       
   END pc_intarq_remes_cnab400_085;
   
