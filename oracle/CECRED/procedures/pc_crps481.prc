@@ -306,10 +306,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                       ,pr_tptaxrdc crapttx.tptaxrdc%TYPE
                       ,pr_qtdiacar crapttx.qtdiacar%TYPE) IS
        SELECT ttx.cdperapl
+             ,ttx.qtdiacar
          FROM crapttx ttx
         WHERE ttx.cdcooper = pr_cdcooper
           AND ttx.tptaxrdc = pr_tptaxrdc
-          AND ttx.qtdiacar = pr_qtdiacar; 
+          AND ttx.qtdiacar = DECODE(pr_tptaxrdc,7,0,pr_tptaxrdc); 
      rw_crapttx cr_crapttx%ROWTYPE;
 
      --Registro do tipo calendario
@@ -1695,7 +1696,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
 
              -- Bloqueios de Garantia
-             IF vr_inaplblq = 2 THEN
+             IF vr_inaplblq = 3 THEN
 
                -- Busca da taxa
                OPEN cr_crapttx(pr_cdcooper => pr_cdcooper
@@ -1726,11 +1727,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_idorigem => 1
                                                  ,pr_nrdconta => rw_craprda.nrdconta
                                                  ,pr_idseqttl => 1
-                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtopr
                                                  ,pr_tpaplica => rw_crapdtc.tpaplica
                                                  ,pr_qtdiaapl => rw_craprda.qtdiaapl
                                                  ,pr_dtresgat => vr_dtvencto
-                                                 ,pr_qtdiacar => rw_craprda.qtdiauti
+                                                 ,pr_qtdiacar => rw_crapttx.qtdiacar
                                                  ,pr_cdperapl => rw_crapttx.cdperapl
                                                  ,pr_flgdebci => 1 -- Debitar da Conta Investimento
                                                  ,pr_vllanmto => vr_vlsldapl
@@ -1980,8 +1981,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
              vr_flgaplic:= TRUE;
            END IF;      
            /* Se nao estiver bloqueada, coloca uma linha para observacoes */
-           IF nvl(vr_tab_aplicacao(vr_index_aplicacao).dsobserv,'#') <> 'Aplicacao Bloqueada'      AND
-              nvl(vr_tab_aplicacao(vr_index_aplicacao).dsobserv,'#') <> 'Apl. Bloq. Judicialmente' THEN
+           IF nvl(vr_tab_aplicacao(vr_index_aplicacao).dsobserv,'#') not in('Aplicacao Bloqueada','Apl. Bloq. Judicialmente','Apl. Bloq. Garantia') THEN
              vr_tab_aplicacao(vr_index_aplicacao).dsobserv:= Rpad('_',25,'_');
            END IF;  
            --Atualizar Saldo Rendimento
