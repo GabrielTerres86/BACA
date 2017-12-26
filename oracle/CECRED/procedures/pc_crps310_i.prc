@@ -2686,7 +2686,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         pc_grava_crapris(  pr_nrdconta => pr_rw_crapass.nrdconta                             
                           ,pr_dtrefere => vr_dtrefere
                           ,pr_innivris => vr_aux_nivel                 
-                          ,pr_qtdiaatr => 0
+                          ,pr_qtdiaatr => vr_qtdiaatr
                           ,pr_vldivida => nvl(vr_vldivida_acum,0)                  
                           ,pr_vlvec180 => 0
                           ,pr_vlvec360 => 0
