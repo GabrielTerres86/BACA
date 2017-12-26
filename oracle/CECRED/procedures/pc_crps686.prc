@@ -1019,7 +1019,7 @@ BEGIN
         IF vr_cdcritic = 640 THEN
 
           -- Calculo da data de vencimento
-          vr_dtvencto := rw_crapdat.dtmvtocd + rw_craprac.qtdiaapl;
+          vr_dtvencto := rw_craplot.dtmvtolt + rw_craprac.qtdiaapl;
           vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                     ,pr_dtmvtolt => vr_dtvencto
                                                     ,pr_tipo => 'P');
@@ -1032,7 +1032,7 @@ BEGIN
                                     ,pr_nrdconta => rw_craprac.nrdconta -- Número da Conta
                                     ,pr_idseqttl => 1                   -- Titular da Conta
                                     ,pr_nrdcaixa => 100                 -- Numero de caixa
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd -- Data de Movimento
+                                    ,pr_dtmvtolt => rw_craplot.dtmvtolt -- Data de Movimento
                                     ,pr_cdprodut => rw_craprac.cdprodut -- Código do Produto
                                     ,pr_qtdiaapl => rw_craprac.qtdiaapl -- Dias da Aplicação
                                     ,pr_dtvencto => vr_dtvencto         -- Data de Vencimento da Aplicação
