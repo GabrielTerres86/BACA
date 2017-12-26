@@ -903,7 +903,7 @@ function controlaOperacao(operacao) {
             break;
         case 'I_ALIENACAO' :
 
-            if (arrayProposta['tplcremp'] == 1) {
+			if (arrayProposta['tplcremp'] == 1) {
                 controlaOperacao('I_CONTRATO');
                 return false;
             } else if (arrayProposta['tplcremp'] == 2) {
@@ -922,6 +922,9 @@ function controlaOperacao(operacao) {
                 }
             } else if (arrayProposta['tplcremp'] == 3) {
                 controlaOperacao('I_HIPOTECA');
+                return false;
+            } else if (arrayProposta['tplcremp'] == 4) {
+                controlaOperacao('I_CONTRATO');
                 return false;
             } else {
                 controlaOperacao('');
