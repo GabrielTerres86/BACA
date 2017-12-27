@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 25/04/2016
  * OBJETIVO     : Cabeçalho para a tela CADRIS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 19/12/2017 - Inclusao de opcao L na tela (Importacao de arquivo) - Heitor (Mouts)
  *				  
  * --------------
  */	
@@ -25,6 +25,7 @@
                     <option value='C'>C - Consultar Risco</option>
                     <option value='I'>I - Incluir Risco</option>
 					<option value='E'>E - Excluir Risco</option>					
+					<option value='L'>L - Importa&ccedil;&atilde;o de arquivo</option>						
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
 			</td>

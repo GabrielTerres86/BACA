@@ -25,6 +25,7 @@ $(document).ready(function() {
 function estadoInicial() {
 	$('#frmCab').css({'display':'block'});
 	$('#frmCadris').css({'display':'none'});	
+	$('#frmCadrisArquivo').css({'display':'none'});	
 	$('#divBotoes', '#divTela').html('').css({'display':'block'});
 	resetCodigoNivelRisco();
 	formataCabecalho();
@@ -162,7 +163,7 @@ function formataCamposTela(cddopcao){
             }
         });
 
-    } else {
+    } else if (cddopcao != 'L') {
 
         // Oculta o campo de conta e justificativa
         $('.clsContaJustif', '#frmCadris').hide();
@@ -178,6 +179,9 @@ function formataCamposTela(cddopcao){
             // Exibe o fieldset de justificativa
             $('#fieldJustificativa', '#frmCadris').show();
         }
+    } else {
+		$('label[for="nmdarqui"]','#frmCadrisArquivo').addClass('rotulo').css({'width':'80px'});
+		$('#nmdarqui','#frmCadrisArquivo').css({'width':'415px'}).desabilitaCampo();
     }
 
 	layoutPadrao();
@@ -256,6 +260,9 @@ function carregaTelaCadris(){
                     case 'E':
                         nmBotao  = 'Excluir';
                         break;
+					case 'L':
+						nmBotao = 'Importar';
+						break;
                     default:
                         nmBotao  = '';
                         nmFuncao = '';
@@ -373,6 +380,8 @@ function confirmaAcao() {
         } else {
             nmfuncao = 'excluirRisco()';
         }
+    } else if (cddopcao == 'L') {
+		nmfuncao = 'importarRisco()';
     }
 
     showConfirmacao('Confirma a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', nmfuncao, '', 'sim.gif', 'nao.gif');
@@ -479,3 +488,37 @@ function selecionaRisco() {
 function resetCodigoNivelRisco(){
 	iCodigoNivelRisco = 2;
 }	
+
+/**
+	Funcao responsavel por importar arquivo de risco
+*/
+function importarRisco() {
+    var cddopcao 		  = $('#cddopcao','#frmCab').val();
+    var nmdarqui 		  = $('#nmdarqui','#frmCadrisArquivo').val();
+	
+    showMsgAguardo("Aguarde, importando...");
+
+    // Executa script de bloqueio através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/cadris/manter_rotina.php", 
+		data: {			
+			cddopcao: cddopcao,
+            nmdarqui: nmdarqui,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
+		},
+		success : function(response) {
+			try { 
+				eval(response);
+				return false;
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+			}
+		}
+	});
+}

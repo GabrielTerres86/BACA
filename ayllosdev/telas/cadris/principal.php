@@ -22,7 +22,12 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 
+	if ($cddopcao == 'L') {
+		require_once("form_arquivo.php");
+	} else {
 	require_once("form_cadris.php");
+	}
+	
 ?>
 <script type="text/javascript">		
     formataCamposTela('<?= $cddopcao ?>');    
