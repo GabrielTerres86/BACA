@@ -1276,8 +1276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_nrcpfope => pr_nrcpfope                 --CPF operador
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
-                                    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
-                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
+								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
+									,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro
@@ -7210,6 +7210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
            IF pr_indtpaga = 2 THEN
 
+              IF pr_tpdpagto = 1 THEN -- Código de barras
              -- Validar Competência
               vr_mes_competencia := TO_NUMBER(SUBSTR(pr_cdbarras,42,2));
               vr_ano_competencia := TO_NUMBER(SUBSTR(pr_cdbarras,38,4));
@@ -7225,7 +7226,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                 pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
                 RAISE vr_exc_saida;
               END IF;
+              ELSE
+                vr_mes_competencia := TO_NUMBER(SUBSTR(pr_dtcompet,1,2));
+                vr_ano_competencia := TO_NUMBER(SUBSTR(pr_dtcompet,3,4));                
 
+                IF TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'MM')) = 1 THEN
+                  -- Deve permitir agendamento para competencia maior ou igual a dezembro do ano anterior caso esteja em janeiro
+                  IF (vr_ano_competencia = (TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'YYYY')) - 1) AND vr_mes_competencia <> 12) OR 
+                     (vr_ano_competencia <= (TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'YYYY')) - 2)) THEN
+                    pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
+                    RAISE vr_exc_saida;
+                  END IF;                 
+                ELSE                
+                  IF vr_ano_competencia < TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'YYYY')) THEN
+                    pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
+                    RAISE vr_exc_saida;
+                  END IF;                 
+          
+                  /*Para essa validacao, devemos considerar o mes anterior ao atual, pois
+                    o mesmo ainda pode ser agendado e pago no mes corrente. */
+                  IF vr_mes_competencia - 1 < TO_NUMBER(TO_CHAR(rw_crapdat.dtmvtolt,'MM')) THEN
+                    pr_dscritic := 'Agendamento não permitido para competências anteriores. Para efetivar o pagamento utilize a rotina de Pagamento de GPS.';
+                    RAISE vr_exc_saida;
+                  END IF;
+                END IF;
+              END IF;
             END IF;
 
             -- Validar dia útil
