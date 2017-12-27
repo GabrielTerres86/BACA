@@ -2607,6 +2607,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
         END.
     END.
 
+/*
     /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
     IF   crawepr.cdlcremp = 100  THEN
          DO:
@@ -2662,6 +2663,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                        RETURN "NOK".
                    END.
          END.
+         */
 
     /* Condicao para a Finalidade for Cessao de Credito */
     FOR FIRST crapfin FIELDS(tpfinali)
@@ -4376,6 +4378,7 @@ PROCEDURE transf_contrato_prejuizo.
        END.
             
        /* Verificacao de contrato de acordo */  
+       /*
       
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4427,6 +4430,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
              
        END.
+       */
           
        /* Fim verificacao contrato acordo */     
           
