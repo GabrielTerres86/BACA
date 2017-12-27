@@ -34,6 +34,9 @@
                09/11/2015 - Removido as virgulas do numero de documento para aumentar
                             seus format para 31 posicoes conforme solicitado no chamado
                             348989. (Kelvin)   
+
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -78,7 +81,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -147,7 +150,7 @@ PROCEDURE Busca_Dados:
                   INPUT par_cdoperad,              
                   INPUT par_nmdatela,              
                   INPUT par_idorigem,              
-                  INPUT par_dsdepart,              
+                  INPUT par_cddepart,              
                   INPUT par_dtmvtolt,              
                   INPUT par_cddopcao,              
                   INPUT par_tpdopcao,              
@@ -176,7 +179,7 @@ PROCEDURE Busca_Dados:
                      INPUT par_cdoperad,
                      INPUT par_nmdatela,
                      INPUT par_idorigem,
-                     INPUT par_dsdepart,
+                     INPUT par_cddepart,
                      INPUT par_dtmvtolt,
                      INPUT par_cddopcao,
                      INPUT par_tpdopcao,
@@ -206,7 +209,7 @@ PROCEDURE Busca_Dados:
                      INPUT par_cdoperad,
                      INPUT par_nmdatela,
                      INPUT par_idorigem,
-                     INPUT par_dsdepart,
+                     INPUT par_cddepart,
                      INPUT par_dtmvtolt,
                      INPUT par_cddopcao,
                      INPUT par_tpdopcao,
@@ -285,7 +288,7 @@ PROCEDURE Gera_Impressao:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -325,7 +328,7 @@ PROCEDURE Gera_Impressao:
              INPUT par_cdoperad,                       
              INPUT par_nmdatela,                       
              INPUT 1, 
-             INPUT par_dsdepart,                       
+             INPUT par_cddepart,                       
              INPUT par_dtmvtolt,                       
              INPUT par_cddopcao,                       
              INPUT par_tpdopcao,                       
@@ -362,7 +365,7 @@ PROCEDURE Gera_Impressao:
                       INPUT par_cdoperad,                       
                       INPUT par_nmdatela,                       
                       INPUT par_idorigem,                       
-                      INPUT par_dsdepart,                       
+                      INPUT par_cddepart,                       
                       INPUT par_dtmvtolt,                       
                       INPUT par_cddopcao,                       
                       INPUT par_nrdconta,                       
@@ -391,7 +394,7 @@ PROCEDURE Gera_Impressao:
                       INPUT par_cdoperad,
                       INPUT par_nmdatela,
                       INPUT par_idorigem,
-                      INPUT par_dsdepart,
+                      INPUT par_cddepart,
                       INPUT par_dtmvtolt,
                       INPUT par_cddopcao,
                       INPUT par_tpdopcao,
@@ -422,7 +425,7 @@ PROCEDURE Gera_Impressao:
                       INPUT par_cdoperad,
                       INPUT par_nmdatela,
                       INPUT par_idorigem,
-                      INPUT par_dsdepart,
+                      INPUT par_cddepart,
                       INPUT par_dtmvtolt,
                       INPUT par_cddopcao,
                       INPUT par_tpdopcao,
@@ -500,7 +503,7 @@ PROCEDURE Busca_Cooperado:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -619,7 +622,7 @@ PROCEDURE Busca_Cooperado:
                                  INPUT par_cdoperad,
                                  INPUT par_nmdatela,
                                  INPUT par_idorigem,
-                                 INPUT par_dsdepart,
+                                 INPUT par_cddepart,
                                  INPUT craphis.nmestrut,                                
                                  INPUT par_cdhistor,   
                                  INPUT par_cdagenci,   
@@ -841,7 +844,7 @@ PROCEDURE Busca_Dados_T:
     DEF  INPUT PARAM par_cdoperad AS CHAR                                 NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                                 NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                                 NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                                 NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                                 NO-UNDO.
 
     DEF  INPUT PARAM par_nmestrut AS CHAR                                 NO-UNDO.
     DEF  INPUT PARAM par_cdhistor AS INTE                                 NO-UNDO.
@@ -1043,7 +1046,7 @@ PROCEDURE Busca_Lote:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -1124,7 +1127,7 @@ PROCEDURE Busca_Lote:
                                   INPUT par_cdoperad,
                                   INPUT par_nmdatela,
                                   INPUT par_idorigem,
-                                  INPUT par_dsdepart,
+                                  INPUT par_cddepart,
                                   INPUT par_dtmvtolt,
                                   INPUT par_cddopcao,
                                   INPUT par_tpdopcao,
@@ -1264,7 +1267,7 @@ PROCEDURE Busca_Caixa:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -1364,7 +1367,7 @@ PROCEDURE Busca_Caixa:
                                    INPUT par_cdoperad,
                                    INPUT par_nmdatela,
                                    INPUT par_idorigem,
-                                   INPUT par_dsdepart,
+                                   INPUT par_cddepart,
                                    INPUT par_dtmvtolt,
                                    INPUT par_cddopcao,
                                    INPUT par_tpdopcao,
@@ -1533,7 +1536,7 @@ PROCEDURE Terminal_Caixa:
     DEF  INPUT PARAM par_cdoperad AS CHAR                                NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                                NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                                NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                                NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                                NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                                NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                                NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                                NO-UNDO.
@@ -1670,7 +1673,7 @@ PROCEDURE Gera_Impressao_Caixa:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -1981,7 +1984,7 @@ PROCEDURE Terminal_Lote:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -2159,7 +2162,7 @@ PROCEDURE Gera_Impressao_Lote:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpdopcao AS CHAR                           NO-UNDO.
@@ -2480,7 +2483,7 @@ PROCEDURE Gera_Impressao_Cooperado:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
