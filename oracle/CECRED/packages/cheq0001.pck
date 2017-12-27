@@ -219,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
 
    Dados referentes ao programa:
   
@@ -241,6 +241,16 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            
               25/04/2017 - Na procedure pc_busca_cheque incluir >= na busca do todos pr_nrtipoop = 5 para 
                            trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                           
+              11/10/2017 - Na procedure pc_busca_cheque mudar ordenacao do select pra trazer os 
+                           ultimos cheques emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
+
+              19/10/2017 - Ajuste para pegar corretamente a observação do cheque
+			               (Adriano - SD 774552)
+                     
+              24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
+                           deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+                     
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -1508,7 +1518,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : WEB
    Autor   : David
-   Data    : Maio/2013.                        Ultima atualizacao: 10/06/2016
+   Data    : Maio/2013.                        Ultima atualizacao: 20/10/2017
 
    Dados referentes ao programa:
 
@@ -1522,6 +1532,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
                10/06/2016 - Ajustado para gerar os registros conforme era gerado no 
                             fonte progress (Lucas Ranghetti #422753)
+
+               19/10/2017 - Ajsute para pegar corretamente a observação do cheque
+			               (Adriano - SD 774552)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -1631,6 +1644,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
           pr_tab_cheques(vr_index)('dsobserv') := 'Contra-Ordem';
         ELSIF pr_incheque = 8 THEN
           pr_tab_cheques(vr_index)('dsobserv') := 'Cancelado';
+        ELSE
+          pr_tab_cheques(vr_index)('dsobserv') := ' ';
         END IF;
 
         -- Validar data do cheque
@@ -1642,7 +1657,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
           -- Verifica se forma encontrados registros
           IF cr_crapped%FOUND THEN
-            pr_tab_cheques(vr_index)('dsobserv') := 'Ped. ' || to_char(pr_nrpedido, 'FM99D990');
+            pr_tab_cheques(vr_index)('dsobserv') := nvl(trim(pr_tab_cheques(vr_index)('dsobserv')),'Ped. ' || trim(to_char(pr_nrpedido, '99999999')));
             pr_tab_cheques(vr_index)('dtemschq') := rw_crapped.dtsolped;
           END IF;
         ELSE
@@ -2356,8 +2371,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-
-                        
+    
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
@@ -2377,7 +2391,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotinas para cadastros Web
     --  Sigla    : CHEQUE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 25/04/2017
+    --  Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2393,6 +2407,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     
                      25/04/2017 - Incluir >= na busca do todos pr_nrtipoop = 5 para 
                                   trazer todos os cheques a partir do informado (Lucas Ranghetti #625222)
+                                  
+                     11/10/2017 - Mudar ordenacao do select pra trazer os ultimos cheques
+                                  emitidos primeiro qdo a opcao for TODOS na tela (Tiago #725346)
+                                  
+                     24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
+                                  deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
      .............................................................................*/
     
     -- Variáveis
@@ -2511,8 +2531,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             'order by nrctachq desc, nrseqems desc, nrcheque desc';
       WHEN 5 THEN
         IF pr_nrcheque > 0 THEN
-          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' ' ||
-                              'order by nrcheque';
+          vr_sql := vr_sql || 'and nrcheque >= ' || pr_nrcheque || ' order by nrcheque';
+        ELSE
+          vr_sql := vr_sql || 'order by dtemschq desc, nrcheque desc';  
         END IF;
     END CASE;
 
