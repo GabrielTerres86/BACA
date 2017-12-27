@@ -230,6 +230,9 @@
                14/10/2015 - Ajuste em determinar idseqbem da crapbpr na proc.
                             grava-dados-proposta. (Jorge/Gielow) SD - 325844
 
+               21/12/2017 - Ajuste para nao alterar nome da empresa do conjuge no emprestimo.
+                            PRJ-339(Odirlei-AMcom)
+               
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -4058,8 +4061,9 @@ PROCEDURE grava-dados-cadastro:
                                     
               /* Se possui conjuge */
               IF   AVAIL crapcje  THEN
-                   ASSIGN crapcje.vlsalari = par_vlsalcon
-                          crapcje.nmextemp = par_nmextemp.
+                   ASSIGN crapcje.vlsalari = par_vlsalcon.
+                          /* Nao deve mais alterar nome da empresa do conjuge no emprestimo
+                             crapcje.nmextemp = par_nmextemp.*/
                    
           END.
       ELSE    /* Atualizacoes para pessoa juridica */

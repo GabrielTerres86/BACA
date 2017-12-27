@@ -117,6 +117,7 @@
  * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+ * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2275,6 +2276,9 @@ function controlaLayout(operacao) {
             }
 
         }
+
+        //Manter campo bloqueado, dado deve ser apenas alterado na tela Contas
+        cLocalTrab.desabilitaCampo();
 
         //Se não tem conjuge, desabilita campos 'Conjugê - Salário', 'Local Trabalho' e 'Co-responsável' e 'Consultar Conjuge'
         if (arrayRendimento['flgconju'] == 'no') {

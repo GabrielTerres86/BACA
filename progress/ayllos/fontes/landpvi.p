@@ -1774,72 +1774,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
               /** Prejuizo de conta **/
               IF   tel_cdhistor = 350   THEN
                    DO:     
-                       /****** Comentado em 18/04/2012 - Elton *****
-                       FIND craptab WHERE  craptab.cdcooper = glb_cdcooper AND
-                                           craptab.nmsistem = "CRED"       AND
-                                           craptab.tptabela = "USUARI"     AND
-                                           craptab.cdempres = 11           AND
-                                           craptab.cdacesso = "RISCOBACEN" AND
-                                           craptab.tpregist = 000 NO-LOCK NO-ERROR.
-                       
-                       FIND FIRST crapdat WHERE crapdat.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
-                       
-                       ASSIGN   aux_dtrefere = crapdat.dtultdma
-                                aux_vlr_arrasto = DEC(SUBSTRING(craptab.dstextab,3,9)).
-                       
-                       FIND LAST crapris WHERE  crapris.cdcooper = glb_cdcooper  AND
-                                                crapris.nrdconta = tel_nrdctabb  AND 
-                                                crapris.dtrefere = aux_dtrefere  AND 
-                                                crapris.inddocto = 1             AND 
-                                                crapris.vldivida > aux_vlr_arrasto /*Valor arrasto*/  
-                                                NO-LOCK NO-ERROR.
-                       
-                       IF  NOT AVAIL crapris THEN   
-                           FIND LAST crapris WHERE crapris.cdcooper = glb_cdcooper AND
-                                                   crapris.nrdconta = tel_nrdctabb AND 
-                                                   crapris.dtrefere = aux_dtrefere AND 
-                                                   crapris.inddocto = 1 NO-LOCK NO-ERROR.
-                       
-                       IF   AVAIL crapris THEN
-                            DO:     /** Critica se risco nao for 'H' **/
-                               IF   (crapris.innivris < 9)      OR
-                                    (crapris.innivris >= 9      AND
-                                    (glb_dtmvtolt - crapris.dtdrisco) < 180) THEN
-                                    DO:
-                                        glb_cdcritic = 944.
-                                        NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
-                                        NEXT.
-                                    END.
-                            END.
-                       *************/
-
-                       /*  Esta alteracao foi aprovada por IVAN (Acredi), 
-                           DEBORAH/MIRTES (TI-CECRED), RODRIGO (PN-CECRED)
-                           e trata-se do prejuizo da c/c 85448 da Coop 2 - Ze */
-                           
-                       IF   glb_cdcooper     = 2            AND
-                            glb_dtmvtolt     = 11/30/2011   AND
-                            crapass.nrdconta = 85448        THEN
-                            .
-                       ELSE     
-                            DO:
-                                IF   crapass.vllimcre <> 0   THEN
-                                     DO:
-                                         glb_cdcritic = 724.
-                                         NEXT-PROMPT tel_cdhistor 
-                                                     WITH FRAME f_landpv.
-                                         NEXT.
-                                     END.
-                                
-                                IF   crapass.dtdsdspc = ?   THEN
-                                     DO:
-                                         glb_cdcritic = 727.
-                                         NEXT-PROMPT tel_cdhistor 
-                                                     WITH FRAME f_landpv.
-                                         NEXT.
-                                     END.
-                            END.
-
                        FIND LAST crapdpb WHERE
                                  crapdpb.cdcooper  = glb_cdcooper       AND
                                  crapdpb.nrdconta  = crapass.nrdconta   AND
@@ -1854,33 +1788,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 NEXT.
                             END.  
                        
-                       FIND LAST crawcrd WHERE 
-                                 crawcrd.cdcooper = glb_cdcooper        AND
-                                 crawcrd.nrdconta = crapass.nrdconta    AND
-                                 crawcrd.insitcrd = 4  
-                                 NO-LOCK NO-ERROR.
-                                 
-                       IF   AVAILABLE crawcrd   THEN          
-                            DO:
-                                glb_cdcritic = 728.
-                                NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
-                                NEXT.
-                            END.
-
-                       FIND LAST crapcrm WHERE 
-                                 crapcrm.cdcooper = glb_cdcooper     AND
-                                 crapcrm.nrdconta = crapass.nrdconta AND
-                                 crapcrm.cdsitcar = 2                AND
-                                 crapcrm.tptitcar <> 9               AND /* Cartao de operador */
-                                 crapcrm.dtvalcar > glb_dtmvtolt
-                                 NO-LOCK NO-ERROR.
-                                 
-                       IF  AVAILABLE crapcrm   THEN 
-                           DO:
-                               glb_cdcritic = 728.
-                               NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
-                               NEXT.
-                           END.
                        ASSIGN aux_flgpreju = NO.
                        
                        FOR EACH crapepr WHERE

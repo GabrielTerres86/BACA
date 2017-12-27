@@ -1174,11 +1174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         -- Verifica se este responsavel ja possui cadastro de pessoa
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
-        FETCH cr_pessoa INTO rw_pessoa_resp;
-        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
-        IF cr_pessoa%NOTFOUND THEN
-          CLOSE cr_pessoa;
-        END IF;
+        FETCH cr_pessoa INTO rw_pessoa_resp;        
+        CLOSE cr_pessoa;
           
       ELSE
       
@@ -1186,11 +1183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         rw_pessoa_resp := NULL;
         OPEN cr_pessoa(pr_nrcpfcgc => pr_crapcrl.nrcpfcgc);
         FETCH cr_pessoa INTO rw_pessoa_resp;
-        -- Se nao existir pessoa cadastrada, deve-se efetuar o cadastro
-        IF cr_pessoa%NOTFOUND THEN
-          CLOSE cr_pessoa;
-        END IF;
-      
+        CLOSE cr_pessoa;
+        
       END IF;      
       
       --> se localizou pessoa, deve excluir registro
@@ -1816,7 +1810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               
             ELSE -- Se encontrou a pessoa juridica
               --> se o nome estiver diferente, é necessario atualizar pessoa
-              IF pr_crapcje.nmextemp <> rw_pessoa.nmpessoa THEN
+              IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) THEN
                 vr_flcria_empresa := TRUE;
               END IF;
               -- Atualiza o ID da pessoa juridica
@@ -1831,7 +1825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             FETCH cr_pessoa_id INTO rw_pessoa;
             CLOSE cr_pessoa_id;
             
-            IF nvl(pr_crapcje.nmextemp,' ') <> nvl(rw_pessoa.nmpessoa,' ') THEN
+            IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
               -- Atualiza o indicador para criar o CNPJ
               vr_flcria_empresa := TRUE;          
             END IF;
@@ -1851,7 +1845,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         
               -- Popula os dados de pessoa fisica
               rw_pessoa_fisica.nrcpf                := pr_crapcje.nrdocnpj;
-              rw_pessoa_fisica.nmpessoa             := pr_crapcje.nmextemp;
+              
+              -- Feito a validacao abaixo para nao cortar o final do nome da pessoal
+              IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa_fisica.nmpessoa,' '),1,40) THEN
+                rw_pessoa_fisica.nmpessoa             := pr_crapcje.nmextemp;
+              END IF;
+              
               rw_pessoa_fisica.tppessoa             := 1; -- Fisica
               rw_pessoa_fisica.tpcadastro           := 1; -- Prospect
               rw_pessoa_fisica.cdoperad_altera      := pr_cdoperad;
@@ -1878,7 +1877,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                   rw_pessoa_juridica.nrcnpj             := NULL;
               END IF;
               
-              rw_pessoa_juridica.nmpessoa             := pr_crapcje.nmextemp;
+              -- Feito a validacao abaixo para nao cortar o final do nome da pessoal
+              IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa_juridica.nmpessoa,' '),1,40) THEN
+                rw_pessoa_juridica.nmpessoa             := pr_crapcje.nmextemp;
+              END IF;
+              
               rw_pessoa_juridica.tppessoa             := nvl(rw_pessoa_juridica.tppessoa,2);   -- Juridica
               rw_pessoa_juridica.tpcadastro           := nvl(rw_pessoa_juridica.tpcadastro,1); -- Prospect
               rw_pessoa_juridica.cdoperad_altera      := pr_cdoperad;
@@ -2910,6 +2913,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND ass.nrdconta = pr_nrdconta;  
     rw_crapass cr_crapass%ROWTYPE;
         
+    --> buscar pessoa pelo id
+    CURSOR cr_pessoa_id(pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
+      SELECT pes.tppessoa
+        FROM tbcadast_pessoa pes
+       WHERE pes.idpessoa = pr_idpessoa;
+    rw_pessoa_id cr_pessoa_id%ROWTYPE;    
+
     ---------------> VARIAVEIS <----------------- 
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2974,10 +2984,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     
     --> se for pessoa de referencia
     IF pr_crapavt.tpctrato = 5 THEN
+    
+      --> Buscar pessoa pelo ID
+      OPEN cr_pessoa_id(pr_idpessoa => vr_idpessoa);
+      FETCH cr_pessoa_id INTO rw_pessoa_id;
+      CLOSE cr_pessoa_id;
+            
+      
       -- Buscar dados de pesso de referencia
       rw_pessoa_referencia := NULL;
       OPEN cr_pessoa_referencia ( pr_idpessoa         => vr_idpessoa,
-                                  pr_nrseq_referencia => pr_crapavt.nrctremp); --> no caso de pessoa referencia, é o sequencial
+                                  pr_nrseq_referencia => (CASE rw_pessoa_id.tppessoa 
+                                                            WHEN 1 THEN pr_crapavt.nrcpfcgc --> para pessoa fisica, o campo nrcpscgc é o seq
+                                                            ELSE pr_crapavt.nrctremp --> pessoa jur é o numero do contrato
+                                                          END)); 
       FETCH cr_pessoa_referencia INTO rw_pessoa_referencia;
       CLOSE cr_pessoa_referencia;
      
@@ -4080,7 +4100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         
       ELSE -- Se encontrou a pessoa juridica
         --> se o nome estiver diferente, é necessario atualizar pessoa
-        IF nvl(pr_crapttl.nmextemp,' ') <> nvl(rw_pessoa.nmpessoa,' ') THEN
+        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
           vr_flcria_empresa := TRUE;
         END IF;
         -- Atualiza o ID da pessoa juridica
@@ -4095,7 +4115,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       FETCH cr_pessoa_id INTO rw_pessoa;
       CLOSE cr_pessoa_id;
             
-      IF nvl(pr_crapttl.nmextemp,' ') <> nvl(rw_pessoa.nmpessoa,' ') THEN
+      -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
+      IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
         -- Atualiza o indicador para criar o CNPJ
         vr_flcria_empresa := TRUE;          
       END IF;
@@ -4116,7 +4137,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         
         -- Popula os dados para PF
         rw_pessoa_fisica.nrcpf                := pr_crapttl.nrcpfemp;
-        rw_pessoa_fisica.nmpessoa             := pr_crapttl.nmextemp;
+        
+        -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
+        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa_fisica.nmpessoa,' '),1,40) THEN
+          rw_pessoa_fisica.nmpessoa             := pr_crapttl.nmextemp;
+        END IF;
         rw_pessoa_fisica.tppessoa             := nvl(rw_pessoa_fisica.tppessoa  ,1); -- Fisica
         rw_pessoa_fisica.tpcadastro           := nvl(rw_pessoa_fisica.tpcadastro,1); -- Prospect
         rw_pessoa_fisica.cdoperad_altera      := pr_cdoperad;
@@ -4150,7 +4175,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         CLOSE cr_pessoa_juridica;
       
         -- Popula os dados de pessoa juridica
-        rw_pessoa_juridica.nmpessoa             := pr_crapttl.nmextemp;
+        -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
+        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa_juridica.nmpessoa,' '),1,40) THEN
+          rw_pessoa_juridica.nmpessoa             := pr_crapttl.nmextemp;
+        END IF;
+        
         IF pr_crapttl.nrcpfemp <> 0 THEN
           rw_pessoa_juridica.nrcnpj               := pr_crapttl.nrcpfemp;
         END IF;
