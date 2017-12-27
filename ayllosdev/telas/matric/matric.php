@@ -6,6 +6,10 @@
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
  * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+
+				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
+
+				  14/11/2017 - Ajuste para inclusão da nova opção H (Jonata - RKAM P364).
  * --------------
  */
 ?>
@@ -27,13 +31,13 @@
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
-		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
-		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
-		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
-		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js"></script>
-		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="matric.js"></script>
+		<script type="text/javascript" src="../../scripts/scripts.js?keyrand=<?php echo mt_rand(); ?>" charset="utf-8"></script>
+		<script type="text/javascript" src="../../scripts/dimensions.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../scripts/mascara.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="matric.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -94,6 +98,15 @@
 																		
 																		<div id="divMatric">
 																			<? include('form_cabecalho.php'); ?>
+																			<? include('form_filtro.php'); ?>
+																			<? include('form_filtro_contas_demitidas.php'); ?>
+																			<? include('form_filtro_contas_antigas_demitidas.php'); ?>
+																			
+																			<div id="divConteudoMatric"></div>												
+																			
+																			<div id="divContasDemitidas"></div>
+																			
+																																							
 																		</div>
 																		
 																	</td>

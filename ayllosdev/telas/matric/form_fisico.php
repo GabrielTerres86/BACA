@@ -12,9 +12,12 @@
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-					          (Adriano - P339).
- *
+ *			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+ *					          (Adriano - P339).
+ *                28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
+ * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).   
  * -------------- 
  */  
 ?>
@@ -63,9 +66,11 @@
 		<label for="tpdocptl">Documento:</label>
 		<select name="tpdocptl" id="tpdocptl">
 			<option value=""   <? if (getByTagName($registro,'tpdocptl') == ""  ){ echo " selected"; } ?>> - </option> 
-			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
 			<option value="CI" <? if (getByTagName($registro,'tpdocptl') == "CI"){ echo " selected"; } ?>>CI - Carteira de Identidade </option>
-			<option value="CP" <? if (getByTagName($registro,'tpdocptl') == "CP"){ echo " selected"; } ?>>CP - Carteira Profissional</option>
+			<option value="CN" <? if (getByTagName($registro,'tpdocptl') == "CN"){ echo " selected"; } ?>>CN - Certid&atilde;o de Nascimento</option>
+			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
+			<option value="RE" <? if (getByTagName($registro,'tpdocptl') == "RE"){ echo " selected"; } ?>>RE - Registro Nacional de Estrangeiro</option>
+			<option value="PP" <? if (getByTagName($registro,'tpdocptl') == "PP"){ echo " selected"; } ?>>PP - Passaporte</option>
 			<option value="CT" <? if (getByTagName($registro,'tpdocptl') == "CT"){ echo " selected"; } ?>>CT - Carteira de Trabalho</option>
 		</select>
 		<input name="nrdocptl" id="nrdocptl" type="text" value="<? echo getByTagName($registro,'nrdocptl') ?>" />
@@ -74,6 +79,9 @@
 
 		<label for="cdoedptl">Org. Emi.:</label>
 		<input name="cdoedptl" id="cdoedptl" type="text" value="<? echo getByTagName($registro,'cdoedptl') ?>" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedptl" id="nmoedptl" type="text" style="display:none;" />
+		
 					
 		<label for="cdufdptl">U.F.:</label>
 		<? echo selectEstado('cdufdptl', getByTagName($registro,'cdufdptl'), 1) ?>
@@ -204,22 +212,13 @@
 		<label for="complend"><? echo utf8ToHtml('Comple.:') ?></label>
 		<input name="complend" id="complend" type="text" value="<? echo getByTagName($registro,'complend') ?>" />
 		<br />
-
-		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($registro,'nrcxapst') ?>" />		
+		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
+		<? echo selectEstado('cdufende', getByTagName($registro,'cdufende'), 1); ?>	
 
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($registro,'nmbairro') ?>" />								
 		<br />	
 
-		<label for="cdufende"><? echo utf8ToHtml('U.F.:') ?></label>
-		<? echo selectEstado('cdufende', getByTagName($registro,'cdufende'), 1); ?>	
-
-		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
-		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
-
-		<br style="clear:both" />
-		
 		<label for="idorigee" class="rotulo"><? echo utf8ToHtml('Origem:'); ?></label>
 		<select id="idorigee" name="idorigee">
 			<option value=""> - </option>
@@ -227,7 +226,10 @@
 			<option value="2" <? if (getByTagName($registro,'idorigee') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($registro,'idorigee') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
-		
+
+		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
+		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
+
 		<br style="clear:both" />
 		
 	</fieldset>	

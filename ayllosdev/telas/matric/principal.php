@@ -17,6 +17,9 @@
  * 007: [05/12/2016] Renato D.(Supero): P341-Automatização BACENJUD - Removido passagem do departamento 
  *                                      como parametros pois a BO não utiliza o mesmo.
  * 008: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 009: [26/06/2017] Jonata     (RKAM): Ajustes para inclusão da nova opção "G" (P364).
+ * 010: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
+ * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  */ 
 
 	session_start();	
@@ -32,8 +35,7 @@
 	setVarSession("rotinasTela",$rotinasTela);
 	$glbvars['opcoesTela' ] = $opcoesTela;
 	
-	// Carregas as opções da Rotina de Bens	
-	$flgAlterar		= (in_array('A', $glbvars['opcoesTela']));
+	// Carregas as opções da Rotina de Bens		
 	$flgConsultar	= (in_array('C', $glbvars['opcoesTela']));	
 	$flgIncluir		= (in_array('I', $glbvars['opcoesTela']));
 	$flgRelatorio	= (in_array('R', $glbvars['opcoesTela']));
@@ -59,7 +61,7 @@
 	// Se conta informada não for um número inteiro válido
 	if (!validaInteiro($nrdconta) && $operacao != 'CI') exibirErro('error','Conta/dv inválida.','Alerta - Matric','',false);
 	
-	if ($operacao != '') {
+
 		// Monta o xml de requisição
 		$xmlMatric  = '';
 		$xmlMatric .= '<Root>';
@@ -88,7 +90,8 @@
 		if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 			$operacao = '';
 			$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			$mtdErro  = "showMsgAguardo( 'Aguarde, carregando ...' );setTimeout('estadoInicial()',1);";		
+			$mtdErro  = "showMsgAguardo( 'Aguarde, carregando ...' );setTimeout('controlaVoltar()',1);";		
+			
 			exibirErro('error',$msgErro,'Alerta - Matric',$mtdErro,false);
 		} 
 		
@@ -286,41 +289,26 @@
 			sincronizaArray();
 			
 		</script>
-		<?php
-	} else {
-		$registro = '';
-		$tpPessoa = 1;
-		$strMsg   = '';
-		?>
-			<script type="text/javascript">
-			
-				arrayFilhosAvtMatric = new Array();
-				arrayBensMatric = new Array();
-				arrayFilhos     = new Array();
-		
-			</script>
-		<?php
-	}
 	
-	include('form_cabecalho.php');	
+		<?php
+	
 	include('form_fisico.php'); 
 	include('form_juridico.php');
+	
 ?>
 
 <div id="divBotoes" style="margin-bottom:10px">
 
-	<a href="#" class="opInicial botao" id="btLimparIni" onclick="estadoInicial(); return false;">Limpar</a>
+	<a href="#" class="opInicial botao" id="btLimparIni" onclick="controlaVoltar(); return false;">Limpar</a>
 	<a href="#" class="opInicial botao" id="btProsseguirIni" onclick="consultaInicial(); return false;">Prosseguir</a>
 
 	<a href="#" class="opIncluir botao" id="btVoltarInc" onclick="controlaOperacao('IC'); return false;">Voltar</a>
 	<a href="#" class="opIncluir botao" id="btProsseguirInc" onclick="">Prosseguir</a>
 											
-	<a href="#" class="opPreIncluir botao" id="btVoltarPreInc" onclick="estadoInicial(); return false;">Voltar</a>
+	<a href="#" class="opPreIncluir botao" id="btVoltarPreInc" onclick="controlaVoltar(); return false;">Voltar</a>
 	<a href="#" class="opPreIncluir botao" id="btProsseguirPreInc" onclick="">Prosseguir</a>
 
-	<a href="#" class="opAlterar botao" id="btVoltarAlt" onclick="controlaOperacao('AC'); return false;">Cancelar</a>	
-	<a href="#" class="opAlterar botao" id="btProsseguirAlt" onclick="">Prosseguir</a>
-	<a href="#" class="opAlterar botao" id="btSalvarAlt" onclick="">Concluir</a>
+	
 
 	<a href="#" class="opAltNome botao" id="btVoltarAltNome" onclick="controlaOperacao('XC'); return false;">Cancelar</a>
 	<a href="#" class="opAltNome botao" id="btSalvarAltNome" onclick="controlaOperacao('XV'); return false;">Concluir</a>
@@ -328,25 +316,77 @@
 	<a href="#" class="opAltCpfCnpj botao" id="btVoltarAltCpfCnpj" onclick="controlaOperacao('JC'); return false;">Cancelar</a>
 	<a href="#" class="opAltCpfCnpj botao" id="btSalvarAltCpfCnpj" onclick="controlaOperacao('JV'); return false;">Concluir</a>
 	
-	<a href="#" class="opConsultar botao" id="btVoltarCns" onclick="">Voltar</a>
-	<a href="#" class="opConsultar botao" id="btProsseguirCns" onclick="">Prosseguir</a>
+	<a href="#" class="opConsultar botao" id="btVoltarCns">Voltar</a>
+	<a href="#" class="opAlterar botao" id="btDesligarAlt" onclick="verificaProdutosAtivos();return false;">Desligar</a>
+	
+	<? if (getByTagName($registro,'flgtermo') == '1'){?>
+		
+		<a href="#" class="botao" id="btTermoDesligamento" onclick="showError('inform','Termo de desligamento j&aacute; est&aacute; digitalizado no SmartShare? <? if (getByTagName($registro,'flgdigit') == '1') { echo 'Sim.'; }else{ echo 'N&atilde;o.'; } ?> ','Alerta - Ayllos','');">Termo Cancelamento</a>
+
+	<?}?>
+  
+    <? if(getByTagName($registro,'dtdemiss') == ''){?>
+		
+		
+        <a href="#" class="botao" id="btSaqueParcial" >Saque Parcial</a>
+  
+	<?}?>
+	
+	
+
+	<a href="#" class="opConsultar botao" id="btProsseguirCns" >Prosseguir</a>
 	
 	<a href="#" class="opDesvinc botao" id="btVoltarDesvinc" onclick="controlaOperacao('DC'); return false;">Cancelar</a>
 	<a href="#" class="opDesvinc botao" id="btSalvarDesvinc" onclick="controlaOperacao('DV'); return false;">Concluir</a>
 	
+    
 </div>
 
 <script type='text/javascript'>
+
 	// Alimenta as variáveis globais
 	operacao = '<?php echo $operacao; ?>';
 	nrdconta = '<?php echo $nrdconta; ?>';
+	
+	if(operacao == 'CI'){
+	
+		if($("#pessoaFi", "#frmFiltro").prop("checked") == true){
+			
+			tppessoa = 1;
+			
+		}else if($("#pessoaJu", "#frmFiltro").prop("checked") == true){
+			
+			tppessoa = 2;
+			
+		}
+		
+	}else{
+	
 	tppessoa = '<?php echo $tpPessoa; ?>';	
+		$('#rowidass','#frmFiltro').val("<?php echo ( isset($registro) ) ? getByTagName($registro,'rowidass') : ''; ?>");
+		$('#inmatric','#frmFiltro').val("<?php echo ( isset($registro) ) ? getByTagName($registro,'inmatric') : ''; ?>");
+		$('#cdagepac','#frmFiltro').val("<?php echo getByTagName($registro,'cdagepac') ?>");
+		$('#nmresage','#frmFiltro').val("<?php echo getByTagName($registro,'nmresage') ?>");
+		$('#nrmatric','#frmFiltro').val("<?php echo getByTagName($registro,'nrmatric') ?>");
+		
+		<?if($tpPessoa == 1){?>
+		
+			$('#pessoaFi','#frmFiltro').prop("checked",true);
+			$('#pessoaJu','#frmFiltro').prop("checked",false);
+			
+		<?}else if($tpPessoa == 2 || $tppessoa == 3){?>
+		
+			$('#pessoaFi','#frmFiltro').prop("checked",false);
+			$('#pessoaJu','#frmFiltro').prop("checked",true);
+			
+		<?}?>
+		
+	}
+	
 	nrdeanos = '<?php echo getByTagName($registro,'nrdeanos'); ?>';
 	dtmvtolt = '<?php echo $glbvars["dtmvtolt"] ?>';
-	cdpactra = '<?php echo $glbvars["cdpactra"] ?>';
 	
-	// Alimenta opções que o operador tem acesso
-	flgAlterar		= '<?php echo $flgAlterar; 	?>';
+	// Alimenta opções que o operador tem acesso	
 	flgConsultar	= '<?php echo $flgConsultar; 	?>';
 	flgIncluir		= '<?php echo $flgIncluir; 	?>';
 	flgRelatorio	= '<?php echo $flgRelatorio; 	?>';
@@ -356,7 +396,7 @@
 	
 	strMsg = '<?php echo $strMsg; ?>';
 	
-	controlaLayout();
+	controlaApresentacaoForms();
 		
 	if (operacao != 'CI') {
 		if ( strMsg != '' ){
@@ -367,6 +407,10 @@
 		if (tppessoa == 2) {
 			$("#cdcnae","#frmJuridico").trigger("change");	
 		}
+	}else{
+		
+		consultaPreIncluir();	
+		
 	}
 	
 </script>
