@@ -182,9 +182,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+               22/11/2017 - Adicionado regra para não debitar títulos vencidos no primeiro dia util do ano e
+                            que venceram no dia útil anterior. (Rafael)
               
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
-
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -477,6 +479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados
       vr_dtvcttdb     DATE;                --> Data de vencimento como dia util
       vr_nrseqdig     NUMBER;              --> Nr Sequencia
+      vr_dtultdia     DATE;                --> Variavel para armazenar o ultimo dia util do ano
       vr_indice       VARCHAR2(13);
       vr_cdpesqbb     VARCHAR2(1000);
       vr_tab_saldo    EXTR0001.typ_tab_saldos;     --> Temp-Table com o saldo do dia
@@ -865,6 +868,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                pr_cdcooper => pr_cdcooper,
                                                pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');      
       
+      -- Rotina para achar o ultimo dia útil do ano
+      vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;    
+      CASE to_char(vr_dtultdia,'d') 
+        WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
+        WHEN '7' THEN vr_dtultdia := vr_dtultdia - 1;
+        ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
+      END CASE;        
+      
 /*######################Loop Principal Pegando os titulos para Processamento######################################*/
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => pr_dtmvtolt
@@ -881,7 +892,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                        pr_dtmvtolt => rw_craptdb.dtvencto) > rw_crapdat.dtmvtoan THEN
           CONTINUE;
-        END IF; 
+        END IF; 					  
+
+        -- #################################################################################################
+        --   REGRA PARA NÃO DEBITAR TÍTULOS VENCIDOS NO PRIMEIRO DIA UTIL DO ANO E QUE VENCERAM NO
+        --   DIA UTIL ANTERIOR.
+        --   Ex: Boleto com vencto  = 29/12/2017  (ultimo dia útil do ano)
+        --       Se o movimento for = 02/01/2018  (primeiro dia util do ano) -- nao debitar --
+        --       Se o movimento for = 03/01/2018  (segundo dia util do ano)  -- debitar --
+        -- #################################################################################################        
+        -- se o titulo vencer no último dia útil do ano e também no dia útil anterior,
+        -- entao "não" deverá debitar o título
+        IF rw_craptdb.dtvencto = vr_dtultdia AND
+           rw_craptdb.dtvencto = rw_crapdat.dtmvtoan THEN
+           CONTINUE;
+        END IF;
+        -- #################################################################################################
         
         --Verifica se a conta existe
         OPEN cr_crapass(pr_cdcooper => rw_craptdb.cdcooper
@@ -1697,8 +1723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdocmto = pr_nrdocmto
-        AND   crapcob.flgregis = pr_flgregis
-        ORDER BY crapcob.progress_recid ASC;
+              AND   crapcob.flgregis = pr_flgregis
+         ORDER BY crapcob.progress_recid ASC;
       rw_crapcob cr_crapcob%ROWTYPE;
       
       --Selecionar Bordero de titulos
