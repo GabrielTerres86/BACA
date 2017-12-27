@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 12/09/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 22/11/2017
 
    Dados referentes ao programa:
 
@@ -88,6 +88,9 @@
                              para nao enviar arquivos 2*.DVS em feriados. (Rafael)
                              
                 12/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
+                22/11/2017 - Alteracao para não enviar os arquivos 2* para a ABBC, caso o dia atual 
+                             nao for feriado e nao for o ultimo dia util do ano. (Rafael)                
 
 .............................................................................*/
 
@@ -2681,6 +2684,9 @@ PROCEDURE carrega_tabela_envio.
     DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
     DEF BUFFER b-crapfer FOR crapfer.
 
+    DEF VAR aux_dtultdia AS DATE                                    NO-UNDO.
+    DEF VAR aux_flultdia AS LOGICAL                                 NO-UNDO.
+
     EMPTY TEMP-TABLE crawarq.
     EMPTY TEMP-TABLE w-arquivos.
 
@@ -2715,9 +2721,27 @@ PROCEDURE carrega_tabela_envio.
                AND b-crapfer.dtferiad = TODAY
                NO-LOCK NO-ERROR.
         
-        /* se o dia atual nao for feriado, os arquivos 2* podem
-           ser transmitidos para a ABBC */
-        IF NOT AVAIL b-crapfer THEN 
+        /* Flag para verificar se o dia eh o ultimo dia util do ano */
+        aux_flultdia = FALSE.
+                
+        /* Verificar se o dia eh o ultimo dia util do ano */
+        IF MONTH(TODAY) = 12 THEN
+           DO:
+                aux_dtultdia = DATE(MONTH(TODAY),31,YEAR(TODAY)).
+                IF WEEKDAY(aux_dtultdia) = 1 THEN
+                    aux_dtultdia = aux_dtultdia - 2.
+                    
+                IF WEEKDAY(aux_dtultdia) = 7 THEN
+                    aux_dtultdia = aux_dtultdia - 1.
+                    
+                IF aux_dtultdia = TODAY THEN
+                    aux_flultdia = TRUE.                    
+           END.        
+        
+        /* se o dia atual nao for feriado e nao for o ultimo dia util do ano
+           ,os arquivos 2* podem ser transmitidos para a ABBC */
+        IF NOT AVAIL b-crapfer AND 
+           NOT aux_flultdia THEN 
         DO:                             
           /*** Procura arquivos TITULOS ***/
           ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
