@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 24/04/2017
+ Data    : Janeiro/92.                         Ultima atualizacao: 05/12/2017
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -154,6 +154,13 @@ BEGIN
 		  24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			           crapass, crapttl, crapjur 
 					  (Adriano - P339).                     
+
+          19/06/2017 - Ajuste devido a inclusao do novo tipo de situacao da conta
+  				             "Desligamento por determinação do BACEN" 
+							        ( Jonata - RKAM P364). 
+                      
+          05/12/2017 - Ajuste no tratamento para apresentar a contabilização dos motivos de demissão
+                      (Jonata - RKAM P364).
 
    ............................................................................. */
    DECLARE
@@ -959,10 +966,8 @@ BEGIN
        vr_tab_tot_qtassemp(pr_cdagenci):= 0;
 
        -- Inicializar totalizador de motivos para relatorio 421
-       FOR idx IN 1..11 LOOP
-         vr_tab_rel_qttotmot(idx):= 0;
-       END LOOP;
-
+       vr_tab_rel_qttotmot.delete();
+       
      EXCEPTION
        WHEN OTHERS THEN
          -- Variavel de erro recebe erro ocorrido
@@ -1528,19 +1533,35 @@ BEGIN
         -- Finalizar agrupador de agencias e Iniciar agrupador de totais por motivo
         pc_escreve_xml('</motivos><total_motivos ref="'||vr_rel_nmmesref||'"
                        dup="'||To_Char(nvl(vr_rel_qttotdup,0),'fm999g999g990')||'">');
-        -- Percorrer todos os motivos
-        FOR idx IN 1..11 LOOP
-           -- Verificar se existe o motivo da demissao
-           IF vr_tab_craptab_motivo.EXISTS(idx) THEN
-              -- Atribuir a descricao do motivo
-              vr_dsmotdem:= vr_tab_craptab_motivo(idx);
-           END IF;
-           -- Montar tag da conta para arquivo XML
-           pc_escreve_xml('<tot_motivo>
-                           <tot_dsmotdem>'||idx||' - '||vr_dsmotdem||'</tot_dsmotdem>
-                           <tot_qttotmot>'||vr_tab_rel_qttotmot(idx)||'</tot_qttotmot>
-                           </tot_motivo>');
-        END LOOP;
+
+        --Somente se encontrar algum registro
+        IF vr_tab_rel_qttotmot.count() > 0 THEN 
+          
+          -- Percorrer todos os motivos
+          FOR idx IN vr_tab_rel_qttotmot.FIRST..vr_tab_rel_qttotmot.LAST LOOP
+
+            --Inicializa variável
+            vr_dsmotdem := '';
+          
+            IF vr_tab_rel_qttotmot.EXISTS(idx) THEN
+               
+              -- Verificar se existe o motivo da demissao
+              IF vr_tab_craptab_motivo.EXISTS(idx) THEN
+                -- Atribuir a descricao do motivo
+                vr_dsmotdem:= vr_tab_craptab_motivo(idx);
+              END IF;
+               
+              -- Montar tag da conta para arquivo XML
+              pc_escreve_xml('<tot_motivo>
+                                 <tot_dsmotdem>'||idx||' - '||vr_dsmotdem||'</tot_dsmotdem>
+                                 <tot_qttotmot>'||vr_tab_rel_qttotmot(idx)||'</tot_qttotmot>
+                              </tot_motivo>');
+                               
+            END IF;
+             
+          END LOOP;
+          
+        END IF;
 
         -- Finalizar agrupador total motivos e criar total geral e duplicadas
         pc_escreve_xml('</total_motivos></crrl421>');
@@ -2110,7 +2131,7 @@ BEGIN
                                     <s_mes3>'||to_char(vr_tab_tot_vlsmmes3(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_mes3>
                                     <s_cap>'||to_char(vr_tab_tot_vlcaptal(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_cap>
                                  </s1>');
-              END IF;
+           END IF;
            END IF;
         END LOOP;
 
