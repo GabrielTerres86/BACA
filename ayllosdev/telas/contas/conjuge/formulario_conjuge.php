@@ -99,12 +99,15 @@
 			<option value="3" <? if (getByTagName($conjuge,'tpcttrab') == "3"){ echo " selected"; } ?>>3 - SEM V&Iacute;NCULO</option>
 		</select>
 		
+		<br>
+		
+		<label for="nrdocnpj">C.N.P.J.:</label>
+		<input name="nrdocnpj" id="nrdocnpj" type="text" onfocusout="buscaNomePessoa(); $('#nmextemp', '#frmDadosConjuge').focus();" value="<? echo getByTagName($conjuge,'nrdocnpj') ?>" />
+				
 		<label for="nmextemp">Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<? echo getByTagName($conjuge,'nmextemp') ?>" />
 		<br />
 		
-		<label for="nrdocnpj">C.N.P.J.:</label>
-		<input name="nrdocnpj" id="nrdocnpj" type="text" value="<? echo getByTagName($conjuge,'nrdocnpj') ?>" />
 		
 		<label for="dsproftl"><? echo utf8ToHtml('Cargo:') ?></label>
 		<input name="dsproftl" id="dsproftl" type="text" value="<? echo getByTagName($conjuge,'dsproftl') ?>" />
