@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 25/08/2016
+     Data    : Maio/2001                       Ultima atualizacao: 26/12/2017
      
      Dados referentes ao programa:
 
@@ -269,6 +269,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               (Odirlei-AMcom)                
 
                  16/05/2017 - Acionamento da criação do Risco para Cartões Credito BB (Andrei-Mouts)
+                 
+                 26/12/2017 - Auditoria BACEN ajustar a quantidade de dias em atraso da central de risco produto PP e TR após a transferência para prejuizo. (Oscar/Odirlei-AMcom)
+            
 
   ............................................................................ */
 
@@ -629,7 +632,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,MIN(dtvencto) dtvencto
           FROM crappep
          WHERE cdcooper = pr_cdcooper
-           AND inliquid = 0
+           AND (inliquid = 0 OR inprejuz = 1)
            AND dtvencto <= pr_rw_crapdat.dtmvtoan
          GROUP BY nrdconta
                  ,nrctremp;
@@ -647,6 +650,43 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
          WHERE ces.cdcooper = pr_cdcooper
            AND epr.inliquid = 0;
                                                  
+      --> Buscar ultimo nivel de risco
+      CURSOR cr_crapris_9 (pr_cdcooper IN crapris.cdcooper%TYPE,
+                           pr_nrdconta IN crapris.nrdconta%TYPE,
+                           pr_nrctremp IN crapris.nrctremp%TYPE) IS
+        SELECT max(ris.dtrefere) dtrefere, 
+               max(ris.qtdiaatr) qtdiaatr
+          FROM crapris ris 
+         WHERE ris.cdcooper = pr_cdcooper 
+           AND ris.innivris = 9 
+           AND ris.nrdconta = pr_nrdconta 
+           AND ris.nrctremp = pr_nrctremp;
+      rw_crapris_9 cr_crapris_9%ROWTYPE;
+      
+      
+      --> Buscar ultimo nivel de risco 9 da linha 100
+      CURSOR cr_crapris_9_100 (pr_cdcooper IN crapris.cdcooper%TYPE,
+                               pr_nrdconta IN crapris.nrdconta%TYPE,
+                               pr_nrctremp IN crapris.nrctremp%TYPE) IS
+        SELECT ris.dtrefere dtrefere, 
+               ris.qtdiaatr qtdiaatr
+          FROM crapris ris,
+               crapepr epr 
+         WHERE ris.cdcooper = epr.cdcooper
+           AND ris.nrdconta = epr.nrdconta
+           --> filtrar emp baseado no filtro
+           AND epr.nrctremp = pr_nrctremp
+           --> buscar o risco referente ao ultimo mês antes de ser transferido para prejuizo
+           AND ris.dtrefere = last_day(add_months( epr.dtmvtolt,-1))
+           AND ris.cdcooper = pr_cdcooper 
+           AND ris.innivris = 9 
+           AND ris.cdorigem = 1
+           --> buscar risco baseado na conta(estouro de conta)
+           AND ris.nrdconta = pr_nrdconta 
+           AND ris.nrctremp = pr_nrdconta;
+      rw_crapris_9_100 cr_crapris_9_100%ROWTYPE;
+     
+                     
       -------- Tipos e registros genéricos ------------
 
       -- Vetor para armazenar os dados de riscos, dessa forma temos o valor
@@ -1572,10 +1612,51 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_qtprecal_retor := pr_rw_crapepr.qtprecal;
           vr_vlsdeved_atual := pr_rw_crapepr.vlsdeved;
         END IF;
-        -- Calcular número de dias com base nos (meses decorridos - qtde parcelas calculas) * 30
-        vr_dias := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
-        -- Efetuar o mesmo calculo para a variavel que será utilizada no insert posterior
-        vr_qtdiaatr := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+        
+        --> Caso NAO esteja em prejuizo
+        IF pr_rw_crapepr.inprejuz = 0 THEN
+        
+          -- Calcular número de dias com base nos (meses decorridos - qtde parcelas calculas) * 30
+          vr_dias := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+          -- Efetuar o mesmo calculo para a variavel que será utilizada no insert posterior
+          vr_qtdiaatr := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+          
+        --> Caso esteja em prejuizo
+        ELSIF pr_rw_crapepr.inprejuz = 1 THEN
+        
+          vr_qtdiaatr := 0;
+          --> Buscar ultimo nivel de risco
+          rw_crapris_9 := NULL;
+          
+          --> Caso linha 100
+          IF pr_rw_crapepr.cdlcremp = 100 THEN
+            --> usar data de referencia a data que gerou o emprestimo de prejuizo
+            OPEN cr_crapris_9_100 (pr_cdcooper => pr_cdcooper,
+                                   pr_nrdconta => pr_rw_crapepr.nrdconta,
+                                   pr_nrctremp => pr_rw_crapepr.nrctremp);
+            FETCH cr_crapris_9_100 INTO rw_crapris_9;
+            CLOSE cr_crapris_9_100;
+            
+          ELSE
+            
+            OPEN cr_crapris_9 (pr_cdcooper => pr_cdcooper,
+                               pr_nrdconta => pr_rw_crapepr.nrdconta,
+                               pr_nrctremp => pr_rw_crapepr.nrctremp);
+            FETCH cr_crapris_9 INTO rw_crapris_9;
+            CLOSE cr_crapris_9;
+          END IF;
+          
+          vr_qtdiaatr := (pr_rw_crapdat.dtmvtolt - rw_crapris_9.dtrefere);
+          IF vr_qtdiaatr < 0 THEN
+            vr_qtdiaatr := 0;
+          END IF;
+          
+          --> incrementar qtd de dias em atraso antes de se tornar em prejuizo
+          vr_qtdiaatr := nvl(vr_qtdiaatr,0) + nvl(rw_crapris_9.qtdiaatr,0);
+          vr_dias     := vr_qtdiaatr;
+        
+        END IF;
+        
         -- Porém garantir que a mesma não fique negativa
         IF vr_qtdiaatr < 0 THEN
           vr_qtdiaatr := 0;
@@ -2596,8 +2677,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_difmespr         PLS_INTEGER;           --> Diferença de meses em prejuízo
         vr_vldivida_acum    NUMBER;                --> Valor da divida acumulada
         vr_aux_nivel        PLS_INTEGER;           --> Nível do risco        
-        
+        vr_qtdiaatr         PLS_INTEGER;            --> Var auxiliar para manter o atraso 
+        vr_dtvencto         DATE;
+               
       BEGIN
+      
         -- Inicializa as variaveis
         vr_vlrpagos     := 0;
         vr_vlprjano     := 0;
@@ -2605,6 +2689,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlprjant     := 0;
         vr_vlsrisco     := 0;
         vr_aux_nivel    := 10;
+        vr_qtdiaatr     := 0;
+        
+        -- Buscar a parcela com maior atraso        
+        vr_dtvencto := NULL;
+        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0');
+        IF vr_tab_crappep_maior.exists(vr_idxpep) THEN
+          vr_dtvencto := vr_tab_crappep_maior(vr_idxpep); 
+        END if; 
+         
+        -- Se encontrou
+        IF vr_dtvencto IS NOT NULL THEN
+          -- Calcular a quantidade de dias em atraso
+           vr_qtdiaatr := pr_rw_crapdat.dtmvtolt - vr_dtvencto;
+        END IF; 
+        
+        --> incrementar qtd de dias em atraso antes de se tornar em prejuizo
+        IF pr_rw_crapepr.cdlcremp = 100 THEN
+        
+          --> Buscar ultimo nivel de risco
+          rw_crapris_9_100 := NULL;
+          OPEN cr_crapris_9_100 ( pr_cdcooper => pr_cdcooper,
+                                  pr_nrdconta => pr_rw_crapepr.nrdconta,
+                                  pr_nrctremp => pr_rw_crapepr.nrctremp);
+          FETCH cr_crapris_9_100 INTO rw_crapris_9_100;
+          CLOSE cr_crapris_9_100;
+          
+          --> atribuir a quantidade de dias antes do prejuizo
+          vr_qtdiaatr := nvl(rw_crapris_9_100.qtdiaatr,0);
+          
+          --> adicionar os dias até a data do atual
+          vr_qtdiaatr := nvl(vr_qtdiaatr,0) + (pr_rw_crapdat.dtmvtolt - rw_crapris_9_100.dtrefere);
+        
+        END IF;        
         
         -- Busca os pagamentos de prejuízo
         vr_index_prejuz := lpad(pr_rw_crapepr.nrdconta, 10, '0') ||
@@ -2668,7 +2785,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         pc_grava_crapris(  pr_nrdconta => pr_rw_crapass.nrdconta                             
                           ,pr_dtrefere => vr_dtrefere
                           ,pr_innivris => vr_aux_nivel                 
-                          ,pr_qtdiaatr => 0
+                          ,pr_qtdiaatr => vr_qtdiaatr
                           ,pr_vldivida => nvl(vr_vldivida_acum,0)                  
                           ,pr_vlvec180 => 0
                           ,pr_vlvec360 => 0

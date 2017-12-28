@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 15/08/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 27/12/2017
 
        Dados referentes ao programa:
 
@@ -314,6 +314,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  pelo cr_tbepr_bens_hst que chama a tabela tbepr_bens_hst
                                  (Lucas Ranghetti #734912)
                                  
+                    27/12/2017 - Ajustado para enviar a qtd de dias de atraso calculado na 
+                                 central de risco para os contratos em prejuizo, devido a auditoria do Bacen.
+                                 (Odirlei-AMcom/Oscar) 
+
 .............................................................................................................................*/
 
     DECLARE
@@ -4100,7 +4104,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) OR vr_tab_individ(vr_idx_individ).inddocto=5 THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
-              IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
+              -- Se existir Crapepr
+              vr_ind_epr := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
+                         || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
+                         
+              -- Se encontrar o contrato
+              IF vr_tab_crapepr.exists(vr_ind_epr) AND 
+                 --> e o mesmo estiver em prejuizo
+                 vr_tab_crapepr(vr_ind_epr).inprejuz = 1 THEN
+                --> utilizar os dias em atrasos calculados na central de risco(310_i)
+                vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';             
+              
+              ELSIF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
                                                                             vr_tab_individ(vr_idx_individ).qtdiaatr > 14) THEN
                 vr_stdiasat := ' DiaAtraso = "1"';
               ELSIF vr_tab_venc(vr_indice_venc).cdvencto = 210 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 15 OR

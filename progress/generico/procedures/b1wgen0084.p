@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 07/07/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
 
     Dados referentes ao programa:
 
@@ -282,6 +282,10 @@
 
               28/07/2017 - Ajuste na procedure valida_dados_efetivacao_proposta para nao validar
                            o capital minimo para as cessoes de credito (Anderson).
+                           
+              27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
+                           para prejuizo. (Oscar)
+                           
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -4449,7 +4453,7 @@ PROCEDURE transf_contrato_prejuizo.
            /* Precisa estar 181 dias com risco em H */
            ASSIGN aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
            
-           IF crapris.innivris = 9 AND aux_qtdiaris >= 181 THEN
+           IF crapris.innivris = 9 AND aux_qtdiaris > 179 THEN
            DO:
                FOR FIRST crapepr
                    WHERE crapepr.cdcooper = par_cdcooper
