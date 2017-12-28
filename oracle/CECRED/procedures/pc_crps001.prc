@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 10/11/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 28/12/2017
 
    Dados referentes ao programa:
 
@@ -210,6 +210,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                12/07/2017 - Inclusão no final do programa para execução da procedure
                             empr0002.pc_gerar_carga_vig_crapsda com o objetivo de popular o campo
                             crapsda.vllimcap - Melhoria M441 - Roberto Holz (Mout´s)
+                            
+               28/12/2017 - #783710 Melhoria das informações dos logs quando ñ encontrar os 
+                            registros crapfdc; e alterado o arquivo de log dos mesmos, de 
+                            proc_batch para proc_message (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -1924,18 +1928,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
   											 CLOSE cr_crapfdc;
   											 --Buscar	mensagem de	erro da	critica
                          vr_cdcritic:= 244;
-  											 vr_dscritic :=	gene0001.fn_busca_critica(pr_cdcritic	=> vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld.nrdconta)||
-                                                                                                 ' CHEQUE = '||vr_nrchqsdv;
+  											 vr_dscritic :=	gene0001.fn_busca_critica(pr_cdcritic	=> vr_cdcritic) ||
+                                        ' COOP ANT = ' || rw_craptco.cdcopant ||
+                                        ' CONTA = '    || gene0002.fn_mask_conta(rw_crapsld.nrdconta) ||
+                                        ' CHEQUE = '   || vr_nrchqsdv;
                                                                                                  
-                         --Abortar Programa
-  											 --RAISE vr_exc_saida;
                          -- Envio centralizado de log de erro
                           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                      || vr_cdprogra || ' --> '
-                                                                     || vr_dscritic );
-                          
+                                                                       || vr_dscritic
+                                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                           vr_cdcritic := NULL;
                           vr_dscritic := NULL;
                           -- Indicador de controle                                          
@@ -1953,15 +1957,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
   										 CLOSE cr_craptco;
   										 --Buscar	mensagem de	erro da	critica
                        vr_cdcritic := 244;
-  										 vr_dscritic :=	gene0001.fn_busca_critica(pr_cdcritic	=> vr_cdcritic) || 'CONTA = '||gene0002.fn_mask_conta(rw_crapsld.nrdconta);
-  										 --Abortar Programa
-  										 --RAISE vr_exc_saida;
+  										 vr_dscritic :=	gene0001.fn_busca_critica(pr_cdcritic	=> vr_cdcritic) || 
+                                      ' CONTA = '  || gene0002.fn_mask_conta(rw_crapsld.nrdconta) ||
+                                      ' CHEQUE = ' || vr_nrchqsdv;
+
                        -- Envio centralizado de log de erro
                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                    || vr_cdprogra || ' --> '
-                                                                   || vr_dscritic );
+                                                                   || vr_dscritic
+                                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                         vr_cdcritic := NULL;
                         vr_dscritic := NULL;
                         -- Indicador de controle                                             
@@ -2912,6 +2918,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
          EXCEPTION
            WHEN OTHERS THEN
+             cecred.pc_internal_exception(pr_cdcooper);
+
              RAISE vr_exc_saida;
          END;
        END LOOP; --rw_crapsld
@@ -3104,6 +3112,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper);
 
         pc_limpa_tabela;
 
