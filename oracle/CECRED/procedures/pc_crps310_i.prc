@@ -396,6 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.qtlcalat
               ,crapepr.vlsdevat
               ,crawepr.dtdpagto dtdpripg
+              ,crapepr.dtultpag
               ,crawepr.dsnivris
           FROM crapepr
           JOIN crawepr
@@ -1653,6 +1654,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           
           --> incrementar qtd de dias em atraso antes de se tornar em prejuizo
           vr_qtdiaatr := nvl(vr_qtdiaatr,0) + nvl(rw_crapris_9.qtdiaatr,0);
+          
+          --> Caso ainda não tenha calculado a qtd de dias em atraso do prejuizo
+          IF vr_qtdiaatr <= 0 THEN
+            --> deve calcular conforma a data do ultimo pagamento
+            vr_qtdiaatr := (pr_rw_crapdat.dtmvtolt - pr_rw_crapepr.dtultpag); 
+          END IF;
+          
           vr_dias     := vr_qtdiaatr;
         
         END IF;
