@@ -1504,7 +1504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 	 Sistema : Rotinas referentes ao WebService
 	 Sigla   : WEBS
 	 Autor   : Lucas Reinert
-	 Data    : Maio/17.                    Ultima atualizacao:
+	 Data    : Maio/17.                    Ultima atualizacao: 15/12/2017
 
 	 Dados referentes ao programa:
 
@@ -1515,7 +1515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
 	 Observacao: -----
      
-	 Alteracoes:      
+	 Alteracoes:  15/12/2017 - P337 - SM - Acionar nova rotina Derivação (Marcos-Supero)
+        
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
@@ -2016,33 +2017,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                      || '  vr_cdcritic NUMBER;'||chr(13)
                      || '  vr_dscritic VARCHAR2(4000);'||chr(13)
                      || 'BEGIN'||chr(13)
-                     || 'ESTE0001.pc_incluir_proposta_est(pr_cdcooper => '||rw_crawepr.cdcooper ||chr(13)
+                     || '  ESTE0001.pc_derivar_proposta_est(pr_cdcooper => '||rw_crawepr.cdcooper ||chr(13)
                      || '                                ,pr_cdagenci => '||rw_crawepr.cdagenci ||chr(13)
                      || '                                ,pr_cdoperad => '''||rw_crawepr.cdopeste||''''||chr(13)
                      || '                                ,pr_cdorigem => 9'                    ||chr(13)
                      || '                                ,pr_nrdconta => '||rw_crawepr.nrdconta ||chr(13)
                      || '                                ,pr_nrctremp => '||rw_crawepr.nrctremp ||chr(13)
-                     || '                                ,pr_dtmvtolt => to_date('''||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''',''dd/mm/rrrr'')'||chr(13)
-                     || '                                ,pr_nmarquiv => NULL'                  ||chr(13)
-                     || '                                ,pr_dsmensag => vr_dsmensag'           ||chr(13)
-                     || '                                ,pr_cdcritic => vr_cdcritic'           ||chr(13)
-                     || '                                ,pr_dscritic => vr_dscritic);'         ||chr(13)
-                     /*|| '  -- Em caso de erro '||chr(13)
-                     || '  IF nvl(vr_cdcritic,0) >= 0 AND vr_dscritic IS NOT NULL THEN '||chr(13)
-                     || '  -- Adicionar ao LOG e continuar o processo'||chr(13)
-                     || '  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,'||chr(13)
-                     || '                             pr_ind_tipo_log => 2,'||chr(13)
-                     || '                             pr_des_log      => '''||to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')||''''||chr(13)
-                     || '                                             || '' - WEBS0001 --> Erro ao solicitor Derivacao Automatica '''||chr(13)
-                     || '                                             || '' do Protocolo: '||pr_dsprotoc||''''||chr(13)
-                     || '                                             || '', erro: ''||vr_cdcritic||''-''||vr_dscritic,'||chr(13)
-                     || '                             pr_nmarqlog     => '''||gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE')||''','||chr(13)
-                     || '                             pr_flnovlog     => ''N'','||chr(13)
-                     || '                             pr_flfinmsg     => ''S'','||chr(13)
-                     || '                             pr_dsdirlog     => NULL,'||chr(13)
-                     || '                             pr_dstiplog     => ''O'','||chr(13)
-                     || '                             PR_CDPROGRAMA   => NULL);'||chr(13)
-                     || '  END IF;'||chr(13)*/
+                     || '                                  ,pr_dtmvtolt => to_date('''||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''',''dd/mm/rrrr''));'||chr(13)
                      || 'END;';
                      
           -- Montar o prefixo do código do programa para o jobname
