@@ -48,6 +48,9 @@ BEGIN
             ,crapepr.txmensal
             ,crapepr.vlpreemp
             ,crapepr.dtrefjur
+            ,crapepr.diarefju
+            ,crapepr.mesrefju
+            ,crapepr.anorefju            
             ,crapepr.txjuremp
             ,crapepr.vlemprst
             ,crapepr.qtpreemp
@@ -188,7 +191,9 @@ BEGIN
     vr_percmult          NUMBER(25,2);
     vr_cdhistor          craphis.cdhistor%TYPE;
     vr_dstextab          craptab.dstextab%TYPE;
-
+    vr_diarefju          crapepr.diarefju%TYPE;
+    vr_mesrefju          crapepr.mesrefju%TYPE;
+    vr_anorefju          crapepr.anorefju%TYPE;
   BEGIN
 
     --------------- VALIDACOES INICIAIS -----------------
@@ -254,6 +259,14 @@ BEGIN
 
     -- Listagem dos contratos
     FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
+      -- Zerar a Variavel
+      vr_vljuremu := 0;
+      vr_vljurcor := 0;
+      vr_vlmrapar := 0;
+      vr_vltotmra := 0;
+      vr_diarefju := rw_crapepr.diarefju;
+      vr_mesrefju := rw_crapepr.mesrefju;
+      vr_anorefju := rw_crapepr.anorefju;
 
       -- Se NAO achou a linha de credito
       IF NOT vr_tab_craplcr.EXISTS(rw_crapepr.cdlcremp) THEN
@@ -297,6 +310,9 @@ BEGIN
                                            ,pr_ehmensal => TRUE
                                            ,pr_txdiaria => vr_txdiaria
                                            ,pr_nrparepr => rw_crappep_mensal.nrparepr
+                                           ,pr_diarefju => vr_diarefju
+                                           ,pr_mesrefju => vr_mesrefju
+                                           ,pr_anorefju => vr_anorefju
                                            ,pr_vljuremu => vr_vljuremu
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -452,10 +468,6 @@ BEGIN
         vr_tab_flg_lcr(rw_crapepr.cdlcremp) := 1;
       END IF;
 
-      -- Inicializa
-      vr_vlmrapar := 0;
-      vr_vltotmra := 0;
-
       -- Condicao para verificar se possui parcelas em atraso
       IF rw_crapepr.dtdpagto < rw_crapdat.dtmvtolt THEN
 
@@ -533,32 +545,25 @@ BEGIN
             IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-
-/*
-            -- Atualizar parcela do emprestimo
-            BEGIN
-              UPDATE crappep
-                 SET crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) + NVL(vr_vltotmra,0)
-               WHERE crappep.cdcooper = pr_cdcooper
-                 AND crappep.nrdconta = rw_crapepr.nrdconta
-                 AND crappep.nrctremp = rw_crapepr.nrctremp
-                 AND crappep.nrparepr = rw_crappep.nrparepr;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar o registro na crappep. ' || SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-*/
           END IF; -- NVL(vr_vlmrapar, 0) > 0
            
          END LOOP;
+      END IF;
       
+      -- Condicao para verificar se foi lancado Juros Remuneratorio
+      IF vr_vljuremu <= 0 THEN
+        vr_diarefju := rw_crapepr.diarefju;
+        vr_mesrefju := rw_crapepr.mesrefju;
+        vr_anorefju := rw_crapepr.anorefju;
       END IF;
 
       -- Atualizar Emprestimo
       BEGIN
         UPDATE crapepr
            SET crapepr.dtrefjur = rw_crapdat.dtmvtolt
+              ,crapepr.diarefju = vr_diarefju
+              ,crapepr.mesrefju = vr_mesrefju
+              ,crapepr.anorefju = vr_anorefju
               ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0) + NVL(vr_vlmrapar,0)
               ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
               ,crapepr.vljurmes = NVL(crapepr.vljuratu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)

@@ -11,6 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,vlmrapar     crappep.vlmrapar%TYPE
       ,vlsdvpar     crappep.vlsdvpar%TYPE
       ,vldescto     crappep.vldespar%TYPE
+      ,vlpraven     crappep.vlsdvpar%TYPE
       ,vlatupar     NUMBER(25,2)
       ,vlatrpag     NUMBER(25,2)
       ,flcarenc     PLS_INTEGER
@@ -1011,14 +1012,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF pr_dtvencto = pr_datafinal THEN
           -- Condicao para verificar se estamos calculando o Valor da Parcela Principal ou Valor da Parcela do Juros da Carencia
           IF pr_vlparepr_principal > 0 THEN
-            -- Atualiza o Saldo Projetado
-            pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
-                                                                 pr_vlparepr_principal;
+            IF pr_dtvencto >= pr_dtdpagto THEN
+              -- Atualiza o Saldo Projetado
+              pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
+                                                                   pr_vlparepr_principal;
+            END IF;                                                                   
           ELSE
             -- Atualiza o Saldo Projetado
             pr_tab_saldo_projetado(vr_indice).saldo_projetado := pr_tab_saldo_projetado(vr_indice).saldo_projetado - 
-                                                                 pr_tab_total_juros(pr_nrparepr).valor_total_juros;
-            
+                                                                 pr_tab_total_juros(pr_nrparepr).valor_total_juros;            
           END IF;
           
         END IF;
@@ -1338,7 +1340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Data da Carencia
       vr_dtcarenc        := pr_dtcarenc;
       -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
+      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) > TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
         vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
       ELSE
         vr_datafinal := LAST_DAY(vr_dtmvtolt);
@@ -1622,11 +1624,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_qtparcel := pr_tab_price.COUNT + 1;
         vr_dtvencto := pr_dtvencto;
       ELSE 
-        vr_qtparcel := TO_CHAR(pr_dtvencto,'RRRRMM') - TO_CHAR(pr_dtcalcul,'RRRRMM') + 1;
+        vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul));
+        IF NVL(vr_qtparcel,0) = 0 THEN
+          vr_qtparcel := 1;          
+        END IF;
+        
         vr_dtvencto := TO_DATE(TO_CHAR(pr_dtvencto,'DD')||'/'||TO_CHAR(pr_dtcalcul,'MM/RRRR'),'DD/MM/RRRR');
         -- Condicao para verificar se o dia atual eh maior que o dia do vencimento
         IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtvencto,'DD')) THEN
-          vr_qtparcel := vr_qtparcel - 1;
           vr_dtvencto := ADD_MONTHS(vr_dtvencto,1);
         END IF;        
       END IF;
@@ -2143,6 +2148,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
           -- A Vencer
           pr_tab_parcelas(vr_indice).insitpar := 3;
+          
+          -- Somente sera carregado os valores de vencimento a vencer, dentro do mês (LAUTOM)
+          IF (to_char(rw_crappep.dtvencto,'RRRRMM') = to_char(pr_dtmvtolt,'RRRRMM')) THEN
+            pr_tab_parcelas(vr_indice).vlpraven := pr_tab_parcelas(vr_indice).vlatupar;
+          END IF;         
+          
         END IF;
         -- Valor atual da parcela mais multa e juros de mora
         pr_tab_parcelas(vr_indice).vlatrpag := NVL(pr_tab_parcelas(vr_indice).vlatupar,0)
@@ -2278,12 +2289,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_vlmrapar := vr_vlmrapar + NVL(vr_tab_parcelas(vr_indice).vlmrapar,0);
 
         CASE vr_tab_parcelas(vr_indice).insitpar
-          -- Em Dia
-          WHEN 1 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlatupar,0);
           -- Em Atraso
           WHEN 2 THEN vr_vlprvenc := vr_vlprvenc + NVL(vr_tab_parcelas(vr_indice).vlatupar,0);
           -- A Vencer
-          WHEN 3 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlsdvpar,0);
+          WHEN 3 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlpraven,0);
         END CASE;
 
         vr_indice   := vr_tab_parcelas.NEXT(vr_indice);
@@ -2663,7 +2672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Loop para calcular o saldo devedor
       WHILE vr_datafinal <= vr_dtultpag LOOP
         -- Somente vamos calcular o Saldo Devedor Projetado caso nao for no periodo da carencia
-        IF vr_tab_parcelas(vr_nrparepr).flcarenc = 0 THEN          
+        IF vr_tab_parcelas(vr_nrparepr).flcarenc = 0 THEN       
           -- Procedure para calcular o saldo projetado
           pc_calcula_saldo_projetado(pr_cdcooper            => pr_cdcooper
                                     ,pr_flgbatch            => FALSE

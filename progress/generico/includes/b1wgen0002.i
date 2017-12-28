@@ -164,6 +164,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
               aux_dscritic = ""
               aux_vlpreapg = pc_busca_pagto_parc_pos_prog.pr_vlpreapg
                              WHEN pc_busca_pagto_parc_pos_prog.pr_vlpreapg <> ?
+              aux_vlsdeved = aux_vlpreapg
               aux_vlprvenc = pc_busca_pagto_parc_pos_prog.pr_vlprvenc
                              WHEN pc_busca_pagto_parc_pos_prog.pr_vlprvenc <> ?
               aux_vlpraven = pc_busca_pagto_parc_pos_prog.pr_vlpraven
@@ -189,7 +190,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
                 
                 RETURN "NOK".
             END.
-
+  
     END.
 ELSE IF crapepr.tpemprst = 0 THEN /* Price TR */
 DO:

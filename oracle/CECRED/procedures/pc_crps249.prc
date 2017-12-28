@@ -1953,7 +1953,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,lem.vllanmto
           ,epr.cdlcremp
           ,lcr.cdhistor
-          ,decode(epr.tpemprst,0,'TR','PP') tpprodut
+          ,decode(epr.tpemprst,0,'TR',1,'PP',2,'POS','') tpprodut
           ,his.dshistor
       FROM crapepr epr
           ,craplem lem
@@ -4227,6 +4227,131 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_flgctred := false; -- Normal
     vr_lsctaorc := ',1667,';
     vr_dshstorc := '"(crps249) REVERSAO DOS FINANCIAMENTOS PREFIXADO REALIZADOS."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+
+    /* ------------------------------------------------------------------------------------------
+     * EMPRESTIMO - POS FIXADO    
+     * ------------------------------------------------------------------------------------------ */    
+    pc_cria_agencia_pltable(999,7);
+    vr_tab_cratorc.delete;
+    vr_vltotorc := 0;
+    FOR rw_crapris in cr_crapris (pr_cdcooper,
+                                  vr_dtultdia,
+                                  3,
+                                  299,
+                                  2) LOOP
+      vr_vlstotal := 0;
+      -- Percorrer vencimentos do risco
+      FOR rw_crapvri IN cr_crapvri (rw_crapris.cdcooper,
+                                    rw_crapris.nrdconta,
+                                    rw_crapris.dtrefere,
+                                    rw_crapris.innivris,
+                                    rw_crapris.cdmodali,
+                                    rw_crapris.nrctremp,
+                                    rw_crapris.nrseqctr) loop
+        IF rw_crapvri.cdvencto BETWEEN 110 AND 290 THEN
+          vr_vlstotal := vr_vlstotal + rw_crapvri.vldivida;
+        END IF;
+      END LOOP;
+      --
+      pc_cria_agencia_pltable(rw_crapris.cdagenci,7);
+      -- Separando as informacoes por agencia e tipo de pessoa
+      IF rw_crapris.inpessoa = 1 THEN
+         vr_arq_op_cred(7)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(7)(rw_crapris.cdagenci)(1) + vr_vlstotal;
+         vr_arq_op_cred(7)(999)(1) := vr_arq_op_cred(7)(999)(1) + vr_vlstotal;
+      ELSE
+         vr_arq_op_cred(7)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(7)(rw_crapris.cdagenci)(2) + vr_vlstotal;
+         vr_arq_op_cred(7)(999)(2) := vr_arq_op_cred(7)(999)(2) + vr_vlstotal;
+      END IF;
+      --
+      vr_tab_cratorc(rw_crapris.cdagenci).vr_cdagenci := rw_crapris.cdagenci;
+      vr_tab_cratorc(rw_crapris.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris.cdagenci).vr_vllanmto, 0) + vr_vlstotal;
+      vr_vltotorc := vr_vltotorc + vr_vlstotal;
+    END LOOP;
+    --
+    vr_flgrvorc := false; -- Lancamento do dia
+    vr_flgctpas := false; -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',1603,';
+    vr_dshstorc := '"(crps249) EMPRESTIMOS POSFIXADO REALIZADOS."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+    --
+    vr_flgrvorc := true;  -- Lancamento de reversao
+    vr_flgctpas := false; -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',1603,';
+    vr_dshstorc := '"(crps249) REVERSAO DOS EMPRESTIMOS POSFIXADO REALIZADOS."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+    
+    /* ------------------------------------------------------------------------------------------
+     * FINANCIAMENTO - POS FIXADO
+     * ------------------------------------------------------------------------------------------ */    
+    pc_cria_agencia_pltable(999,8);
+    vr_tab_cratorc.delete;
+    vr_vltotorc := 0;
+    -- Percorrer vencimentos do risco
+    FOR rw_crapris in cr_crapris (pr_cdcooper,
+                                  vr_dtultdia,
+                                  3,
+                                  499,
+                                  2) LOOP
+
+      -- Se for modalidade 0499, deve desprezar contratos do BNDES
+      OPEN  cr_crapebn(rw_crapris.cdcooper, rw_crapris.nrdconta, rw_crapris.nrctremp);
+      FETCH cr_crapebn INTO vr_incrapebn;
+      -- Se retorna algum registro
+      IF cr_crapebn%FOUND THEN
+        CLOSE cr_crapebn;
+        CONTINUE;  /* Despreza contratos do BNDES */
+      END IF;
+      IF cr_crapebn%ISOPEN THEN
+        CLOSE cr_crapebn;
+      END IF;
+
+      vr_vlstotal := 0;
+      -- Percorrer vencimentos do risco
+      FOR rw_crapvri IN cr_crapvri (rw_crapris.cdcooper,
+                                    rw_crapris.nrdconta,
+                                    rw_crapris.dtrefere,
+                                    rw_crapris.innivris,
+                                    rw_crapris.cdmodali,
+                                    rw_crapris.nrctremp,
+                                    rw_crapris.nrseqctr) loop
+        IF rw_crapvri.cdvencto BETWEEN 110 AND 290 THEN
+          vr_vlstotal := vr_vlstotal + rw_crapvri.vldivida;
+        END IF;
+      END LOOP;
+      pc_cria_agencia_pltable(rw_crapris.cdagenci,8);
+      -- Separando as informacoes por agencia e tipo de pessoa
+      IF rw_crapris.inpessoa = 1 THEN
+         vr_arq_op_cred(8)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(8)(rw_crapris.cdagenci)(1) + vr_vlstotal;
+         vr_arq_op_cred(8)(999)(1) := vr_arq_op_cred(8)(999)(1) + vr_vlstotal;
+      ELSE
+         vr_arq_op_cred(8)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(8)(rw_crapris.cdagenci)(2) + vr_vlstotal;
+         vr_arq_op_cred(8)(999)(2) := vr_arq_op_cred(8)(999)(2) + vr_vlstotal;
+      END IF;
+      --
+      vr_tab_cratorc(rw_crapris.cdagenci).vr_cdagenci := rw_crapris.cdagenci;
+      vr_tab_cratorc(rw_crapris.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris.cdagenci).vr_vllanmto, 0) + vr_vlstotal;
+      vr_vltotorc := vr_vltotorc + vr_vlstotal;
+    END LOOP;
+    --
+    vr_flgrvorc := false; -- Lancamento do dia
+    vr_flgctpas := false; -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',1607,';
+    vr_dshstorc := '"(crps249) FINANCIAMENTOS POSFIXADO REALIZADOS."';
+    vr_dshcporc := ',5210,';
+    pc_proc_lista_orcamento;
+    --
+    vr_flgrvorc := true;  -- Lancamento de reversao
+    vr_flgctpas := false; -- Conta do PASSIVO
+    vr_flgctred := false; -- Normal
+    vr_lsctaorc := ',1607,';
+    vr_dshstorc := '"(crps249) REVERSAO DOS FINANCIAMENTOS POSFIXADO REALIZADOS."';
     vr_dshcporc := ',5210,';
     pc_proc_lista_orcamento;
 
@@ -6970,7 +7095,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
           RAISE vr_exc_erro;
        END;
-
+     
        vr_nmarqdat_prejuizo_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_PREJUIZO.txt';
 
        -- Copia o arquivo gerado para o diretório final convertendo para DOS
@@ -7398,7 +7523,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
         RAISE vr_exc_erro;
      END;
-
+     
        vr_nmarqdat_tarifasbb_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_TARIFASBB.txt';
 
        -- Copia o arquivo gerado para o diretório final convertendo para DOS
