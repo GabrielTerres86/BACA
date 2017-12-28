@@ -3697,8 +3697,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
-    -- verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada
-    IF vr_dscritic IS NOT NULL AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' THEN
+    -- Verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada ou proposta nao permite interromper o fluxo
+    IF vr_dscritic IS NOT NULL 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao permite interromper o fluxo%'
+      AND lower(vr_dscritic) NOT LIKE '%produto cdc nao integrado%' THEN
       RAISE vr_exc_erro;
     END IF;    
     
@@ -3743,7 +3746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel realizar o cancelamento da Analise de Credito: '||SQLERRM;
+      pr_dscritic := 'Não foi possivel realizar a interrupcao da Analise de Credito: '||SQLERRM;
   END pc_interrompe_proposta_est;  
   
   --> Rotina responsavel por gerar efetivacao da proposta para a esteira

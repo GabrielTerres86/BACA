@@ -7395,8 +7395,7 @@ PROCEDURE altera-valor-proposta:
                                                              " enviada para Analise de Credito".
 
                                                     /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                                                    IF NOT aux_contigen AND aux_inobriga = "S" 
-                                                    AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                                                    IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                                     DO:
                                                        ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                                     END.
@@ -7435,8 +7434,7 @@ PROCEDURE altera-valor-proposta:
                                             " enviada para Analise de Credito".
 
                                          /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                                         IF NOT aux_contigen AND aux_inobriga = "S" 
-                                         AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                                         IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                          DO:
                                              ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                          END.   
@@ -7457,8 +7455,7 @@ PROCEDURE altera-valor-proposta:
                                         DO:
                      
                       /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                      IF NOT aux_contigen AND aux_inobriga = "S" 
-                      AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                      IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                       DO:
                           ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                       END.
@@ -7489,8 +7486,7 @@ PROCEDURE altera-valor-proposta:
              DO:
                  
                  /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                 IF NOT aux_contigen AND aux_inobriga = "S" 
-                 AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                 IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                  DO:
                      ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                  END.
@@ -7520,8 +7516,7 @@ PROCEDURE altera-valor-proposta:
               DO:
               
                   /* Se a proposta estava na Esteira */
-                  IF aux_inobriga = "S" 
-                  AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                  IF crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                   
                       ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                   
@@ -7798,7 +7793,7 @@ PROCEDURE altera-valor-proposta:
 
     END. /* Tratamento de criticas */
         
-    /* Se devemos cancelar a proposta na Esteira */
+    /* Se devemos interromper a proposta na Esteira */
     IF aux_interrup THEN
     DO:
       
@@ -7833,7 +7828,10 @@ PROCEDURE altera-valor-proposta:
       DELETE OBJECT h-b1wgen0195.
        
       /* Ignorar erro de "%Proposta nao encontrada" */ 
-      IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
+      IF RETURN-VALUE = "NOK" AND 
+         NOT LOWER(aux_dscritic) MATCHES "*proposta nao encontrada*" AND
+         NOT LOWER(aux_dscritic) MATCHES "*proposta nao permite interromper o fluxo*" AND
+         NOT LOWER(aux_dscritic) MATCHES "*produto cdc nao integrado*" THEN
           DO:
               IF aux_cdcritic = 0 AND 
                  aux_dscritic = "" THEN
@@ -13540,8 +13538,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                              DO:
                              
                                /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                               IF NOT aux_contigen AND aux_inobriga = "S" 
-                                 AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                               IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                                DO:
                                   ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                                END.
@@ -13562,6 +13559,17 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                                             "Avalistas Alterados - A proposta devera ser " +
                                                             " enviada para Analise de Credito".      
                                
+                                
+                               
+                               END.
+                      END. 
+                 END.  
+              END.     
+
+        LEAVE.
+
+    END. /* DO WHILE TRUE TRANSACTION */
+
                                 /* Soh devemos interromper a proposta na Esteira */
                                 IF aux_interrup THEN
                                 DO:
@@ -13597,7 +13605,10 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                   DELETE OBJECT h-b1wgen0195.
                                    
                                   /* Ignorar erro de "%Proposta nao encontrada" */ 
-                                  IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
+      IF RETURN-VALUE = "NOK" AND
+          NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" AND
+          NOT lower(aux_dscritic) MATCHES "*proposta nao permite interromper o fluxo*" AND
+          NOT lower(aux_dscritic) MATCHES "*produto cdc nao integrado*" THEN
                                       DO:
                                           IF aux_cdcritic = 0 AND 
                                              aux_dscritic = "" THEN
@@ -13612,17 +13623,6 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                                  aux_dscritic = "".
                  END.  
                                  END.
-                               
-                               END.
-                      END. 
-                 END.  
-              END.     
-
-        LEAVE.
-
-    END. /* DO WHILE TRUE TRANSACTION */
-
-    
     
     IF   aux_cdcritic <> 0    OR
          aux_dscritic <> ""   THEN
