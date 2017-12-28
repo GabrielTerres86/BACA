@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 19/04/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 12/12/2017
     
     Dados referentes ao programa:
 
@@ -338,9 +338,12 @@
                              não consultar transferência de conta (Carlos)
 
 			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                             crapass, crapttl, crapjur (Adriano - P339).
+                30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
+				                     Prova de vida nao aparecendo na AV - Andrei - Mouts							
 
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2635,7 +2638,7 @@ PROCEDURE efetua_saque:
                cratlot.vlinfodb = cratlot.vlinfodb + par_vldsaque
                cratlot.vlcompdb = cratlot.vlcompdb + par_vldsaque.
     
-                EMPTY TEMP-TABLE cratlcm.
+        EMPTY TEMP-TABLE cratlcm.
         CREATE cratlcm.
         ASSIGN cratlcm.cdcooper = par_cdcooper
                cratlcm.dtmvtolt = par_dtmvtocd
@@ -2659,7 +2662,7 @@ PROCEDURE efetua_saque:
                cratlcm.cdhistor = aux_cdhisdeb /* SAQUE CARTAO */
                cratlcm.vllanmto = par_vldsaque
                cratlcm.nrseqdig = cratlot.nrseqdig.
-              
+               
                                                
         RUN sistema/generico/procedures/b1craplcm.p PERSISTENT SET h-b1craplcm.
                
@@ -2951,7 +2954,7 @@ PROCEDURE efetua_saque:
                                  INPUT IF AVAIL crapcrm THEN 1 ELSE 2,
                                  INPUT par_hrtransa,     /* Nrd Documento */               
                                  INPUT aux_cdhisdeb,     /* SAQUE CARTAO */
-                                 INPUT par_nrcartao,
+                                 INPUT STRING(par_nrcartao),
                                  INPUT par_vldsaque,
                                  INPUT "1",                /* Código do Operador */
                                  INPUT 0,
@@ -3692,7 +3695,7 @@ PROCEDURE busca_associado:
 		     ASSIGN par_nmtitula[2] = crapttl.nmextttl.
 
 		  END.
-
+		  
 	   END.
 
     ASSIGN par_nmtitula[1] = crapass.nmprimtl.
