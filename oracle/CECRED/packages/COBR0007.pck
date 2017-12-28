@@ -516,7 +516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 11/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 26/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -526,6 +526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Alteracoes: 11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                            (Douglas - Importacao de Arquivos CNAB)
     --
+    --               26/12/2017 - Ajuste na mensagem para informar que a instrução só pode ser
+    --                            executada em dia útil (Douglas - Chamado 820998)
     -- ...........................................................................................
     
   BEGIN
@@ -568,9 +570,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           RETURN;
         END IF;
         --Montar Mensagem Critica
-        vr_dscritic:= 'Este tipo de instrucao eh permitido apenas no horario: '||
-                       vr_tab_limite(vr_tab_limite.FIRST).hrinipag ||' ate '||
+        vr_dscritic:= 'Este tipo de instrução é permitida apenas em dias úteis no horário das '||
+                       vr_tab_limite(vr_tab_limite.FIRST).hrinipag ||' até '||
                        vr_tab_limite(vr_tab_limite.FIRST).hrfimpag ||'.';
+                       
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
