@@ -526,7 +526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 25/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -603,7 +603,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --		                 crapass, crapttl, crapjur 
   --						(Adriano - P339).
   --
-  --
+  --            26/12/2017 - Na pc_busca_limites foi inicializado as variaveis da pr_tab_internet e feito NVL 
+  --                         nas variaveis que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
+  --                         TED cadastrado realizar esta operação (Tiago #820218).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1437,7 +1439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para buscar os limites para internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 14/12/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1452,6 +1454,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
   --              14/12/2016 - Contabilizar corretamente o limite diário de TED
   --                           (Adriano - SD 482831)
+  --
+  --              26/12/2017 - Inicializado as variaveis da pr_tab_internet e feito NVL nas variaveis
+  --                           que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
+  --                           TED cadastrado realizar esta operação (Tiago #820218).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1684,17 +1690,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
       --Criar registro limite internet
       vr_index:= pr_idseqttl; --nvl(rw_crapsnh.idseqttl,pr_idseqttl);
+      
       pr_tab_internet(vr_index).idseqttl:= rw_crapsnh.idseqttl;
-      pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
-      pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
-      pr_tab_internet(vr_index).vltrfcop:= vr_tab_vllimtrf;
-      pr_tab_internet(vr_index).vltedcop:= vr_tab_vllimted;
-      pr_tab_internet(vr_index).vllimweb:= vr_vllimweb;
-      pr_tab_internet(vr_index).vllimpgo:= vr_vllimpgo;
-      pr_tab_internet(vr_index).vllimtrf:= vr_vllimtrf;
-      pr_tab_internet(vr_index).vllimted:= vr_vllimted;
-      pr_tab_internet(vr_index).vlvrbcop:= vr_tab_vllimvrb;
-		  pr_tab_internet(vr_index).vllimvrb:= rw_crapsnh.vllimvrb;
+      pr_tab_internet(vr_index).vlwebcop:= NVL(vr_tab_vllimweb,0);
+      pr_tab_internet(vr_index).vlpgocop:= NVL(vr_tab_vllimpgo,0);
+      pr_tab_internet(vr_index).vltrfcop:= NVL(vr_tab_vllimtrf,0);
+      pr_tab_internet(vr_index).vltedcop:= NVL(vr_tab_vllimted,0);
+      pr_tab_internet(vr_index).vllimweb:= NVL(vr_vllimweb,0);
+      pr_tab_internet(vr_index).vllimpgo:= NVL(vr_vllimpgo,0);
+      pr_tab_internet(vr_index).vllimtrf:= NVL(vr_vllimtrf,0);
+      pr_tab_internet(vr_index).vllimted:= NVL(vr_vllimted,0);
+      pr_tab_internet(vr_index).vlvrbcop:= NVL(vr_tab_vllimvrb,0);
+		  pr_tab_internet(vr_index).vllimvrb:= NVL(rw_crapsnh.vllimvrb,0);
+      pr_tab_internet(vr_index).vllimflp:= 0;
+           /* Limite utilizado */
+      pr_tab_internet(vr_index).vlutlweb:= 0;
+      pr_tab_internet(vr_index).vlutlpgo:= 0;
+      pr_tab_internet(vr_index).vlutltrf:= 0;
+      pr_tab_internet(vr_index).vlutlted:= 0;
+      pr_tab_internet(vr_index).vlutlvrb:= 0;
+      pr_tab_internet(vr_index).vlutlflp:= 0;
+           /* Limite disponivel */
+      pr_tab_internet(vr_index).vldspweb:= 0;
+      pr_tab_internet(vr_index).vldsppgo:= 0;
+      pr_tab_internet(vr_index).vldsptrf:= 0;
+      pr_tab_internet(vr_index).vldspted:= 0;
+      pr_tab_internet(vr_index).vldspvrb:= 0;
+      pr_tab_internet(vr_index).vldspflp:= 0;
 
       --Se for pessoa fisica e o sequencial titular > 1
       IF  rw_crapass.inpessoa = 1 AND pr_idseqttl > 1  THEN
@@ -1734,16 +1756,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Criar registro limite internet
         vr_index:= rw_crapsnh.idseqttl;
         pr_tab_internet(vr_index).idseqttl:= vr_index;
-        pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
-        pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
-        pr_tab_internet(vr_index).vltrfcop:= vr_tab_vllimtrf;
-        pr_tab_internet(vr_index).vltedcop:= vr_tab_vllimted;
-        pr_tab_internet(vr_index).vllimweb:= vr_vllimweb;
-        pr_tab_internet(vr_index).vllimpgo:= vr_vllimpgo;
-        pr_tab_internet(vr_index).vllimtrf:= vr_vllimtrf;
-        pr_tab_internet(vr_index).vllimted:= vr_vllimted;
-        pr_tab_internet(vr_index).vlvrbcop:= vr_tab_vllimvrb;
-  		  pr_tab_internet(vr_index).vllimvrb:= rw_crapsnh.vllimvrb;
+        pr_tab_internet(vr_index).vlwebcop:= NVL(vr_tab_vllimweb,0);
+        pr_tab_internet(vr_index).vlpgocop:= NVL(vr_tab_vllimpgo,0);
+        pr_tab_internet(vr_index).vltrfcop:= NVL(vr_tab_vllimtrf,0);
+        pr_tab_internet(vr_index).vltedcop:= NVL(vr_tab_vllimted,0);
+        pr_tab_internet(vr_index).vllimweb:= NVL(vr_vllimweb,0);
+        pr_tab_internet(vr_index).vllimpgo:= NVL(vr_vllimpgo,0);
+        pr_tab_internet(vr_index).vllimtrf:= NVL(vr_vllimtrf,0);
+        pr_tab_internet(vr_index).vllimted:= NVL(vr_vllimted,0);
+        pr_tab_internet(vr_index).vlvrbcop:= NVL(vr_tab_vllimvrb,0);
+  		  pr_tab_internet(vr_index).vllimvrb:= NVL(rw_crapsnh.vllimvrb,0);
       END IF;
       /** Limite Disponivel (Total - Utilizado) **/
       IF pr_flglimdp THEN
@@ -1826,33 +1848,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Se existir valor limite web
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
             --Valor utilizado WEB
-            pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
+            pr_tab_internet(vr_index).vlutlweb:= NVL(vr_vlutlweb,0);
             --Valor disponivel WEB recebe limite menos utilizado web
-            pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
+            pr_tab_internet(vr_index).vldspweb:= NVL(pr_tab_internet(vr_index).vllimweb,0) - NVL(vr_vlutlweb,0);
           END IF;
         
           --Se existir valor limite transferencia
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
             --Valor utilizado transferencia
-            pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
+            pr_tab_internet(vr_index).vlutltrf:= NVL(vr_vlutltrf,0);
             --Valor disponivel transf. recebe limite menos utilizado transf
-            pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+            pr_tab_internet(vr_index).vldsptrf:= NVL(pr_tab_internet(vr_index).vllimtrf,0) - NVL(vr_vlutltrf,0);
           END IF;
         
           --Se existir valor limite pagto
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
             --Valor utilizado pagto
-            pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
+            pr_tab_internet(vr_index).vlutlpgo:= NVL(vr_vlutlpgo,0);
             --Valor disponivel pagto. recebe limite menos utilizado pagto
-            pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+            pr_tab_internet(vr_index).vldsppgo:= NVL(pr_tab_internet(vr_index).vllimpgo,0) - NVL(vr_vlutlpgo,0);
           END IF;
         
           --Se existir valor limite ted
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
             --Valor utilizado ted
-            pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
+            pr_tab_internet(vr_index).vlutlted:= NVL(vr_vlutlted,0);
             --Valor disponivel ted. recebe limite menos utilizado ted
-            pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+            pr_tab_internet(vr_index).vldspted:= NVL(pr_tab_internet(vr_index).vllimted,0) - NVL(vr_vlutlted,0);
           END IF;
 
           pr_tab_internet(vr_index).vlutlflp := 0;
@@ -1860,9 +1882,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            --Se existir valor limite Folha de pagamento
           IF  vr_vllimfol > 0  THEN
             --Valor utilizado Folha de Pagamento
-            pr_tab_internet(vr_index).vlutlflp:= vr_vlutlflp;
+            pr_tab_internet(vr_index).vlutlflp:= NVL(vr_vlutlflp,0);
             --Valor disponivel folha de pagamento
-            pr_tab_internet(vr_index).vldspflp:= vr_vllimfol - vr_vlutlflp;
+            pr_tab_internet(vr_index).vldspflp:= NVL(vr_vllimfol,0) - NVL(vr_vlutlflp,0);
           END IF;
         
           --Se for pessoa fisica e sequencial titular > 1
@@ -1926,7 +1948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 --Valor utilizado WEB
                 pr_tab_internet(vr_index).vlutlweb:= vr_vlutlweb;
                 --Valor disponivel WEB recebe limite menos utilizado web
-                pr_tab_internet(vr_index).vldspweb:= pr_tab_internet(vr_index).vllimweb - vr_vlutlweb;
+                pr_tab_internet(vr_index).vldspweb:= NVL(pr_tab_internet(vr_index).vllimweb,0) - vr_vlutlweb;
               END IF;
             
               --Se existir valor limite transferencia
@@ -1934,7 +1956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 --Valor utilizado transferencia
                 pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
                 --Valor disponivel transf. recebe limite menos utilizado transf
-                pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+                pr_tab_internet(vr_index).vldsptrf:= NVL(pr_tab_internet(vr_index).vllimtrf,0) - vr_vlutltrf;
               END IF;
             
               --Se existir valor limite pagto
@@ -1942,7 +1964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 --Valor utilizado pagto
                 pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
                 --Valor disponivel pagto. recebe limite menos utilizado pagto
-                pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+                pr_tab_internet(vr_index).vldsppgo:= NVL(pr_tab_internet(vr_index).vllimpgo,0) - vr_vlutlpgo;
               END IF;
             
               --Se existir valor limite ted
@@ -1950,35 +1972,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 --Valor utilizado ted
                 pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
                 --Valor disponivel ted. recebe limite menos utilizado ted
-                pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+                pr_tab_internet(vr_index).vldspted:= NVL(pr_tab_internet(vr_index).vllimted,0) - vr_vlutlted;
               END IF;
             
               --Verificar os limites disponiveis web
               IF pr_tab_internet(pr_idseqttl).vldspweb > pr_tab_internet(1).vldspweb THEN
                  --Atualizar valor disponivel web
-                 pr_tab_internet(pr_idseqttl).vldspweb:= pr_tab_internet(1).vldspweb;
+                 pr_tab_internet(pr_idseqttl).vldspweb:= NVL(pr_tab_internet(1).vldspweb,0);
               END IF;
             
               --Verificar os limites disponiveis transferencia
               IF pr_tab_internet(pr_idseqttl).vldsptrf > pr_tab_internet(1).vldsptrf THEN
                  --Atualizar valor disponivel transferencia
-                 pr_tab_internet(pr_idseqttl).vldsptrf:= pr_tab_internet(1).vldsptrf;
+                 pr_tab_internet(pr_idseqttl).vldsptrf:= NVL(pr_tab_internet(1).vldsptrf,0);
               END IF;
             
               --Verificar os limites disponiveis pagamento
               IF pr_tab_internet(pr_idseqttl).vldsppgo > pr_tab_internet(1).vldsppgo THEN
                  --Atualizar valor disponivel pagamento
-                 pr_tab_internet(pr_idseqttl).vldsppgo:= pr_tab_internet(1).vldsppgo;
+                 pr_tab_internet(pr_idseqttl).vldsppgo:= NVL(pr_tab_internet(1).vldsppgo,0);
               END IF;
             
               --Verificar os limites disponiveis ted
               IF pr_tab_internet(pr_idseqttl).vldspted > pr_tab_internet(1).vldspted THEN
                  --Atualizar valor disponivel ted
-                 pr_tab_internet(pr_idseqttl).vldspted:= pr_tab_internet(1).vldspted;
+                 pr_tab_internet(pr_idseqttl).vldspted:= NVL(pr_tab_internet(1).vldspted,0);
               END IF;
 
             END IF;
-          
           END IF;
        
       END IF;
