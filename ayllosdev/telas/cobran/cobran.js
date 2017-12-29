@@ -25,6 +25,7 @@
  * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
  * 14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
  * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
+ * 21/12/2017 - Adicionar validação para que sejam informados os campos de data inicial e final na opção "R" da tela (Douglas - Chamado 807531)
  */
 
 //Formulários e Tabela
@@ -219,6 +220,31 @@ function manterRotina(operacao) {
     } else if (cddopcao == 'I') {
         nmarqint = $('#nmarqint', '#' + frmOpcao).val();
     }
+
+	if (cddopcao == 'R') {
+		if (inidtmvt == '') {
+			showError('error', 'Informe a data inicial.', 'Alerta - Ayllos', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
+			return false;
+		}
+
+		if (fimdtmvt == '') {
+			showError('error', 'Informe a data final.', 'Alerta - Ayllos', '$(\'#fimdtmvt\',\'#frmOpcao\').focus();');
+			return false;
+		}
+
+		var dtiniper = inidtmvt.split("/");
+		var dtfimper = fimdtmvt.split("/");
+
+		var dtini    = new Date(dtiniper[2] + "/" + dtiniper[1] + "/" + dtiniper[0]);
+		var dtfim    = new Date(dtfimper[2] + "/" + dtfimper[1] + "/" + dtfimper[0]);
+
+		if (dtfim < dtini) {
+			$('#inidtmvt', '#' + frmOpcao).val('');
+			$('#fimdtmvt', '#' + frmOpcao).val('');
+			showError('error', 'Per&iacute;odo Inv&aacute;lido! Data final maior que data inicial!', 'Alerta - Ayllos', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
+			return false;
+		}
+	}	
 
     var mensagem = '';
     fechaRotina($('#divUsoGenerico'));

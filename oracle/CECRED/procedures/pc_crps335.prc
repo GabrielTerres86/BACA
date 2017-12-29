@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah
-       Data    : Dezembro/2002                   Ultima atualizacao: 25/08/2015
+       Data    : Dezembro/2002                   Ultima atualizacao: 01/12/2017
 
        Dados referentes ao programa:
 
@@ -78,6 +78,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
                           
                    25/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
                                 Heitor (Mouts) - Melhoria 440
+                          
+                   01/12/2017 - #804805 Melhoria do cursor cr_craplat_ultlcm e sua lógica de uso (Carlos)
                           
     ............................................................................. */
     DECLARE
@@ -187,14 +189,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
 
       -- Buscar o ultimo lançamento automatico da conta para o historico "ADTODEPOPF"
       CURSOR cr_craplat_ultlcm(pr_nrdconta IN craplcm.nrdconta%TYPE
-                              ,pr_cdhistor IN craplat.cdhistor%TYPE) IS
-        SELECT dtmvtolt
+                              ,pr_cdhistor IN craplat.cdhistor%TYPE                              
+                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
           FROM craplat
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND cdhistor = pr_cdhistor --> "ADTODEPOPF"
-           AND dtdestor IS NULL  -- que nao tenha sido estornado
-           ORDER BY dtmvtolt DESC; -- recupera o ultimo registro por data
+           AND insitlat IN (1,2)
+           AND dtmvtolt > (pr_dtmvtolt - 30)
+           AND dtdestor IS NULL;
        
       rw_craplat_ultlcm cr_craplat_ultlcm%ROWTYPE;    
 
@@ -408,21 +412,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS335(pr_cdcooper IN crapcop.cdcooper%TY
           IF rw_crapass.inpessoa = 1 THEN 
              -- filtra lancamentos "ADTODEPOPF" feitos a 30 dias
              OPEN cr_craplat_ultlcm(pr_nrdconta => rw_crapass.nrdconta
-                                   ,pr_cdhistor => vr_cdhistor_pf);                                   
+                                   ,pr_cdhistor => vr_cdhistor_pf                                   
+                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
              
              FETCH cr_craplat_ultlcm INTO rw_craplat_ultlcm;
              
              -- se o registro nao existir deve cria-lo
-             IF cr_craplat_ultlcm%NOTFOUND THEN
-               vr_ultlcm_found := TRUE;
-             ELSE
-               -- ultimo lançamento a mais de 30 dias 
-               IF (rw_crapdat.dtmvtolt - rw_craplat_ultlcm.dtmvtolt) > 30 THEN
-                  vr_ultlcm_found := TRUE;
-               ELSE -- do contrario nao registra novo lancamento
-                  vr_ultlcm_found := FALSE;
-               END IF;     
-             END IF;
+             vr_ultlcm_found := cr_craplat_ultlcm%NOTFOUND;             
 
              -- fecha cursor
              CLOSE cr_craplat_ultlcm;

@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 05/12/2017
+ Data    : Janeiro/92.                         Ultima atualizacao: 27/12/2017
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -162,6 +162,7 @@ BEGIN
           05/12/2017 - Ajuste no tratamento para apresentar a contabilização dos motivos de demissão
                       (Jonata - RKAM P364).
 
+          27/12/2017 - #806757 Incluídos os logs de trace dos erros nas principais exceptions others (Carlos)
    ............................................................................. */
    DECLARE
 
@@ -1324,6 +1325,7 @@ BEGIN
         WHEN vr_exc_saida THEN
            pr_des_erro:= vr_des_erro;
         WHEN OTHERS THEN
+           cecred.pc_internal_exception;
            pr_des_erro:= 'Erro ao imprimir relatório pc_crps010_2. '||sqlerrm;
      END;
 
@@ -1637,6 +1639,7 @@ BEGIN
        WHEN vr_exc_erro THEN
          pr_des_erro:= vr_des_erro;
        WHEN OTHERS THEN
+         cecred.pc_internal_exception;
          pr_des_erro:= 'Erro ao imprimir relatório pc_crps010_3. '||sqlerrm;
      END;
 
@@ -1898,6 +1901,7 @@ BEGIN
        WHEN vr_exc_erro THEN
          pr_des_erro:= vr_des_erro;
        WHEN OTHERS THEN
+         cecred.pc_internal_exception;
          pr_des_erro:= 'Erro ao imprimir relatório pc_crps010_4. '||sqlerrm;
      END;
 
@@ -2032,6 +2036,7 @@ BEGIN
        WHEN vr_exc_erro THEN
          pr_des_erro:= vr_des_erro;
        WHEN OTHERS THEN
+         cecred.pc_internal_exception;
          pr_des_erro:= 'Erro ao imprimir relatório crrl398. '||sqlerrm;
      END;
 
@@ -2131,7 +2136,7 @@ BEGIN
                                     <s_mes3>'||to_char(vr_tab_tot_vlsmmes3(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_mes3>
                                     <s_cap>'||to_char(vr_tab_tot_vlcaptal(rw_crapage.cdagenci),'fm999g999g990d00')||'</s_cap>
                                  </s1>');
-              END IF;
+           END IF;
            END IF;
         END LOOP;
 
@@ -2238,6 +2243,7 @@ BEGIN
        WHEN vr_exc_erro THEN
          pr_des_erro:= vr_des_erro;
        WHEN OTHERS THEN
+         cecred.pc_internal_exception;
          pr_des_erro:= 'Erro ao imprimir relatório crrl014_total. '||sqlerrm;
      END;
 
@@ -2797,6 +2803,7 @@ BEGIN
         WHEN vr_exc_erro THEN
            pr_des_erro:= vr_des_erro;
         WHEN OTHERS THEN
+           cecred.pc_internal_exception;
            pr_des_erro:= 'Erro ao gerar arquivo AAMMDD_CAPITAL.txt para contabilidade. '||SQLERRM;
      END;
 
@@ -3934,6 +3941,7 @@ BEGIN
                      WHEN vr_exc_pula THEN
                         NULL;
                      WHEN OTHERS THEN
+                        cecred.pc_internal_exception;
                         vr_des_erro:= 'Erro ao processar contratos de emprestimo. Rotina pc_crps010. '||SQLERRM;
                   END;
                END LOOP; -- rw_crapepr
@@ -4010,6 +4018,7 @@ BEGIN
                WHEN vr_exc_pula THEN
                   NULL;
                WHEN OTHERS THEN
+                  cecred.pc_internal_exception;
                   vr_des_erro:= 'Erro ao selecionar associado. '||SQLERRM;
                   -- Levantar Excecao
                   RAISE vr_exc_saida;
@@ -4182,6 +4191,8 @@ BEGIN
          pc_limpa_tabela;
 
       WHEN OTHERS THEN
+         cecred.pc_internal_exception;
+         
          -- Retornar texto do erro
          pr_cdcritic := 0;
          pr_dscritic := sqlerrm;
