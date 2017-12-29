@@ -1422,7 +1422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para buscar os limites para internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 14/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1436,9 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --              18/07/2016 - Incluido pr_tpoperac = 10 -> DARF, Prj. 338 (Jean Michel).
 
   --              14/12/2016 - Contabilizar corretamente o limite diário de TED
-  --                           (Adriano - SD 482831)	
-  --
-  --              26/12/2017 - Chamado 771976 - Problema na inicializacao de limites (ANdrei-Mouts)
+  --                           (Adriano - SD 482831)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1630,23 +1628,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       pr_tab_internet(vr_index).vllimted:= vr_vllimted;
       pr_tab_internet(vr_index).vlvrbcop:= vr_tab_vllimvrb;
 		  pr_tab_internet(vr_index).vllimvrb:= rw_crapsnh.vllimvrb;
-
-      
-      -- Inicializar valores
-      pr_tab_internet(vr_index).vllimflp := 0;
-      pr_tab_internet(vr_index).vlutlweb := 0; 
-      pr_tab_internet(vr_index).vlutlpgo := 0;
-      pr_tab_internet(vr_index).vlutltrf := 0;
-      pr_tab_internet(vr_index).vlutlted := 0;
-      pr_tab_internet(vr_index).vlutlvrb := 0;
-      pr_tab_internet(vr_index).vlutlflp := 0;
-      pr_tab_internet(vr_index).vldspweb := 0;
-      pr_tab_internet(vr_index).vldsppgo := 0;
-      pr_tab_internet(vr_index).vldsptrf := 0;
-      pr_tab_internet(vr_index).vldspted := 0;
-      pr_tab_internet(vr_index).vldspvrb := 0;
-      pr_tab_internet(vr_index).vldspflp := 0;
-      
 
       --Se for pessoa fisica e o sequencial titular > 1
       IF  rw_crapass.inpessoa = 1 AND pr_idseqttl > 1  THEN
