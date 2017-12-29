@@ -113,39 +113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           ,vljuraut_cta NUMBER(17,2));
   TYPE typ_tab_crrl048 IS
     TABLE OF typ_reg_crrl048
-      INDEX BY PLS_INTEGER;    
-
-
-  PROCEDURE atualiza_tbcotas(pr_cdcooper    IN tbcotas_devolucao.cdcooper%TYPE
-                            ,pr_nrdconta    IN tbcotas_devolucao.nrdconta%TYPE
-                            ,pr_tpdevolucao IN tbcotas_devolucao.tpdevolucao%TYPE 
-                            ,pr_vlcapital   IN tbcotas_devolucao.vlcapital%TYPE
-                            ,pr_cdcritic    OUT crapcri.cdcritic%TYPE
-                            ,pr_dscritic    OUT VARCHAR2) IS
-  BEGIN
-     pr_cdcritic := null;
-     pr_dscritic := null;
-
-     UPDATE tbcotas_devolucao
-        SET vlcapital   = vlcapital + nvl(pr_vlcapital,0)
-      WHERE cdcooper    = pr_cdcooper
-        AND nrdconta    = pr_nrdconta
-        AND tpdevolucao = pr_tpdevolucao; -- 3 CAPITAL e 4 DEPOSITO
-     IF SQL%ROWCOUNT = 0 THEN
-       INSERT INTO tbcotas_devolucao (cdcooper,
-                                      nrdconta, 
-                                      tpdevolucao,
-                                      vlcapital)
-                              VALUES (pr_cdcooper
-                                     ,pr_nrdconta
-                                     ,pr_tpdevolucao -- 3 CAPITAL e 4 DEPOSITO
-                                     ,nvl(pr_vlcapital,0)); 
-     END IF;
-  EXCEPTION
-    WHEN OTHERS THEN
-       pr_cdcritic := 0;
-       pr_dscritic := 'Erro ao inserir na tabela tbcotas_devolucao para a conta ( '||pr_nrdconta||' ). '||SQLERRM;
-  END atualiza_tbcotas;
+      INDEX BY PLS_INTEGER;      
 
   -- Procedure para calculo e credito do retorno de sobras e juros sobre o capital. Emissao do relatorio CRRL043
   PROCEDURE pc_calculo_retorno_sobras(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
@@ -270,7 +238,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                             evitar nova leitura na crapass (Rodrigo)
                             
                04/09/2017 - Mudanca para calcular tambem no ultimo dia util do ano
-                            M439 (Tiago/Thiago #635669).             
+                            M439 (Tiago/Thiago #635669). 
+                            
+               21/12/2017 - Alteracao para desconsiderar se o cooperado esta eliminado ou nao.
+                            Adequar lancamentos para cooperados eliminados para voltar a lancar
+                            o credito das sobras/juros. (Anderson SD820374).
 ............................................................................. */
 
       -- Código do programa
@@ -286,6 +258,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       vr_dstextab craptab.dstextab%TYPE;
       vr_inprvdef PLS_INTEGER;
       vr_flultdia BOOLEAN;
+      vr_anocalcu PLS_INTEGER;
+      vr_vlretaux craplcm.vllanmto%TYPE;
       --vr_ininccmi PLS_INTEGER;
       vr_increret PLS_INTEGER;
       vr_txdretor NUMBER(17,10);
@@ -496,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               ,dtelimin
               ,cdagenci
               ,substr(nmprimtl,1,22) nmprimtl
-			  ,nrcpfcgc
+			        ,nrcpfcgc
           FROM crapass
          WHERE cdcooper = pr_cdcooper
            AND EXISTS(SELECT 1 
@@ -886,9 +860,156 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro geral na rotina pc_busca_soma_hist, detalhes: '||SQLERRM;
           ROLLBACK;
-      END pc_busca_soma_hist;
+      END pc_busca_soma_hist;      
 
+      /* Procedure responsavel por lancar debito na conta corrente ou conta capital dos cooperados eliminados */
+      PROCEDURE pc_efetua_lcto_coop_elimin(pr_cdcooper    IN tbcotas_devolucao.cdcooper%TYPE
+                                          ,pr_nrdconta    IN tbcotas_devolucao.nrdconta%TYPE
+                                          ,pr_inpessoa    IN crapass.inpessoa%TYPE
+                                          ,pr_tpdevolucao IN tbcotas_devolucao.tpdevolucao%TYPE 
+                                          ,pr_vlcapital   IN tbcotas_devolucao.vlcapital%TYPE
+                                          ,pr_nrseqdig    IN craplot.nrseqdig%TYPE
+                                          ,pr_cdcritic    OUT crapcri.cdcritic%TYPE
+                                          ,pr_dscritic    OUT VARCHAR2) IS
+          vr_cdhistor craphis.cdhistor%TYPE;
+          vr_nrdocmto craplcm.nrdocmto%TYPE;
+          vr_nrdocaux varchar2(10);
+        BEGIN
+          /* pr_tpdevolucao = [3 - Capital] [4 - Deposito a Vista] */
+          IF pr_tpdevolucao = 3 /* Capital */ THEN
+            vr_cdhistor := CASE WHEN pr_inpessoa = 1 THEN vr_cdhiscot_dem_pf ELSE vr_cdhiscot_dem_pj END;
+            vr_nrdocaux := lpad(pr_nrseqdig,10,'0');
+            vr_nrdocmto := '8005'||lpad(substr(vr_nrdocaux,length(vr_nrdocaux)-4,length(vr_nrdocaux)),5,'0'); --Em tela existe o limite de 9 caracteres
+            BEGIN
+              INSERT INTO craplct
+                (dtmvtolt,
+                 cdagenci,
+                 cdbccxlt,
+                 nrdolote,
+                 nrdconta,
+                 nrdocmto,
+                 cdhistor,
+                 vllanmto,
+                 nrseqdig,
+                 cdcooper)
+               VALUES
+                (vr_dtmvtolt,
+                 vr_cdagenci,
+                 vr_cdbccxlt,
+                 vr_nrdolote,
+                 pr_nrdconta,
+                 vr_nrdocmto,
+                 vr_cdhistor,
+                 pr_vlcapital,
+                 pr_nrseqdig,
+                 pr_cdcooper);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro insert da CRAPLCT: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          ELSIF pr_tpdevolucao = 4 /* Deposito a Vista */ THEN
+            vr_cdhistor := CASE WHEN pr_inpessoa = 1 THEN vr_cdhiscta_dem_pf ELSE vr_cdhiscta_dem_pj END;
+            vr_nrdocaux := lpad(pr_nrseqdig,10,'0');
+            vr_nrdocmto := '8005'||lpad(substr(vr_nrdocaux,length(vr_nrdocaux)-4,length(vr_nrdocaux)),5,'0'); --Em tela existe o limite de 9 caracteres
+            BEGIN
+              INSERT INTO craplcm
+                (dtmvtolt,
+                 cdagenci,
+                 cdbccxlt,
+                 nrdolote,
+                 nrdconta,
+                 nrdctabb,
+                 nrdctitg,
+                 nrdocmto,
+                 cdhistor,
+                 vllanmto,
+                 nrseqdig,
+                 cdcooper)
+              VALUES
+                (vr_dtmvtolt,
+                 vr_cdagenci,
+                 vr_cdbccxlt,
+                 vr_nrdolote,
+                 pr_nrdconta,
+                 pr_nrdconta,
+                 gene0002.fn_mask(pr_nrdconta,'99999999'), -- nrdctitg
+                 vr_nrdocmto,
+                 vr_cdhistor,
+                 pr_vlcapital,
+                 pr_nrseqdig,
+                 pr_cdcooper);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+           ELSE
+             vr_dscritic := 'Tipo de devolucao de cotas invalido. Valores possiveis (3,4) recebido '|| cast(pr_tpdevolucao as varchar)||'.';
+             RAISE vr_exc_saida;
+           END IF;
+          
+        EXCEPTION
+         WHEN vr_exc_saida THEN
+             IF vr_dscritic IS NULL THEN
+                vr_dscritic := 'Erro ao inserir debito ref. a cooperado eliminado para a conta ( '||pr_nrdconta||' ). '||SQLERRM;
+             END IF;
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic;
+         WHEN OTHERS THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro ao inserir debito ref. a cooperado eliminado para a conta ( '||pr_nrdconta||' ). '||SQLERRM;
+        END pc_efetua_lcto_coop_elimin;
+        
+      PROCEDURE atualiza_tbcotas(pr_cdcooper    IN tbcotas_devolucao.cdcooper%TYPE
+                                ,pr_nrdconta    IN tbcotas_devolucao.nrdconta%TYPE
+                                ,pr_inpessoa    IN crapass.inpessoa%TYPE
+                                ,pr_tpdevolucao IN tbcotas_devolucao.tpdevolucao%TYPE 
+                                ,pr_vlcapital   IN tbcotas_devolucao.vlcapital%TYPE
+                                ,pr_nrseqdig    IN craplot.nrseqdig%TYPE
+                                ,pr_cdcritic    OUT crapcri.cdcritic%TYPE
+                                ,pr_dscritic    OUT VARCHAR2) IS
+        BEGIN
+           pr_cdcritic := null;
+           pr_dscritic := null;
+           
+           pc_efetua_lcto_coop_elimin(pr_cdcooper    => pr_cdcooper
+                                     ,pr_nrdconta    => pr_nrdconta
+                                     ,pr_inpessoa    => pr_inpessoa
+                                     ,pr_tpdevolucao => pr_tpdevolucao
+                                     ,pr_vlcapital   => pr_vlcapital
+                                     ,pr_nrseqdig    => pr_nrseqdig
+                                     ,pr_cdcritic    => pr_cdcritic
+                                     ,pr_dscritic    => pr_dscritic);
+          IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
 
+           UPDATE tbcotas_devolucao
+              SET vlcapital   = vlcapital + nvl(pr_vlcapital,0)
+            WHERE cdcooper    = pr_cdcooper
+              AND nrdconta    = pr_nrdconta
+              AND tpdevolucao = pr_tpdevolucao; -- 3 CAPITAL e 4 DEPOSITO
+           IF SQL%ROWCOUNT = 0 THEN
+             INSERT INTO tbcotas_devolucao (cdcooper,
+                                            nrdconta, 
+                                            tpdevolucao,
+                                            vlcapital)
+                                    VALUES (pr_cdcooper
+                                           ,pr_nrdconta
+                                           ,pr_tpdevolucao -- 3 CAPITAL e 4 DEPOSITO
+                                           ,nvl(pr_vlcapital,0)); 
+           END IF;
+        EXCEPTION
+          WHEN vr_exc_saida THEN
+             IF pr_dscritic IS NULL THEN
+               pr_dscritic := 'Erro ao inserir devolucao de cotas para cooperado eliminado ( '||pr_nrdconta||' ). '||SQLERRM;
+             END IF;
+          WHEN OTHERS THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro ao inserir na tabela tbcotas_devolucao para a conta ( '||pr_nrdconta||' ). '||SQLERRM;
+        END atualiza_tbcotas;
+        
     BEGIN -- Rotina principal
 
       -- Coloca como programa logado o programa chamador. Isso se faz necessario para a impressao do relatorio
@@ -934,7 +1055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         IF vr_dtmvtolt = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                      pr_dtmvtolt => TO_DATE('31/12'||TO_CHAR(vr_dtmvtolt,'RRRR'),'DD/MM/RRRR'), 
                                                      pr_tipo     => 'A') THEN
-        -- Busca o ultimo dia util do ano anterior
+          -- Busca o ultimo dia util do ano anterior
           vr_dtmvtaan := vr_dtmvtolt;
           -- Montagem das datas para busca das informações
           vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-1),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
@@ -943,14 +1064,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                                      
         ELSE
           -- Busca o ultimo dia util do ano anterior
-        vr_dtmvtaan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                                   pr_dtmvtolt => trunc(vr_dtmvtolt,'YYYY') - 1, -- busca a data de 31/12 do ano anterior
-                                                   pr_tipo     => 'A'); -- Dia anterior
-        -- Montagem das datas para busca das informações
-        vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-2),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
-        vr_dtlimsup := trunc(vr_dtmvtolt,'YYYY'); -- Pega o primeiro dia do ano
+          vr_dtmvtaan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                     pr_dtmvtolt => trunc(vr_dtmvtolt,'YYYY') - 1, -- busca a data de 31/12 do ano anterior
+                                                     pr_tipo     => 'A'); -- Dia anterior
+          -- Montagem das datas para busca das informações
+          vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-2),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
+          vr_dtlimsup := trunc(vr_dtmvtolt,'YYYY'); -- Pega o primeiro dia do ano
           vr_flultdia := FALSE;   
-      END IF;
+        END IF;
+        
+        -- Ano base do cálculo
+        vr_anocalcu := extract(year from vr_dtmvtaan);
 
       END IF;
 
@@ -1133,17 +1257,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       END LOOP;
 
       IF vr_flultdia = TRUE THEN
-         OPEN cr_crapcot2;
+        OPEN cr_crapcot2;
       ELSE        
-      -- Varredura das informações de Cotas dos Cooperados
-      OPEN cr_crapcot(vr_dtmvtaan);
+        -- Varredura das informações de Cotas dos Cooperados
+        OPEN cr_crapcot(vr_dtmvtaan);
       END IF;
       
       LOOP 
         IF vr_flultdia = TRUE THEN
-           FETCH cr_crapcot2 BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
+          FETCH cr_crapcot2 BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
         ELSE 
-        FETCH cr_crapcot BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
+          FETCH cr_crapcot BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
         END IF;
         
         EXIT WHEN vr_tab_crapcot.count = 0;
@@ -1157,21 +1281,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           
           -- Garantir que haja o associado
           IF NOT vr_tab_crapass.exists(vr_tab_crapcot(idx).nrdconta) THEN
-          vr_cdcritic := 251;
+            vr_cdcritic := 251;
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || ' CONTA = '||vr_tab_crapcot(idx).nrdconta;
-          pc_controle_critica;
-          RAISE vr_exc_saida;
-        END IF;
+            pc_controle_critica;
+            RAISE vr_exc_saida;
+          END IF;
 
-          -- Atualiza flag que indica se deve ser considerada conta
-          -- demitida no calculo - vr_indemiti = 0 - NAO = 1 - SIM 
-        IF vr_indemiti = 1                                    OR
-            (vr_indemiti = 0 AND (vr_tab_crapcot(idx).dtdemiss IS NULL   OR
-             to_char(vr_tab_crapcot(idx).dtdemiss,'YYYY') >= to_char(vr_dtmvtolt,'YYYY') - 1))  THEN
-          vr_flgdemit := 1;
-        ELSE
-          vr_flgdemit := 0;
-        END IF;
+          /* 
+           Alimenta a variavel 'vr_flgdemit' com [0 - NAO] [1 - SIM] indicando se deve considerar
+           essa conta no credito de juros / retorno de sobras.
+           
+           A regra aqui eh o seguinte: Vamos considerar a conta caso:
+           1 - Estiver marcado em interface para considerar demitidos; ou
+           2 - Cooperado nao demitido ou demitido no ano de calculo
+          */
+          IF( /* Regra 1 */ 
+             (vr_indemiti = 1) OR -- Flag 'Considera demitidos' da interface;
+             
+             (/* Regra 2 */
+              vr_indemiti = 0 AND 
+             (vr_tab_crapcot(idx).dtdemiss IS NULL OR to_char(vr_tab_crapcot(idx).dtdemiss,'YYYY') >= vr_anocalcu))
+             
+             )THEN
+            vr_flgdemit := 1;
+          ELSE
+            vr_flgdemit := 0;
+          END IF;
 
           -- Busca base de titulos e cheques
           IF vr_tab_titulos.exists(vr_tab_crapcot(idx).nrdconta) THEN
@@ -1181,12 +1316,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           END IF;
           IF vr_tab_cheques.exists(vr_tab_crapcot(idx).nrdconta) THEN
             vr_vlbasdsc := vr_tab_cheques(vr_tab_crapcot(idx).nrdconta);
-        ELSE
+          ELSE
             vr_vlbasdsc := 0;
-        END IF;
+          END IF;
         
-          -- Para juridico e fisico, sem data de eliminaçao e solicitado os demitidos
-          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
+          -- Para juridico e fisico e de acordo com a flag de demissao.
+          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_flgdemit = 1 THEN
             vr_qtraimfx := vr_tab_crapcot(idx).qtraimfx;
             vr_vlrendim := vr_tab_crapcot(idx).vlrearda + vr_tab_crapcot(idx).vlrearpp + vr_tab_crapcot(idx).vlpvardc;
 
@@ -1220,7 +1355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           tt_vlbasapl := tt_vlbasapl + vr_vlbasapl;
 
           /*  Calcula retorno sobre juros pagos de emprestimos/cc ........ */
-          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
+          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_flgdemit = 1 THEN
             IF vr_increret = 1   THEN
               vr_vldretor := ROUND(vr_vlbasret * vr_txdretor,2);
             ELSE
@@ -1248,7 +1383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           vr_vlmedcap := 0;
           vr_vldeirrf := 0;
 
-          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
+          IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_flgdemit = 1 THEN
             /* Saldo medio c/c */
             vr_vlbassdm := vr_vlbassdm + vr_tab_crapcot(idx).smposano;
             /* Media capital */
@@ -1374,7 +1509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           vr_vljurtar := 0;
           
           IF vr_txjurtar > 0 THEN
-            IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
+            IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_flgdemit = 1 THEN
               -- Busca da quantidade de operações de auto atendimento se existir
               IF vr_tab_tarifa.exists(vr_tab_crapcot(idx).nrdconta) THEN
                 vr_vlbastar := vr_tab_tarifa(vr_tab_crapcot(idx).nrdconta);
@@ -1383,35 +1518,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               ELSE
                 vr_vlbastar := 0;
                 vr_vljurtar := 0;
-          END IF;
-        END IF;
+              END IF;
             END IF;
+          END IF;
 
           /********* M360 - Calculo retorno sobre Auto Atendimento ****************/
           IF vr_tab_autoate.exists(vr_tab_crapcot(idx).nrdconta) THEN
             vr_vlbasaut := vr_tab_autoate(vr_tab_crapcot(idx).nrdconta);
           ELSE
             vr_vlbasaut := 0;
-            END IF;
+          END IF;
           vr_vljuraut := 0;
           -- Havendo taxa de juros a aplicar        
           IF vr_txjuraut > 0 THEN                    
             -- Acumular conforme teste de consideração de demitidos sim/não  
-            IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
+            IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_flgdemit = 1 THEN
               vr_vljuraut := ROUND(vr_vlbasaut * vr_txjuraut,2);
               tt_vljuraut := tt_vljuraut + vr_vljuraut;  
-        END IF;
-        END IF;
+            END IF;
+          END IF;
           /********* M360 - Calculo retorno sobre Auto Atendimento ****************/
 
-        -- efetua os acumuladores dos calculos
-        tt_vlbasret := tt_vlbasret + vr_vlbasret;
-        tt_vldretor := tt_vldretor + vr_vldretor;
-        tt_vlbasdsc := tt_vlbasdsc + vr_vlbasdsc;
-        tt_vlretdsc := tt_vlretdsc + vr_vlretdsc;
-        tt_vlbastit := tt_vlbastit + vr_vlbastit;
-        tt_vlrettit := tt_vlrettit + vr_vlrettit;
-        tt_vlbastar := tt_vlbastar + vr_vlbastar;
+          -- efetua os acumuladores dos calculos
+          tt_vlbasret := tt_vlbasret + vr_vlbasret;
+          tt_vldretor := tt_vldretor + vr_vldretor;
+          tt_vlbasdsc := tt_vlbasdsc + vr_vlbasdsc;
+          tt_vlretdsc := tt_vlretdsc + vr_vlretdsc;
+          tt_vlbastit := tt_vlbastit + vr_vlbastit;
+          tt_vlrettit := tt_vlrettit + vr_vlrettit;
+          tt_vlbastar := tt_vlbastar + vr_vlbastar;
           tt_vlbasaut := tt_vlbasaut + vr_vlbasaut;
           
           -- Contagem de associados com retorno de Capital
@@ -1424,45 +1559,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           END IF;
 
           -- Contagem de associados com sobras
-        IF vr_vldretor > 0 THEN
-          tt_qtassret := tt_qtassret + 1; -- Quantidade de associados com retorno
-        END IF;
+          IF vr_vldretor > 0 THEN
+            tt_qtassret := tt_qtassret + 1; -- Quantidade de associados com retorno
+          END IF;
 
-        IF vr_vlretdsc > 0 THEN
-          tt_qtassdsc := tt_qtassdsc + 1; -- Quantidade de associados com retorno creditado
-        END IF;
+          IF vr_vlretdsc > 0 THEN
+            tt_qtassdsc := tt_qtassdsc + 1; -- Quantidade de associados com retorno creditado
+          END IF;
 
-        IF vr_vlrettit > 0 THEN
-          tt_qtasstit := tt_qtasstit + 1; -- Quantidade de associados com desconto de titulos
-        END IF;
+          IF vr_vlrettit > 0 THEN
+            tt_qtasstit := tt_qtasstit + 1; -- Quantidade de associados com desconto de titulos
+          END IF;
 
           -- Se houve lançamento de juros sobre as operações de credito
           IF vr_vldretor + vr_vlretdsc + vr_vlrettit > 0 THEN
             tt_qtretcrd := tt_qtretcrd + 1;
-          tt_qtcredit := tt_qtcredit + 1;
-        END IF;
+            tt_qtcredit := tt_qtcredit + 1;
+          END IF;
         
-        -- Armazena o valor total de retorno sobre operacoes de credito
+          -- Armazena o valor total de retorno sobre operacoes de credito
           tt_vlretcrd := tt_vlretcrd + vr_vldretor + vr_vlretdsc + vr_vlrettit;
           
 
           -- Para os retornos de depositos unificados
           IF vr_indivdep = 1 THEN
             -- Se houve juros sobre aplicações
-        IF vr_vljurapl > 0 THEN
+            IF vr_vljurapl > 0 THEN
               tt_qtassapl := tt_qtassapl + 1;
-        END IF;
+            END IF;
 
             -- Se houve juros sobre deposito a vista
-        IF vr_vljursdm > 0 THEN
+            IF vr_vljursdm > 0 THEN
               tt_qtasssdm := tt_qtasssdm + 1;
-        END IF;
+            END IF;
 
             -- Se houve juros sobre aplicações + saldo medio
             IF vr_vljurapl + vr_vljursdm > 0 THEN
               tt_qtretdep := tt_qtretdep + 1;
-          tt_qtcredit := tt_qtcredit + 1;
-        END IF;
+              tt_qtcredit := tt_qtcredit + 1;
+            END IF;
         
           ELSE  
             -- Se houve juros sobre aplicações 
@@ -1470,14 +1605,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               tt_qtassapl := tt_qtassapl + 1;
               tt_qtretdep := tt_qtretdep + 1;
               tt_qtcredit := tt_qtcredit + 1;
-        END IF;
+            END IF;
         
             -- Se houve juros sobre deposito a vista
             IF vr_vljursdm > 0 THEN
               tt_qtasssdm := tt_qtasssdm + 1;
               tt_qtretdep := tt_qtretdep + 1;
-          tt_qtcredit := tt_qtcredit + 1;
-        END IF;
+              tt_qtcredit := tt_qtcredit + 1;
+            END IF;
           END IF;  
 
           -- Armazena o valor total de retorno sobre depositos (aplicacoes e saldo médio C/C) 
@@ -1511,11 +1646,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           -- Acumular valor do retorno total
           tt_vlcretot := tt_vlcretot + vr_vlcretot;
 
-        -- Se for processo definitivo, entao popula a temp-table
-        IF vr_inprvdef = 1 THEN
+          -- Se for processo definitivo, entao popula a temp-table
+          IF vr_inprvdef = 1 THEN
             
             -- Criação do índice
-          vr_indice := vr_indice + 1;
+            vr_indice := vr_indice + 1;
             -- Copia das informações para as colunas
             vr_tab_crrl048(vr_indice).dsrowid := vr_tab_crapcot(idx).nrrowid;
             vr_tab_crrl048(vr_indice).nrdconta := vr_tab_crapcot(idx).nrdconta;
@@ -1523,11 +1658,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_tab_crrl048(vr_indice).dtelimin := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin;
             
             vr_tab_crrl048(vr_indice).flraimfx := 0;
-          vr_tab_crrl048(vr_indice).qtraimfx := vr_qtraimfx;
+            vr_tab_crrl048(vr_indice).qtraimfx := vr_qtraimfx;
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crapcot(idx).vldcotas;
             
             /* Juros e IR sobre Cotas */
-          vr_tab_crrl048(vr_indice).vljurcap := vr_vljurcap;
+            vr_tab_crrl048(vr_indice).vljurcap := vr_vljurcap;
             vr_tab_crrl048(vr_indice).vldeirrf := vr_vldeirrf;
             
             /* Efetuar a mesma divisão da Cotas e CC para que o relatório possua o mesmo arredondamento dos lançamentos */
@@ -1544,7 +1679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vlretcrd_cta;
             
             /* Aplicacoes */
-          vr_tab_crrl048(vr_indice).vljurapl := vr_vljurapl;
+            vr_tab_crrl048(vr_indice).vljurapl := vr_vljurapl;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljurapl
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljurapl_cot
@@ -1553,7 +1688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vljurapl_cta;
             
             /* Saldo Medio */
-          vr_tab_crrl048(vr_indice).vljursdm := vr_vljursdm;
+            vr_tab_crrl048(vr_indice).vljursdm := vr_vljursdm;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljursdm
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljursdm_cot
@@ -1562,7 +1697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vljursdm_cta;
             
             /* Tarifas aplicadas */
-          vr_tab_crrl048(vr_indice).vljurtar := vr_vljurtar;
+            vr_tab_crrl048(vr_indice).vljurtar := vr_vljurtar;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljurtar
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljurtar_cot
@@ -1626,10 +1761,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecot := vr_vlcrecot + vr_vlcrecot_tmp;
             vr_vlcrecta := vr_vlcrecta + vr_vlcrecta_tmp;
             
-        END IF;
+          END IF;
 
-        -- Atualiza o registro abaixo para utilizacao no relatorio CRRL412
-        -- Se todos os valores forem zeros, nao deve imprimir no relatorio
+          -- Atualiza o registro abaixo para utilizacao no relatorio CRRL412
+          -- Se todos os valores forem zeros, nao deve imprimir no relatorio
           IF vr_vlcretot + vr_vlmedcap + vr_vlbasjur + vr_vlbasret + vr_vlrendim
            + vr_vlbassdm + vr_vldeirrf + vr_vlbastar + vr_vlbasaut > 0  THEN
             -- Criação do registro
@@ -1638,35 +1773,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_tab_crrl412(vr_indice_412).cdagenci := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).cdagenci;
             vr_tab_crrl412(vr_indice_412).nrdconta := vr_tab_crapcot(idx).nrdconta;
             vr_tab_crrl412(vr_indice_412).nmprimtl := substr(vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).nmprimtl,1,30);
-          vr_tab_crrl412(vr_indice_412).vlmedcap := vr_vlmedcap;
-          vr_tab_crrl412(vr_indice_412).vlbascap := vr_vlbasjur;
-          vr_tab_crrl412(vr_indice_412).vlretcap := vr_vljurcap;
-          vr_tab_crrl412(vr_indice_412).vlbasopc := vr_vlbasret + vr_vlbasdsc + vr_vlbastit;
-          vr_tab_crrl412(vr_indice_412).vlretopc := vr_vldretor + vr_vlretdsc + vr_vlrettit;
-          vr_tab_crrl412(vr_indice_412).vlbasapl := vr_vlrendim;
-          vr_tab_crrl412(vr_indice_412).vlretapl := vr_vljurapl;
-          vr_tab_crrl412(vr_indice_412).vlbassdm := vr_vlbassdm;
-          vr_tab_crrl412(vr_indice_412).vlretsdm := vr_vljursdm;
-          vr_tab_crrl412(vr_indice_412).vldeirrf := vr_vldeirrf;
+            vr_tab_crrl412(vr_indice_412).vlmedcap := vr_vlmedcap;
+            vr_tab_crrl412(vr_indice_412).vlbascap := vr_vlbasjur;
+            vr_tab_crrl412(vr_indice_412).vlretcap := vr_vljurcap;
+            vr_tab_crrl412(vr_indice_412).vlbasopc := vr_vlbasret + vr_vlbasdsc + vr_vlbastit;
+            vr_tab_crrl412(vr_indice_412).vlretopc := vr_vldretor + vr_vlretdsc + vr_vlrettit;
+            vr_tab_crrl412(vr_indice_412).vlbasapl := vr_vlrendim;
+            vr_tab_crrl412(vr_indice_412).vlretapl := vr_vljurapl;
+            vr_tab_crrl412(vr_indice_412).vlbassdm := vr_vlbassdm;
+            vr_tab_crrl412(vr_indice_412).vlretsdm := vr_vljursdm;
+            vr_tab_crrl412(vr_indice_412).vldeirrf := vr_vldeirrf;
             vr_tab_crrl412(vr_indice_412).percirrf := vr_vlprirrf;
-          vr_tab_crrl412(vr_indice_412).vlbastar := vr_vlbastar;
-          vr_tab_crrl412(vr_indice_412).vlrettar := vr_vljurtar;
+            vr_tab_crrl412(vr_indice_412).vlbastar := vr_vlbastar;
+            vr_tab_crrl412(vr_indice_412).vlrettar := vr_vljurtar;
             vr_tab_crrl412(vr_indice_412).vlbasaut := vr_vlbasaut;
             vr_tab_crrl412(vr_indice_412).vlretaut := vr_vljuraut;
-          vr_tab_crrl412(vr_indice_412).vlcredit := vr_vlcredit;
+            vr_tab_crrl412(vr_indice_412).vlcredit := vr_vlcredit;
             vr_tab_crrl412(vr_indice_412).vlcrecot := vr_vlcrecot;
             vr_tab_crrl412(vr_indice_412).vlcrecta := vr_vlcrecta;
-          vr_tab_crrl412(vr_indice_412).vlcretot := vr_vlcretot;
-        END IF;
+            vr_tab_crrl412(vr_indice_412).vlcretot := vr_vlcretot;
+          END IF;
         END LOOP;/* Fim do LOOP -- leitura da pltabe vr_tab_crapcot */ 
       END LOOP; /*  Fim do LOOP --  Leitura do crapcot  */
 
       IF cr_crapcot%ISOPEN THEN
-      CLOSE cr_crapcot;      
+        CLOSE cr_crapcot;      
       END IF;        
 
       IF cr_crapcot2%ISOPEN THEN
-         CLOSE cr_crapcot2;
+        CLOSE cr_crapcot2;
       END IF;        
 
       -- Se for processo definitivo e existirem informações na pltable      
@@ -1685,7 +1820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || ' LOTE = ' ||to_char(vr_nrdolote,'000000');
           pc_controle_critica;
           RAISE vr_exc_saida;
-      ELSE
+        ELSE
           CLOSE cr_craplot;
           -- Iniciar variaveis para gravação posterior de lote
           rw_craplot.vlinfocr := 0;
@@ -1695,7 +1830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           rw_craplot.qtinfoln := 0;
           rw_craplot.qtcompln := 0;
           rw_craplot.nrseqdig := 0;
-      END IF;
+        END IF;
 
         -- Perceorre a tabela que foi populada para o processo definitivo
         vr_indice := vr_tab_crrl048.first;
@@ -1731,12 +1866,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                      vr_cdbccxlt,
                      vr_nrdolote,
                      vr_tab_crrl048(vr_indice).nrdconta,
-                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisopc_cot
-                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                               ,8005||vr_cdhiscot_dem_pj)),
-                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisopc_cot
-                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                               ,vr_cdhiscot_dem_pj)),
+                     8005||vr_cdhisopc_cot,
+                     vr_cdhisopc_cot,
                      vr_tab_crrl048(vr_indice).vlretcrd_cot,
                      rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1745,84 +1876,102 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                     vr_dscritic := 'Erro insert da CRAPLCT (4): '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                
+                /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
                 IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  -- Incrementar sequencia no lote e quantidades
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
                   atualiza_tbcotas(pr_cdcooper
                                   ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,vr_tab_crrl048(vr_indice).inpessoa
                                   ,3
                                   ,vr_tab_crrl048(vr_indice).vlretcrd_cot
+                                  ,rw_craplot.nrseqdig
                                   ,vr_cdcritic
                                   ,vr_dscritic);
                   IF vr_cdcritic IS NOT NULL THEN
                     RAISE vr_exc_saida;
                   END IF;
+                ELSE
+                  -- Atualiza o valor das cotas na conta
+                  vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vlretcrd_cot;
                 END IF;
-
-                -- Incrementar sequencia no lote e quantidades
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
-                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-                -- Atualiza o valor das cotas na conta
-                vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vlretcrd_cot;                
               END IF;
 
               -- Lançamento em C/C  
               IF vr_tab_crrl048(vr_indice).vlretcrd_cta > 0 THEN
-                  BEGIN
+                BEGIN
                   INSERT INTO craplcm
                       (dtmvtolt,
                        cdagenci,
                        cdbccxlt,
                        nrdolote,
                        nrdconta,
-                     nrdctabb,
-                     nrdctitg,
+                       nrdctabb,
+                       nrdctitg,
                        nrdocmto,
                        cdhistor,
                        vllanmto,
                        nrseqdig,
                        cdcooper)
                      VALUES
-                    (vr_dtmvtolt,
-                     vr_cdagenci,
-                     vr_cdbccxlt,
-                     vr_nrdolote,
-                     vr_tab_crrl048(vr_indice).nrdconta,
-                     vr_tab_crrl048(vr_indice).nrdconta,
-                     gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisopc_cta
-                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                               ,8005||vr_cdhiscta_dem_pj)),
-                     decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisopc_cta
-                                                                   ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                               ,vr_cdhiscta_dem_pj)),
-                     vr_tab_crrl048(vr_indice).vlretcrd_cta,
-                     rw_craplot.nrseqdig + 1,
+                      (vr_dtmvtolt,
+                       vr_cdagenci,
+                       vr_cdbccxlt,
+                       vr_nrdolote,
+                       vr_tab_crrl048(vr_indice).nrdconta,
+                       vr_tab_crrl048(vr_indice).nrdconta,
+                       gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
+                       8005||vr_cdhisopc_cta,
+                       vr_cdhisopc_cta,
+                       vr_tab_crrl048(vr_indice).vlretcrd_cta,
+                       rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
                   EXCEPTION
                     WHEN OTHERS THEN
-                    vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
+                      vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  
+                  -- Incrementar sequencia no lote e quantidades
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                
+                  /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
                   IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                    
                     atualiza_tbcotas(pr_cdcooper
                                     ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
                                     ,4
                                     ,vr_tab_crrl048(vr_indice).vlretcrd_cta
+                                    ,rw_craplot.nrseqdig
                                     ,vr_cdcritic
                                     ,vr_dscritic);
                     IF vr_cdcritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
                     END IF;
                   END IF;
-
-                -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-              END IF;
+              END IF; -- Lançamento em C/C  
               -- Atualizar informações do lote  
               rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vlretcrd;
               rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vlretcrd;
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vlretcrd;
+                rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vlretcrd;
+              END IF;
             END IF; -- vlretcrd > 0
 
             /* Se foi solicitado o retorno das sobras sobre depósitos unificada */ 
@@ -1855,12 +2004,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdbccxlt,
                        vr_nrdolote,
                        vr_tab_crrl048(vr_indice).nrdconta,
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdep_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdep_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                                 ,vr_cdhiscot_dem_pj)),
+                       8005||vr_cdhisdep_cot,
+                       vr_cdhisdep_cot,
                        vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
@@ -1869,24 +2014,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  -- Incrementar sequencia no lote e quantidades
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
+                  /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
                   IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
                     atualiza_tbcotas(pr_cdcooper
                                     ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
                                     ,3
                                     ,vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot
+                                    ,rw_craplot.nrseqdig
                                     ,vr_cdcritic
                                     ,vr_dscritic);
                     IF vr_cdcritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
                     END IF;
+                  ELSE
+                    -- Atualiza o valor das cotas na conta
+                    vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot;  
                   END IF;
-
-                  -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
-                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-                  -- Atualiza o valor das cotas na conta
-                  vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot;
                 END IF;
 
                 -- Lançamento em C/C  
@@ -1913,12 +2067,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).nrdconta,
                        vr_tab_crrl048(vr_indice).nrdconta,
                        gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdep_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdep_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                                 ,vr_cdhiscta_dem_pj)),
+                       8005||vr_cdhisdep_cta,
+                       vr_cdhisdep_cta,
                        vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
@@ -1927,25 +2077,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                  -- Incrementar sequencia no lote e quantidades
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
+                  /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
                   IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
                     atualiza_tbcotas(pr_cdcooper
                                     ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
                                     ,4
                                     ,vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta
+                                    ,rw_craplot.nrseqdig
                                     ,vr_cdcritic
                                     ,vr_dscritic);
                     IF vr_cdcritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
                     END IF;
                   END IF;
-                  -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
                 END IF;
                 -- Atualizar informações do lote  
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
+                  rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
+                END IF;
               END IF; -- vljursdm + vljurapl > 0
                 
             ELSE   
@@ -1976,12 +2140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdbccxlt,
                        vr_nrdolote,
                        vr_tab_crrl048(vr_indice).nrdconta,
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpa_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpa_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                                 ,vr_cdhiscot_dem_pj)),
+                       8005||vr_cdhisdpa_cot,
+                       vr_cdhisdpa_cot,
                        vr_tab_crrl048(vr_indice).vljursdm_cot,
                        rw_craplot.nrseqdig + 1,
                      pr_cdcooper);
@@ -1990,83 +2150,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                  
+                /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
                 IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  -- Incrementar sequencia no lote e quantidades
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
+                
                   atualiza_tbcotas(pr_cdcooper
                                   ,vr_tab_crrl048(vr_indice).nrdconta
+                                  ,vr_tab_crrl048(vr_indice).inpessoa
                                   ,3
                                   ,vr_tab_crrl048(vr_indice).vljursdm_cot
+                                  ,rw_craplot.nrseqdig
                                   ,vr_cdcritic
                                   ,vr_dscritic);
                   IF vr_cdcritic IS NOT NULL THEN
                     RAISE vr_exc_saida;
                   END IF;
-                END IF;
-
-                  -- Incrementar sequencia no lote e quantidades
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-                  rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                ELSE
                   -- Atualiza o valor das cotas na conta
                   vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljursdm_cot;
+                END IF;
               END IF;
 
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta > 0 THEN
-                BEGIN
+                  BEGIN
                     INSERT INTO craplcm
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
+                      (dtmvtolt,
+                       cdagenci,
+                       cdbccxlt,
+                       nrdolote,
+                       nrdconta,
                        nrdctabb,
                        nrdctitg,
-                     nrdocmto,
-                     cdhistor,
-                     vllanmto,
-                     nrseqdig,
-                     cdcooper)
-                  VALUES
-                      (vr_dtmvtolt,
-                       vr_cdagenci,
-                       vr_cdbccxlt,
-                       vr_nrdolote,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpa_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpa_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                                 ,vr_cdhiscta_dem_pj)),
-                       vr_tab_crrl048(vr_indice).vljursdm_cta,
-                       rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
+                       nrdocmto,
+                       cdhistor,
+                       vllanmto,
+                       nrseqdig,
+                       cdcooper)
+                    VALUES
+                        (vr_dtmvtolt,
+                         vr_cdagenci,
+                         vr_cdbccxlt,
+                         vr_nrdolote,
+                         vr_tab_crrl048(vr_indice).nrdconta,
+                         vr_tab_crrl048(vr_indice).nrdconta,
+                         gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
+                         8005||vr_cdhisdpa_cta,
+                         vr_cdhisdpa_cta,
+                         vr_tab_crrl048(vr_indice).vljursdm_cta,
+                         rw_craplot.nrseqdig + 1,
+                       pr_cdcooper);
+                  EXCEPTION
+                    WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
-                  atualiza_tbcotas(pr_cdcooper
-                                 ,vr_tab_crrl048(vr_indice).nrdconta
-                                  ,4
-                                  ,vr_tab_crrl048(vr_indice).vljursdm_cta
-                                  ,vr_cdcritic
-                                  ,vr_dscritic);
-                  IF vr_cdcritic IS NOT NULL THEN
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
+                      RAISE vr_exc_saida;
+                  END;
                   -- Incrementar sequencia no lote e quantidades
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-              END IF;
+                  
+                  /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                    
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
+                                    ,4
+                                    ,vr_tab_crrl048(vr_indice).vljursdm_cta
+                                    ,rw_craplot.nrseqdig
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;
+                END IF;
                 -- Atualizar informações do lote  
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljursdm;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljursdm;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vljursdm;
+                  rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vljursdm;
+                END IF;
               END IF; -- vljursdm > 0
 
               /* verifica se ha saldo sobre depositos de aplicações */
@@ -2078,116 +2256,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
                 -- Insere dados na tabela de lancamentos de cota / capital
                 IF vr_tab_crrl048(vr_indice).vljurapl_cot > 0 THEN
-                BEGIN
-                    INSERT INTO craplct
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
+                  BEGIN
+                      INSERT INTO craplct
+                      (dtmvtolt,
+                       cdagenci,
+                       cdbccxlt,
+                       nrdolote,
                        nrdconta,
                        nrdocmto,
                        cdhistor,
                        vllanmto,
                        nrseqdig,
-                     cdcooper)
-                  VALUES
-                      (vr_dtmvtolt,
-                       vr_cdagenci,
-                       vr_cdbccxlt,
-                       vr_nrdolote,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpp_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                                 ,8005||vr_cdhiscot_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpp_cot
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                                 ,vr_cdhiscot_dem_pj)),
-                       vr_tab_crrl048(vr_indice).vljurapl_cot,
-                       rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
-                      vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
-                  atualiza_tbcotas(pr_cdcooper
-                                  ,vr_tab_crrl048(vr_indice).nrdconta
-                                  ,3
-                                  ,vr_tab_crrl048(vr_indice).vljurapl_cot
-                                  ,vr_cdcritic
-                                  ,vr_dscritic);
-                  IF vr_cdcritic IS NOT NULL THEN
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
-
+                       cdcooper)
+                    VALUES
+                        (vr_dtmvtolt,
+                         vr_cdagenci,
+                         vr_cdbccxlt,
+                         vr_nrdolote,
+                         vr_tab_crrl048(vr_indice).nrdconta,
+                         8005||vr_cdhisdpp_cot,
+                         vr_cdhisdpp_cot,
+                         vr_tab_crrl048(vr_indice).vljurapl_cot,
+                         rw_craplot.nrseqdig + 1,
+                       pr_cdcooper);
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                        vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
+                      RAISE vr_exc_saida;
+                  END;
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-                  -- Atualiza o valor das cotas na conta
-                  vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurapl_cot;
-              END IF;
+                    
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
+                    
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
+                                    ,3
+                                    ,vr_tab_crrl048(vr_indice).vljurapl_cot
+                                    ,rw_craplot.nrseqdig
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  ELSE
+                    -- Atualiza o valor das cotas na conta
+                    vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurapl_cot;
+                  END IF;
+                END IF;
 
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
-                BEGIN
-                    INSERT INTO craplcm
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
+                  BEGIN
+                      INSERT INTO craplcm
+                      (dtmvtolt,
+                       cdagenci,
+                       cdbccxlt,
+                       nrdolote,
+                       nrdconta,
                        nrdctabb,
                        nrdctitg,
-                     nrdocmto,
-                     cdhistor,
-                     vllanmto,
-                     nrseqdig,
-                     cdcooper)
-                  VALUES
-                      (vr_dtmvtolt,
-                       vr_cdagenci,
-                       vr_cdbccxlt,
-                       vr_nrdolote,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       vr_tab_crrl048(vr_indice).nrdconta,
-                       gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisdpp_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                                 ,8005||vr_cdhiscta_dem_pj)),
-                       decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisdpp_cta
-                                                                     ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                                 ,vr_cdhiscta_dem_pj)),
-                       vr_tab_crrl048(vr_indice).vljurapl_cta,
-                       rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
-                      vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
-                  atualiza_tbcotas(pr_cdcooper
-                                 ,vr_tab_crrl048(vr_indice).nrdconta
-                                  ,4
-                                  ,vr_tab_crrl048(vr_indice).vljurapl_cta
-                                  ,vr_cdcritic
-                                  ,vr_dscritic);
-                  IF vr_cdcritic IS NOT NULL THEN
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
+                       nrdocmto,
+                       cdhistor,
+                       vllanmto,
+                       nrseqdig,
+                       cdcooper)
+                    VALUES
+                        (vr_dtmvtolt,
+                         vr_cdagenci,
+                         vr_cdbccxlt,
+                         vr_nrdolote,
+                         vr_tab_crrl048(vr_indice).nrdconta,
+                         vr_tab_crrl048(vr_indice).nrdconta,
+                         gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
+                         8005||vr_cdhisdpp_cta,
+                         vr_cdhisdpp_cta,
+                         vr_tab_crrl048(vr_indice).vljurapl_cta,
+                         rw_craplot.nrseqdig + 1,
+                       pr_cdcooper);
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                        vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
+                      RAISE vr_exc_saida;
+                  END;
                   -- Incrementar sequencia no lote e quantidades
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;            
-              END IF;
-
+                  rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                    
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                    -- Incrementar sequencia no lote e quantidades
+                    rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                    rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                    rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                      
+                    atualiza_tbcotas(pr_cdcooper
+                                    ,vr_tab_crrl048(vr_indice).nrdconta
+                                    ,vr_tab_crrl048(vr_indice).inpessoa
+                                    ,4
+                                    ,vr_tab_crrl048(vr_indice).vljurapl_cta
+                                    ,rw_craplot.nrseqdig
+                                    ,vr_cdcritic
+                                    ,vr_dscritic);
+                    IF vr_cdcritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
+                  END IF;                              
+                END IF;
                 -- Atualizar informações do lote  
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurapl;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurapl;
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vljurapl;
+                  rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vljurapl;
+                END IF;
               END IF; -- vljurapl > 0
             END IF;
 
@@ -2195,120 +2384,123 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
           /* Juros ao capital */
           IF vr_tab_crrl048(vr_indice).vljurcap > 0  THEN
-                -- Insere dados na tabela de lancamentos de cota / capital
-                BEGIN
-                  INSERT INTO craplct
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
-                     nrdocmto,
-                     cdhistor,
-                     vllanmto,
-                     nrseqdig,
-                     cdcooper)
-                  VALUES
+            -- Insere dados na tabela de lancamentos de cota / capital
+            BEGIN
+              INSERT INTO craplct
+                (dtmvtolt,
+                 cdagenci,
+                 cdbccxlt,
+                 nrdolote,
+                 nrdconta,
+                 nrdocmto,
+                 cdhistor,
+                 vllanmto,
+                 nrseqdig,
+                 cdcooper)
+              VALUES
                 (vr_dtmvtolt,
                  vr_cdagenci,
                  vr_cdbccxlt,
                  vr_nrdolote,
                  vr_tab_crrl048(vr_indice).nrdconta,
-                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||lpad(vr_cdhisjur_cot,4,'0')
-                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                           ,8005||vr_cdhiscot_dem_pj)),
-                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,lpad(vr_cdhisjur_cot,4,'0')
-                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                           ,vr_cdhiscot_dem_pj)),
+                 8005||lpad(vr_cdhisjur_cot,4,'0'),
+                 lpad(vr_cdhisjur_cot,4,'0'),
                  vr_tab_crrl048(vr_indice).vljurcap,
-                     rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
+                 rw_craplot.nrseqdig + 1,
+                 pr_cdcooper);
+            EXCEPTION
+              WHEN OTHERS THEN
                 vr_dscritic := 'Erro insert da CRAPLCT (5): '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
-                  atualiza_tbcotas(pr_cdcooper
-                                  ,vr_tab_crrl048(vr_indice).nrdconta
-                                  ,3
-                                  ,vr_tab_crrl048(vr_indice).vljurcap
-                                  ,vr_cdcritic
-                                  ,vr_dscritic);
-                  IF vr_cdcritic IS NOT NULL THEN
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
-
-
-                -- Atualiza o valor das cotas na conta
-            vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurcap;
-
+                RAISE vr_exc_saida;
+            END;
             -- Atualizar informações do lote  
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-            rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurcap;
-            rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurcap;
+            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
             rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
             rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                
+            -- Atualiza o valor das cotas na conta
+            vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurcap;
+            
+            rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurcap;
+            rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurcap;
+            
           END IF; -- vr_tab_crrl048(vr_indice).vljurcap > 0
               
           -------IRRF sobre rendimentos capital------
           IF vr_tab_crrl048(vr_indice).vldeirrf > 0 THEN
               
-                BEGIN
-                  INSERT INTO craplct
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
-                     nrdocmto,
-                     cdhistor,
-                     vllanmto,
-                     nrseqdig,
-                     cdcooper)
-                  VALUES
+            BEGIN
+              INSERT INTO craplct
+                (dtmvtolt,
+                 cdagenci,
+                 cdbccxlt,
+                 nrdolote,
+                 nrdconta,
+                 nrdocmto,
+                 cdhistor,
+                 vllanmto,
+                 nrseqdig,
+                 cdcooper)
+              VALUES
                 (vr_dtmvtolt,
                  vr_cdagenci,
                  vr_cdbccxlt,
                  vr_nrdolote,
                  vr_tab_crrl048(vr_indice).nrdconta,
-                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||lpad(vr_cdhisirr_cot,4,'0')
-                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                           ,8005||vr_cdhiscot_dem_pj)),
-                 decode(vr_tab_crrl048(vr_indice).dtelimin,null,lpad(vr_cdhisirr_cot,4,'0')
-                                                               ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                           ,vr_cdhiscot_dem_pj)),
+                 8005||lpad(vr_cdhisirr_cot,4,'0'),
+                 lpad(vr_cdhisirr_cot,4,'0'),
                  vr_tab_crrl048(vr_indice).vldeirrf,
-                     rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
-                vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
-                  atualiza_tbcotas(pr_cdcooper
-                                  ,vr_tab_crrl048(vr_indice).nrdconta
-                                  ,3
-                                  ,vr_tab_crrl048(vr_indice).vldeirrf
-                                  ,vr_cdcritic
-                                  ,vr_dscritic);
-                  IF vr_cdcritic IS NOT NULL THEN
-                    RAISE vr_exc_saida;
-                  END IF;
-                END IF;
-
-                -- Atualiza o valor das cotas na conta
-            vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas - vr_tab_crrl048(vr_indice).vldeirrf;
-
+                 rw_craplot.nrseqdig + 1,
+                 pr_cdcooper);
+            EXCEPTION
+              WHEN OTHERS THEN
+                   vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
             -- Atualizar informações do lote  
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-            rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vldeirrf;
-            rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vldeirrf;
+            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
             rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
             rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                
+            -- Atualiza o valor das cotas na conta
+            vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas - vr_tab_crrl048(vr_indice).vldeirrf;  
+            
+            rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vldeirrf;
+            rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vldeirrf;
+            
           END IF;  --vr_tab_crrl048(vr_indice).vldeirrf > 0
+          
+          /* Se teve juros ao capital e a conta esta eliminada, vamos zerar o saldo de cotas e 
+             criar o registro na tabela de devolucao de cotas */
+          IF vr_tab_crrl048(vr_indice).vljurcap > 0 AND
+             vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+             
+            -- Atualizar informações do lote  
+            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+            rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+            rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+            
+            /* Valor para lancamento */
+            vr_vlretaux := vr_tab_crrl048(vr_indice).vljurcap - nvl(vr_tab_crrl048(vr_indice).vldeirrf,0);
+                
+            atualiza_tbcotas(pr_cdcooper
+                            ,vr_tab_crrl048(vr_indice).nrdconta
+                            ,vr_tab_crrl048(vr_indice).inpessoa
+                            ,3
+                            ,vr_vlretaux
+                            ,rw_craplot.nrseqdig
+                            ,vr_cdcritic
+                            ,vr_dscritic);
+            IF vr_cdcritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+            
+            -- Atualiza o valor das cotas na conta
+            vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas - vr_vlretaux;
+            
+            rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_vlretaux;
+            rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_vlretaux;
+          END IF;
               
           /* ---------------TARIFAS PAGAS--------------- */
           IF vr_tab_crrl048(vr_indice).vljurtar > 0  THEN
@@ -2333,12 +2525,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_cdbccxlt,
                    vr_nrdolote,
                    vr_tab_crrl048(vr_indice).nrdconta,
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhistar_cot
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                             ,8005||vr_cdhiscot_dem_pj)),
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhistar_cot
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                             ,vr_cdhiscot_dem_pj)),
+                   8005||vr_cdhistar_cot,
+                   vr_cdhistar_cot,
                    vr_tab_crrl048(vr_indice).vljurtar_cot,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2347,24 +2535,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro insert da CRAPLCT (5): '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              -- Incrementar sequencia no lote e quantidades
+              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              
               IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              
                 atualiza_tbcotas(pr_cdcooper
                                 ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,vr_tab_crrl048(vr_indice).inpessoa
                                 ,3
                                 ,vr_tab_crrl048(vr_indice).vljurtar_cot
+                                ,rw_craplot.nrseqdig
                                 ,vr_cdcritic
                                 ,vr_dscritic);
                 IF vr_cdcritic IS NOT NULL THEN
                   RAISE vr_exc_saida;
                 END IF;
+              ELSE
+                -- Atualiza o valor das cotas na conta
+                vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurtar_cot;  
               END IF;
-
-              -- Incrementar sequencia no lote e quantidades
-              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
-              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-              -- Atualiza o valor das cotas na conta
-              vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurtar_cot;
             END IF;  
 
             -- Lançamento em C/C  
@@ -2391,12 +2587,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).nrdconta,
                    vr_tab_crrl048(vr_indice).nrdconta,
                    gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhistar_cta
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                             ,8005||vr_cdhiscta_dem_pj)),
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhistar_cta
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                             ,vr_cdhiscta_dem_pj)),
+                   8005||vr_cdhistar_cta,
+                   vr_cdhistar_cta,
                    vr_tab_crrl048(vr_indice).vljurtar_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2405,25 +2597,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              -- Incrementar sequencia no lote e quantidades
+              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
+              
               IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
+                
                 atualiza_tbcotas(pr_cdcooper
-                               ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,vr_tab_crrl048(vr_indice).inpessoa
                                 ,4
                                 ,vr_tab_crrl048(vr_indice).vljurtar_cta
+                                ,rw_craplot.nrseqdig
                                 ,vr_cdcritic
                                 ,vr_dscritic);
                 IF vr_cdcritic IS NOT NULL THEN
                   RAISE vr_exc_saida;
                 END IF;
-              END IF;
-              -- Incrementar sequencia no lote e quantidades
-              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
-              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
+              END IF;              
             END IF;
             -- Atualizar informações do lote  
             rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurtar;
             rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurtar;
+            IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vljurtar;
+              rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vljurtar;
+            END IF;
           END IF;
           /* -------------FIM TARIFAS PAGAS------------- */
 
@@ -2451,12 +2655,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_cdbccxlt,
                    vr_nrdolote,
                    vr_tab_crrl048(vr_indice).nrdconta,
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisaut_cot
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscot_dem_pf
-                                                                                                             ,8005||vr_cdhiscot_dem_pj)),
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisaut_cot
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscot_dem_pf
-                                                                                                             ,vr_cdhiscot_dem_pj)),
+                   8005||vr_cdhisaut_cot,
+                   vr_cdhisaut_cot,
                    vr_tab_crrl048(vr_indice).vljuraut_cot,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2465,25 +2665,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              -- Incrementar sequencia no lote e quantidades
+              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              
               IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+                
                 atualiza_tbcotas(pr_cdcooper
                                 ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,vr_tab_crrl048(vr_indice).inpessoa
                                 ,3
                                 ,vr_tab_crrl048(vr_indice).vljuraut_cot
+                                ,rw_craplot.nrseqdig
                                 ,vr_cdcritic
                                 ,vr_dscritic);
                 IF vr_cdcritic IS NOT NULL THEN
                   RAISE vr_exc_saida;
                 END IF;
+              ELSE
+                -- Atualiza o valor das cotas na conta
+                vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljuraut_cot;  
               END IF;
-
-              -- Incrementar sequencia no lote e quantidades
-              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
-              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-              -- Atualiza o valor das cotas na conta
-              vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljuraut_cot;
-
             END IF;  
           
             -- Lançamento em C/C  
@@ -2510,12 +2717,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).nrdconta,
                    vr_tab_crrl048(vr_indice).nrdconta,
                    gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999'), -- nrdctitg
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,8005||vr_cdhisaut_cta
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,8005||vr_cdhiscta_dem_pf
-                                                                                                             ,8005||vr_cdhiscta_dem_pj)),
-                   decode(vr_tab_crrl048(vr_indice).dtelimin,null,vr_cdhisaut_cta
-                                                                 ,decode(vr_tab_crrl048(vr_indice).inpessoa,1,vr_cdhiscta_dem_pf
-                                                                                                             ,vr_cdhiscta_dem_pj)),
+                   8005||vr_cdhisaut_cta,
+                   vr_cdhisaut_cta,
                    vr_tab_crrl048(vr_indice).vljuraut_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
@@ -2524,28 +2727,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+              -- Incrementar sequencia no lote e quantidades
+              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              
               IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                -- Incrementar sequencia no lote e quantidades
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+                rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              
                 atualiza_tbcotas(pr_cdcooper
                                 ,vr_tab_crrl048(vr_indice).nrdconta
+                                ,vr_tab_crrl048(vr_indice).inpessoa
                                 ,4
                                 ,vr_tab_crrl048(vr_indice).vljuraut_cta
+                                ,rw_craplot.nrseqdig
                                 ,vr_cdcritic
                                 ,vr_dscritic);
                 IF vr_cdcritic IS NOT NULL THEN
                   RAISE vr_exc_saida;
                 END IF;
-              END IF;
-
-              -- Incrementar sequencia no lote e quantidades
-              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
-              rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
-              rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+              END IF;              
             END IF;
             
-            -- Atualizar informações do lote  
-            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
             rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljuraut;
             rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljuraut;
+            IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vljuraut;
+              rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vljuraut;
+            END IF;
           END IF;
           /* -------------FIM AUTO ATENDIMENTO------------- */
           
@@ -2557,16 +2769,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           END IF; --vr_tab_crrl048(vr_indice).inpessoa = 3
 
           -- Enfim, fazemos a atualização da CRAPCOT
-              BEGIN
-                UPDATE crapcot
-               SET qtraimfx = decode(vr_tab_crrl048(vr_indice).flraimfx,1,vr_tab_crrl048(vr_indice).qtraimfx,qtraimfx)
-                  ,vldcotas = vr_tab_crrl048(vr_indice).vldcotas
-             WHERE ROWID = vr_tab_crrl048(vr_indice).dsRowid;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro update da CRAPCOT: '||SQLERRM;
-                  RAISE vr_exc_saida;
-              END;
+          BEGIN
+            UPDATE crapcot
+           SET qtraimfx = decode(vr_tab_crrl048(vr_indice).flraimfx,1,vr_tab_crrl048(vr_indice).qtraimfx,qtraimfx)
+              ,vldcotas = vr_tab_crrl048(vr_indice).vldcotas
+         WHERE ROWID = vr_tab_crrl048(vr_indice).dsRowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro update da CRAPCOT: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
 
           -- Busca do próximo registro
           vr_indice := vr_tab_crrl048.next(vr_indice);
@@ -2575,7 +2787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Se há informações para gravação do lote
         IF rw_craplot.nrseqdig > 0 THEN
           -- Insere a capa do lote
-              BEGIN
+          BEGIN
             INSERT INTO craplot (dtmvtolt
                                 ,cdagenci
                                 ,cdbccxlt
@@ -2602,13 +2814,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                 ,rw_craplot.qtinfoln
                                 ,rw_craplot.qtcompln
                                 ,rw_craplot.nrseqdig);
-              EXCEPTION
-                WHEN OTHERS THEN
-              vr_dscritic := 'Erro insert da CRAPLOT: '||SQLERRM;
-                  RAISE vr_exc_saida;
-              END;
+          EXCEPTION
+            WHEN OTHERS THEN
+          vr_dscritic := 'Erro insert da CRAPLOT: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
         END IF;
-            END IF;
+      END IF; -- IF vr_inprvdef = 1 AND vr_tab_crrl048.count > 0 THEN 
       
       ----------- Emissão dos relatórios --------
       
