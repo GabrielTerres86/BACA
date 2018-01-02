@@ -3,13 +3,13 @@
 	//**************************************************************************//
 	//*** Fonte: consulta_bloqueio.php                                       ***//
 	//*** Autor: Guilherme / SUPERO                                          ***//
-	//*** Data : Maio/2013                   Última Alteração: 08/02/2017    ***//
+	//*** Data : Maio/2013                   Ãšltima AlteraÃ§Ã£o: 08/02/2017    ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Exibir os dados obtidos na consulta dos                ***//	
 	//***             processamentos do BLOQUEIO JUDICIAL.                   ***//
 	//***                                                                    ***//
 	//***                                                                    ***//
-	//*** Alterações: 06/09/2013 - Incluido tag <cddopcao> como parametro    ***//
+	//*** AlteraÃ§Ãµes: 06/09/2013 - Incluido tag <cddopcao> como parametro    ***//
 	//***             			   (Lucas R.)       					     ***//
 	//***                          									         ***//
 	//***             17/09/2014 - Retirado tt-grid. 					     ***//
@@ -17,15 +17,17 @@
 	//***                          									         ***//
 	//***             18/12/2014 - Ajuste para mostrar tabela no retorno.    ***//
 	//***						   (Jorge/Gielow - SD 228463)			     ***//
-	//***                                                                    ***//
-	//***             29/07/2016 - Ajuste para controle de permissão sobre   ***//
-	//***                          as subrotinas de cada opção	             ***//
-    //***                         (Adriano - SD 492902).                     ***//
-	//***                                                                    ***//
-	//***             08/02/2017 - Chamda da funcao RemoveCaracteresInvalido ***// 
-	//*** 						   para ajustar o problema do chamado		 ***//
-	//***	  					   562089 (Kelvin)							 ***//                                                    
-	//**************************************************************************//
+	//***                                                                      ***//
+	//***             29/07/2016 - Ajuste para controle de permissÃ£o sobre     ***//
+	//***                          as subrotinas de cada opÃ§Ã£o	               ***//
+  //***                         (Adriano - SD 492902).                       ***//
+	//***                                                                      ***//
+	//***             08/02/2017 - Chamda da funcao RemoveCaracteresInvalido   ***// 
+	//*** 						   para ajustar o problema do chamado		                 ***//
+	//***	  					   562089 (Kelvin)							                         ***//  
+  //***                                                                      ***//
+  //***             29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)   ***//
+	//****************************************************************************//
 	
 	
 	session_start();
@@ -62,7 +64,7 @@
 	// Verifica permiss&atilde;o da subrotina
 	$msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$operacao);
 
-    // Monta o xml de requisição
+    // Monta o xml de requisiÃ§Ã£o
 	$xmlConsulta  = "";
 	$xmlConsulta .= "<Root>";
 	$xmlConsulta .= "	<Cabecalho>";
@@ -88,7 +90,7 @@
 	
 	$msgErro = $xmlObjConsulta->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjConsulta->roottag->tags[0]->name) == "ERRO") { 
 		echo "<script>";
 		echo "$('#divAcaojud').css({'display':'none'});";
@@ -100,6 +102,24 @@
 		exibirErro('error',$msgErro,'Alerta - BLQJUD','hideMsgAguardo();$(\'#nroficon\',\'#frmConsulta\').focus();',true);				
 	}		
 	$dados = $xmlObjConsulta->roottag->tags[0]->tags;
+  
+  // Monta o xml de requisiÃ§Ã£o
+	$xmlConsultaOficio  = "";
+	$xmlConsultaOficio .= "<Root>";
+	$xmlConsultaOficio .= "	<Cabecalho>";
+	$xmlConsultaOficio .= "		<Bo>b1wgen0155.p</Bo>";
+	$xmlConsultaOficio .= "		<Proc>consulta-bloqueio-jud-oficio</Proc>";
+	$xmlConsultaOficio .= "	</Cabecalho>";
+	$xmlConsultaOficio .= "	<Dados>";
+	$xmlConsultaOficio .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlConsultaOficio .= "		<nrctacon>".$nrctacon."</nrctacon>";
+	$xmlConsultaOficio .= "		<nroficon>".$nroficon."</nroficon>";
+	$xmlConsultaOficio .= "	</Dados>";
+	$xmlConsultaOficio .= "</Root>";
+	
+	$xmlResultOficio = getDataXML($xmlConsultaOficio);
+	$xmlObjConsultaOficio = getObjectXML($xmlResultOficio);
+	$oficios = $xmlObjConsultaOficio->roottag->tags[0]->tags;
 	
 	echo "<script>";
 	echo "arrbloqueios.length = 0;"; //limpando array
@@ -130,9 +150,10 @@
 	echo "</script>";
 				
 	if ($operacao == "C" || $operacao == "D" || $operacao == "A") {
-		include('form_consulta_dados.php'); 
+		include('form_consulta_oficio.php');
+		include('form_consulta_dados.php');
 		if($operacao == "C" || $operacao == "D"){
-			include('form_desbloqueio.php');	
+			//include('form_desbloqueio.php');
 		}
 		echo "<script>$('#div_tabblqjud').css({'display':'block'});layoutConsulta();</script>";
 	}
