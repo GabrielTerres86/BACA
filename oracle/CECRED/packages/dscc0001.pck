@@ -2000,7 +2000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_vliofpri NUMBER;
     vr_vliofadi NUMBER;
     vr_vliofcpl NUMBER;
-    vr_flgimune PLS_INTEGER;
+    --vr_flgimune BOOLEAN;
     vr_natjurid NUMBER := 0;
     vr_tpregtrb NUMBER := 0;
     vr_vltotoperacao NUMBER := 0;
@@ -2327,7 +2327,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       FOR idx IN vr_tab_chq_bordero.FIRST..vr_tab_chq_bordero.LAST LOOP
         vr_vltotoperacao := NVL(vr_vltotoperacao,0) + vr_tab_chq_bordero(idx).vlliquid;
       END LOOP;
-      
       FOR idx IN vr_tab_chq_bordero.FIRST..vr_tab_chq_bordero.LAST LOOP
         -- se o borderô estiver liberado e o cheque estiver aprovado ou
         -- se o borderô estiver em estudo ou análise.
@@ -2359,6 +2358,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           vr_qtdiaiof := vr_tab_chq_bordero(idx).dtlibera - vr_dtlibiof;
 
                      
+
+
+          
           TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 3                              --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                        ,pr_tpoperacao => 1                                  --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
                                        ,pr_cdcooper   => pr_cdcooper                        --> Código da cooperativa
@@ -2374,11 +2376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                        ,pr_vliofadi   => vr_vliofadi                        --> Retorno do valor do IOF adicional
                                        ,pr_vliofcpl   => vr_vliofcpl                        --> Retorno do valor do IOF complementar
                                        ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                       ,pr_flgimune   => vr_flgimune
-                                       ,pr_dscritic   => vr_dscritic);
-        IF vr_flgimune <= 0 THEN
-          vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
-        END IF;
+                                       ,pr_dscritic   => vr_dscritic);                                   
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -7348,7 +7347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --vr_dtiniiof         DATE;
 	--vr_dtfimiof         DATE;
   --vr_txccdiof         NUMBER;
-	vr_flgimune         PLS_INTEGER;
+	--vr_flgimune         BOOLEAN;
 	vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
 	vr_cdpactra         NUMBER;
@@ -7797,9 +7796,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						
     -- IOF 
     vr_vltotiof := 0;
-    vr_vltotiofpri := 0;
-    vr_vltotiofadi := 0;
-    vr_vltotiofcpl := 0;
 						
 		-- Iterar sobre os cheques aprovados						
 		FOR vr_idx_cheque IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
@@ -7833,15 +7829,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vliofadi   => vr_vliofadi           --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl           --> Retorno do valor do IOF complementar
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_flgimune   => vr_flgimune
-                                   ,pr_dscritic   => vr_dscritic);
-      
-        vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
-      --Soma os totais de IOF para lançamento na tabela de IOF
+                                   ,pr_dscritic   => vr_dscritic);                                   
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
       vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
       vr_vltotiofcpl := NVL(vr_vltotiofcpl,0) + NVL(vr_vliofcpl,0);
-      
 			-- Buscar custódia
 			OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
 			               ,pr_nrdconta => pr_nrdconta
@@ -7896,6 +7888,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          RAISE vr_exc_erro;
        END IF;               
                        
+                       
+				
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -7954,7 +7948,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
-              
         BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper              --> Codigo da Cooperativa 
                                   ,pr_nrdconta      => pr_nrdconta          --> Numero da Conta Corrente
@@ -7970,7 +7963,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                   ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                                   ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                                   ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
-                                  ,pr_flgimune      => vr_flgimune
                                   ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
                                   ,pr_dscritic      => vr_dscritic);
         EXCEPTION
@@ -8028,6 +8020,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END;			
 			-- Guardar o valor total liquido do borderô para lançar na conta do cooperado
 			vr_vlborder := nvl(vr_vlborder,0) + vr_tab_cheques(vr_idx_cheque).vlliquid;
+      
+      
+
+             
+
+
+             
+
+
       
 		END LOOP;
 		
@@ -8214,39 +8215,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END;
 		END IF;
 		
-		-- Se tiver IOF
-		IF vr_vltotiof > 0 THEN
 
-       --Se for imune, somente efetua o lancamento na tabela de IOF
-       IF vr_flgimune > 0 THEN
-         BEGIN
-            TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
-                              ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
-                              ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
-                              ,pr_tpproduto     => 3                     --> Tipo de Produto
-                              ,pr_nrcontrato    => pr_nrborder           --> Numero do Contrato
-                              ,pr_idlautom      => NULL                  --> Chave: Id dos Lancamentos Futuros
-                              ,pr_dtmvtolt_lcm  => NULL                  --> Chave: Data de Movimento Lancamento
-                              ,pr_cdagenci_lcm  => NULL                  --> Chave: Agencia do Lancamento
-                              ,pr_cdbccxlt_lcm  => NULL                  --> Chave: Caixa do Lancamento
-                              ,pr_nrdolote_lcm  => NULL                  --> Chave: Lote do Lancamento
-                              ,pr_nrseqdig_lcm  => NULL                  --> Chave: Sequencia do Lancamento
-                              ,pr_vliofpri      => vr_vltotiofpri        --> Valor do IOF Principal
-                              ,pr_vliofadi      => vr_vltotiofadi        --> Valor do IOF Adicional
-                              ,pr_vliofcpl      => vr_vltotiofcpl        --> Valor do IOF Complementar
-                              ,pr_flgimune      => vr_flgimune
-                              ,pr_cdcritic      => vr_cdcritic           --> Código da Crítica
-                              ,pr_dscritic      => vr_dscritic);
-            EXCEPTION
-              WHEN OTHERS THEN      
-                -- Gerar crítica
-                vr_cdcritic := 0;
-                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-                -- Levantar exceção
-                RAISE vr_exc_erro;
-          END;
-       ELSE
-          --Lanca na LCM e na tabela de IOF  
+												 
+												 
+		
+		-- Se for imune de tributação
+		IF vr_vltotiof > 0 THEN
 			-- Buscar PA do operador
 			OPEN cr_crapope(pr_cdcooper => pr_cdcooper
 			               ,pr_cdoperad => pr_cdoperad);
@@ -8352,9 +8326,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                           ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                           ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                           ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
-                            ,pr_flgimune      => vr_flgimune
                           ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
-                            ,pr_dscritic      => vr_dscritic);
+                          ,pr_dscritic      => vr_dscritic);
         EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica
@@ -8363,7 +8336,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 			END;			
-        		
 			-- Atualizar valores da craplot refente ao IOF			
 			BEGIN
 			  UPDATE craplot lot
@@ -8413,7 +8385,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					RAISE vr_exc_erro;				
 			END;
 		END IF;
-    END IF;
     
     OPEN cr_crapcop(pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
