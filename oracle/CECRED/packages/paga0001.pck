@@ -10831,7 +10831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      Sistema  : Rotinas Internet
      Sigla    : INET
      Autor    : Alisson C. Berrido - AMcom
-     Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
+     Data     : Junho/2013.                   Ultima atualizacao: 21/12/2017
 
      Dados referentes ao programa:
 
@@ -10873,6 +10873,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
                                processo (Lucas Ranghetti #711123)       
+
+                  21/12/2017 - Ajuste na chamada da procedure pc_verifica_titulo  para que o 
+                               codigo de controle de consulta na CIP (craplau.cdctrlcs)
+                               seja passado como parametro, dessa forma o titulo é validado 
+                               com os mesmos dados que permitiram agendar o pagamento 
+                               (Douglas - Chamado 815286)
      ..........................................................................*/
 
   BEGIN
@@ -11425,6 +11431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
 							 ,pr_flmobile => 0                     --Indicador Mobile
+                             ,pr_cdctrlcs => rw_craplau.cdctrlcs   -- Numero de controle da consulta na CIP
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -16797,8 +16804,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;
-
+      END IF;      
+      
       /* Alterar situacao do Titulo */
       IF rw_crapcob.incobran <> 5 THEN
         BEGIN
