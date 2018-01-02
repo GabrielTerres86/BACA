@@ -118,6 +118,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                          ,pr_dsinfdes   IN VARCHAR2
                                          ,pr_fldestrf   IN NUMBER   
                                          ,pr_tpcooperad IN NUMBER   DEFAULT 0
+                                         ,pr_vldesblo   IN NUMBER
+                                         ,pr_cdmodali   IN NUMBER
                                          ,pr_xmllog     IN VARCHAR2             --> XML com informações de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -136,6 +138,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                      ,pr_dsinfdes   IN VARCHAR2
                                      ,pr_fldestrf   IN BOOLEAN   
                                      ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_vldesblo   IN NUMBER
                                      ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
   
@@ -1288,33 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         vr_flblcrft := 0;
       END IF;
       
-      -- Percorrer os registros para validar se algum dos mesmos já existe
-      FOR vr_indice IN vr_tbcontas.FIRST..vr_tbcontas.LAST LOOP
 
-        -- Buscar registro de cadastro de bloqueio
-        OPEN  cr_crapblj(pr_cdcooper
-                        ,vr_tbcontas(vr_indice)
-                        ,pr_nroficio
-                        ,vr_tbmodali(vr_indice));
-        FETCH cr_crapblj INTO rw_crapblj;
-        
-        -- Se encontrar registro
-        IF cr_crapblj%FOUND THEN
-          -- Fechar o cursor
-          CLOSE cr_crapblj;
-          
-          -- Definir a crítica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Ja existe este Nr. Oficio para esta Conta.';
-          
-          -- Exception
-          RAISE vr_exp_erro;
-        END IF;
-        
-        -- Fechar o cursor
-        CLOSE cr_crapblj;
-        
-      END LOOP;   
       
       FOR vr_indice IN vr_tbcontas.FIRST()..vr_tbcontas.LAST() LOOP
         
@@ -1359,7 +1336,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,nroficio
                              ,nrproces
                              ,dsinfadc
-                             ,vlresblq)
+                             ,vlresblq
+                             ,hrblqini)
                        VALUES(pr_cdcooper                       -- cdcooper
                              ,rw_crapass.nrdconta               -- nrdconta
                              ,rw_crapass.nrcpfcgc               -- nrcpfcgc
@@ -1379,8 +1357,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                                              '                             '),' ')) -- nroficio
                              ,pr_nrproces                       -- nrproces
                              ,pr_dsinfadc                       -- dsinfadc
-                             ,vr_vlresblq);                     -- vlresblq
-                                
+                             ,vr_vlresblq                       -- vlresblq
+                             ,GENE0002.fn_busca_time);
         EXCEPTION               
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPBLJ: '||SQLERRM;
@@ -1565,7 +1543,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,nroficio
                                ,nrproces
                                ,dsinfadc
-                               ,vlresblq)
+                               ,vlresblq
+                               ,hrblqini)
                          VALUES(pr_cdcooper                       -- cdcooper
                                ,rw_crapass.nrdconta               -- nrdconta
                                ,rw_crapass.nrcpfcgc               -- nrcpfcgc
@@ -1585,8 +1564,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                                              '                             '),' ')) -- nroficio
                                ,pr_nrproces                       -- nrproces
                                ,pr_dsinfadc                       -- dsinfadc
-                               ,pr_vlrsaldo);                     -- vlresblq
-                                  
+                               ,pr_vlrsaldo                       -- vlresblq
+                               ,GENE0002.fn_busca_time);
           EXCEPTION               
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir CRAPBLJ: '||SQLERRM;
@@ -1791,6 +1770,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                          ,pr_dsinfdes   IN VARCHAR2
                                          ,pr_fldestrf   IN NUMBER  
                                          ,pr_tpcooperad IN NUMBER   DEFAULT 0
+                                         ,pr_vldesblo   IN NUMBER
+                                         ,pr_cdmodali   IN NUMBER
                                          ,pr_xmllog     IN VARCHAR2             --> XML com informações de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -1833,12 +1814,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                       ,pr_dsinfdes   => pr_dsinfdes
                                       ,pr_fldestrf   => vr_fldestrf       
                                       ,pr_tpcooperad => NVL(pr_tpcooperad,0)
-                                      ,pr_cdmodali   => 0 -- Processar todas as modalidades
+                                      ,pr_vldesblo   => pr_vldesblo
+                                      ,pr_cdmodali   => pr_cdmodali  ---- 0 -- Processar todas as modalidades
                                       ,pr_tab_erro   => vr_tab_erro);
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
-      vr_dscritic := 'Nao foi possivel desbloquear os registros.';
+      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic; -- Retornar o erro ocorrido na rotina
       RAISE vr_exc_saida;
     END IF;
     
@@ -1887,6 +1869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                      ,pr_dsinfdes   IN VARCHAR2
                                      ,pr_fldestrf   IN BOOLEAN 
                                      ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_vldesblo   IN NUMBER
                                      ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
     
@@ -1920,14 +1903,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND ass.nrdconta = blj.nrdconta
          AND blj.cdcooper = pr_cdcooper
          AND blj.nroficio = pr_nroficio  
+         AND blj.nrdconta = pr_nrctacon 
          AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
          AND blj.dtblqfim IS NULL
          AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0)
-      ORDER BY blj.cdcooper
-             , blj.nroficio
-             , blj.nrcpfcgc
-             , blj.cdmodali;
+      ORDER BY blj.cdmodali
+             , blj.dtblqini
+             , blj.hrblqini
+             , blj.dtblqfim
+             , blj.hrblqfim;
+
+    -- Total bloqueado
+    CURSOR cr_crapbljtot(pr_nrcpfcgc crapblj.nrcpfcgc%TYPE) IS
+      SELECT NVL(SUM(blj.vlbloque),0)
+        FROM crapblj blj
+       WHERE blj.cdcooper = pr_cdcooper
+         AND blj.nroficio = pr_nroficio
+         AND blj.nrdconta = pr_nrctacon
+         AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
+           OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
+         AND blj.dtblqfim IS NULL
+         AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0);
     
     -- Buscar pelo lançamento
     CURSOR cr_craplcm(pr_nrdconta  craplcm.nrdconta%TYPE
@@ -1950,6 +1947,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_nrdregis      NUMBER;
     vr_nmprimtl      VARCHAR2(100);
     vr_fldestrf      NUMBER;
+    vr_vldesblo      NUMBER := pr_vldesblo;
+    ww_vldesblo      NUMBER;
+    vr_vltotblq      NUMBER;
+    vr_inserlcm      BOOLEAN;
     
     -- EXCEPTIONS
     vr_exp_erro       EXCEPTION;
@@ -1976,9 +1977,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       vr_fldestrf := 0; -- FALSE
     END IF;
     
+    -- verificar se valor informado na tela maior que bloqueado
+    OPEN  cr_crapbljtot(vr_nrcpfcgc);
+    FETCH cr_crapbljtot INTO vr_vltotblq;
+    CLOSE cr_crapbljtot;
+    IF vr_vldesblo > vr_vltotblq THEN
+      vr_dscritic := 'Valor de desbloqueio R$ '||vr_vldesblo||' maior que o valor bloqueado R$ '||vr_vltotblq;
+      RAISE vr_exp_erro;
+    END IF;
+    
+	vr_inserlcm := FALSE; --inicializando a vr_insere para creditar apenas 1 vez
+
     -- Percorrer todos os bloqueios da conta
     FOR rw_crapblj IN cr_crapblj(vr_nrcpfcgc) LOOP
+      ww_vldesblo := 0;
+      IF vr_vldesblo >= NVL(rw_crapblj.vlbloque,0) THEN
+        ww_vldesblo := rw_crapblj.vlbloque;
+      ELSIF vr_vldesblo > 0
+      AND NVL(rw_crapblj.vlbloque,0) > vr_vldesblo THEN
+        -- para fazer demais atualizações com valor de desbloqueio menor
+        ww_vldesblo := vr_vldesblo;
       
+        -- inserir novo registro com valor de desbloqueio
+        BEGIN
+          INSERT INTO crapblj(cdcooper
+                             ,nrdconta
+                             ,nrcpfcgc
+                             ,cdmodali
+                             ,cdtipmov
+                             ,flblcrft
+                             ,dtblqini
+                             ,dtblqfim
+                             ,vlbloque
+                             ,cdopdblq
+                             ,cdopddes
+                             ,dsjuizem
+                             ,dsresord
+                             ,dtenvres
+                             ,nroficio
+                             ,nrproces
+                             ,dsinfadc
+                             ,vlresblq
+                             ,hrblqini)
+                       SELECT cdcooper
+                             ,nrdconta
+                             ,nrcpfcgc
+                             ,cdmodali
+                             ,cdtipmov
+                             ,flblcrft
+                             ,dtblqini
+                             ,dtblqfim
+                             ,NVL(rw_crapblj.vlbloque,0) - vr_vldesblo -- ww_vldesblo --  vlbloque
+                             ,cdopdblq
+                             ,cdopddes
+                             ,dsjuizem
+                             ,dsresord
+                             ,dtenvres
+                             ,nroficio
+                             ,nrproces
+                             ,dsinfadc
+                             ,vlresblq
+                             ,GENE0002.fn_busca_time hrblqini
+                         FROM crapblj
+                        WHERE rowid = rw_crapblj.dsdrowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir CRAPBLJ: '||SQLERRM;
+            RAISE vr_exp_erro;
+        END;
+
+      END IF;
+
+      IF ww_vldesblo > 0 THEN
       -- Atualizar o registro de bloqueio
       BEGIN
         UPDATE crapblj blj
@@ -2070,6 +2140,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -------------
         -- Inserir registro na CRAPLCM 
         BEGIN
+            -- Demetrius
+--            UPDATE craplcm lcm
+--               SET lcm.vllanmto = lcm.vllanmto + ww_vldesblo
+--             WHERE lcm.cdcooper = pr_cdcooper
+--               AND lcm.dtmvtolt = pr_dtmvtolt
+--               AND lcm.cdagenci = rw_craplot.cdagenci
+--               AND lcm.cdbccxlt = rw_craplot.cdbccxlt
+--               AND lcm.nrdolote = rw_craplot.nrdolote
+--               AND lcm.nrdctabb = rw_crapblj.nrdconta
+--               AND lcm.nrdocmto = rw_craplot.nrseqdig; --vr_nrdocmto;
+--
+--            IF sql%rowcount = 0  THEN
+           IF NOT vr_inserlcm THEN
+              vr_inserlcm := TRUE;
           INSERT INTO craplcm(cdcooper
                              ,dtmvtolt
                              ,dtrefere
@@ -2095,9 +2179,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,rw_crapblj.nrdctitg               -- nrdctitg
                              ,vr_nrdocmto                       -- nrdocmto
                              ,DECODE(rw_crapblj.inpessoa, 1, 1404, 1405) -- cdhistor => 1404 - PF / 1405 - PJ
-                             ,NVL(rw_crapblj.vlbloque,0)        -- vllanmto
+                                 ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
                              ,rw_craplot.nrseqdig + 1           -- nrseqdig
                              ,'BLOQJUD');                       -- cdpesqbb
+--            END IF;
+            END IF;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
@@ -2110,8 +2196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
              SET qtcompln = NVL(qtcompln,0) + 1
                , qtinfoln = NVL(qtinfoln,0) + 1
                , nrseqdig = NVL(nrseqdig,0) + 1   
-               , vlinfodb = NVL(vlinfodb,0) + NVL(rw_crapblj.vlbloque,0)
-               , vlcompdb = NVL(vlcompdb,0) + NVL(rw_crapblj.vlbloque,0)
+                 , vlinfodb = NVL(vlinfodb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
+                 , vlcompdb = NVL(vlcompdb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
            WHERE ROWID = rw_craplot.dsdrowid;
         EXCEPTION           
           WHEN OTHERS THEN
@@ -2122,7 +2208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Atualizar o registro de saldo
         BEGIN
           UPDATE crapsld 
-             SET vlblqjud = NVL(vlblqjud,0) - NVL(rw_crapblj.vlbloque,0)
+               SET vlblqjud = NVL(vlblqjud,0) - ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
            WHERE cdcooper = pr_cdcooper     
              AND nrdconta = rw_crapblj.nrdconta;
 
@@ -2166,6 +2252,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           
         END IF; -- rw_crapblj.flblcrft = 1
       END IF; -- rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag
+        vr_vldesblo := vr_vldesblo - ww_vldesblo; --rw_crapblj.vlbloque;
+        IF vr_vldesblo <= 0 THEN
+          EXIT;
+        END IF;
+      END IF; -- vr_vldesblo 
     END LOOP; -- cr_crapblj
     
   EXCEPTION
