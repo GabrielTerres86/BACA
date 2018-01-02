@@ -4991,7 +4991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_analisar_bordero_cheques
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Novembro/2016                 Ultima atualizacao: 20/12/2017
+    Data    : Novembro/2016                 Ultima atualizacao: 27/12/2017
 
     Dados referentes ao programa:
 
@@ -5003,7 +5003,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     
                 20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
                              (Adriano - SD 791712).                           
-                             
+
+                27/12/2017 - Ajuste para passar o parametro Numero da Agencia do Cheque para a procedure
+                             pc_ver_fraude_chq_extern (Douglas - Chamado 820177)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -5604,18 +5606,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END IF;
 			
 			-- Verificar se o cheque é fraudado
-      CHEQ0001.pc_ver_fraude_chq_extern(pr_cdcooper => pr_tab_cheques(vr_index).cdcooper
-			                                 ,pr_cdprogra => 'DSCC0001'
-																			 ,pr_cdbanco =>  pr_tab_cheques(vr_index).cdbanchq
-																			 ,pr_nrcheque => pr_tab_cheques(vr_index).nrcheque
-																			 ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-																			 ,pr_cdoperad => pr_cdoperad
-																			 ,pr_cdagenci => pr_cdagenci
-																			 ,pr_des_erro => vr_dscritic);
+            CHEQ0001.pc_ver_fraude_chq_extern(pr_cdcooper => pr_tab_cheques(vr_index).cdcooper
+                                             ,pr_cdprogra => 'DSCC0001'
+                                             ,pr_cdbanco  => pr_tab_cheques(vr_index).cdbanchq
+                                             ,pr_nrcheque => pr_tab_cheques(vr_index).nrcheque
+                                             ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_cdagenci => pr_tab_cheques(vr_index).cdagechq
+                                             ,pr_des_erro => vr_dscritic);
 																			 
-      -- Se retornou crítica
-			IF TRIM(vr_dscritic) IS NOT NULL THEN
-	      -- Gerar ocorrencia 18 - Cheque fraudado
+            -- Se retornou crítica
+	  		IF TRIM(vr_dscritic) IS NOT NULL THEN
+	            -- Gerar ocorrencia 18 - Cheque fraudado
 				pc_gerar_ocorrencia_chq(pr_tab_cheques => pr_tab_cheques
 															 ,pr_idx_cheques => vr_index
 															 ,pr_cdocorre => 18
