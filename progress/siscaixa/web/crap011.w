@@ -2,7 +2,7 @@
 
 Programa: siscaixa/web/crap011.w
 Sistema : CAIXA ON-LINE                                       
-                                             Ultima atualizacao: 14/11/2017
+                                             Ultima atualizacao: 27/12/2017
    
 Dados referentes ao programa:
 
@@ -26,6 +26,9 @@ Alteracoes: 30/04/2009 -  Excluida as variaveis "v_complem4" e "v_complem5"
                          pois estava ocorrendo erro ao compilar o fonte (Lucas Ranghetti #654609)
 
 			14/11/2017 - Auste para permitir lancamento de saque decorrente a devolucao de capital (Jonata - RKAM P364).
+
+			27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
+                        (Jonata - MOUTS SD 812703/810959 )
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -279,6 +282,7 @@ DEFINE FRAME Web-Frame
          SIDE-LABELS 
          AT COL 1 ROW 1
          SIZE 80 BY 20.
+
 
 
 /* *********************** Procedure Settings ************************ */
@@ -620,6 +624,7 @@ PROCEDURE process-web-request :
          {include/assignfields.i} /* Colocado a chamada do assignFields dentro ~da i~nclude */
 
 
+
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
 			IF  get-value("cancela") <> "" THEN 
@@ -661,6 +666,7 @@ PROCEDURE process-web-request :
 						DO:
              ASSIGN v_cod = ""
                     v_senha = "".
+						    
              {include/i-erro.i}
          END.
 					 ELSE 
@@ -704,12 +710,14 @@ PROCEDURE process-web-request :
                  END.
 									ELSE 
 										DO: 
+											ASSIGN vh_foco = "15".
 
 											IF (v_tpoperacao = "2"      OR
 											    v_tpoperacao = "3"   ) AND
 												v_sequencia_ope = "1"  THEN
 												DO:
-													ASSIGN 	v_sequencia_ope = "2".
+													ASSIGN 	v_sequencia_ope = "2"
+													         vh_foco = "14".
 												
 												END.
 											ELSE IF (v_tpoperacao = "2"      OR
@@ -737,7 +745,9 @@ PROCEDURE process-web-request :
 
 														END.
 													ELSE
-														DO:	ASSIGN v_sequencia_ope = "3".
+														DO:	
+															ASSIGN v_sequencia_ope = "3"
+																   vh_foco = "21".
 																														
 															IF v_origem_devol = "1" THEN
 															    DO:
@@ -810,6 +820,7 @@ PROCEDURE process-web-request :
                                  FOR EACH w-craperr:
                                      DELETE w-craperr.
                                  END.
+																		 
                                  FOR EACH craperr NO-LOCK WHERE
                                           craperr.cdcooper = 
                                                   crapcop.cdcooper         AND
@@ -832,6 +843,7 @@ PROCEDURE process-web-request :
                                             w-craperr.erro       =
                                             craperr.erro.
                                  END.
+																		
                                  UNDO.
                              END.     
                       END.  /* Do transaction */
@@ -861,6 +873,7 @@ PROCEDURE process-web-request :
                                          craperr.erro       = w-craperr.erro.
                                   VALIDATE craperr.
                               END.
+																	
                               {include/i-erro.i}
                       END.
 
@@ -946,13 +959,14 @@ PROCEDURE process-web-request :
                      END. 
                  END.
                 
+											
                  END.
              END.
 								
              END.
+						
              DELETE PROCEDURE h-b1crap11.
 						
-     END.
      END.
 
      DELETE PROCEDURE h-b1crap00.
@@ -1044,27 +1058,19 @@ PROCEDURE process-web-request :
 
        END.
 
-
     /* STEP 4.2c -
      * OUTPUT the Progress form buffer to the WEB stream. */
     RUN outputFields.
     
-			IF l-habilita = 1 THEN DO:
+			IF l-habilita = 1  OR 
+     		   l-habilita = 2  THEN DO:
 				{&OUT}
 					   '<script language="JavaScript"> ' SKIP
 						 'document.form1.v_hist.disabled=true; ' SKIP
 						 'document.form1.v_valor.disabled=true; ' SKIP
 						'</script>' SKIP.
 			END.
-			ELSE IF l-habilita = 2 THEN
-				DO:
-					{&OUT}
-						   '<script language="JavaScript"> ' SKIP
-							 'document.form1.v_hist.disabled=true; ' SKIP
-							 'document.form1.v_valor.disabled=true; ' SKIP
-							'</script>' SKIP.
 							
-				END.
 				
 			
   END. /* Form has been submitted. */
@@ -1078,7 +1084,9 @@ PROCEDURE process-web-request :
     /* STEP 1 -
      * Open the database or SDO query and and fetch the first record. */ 
     RUN findRecords.
-    ASSIGN vh_foco = "7"
+	
+	
+    ASSIGN vh_foco = "15"
 	       v_sequencia_ope = "1"
 		   v_origem_devol = "".
     
@@ -1101,6 +1109,13 @@ PROCEDURE process-web-request :
     /* STEP 2c -
      * OUTPUT the Progress from buffer to the WEB stream. */
     RUN outputFields.
+		
+	{&OUT}
+		   '<script language="JavaScript"> ' SKIP
+			 'controlaLayout(); ' SKIP
+			'</script>' SKIP.
+						
+						
   END. 
   
   /* Show error messages. */
