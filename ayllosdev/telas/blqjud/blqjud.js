@@ -22,6 +22,9 @@
                                (Adriano - SD 492902).
 
                   29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+
+                  02/01/2018 - Melhoria 460 - (Diogo - Mouts) - Ajuste no valor de desbloqueio, pois sem a validação, 
+                               sempre desbloqueava o valor total
  * --------------
  */
  
@@ -144,6 +147,7 @@ function controlaLayout() {
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
     cDtenvdes           = $('#dtenvdes' ,'#frmDesbloqueio');
     cDsinfdes           = $('#dsinfdes' ,'#frmDesbloqueio');
+    cVldesblo           = $('#vldesblo' ,'#frmDesbloqueio');
     cFldestrf			= $('input[id="#fldestrf"]' ,'#frmDesbloqueio');	
 
     // CAMPOS frmConsulta
@@ -1309,6 +1313,7 @@ function efetuaDesbloqueio() {
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
 	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
+	var vltmpbloque = converteMoedaFloat($("#vltmpbloque", "#frmDesbloqueio").val());
 
     // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
 	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
@@ -1339,7 +1344,18 @@ function efetuaDesbloqueio() {
 		return false;
 	}
 	cDsinfdes.removeClass('campoErro');
-		
+
+	if (vldesblo == '' || vldesblo == '0' || vldesblo == '0.00' || vldesblo == '0,00' || vldesblo <= 0) {
+		showError('error','Valor do Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	
+	if (vldesblo > vltmpbloque) {
+		showError('error','Valor do Desbloqueio está limitado ao valor bloqueado ('+$("#vltmpbloque", "#frmDesbloqueio").val()+').','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	cVldesblo.removeClass('campoErro');
+
 	showMsgAguardo("Aguarde, efetuando opera&ccedil;&atilde;o ...");
 	
 	// Executa script de consulta através de ajax
@@ -1372,8 +1388,8 @@ function efetuaDesbloqueio() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-				eval(response);
-				$('#btnDesbloqueio','#divBotoes').hide();		
+				$('#btnDesbloqueio','#divBotoes').hide();
+				eval(response);						
 			}
 		
 	});
@@ -1791,8 +1807,12 @@ function selecionaBloqueio(seq, cdmodali) {
 	if(cCddopcao.val() == "T"){
 		$('#divDesbloqueio').css({'display':'none'});
 	}else if (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "A" || cCdoperac.val() == "C" || cCdoperac.val() == "D") {
+		$('#vldesblo','#frmDesbloqueio').val('');//valor bloqueio, preencho o máximo
+		$('#vltmpbloque','#frmDesbloqueio').val(''); //campo para controle e validação do valor
 		if((($('#div_tabblqjud').css('display') == "block") && (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "D"))){
 			$('#divDesbloqueio').css({'display':'block'});
+			$('#vldesblo','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']);//valor bloqueio, preencho o máximo
+			$('#vltmpbloque','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']); //campo para controle e validação do valor
 		}
 	}
 	

@@ -36,15 +36,15 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-  $nrdconta = $_POST["nrdconta"];     
-  $nroficio = $_POST["nroficio"];
+  	$nrdconta = $_POST["nrdconta"];     
+  	$nroficio = $_POST["nroficio"];
 	$nrctacon = $_POST["nrctacon"];
 	$dtenvdes = $_POST["dtenvdes"];
 	$dsinfdes = $_POST["dsinfdes"];
 	$fldestrf = $_POST["fldestrf"];
-  $vldesblo = $_POST["vldesblo"];	
+  	$vldesblo = $_POST["vldesblo"];	
 	$cdmodali = $_POST["cdmodali"];	
-  $nrofides = $_POST["nrofides"];	
+  	$nrofides = $_POST["nrofides"];	
     
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
@@ -52,15 +52,15 @@
 	$xmlRegistro .= "	<Dados>";
 	$xmlRegistro .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-  $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
+  	$xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
 	$xmlRegistro .= "		<nrctacon>".$nrctacon."</nrctacon>"; 
-	$xmlRegistro .= "   <dtenvdes>".$dtenvdes."</dtenvdes>";
-	$xmlRegistro .= "   <dsinfdes>".$dsinfdes."</dsinfdes>";
-	$xmlRegistro .= "   <fldestrf>".$fldestrf."</fldestrf>";
-	$xmlRegistro .= "   <vldesblo>".$vldesblo."</vldesblo>";
-	$xmlRegistro .= "   <cdmodali>".$cdmodali."</cdmodali>";
-  $xmlRegistro .= "   <nrofides>".$nrofides."</nrofides>";
+	$xmlRegistro .= "   	<dtenvdes>".$dtenvdes."</dtenvdes>";
+	$xmlRegistro .= "   	<dsinfdes>".$dsinfdes."</dsinfdes>";
+	$xmlRegistro .= "   	<fldestrf>".$fldestrf."</fldestrf>";
+	$xmlRegistro .= "   	<vldesblo>".$vldesblo."</vldesblo>";
+	$xmlRegistro .= "   	<cdmodali>".$cdmodali."</cdmodali>";
+  	$xmlRegistro .= "   	<nrofides>".$nrofides."</nrofides>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
@@ -74,7 +74,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == "ERRO") {
-		echo "showError('error','".$msgErro."','Informe - BLQJUD','hideMsgAguardo();');";
+		echo "showError('error','".$msgErro."','Informe - BLQJUD','hideMsgAguardo();$(\'#btnDesbloqueio\',\'#divBotoes\').show();');";
 	}else{
 		echo "showError('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Informe - BLQJUD','hideMsgAguardo();estadoInicial();');";
 	}
