@@ -218,6 +218,8 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
                                   ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlminpgt IN NUMBER   --> Valor maximo de pagamento
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de movimento
+                                  ,pr_tbtitulo IN typ_reg_TituloCIP     --> Regras de calculo de juros
                                    ) RETURN INTEGER;                                   
   
   --> Rotina para retornar valor do titulo calculado pela NPC
@@ -1051,8 +1053,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                   ,pr_idvlrmax IN NUMBER DEFAULT 1  --> Validar valor maximo
                                   ,pr_tpmaxpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
-                                  ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
-                                  ,pr_vlminpgt IN NUMBER   --> Valor maximo de pagamento
+                                  ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor minimo(P-Percentual, V-Valor)
+                                  ,pr_vlminpgt IN NUMBER   --> Valor minimo de pagamento
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de movimento
+                                  ,pr_tbtitulo IN typ_reg_TituloCIP     --> Regras de calculo de juros
                                    ) RETURN INTEGER IS --1-OK, 0-NOK
   
   /* ..........................................................................
@@ -1069,14 +1073,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Validar se valor esta entre maximo e minimo
       Alteração : 30/10/2017 - Criado parametro para validar valor maximo de pagamento (Rafael/Ademir)
         
+                  27/12/2017 - Incluidos parametros e chamada da funcao fn_valor_calc_titulo_npc
+                               para buscar o valor do título calculado pela CIP na tag VlrTotCobrar.
+                               Caso o valor calculado pela CIP seja menor que o valor mínimo
+                               calculado na variável vr_vlminpgt então assume o VlrTotCobrar
+                               como valor mínimo para pagamento. Nos casos em que após
+                               desconto/abatimento o valor fique inferior ao mínimo cadastrado
+                               no pagamento divergente, então deverá ser recebido montante
+                               menor ao range cadastrado. (SD#821097 - AJFink)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
   
     vr_vlmaxpgt   NUMBER;
     vr_vlminpgt   NUMBER;
+    vr_vltitcal   craptit.vltitulo%TYPE := NULL;
     
   BEGIN
+
+    vr_vltitcal := fn_valor_calc_titulo_npc(pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_tbtitulo => pr_tbtitulo);
   
     vr_vlmaxpgt := pr_vlmaxpgt;
     IF pr_tpmaxpgt = 'P' THEN
@@ -1088,6 +1105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       vr_vlminpgt := pr_vltitulo /100*pr_vlminpgt;      
     END IF;
   
+    IF NVL(vr_vltitcal,0) <> 0 AND NVL(vr_vltitcal,0) < vr_vlminpgt THEN
+      vr_vlminpgt := NVL(vr_vltitcal,0);
+    END IF;
+
     IF pr_vldpagto < vr_vlminpgt THEN
       RETURN 0; -- Valor a pagar menor que o mínimo
     END IF;
@@ -1346,6 +1367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                 ,pr_vlmaxpgt => vr_tituloCIP.Vlr_PercMaxTit     --> Valor maximo de pagamento
                                 ,pr_tpminpgt => vr_tituloCIP.IndrVlr_PercMinTit --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlminpgt => vr_tituloCIP.Vlr_PercMinTit     --> Valor maximo de pagamento
+                                ,pr_dtmvtolt => rw_cons_titulo.dtmvtolt         --> Data de movimento
+                                ,pr_tbtitulo => vr_tituloCIP                    --> Regras de calculo de juros
                                  ) THEN
           vr_dscritic := 'Valor não permitido para pagamento.';
           RAISE vr_exc_erro;
@@ -1369,8 +1392,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
           
         END IF;
 		
-		
-          
       WHEN 4 THEN --> 2 - Somente valor mínimo
         --> Validar se valor esta entre maximo e minimo
         IF 0 = fn_valid_max_min_valor 
@@ -1381,6 +1402,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                 ,pr_vlmaxpgt => vr_tituloCIP.VlrTit             --> Valor maximo de pagamento
                                 ,pr_tpminpgt => vr_tituloCIP.IndrVlr_PercMinTit --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlminpgt => vr_tituloCIP.Vlr_PercMinTit     --> Valor maximo de pagamento
+                                ,pr_dtmvtolt => rw_cons_titulo.dtmvtolt         --> Data de movimento
+                                ,pr_tbtitulo => vr_tituloCIP                    --> Regras de calculo de juros
                                  ) THEN
           vr_dscritic := 'Valor não permitido para pagamento.';
           RAISE vr_exc_erro;
