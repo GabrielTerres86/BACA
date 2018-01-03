@@ -607,8 +607,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         nas variaveis que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                         TED cadastrado realizar esta operação (Tiago #820218).
   --
-  --            03/01/2017 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
+  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
   --                         for o operador realizando alguma transação (Tiago/Adriano).
+  --
+  --            03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
+  --                         quando nao localizar registro para o 1 titular.
+  --                         (Chamado 823977) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -691,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       WHERE crapsnh.cdcooper = pr_cdcooper
       AND   crapsnh.nrdconta = pr_nrdconta
       AND   crapsnh.tpdsenha = pr_tpdsenha
-      ;   
+      AND   crapsnh.cdsitsnh = 1 /*ativo*/ ;
   rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;      
   --Selecionar contas transferencia cadastradas internet
   CURSOR cr_crapcti (pr_cdcooper IN crapcti.cdcooper%type
@@ -1442,7 +1446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para buscar os limites para internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1461,6 +1465,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --              26/12/2017 - Inicializado as variaveis da pr_tab_internet e feito NVL nas variaveis
   --                           que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                           TED cadastrado realizar esta operação (Tiago #820218).
+  --
+  --              03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
+  --                           quando nao localizar registro para o 1 titular.
+  --                           (Chamado 823977) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
