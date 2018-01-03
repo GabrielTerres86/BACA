@@ -4447,7 +4447,7 @@ PROCEDURE transf_contrato_prejuizo.
                         WHERE crapris.cdcooper = par_cdcooper     AND
                               crapris.nrdconta = par_nrdconta     AND
                               crapris.nrctremp = par_nrctremp     AND
-                              crapris.dtrefere = crapdat.dtmvtoan AND
+                              crapris.dtrefere = crapdat.dtultdma AND
                               crapris.cdorigem = 3                AND
                               crapris.inddocto = 1
                               NO-LOCK: END.
