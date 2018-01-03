@@ -4856,8 +4856,8 @@ PROCEDURE transf_contrato_prejuizo.
            END.
            ELSE
            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
+               ASSIGN aux_cdcritic = 0
+                      aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
 
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -4872,16 +4872,16 @@ PROCEDURE transf_contrato_prejuizo.
        ELSE
        DO:
            ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Erro ao lista Ocorrencias!".
+                  aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
 
-               RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT 1, /* nrdcaixa  */
-                              INPUT 1, /* sequencia */
-                              INPUT aux_cdcritic,
-                              INPUT-OUTPUT aux_dscritic).
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT 1, /* nrdcaixa  */
+                          INPUT 1, /* sequencia */
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
 
-               RETURN "NOK".
+           RETURN "NOK".
        END.
 
     END.
