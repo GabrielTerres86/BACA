@@ -158,6 +158,10 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
        INDEX BY PLS_INTEGER;
   vr_tab_SitTitPgto_NPC  typ_tab_SitTitPgto_NPC;
   
+  --> Função que recebe a data de vencimento do titulo e retorna o prazo máximo de pagamento
+  function fn_titulo_vencimento_pagamento(pr_cdcooper crapcop.cdcooper%type
+                                         ,pr_dtvencto date) return date;
+
   --> Função para montar o número de controle do participante - NUMCTRLPART
   FUNCTION fn_montar_NumCtrlPart(pr_cdbarras   IN VARCHAR2
                                 ,pr_cdagenci   IN NUMBER
@@ -173,6 +177,10 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                  pr_tpdregra     IN INTEGER)               --> Tipo de regra de rollout(1-registro,2-pagamento)
                                  RETURN INTEGER;
   
+  --> Rotina para validar se ainda esta no periodo de convivencia
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+                                     RETURN INTEGER;
+                                     
   --> Rotina para retornar valor limite de pagamento em contigencia na cip
   FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
                              RETURN NUMBER;
@@ -205,6 +213,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
                                   ,pr_vldpagto IN NUMBER   --> Valor do pagamento
+                                  ,pr_idvlrmax     IN NUMBER DEFAULT 1     --> Validar valor maximo                                                                    
                                   ,pr_tpmaxpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
                                   ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
@@ -230,6 +239,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_idvlrmax     IN NUMBER DEFAULT 1      --> Validar valor maximo                                                                      
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
@@ -272,6 +282,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   vr_dstextab_rollout_pag     typ_tab_dstextab;
   vr_dstextab_rollout_reg     typ_tab_dstextab;
   
+  --> Armazenar data de convivencia
+  vr_dstextab_dtconviv        craptab.dstextab%TYPE;
+  
   --> Para garantir o valor atualizado, informação será buscada a cada hora
   vr_nrctrlhr        NUMBER;
   
@@ -281,6 +294,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   --> Nome do arquivo de log mensal
   vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; 
    
+  function fn_titulo_vencimento_pagamento(pr_cdcooper crapcop.cdcooper%type
+                                         ,pr_dtvencto date) return date is
+    --
+    /*..........................................................................
+
+      Programa   : fn_titulo_vencimento_pagamento
+      Autor      : Ademir Jose Fink
+      Data       : Dezembro/2017.                   Ultima atualizacao: --/--/----
+
+      Objetivo   : Recebe como parametro a data de vencimento do titulo e devolve a data
+                   em que ele pode ser pago sem ser considerado vencido.
+
+      Alterações : 
+
+    ..........................................................................*/
+    --
+    --trunc da data de vencimento para considerar somente dia/mes/ano
+    vr_dtvencto date := trunc(pr_dtvencto);
+    --pega o ultimo dia do ano de vencimento do título
+    vr_dtultdia date := to_date('31/12/'||to_char(vr_dtvencto,'yyyy'),'dd/mm/yyyy');
+    vr_dtultuti date := null;
+    vr_dtproxim date := null;
+    --
+  begin
+    --
+    --calcula o próximo dia útil a partir da data de vencimento do título
+    vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
+                                              ,pr_dtmvtolt  => vr_dtvencto --> Data do movimento
+                                              ,pr_tipo      => 'P');       --> Proximo dia util
+    --
+    --com base no último dia do ano calcular o ultimo dia ÚTIL do ano
+    vr_dtultuti := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                              ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
+                                              ,pr_tipo     => 'A'         --> Dia util anterior
+                                              ,pr_feriado  => FALSE);     --> Nao considera feriados
+    --
+    --se a data de vencimento é igual ao ultimo dia ÚTIL do ano
+    --então obrigatório calcular a proxima data de pagamento
+    --porque no último dia ÚTIL do ano não há compensação (abbc-cip)
+    if vr_dtvencto = vr_dtultuti then
+      --
+      --se o ultimo dia ÚTIL do ano é igual ao ultimo dia do ano
+      --então tomar como base o primeiro dia do ano seguinte
+      if vr_dtultuti = vr_dtultdia then
+        vr_dtultdia := vr_dtultdia + 1;
+      end if;
+      --
+      --entao calcula o proximo dia ÚTIL
+      vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
+                                                ,pr_tipo     => 'P'         --> Proximo dia util
+                                                ,pr_feriado  => TRUE);      --> Considera feriados
+      --
+    else
+      --
+      --senao pega o dia útil calculado com base na própria data de vencimento
+      vr_dtproxim := vr_dtvencto;
+      --
+    end if;
+    --
+    return (vr_dtproxim);
+    --
+  end fn_titulo_vencimento_pagamento;
+
   --> Função para montar o número de controle do participante - NUMCTRLPART
   FUNCTION fn_montar_NumCtrlPart(pr_cdbarras   IN VARCHAR2
                                 ,pr_cdagenci   IN NUMBER
@@ -394,7 +471,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         -- ou passou a hora
         to_char(SYSDATE,'HH24') <> vr_nrctrlhr THEN
      
+       --> Inicializar/zerar valores
        vr_nrctrlhr := to_char(SYSDATE,'HH24');
+       vr_dstextab_dtconviv    := NULL;
+       vr_dstextab_rollout_reg.delete; 
+       vr_dstextab_rollout_pag.delete; 
      
        --> Buscar dados
        vr_dstextab := TABE0001.fn_busca_dstextab
@@ -448,6 +529,90 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     WHEN OTHERS THEN
       RETURN 0;      
   END fn_verifica_rollout;
+  
+  --> Rotina para validar se ainda esta no periodo de convivencia
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+                                     RETURN INTEGER IS
+  /* ..........................................................................
+    
+      Programa : fn_valid_periodo_conviv        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Setembro/2017.                   Ultima atualizacao: 18/09/2017
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para validar se ainda esta no periodo de convivencia
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    ----------> VARIAVEIS <-----------
+    vr_dstextab     craptab.dstextab%TYPE;  
+    vr_cdacesso     craptab.cdacesso%TYPE;
+    vr_dtconviv     DATE;
+    
+  BEGIN   
+  
+     --> Definir cdacesso conforme tipo de rollout
+     vr_cdacesso := 'DTCONVIV_NPC';
+     vr_dstextab := TRIM(vr_dstextab_dtconviv);
+     
+     -- Se ainda nao possui o valor da craptab
+     IF vr_dstextab is NULL OR 
+        -- ou passou a hora
+        to_char(SYSDATE,'HH24') <> vr_nrctrlhr THEN
+     
+       --> Inicializar/zerar valores
+       vr_nrctrlhr             := to_char(SYSDATE,'HH24');
+       vr_dstextab_dtconviv    := NULL;
+       vr_dstextab_rollout_reg.delete; 
+       vr_dstextab_rollout_pag.delete;
+     
+       --> Buscar dados
+       vr_dstextab := TABE0001.fn_busca_dstextab
+                                       (pr_cdcooper => 3
+                                       ,pr_nmsistem => 'CRED'
+                                       ,pr_tptabela => 'GENERI'
+                                       ,pr_cdempres => 0
+                                       ,pr_cdacesso => vr_cdacesso
+                                       ,pr_tpregist => 0); 
+      
+        --> Guardar valores 
+        vr_dstextab_dtconviv := vr_dstextab;
+      END IF;
+      
+      --> senao nao possui informação
+      IF vr_dstextab IS NULL THEN
+        RETURN 0; 
+      END IF;
+      
+      --> Verificar se é uma data valida
+      BEGIN
+        vr_dtconviv := to_date(vr_dstextab,'DD/MM/RRRR');
+      EXCEPTION
+        WHEN OTHERS THEN
+          NPCB0001.pc_gera_log_npc(pr_cdcooper => 3, 
+                                   pr_nmrotina => 'fn_valid_periodo_conviv', 
+                                   pr_dsdolog  => 'Parametro possui Data invalida('||vr_dstextab||').');
+          RETURN 0;   
+      END;
+            
+      --> Validar se ainda nao passou da data de conveniencia
+      IF pr_dtmvtolt <= vr_dtconviv  THEN        
+        --> Retornar 1 - ainda esta mp periodo de convivencia
+        RETURN 1;
+        
+      END IF;        
+      
+      RETURN 0;
+      
+  EXCEPTION 
+    WHEN OTHERS THEN
+      RETURN 0;      
+  END fn_valid_periodo_conviv;
   
   --> Rotina para retornar valor limite de pagamento em contigencia na cip
   FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
@@ -883,6 +1048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
                                   ,pr_vldpagto IN NUMBER   --> Valor do pagamento
+                                  ,pr_idvlrmax IN NUMBER DEFAULT 1  --> Validar valor maximo
                                   ,pr_tpmaxpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                   ,pr_vlmaxpgt IN NUMBER   --> Valor maximo de pagamento
                                   ,pr_tpminpgt IN VARCHAR2 --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
@@ -895,13 +1061,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 30/10/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Validar se valor esta entre maximo e minimo
-      Alteração : 
+      Alteração : 30/10/2017 - Criado parametro para validar valor maximo de pagamento (Rafael/Ademir)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -922,11 +1088,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       vr_vlminpgt := pr_vltitulo /100*pr_vlminpgt;      
     END IF;
   
-    IF pr_vldpagto BETWEEN vr_vlminpgt AND  vr_vlmaxpgt THEN
-      RETURN 1; --Está entre valor maximo e minimo
+    IF pr_vldpagto < vr_vlminpgt THEN
+      RETURN 0; -- Valor a pagar menor que o mínimo
     END IF;
   
-    RETURN 0;
+    IF pr_vldpagto > vr_vlmaxpgt AND pr_idvlrmax = 1 THEN
+      RETURN 0; -- Valor a pagar maior que o máximo
+    END IF;    
+    
+    RETURN 1;
   EXCEPTION
     WHEN OTHERS THEN
       raise_application_error(-20501,'Erro ao validar valor max. e min.: '||SQLERRM);
@@ -1039,6 +1209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_idvlrmax     IN NUMBER DEFAULT 1     --> Validar valor maximo
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
@@ -1169,6 +1340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> Validar se valor esta entre maximo e minimo
         IF 0 = fn_valid_max_min_valor 
                                 (pr_vltitulo => vr_tituloCIP.VlrTit             --> Valor do titulo
+                                ,pr_idvlrmax => pr_idvlrmax                     --> Validar o valor maximo
                                 ,pr_vldpagto => pr_vldpagto                              --> Valor do pagamento
                                 ,pr_tpmaxpgt => vr_tituloCIP.IndrVlr_PercMaxTit --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlmaxpgt => vr_tituloCIP.Vlr_PercMaxTit     --> Valor maximo de pagamento
@@ -1203,6 +1375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> Validar se valor esta entre maximo e minimo
         IF 0 = fn_valid_max_min_valor 
                                 (pr_vltitulo => vr_tituloCIP.VlrTit             --> Valor do titulo
+                                ,pr_idvlrmax => pr_idvlrmax                     --> Validar o valor maximo                                
                                 ,pr_vldpagto => pr_vldpagto                              --> Valor do pagamento
                                 ,pr_tpmaxpgt => 'V'                                      --> Tipo de calculo valor maximo(P-Percentual, V-Valor)
                                 ,pr_vlmaxpgt => vr_tituloCIP.VlrTit             --> Valor maximo de pagamento
@@ -1214,12 +1387,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         END IF;  
     END CASE;   
       
-    vr_dtvencto := gene0005.fn_valida_dia_util( pr_cdcooper  => pr_cdcooper, 
-                                                pr_dtmvtolt  => vr_tituloCIP.DtVencTit, 
-                                                pr_tipo      => 'P');
+    vr_dtvencto := fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cdcooper
+                                                 ,pr_dtvencto => vr_tituloCIP.DtVencTit);
     
     --> verificar se for agendamento, se a data está dentro do prazo de vencimento
-    IF pr_dtagenda IS NOT NULL AND pr_dtagenda > vr_dtvencto THEN
+    IF pr_dtagenda IS NOT NULL AND trunc(pr_dtagenda) > trunc(vr_dtvencto) THEN
       vr_dscritic := 'Agendamento posterior ao vencimento não permitido.';
       RAISE vr_exc_erro;
     END IF;
