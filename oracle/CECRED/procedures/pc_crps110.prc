@@ -76,10 +76,10 @@ BEGIN
                           (Marcos-Supero)
 
              29/11/2013 - Alterado totalizador de 99 para 999. (Marcos-Supero)
-						 
-						 21/08/2014 - Adicionado resumo das aplicações com vencimento nos
-						              próximos 30 dias para craprac no relatório crrl090.
-													(Reinert)
+             
+             21/08/2014 - Adicionado resumo das aplicações com vencimento nos
+                          próximos 30 dias para craprac no relatório crrl090.
+                          (Reinert)
 
    ............................................................................. */
 
@@ -99,21 +99,21 @@ BEGIN
               ,qtaplica INTEGER
               ,vlaplica craprda.vlaplica%TYPE
               ,vlsdrdca craprda.vlsdrdca%TYPE);
-							
-     	--Definicao do tipo de registro para relatorio por data
+              
+       --Definicao do tipo de registro para relatorio por data
      TYPE typ_reg_detalhe_data IS
        RECORD (dtrefere craprda.dtfimper%TYPE
               ,qtaplica INTEGER
               ,vlaplica craprda.vlaplica%TYPE
               ,vlsdrdca craprda.vlsdrdca%TYPE);
-		 -- Definição da tabela que conterá registros das aplicações por data
-		 TYPE typ_tab_detalhe_data IS TABLE OF typ_reg_detalhe_data INDEX BY VARCHAR2(15);
-							
-     	--Definicao do tipo de registro para relatorio por PA		 
-		 TYPE typ_reg_detalhe_pa IS
-		   RECORD (vr_tab_detalhe_data typ_tab_detalhe_data);
-		 -- Definição da tabela que conterá registros das aplicações por PA
-		 TYPE typ_tab_detalhe_pa IS TABLE OF typ_reg_detalhe_pa INDEX BY PLS_INTEGER;
+     -- Definição da tabela que conterá registros das aplicações por data
+     TYPE typ_tab_detalhe_data IS TABLE OF typ_reg_detalhe_data INDEX BY VARCHAR2(15);
+              
+       --Definicao do tipo de registro para relatorio por PA     
+     TYPE typ_reg_detalhe_pa IS
+       RECORD (vr_tab_detalhe_data typ_tab_detalhe_data);
+     -- Definição da tabela que conterá registros das aplicações por PA
+     TYPE typ_tab_detalhe_pa IS TABLE OF typ_reg_detalhe_pa INDEX BY PLS_INTEGER;
 
      --Definicao dos tipos de tabelas de memoria
      TYPE typ_tab_tot     IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -129,7 +129,7 @@ BEGIN
      vr_tab_ordem        typ_tab_ordem;
      vr_tab_detalhe      typ_tab_detalhe;
      vr_tab_agencia      typ_tab_agencia;
-		 vr_tab_detalhe_pa   typ_tab_detalhe_pa;
+     vr_tab_detalhe_pa   typ_tab_detalhe_pa;
      vr_tab_erro         GENE0001.typ_tab_erro;
 
      -- Selecionar os dados da Cooperativa
@@ -160,7 +160,7 @@ BEGIN
                        ,pr_insaqtot IN craprda.insaqtot%TYPE
                        ,pr_dtiniper IN craprda.dtfimper%TYPE
                        ,pr_dtfimper IN craprda.dtfimper%TYPE
-											 ,pr_cdagenci IN craprda.cdageass%TYPE) IS
+                       ,pr_cdagenci IN craprda.cdageass%TYPE) IS
        SELECT craprda.insaqtot
              ,craprda.nrdconta
              ,craprda.nraplica
@@ -180,7 +180,7 @@ BEGIN
        FROM craprda craprda
        WHERE craprda.cdcooper = pr_cdcooper
        AND   craprda.insaqtot = pr_insaqtot
-			 AND   craprda.cdageass = pr_cdagenci
+       AND   craprda.cdageass = pr_cdagenci
        AND   craprda.dtfimper BETWEEN pr_dtiniper AND pr_dtfimper;
 
      --Selecionar as formas de captacao de recursos
@@ -189,43 +189,43 @@ BEGIN
              ,crapdtc.tpaplrdc
        FROM crapdtc crapdtc
        WHERE crapdtc.cdcooper = pr_cdcooper;
-			 
-		 -- Selecionar informações de aplicações de captação  
-		 CURSOR cr_craprac (pr_cdcooper IN craprac.cdcooper%TYPE
-		                   ,pr_dtiniper IN craprac.dtmvtolt%TYPE
-											 ,pr_dtfimper IN craprac.dtmvtolt%TYPE
-											 ,pr_cdagenci IN crapass.cdagenci%TYPE) IS 
-			 SELECT rac.cdprodut
-			       ,rac.qtdiacar
-						 ,rac.nrdconta
-						 ,rac.nraplica
-						 ,rac.dtmvtolt
-						 ,rac.txaplica
-						 ,rac.dtvencto
-						 ,rac.vlaplica
-						 ,ass.cdagenci
-						 ,COUNT(*) OVER (PARTITION BY ass.cdagenci, 
-						                              rac.dtvencto) qtregdata
-						 ,ROW_NUMBER () OVER (PARTITION BY ass.cdagenci,rac.dtvencto
+       
+     -- Selecionar informações de aplicações de captação  
+     CURSOR cr_craprac (pr_cdcooper IN craprac.cdcooper%TYPE
+                       ,pr_dtiniper IN craprac.dtmvtolt%TYPE
+                       ,pr_dtfimper IN craprac.dtmvtolt%TYPE
+                       ,pr_cdagenci IN crapass.cdagenci%TYPE) IS 
+       SELECT rac.cdprodut
+             ,rac.qtdiacar
+             ,rac.nrdconta
+             ,rac.nraplica
+             ,rac.dtmvtolt
+             ,rac.txaplica
+             ,rac.dtvencto
+             ,rac.vlaplica
+             ,ass.cdagenci
+             ,COUNT(*) OVER (PARTITION BY ass.cdagenci, 
+                                          rac.dtvencto) qtregdata
+             ,ROW_NUMBER () OVER (PARTITION BY ass.cdagenci,rac.dtvencto
                                   ORDER BY ass.cdagenci,rac.dtvencto ASC, rac.nrdconta) nrseqreg
-				 FROM craprac rac,
-				      crapass ass
-				WHERE rac.cdcooper = pr_cdcooper
-					AND rac.idsaqtot = 0
-					AND rac.dtvencto BETWEEN pr_dtiniper AND pr_dtfimper
-					AND ass.cdagenci = pr_cdagenci
-					AND rac.cdcooper = ass.cdcooper
-					AND rac.nrdconta = ass.nrdconta;
-		 rw_craprac cr_craprac%ROWTYPE;
-		 
-		 -- Selecionar informações de produtos de captação
-		 CURSOR cr_crapcpc (pr_cdprodut IN crapcpc.cdprodut%TYPE) IS
-		   SELECT cpc.idtippro
-			       ,cpc.cddindex
-						 ,cpc.idtxfixa
-			   FROM crapcpc cpc
-				WHERE cpc.cdprodut = pr_cdprodut;
-		 rw_crapcpc cr_crapcpc%ROWTYPE;
+         FROM craprac rac,
+              crapass ass
+        WHERE rac.cdcooper = pr_cdcooper
+          AND rac.idsaqtot = 0
+          AND rac.dtvencto BETWEEN pr_dtiniper AND pr_dtfimper
+          AND ass.cdagenci = pr_cdagenci
+          AND rac.cdcooper = ass.cdcooper
+          AND rac.nrdconta = ass.nrdconta;
+     rw_craprac cr_craprac%ROWTYPE;
+     
+     -- Selecionar informações de produtos de captação
+     CURSOR cr_crapcpc (pr_cdprodut IN crapcpc.cdprodut%TYPE) IS
+       SELECT cpc.idtippro
+             ,cpc.cddindex
+             ,cpc.idtxfixa
+         FROM crapcpc cpc
+        WHERE cpc.cdprodut = pr_cdprodut;
+     rw_crapcpc cr_crapcpc%ROWTYPE;
 
      --Constantes Locais
      vr_cdagenci_par CONSTANT INTEGER:= 0;
@@ -264,15 +264,15 @@ BEGIN
      vr_vlirftot     craplap.vllanmto%TYPE; --> IRRF para finalizar a aplicacao
      vr_vlrendmm     craplap.vlrendmm%TYPE; --> Rendimento da ultima provisao até a data do resgate
      vr_vlrvtfim     craplap.vllanmto%TYPE; --> Quantia provisao reverter para zerar a aplicação
-		 
-		 -- Variaveis usadas no retorno da procedure pc_posicao_saldo_aplicacao_pre
-		 vr_vlsldtot NUMBER;      --> Saldo Total da Aplicação
- 		 vr_vlultren NUMBER;      --> Valor Último Rendimento
-		 vr_vlsldrgt NUMBER;      --> Saldo Total para Resgate
-		 vr_vlrentot NUMBER;      --> Valor Rendimento Total
-		 vr_vlrevers NUMBER;      --> Valor de Reversão
-		 vr_percirrf NUMBER;      --> Percentual do IRRF
-		 vr_vlbascal NUMBER := 0; --> Valor Base Cálculo
+     
+     -- Variaveis usadas no retorno da procedure pc_posicao_saldo_aplicacao_pre
+     vr_vlsldtot NUMBER;      --> Saldo Total da Aplicação
+      vr_vlultren NUMBER;      --> Valor Último Rendimento
+     vr_vlsldrgt NUMBER;      --> Saldo Total para Resgate
+     vr_vlrentot NUMBER;      --> Valor Rendimento Total
+     vr_vlrevers NUMBER;      --> Valor de Reversão
+     vr_percirrf NUMBER;      --> Percentual do IRRF
+     vr_vlbascal NUMBER := 0; --> Valor Base Cálculo
 
 
      --Variavel usada para montar o indice da tabela de memoria
@@ -607,486 +607,486 @@ BEGIN
      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                            ,pr_cdcooper => pr_cdcooper
                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-																					 
+                                           
      FOR rw_crapage IN cr_crapage (pr_cdcooper => pr_cdcooper) LOOP
-		 					 
-		   --Determinar o nome do arquivo que será gerado
-			 vr_nom_arquivo := 'crrl090_'||To_Char(rw_crapage.cdagenci,'fm009');					 		   
-		 																		 
-			 --Pesquisar todas as aplicacoes
-			 FOR rw_craprda IN cr_craprda (pr_cdcooper => pr_cdcooper
-																		,pr_insaqtot => 0
-																		,pr_dtiniper => vr_dtiniper
-																		,pr_dtfimper => vr_dtfimper
-																		,pr_cdagenci => rw_crapage.cdagenci) LOOP
+                
+       --Determinar o nome do arquivo que será gerado
+       vr_nom_arquivo := 'crrl090_'||To_Char(rw_crapage.cdagenci,'fm009');                  
+                                          
+       --Pesquisar todas as aplicacoes
+       FOR rw_craprda IN cr_craprda (pr_cdcooper => pr_cdcooper
+                                    ,pr_insaqtot => 0
+                                    ,pr_dtiniper => vr_dtiniper
+                                    ,pr_dtfimper => vr_dtfimper
+                                    ,pr_cdagenci => rw_crapage.cdagenci) LOOP
 
-				 --Zerar o saldo geral
-				 vr_ger_vlsdrdca:= 0;
+         --Zerar o saldo geral
+         vr_ger_vlsdrdca:= 0;
 
-				 /* Calcular o Saldo da aplicacao ate a data do movimento */
-				 IF rw_craprda.tpaplica = 3 THEN
+         /* Calcular o Saldo da aplicacao ate a data do movimento */
+         IF rw_craprda.tpaplica = 3 THEN
 
-					 -- Consulta saldo aplicação RDCA30 (Antiga includes/b1wgen0004.i)
-					 APLI0001.pc_consul_saldo_aplic_rdca30(pr_cdcooper => pr_cdcooper         --> Cooperativa
-																								,pr_dtmvtolt => vr_dtmvtolt         --> Data do processo
-																								,pr_inproces => rw_crapdat.inproces --> Indicador do processo
-																								,pr_dtmvtopr => vr_dtmvtopr         --> Próximo dia util
-																								,pr_cdprogra => vr_cdprogra         --> Programa em execução
-																								,pr_cdagenci => vr_cdagenci_par     --> Código da agência
-																								,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
-																								,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicação RDCA
-																								,pr_nraplica => rw_craprda.nraplica --> Nro da aplicação RDCA
-																								,pr_vlsdrdca => vr_ger_vlsdrdca     --> Saldo da aplicação
-																								,pr_vlsldapl => vr_vlsldapl         --> Saldo da aplicação RDCA
-																								,pr_sldpresg => vr_sldpresg_tmp     --> Valor saldo de resgate
-																								,pr_dup_vlsdrdca => vr_dup_vlsdrdca --> Acumulo do saldo da aplicacao RDCA
-																								,pr_vldperda => vr_vldperda         --> Valor calculado da perda
-																								,pr_txaplica => vr_txaplica         --> Taxa aplicada sob o empréstimo
-																								,pr_des_reto => vr_des_erro         --> OK ou NOK
-																								,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
-					 --Se retornou erro
-					 IF vr_des_erro = 'NOK' THEN
-						 -- Tenta buscar o erro no vetor de erro
-						 IF vr_tab_erro.COUNT > 0 THEN
-							 vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-							 vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta;
-						 ELSE
-							 vr_cdcritic:= 0;
-							 vr_des_erro:= 'Retorno "NOK" na apli0001.pc_consul_saldo_aplic_rdca30 e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
-						 END IF;
-						 --Levantar Excecao
-						 RAISE vr_exc_saida;
-					 END IF;
-				 ELSIF rw_craprda.tpaplica = 5 THEN
+           -- Consulta saldo aplicação RDCA30 (Antiga includes/b1wgen0004.i)
+           APLI0001.pc_consul_saldo_aplic_rdca30(pr_cdcooper => pr_cdcooper         --> Cooperativa
+                                                ,pr_dtmvtolt => vr_dtmvtolt         --> Data do processo
+                                                ,pr_inproces => rw_crapdat.inproces --> Indicador do processo
+                                                ,pr_dtmvtopr => vr_dtmvtopr         --> Próximo dia util
+                                                ,pr_cdprogra => vr_cdprogra         --> Programa em execução
+                                                ,pr_cdagenci => vr_cdagenci_par     --> Código da agência
+                                                ,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
+                                                ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicação RDCA
+                                                ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicação RDCA
+                                                ,pr_vlsdrdca => vr_ger_vlsdrdca     --> Saldo da aplicação
+                                                ,pr_vlsldapl => vr_vlsldapl         --> Saldo da aplicação RDCA
+                                                ,pr_sldpresg => vr_sldpresg_tmp     --> Valor saldo de resgate
+                                                ,pr_dup_vlsdrdca => vr_dup_vlsdrdca --> Acumulo do saldo da aplicacao RDCA
+                                                ,pr_vldperda => vr_vldperda         --> Valor calculado da perda
+                                                ,pr_txaplica => vr_txaplica         --> Taxa aplicada sob o empréstimo
+                                                ,pr_des_reto => vr_des_erro         --> OK ou NOK
+                                                ,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
+           --Se retornou erro
+           IF vr_des_erro = 'NOK' THEN
+             -- Tenta buscar o erro no vetor de erro
+             IF vr_tab_erro.COUNT > 0 THEN
+               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+               vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta;
+             ELSE
+               vr_cdcritic:= 0;
+               vr_des_erro:= 'Retorno "NOK" na apli0001.pc_consul_saldo_aplic_rdca30 e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
+             END IF;
+             --Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+         ELSIF rw_craprda.tpaplica = 5 THEN
 
-					 -- Consulta saldo aplicação RDCA60 (Antiga includes/b1wgen0004a.i)
-					 APLI0001.pc_consul_saldo_aplic_rdca60(pr_cdcooper => pr_cdcooper         --> Cooperativa
-																								,pr_dtmvtolt => vr_dtmvtolt         --> Data do movto atual
-																								,pr_dtmvtopr => vr_dtmvtopr         --> Data do próximo movimento
-																								,pr_cdprogra => vr_cdprogra         --> Programa em execução
-																								,pr_cdagenci => vr_cdagenci_par     --> Código da agência
-																								,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
-																								,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicação RDCA
-																								,pr_nraplica => rw_craprda.nraplica --> Nro da aplicação RDCA
-																								,pr_vlsdrdca => vr_ger_vlsdrdca     --> Saldo da aplicação
-																								,pr_sldpresg => vr_sldpresg         --> Saldo para resgate
-																								,pr_des_reto => vr_des_erro         --> OK ou NOK
-																								,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
+           -- Consulta saldo aplicação RDCA60 (Antiga includes/b1wgen0004a.i)
+           APLI0001.pc_consul_saldo_aplic_rdca60(pr_cdcooper => pr_cdcooper         --> Cooperativa
+                                                ,pr_dtmvtolt => vr_dtmvtolt         --> Data do movto atual
+                                                ,pr_dtmvtopr => vr_dtmvtopr         --> Data do próximo movimento
+                                                ,pr_cdprogra => vr_cdprogra         --> Programa em execução
+                                                ,pr_cdagenci => vr_cdagenci_par     --> Código da agência
+                                                ,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
+                                                ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicação RDCA
+                                                ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicação RDCA
+                                                ,pr_vlsdrdca => vr_ger_vlsdrdca     --> Saldo da aplicação
+                                                ,pr_sldpresg => vr_sldpresg         --> Saldo para resgate
+                                                ,pr_des_reto => vr_des_erro         --> OK ou NOK
+                                                ,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
 
-					 --Se retornou erro
-					 IF vr_des_erro = 'NOK' THEN
-						 -- Tenta buscar o erro no vetor de erro
-						 IF vr_tab_erro.COUNT > 0 THEN
-							 vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-							 vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta;
-						 ELSE
-							 vr_cdcritic:= 0;
-							 vr_des_erro:= 'Retorno "NOK" na apli0001.pc_consul_saldo_aplic_rdca60 e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
-						 END IF;
-						 --Levantar Excecao
-						 RAISE vr_exc_saida;
-					 END IF;
-				 ELSE
-					 --Selecionar os tipos de captação
-					 IF NOT vr_tab_crapdtc.EXISTS(rw_craprda.tpaplica) THEN
-						 vr_cdcritic:= 346;
-						 --Descricao do erro recebe mensagam da critica
-						 vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-						 --Complementar a msg erro
-						 vr_des_compl:= ' Conta/dv: '||gene0002.fn_mask_conta(rw_craprda.nrdconta)||
-														' Nr.Aplicacao: '||rw_craprda.nraplica;
-						 -- Envio centralizado de log de erro
-						 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-																			 ,pr_ind_tipo_log => 2 -- Erro tratato
-																			 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-																													 || vr_cdprogra || ' --> '
-																													 || vr_des_erro || vr_des_compl);
-						 --volta para o inicio do for
-						 vr_cdcritic := 0;
-						 vr_des_erro := NULL;
-						 continue;
-					 ELSE
-						 --Deletar todos os erros
-						 vr_tab_erro.DELETE;
-						 --Se for uma aplicacao rdcpre
-						 IF vr_tab_crapdtc(rw_craprda.tpaplica) = 1 THEN /* RDCPRE */
+           --Se retornou erro
+           IF vr_des_erro = 'NOK' THEN
+             -- Tenta buscar o erro no vetor de erro
+             IF vr_tab_erro.COUNT > 0 THEN
+               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+               vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta;
+             ELSE
+               vr_cdcritic:= 0;
+               vr_des_erro:= 'Retorno "NOK" na apli0001.pc_consul_saldo_aplic_rdca60 e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
+             END IF;
+             --Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+         ELSE
+           --Selecionar os tipos de captação
+           IF NOT vr_tab_crapdtc.EXISTS(rw_craprda.tpaplica) THEN
+             vr_cdcritic:= 346;
+             --Descricao do erro recebe mensagam da critica
+             vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+             --Complementar a msg erro
+             vr_des_compl:= ' Conta/dv: '||gene0002.fn_mask_conta(rw_craprda.nrdconta)||
+                            ' Nr.Aplicacao: '||rw_craprda.nraplica;
+             -- Envio centralizado de log de erro
+             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                           || vr_cdprogra || ' --> '
+                                                           || vr_des_erro || vr_des_compl);
+             --volta para o inicio do for
+             vr_cdcritic := 0;
+             vr_des_erro := NULL;
+             continue;
+           ELSE
+             --Deletar todos os erros
+             vr_tab_erro.DELETE;
+             --Se for uma aplicacao rdcpre
+             IF vr_tab_crapdtc(rw_craprda.tpaplica) = 1 THEN /* RDCPRE */
 
-							 --Consultar saldo rdc pre
-							 APLI0001.pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper          --> Cooperativa
-																				,pr_nrdconta => rw_craprda.nrdconta  --> Nro da conta da aplicação RDCA
-																				,pr_nraplica => rw_craprda.nraplica  --> Nro da aplicação RDCA
-																				,pr_dtmvtolt => rw_craprda.dtvencto  --> Data do processo (Não necessariamente da CRAPDAT)
-																				,pr_dtiniper => NULL                 --> Data de início da aplicação
-																				,pr_dtfimper => NULL                 --> Data de término da aplicação
-																				,pr_txaplica => 0                    --> Taxa aplicada
-																				,pr_flggrvir => FALSE                --> Identificador se deve gravar valor insento
-																				,pr_tab_crapdat => rw_crapdat        --> Controle de Datas
-																				,pr_vlsdrdca => vr_ger_vlsdrdca      --> Saldo da aplicação pós cálculo
-																				,pr_vlrdirrf => vr_vlrdirrf          --> Valor de IR
-																				,pr_perirrgt => vr_perirrgt          --> Percentual de IR resgatado
-																				,pr_des_reto => vr_des_erro          --> OK ou NOK
-																				,pr_tab_erro => vr_tab_erro);        --> Tabela com erros
+               --Consultar saldo rdc pre
+               APLI0001.pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper          --> Cooperativa
+                                        ,pr_nrdconta => rw_craprda.nrdconta  --> Nro da conta da aplicação RDCA
+                                        ,pr_nraplica => rw_craprda.nraplica  --> Nro da aplicação RDCA
+                                        ,pr_dtmvtolt => rw_craprda.dtvencto  --> Data do processo (Não necessariamente da CRAPDAT)
+                                        ,pr_dtiniper => NULL                 --> Data de início da aplicação
+                                        ,pr_dtfimper => NULL                 --> Data de término da aplicação
+                                        ,pr_txaplica => 0                    --> Taxa aplicada
+                                        ,pr_flggrvir => FALSE                --> Identificador se deve gravar valor insento
+                                        ,pr_tab_crapdat => rw_crapdat        --> Controle de Datas
+                                        ,pr_vlsdrdca => vr_ger_vlsdrdca      --> Saldo da aplicação pós cálculo
+                                        ,pr_vlrdirrf => vr_vlrdirrf          --> Valor de IR
+                                        ,pr_perirrgt => vr_perirrgt          --> Percentual de IR resgatado
+                                        ,pr_des_reto => vr_des_erro          --> OK ou NOK
+                                        ,pr_tab_erro => vr_tab_erro);        --> Tabela com erros
 
-							 --Se retornou erro
-							 IF vr_des_erro = 'NOK' THEN
-								 -- Tenta buscar o erro no vetor de erro
-								 IF vr_tab_erro.COUNT > 0 THEN
-									 vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-									 vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta ||' Nr.Aplicacao: '||rw_craprda.nraplica;
-								 ELSE
-									 vr_cdcritic:= 0;
-									 vr_des_erro:= 'Retorno "NOK" na apli0001.pc_saldo_rdc_pre e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
-								 END IF;
-								 --Levantar Excecao
-								 RAISE vr_exc_saida;
-							 END IF;
-						 --Se for uma aplicacao rdcpos
-						 ELSIF vr_tab_crapdtc(rw_craprda.tpaplica) = 2 THEN /* RDCPOS*/
+               --Se retornou erro
+               IF vr_des_erro = 'NOK' THEN
+                 -- Tenta buscar o erro no vetor de erro
+                 IF vr_tab_erro.COUNT > 0 THEN
+                   vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                   vr_des_erro:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta ||' Nr.Aplicacao: '||rw_craprda.nraplica;
+                 ELSE
+                   vr_cdcritic:= 0;
+                   vr_des_erro:= 'Retorno "NOK" na apli0001.pc_saldo_rdc_pre e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
+                 END IF;
+                 --Levantar Excecao
+                 RAISE vr_exc_saida;
+               END IF;
+             --Se for uma aplicacao rdcpos
+             ELSIF vr_tab_crapdtc(rw_craprda.tpaplica) = 2 THEN /* RDCPOS*/
 
-							 -- Rotina de calculo do saldo das aplicacoes RDC POS para resgate com IRPF.
-							 APLI0001.pc_saldo_rgt_rdc_pos(pr_cdcooper => pr_cdcooper         --> Cooperativa
-																						,pr_cdagenci => vr_cdagenci_par     --> Código da agência
-																						,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
-																						,pr_nrctaapl => rw_craprda.nrdconta --> Nro da conta da aplicação RDC
-																						,pr_nraplres => rw_craprda.nraplica --> Nro da aplicação RDC
-																						,pr_dtmvtolt => vr_dtmvtolt         --> Data do movimento atual passado
-																						,pr_dtaplrgt => vr_dtmvtolt         --> Data do movimento atual passado
-																						,pr_vlsdorgt => 0                   --> Valor RDC
-																						,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
-																						,pr_dtinitax => vr_dtinitax         --> Data Inicial da Utilizacao da taxa da poupanca
-																						,pr_dtfimtax => vr_dtfimtax         --> Data Final da Utilizacao da taxa da poupanca
-																						,pr_vlsddrgt => vr_sldpresg         --> Valor do resgate total sem irrf ou o solicitado
-																						,pr_vlrenrgt => vr_vlrenrgt         --> Rendimento total a ser pago quando resgate total
-																						,pr_vlrdirrf => vr_vlrdirrf         --> IRRF do que foi solicitado
-																						,pr_perirrgt => vr_perirrgt         --> Percentual de aliquota para calculo do IRRF
-																						,pr_vlrgttot => vr_vlrrgtot         --> Resgate para zerar a aplicação
-																						,pr_vlirftot => vr_vlirftot         --> IRRF para finalizar a aplicacao
-																						,pr_vlrendmm => vr_vlrendmm         --> Rendimento da ultima provisao até a data do resgate
-																						,pr_vlrvtfim => vr_vlrvtfim         --> Quantia provisao reverter para zerar a aplicação
-																						,pr_des_reto => vr_des_erro         --> OK ou NOK
-																						,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
+               -- Rotina de calculo do saldo das aplicacoes RDC POS para resgate com IRPF.
+               APLI0001.pc_saldo_rgt_rdc_pos(pr_cdcooper => pr_cdcooper         --> Cooperativa
+                                            ,pr_cdagenci => vr_cdagenci_par     --> Código da agência
+                                            ,pr_nrdcaixa => vr_nrdcaixa_par     --> Número do caixa
+                                            ,pr_nrctaapl => rw_craprda.nrdconta --> Nro da conta da aplicação RDC
+                                            ,pr_nraplres => rw_craprda.nraplica --> Nro da aplicação RDC
+                                            ,pr_dtmvtolt => vr_dtmvtolt         --> Data do movimento atual passado
+                                            ,pr_dtaplrgt => vr_dtmvtolt         --> Data do movimento atual passado
+                                            ,pr_vlsdorgt => 0                   --> Valor RDC
+                                            ,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
+                                            ,pr_dtinitax => vr_dtinitax         --> Data Inicial da Utilizacao da taxa da poupanca
+                                            ,pr_dtfimtax => vr_dtfimtax         --> Data Final da Utilizacao da taxa da poupanca
+                                            ,pr_vlsddrgt => vr_sldpresg         --> Valor do resgate total sem irrf ou o solicitado
+                                            ,pr_vlrenrgt => vr_vlrenrgt         --> Rendimento total a ser pago quando resgate total
+                                            ,pr_vlrdirrf => vr_vlrdirrf         --> IRRF do que foi solicitado
+                                            ,pr_perirrgt => vr_perirrgt         --> Percentual de aliquota para calculo do IRRF
+                                            ,pr_vlrgttot => vr_vlrrgtot         --> Resgate para zerar a aplicação
+                                            ,pr_vlirftot => vr_vlirftot         --> IRRF para finalizar a aplicacao
+                                            ,pr_vlrendmm => vr_vlrendmm         --> Rendimento da ultima provisao até a data do resgate
+                                            ,pr_vlrvtfim => vr_vlrvtfim         --> Quantia provisao reverter para zerar a aplicação
+                                            ,pr_des_reto => vr_des_erro         --> OK ou NOK
+                                            ,pr_tab_erro => vr_tab_erro);       --> Tabela com erros
 
-							 --Se retornou erro
-							 IF vr_des_erro = 'NOK' THEN
-								 -- Tenta buscar o erro no vetor de erro
-								 IF vr_tab_erro.COUNT > 0 THEN
-									 vr_cdcritic:=  vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-									 vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta ||' Nr.Aplicacao: '||rw_craprda.nraplica;
-								 ELSE
-									 vr_cdcritic:= 0;
-									 vr_des_erro := 'Retorno "NOK" na apli0001.pc_saldo_rgt_rdc_pos e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
-								 END IF;
-								 --Levantar Excecao
-								 RAISE vr_exc_saida;
-							 END IF;
-							 --Se o valor do resgate > 0
-							 IF Nvl(vr_vlrrgtot,0) > 0 THEN
-								 --Valor saldo rdca recebe valor resgate
-								 vr_ger_vlsdrdca:= vr_vlrrgtot;
-							 ELSE
-								 --Valor saldo rdca recebe valor saldo rdca
-								 vr_ger_vlsdrdca:= Nvl(rw_craprda.vlsdrdca,0);
-							 END IF;
-						 END IF; --vr_tab_crapdtc(rw_craprda.tpaplica) = 1
-					 END IF; --vr_tab_crapdtc.EXISTS
-				 END IF; --rw_craprda.tpaplica = 3
+               --Se retornou erro
+               IF vr_des_erro = 'NOK' THEN
+                 -- Tenta buscar o erro no vetor de erro
+                 IF vr_tab_erro.COUNT > 0 THEN
+                   vr_cdcritic:=  vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                   vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craprda.nrdconta ||' Nr.Aplicacao: '||rw_craprda.nraplica;
+                 ELSE
+                   vr_cdcritic:= 0;
+                   vr_des_erro := 'Retorno "NOK" na apli0001.pc_saldo_rgt_rdc_pos e sem informação na pr_tab_erro, Conta: '||rw_craprda.nrdconta;
+                 END IF;
+                 --Levantar Excecao
+                 RAISE vr_exc_saida;
+               END IF;
+               --Se o valor do resgate > 0
+               IF Nvl(vr_vlrrgtot,0) > 0 THEN
+                 --Valor saldo rdca recebe valor resgate
+                 vr_ger_vlsdrdca:= vr_vlrrgtot;
+               ELSE
+                 --Valor saldo rdca recebe valor saldo rdca
+                 vr_ger_vlsdrdca:= Nvl(rw_craprda.vlsdrdca,0);
+               END IF;
+             END IF; --vr_tab_crapdtc(rw_craprda.tpaplica) = 1
+           END IF; --vr_tab_crapdtc.EXISTS
+         END IF; --rw_craprda.tpaplica = 3
 
 
-				 --Se o valor do saldo rdca
-				 IF vr_ger_vlsdrdca > 0 THEN
-					 IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) OR
-						  NOT vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(rw_craprda.dtfimper, 'ddmmyyyy'))	THEN
-							
-						 --Incrementar quantidade aplicada
-						 vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;					 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica := 1;
-						 
-						 --Acumular valor aplicado
-						 vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprda.vlaplica,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica := Nvl(rw_craprda.vlaplica,0);
-						 
-						 --Acumular total saldo rdca
-						 vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_ger_vlsdrdca,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca := Nvl(vr_ger_vlsdrdca,0);
-						 
-						 -- Data de referencia
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).dtrefere := rw_craprda.dtfimper;	 
-					 ELSE
-						 
-						 --Incrementar quantidade aplicada
-						 vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;					 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica := 
-						 NVL(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica,0) + 1;
-						 
-						 --Acumular valor aplicado
-						 vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprda.vlaplica,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica :=
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica + Nvl(rw_craprda.vlaplica,0);
-							 
-						 --Acumular total saldo rdca
-						 vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_ger_vlsdrdca,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca :=
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca + Nvl(vr_ger_vlsdrdca,0);
-						 
-						 -- Data de referencia	 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).dtrefere := rw_craprda.dtfimper;							 
-                                                                                                     					 
-					 END IF;
-					 --Montar Indice para tabela de detalhes pela data
-					 vr_index_detalhe:= To_Char(rw_craprda.dtfimper,'YYYYMMDD');
-					 --Inserir os detalhes na tabela de aniversarios
-					 IF vr_tab_detalhe.EXISTS(vr_index_detalhe) THEN
-						 vr_tab_detalhe(vr_index_detalhe).qtaplica:= vr_tab_detalhe(vr_index_detalhe).qtaplica + 1;
-						 vr_tab_detalhe(vr_index_detalhe).vlaplica:= vr_tab_detalhe(vr_index_detalhe).vlaplica + Nvl(rw_craprda.vlaplica,0);
-						 vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_ger_vlsdrdca,0);
-					 ELSE
-						 vr_tab_detalhe(vr_index_detalhe).dtrefere:= rw_craprda.dtfimper;
-						 vr_tab_detalhe(vr_index_detalhe).qtaplica:= 1;
-						 vr_tab_detalhe(vr_index_detalhe).vlaplica:= Nvl(rw_craprda.vlaplica,0);
-						 vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_ger_vlsdrdca,0);
-					 END IF;
-				 END IF;
-
-				 --Se for o ultimo registro da mesma data
-				 IF rw_craprda.qtregdata = rw_craprda.nrseqreg THEN
-
-					 --Acumular totais da quantidade aplicada para relatório geral
-					 vr_tab_tot_qtaplica(rw_craprda.cdageass):= vr_tab_tot_qtaplica(rw_craprda.cdageass) +
-																											Nvl(vr_rel_qtaplica,0);
-					 --Acumular totais de valor aplicado para relatório geral
-					 vr_tab_tot_vlaplica(rw_craprda.cdageass):= vr_tab_tot_vlaplica(rw_craprda.cdageass) +
-																											Nvl(vr_rel_vlaplica,0);
-					 --Acumular totais de valor saldo para relatório geral
-					 vr_tab_tot_vlsdrdca(rw_craprda.cdageass):= vr_tab_tot_vlsdrdca(rw_craprda.cdageass) +
-																											Nvl(vr_rel_vlsdrdca,0);
-					 --Zerar variaveis de acumulo por data
-					 vr_rel_qtaplica:= 0;
-					 vr_rel_vlaplica:= 0;
-					 vr_rel_vlsdrdca:= 0;
-				 END IF;
-
-			 END LOOP; --rw_craprda
-			 
-			 -- Busca todos os produtos de captação
-			 FOR rw_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper
-				                           ,pr_dtiniper => vr_dtiniper
-																	 ,pr_dtfimper => vr_dtfimper
-																	 ,pr_cdagenci => rw_crapage.cdagenci)LOOP
-																	 
-				 -- Abre cursor de cadastro de produtos
-         OPEN cr_crapcpc(rw_craprac.cdprodut);
-				 FETCH cr_crapcpc INTO rw_crapcpc;
-				 
-				 -- Se não encontrar levantar exceção
-				 IF cr_crapcpc%NOTFOUND THEN
-					 vr_cdcritic := 0;
-           vr_des_erro :=	'Produto de captacao nao encontrado';
-					 -- Fecha cursor
-					 CLOSE cr_crapcpc;
-					 RAISE vr_exc_saida;			 
-				 END IF;
-				 -- Fecha cursor				 
-				 CLOSE cr_crapcpc;
-				 
-				 IF rw_crapcpc.idtippro = 1 THEN -- Pré-fixada
-					 -- Calculo para obter saldo atualizado de aplicacao pre
-				   APLI0006.pc_posicao_saldo_aplicacao_pre(pr_cdcooper => pr_cdcooper           --> Código da Cooperativa
-																									,pr_nrdconta => rw_craprac.nrdconta   --> Número da Conta
-																									,pr_nraplica => rw_craprac.nraplica   --> Número da Aplicação
-																									,pr_dtiniapl => rw_craprac.dtmvtolt   --> Data de Início da Aplicação
-																									,pr_txaplica => rw_craprac.txaplica   --> Taxa da Aplicação
-																									,pr_idtxfixa => rw_crapcpc.idtxfixa   --> Taxa Fixa (1-SIM/2-NAO)
-																									,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
-																									,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
-																									,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
-																									,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
-																									,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
-																									,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
-																									,pr_vlbascal => vr_vlbascal           --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
-																									,pr_vlsldtot => vr_vlsldtot           --> Saldo Total da Aplicação
-																									,pr_vlsldrgt => vr_vlsldrgt           --> Saldo Total para Resgate
-																									,pr_vlultren => vr_vlultren           --> Valor Último Rendimento
-																									,pr_vlrentot => vr_vlrentot           --> Valor Rendimento Total
-																									,pr_vlrevers => vr_vlrevers           --> Valor de Reversão
-																									,pr_vlrdirrf => vr_vlrdirrf           --> Valor do IRRF
-																									,pr_percirrf => vr_percirrf           --> Percentual do IRRF
-																									,pr_cdcritic => vr_cdcritic           --> Código da crítica
-																									,pr_dscritic => vr_des_erro);         --> Descrição da crítica
-					 -- Se procedure retornou erro																				
-           IF vr_cdcritic <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
-						 vr_des_erro := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre -> ' || vr_des_erro;
-						 -- Levanta exceção
-						 RAISE vr_exc_saida;
-					 END IF;
-				 ELSIF rw_crapcpc.idtippro = 2 THEN -- Pós-fixada
-					 
-				   APLI0006.pc_posicao_saldo_aplicacao_pos(pr_cdcooper => pr_cdcooper           --> Código da Cooperativa
-																									,pr_nrdconta => rw_craprac.nrdconta   --> Número da Conta
-																									,pr_nraplica => rw_craprac.nraplica   --> Número da Aplicação
-																									,pr_dtiniapl => rw_craprac.dtmvtolt   --> Data de Início da Aplicação
-																									,pr_txaplica => rw_craprac.txaplica   --> Taxa da Aplicação
-																									,pr_idtxfixa => rw_crapcpc.idtxfixa   --> Taxa Fixa (1-SIM/2-NAO)
-																									,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
-																									,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
-																									,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
-																									,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
-																									,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
-																									,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
-																									,pr_vlbascal => vr_vlbascal           --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
-																									,pr_vlsldtot => vr_vlsldtot           --> Saldo Total da Aplicação
-																									,pr_vlsldrgt => vr_vlsldrgt           --> Saldo Total para Resgate
-																									,pr_vlultren => vr_vlultren           --> Valor Último Rendimento
-																									,pr_vlrentot => vr_vlrentot           --> Valor Rendimento Total
-																									,pr_vlrevers => vr_vlrevers           --> Valor de Reversão
-																									,pr_vlrdirrf => vr_vlrdirrf           --> Valor do IRRF
-																									,pr_percirrf => vr_percirrf           --> Percentual do IRRF
-																									,pr_cdcritic => vr_cdcritic           --> Código da crítica
-																									,pr_dscritic => vr_des_erro);         --> Descrição da crítica
-																									
-					 -- Se procedure retornou erro																				
-           IF vr_cdcritic <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
-						 vr_des_erro := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos -> ' || vr_des_erro;
-						 -- Levanta exceção
-						 RAISE vr_exc_saida;
-					 END IF;
-				 
-				 END IF;
-				 
-				 --Se o valor do saldo total para resgate
-				 IF vr_vlsldrgt > 0 THEN
-					 IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) OR
-						  NOT vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(rw_craprac.dtvencto, 'ddmmyyyy'))	THEN
-							
-						 --Incrementar quantidade aplicada
-						 vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;					 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica := 1;
-						 
-						 --Acumular valor aplicado
-						 vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprac.vlaplica,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica := Nvl(rw_craprac.vlaplica,0);
-						 
-						 --Acumular total saldo rdca
-						 vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_vlsldrgt,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca := Nvl(vr_vlsldrgt,0);
-						 
-						 -- Data de referencia
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).dtrefere := rw_craprac.dtvencto;	 
-					 ELSE
-						 
-						 --Incrementar quantidade aplicada
-						 vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;					 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica := 
-						 NVL(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica,0) + 1;
-						 
-						 --Acumular valor aplicado
-						 vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprac.vlaplica,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica :=
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica + Nvl(rw_craprac.vlaplica,0);
-							 
-						 --Acumular total saldo
-						 vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_vlsldrgt,0);
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca :=
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca + Nvl(vr_vlsldrgt,0);
-						 
-						 -- Data de referencia	 
-						 vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).dtrefere := rw_craprac.dtvencto;							 
-                                                                                                     					 
-					 END IF;
-					 
-					 --Montar Indice para tabela de detalhes pela data
-					 vr_index_detalhe:= To_Char(rw_craprac.dtvencto,'YYYYMMDD');
-					 --Inserir os detalhes na tabela de aniversarios
-					 IF vr_tab_detalhe.EXISTS(vr_index_detalhe) THEN
-						 vr_tab_detalhe(vr_index_detalhe).qtaplica:= vr_tab_detalhe(vr_index_detalhe).qtaplica + 1;
-						 vr_tab_detalhe(vr_index_detalhe).vlaplica:= vr_tab_detalhe(vr_index_detalhe).vlaplica + Nvl(rw_craprac.vlaplica,0);
-						 vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_vlsldrgt,0);
-					 ELSE
-						 vr_tab_detalhe(vr_index_detalhe).dtrefere:= rw_craprac.dtvencto;
-						 vr_tab_detalhe(vr_index_detalhe).qtaplica:= 1;
-						 vr_tab_detalhe(vr_index_detalhe).vlaplica:= Nvl(rw_craprac.vlaplica,0);
-						 vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_vlsldrgt,0);
-					 END IF;
-					 
-				 END IF;
+         --Se o valor do saldo rdca
+         IF vr_ger_vlsdrdca > 0 THEN
+           IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) OR
+              NOT vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(rw_craprda.dtfimper, 'ddmmyyyy'))  THEN
+              
+             --Incrementar quantidade aplicada
+             vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;           
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica := 1;
+             
+             --Acumular valor aplicado
+             vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprda.vlaplica,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica := Nvl(rw_craprda.vlaplica,0);
+             
+             --Acumular total saldo rdca
+             vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_ger_vlsdrdca,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca := Nvl(vr_ger_vlsdrdca,0);
+             
+             -- Data de referencia
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).dtrefere := rw_craprda.dtfimper;   
+           ELSE
+             
+             --Incrementar quantidade aplicada
+             vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;           
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica := 
+             NVL(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).qtaplica,0) + 1;
+             
+             --Acumular valor aplicado
+             vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprda.vlaplica,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica :=
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlaplica + Nvl(rw_craprda.vlaplica,0);
+               
+             --Acumular total saldo rdca
+             vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_ger_vlsdrdca,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca :=
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).vlsdrdca + Nvl(vr_ger_vlsdrdca,0);
+             
+             -- Data de referencia   
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprda.dtfimper, 'ddmmyyyy')).dtrefere := rw_craprda.dtfimper;               
+                                                                                                                
+           END IF;
+           --Montar Indice para tabela de detalhes pela data
+           vr_index_detalhe:= To_Char(rw_craprda.dtfimper,'YYYYMMDD');
+           --Inserir os detalhes na tabela de aniversarios
+           IF vr_tab_detalhe.EXISTS(vr_index_detalhe) THEN
+             vr_tab_detalhe(vr_index_detalhe).qtaplica:= vr_tab_detalhe(vr_index_detalhe).qtaplica + 1;
+             vr_tab_detalhe(vr_index_detalhe).vlaplica:= vr_tab_detalhe(vr_index_detalhe).vlaplica + Nvl(rw_craprda.vlaplica,0);
+             vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_ger_vlsdrdca,0);
+           ELSE
+             vr_tab_detalhe(vr_index_detalhe).dtrefere:= rw_craprda.dtfimper;
+             vr_tab_detalhe(vr_index_detalhe).qtaplica:= 1;
+             vr_tab_detalhe(vr_index_detalhe).vlaplica:= Nvl(rw_craprda.vlaplica,0);
+             vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_ger_vlsdrdca,0);
+           END IF;
+         END IF;
 
          --Se for o ultimo registro da mesma data
-				 IF rw_craprac.qtregdata = rw_craprac.nrseqreg THEN
+         IF rw_craprda.qtregdata = rw_craprda.nrseqreg THEN
 
-					 --Acumular totais da quantidade aplicada para relatório geral
-					 vr_tab_tot_qtaplica(rw_craprac.cdagenci):= vr_tab_tot_qtaplica(rw_craprac.cdagenci) +
-																											Nvl(vr_rel_qtaplica,0);
-					 --Acumular totais de valor aplicado para relatório geral
-					 vr_tab_tot_vlaplica(rw_craprac.cdagenci):= vr_tab_tot_vlaplica(rw_craprac.cdagenci) +
-																											Nvl(vr_rel_vlaplica,0);
-					 --Acumular totais de valor saldo para relatório geral
-					 vr_tab_tot_vlsdrdca(rw_craprac.cdagenci):= vr_tab_tot_vlsdrdca(rw_craprac.cdagenci) +
-																											Nvl(vr_rel_vlsdrdca,0);
-					 --Zerar variaveis de acumulo por data
-					 vr_rel_qtaplica:= 0;
-					 vr_rel_vlaplica:= 0;
-					 vr_rel_vlsdrdca:= 0;
-				 END IF;
-				 				 
-			 END LOOP;
+           --Acumular totais da quantidade aplicada para relatório geral
+           vr_tab_tot_qtaplica(rw_craprda.cdageass):= vr_tab_tot_qtaplica(rw_craprda.cdageass) +
+                                                      Nvl(vr_rel_qtaplica,0);
+           --Acumular totais de valor aplicado para relatório geral
+           vr_tab_tot_vlaplica(rw_craprda.cdageass):= vr_tab_tot_vlaplica(rw_craprda.cdageass) +
+                                                      Nvl(vr_rel_vlaplica,0);
+           --Acumular totais de valor saldo para relatório geral
+           vr_tab_tot_vlsdrdca(rw_craprda.cdageass):= vr_tab_tot_vlsdrdca(rw_craprda.cdageass) +
+                                                      Nvl(vr_rel_vlsdrdca,0);
+           --Zerar variaveis de acumulo por data
+           vr_rel_qtaplica:= 0;
+           vr_rel_vlaplica:= 0;
+           vr_rel_vlsdrdca:= 0;
+         END IF;
+
+       END LOOP; --rw_craprda
+       
+       -- Busca todos os produtos de captação
+       FOR rw_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper
+                                   ,pr_dtiniper => vr_dtiniper
+                                   ,pr_dtfimper => vr_dtfimper
+                                   ,pr_cdagenci => rw_crapage.cdagenci)LOOP
+                                   
+         -- Abre cursor de cadastro de produtos
+         OPEN cr_crapcpc(rw_craprac.cdprodut);
+         FETCH cr_crapcpc INTO rw_crapcpc;
+         
+         -- Se não encontrar levantar exceção
+         IF cr_crapcpc%NOTFOUND THEN
+           vr_cdcritic := 0;
+           vr_des_erro :=  'Produto de captacao nao encontrado';
+           -- Fecha cursor
+           CLOSE cr_crapcpc;
+           RAISE vr_exc_saida;       
+         END IF;
+         -- Fecha cursor         
+         CLOSE cr_crapcpc;
+         
+         IF rw_crapcpc.idtippro = 1 THEN -- Pré-fixada
+           -- Calculo para obter saldo atualizado de aplicacao pre
+           APLI0006.pc_posicao_saldo_aplicacao_pre(pr_cdcooper => pr_cdcooper           --> Código da Cooperativa
+                                                  ,pr_nrdconta => rw_craprac.nrdconta   --> Número da Conta
+                                                  ,pr_nraplica => rw_craprac.nraplica   --> Número da Aplicação
+                                                  ,pr_dtiniapl => rw_craprac.dtmvtolt   --> Data de Início da Aplicação
+                                                  ,pr_txaplica => rw_craprac.txaplica   --> Taxa da Aplicação
+                                                  ,pr_idtxfixa => rw_crapcpc.idtxfixa   --> Taxa Fixa (1-SIM/2-NAO)
+                                                  ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
+                                                  ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
+                                                  ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                  ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
+                                                  ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
+                                                  ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
+                                                  ,pr_vlbascal => vr_vlbascal           --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
+                                                  ,pr_vlsldtot => vr_vlsldtot           --> Saldo Total da Aplicação
+                                                  ,pr_vlsldrgt => vr_vlsldrgt           --> Saldo Total para Resgate
+                                                  ,pr_vlultren => vr_vlultren           --> Valor Último Rendimento
+                                                  ,pr_vlrentot => vr_vlrentot           --> Valor Rendimento Total
+                                                  ,pr_vlrevers => vr_vlrevers           --> Valor de Reversão
+                                                  ,pr_vlrdirrf => vr_vlrdirrf           --> Valor do IRRF
+                                                  ,pr_percirrf => vr_percirrf           --> Percentual do IRRF
+                                                  ,pr_cdcritic => vr_cdcritic           --> Código da crítica
+                                                  ,pr_dscritic => vr_des_erro);         --> Descrição da crítica
+           -- Se procedure retornou erro                                        
+           IF vr_cdcritic <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
+             vr_des_erro := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre -> ' || vr_des_erro;
+             -- Levanta exceção
+             RAISE vr_exc_saida;
+           END IF;
+         ELSIF rw_crapcpc.idtippro = 2 THEN -- Pós-fixada
+           
+           APLI0006.pc_posicao_saldo_aplicacao_pos(pr_cdcooper => pr_cdcooper           --> Código da Cooperativa
+                                                  ,pr_nrdconta => rw_craprac.nrdconta   --> Número da Conta
+                                                  ,pr_nraplica => rw_craprac.nraplica   --> Número da Aplicação
+                                                  ,pr_dtiniapl => rw_craprac.dtmvtolt   --> Data de Início da Aplicação
+                                                  ,pr_txaplica => rw_craprac.txaplica   --> Taxa da Aplicação
+                                                  ,pr_idtxfixa => rw_crapcpc.idtxfixa   --> Taxa Fixa (1-SIM/2-NAO)
+                                                  ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
+                                                  ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
+                                                  ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                  ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
+                                                  ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
+                                                  ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
+                                                  ,pr_vlbascal => vr_vlbascal           --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
+                                                  ,pr_vlsldtot => vr_vlsldtot           --> Saldo Total da Aplicação
+                                                  ,pr_vlsldrgt => vr_vlsldrgt           --> Saldo Total para Resgate
+                                                  ,pr_vlultren => vr_vlultren           --> Valor Último Rendimento
+                                                  ,pr_vlrentot => vr_vlrentot           --> Valor Rendimento Total
+                                                  ,pr_vlrevers => vr_vlrevers           --> Valor de Reversão
+                                                  ,pr_vlrdirrf => vr_vlrdirrf           --> Valor do IRRF
+                                                  ,pr_percirrf => vr_percirrf           --> Percentual do IRRF
+                                                  ,pr_cdcritic => vr_cdcritic           --> Código da crítica
+                                                  ,pr_dscritic => vr_des_erro);         --> Descrição da crítica
+                                                  
+           -- Se procedure retornou erro                                        
+           IF vr_cdcritic <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
+             vr_des_erro := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos -> ' || vr_des_erro;
+             -- Levanta exceção
+             RAISE vr_exc_saida;
+           END IF;
+         
+         END IF;
+         
+         --Se o valor do saldo total para resgate
+         IF vr_vlsldrgt > 0 THEN
+           IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) OR
+              NOT vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(rw_craprac.dtvencto, 'ddmmyyyy'))  THEN
+              
+             --Incrementar quantidade aplicada
+             vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;           
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica := 1;
+             
+             --Acumular valor aplicado
+             vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprac.vlaplica,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica := Nvl(rw_craprac.vlaplica,0);
+             
+             --Acumular total saldo rdca
+             vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_vlsldrgt,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca := Nvl(vr_vlsldrgt,0);
+             
+             -- Data de referencia
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).dtrefere := rw_craprac.dtvencto;   
+           ELSE
+             
+             --Incrementar quantidade aplicada
+             vr_rel_qtaplica:= Nvl(vr_rel_qtaplica,0) + 1;           
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica := 
+             NVL(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).qtaplica,0) + 1;
+             
+             --Acumular valor aplicado
+             vr_rel_vlaplica:= Nvl(vr_rel_vlaplica,0) + Nvl(rw_craprac.vlaplica,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica :=
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlaplica + Nvl(rw_craprac.vlaplica,0);
+               
+             --Acumular total saldo
+             vr_rel_vlsdrdca:= Nvl(vr_rel_vlsdrdca,0) + Nvl(vr_vlsldrgt,0);
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca :=
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).vlsdrdca + Nvl(vr_vlsldrgt,0);
+             
+             -- Data de referencia   
+             vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(rw_craprac.dtvencto, 'ddmmyyyy')).dtrefere := rw_craprac.dtvencto;               
+                                                                                                                
+           END IF;
+           
+           --Montar Indice para tabela de detalhes pela data
+           vr_index_detalhe:= To_Char(rw_craprac.dtvencto,'YYYYMMDD');
+           --Inserir os detalhes na tabela de aniversarios
+           IF vr_tab_detalhe.EXISTS(vr_index_detalhe) THEN
+             vr_tab_detalhe(vr_index_detalhe).qtaplica:= vr_tab_detalhe(vr_index_detalhe).qtaplica + 1;
+             vr_tab_detalhe(vr_index_detalhe).vlaplica:= vr_tab_detalhe(vr_index_detalhe).vlaplica + Nvl(rw_craprac.vlaplica,0);
+             vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= vr_tab_detalhe(vr_index_detalhe).vlsdrdca + Nvl(vr_vlsldrgt,0);
+           ELSE
+             vr_tab_detalhe(vr_index_detalhe).dtrefere:= rw_craprac.dtvencto;
+             vr_tab_detalhe(vr_index_detalhe).qtaplica:= 1;
+             vr_tab_detalhe(vr_index_detalhe).vlaplica:= Nvl(rw_craprac.vlaplica,0);
+             vr_tab_detalhe(vr_index_detalhe).vlsdrdca:= Nvl(vr_vlsldrgt,0);
+           END IF;
+           
+         END IF;
+
+         --Se for o ultimo registro da mesma data
+         IF rw_craprac.qtregdata = rw_craprac.nrseqreg THEN
+
+           --Acumular totais da quantidade aplicada para relatório geral
+           vr_tab_tot_qtaplica(rw_craprac.cdagenci):= vr_tab_tot_qtaplica(rw_craprac.cdagenci) +
+                                                      Nvl(vr_rel_qtaplica,0);
+           --Acumular totais de valor aplicado para relatório geral
+           vr_tab_tot_vlaplica(rw_craprac.cdagenci):= vr_tab_tot_vlaplica(rw_craprac.cdagenci) +
+                                                      Nvl(vr_rel_vlaplica,0);
+           --Acumular totais de valor saldo para relatório geral
+           vr_tab_tot_vlsdrdca(rw_craprac.cdagenci):= vr_tab_tot_vlsdrdca(rw_craprac.cdagenci) +
+                                                      Nvl(vr_rel_vlsdrdca,0);
+           --Zerar variaveis de acumulo por data
+           vr_rel_qtaplica:= 0;
+           vr_rel_vlaplica:= 0;
+           vr_rel_vlsdrdca:= 0;
+         END IF;
+                  
+       END LOOP;
 
        IF NOT vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) THEN
-				 CONTINUE;
-			 END IF;
-			 
-			 -- Inicializar o CLOB
-			 dbms_lob.createtemporary(vr_des_xml, TRUE);
-			 dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);			 
-			 
-			 -- Inicilizar as informações do XML
-			 pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl090>'||
-											'<agencia cdagenci="'||To_Char(rw_crapage.cdagenci,'fm009')||
-											' - '||rw_crapage.nmresage||'">');
-			 
-			 -- For para percorrer data de inicio até data final
-			 FOR rw_dtrefere IN to_number(to_char(vr_dtiniper, 'j'))..to_number(to_char(vr_dtfimper,'j')) LOOP
-				 
-			   IF vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) AND
-						vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy'))	THEN
-			 
-					 IF Nvl(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).qtaplica,0) > 0 THEN
-						 --Escrever informacoes da linha de credito no arquivo XML						 						 
-						 pc_escreve_xml('<aplica>
-															 <dtfimper>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).dtrefere,'DD/MM/YYYY')||'</dtfimper>
-															 <qtaplica>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).qtaplica,'999g990')||'</qtaplica>
-															 <vlaplica>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).vlaplica,'fm999g999g999g990d00')||'</vlaplica>
-															 <vlsdrdca>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).vlsdrdca,'fm999g999g999g990d00')||'</vlsdrdca>
-														 </aplica>');             
-														 
-					 END IF;
-				 END IF;
-					 
-			 END LOOP;
-			 			 
-			 --Finaliza o arquivo xml
-			 pc_escreve_xml('</agencia></crrl090>');  														 
-			 -- Efetuar solicitação de geração de relatório --
-			 gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
-																	,pr_cdprogra  => vr_cdprogra         --> Programa chamador
-																	,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
-																	,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
-																	,pr_dsxmlnode => '/crrl090/agencia/aplica' --> Nó base do XML para leitura dos dados
-																	,pr_dsjasper  => 'crrl090.jasper'    --> Arquivo de layout do iReport
-																	,pr_dsparams  => NULL                --> Sem parametros
-																	,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final com código da agência
-																	,pr_qtcoluna  => 132                 --> 132 colunas
-																	,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
-																	,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
-																	,pr_flg_gerar => 'N'                 --> gerar PDF
-																	,pr_des_erro  => vr_des_erro);       --> Saída com erro
-			 -- Liberando a memória alocada pro CLOB
-			 dbms_lob.close(vr_des_xml);
-			 dbms_lob.freetemporary(vr_des_xml);
-			 -- Testar se houve erro
-			 IF vr_des_erro IS NOT NULL THEN
-				 -- Gerar exceção
-				 RAISE vr_exc_saida;
-			 END IF;
-		 END LOOP; --rw_crapage
+         CONTINUE;
+       END IF;
+       
+       -- Inicializar o CLOB
+       dbms_lob.createtemporary(vr_des_xml, TRUE);
+       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);       
+       
+       -- Inicilizar as informações do XML
+       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl090>'||
+                      '<agencia cdagenci="'||To_Char(rw_crapage.cdagenci,'fm009')||
+                      ' - '||rw_crapage.nmresage||'">');
+       
+       -- For para percorrer data de inicio até data final
+       FOR rw_dtrefere IN to_number(to_char(vr_dtiniper, 'j'))..to_number(to_char(vr_dtfimper,'j')) LOOP
+         
+         IF vr_tab_detalhe_pa.EXISTS(rw_crapage.cdagenci) AND
+            vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data.EXISTS(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy'))  THEN
+       
+           IF Nvl(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).qtaplica,0) > 0 THEN
+             --Escrever informacoes da linha de credito no arquivo XML                          
+             pc_escreve_xml('<aplica>
+                               <dtfimper>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).dtrefere,'DD/MM/YYYY')||'</dtfimper>
+                               <qtaplica>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).qtaplica,'999g990')||'</qtaplica>
+                               <vlaplica>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).vlaplica,'fm999g999g999g990d00')||'</vlaplica>
+                               <vlsdrdca>'||To_Char(vr_tab_detalhe_pa(rw_crapage.cdagenci).vr_tab_detalhe_data(to_char(to_date(rw_dtrefere,'j'), 'ddmmyyyy')).vlsdrdca,'fm999g999g999g990d00')||'</vlsdrdca>
+                             </aplica>');             
+                             
+           END IF;
+         END IF;
+           
+       END LOOP;
+              
+       --Finaliza o arquivo xml
+       pc_escreve_xml('</agencia></crrl090>');                               
+       -- Efetuar solicitação de geração de relatório --
+       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
+                                  ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
+                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                  ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
+                                  ,pr_dsxmlnode => '/crrl090/agencia/aplica' --> Nó base do XML para leitura dos dados
+                                  ,pr_dsjasper  => 'crrl090.jasper'    --> Arquivo de layout do iReport
+                                  ,pr_dsparams  => NULL                --> Sem parametros
+                                  ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final com código da agência
+                                  ,pr_qtcoluna  => 132                 --> 132 colunas
+                                  ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
+                                  ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
+                                  ,pr_flg_gerar => 'N'                 --> gerar PDF
+                                  ,pr_des_erro  => vr_des_erro);       --> Saída com erro
+       -- Liberando a memória alocada pro CLOB
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);
+       -- Testar se houve erro
+       IF vr_des_erro IS NOT NULL THEN
+         -- Gerar exceção
+         RAISE vr_exc_saida;
+       END IF;
+     END LOOP; --rw_crapage
 
      --Executar procedure geração relatorio crrl090 totalizador
      pc_imprime_crrl090_total (pr_des_erro => vr_des_erro);
@@ -1146,4 +1146,4 @@ BEGIN
    END;
  END pc_crps110;
 /
-
+/
