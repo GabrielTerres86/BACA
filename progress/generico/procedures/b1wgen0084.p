@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 29/12/2017
 
     Dados referentes ao programa:
 
@@ -232,7 +232,7 @@
               29/06/2015 - Ajuste na passagem de parametros da procedure
                            "obtem_emprestimo_risco". (James)
                            											 
-			  10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
+			        10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
                            tratar operacoes de portabilidade de credito. (Reinert)
 
               30/09/2015 - Desenvolvimento do Projeto 215 - Estorno. (James/Reinert)
@@ -267,8 +267,8 @@
                            apenas os antigos e impactando na geracao do rating.
                            Heitor (Mouts)
 
-			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
-			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
+			        04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
+			                     para o contrato de empréstimo (Renato Darosci - Supero) - M326
               28/09/2016 - Incluido verificacao de contratos de acordos na procedure
 						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
                            Prj. 302 (Jean Michel).
@@ -285,6 +285,10 @@
                            
               27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
                            para prejuizo. (Oscar)
+                           
+              28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
+              
+              29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
                            
 ............................................................................. */
 
@@ -4443,7 +4447,7 @@ PROCEDURE transf_contrato_prejuizo.
                         WHERE crapris.cdcooper = par_cdcooper     AND
                               crapris.nrdconta = par_nrdconta     AND
                               crapris.nrctremp = par_nrctremp     AND
-                              crapris.dtrefere = crapdat.dtultdma AND
+                              crapris.dtrefere = crapdat.dtmvtoan AND
                               crapris.cdorigem = 3                AND
                               crapris.inddocto = 1
                               NO-LOCK: END.
@@ -4947,7 +4951,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
 
     TRANSFERE:
     DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:
-
+    
         FOR FIRST crapepr
             WHERE crapepr.cdcooper = par_cdcooper
               AND crapepr.nrdconta = par_nrdconta
@@ -4971,20 +4975,20 @@ PROCEDURE desfaz_transferencia_prejuizo.
         END.
         ELSE
         DO:
-
-            IF crapepr.dtprejuz <> par_dtmvtolt THEN
+        
+         IF crapepr.dtprejuz <> par_dtmvtolt THEN
             DO:
                 ASSIGN aux_cdcritic = 0
                        aux_dscritic = "Data de Envio Prejuizo diferente Data Atual!".
 
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT 1, /* nrdcaixa  */
-                               INPUT 1, /* sequencia */
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT 1, /* nrdcaixa  */
+                                   INPUT 1, /* sequencia */
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
 
-                RETURN "NOK".
+                    RETURN "NOK".
             END.
 
             ASSIGN aux_cdhistor[1] = 1732  /* FINANCIAMENTO PRE-FIXADO TRANSFERIDO PARA PREJUIZO */
@@ -5131,7 +5135,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
-                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta
