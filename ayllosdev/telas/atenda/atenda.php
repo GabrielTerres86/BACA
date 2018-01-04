@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 28/03/2017
+ Data : Julho/2007                   Última Alteração: 08/08/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -57,7 +57,11 @@
 			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
 
 			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
-			 
+			 															 
+             26/06/2017 - Incluido mt_rand na chamada do script menu.js (Jonata - RKAM P364)
+									   
+             14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
+
 			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
 
@@ -94,7 +98,7 @@ setVarSession("rotinasTela", $rotinasTela);
         <script type="text/javascript" src="../../scripts/dimensions.js"></script>
         <script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
-        <script type="text/javascript" src="../../scripts/menu.js"></script>
+        <script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.core.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
@@ -411,6 +415,19 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot31" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
+																						  
+																						  <div class="bloco_full">
+
+																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
+																						     <a tabindex="39 name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <p id="valueRot32" class="txtNormal">&nbsp;</p>
+																							</div>
+																							
+																							<div class="bloco_line" onMouseOver="focoRotina(33, true);" onMouseOut="focoRotina(33, false);">
+																						     <a tabindex="40" name="40" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
+																							</div>
+																						  </div>
 																						  																
 																						</td>
 																					</tr>																			
@@ -440,12 +457,17 @@ setVarSession("rotinasTela", $rotinasTela);
 	var nrdconta           = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
 	var flgcadas           = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
 	var executandoProdutos = '<? echo $_POST['executandoProdutos']; ?>'; // Se esta sendo rodada a rotina de Produtos
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var nmtelant = '<? echo $_POST['nmtelant']; ?>'; 					 // Nome da tela anterior chamadora
 	var produtosTelasServicos = new Array();							 // Rotinas essencias a serem chamadas via PRODUTOS
 	var produtosTelasServicosAdicionais = new Array();	                 // Rotinas adicionais a serem chamadas via PRODUTOS
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
 	var atualizarServicos = [];											 // Lista de produtos a atualizar	
 	var flgProdutos        = false; 									 // Verificar se ja entrou na rotina PRODUTOS apos vir da MATRIC/CONTAS
 	
-
 	// Variaveis de controle para uso da rotina Produtos	
 	if (executandoProdutos == '') {
 		var executandoProdutosServicos = false;
@@ -481,8 +503,22 @@ setVarSession("rotinasTela", $rotinasTela);
 		executandoProdutos = true;
 	}
 	
-	if (nrdconta != '') {
+	if (executandoImpedimentos){
+		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
+		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
+		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
+		var posicao = '<? echo $_POST['posicao']; ?>';
+		produtosCancM = produtos.split("|");		
+		produtosCancMAtenda = produtosAtenda.split("|");
+		produtosCancMContas = produtosContas.split("|");
+		produtosCancMCheque = produtosCheque.split("|");
+	}
+
+	if (nrdconta != '' && executandoImpedimentos == '') {
 		 $("#nrdconta","#frmCabAtenda").val(nrdconta);
 		 flgProdutos = true;		 
+	} else if (nrdconta != '' && executandoImpedimentos) {
+		$("#nrdconta","#frmCabAtenda").val(nrdconta);		
 	}
 </script>
