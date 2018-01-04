@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 07/07/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
 
     Dados referentes ao programa:
 
@@ -284,6 +284,10 @@
 
               28/07/2017 - Ajuste na procedure valida_dados_efetivacao_proposta para nao validar
                            o capital minimo para as cessoes de credito (Anderson).
+                           
+              27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
+                           para prejuizo. (Oscar)
+                           
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2620,6 +2624,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
         END.
     END.
 
+/*
     /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
     IF   crawepr.cdlcremp = 100  THEN
          DO:
@@ -2675,6 +2680,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                        RETURN "NOK".
                    END.
          END.
+         */
 
     /* Condicao para a Finalidade for Cessao de Credito */
     FOR FIRST crapfin FIELDS(tpfinali)
@@ -4551,6 +4557,7 @@ PROCEDURE transf_contrato_prejuizo.
        END.
             
        /* Verificacao de contrato de acordo */  
+       /*
       
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4602,6 +4609,7 @@ PROCEDURE transf_contrato_prejuizo.
            RETURN "NOK".
              
        END.
+       */
           
        /* Fim verificacao contrato acordo */     
           
@@ -4620,7 +4628,7 @@ PROCEDURE transf_contrato_prejuizo.
            /* Precisa estar 181 dias com risco em H */
            ASSIGN aux_qtdiaris = par_dtmvtolt - crapris.dtdrisco.
            
-           IF crapris.innivris = 9 AND aux_qtdiaris >= 181 THEN
+           IF crapris.innivris = 9 AND aux_qtdiaris > 179 THEN
            DO:
                FOR FIRST crapepr
                    WHERE crapepr.cdcooper = par_cdcooper
