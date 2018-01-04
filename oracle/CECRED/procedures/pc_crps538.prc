@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 26/09/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 03/01/2018
 
    Dados referentes ao programa:
 
@@ -381,6 +381,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             Títulos estavam sendo devolvidos com a crítica 63.
                             (SD#764044-AJFink)
                             
+               03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+                            periodo de convivencia será tratado por faixa de valores
+                           (Douglas - Chamado 823963)
+
    .............................................................................*/
 
      DECLARE
@@ -3162,7 +3166,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  --> Se cobrança ja esta na regra de rollout da nova plataforma de cobrança, 
                  IF vr_flgdnpcb = 1 
                  --> e esta fora do periodo de convivencia /*SD#764044*/
-                 AND npcb0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt) = 0 THEN                                      
+                 AND npcb0001.fn_valid_periodo_conviv (pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                      ,pr_vltitulo => rw_crapcob.vltitulo) = 0 THEN                                      
                    
                    cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                        pr_de_campo => substr(vr_dscodbar_ori,6,4),

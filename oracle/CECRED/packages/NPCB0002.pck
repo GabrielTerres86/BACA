@@ -105,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: 09/11/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 03/01/2018
 
       Dados referentes ao programa:
 
@@ -117,6 +117,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
 
                   09/11/2017 - Inclusão de chamada da procedure pc_libera_sessao_sqlserver_npc.
                                (SD#791193 - AJFink)
+
+                  03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+                               periodo de convivencia será tratado por faixa de valores
+                               (Douglas - Chamado 823963)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -424,7 +428,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         END IF;
       END IF;
       
-      vr_flconviv := NPCB0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt);
+      -- Valor do titulo é o mesmo utilizado na pc_consultar_titulo_cip
+      vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                      ,pr_vltitulo => TO_NUMBER(SUBSTR(gene0002.fn_mask(pr_titulo5,'99999999999999'),5,10)) / 100);
       
       -- verificar se autoriza pagto divergente
       IF rw_crapcob.inpagdiv = 0 THEN
@@ -974,7 +980,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        --> Se retornou critica de titulo nao registrao
        IF vr_cdcritic_req = 950 THEN
          --> e ainda esta no periodo de convivencia
-         IF NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt) = 1 THEN
+         IF NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
+                                             ,pr_vltitulo => NVL(vr_vlboleto,TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),5,10)) / 100)) = 1 THEN
            --> Garantir a gravação da tabela tbcobran_consulta_titulo
            COMMIT;
            
@@ -1429,13 +1436,15 @@ end;';
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Setembro/2017.                   Ultima atualizacao: 
+      Data     : Setembro/2017.                   Ultima atualizacao: 03/01/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para validar valor dos titulos no periodo de convivencia
-      Alteração : 
+      Alteração : 03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+                               periodo de convivencia será tratado por faixa de valores
+                               (Douglas - Chamado 823963)
         
     ..........................................................................*/
   
@@ -1443,7 +1452,8 @@ end;';
     vr_idrollout INTEGER;
   BEGIN
   
-    vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt);
+    vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
+                                                    ,pr_vltitulo => pr_vltitulo);
       
     IF vr_flconviv = 1 THEN
     
