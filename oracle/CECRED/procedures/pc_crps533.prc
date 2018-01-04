@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                                              ,pr_nmtelant IN VARCHAR2
-                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                              ,pr_dscritic OUT varchar2) IS
+                                       ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                       ,pr_nmtelant IN VARCHAR2
+                                       ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                       ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                       ,pr_dscritic OUT varchar2) IS
   BEGIN
 
   /* .............................................................................
@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 11/09/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 03/10/2017
 
    Dados referentes ao programa:
 
@@ -287,9 +287,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             a contra-ordem (critica 96)
                             (Adriano - SD 746815). 
                             
+               01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
+			               o nome do arquivo apos processamento, iremos gerar o arquivo
+						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
                11/09/2017 - Ajustes para criar craplcm para historicos 573 ou 78 caso a critica for 
                             96,257,414,439,950
                             (Adriano - SD 745649).                        
+                            
+               03/10/2017 - SD761624 - Inclusão de tratamento da Critica 811 - Marcos(Supero)           
                             
 ............................................................................. */
 
@@ -2186,7 +2191,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND craplot.cdbccxlt = pr_cdbccxlt
                  AND craplot.nrdolote = pr_nrdolote;
             rw_craplot cr_craplot%ROWTYPE;
-            
+
             --Selecionar informacoes dos lotes (contra-ordem)
             CURSOR cr_craplot2(pr_cdcooper IN craplot.cdcooper%TYPE
                               ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
@@ -4823,7 +4828,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         RAISE vr_exc_erro;
                       END IF;
 
-                      --Atribuir quantidade e valor integrado para as variaveis
+                       --Atribuir quantidade e valor integrado para as variaveis
                       vr_qtcompln:= nvl(vr_qtcompln,0) + 1;
                       vr_vlcompdb:= nvl(vr_vlcompdb,0) + vr_vllanmto;
 
@@ -5145,7 +5150,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_tot_vlregrej:= Nvl(vr_tot_vlregrej,0) + Nvl(rw_craprej.vllanmto,0);
                         
                         -- Caso esteja dentro da lista abaixo
-                        IF vr_cdcritic IN (9,97,108,109,320) THEN
+                        IF vr_cdcritic IN (9,97,108,109,320,811) THEN
                           -- Monta a mensagem
                           vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                          ',1773,1455,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
@@ -5376,7 +5381,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                         ,pr_cdcooper => 0
                                                         ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-                  vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+                  vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_526.txt';
                   
                   -- Chama a geracao do TXT
                   GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -5388,7 +5393,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                      ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                                      ,pr_dspathcop => vr_dircon
                                                      ,pr_fldoscop  => 'S'
-                                                     ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                                      ,pr_des_erro  => vr_des_erro);            --> Saída com erro
 
                 END IF;
