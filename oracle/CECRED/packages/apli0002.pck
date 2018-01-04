@@ -1308,6 +1308,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                
                 05/12/2017 - Alterei a procedure pc_cad_resgate_aplica para gravacao do lote de forma autonoma. Criei
                              a procedure pc_processa_lote_regt. (SD 799728 - Carlos Rafael Tanholi)
+
+                04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+                             com debito em Conta Investimento.
+                             Heitor (Mouts) - Chamado 821010.
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5205,8 +5209,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,cdagenci
                        ,cdbccxlt
                        ,nrdolote                      
-                       ,vlinfocr
-                       ,vlcompcr
+                       ,vlinfodb
+                       ,vlcompdb
                        ,qtinfoln
                        ,qtcompln
                        ,nrseqdig
@@ -5215,8 +5219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,rw_craplot.cdagenci
                        ,rw_craplot.cdbccxlt
                        ,rw_craplot.nrdolote
-                       ,rw_craplot.vlinfocr
-                       ,rw_craplot.vlcompcr
+                       ,rw_craplot.vlinfodb
+                       ,rw_craplot.vlcompdb
                        ,rw_craplot.qtinfoln
                        ,rw_craplot.qtcompln
                        ,rw_craplot.nrseqdig
@@ -5297,15 +5301,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
              SET craplot.nrseqdig = craplot.nrseqdig + 1
                 ,craplot.qtinfoln = craplot.qtinfoln + 1
                 ,craplot.qtcompln = craplot.qtcompln + 1
-                ,craplot.vlinfocr = craplot.vlinfodb + pr_vllanmto
+                ,craplot.vlinfodb = craplot.vlinfodb + pr_vllanmto
                 ,craplot.vlcompdb = craplot.vlcompdb + pr_vllanmto              
            WHERE craplot.rowid = rw_craplot.rowid
            RETURNING dtmvtolt
                      ,cdagenci
                      ,cdbccxlt
                      ,nrdolote                   
-                     ,vlinfocr
-                     ,vlcompcr
+                     ,vlinfodb
+                     ,vlcompdb
                      ,qtinfoln
                      ,qtcompln
                      ,nrseqdig
@@ -5314,8 +5318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                      ,rw_craplot.cdagenci
                      ,rw_craplot.cdbccxlt
                      ,rw_craplot.nrdolote
-                     ,rw_craplot.vlinfocr
-                     ,rw_craplot.vlcompcr
+                     ,rw_craplot.vlinfodb
+                     ,rw_craplot.vlcompdb
                      ,rw_craplot.qtinfoln
                      ,rw_craplot.qtcompln
                      ,rw_craplot.nrseqdig
