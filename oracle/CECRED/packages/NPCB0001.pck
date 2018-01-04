@@ -178,7 +178,8 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                  RETURN INTEGER;
   
   --> Rotina para validar se ainda esta no periodo de convivencia
-  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE  --> Data de movimento
+                                   , pr_vltitulo     IN crapcob.vltitulo%TYPE) --> Valor do Titulo
                                      RETURN INTEGER;
                                      
   --> Rotina para retornar valor limite de pagamento em contigencia na cip
@@ -533,7 +534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   END fn_verifica_rollout;
   
   --> Rotina para validar se ainda esta no periodo de convivencia
-  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE  --> Data de movimento
+                                   , pr_vltitulo     IN crapcob.vltitulo%TYPE) --> Valor do Titulo
                                      RETURN INTEGER IS
   /* ..........................................................................
     
@@ -541,20 +543,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Setembro/2017.                   Ultima atualizacao: 18/09/2017
+      Data     : Setembro/2017.                   Ultima atualizacao: 03/01/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para validar se ainda esta no periodo de convivencia
-      Alteração : 
+      Alteração : 03/01/2018 - Adicionar o parametro de valor do titulo, pois o periodo de 
+                               convivencia tambem é por faixa de DATA e VALOR
+                               (Douglas - Chamado 823963)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
     vr_dstextab     craptab.dstextab%TYPE;  
+    vr_tab_campos   gene0002.typ_split;  
     vr_cdacesso     craptab.cdacesso%TYPE;
-    vr_dtconviv     DATE;
+    vr_index        INTEGER;
     
   BEGIN   
   
@@ -570,8 +575,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
        --> Inicializar/zerar valores
        vr_nrctrlhr             := to_char(SYSDATE,'HH24');
        vr_dstextab_dtconviv    := NULL;
-       vr_dstextab_rollout_reg.delete; 
-       vr_dstextab_rollout_pag.delete;
      
        --> Buscar dados
        vr_dstextab := TABE0001.fn_busca_dstextab
@@ -591,25 +594,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         RETURN 0; 
       END IF;
       
-      --> Verificar se é uma data valida
-      BEGIN
-        vr_dtconviv := to_date(vr_dstextab,'DD/MM/RRRR');
-      EXCEPTION
-        WHEN OTHERS THEN
-          NPCB0001.pc_gera_log_npc(pr_cdcooper => 3, 
-                                   pr_nmrotina => 'fn_valid_periodo_conviv', 
-                                   pr_dsdolog  => 'Parametro possui Data invalida('||vr_dstextab||').');
-          RETURN 0;   
-      END;
-            
-      --> Validar se ainda nao passou da data de conveniencia
-      IF pr_dtmvtolt <= vr_dtconviv  THEN        
-        --> Retornar 1 - ainda esta mp periodo de convivencia
-        RETURN 1;
-        
-      END IF;        
+      vr_tab_campos:= gene0002.fn_quebra_string(vr_dstextab,';');
       
-      RETURN 0;
+      --> senao nao encontrar os parametros de convivência retornar que não há período
+      IF vr_tab_campos.count = 0 THEN
+          RETURN 0;   
+      END IF;
+        
+      --> Validar data
+      FOR vr_index IN 1..vr_tab_campos.count LOOP
+        IF vr_index MOD 2 = 0 THEN 
+          IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
+            --> Validar valor
+            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+              --> Retornar 0 - acabou período de convivência
+              RETURN 0;
+            END IF;
+          END IF;
+      END IF;        
+      END LOOP;      
+      
+      RETURN 1;
       
   EXCEPTION 
     WHEN OTHERS THEN
@@ -1091,7 +1096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_vltitcal   craptit.vltitulo%TYPE := NULL;
     
   BEGIN
-
+  
     vr_vltitcal := fn_valor_calc_titulo_npc(pr_dtmvtolt => pr_dtmvtolt
                                            ,pr_tbtitulo => pr_tbtitulo);
   
