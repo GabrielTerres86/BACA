@@ -11,6 +11,10 @@ Objetivo  : Entrada de Arrecadacoes GPS
 Alteracoes: 20/06/2016 - Incluida validacao da conta para verificar se esta
                          possui INTERNET ativa, caso contrario, nao segue
 						 (Guilherme/SUPERO)
+            03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
+                         valor do pagamento for superior ao limite cadastrado 
+                         na CADCOP / CADPAC
+                        (Diogo - MoutS)
 
 
 ..............................................................................*/
@@ -48,7 +52,9 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD inpesgps        AS CHARACTER FORMAT "X(256)":U
        FIELD h_inpesgps      AS CHARACTER FORMAT "X(256)":U
        FIELD h_tpdpagto      AS CHARACTER FORMAT "X(256)":U
-       FIELD h_idleitor      AS CHARACTER FORMAT "X(256)":U.
+       FIELD h_idleitor      AS CHARACTER FORMAT "X(256)":U
+       FIELD v_cod           AS CHARACTER FORMAT "X(256)":U
+       FIELD v_senha         AS CHARACTER FORMAT "X(256)":U.
 
 DEF TEMP-TABLE tt-conta
     FIELD situacao           AS CHAR FORMAT "x(21)"
@@ -176,8 +182,8 @@ DEFINE VARIABLE glb_cdoperad LIKE crapope.cdoperad              NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS   ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta  ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_periodo  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.v_diadebito  ab_unmap.inpesgps  ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta  ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_periodo  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.v_diadebito  ab_unmap.inpesgps  ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor
+&Scoped-Define ENABLED-OBJECTS   ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta  ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_periodo  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.v_diadebito  ab_unmap.inpesgps  ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_cod ab_unmap.v_senha
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta  ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_periodo  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.v_diadebito  ab_unmap.inpesgps  ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_cod ab_unmap.v_senha
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -315,6 +321,14 @@ DEFINE FRAME Web-Frame
                     "radio", "2":U,
                     "radio", "0":U
           SIZE 20 BY 3
+    ab_unmap.v_cod AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+    ab_unmap.v_senha AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -358,6 +372,8 @@ DEFINE FRAME Web-Frame
           FIELD v_valorout AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valorjur AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valortot AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_cod AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -437,6 +453,10 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_valorjur IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_valortot IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_cod IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_senha IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -555,6 +575,8 @@ PROCEDURE htmOffsets :
   RUN htmAssociate ("h_inpesgps":U,"ab_unmap.h_inpesgps":U,ab_unmap.h_inpesgps:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("h_tpdpagto":U,"ab_unmap.h_tpdpagto":U,ab_unmap.h_tpdpagto:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("h_idleitor":U,"ab_unmap.h_idleitor":U,ab_unmap.h_idleitor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
 
 END PROCEDURE.
 
@@ -623,6 +645,10 @@ PROCEDURE process-web-request :
   Purpose:     Process the web request.
   Notes:       
 ------------------------------------------------------------------------*/
+     
+  DEF VAR aux_des_erro      AS CHARACTER     NO-UNDO.
+  DEF VAR aux_dscritic      AS CHARACTER     NO-UNDO.
+  DEF VAR aux_inssenha      AS INTEGER       NO-UNDO.
      
   /* STEP 0 -
    * Output the MIME header and set up the object as state-less or state-aware. 
@@ -745,6 +771,22 @@ PROCEDURE process-web-request :
               {include/i-erro.i}
           END.
           ELSE DO:
+              RUN valida-valor-limite(INPUT v_coop,
+                                      INPUT ab_unmap.v_cod,
+                                      INPUT v_pac,
+                                      INPUT v_caixa,
+                                      INPUT v_valortot,
+                                      INPUT ab_unmap.v_senha,
+                                      OUTPUT aux_des_erro,
+                                      OUTPUT aux_dscritic,
+                                      OUTPUT aux_inssenha).
+              IF RETURN-VALUE = 'NOK' THEN  
+                DO:
+                  ASSIGN proximo = IF h_tpdpagto = "1" THEN "998" ELSE "999".
+                  {include/i-erro.i}
+               END.
+              ELSE
+                 DO:
               /* Efetua o Pagamento */
               RUN dbo/b1crap89.p PERSISTENT SET h_b1crap89.
               RUN pc-efetua-agendamento-gps IN h_b1crap89
@@ -793,6 +835,7 @@ PROCEDURE process-web-request :
 
               END.
           END.
+      END.
       END.
       ELSE
       IF  get-value("v_codbarras") <> "" AND get-value("b_confirmar") = "" AND INT(ab_unmap.v_cntanter) = INT(ab_unmap.v_conta) THEN DO:
@@ -1118,3 +1161,54 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE valida-valor-limite w-html 
+
+/* valida o valor recebido como parâmetro com o limite da agencia / cooperativa e solicita senha do coordenador se for maior */
+PROCEDURE valida-valor-limite:
+
+    DEF INPUT PARAM par_nmrescop  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdoperad  AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_cdagenci  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
+    DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
+    DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
+
+    DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
+    DEF VAR h_b1crap89            AS HANDLE                          NO-UNDO.
+    
+    RUN dbo/b1crap89.p PERSISTENT SET h_b1crap89.
+                           
+    RUN validar-valor-limite IN h_b1crap89(INPUT par_nmrescop,
+                                           INPUT par_cdoperad,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrocaixa,
+                                           INPUT par_vltitfat,
+                                           INPUT par_senha,
+                                           OUTPUT par_des_erro,
+                                           OUTPUT par_dscritic,
+                                           OUTPUT par_inssenha).
+                                          
+    DELETE PROCEDURE h_b1crap89.
+    
+    IF RETURN-VALUE = 'NOK' THEN  
+     DO:
+        RETURN "NOK".
+     END.
+           
+     /* Solicita confirmaçao operacao depois de inserida a senha DO coordenador */
+     IF par_inssenha > 0 THEN
+        DO: 
+           {&out}   '<script>if (confirm("Confirma operaçao?")) ~{' +
+                    'document.forms[0].submit();' +
+                    '~} else ~{' +
+                    ' window.location = "crap089.html";' +
+                    '~}</script>'.
+        END.
+        
+    RETURN "OK".
+END PROCEDURE.
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
