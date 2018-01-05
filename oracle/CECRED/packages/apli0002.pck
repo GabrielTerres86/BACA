@@ -1072,6 +1072,18 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
 														
 
+  PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
+                                  ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
+                                  ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
+                                  ,pr_cdoperad IN VARCHAR2                 --> Codigo operador
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE    --> Data de movimento
+                                  ,pr_dtmvtopr  IN crapdat.dtmvtopr%TYPE   --> Data do prox. movnto                                   
+                                  ,pr_vlresgat IN craplrg.vllanmto%TYPE    --> Valor de resgate  
+                                  ,pr_nrseqdig OUT craplot.nrseqdig%TYPE   --> Numero de Sequencia 
+                                  ,pr_des_reto OUT VARCHAR2                --> retorno OK/NOK
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código do erro
+                                  ,pr_dscritic OUT crapcri.dscritic%TYPE);                                       
+
 END APLI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
@@ -1081,7 +1093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 21/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 05/12/2017
 
    Dados referentes ao programa:
 
@@ -1295,6 +1307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 							 (M460 BACENJUD - Thiago Rodrigues).
 
                 30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
+
+                05/12/2017 - Alterei a procedure pc_cad_resgate_aplica para gravacao do lote de forma autonoma. Criei
+                             a procedure pc_processa_lote_regt. (SD 799728 - Carlos Rafael Tanholi)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -18033,7 +18048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                  Antigo: sistema/generico/procedures/b1wgen0081.p > cadastrar-resgate-aplicacao
    Sigla   : APLI
    Autor   : Renato Darosci.
-   Data    : Agosto/2014                          Ultima atualizacao: 31/10/2014
+   Data    : Agosto/2014                          Ultima atualizacao: 05/12/2017
 
    Dados referentes ao programa:
 
@@ -18055,6 +18070,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 22/09/2016 - Alterar ordem da chamada da procedure pc_ver_valor_blq_judicial
                              pois estava validando o bloqueio judicial antes de validar se
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
+                             
+                05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
+                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
   .......................................................................................*/
   PROCEDURE pc_cad_resgate_aplica(pr_cdcooper    IN NUMBER
                                  ,pr_cdagenci    IN NUMBER
@@ -18683,74 +18701,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
     BEGIN -- Transação
     
-      BEGIN
+      -- Atualiza ou cria o registro de lote(999) para o resgate
+      pc_processa_lote_resgt(pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => pr_cdagenci
+                            ,pr_nrdcaixa => pr_nrdcaixa
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_dtmvtopr => pr_dtmvtopr
+                            ,pr_vlresgat => pr_vlresgat           
+                            ,pr_nrseqdig => vr_nrseqdig
+                            ,pr_des_reto => vr_des_reto
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
       
-        -- Mensagem de erro de update
-        vr_dsmensag := 'Erro ao atualizar CRAPLOT. ';
-        
-        -- Atualizar capa dos lotes
-        UPDATE craplot 
-           SET craplot.nrseqdig = NVL(craplot.nrseqdig,0) + 1
-             , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
-             , craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
-             , craplot.vlcompdb = NVL(craplot.vlcompdb,0) + pr_vlresgat
-             , craplot.vlinfodb = NVL(craplot.vlinfodb,0) + pr_vlresgat
-         WHERE craplot.cdcooper = pr_cdcooper
-           AND craplot.dtmvtolt = pr_dtmvtolt
-           AND craplot.cdagenci = 99
-           AND craplot.cdbccxlt = 400
-           AND craplot.nrdolote = 999
-        RETURNING nrseqdig INTO vr_nrseqdig;
-        
-        -- Se não alterar nenhum registro
-        IF SQL%ROWCOUNT = 0 THEN
-          
-          -- Mensagem de erro de insert
-          vr_dsmensag := 'Erro ao inserir CRAPLOT. ';
-        
-          -- Inserir capa dos lotes
-          INSERT INTO craplot(dtmvtolt
-                             ,dtmvtopg
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,cdbccxpg
-                             ,cdhistor
-                             ,nrdolote
-                             ,tplotmov
-                             ,tpdmoeda
-                             ,nrseqdig
-                             ,qtcompln
-                             ,qtinfoln
-                             ,vlcompdb
-                             ,vlinfodb
-                             ,cdoperad
-                             ,cdcooper)
-                      VALUES (pr_dtmvtolt    -- dtmvtolt
-                             ,pr_dtmvtopr    -- dtmvtopg
-                             ,99             -- cdagenci
-                             ,400            -- cdbccxlt
-                             ,0              -- cdbccxpg
-                             ,00             -- cdhistor
-                             ,999            -- nrdolote
-                             ,11             -- tplotmov
-                             ,1              -- tpdmoeda
-                             ,1              -- nrseqdig
-                             ,1              -- qtcompln
-                             ,1              -- qtinfoln
-                             ,pr_vlresgat    -- vlcompdb
-                             ,pr_vlresgat    -- vlinfodb
-                             ,vr_cdoperad    -- cdoperad
-                             ,pr_cdcooper)   -- cdcooper
-          RETURNING nrseqdig INTO vr_nrseqdig;
-                                     
+      IF vr_des_reto = 'NOK' THEN
+        RAISE vr_exc_erro;        
         END IF;
         
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Raise com o erro
-          vr_dscritic := vr_dsmensag||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
       
       BEGIN
         
@@ -21648,6 +21615,116 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     END;
   END pc_obtem_resgates_aplicacao;
 
+
+  /*.......................................................................................
+
+   Programa: APLI0002             
+   Sigla   : APLI
+   Autor   : Carlos Rafael Tanholi.
+   Data    : Dezembro/2017                          Ultima atualizacao: 
+
+   Dados referentes ao programa:
+
+   Objetivo  : Rotina para manipular lote de resgate de aplicacoes de maneira autonoma
+
+   Alteracoes: 
+                
+  .......................................................................................*/
+
+  PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
+                                  ,pr_cdagenci IN crapass.cdagenci%TYPE      --> Codigo Agencia
+                                  ,pr_nrdcaixa IN INTEGER                    --> Numero do Caixa
+                                  ,pr_cdoperad IN VARCHAR2                   --> Codigo operador
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE      --> Data de movimento
+                                  ,pr_dtmvtopr  IN crapdat.dtmvtopr%TYPE      --> Data do prox. movnto 
+                                  ,pr_vlresgat IN craplrg.vllanmto%TYPE      --> Valor de resgate  
+                                  ,pr_nrseqdig OUT craplot.nrseqdig%TYPE     --> Numero de Sequencia 
+                                  ,pr_des_reto OUT VARCHAR2                  --> retorno OK/NOK
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código do erro
+                                  ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro   
+  	 
+     -- Pragma - abre nova sessao para tratar a atualizacao
+     PRAGMA AUTONOMOUS_TRANSACTION;                                
+
+  BEGIN
+    DECLARE     
+      -- Descrição e código da critica
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      
+      BEGIN    
+        -- Mensagem de erro de update
+        vr_dscritic := 'atualizar CRAPLOT';      
+        
+        -- Atualizar capa dos lotes
+        UPDATE craplot 
+           SET craplot.nrseqdig = NVL(craplot.nrseqdig,0) + 1
+             , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
+             , craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
+             , craplot.vlcompdb = NVL(craplot.vlcompdb,0) + pr_vlresgat
+             , craplot.vlinfodb = NVL(craplot.vlinfodb,0) + pr_vlresgat
+         WHERE craplot.cdcooper = pr_cdcooper
+           AND craplot.dtmvtolt = pr_dtmvtolt
+           AND craplot.cdagenci = 99
+           AND craplot.cdbccxlt = 400
+           AND craplot.nrdolote = 999
+        RETURNING nrseqdig INTO pr_nrseqdig;
+
+        -- Se não alterar nenhum registro
+        IF SQL%ROWCOUNT = 0 THEN
+              
+          -- Mensagem de erro de insert
+          vr_dscritic := 'inserir CRAPLOT';
+            
+          -- Inserir capa dos lotes
+          INSERT INTO craplot(dtmvtolt
+                             ,dtmvtopg
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,cdbccxpg
+                             ,cdhistor
+                             ,nrdolote
+                             ,tplotmov
+                             ,tpdmoeda
+                             ,nrseqdig
+                             ,qtcompln
+                             ,qtinfoln
+                             ,vlcompdb
+                             ,vlinfodb
+                             ,cdoperad
+                             ,cdcooper)
+                      VALUES (pr_dtmvtolt    -- dtmvtolt
+                             ,pr_dtmvtopr    -- dtmvtopg
+                             ,99             -- cdagenci
+                             ,400            -- cdbccxlt
+                             ,0              -- cdbccxpg
+                             ,00             -- cdhistor
+                             ,999            -- nrdolote
+                             ,11             -- tplotmov
+                             ,1              -- tpdmoeda
+                             ,1              -- nrseqdig
+                             ,1              -- qtcompln
+                             ,1              -- qtinfoln
+                             ,pr_vlresgat    -- vlcompdb
+                             ,pr_vlresgat    -- vlinfodb
+                             ,pr_cdoperad    -- cdoperad
+                             ,pr_cdcooper)   -- cdcooper
+          RETURNING nrseqdig INTO pr_nrseqdig;
+
+        END IF;
+
+      COMMIT;  
+      pr_des_reto := 'OK';
+	        
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_des_reto := 'NOK';        
+          --Monta critica
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro ao ' || vr_dscritic || ' - APLI0002.pc_processa_lote_resgt: '||SQLERRM;
+      END;  
+      
+  END pc_processa_lote_resgt;
   
 END APLI0002;
 /
