@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 20/11/2017
+   Data    : Dezembro/2009.                  Ultima atualizacao: 05/01/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -131,6 +131,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                           - Colocado logs no padrão
                           - Padronização mensagens insert/update/delete
                             (Ana - Envolti - Chamado 789851)
+                            
+               05/01/2018 - Corrigido data usada no cursor dos registros rejeitados para 
+                            que tanto no processo quanto na compefora sejam buscados os registros
+                            corretamente
+                            (Adriano - SD 825150).                            
   ............................................................................ */
 
 
@@ -3004,7 +3009,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                , craprej.nrseqdig
             FROM craprej
            WHERE craprej.cdcooper = pr_cdcooper
-             AND craprej.dtrefere = to_char(vr_dtmvtolt,'YYYYMMDD')
+             AND craprej.dtrefere = vr_dtauxili
              AND (craprej.cdcritic = pr_cdcritic OR
                     pr_cdcritic = 0)
            ORDER BY craprej.nrdconta
