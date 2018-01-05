@@ -259,6 +259,15 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
   FUNCTION fn_contigencia_NPC ( pr_cdcooper   IN INTEGER, --> Codigo da cooperativa
                                 pr_idorigem   IN INTEGER  --> Origem da transacao
                               ) RETURN VARCHAR2; --> Retornar S-Em contigencia, N-Não esta em contigencia                                                                   
+
+  --> Rotina para verificar rollout da plataforma de cobrança
+  PROCEDURE pc_verifica_rollout(pr_cdcooper   IN INTEGER   --> Codigo da cooperativa
+                               ,pr_dtmvtolt   IN VARCHAR2  --> Data do movimento
+                               ,pr_vltitulo   IN NUMBER    --> Valor do titulo
+                               ,pr_tpdregra   IN INTEGER   --> Tipo de regra de rollout(1-registro,2-pagamento)
+                               ,pr_rollout   OUT INTEGER); --> Identifica se está no rollout
+
+
 END NPCB0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
@@ -600,7 +609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       IF vr_tab_campos.count = 0 THEN
           RETURN 0;   
       END IF;
-        
+
       --> Validar data
       FOR vr_index IN 1..vr_tab_campos.count LOOP
         IF vr_index MOD 2 = 0 THEN 
@@ -611,7 +620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
               RETURN 0;
             END IF;
           END IF;
-      END IF;        
+        END IF;
       END LOOP;      
       
       RETURN 1;
@@ -1578,6 +1587,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       raise_application_error(-20500,'Erro ao verificar contigencia NPC: '||SQLERRM);
   END fn_contigencia_NPC;  
   
+  
+  --> Rotina para verificar rollout da plataforma de cobrança
+  PROCEDURE pc_verifica_rollout(pr_cdcooper   IN INTEGER     --> Codigo da cooperativa
+                               ,pr_dtmvtolt   IN VARCHAR2    --> Data do movimento
+                               ,pr_vltitulo   IN NUMBER      --> Valor do titulo
+                               ,pr_tpdregra   IN INTEGER     --> Tipo de regra de rollout(1-registro,2-pagamento)
+                               ,pr_rollout   OUT INTEGER) IS --> Identifica se está no rollout
+  /* ..........................................................................
+    
+      Programa : pc_verifica_rollout        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Douglas Quisinski
+      Data     : Janeiro/2018.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para verificar a faixa de Rollout da CIP
+      Alteração : 
+        
+    ..........................................................................*/
+  BEGIN   
+    pr_rollout := npcb0001.fn_verifica_rollout(pr_cdcooper => pr_cdcooper
+                                              ,pr_dtmvtolt => to_date(pr_dtmvtolt,'DD/MM/YYYY')
+                                              ,pr_vltitulo => pr_vltitulo
+                                              ,pr_tpdregra => pr_tpdregra);
+  EXCEPTION 
+    WHEN OTHERS THEN
+      --> senao nao encontrar os parametros do rollout, retornar como nao esta na faixa
+      pr_rollout := 0; 
+  END pc_verifica_rollout;
   
 BEGIN
 
