@@ -1030,6 +1030,8 @@ DEF VAR aux_nrcpfope LIKE crapopi.nrcpfope                             NO-UNDO.
 DEF VAR aux_cpfopelg LIKE crapopi.nrcpfope                             NO-UNDO.
 DEF VAR aux_nmrescop LIKE crapcop.nmrescop                             NO-UNDO.
 
+DEF VAR aux_cdtransa LIKE tbgen_trans_pend.cdtransacao_pendente        NO-UNDO.
+
 DEF VAR aux_nrcrcard AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvctini AS DATE                                           NO-UNDO.
 DEF VAR aux_dtvctfim AS DATE                                           NO-UNDO.
@@ -4903,7 +4905,8 @@ PROCEDURE proc_operacao73:
            aux_insittra = INTE(GET-VALUE("aux_insittra"))
            aux_cpfopelg = DECI(GET-VALUE("aux_cpfopelg"))
            aux_nrregist = INTE(GET-VALUE("aux_nrregist"))
-           aux_nriniseq = INTE(GET-VALUE("aux_nriniseq")).
+           aux_nriniseq = INTE(GET-VALUE("aux_nriniseq"))
+           aux_cdtransa = INTE(GET-VALUE("aux_cdtransa")).
 
     RUN sistema/internet/fontes/InternetBank73.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4913,6 +4916,7 @@ PROCEDURE proc_operacao73:
                                                   INPUT 90, /* pac */
                                                   INPUT aux_dtmvtocd,
                                                   INPUT 3, /* origem */
+                                                  INPUT aux_cdtransa,
                                                   INPUT aux_insittra,
                                                   INPUT aux_dtiniper,
                                                   INPUT aux_dtfimper,
@@ -8994,7 +8998,7 @@ PROCEDURE proc_operacao206:
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.
-    
+
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
@@ -9033,7 +9037,7 @@ PROCEDURE proc_operacao208:
     END.
     
     {&out} aux_tgfimprg.
-
+    
 END PROCEDURE.
 
 /* Alterar configuracoes de recebimento de push */
@@ -9064,7 +9068,7 @@ END PROCEDURE.
 
 /* Obter quantidade de notificações não visualizadas do cooperado */
 PROCEDURE proc_operacao214:
-    
+        
     RUN sistema/internet/fontes/InternetBank214.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -9074,7 +9078,7 @@ PROCEDURE proc_operacao214:
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.
-    
+
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

@@ -1772,7 +1772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      ..................................................................................*/          
  
      CASE 
-       WHEN pr_cdtiptra = 1 OR pr_cdtiptra = 3 THEN -- Transferência ou Crédito Salário
+       WHEN pr_cdtiptra = 1 OR pr_cdtiptra = 3 OR pr_cdtiptra = 5 THEN -- Transferência Intra e Intercooperativa ou Crédito Salário
          pc_detalhe_agendamento_trans(pr_idlancto => pr_idlancto
                                      ,pr_retxml   => pr_retxml
                                      ,pr_dsretorn => pr_dsretorn);
