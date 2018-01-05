@@ -29,6 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_cdagedoc     IN crapage.cdagedoc%TYPE --> Codigo da agencia do DOC onde sera entregue a COMPE
                         ,pr_flgdsede     IN crapage.flgdsede%TYPE --> PA eh Sede da cooperativa
                         ,pr_cdagepac     IN crapage.cdagepac%TYPE --> Numero da agencia do PA na Central
+												,pr_flgutcrm     IN crapage.flgutcrm%TYPE --> Flag de controle de acesso ao CRM
                         ,pr_dsendcop     IN crapage.dsendcop%TYPE --> Endereco do PA
                         ,pr_nrendere     IN crapage.nrendere%TYPE --> Numero (ref. endereco) do PA
                         ,pr_nmbairro     IN crapage.nmbairro%TYPE --> Nome do bairro onde esta localizado o PA
@@ -118,7 +119,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         	     ,pr_nmpasite     IN crapage.nmpasite%TYPE --> Nome do PA para apresentacao no site da cooperativa
                                ,pr_dstelsit     IN crapage.dstelsit%TYPE --> Telefone do PA para apresentacao no site da cooperativa
                                ,pr_dsemasit     IN crapage.dsemasit%TYPE --> E-mail do PA para apresentacao no site da cooperativa
-                               ,pr_dshorsit     IN crapage.dshorsit%TYPE --> Horario de atendimento para apresentacao no site da cooperativa
+ 															 ,pr_hrinipaa     IN VARCHAR2              --> Hora Inicial atendimento
+															 ,pr_hrfimpaa     IN VARCHAR2              --> Hora Final atendimento
+															 ,pr_indspcxa     IN crapage.indspcxa%TYPE --> Possui Caixa
                                ,pr_nrlatitu     IN crapage.nrlatitu%TYPE --> Latitude da localizacao
                                ,pr_nrlongit     IN crapage.nrlongit%TYPE --> Longitude da localizacao
                                ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -167,6 +170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,cdagedoc crapage.cdagedoc%TYPE
          ,flgdsede crapage.flgdsede%TYPE
          ,cdagepac crapage.cdagepac%TYPE
+				 ,flgutcrm crapage.flgutcrm%TYPE
          ,dsendcop crapage.dsendcop%TYPE
          ,nrendere crapage.nrendere%TYPE
          ,nmbairro crapage.nmbairro%TYPE
@@ -217,7 +221,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,nmpasite crapage.nmpasite%TYPE
          ,dstelsit crapage.dstelsit%TYPE
          ,dsemasit crapage.dsemasit%TYPE
-         ,dshorsit crapage.dshorsit%TYPE
+				 ,dssitpaa VARCHAR2(10)
+				 ,hrinipaa VARCHAR2(5)
+				 ,hrfimpaa VARCHAR2(5)
+				 ,indspcxa crapage.indspcxa%TYPE
+				 ,indsptaa VARCHAR2(1)
          ,nrlatitu crapage.nrlatitu%TYPE
          ,nrlongit crapage.nrlongit%TYPE
          ,flmajora crapage.flmajora%TYPE);
@@ -290,6 +298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.cdagedoc
               ,crapage.flgdsede
               ,crapage.cdagepac
+							,crapage.flgutcrm
               ,crapage.dsendcop
               ,crapage.nrendere
               ,crapage.nmbairro
@@ -321,7 +330,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.nmpasite
               ,crapage.dstelsit
               ,crapage.dsemasit
-              ,crapage.dshorsit
+							,crapage.hrinipaa
+							,crapage.hrfimpaa
+							,crapage.indspcxa
+							,DECODE((SELECT COUNT(*) FROM craptfn
+							                         JOIN tbsite_taa taa
+																			   ON taa.cdcooper = craptfn.cdcooper
+																			  AND taa.nrterfin = craptfn.nrterfin
+																			  AND taa.flganexo_pa = 1  -- PA possui TAA anexo
+			                                WHERE craptfn.cdcooper = crapage.cdcooper
+			                                  AND craptfn.cdagenci = crapage.cdagenci
+															          /*	 Não considerar se TAA estão ativos ou não																				
+																				AND craptfn.flsistaa = 1 -- TAA está ativo */
+																				), 0, '0', '1')
+																				 AS indsptaa
               ,crapage.nrlatitu
               ,crapage.nrlongit
               ,crapage.flmajora
@@ -360,6 +382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_hhsiccan VARCHAR2(5); -- HH:MM
       vr_flsgproc VARCHAR2(3);
       vr_dsdregio crapreg.dsdregio%TYPE;
+			vr_dssitpaa VARCHAR2(10);
 
     BEGIN
       -- Limpa PLTABLE
@@ -491,6 +514,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         vr_hhcpaini := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(1,vr_dstextab,' '));
         vr_hhcpafim := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(2,vr_dstextab,' '));
 
+				IF rw_crapage.insitage = 1 THEN -- Ativo
+					IF GENE0002.fn_busca_time BETWEEN rw_crapage.hrinipaa AND rw_crapage.hrfimpaa THEN
+						vr_dssitpaa := 'ABERTO';
+					ELSE 
+						vr_dssitpaa := 'FECHADO';
+					END IF;
+				ELSE
+					vr_dssitpaa := 'FECHADO';
+				END IF;
+
         -- Carrega os dados na PLTRABLE
         pr_tab_crapage(pr_cdagenci).nmextage := rw_crapage.nmextage;
         pr_tab_crapage(pr_cdagenci).nmresage := rw_crapage.nmresage;
@@ -510,6 +543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).cdagedoc := rw_crapage.cdagedoc;
         pr_tab_crapage(pr_cdagenci).flgdsede := rw_crapage.flgdsede;
         pr_tab_crapage(pr_cdagenci).cdagepac := rw_crapage.cdagepac;
+        pr_tab_crapage(pr_cdagenci).flgutcrm := rw_crapage.flgutcrm;				
         pr_tab_crapage(pr_cdagenci).dsendcop := rw_crapage.dsendcop;
         pr_tab_crapage(pr_cdagenci).nrendere := rw_crapage.nrendere;
         pr_tab_crapage(pr_cdagenci).nmbairro := rw_crapage.nmbairro;
@@ -560,7 +594,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).nmpasite := rw_crapage.nmpasite;
         pr_tab_crapage(pr_cdagenci).dstelsit := rw_crapage.dstelsit;
         pr_tab_crapage(pr_cdagenci).dsemasit := rw_crapage.dsemasit;
-        pr_tab_crapage(pr_cdagenci).dshorsit := rw_crapage.dshorsit;
+				pr_tab_crapage(pr_cdagenci).dssitpaa := vr_dssitpaa;
+				pr_tab_crapage(pr_cdagenci).hrinipaa := GENE0002.fn_converte_time_data(rw_crapage.hrinipaa);
+				pr_tab_crapage(pr_cdagenci).hrfimpaa := GENE0002.fn_converte_time_data(rw_crapage.hrfimpaa);
+				pr_tab_crapage(pr_cdagenci).indspcxa := rw_crapage.indspcxa;
+				pr_tab_crapage(pr_cdagenci).indsptaa := rw_crapage.indsptaa;
         pr_tab_crapage(pr_cdagenci).nrlatitu := rw_crapage.nrlatitu;
         pr_tab_crapage(pr_cdagenci).nrlongit := rw_crapage.nrlongit;
         pr_tab_crapage(pr_cdagenci).flmajora := rw_crapage.flmajora;
@@ -814,6 +852,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'cdagepac'
                               ,pr_tag_cont => GENE0002.fn_mask(vr_tab_crapage(pr_cdagenci).cdagepac,'zz.zzz')
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'flgutcrm'
+                              ,pr_tag_cont => GENE0002.fn_mask(vr_tab_crapage(pr_cdagenci).flgutcrm,'zz.zzz')
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1169,8 +1214,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
-                              ,pr_tag_nova => 'dshorsit'
-                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dshorsit
+                              ,pr_tag_nova => 'dssitpaa'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dssitpaa
+                              ,pr_des_erro => vr_dscritic);
+
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'hrinipaa'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrinipaa
+                              ,pr_des_erro => vr_dscritic);
+															
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'hrfimpaa'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrfimpaa
+                              ,pr_des_erro => vr_dscritic);
+															
+		    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'indspcxa'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).indspcxa
+                              ,pr_des_erro => vr_dscritic);
+															
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'indsptaa'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).indsptaa
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1315,6 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_cdagedoc     IN crapage.cdagedoc%TYPE --> Codigo da agencia do DOC onde sera entregue a COMPE
                         ,pr_flgdsede     IN crapage.flgdsede%TYPE --> PA eh Sede da cooperativa
                         ,pr_cdagepac     IN crapage.cdagepac%TYPE --> Numero da agencia do PA na Central
+												,pr_flgutcrm     IN crapage.flgutcrm%TYPE --> Flag de controle de acesso ao CRM
                         ,pr_dsendcop     IN crapage.dsendcop%TYPE --> Endereco do PA
                         ,pr_nrendere     IN crapage.nrendere%TYPE --> Numero (ref. endereco) do PA
                         ,pr_nmbairro     IN crapage.nmbairro%TYPE --> Nome do bairro onde esta localizado o PA
@@ -1383,7 +1457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 
     Objetivo  : Rotina para incluir/alterar o PA.
 
-    Alteracoes: 
+    Alteracoes: 08/08/2017 - Adicionado novo parametro pr_flgutcrm. (Projeto 339 - Reinert)
     ..............................................................................*/
     DECLARE
 
@@ -2557,6 +2631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.cdagedoc = pr_cdagedoc
                 ,crapage.flgdsede = pr_flgdsede
                 ,crapage.cdagepac = pr_cdagepac
+								,crapage.flgutcrm = pr_flgutcrm
                 ,crapage.dsendcop = NVL(pr_dsendcop,' ')
                 ,crapage.nrendere = pr_nrendere
                 ,crapage.nmbairro = NVL(pr_nmbairro,' ')
@@ -2741,6 +2816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,cdagedoc
                      ,flgdsede
                      ,cdagepac
+										 ,flgutcrm
                      ,dsendcop
                      ,nrendere
                      ,nmbairro
@@ -2793,6 +2869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,pr_cdagedoc
                      ,pr_flgdsede
                      ,pr_cdagepac
+										 ,pr_flgutcrm
                      ,NVL(pr_dsendcop,' ')
                      ,pr_nrendere
                      ,NVL(pr_nmbairro,' ')
@@ -3056,6 +3133,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'Agencia do PA'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).cdagepac) ELSE '-' END)
                  ,pr_vldepois => pr_cdagepac);
+
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'Habilitar acesso CRM'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flgutcrm) ELSE '-' END)
+                 ,pr_vldepois => pr_flgutcrm);
 
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
@@ -4040,7 +4125,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         	     ,pr_nmpasite     IN crapage.nmpasite%TYPE --> Nome do PA para apresentacao no site da cooperativa
                                ,pr_dstelsit     IN crapage.dstelsit%TYPE --> Telefone do PA para apresentacao no site da cooperativa
                                ,pr_dsemasit     IN crapage.dsemasit%TYPE --> E-mail do PA para apresentacao no site da cooperativa
-                               ,pr_dshorsit     IN crapage.dshorsit%TYPE --> Horario de atendimento para apresentacao no site da cooperativa
+															 ,pr_hrinipaa     IN VARCHAR2              --> Hora Inicial atendimento
+															 ,pr_hrfimpaa     IN VARCHAR2              --> Hora Final atendimento
+															 ,pr_indspcxa     IN crapage.indspcxa%TYPE --> Possui Caixa
                                ,pr_nrlatitu     IN crapage.nrlatitu%TYPE --> Latitude da localizacao
                                ,pr_nrlongit     IN crapage.nrlongit%TYPE --> Longitude da localizacao
                                ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -4087,7 +4174,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       -- Variaveis
       vr_dscnteml VARCHAR2(10000) := '';
       vr_emaildst VARCHAR2(4000);
-      vr_dshorsit crapage.dshorsit%TYPE;
+			vr_hhini    NUMBER;
+      vr_mmini    NUMBER;
+      vr_hhfim    NUMBER;
+      vr_mmfim    NUMBER;
+      vr_hrinipaa VARCHAR2(5);
+			vr_hrfimpaa VARCHAR2(5);
 
     BEGIN
       -- Limpa PLTABLE
@@ -4111,8 +4203,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                       ,pr_cdcritic    => vr_cdcritic
                       ,pr_dscritic    => vr_dscritic);
 
-      -- Remove o CDATA da String
-      vr_dshorsit := GENE0007.fn_remove_cdata(pr_dshorsit);
+			vr_hrinipaa := TO_CHAR(TO_DATE(pr_hrinipaa,'HH24:MI'),'SSSSS');
+			vr_hrfimpaa := TO_CHAR(TO_DATE(pr_hrfimpaa,'HH24:MI'),'SSSSS');
+									
+      -- Horario Atendimento
+			vr_hhini    := TO_NUMBER(SUBSTR(pr_hrinipaa,1,2));
+			vr_mmini    := TO_NUMBER(SUBSTR(pr_hrinipaa,4,2));
+			vr_hhfim    := TO_NUMBER(SUBSTR(pr_hrfimpaa,1,2));
+			vr_mmfim    := TO_NUMBER(SUBSTR(pr_hrfimpaa,4,2));
+
+			-- Valida hora inicial do Atendimento
+			IF vr_hhini > 23 THEN
+				vr_dscritic := 'Hora inválida.';
+				RAISE vr_exc_saida;
+			END IF;
+
+			-- Valida minutos iniciais do Atendimento
+			IF vr_mmini > 59 THEN
+				vr_dscritic := 'Minutos inválidos.';
+				RAISE vr_exc_saida;
+			END IF;
+
+			-- Valida hora final do Atendimento
+			IF vr_hhfim > 23 THEN
+				vr_dscritic := 'Hora inválida.';
+				RAISE vr_exc_saida;
+			END IF;
+
+			-- Valida minutos finais do Atendimento
+			IF vr_mmfim > 59 THEN
+				vr_dscritic := 'Minutos inválidos.';
+				RAISE vr_exc_saida;
+			END IF;
+
+			-- Valida se foi informado valor
+			IF vr_hhini = 0 AND vr_mmini = 0 AND
+				 vr_hhfim = 0 AND vr_mmfim = 0 THEN
+				 vr_dscritic := 'Horário para atendimento não pode ser nulo.';
+				 RAISE vr_exc_saida;
+			END IF;
+
+			-- Valida se hora inicial eh maior que final
+			IF vr_hrinipaa >= vr_hrfimpaa THEN
+				vr_cdcritic := 687;
+				RAISE vr_exc_saida;
+			END IF;
 
       BEGIN
         -- Altera o PA
@@ -4120,7 +4255,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
            SET crapage.nmpasite = nvl(pr_nmpasite,' ')
               ,crapage.dstelsit = nvl(pr_dstelsit,' ')
               ,crapage.dsemasit = nvl(pr_dsemasit,' ')
-              ,crapage.dshorsit = nvl(vr_dshorsit,' ')
+						  ,crapage.hrinipaa = TO_CHAR(vr_hrinipaa)
+							,crapage.hrfimpaa = TO_CHAR(vr_hrfimpaa)
+							,crapage.indspcxa = nvl(pr_indspcxa,0)
               ,crapage.nrlatitu = nvl(pr_nrlatitu,0)
               ,crapage.nrlongit = nvl(pr_nrlongit,0)
          WHERE crapage.cdcooper = vr_cdcooper
@@ -4160,9 +4297,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_cddopcao => 'A'
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
-                 ,pr_dsdcampo => 'horario para site'
-                 ,pr_vldantes => vr_tab_crapage(pr_cdagenci).dshorsit
-                 ,pr_vldepois => NVL(vr_dshorsit, ' '));
+                 ,pr_dsdcampo => 'inicio horario de atendimento'
+                 ,pr_vldantes => vr_tab_crapage(pr_cdagenci).hrinipaa
+                 ,pr_vldepois => NVL(vr_hrinipaa, ' '));
+								 
+			pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => 'A'
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'fim horario de atendimento'
+                 ,pr_vldantes => vr_tab_crapage(pr_cdagenci).hrfimpaa
+                 ,pr_vldepois => NVL(vr_hrfimpaa, ' '));
+								 								 
+			pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => 'A'
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'possui caixaonline'
+                 ,pr_vldantes => vr_tab_crapage(pr_cdagenci).indspcxa
+                 ,pr_vldepois => NVL(pr_indspcxa, 0));
 
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => 'A'
@@ -4198,10 +4351,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                     || ''' para ''' || pr_dsemasit || '''<br>';
       END IF;
 
-      IF NVL(vr_tab_crapage(pr_cdagenci).dshorsit, ' ') <> NVL(vr_dshorsit, ' ') THEN
+      IF NVL(vr_tab_crapage(pr_cdagenci).hrinipaa, ' ') <> NVL(vr_hrinipaa, ' ') THEN
         vr_dscnteml := vr_dscnteml
-                    || '<b>Horário:</b> de ''' || vr_tab_crapage(pr_cdagenci).dshorsit
-                    || ''' para ''' || vr_dshorsit || '''<br>';
+                    || '<b>Horário inicio atendimento:</b> de ''' || vr_tab_crapage(pr_cdagenci).hrinipaa
+                    || ''' para ''' || vr_hrinipaa || '''<br>';
+      END IF;
+			
+			IF NVL(vr_tab_crapage(pr_cdagenci).hrfimpaa, ' ') <> NVL(vr_hrfimpaa, ' ') THEN
+
+        vr_dscnteml := vr_dscnteml
+                    || '<b>Horário fim atendimento:</b> de ''' || vr_tab_crapage(pr_cdagenci).hrfimpaa
+                    || ''' para ''' || vr_hrfimpaa || '''<br>';
+      END IF;
+
+			IF NVL(vr_tab_crapage(pr_cdagenci).indspcxa, 0) <> NVL(pr_indspcxa, 0) THEN
+
+        vr_dscnteml := vr_dscnteml
+                    || '<b>Possui Caixa presencial:</b> de ''' || vr_tab_crapage(pr_cdagenci).indspcxa
+                    || ''' para ''' || pr_indspcxa || '''<br>';
       END IF;
 
       IF NVL(vr_tab_crapage(pr_cdagenci).nrlatitu, 0) <> NVL(pr_nrlatitu, 0) THEN
