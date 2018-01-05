@@ -740,8 +740,12 @@ PROCEDURE pc-efetua-gps-pagamento:
                          INPUT p-vlrtotal,
                          INPUT p-dtvencim,
                          INPUT p-idfisjur,
-                         INPUT 0, /* NRSEQAGP */
+                         INPUT 0, /* NRSEQAGP */ 
                          INPUT 0,
+						 INPUT 0, /* Mobile */
+						 INPUT "", /* pr_dshistor */
+						 OUTPUT "", /* protocolo */
+                         
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").

@@ -689,6 +689,9 @@ PROCEDURE pc-efetua-agendamento-gps:
                          INPUT p-idfisjur,
                          INPUT p-dtdebito,
                          INPUT 0,
+                         INPUT 0,
+                         INPUT "",
+                         OUTPUT "",
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").
