@@ -25,8 +25,8 @@
 	<input type="hidden" id="dtdemiss" name="dtdemiss" value="" />
 	<input type="hidden" id="cdmotdem" name="cdmotdem" value="" />
 
-	<label for="cddbanco" class="rotulo rotulo-80">C&oacute;d. Banco:</label> 
-	<input name="cddbanco" id="cddbanco" type="text" class="codigo pesquisa" />
+	<label for="cdbccxlt" class="rotulo rotulo-80">C&oacute;d. Banco:</label> 
+	<input name="cdbccxlt" id="cdbccxlt" type="text" class="codigo pesquisa" />
 	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 	<input name="nmdbanco" id="nmdbanco" type="text" class="descricao" />
 	<br />
@@ -45,5 +45,5 @@
 </div>
 
 <script type="text/javascript">
-	$('#cddbanco','#formEmissaoSistFinanc').focus();
+	$('#cdbccxlt','#formEmissaoSistFinanc').focus();
 </script>
