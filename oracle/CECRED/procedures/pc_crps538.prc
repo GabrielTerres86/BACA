@@ -382,6 +382,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             
                08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                             (SD#791193 - AJFink)
+                           
+			   03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+                            periodo de convivencia será tratado por faixa de valores
+                           (Douglas - Chamado 823963)
 
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
@@ -1865,13 +1869,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            pc_controla_log_batch(2, vr_dscritic|| ' - Arquivo: integra/'||vr_nmarqret);           
 
            --Levantar Excecao pois nao tem arquivo para processar
-           IF gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+           IF nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                         pr_cdcooper => 0, 
-                                        pr_cdacesso => 'FL_CRPS538_ABORTAR') = 'S' THEN
+                                        pr_cdacesso => 'FL_CRPS538_ABORTAR'),'S') = 'S' THEN
              RAISE vr_exc_saida;
            ELSE
-           RAISE vr_exc_final;
-         END IF;
+             RAISE vr_exc_final;
+           END IF;
 
          END IF;
          /*  Fim da verificacao se deve executar  */
