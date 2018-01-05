@@ -2980,6 +2980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                       ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+
   BEGIN
     /*..............................................................................
 
@@ -3047,6 +3048,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                    ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
                                    ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+    PRAGMA AUTONOMOUS_TRANSACTION;  
+  
   BEGIN
     /*..............................................................................
 
@@ -3097,13 +3100,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           RETURNING tbc.idcontrole 
                INTO pr_idcontrole;
       END IF;
-
+      
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina GENE0001.pc_grava_batch_controle: ' || SQLERRM;
     END;
-
+    --
+    COMMIT;   
+    --
   END pc_grava_batch_controle;
 
   /* Finaliza o controle do batch por agencia ou convenio */
@@ -3112,6 +3117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS            -- Descricao da critica
   
 
+    PRAGMA AUTONOMOUS_TRANSACTION;   
+  
   BEGIN
     /*..............................................................................
 
@@ -3138,7 +3145,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina GENE0001.pc_finaliza_batch_controle: ' || SQLERRM;
     END;
-    
+    --
+    COMMIT;
+    --
 
   END pc_finaliza_batch_controle;
 
