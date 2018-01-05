@@ -610,6 +610,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
   --                         quando nao localizar registro para o 1 titular.
   --                         (Chamado 823977) - (Fabricio)
+  --
+  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
+  --                         for o operador realizando alguma transação (Tiago/Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1852,7 +1855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END LOOP;
        
           vr_index:= pr_idseqttl;
-          
+        
           --Se existir valor limite web
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
             --Valor utilizado WEB
@@ -3795,7 +3798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 12/12/2016
+   Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
   
   Dados referentes ao programa:
   
@@ -3864,6 +3867,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            Incluído novas regras para definir se deve seguir o fluxo de aprovação
                            em transações pendentes ou não de acordo com o limite disponível diário
                            de preposto ou operador para contas PJ.              
+                           
+              03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
+                           alguma transação (Tiago/Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4831,8 +4837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       IF  pr_idagenda = 1 THEN
-        /* Nao validar saldo para operadores na internet */
-        IF pr_nrcpfope = 0 THEN
+        
           --Limpar tabela saldo e erro
           vr_tab_saldo.DELETE;
           vr_tab_erro.DELETE;
@@ -4864,7 +4869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-          --Verificar o saldo retornado
+      
           IF vr_tab_saldo.Count = 0 THEN
             --Montar mensagem erro
             vr_cdcritic:= 0;
@@ -4887,57 +4892,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
-      
-          /** Obtem valor da tarifa TED **/
-          IF pr_tpoperac = 4 AND
-             pr_flgexage = 0 THEN
-            --Buscar tarifa da TED
-            CXON0020.pc_busca_tarifa_ted (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
-                                         ,pr_cdagenci => 90           --Codigo Agencia
-                                         ,pr_nrdconta => pr_nrdconta  --Numero da Conta
-                                         ,pr_vllanmto => pr_vllanmto  --Valor Lancamento
-                                         ,pr_vltarifa => vr_vltarifa  --Valor Tarifa
-                                         ,pr_cdhistor => vr_cdhistor  --Historico da tarifa
-                                         ,pr_cdhisest => vr_cdhisest  --Historico estorno
-                                         ,pr_cdfvlcop => vr_cdfvlcop  --Codigo Filial Cooperativa
-                                         ,pr_cdcritic => vr_cdcritic  --C¿digo do erro
-                                         ,pr_dscritic => vr_dscritic);  --Descricao do erro
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          END IF;      
+
+        /* Nao validar saldo para operadores na internet */
+        IF pr_nrcpfope = 0 THEN
+         
+            /** Obtem valor da tarifa TED **/
+            IF pr_tpoperac = 4 AND
+               pr_flgexage = 0 THEN
+              --Buscar tarifa da TED
+              CXON0020.pc_busca_tarifa_ted (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
+                                           ,pr_cdagenci => 90           --Codigo Agencia
+                                           ,pr_nrdconta => pr_nrdconta  --Numero da Conta
+                                           ,pr_vllanmto => pr_vllanmto  --Valor Lancamento
+                                           ,pr_vltarifa => vr_vltarifa  --Valor Tarifa
+                                           ,pr_cdhistor => vr_cdhistor  --Historico da tarifa
+                                           ,pr_cdhisest => vr_cdhisest  --Historico estorno
+                                           ,pr_cdfvlcop => vr_cdfvlcop  --Codigo Filial Cooperativa
+                                           ,pr_cdcritic => vr_cdcritic  --C¿digo do erro
+                                           ,pr_dscritic => vr_dscritic);  --Descricao do erro
+              --Se ocorreu erro
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
+              --Somar valor tarifa no lancamento
+              pr_vllanmto:= nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
+            ELSIF  pr_tpoperac = 5  THEN /** Tarifa Transf.Intercoop. **/
+              --Buscar tarifa da TED
+              TARI0001.pc_busca_tar_transf_intercoop (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
+                                                     ,pr_cdagenci => 90           --Codigo Agencia
+                                                     ,pr_nrdconta => pr_nrdconta  --Numero da Conta
+                                                     ,pr_vllanmto => pr_vllanmto  --Valor Lancamento
+                                                     ,pr_vltarifa => vr_vltarifa  --Valor Tarifa
+                                                     ,pr_cdhistor => vr_cdhistor  --Historico da tarifa
+                                                     ,pr_cdhisest => vr_cdhisest  --Historico estorno
+                                                     ,pr_cdfvlcop => vr_cdfvlcop  --Codigo Filial Cooperativa
+                                                     ,pr_cdcritic => vr_cdcritic  --C¿digo do erro
+                                                     ,pr_dscritic => vr_dscritic);  --Descricao do erro
+              --Se ocorreu erro
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
+              --Somar valor tarifa no lancamento
+              pr_vllanmto:= nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
+            END IF;
+            --Se o valor do lancamento maior valor disponivel
+            IF pr_vllanmto > vr_vlsldisp THEN
+              --Montar mensagem erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Saldo insuficiente para debito da tarifa.';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
-            --Somar valor tarifa no lancamento
-            pr_vllanmto:= nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
-          ELSIF  pr_tpoperac = 5  THEN /** Tarifa Transf.Intercoop. **/
-            --Buscar tarifa da TED
-            TARI0001.pc_busca_tar_transf_intercoop (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
-                                                   ,pr_cdagenci => 90           --Codigo Agencia
-                                                   ,pr_nrdconta => pr_nrdconta  --Numero da Conta
-                                                   ,pr_vllanmto => pr_vllanmto  --Valor Lancamento
-                                                   ,pr_vltarifa => vr_vltarifa  --Valor Tarifa
-                                                   ,pr_cdhistor => vr_cdhistor  --Historico da tarifa
-                                                   ,pr_cdhisest => vr_cdhisest  --Historico estorno
-                                                   ,pr_cdfvlcop => vr_cdfvlcop  --Codigo Filial Cooperativa
-                                                   ,pr_cdcritic => vr_cdcritic  --C¿digo do erro
-                                                   ,pr_dscritic => vr_dscritic);  --Descricao do erro
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
-            --Somar valor tarifa no lancamento
-            pr_vllanmto:= nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
-          END IF;
-          --Se o valor do lancamento maior valor disponivel
-          IF pr_vllanmto > vr_vlsldisp THEN
-            --Montar mensagem erro
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Saldo insuficiente para debito da tarifa.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-          END IF;
+                   
         ELSIF pr_tpoperac = 4 AND
               pr_flgexage = 0 THEN
           --Buscar tarifa da TED
