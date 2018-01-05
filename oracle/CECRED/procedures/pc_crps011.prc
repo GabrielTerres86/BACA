@@ -18,7 +18,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                       Ultima atualizacao: 04/09/2017
+   Data    : Janeiro/92.                       Ultima atualizacao: 03/01/2018
 
    Dados referentes ao programa:
 
@@ -118,6 +118,11 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
 
                04/09/2017 - M439 Modificado cursor cr_craplct para somar todos 
                             lancamentos dentro do ano (Tiago/Thiago #635669)
+
+               03/01/2018 - Carregar o saldo devedor dos emprestimos para a tabela de
+                            memória somente se o empréstimo está ativo (inliquid = 0)
+                            ou está em prejuízo (inprejuz = 1) (SD#748299 - AJFink)
+
     ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -273,6 +278,10 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
       from crapepr
      where cdcooper = pr_cdcooper
        and nrdconta > pr_nrctares
+       --se está ativo (inliquid = 0) ou está em prejuízo (inprejuz = 1)
+       and (inliquid = 0 or inprejuz = 1)
+       --se possui saldo devedor diferente de zero
+       and nvl(vlsdeved,0) <> 0
      group by cdcooper, nrdconta;
   -- Busca o registro de saldo dos associados
   cursor cr_crapsld(pr_cdcooper crapcop.cdcooper%type,
