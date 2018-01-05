@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 29/12/2017
 
     Dados referentes ao programa:
 
@@ -287,6 +287,10 @@
                            
               27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
                            para prejuizo. (Oscar)
+                           
+              28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
+              
+              29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
                            
 ............................................................................. */
 
@@ -1824,13 +1828,13 @@ PROCEDURE busca_dados_efetivacao_proposta:
                     aux_dscritic = "Efetive o contrato na tela Lote.".
 
              RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
+                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
                             INPUT 1,
                             INPUT aux_cdcritic,
                             INPUT-OUTPUT aux_dscritic).
 
-             RETURN "NOK".
+       RETURN "NOK".
         END.
 
     RUN valida_dados_efetivacao_proposta ( INPUT par_cdcooper,
@@ -3389,7 +3393,7 @@ PROCEDURE grava_efetivacao_proposta:
            DO:
                ASSIGN aux_nrdolote = 650004.
 
-               IF   aux_floperac   THEN             /* Financiamento*/
+       IF   aux_floperac   THEN             /* Financiamento*/
                     ASSIGN aux_cdhistor = 2327.
                ELSE                                 /* Emprestimo */
                     ASSIGN aux_cdhistor = 2326.
@@ -3397,11 +3401,11 @@ PROCEDURE grava_efetivacao_proposta:
        ELSE
            DO:
                IF   aux_floperac   THEN             /* Financiamento*/
-                    ASSIGN aux_cdhistor = 1059
-                           aux_nrdolote = 600030.
-               ELSE                                 /* Emprestimo */
-                    ASSIGN aux_cdhistor = 1036
-                           aux_nrdolote = 600005.
+            ASSIGN aux_cdhistor = 1059
+                   aux_nrdolote = 600030.
+       ELSE                                 /* Emprestimo */
+            ASSIGN aux_cdhistor = 1036
+                   aux_nrdolote = 600005.
            END.
 
        RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
@@ -3950,13 +3954,13 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                     aux_dscritic = "Opcao invalida para esse tipo de contrato.".
 
              RUN gera_erro (INPUT par_cdcooper,
-                            INPUT par_cdagenci,
+                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
                             INPUT 1,
                             INPUT aux_cdcritic,
                             INPUT-OUTPUT aux_dscritic).
 
-             RETURN "NOK".
+       RETURN "NOK".
         END.
 
     FIND   crapass WHERE crapass.nrdconta = par_nrdconta   AND
@@ -5043,7 +5047,7 @@ PROCEDURE transf_contrato_prejuizo.
        ELSE
        DO:
            ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Erro ao lista Ocorrencias!".
+                  aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
 
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -5306,7 +5310,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
-                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta
