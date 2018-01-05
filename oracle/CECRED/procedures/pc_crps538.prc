@@ -1867,9 +1867,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            pc_controla_log_batch(2, vr_dscritic|| ' - Arquivo: integra/'||vr_nmarqret);           
 
            --Levantar Excecao pois nao tem arquivo para processar
-           IF gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+           IF nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                         pr_cdcooper => 0, 
-                                        pr_cdacesso => 'FL_CRPS538_ABORTAR') = 'S' THEN
+                                        pr_cdacesso => 'FL_CRPS538_ABORTAR'),'S') = 'S' THEN
              RAISE vr_exc_saida;
            ELSE
              RAISE vr_exc_final;
