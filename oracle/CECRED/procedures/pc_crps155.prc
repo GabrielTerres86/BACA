@@ -121,13 +121,24 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   rw_craptab   cr_craptab%rowtype;
 
   -- Agências por cooperativa, com poupança programada
-  cursor cr_craprpp_age (pr_cdcooper in craprpp.cdcooper%type) is 
+  cursor cr_craprpp_age (pr_cdcooper in craprpp.cdcooper%type,
+                         pr_dtmvtolt in crapdat.dtmvtolt%type,
+                         pr_cdprogra in tbgen_batch_controle.cdprogra%type) is 
     select distinct crapass.cdagenci
       from craprpp,
            crapass
      where craprpp.cdcooper  = pr_cdcooper
-       AND crapass.cdcooper  = craprpp.cdcooper
-       AND crapass.nrdconta  = craprpp.nrdconta ;
+       and crapass.cdcooper  = craprpp.cdcooper
+       and crapass.nrdconta  = craprpp.nrdconta
+       and (pr_flgresta = 0 or
+           (pr_flgresta = 1 and exists (select 1
+                                          from tbgen_batch_controle
+                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                           and tbgen_batch_controle.tpagrupador = 1
+                                           and tbgen_batch_controle.cdagrupador = crapass.cdagenci
+                                           and tbgen_batch_controle.insituacao  = 1
+                                           and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
 
   -- Informações da poupança programada
   cursor cr_craprpp(pr_cdcooper in craptab.cdcooper%type) is
@@ -392,7 +403,7 @@ begin
     END IF;
                                           
     -- Retorna as agências, com poupança programada
-    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper) loop
+    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,vr_dtmvtolt,vr_cdprogra) loop
                                           
       -- Montar o prefixo do código do programa para o jobname
       vr_jobname := vr_cdprogra ||'_'|| rw_craprpp_age.cdagenci || '$';  
@@ -465,7 +476,7 @@ begin
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
-                                                  pr_dtmvtolt    => trunc(sysdate),
+                                                  pr_dtmvtolt    => vr_dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);
     if vr_qterro > 0 then 
@@ -486,7 +497,7 @@ begin
     -- Grava controle de batch por agência
     gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper               -- Codigo da Cooperativa
                                     ,pr_cdprogra    => vr_cdprogra               -- Codigo do Programa
-                                    ,pr_dtmvtolt    => vr_dtmvtopr               -- Data de Movimento
+                                    ,pr_dtmvtolt    => vr_dtmvtolt               -- Data de Movimento
                                     ,pr_tpagrupador => 1                         -- Tipo de Agrupador (1-PA/ 2-Convenio)
                                     ,pr_cdagrupador => pr_cdagenci               -- Codigo do agrupador conforme (tpagrupador)
                                     ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
@@ -511,7 +522,7 @@ begin
                     pr_tpocorrencia       => 4,
                     pr_dsmensagem         => 'Início - cursor cr_craprpp. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                     PR_IDPRGLOG           => vr_idlog_ini_par);  
-
+    
     -- Leitura das poupanças programadas
     for rw_craprpp in cr_craprpp(pr_cdcooper) loop
 
@@ -787,7 +798,8 @@ begin
                     pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_idprglog   => vr_idlog_ini_par);       
+                    pr_idprglog   => vr_idlog_ini_par,
+                    pr_flgsucesso => 1);       
     
   end if;
 
@@ -804,7 +816,8 @@ begin
                       pr_cdprograma => vr_cdprogra,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_ger);                 
+                      pr_idprglog   => vr_idlog_ini_ger,
+                      pr_flgsucesso => 1);                 
     end if;
 
     --Salvar informacoes no banco de dados
@@ -854,7 +867,8 @@ exception
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_par);  
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);  
                       
       -- Encerrar o job do processamento paralelo dessa agência
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -886,7 +900,8 @@ exception
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_par);  
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);  
     
       -- Encerrar o job do processamento paralelo dessa agência
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
