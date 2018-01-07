@@ -20,11 +20,9 @@ BEGIN
      Alteracoes: 
 
   ............................................................................ */
-
   DECLARE
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
-
     -- Codigo do programa
     vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'CRPS723';
 
@@ -34,7 +32,6 @@ BEGIN
     vr_dscritic  VARCHAR2(4000);
 
     ------------------------------- CURSORES ---------------------------------
-
     -- Cursor generico de calendario
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -107,13 +104,23 @@ BEGIN
       ,vr_rowid ROWID);
     TYPE typ_tab_crapepr IS TABLE OF typ_reg_crapepr INDEX BY PLS_INTEGER;
     vr_tab_crapepr  typ_tab_crapepr;
+    
+    TYPE typ_reg_crappep IS RECORD
+      (cdcooper  crappep.cdcooper%TYPE
+      ,nrdconta  crappep.nrdconta%TYPE
+      ,nrctremp  crappep.nrctremp%TYPE
+      ,nrparepr  crappep.nrparepr%TYPE
+      ,vlsdvatu  crappep.vlsdvatu%TYPE
+      ,vlmrapar  crappep.vlmrapar%TYPE
+      ,vlmtapar  crappep.vlmtapar%TYPE);
+    TYPE typ_tab_crappep IS TABLE OF typ_reg_crappep INDEX BY PLS_INTEGER;
+    vr_tab_crappep  typ_tab_crappep;
 
     vr_tab_parcelas EMPR0011.typ_tab_parcelas;
 
     ------------------------------- VARIAVEIS -------------------------------
     vr_vlsprojt         crapepr.vlsprojt%TYPE;
     vr_flgachou         BOOLEAN;
-    vr_fldtpgto         BOOLEAN;
     vr_dtdpagto         crapepr.dtdpagto%TYPE;
     vr_dtvencto         crappep.dtvencto%TYPE;
     vr_qtmesdec         crapepr.qtmesdec%TYPE;
@@ -125,6 +132,42 @@ BEGIN
     vr_vlprepag         NUMBER;
     vr_vltotal_juros    NUMBER(25,2);
     vr_vltotal_parcela	NUMBER(25,2);
+    
+    -- Função buscar os meses decorridos
+    FUNCTION fn_retorna_meses_decorridos(pr_cdcooper IN crapepr.cdcooper%TYPE             
+                                        ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                                        ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                                        ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) 
+                                         RETURN NUMBER IS
+                                               
+      -- Cursor para buscar as parcelas que vencem hoje
+      CURSOR cr_crappep (pr_cdcooper IN crapepr.cdcooper%TYPE             
+                        ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                        ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                        ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS
+        SELECT dtvencto
+          from crappep
+         WHERE cdcooper  = pr_cdcooper
+           AND nrdconta  = pr_nrdconta
+           AND nrctremp  = pr_nrctremp
+           AND dtvencto <= pr_dtmvtolt
+           AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan));
+    BEGIN        
+      FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrctremp => pr_nrctremp
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_dtmvtoan => pr_dtmvtoan) LOOP                                   
+        -- Condicao para verificar se estah em dia                           
+        IF rw_crappep.dtvencto > pr_dtmvtoan THEN
+          RETURN 1;
+        END IF;
+      END LOOP;
+      
+      RETURN 0;                             
+    END;
 
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
@@ -160,8 +203,6 @@ BEGIN
     -- Listagem dos contratos
     FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
       -- Reseta as variaveis
-      vr_fldtpgto      	 := FALSE;
-      vr_dtdpagto        := rw_crapepr.dtdpagto;
       vr_qtmesdec        := rw_crapepr.qtmesdec;
       vr_vlsprojt        := rw_crapepr.vlsprojt;
       vr_vlsdvctr        := 0;
@@ -210,6 +251,16 @@ BEGIN
         IF vr_tab_parcelas(vr_index_pos).insitpar IN (1,2) THEN
           vr_vlpreapg := vr_vlpreapg + vr_tab_parcelas(vr_index_pos).vlatupar;
         END IF;
+        
+        -- Atualiza os valores das Parcelas
+        vr_index := vr_tab_crappep.count + 1;
+        vr_tab_crappep(vr_index).cdcooper := pr_cdcooper;
+        vr_tab_crappep(vr_index).nrdconta := rw_crapepr.nrdconta;
+        vr_tab_crappep(vr_index).nrctremp := rw_crapepr.nrctremp;
+        vr_tab_crappep(vr_index).nrparepr := vr_tab_parcelas(vr_index_pos).nrparepr;
+        vr_tab_crappep(vr_index).vlsdvatu := vr_tab_parcelas(vr_index_pos).vlatupar;        
+        vr_tab_crappep(vr_index).vlmrapar := vr_tab_parcelas(vr_index_pos).vlmrapar;
+        vr_tab_crappep(vr_index).vlmtapar := vr_tab_parcelas(vr_index_pos).vlmtapar;        
         -- Proximo indice
         vr_index_pos := vr_tab_parcelas.NEXT(vr_index_pos);
       END LOOP;
@@ -222,10 +273,7 @@ BEGIN
       CLOSE cr_vltotal_pag_par;
 
       -- Data de Vencimento correspondente do mês
-      vr_dtvencto := TO_DATE(TO_CHAR(vr_dtdpagto,'DD')||'/'||
-                             TO_CHAR(rw_crapdat.dtmvtolt,'MM')||'/'||
-                             TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'DD/MM/RRRR');      
-                             
+      vr_dtvencto := TO_DATE(TO_CHAR(vr_dtdpagto,'DD')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'MM')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'DD/MM/RRRR');                             
       -- Condicao para verificar se a Parcela vence hoje
       IF vr_dtvencto > rw_crapdat.dtmvtoan AND vr_dtvencto <= rw_crapdat.dtmvtolt THEN
         -- Somar o Valor Total de Juros de Emprestimo
@@ -247,6 +295,13 @@ BEGIN
         vr_vlsprojt := NVL(rw_crapepr.vlemprst,0) + NVL(vr_vltotal_juros,0) - NVL(vr_vltotal_parcela,0);
       END IF;            
 
+      -- Calcula os meses decorridos
+      vr_qtmesdec := vr_qtmesdec + NVL(fn_retorna_meses_decorridos(pr_cdcooper => pr_cdcooper            
+                                                                  ,pr_nrdconta => rw_crapepr.nrdconta
+                                                                  ,pr_nrctremp => rw_crapepr.nrctremp
+                                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                                  ,pr_dtmvtoan => rw_crapdat.dtmvtoan),0);
+
       -- Alterar data de pagamento do emprestimo
       vr_index := vr_tab_crapepr.COUNT + 1;
       vr_tab_crapepr(vr_index).dtdpagto := vr_dtdpagto;
@@ -259,7 +314,25 @@ BEGIN
       vr_tab_crapepr(vr_index).vlsprojt := vr_vlsprojt;
       vr_tab_crapepr(vr_index).vr_rowid := rw_crapepr.ROWID;
     END LOOP; -- cr_crapepr
-
+    
+    -- Atualizar Parcela Emprestimo
+    BEGIN
+      FORALL idx IN INDICES OF vr_tab_crappep SAVE EXCEPTIONS
+        update crappep
+           set vlsdvatu = vr_tab_crappep(idx).vlsdvatu
+              ,vlmrapar = vr_tab_crappep(idx).vlmrapar
+              ,vlmtapar = vr_tab_crappep(idx).vlmtapar
+         where cdcooper = vr_tab_crappep(idx).cdcooper
+           AND nrdconta = vr_tab_crappep(idx).nrdconta
+           AND nrctremp = vr_tab_crappep(idx).nrctremp
+           AND nrparepr = vr_tab_crappep(idx).nrparepr;
+    EXCEPTION
+      when others then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar crappep: '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+        raise vr_exc_saida;
+    END;
+    
     -- Atualizar Emprestimo
     BEGIN
       FORALL idx IN INDICES OF vr_tab_crapepr SAVE EXCEPTIONS

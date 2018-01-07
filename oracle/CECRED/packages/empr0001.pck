@@ -3949,8 +3949,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_nrctremp => pr_nrctremp
                                              ,pr_cdlcremp => rw_crapepr.cdlcremp
                                              ,pr_qttolatr => rw_crapepr.qttolatr
-                                             ,pr_vlpreapg => pr_vlpreapg
-                                             ,pr_vlprvenc => pr_vlprvenc
+                                             ,pr_vlsdeved => pr_vlsdeved
+                                             ,pr_vlprvenc => pr_vlpreapg
                                              ,pr_vlpraven => pr_vlpraven
                                              ,pr_vlmtapar => pr_vlmtapar
                                              ,pr_vlmrapar => pr_vlmrapar
@@ -3961,8 +3961,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_erro;
         END IF;
 
-        pr_vlsdeved := pr_vlpreapg;
-        
       -- Price TR
       ELSIF rw_crapepr.tpemprst = 0 THEN
 
@@ -5521,7 +5519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                  || lpad(to_char(vr_qtpreapg,'fm990d0000'),8,' ')||' ';
           pr_tab_dados_epr(vr_indadepr).qtpreapg := vr_qtpreapg;
           -- Guardar o valor prestações a pagar cfme já calculado
-          IF rw_crapepr.tpemprst = 1 THEN
+          IF rw_crapepr.tpemprst IN (1,2) THEN
             -- Quantidade de meses decorridos vem da crapepr
             pr_tab_dados_epr(vr_indadepr).vlpreapg := vr_vlpreapg;
           ELSE
@@ -6358,7 +6356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_nrctremp => rw_crapepr.nrctremp
                                              ,pr_cdlcremp => rw_crapepr.cdlcremp
                                              ,pr_qttolatr => rw_crapepr.qttolatr
-                                             ,pr_vlpreapg => vr_vlpreapg
+                                             ,pr_vlsdeved => pr_vlsdeved
                                              ,pr_vlprvenc => vr_vlprvenc
                                              ,pr_vlpraven => vr_vlpraven
                                              ,pr_vlmtapar => vr_vlmtapar
@@ -6371,7 +6369,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
 
         -- Copiar os valores da rotina para as variaveis de saida
-        pr_vlsdeved := vr_vlpreapg;
         pr_qtprecal := rw_crapepr.qtprecal;
 
       END IF;

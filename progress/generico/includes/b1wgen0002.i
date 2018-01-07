@@ -162,11 +162,11 @@ ELSE IF crapepr.tpemprst = 2 THEN /* Price Pos-Fixado */
               aux_vlmrapar = 0
               aux_cdcritic = 0
               aux_dscritic = ""
-              aux_vlpreapg = pc_busca_pagto_parc_pos_prog.pr_vlpreapg
-                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlpreapg <> ?
-              aux_vlsdeved = aux_vlpreapg
+              aux_vlsdeved = pc_busca_pagto_parc_pos_prog.pr_vlsdeved
+                             WHEN pc_busca_pagto_parc_pos_prog.pr_vlsdeved <> ?
               aux_vlprvenc = pc_busca_pagto_parc_pos_prog.pr_vlprvenc
                              WHEN pc_busca_pagto_parc_pos_prog.pr_vlprvenc <> ?
+              aux_vlpreapg = aux_vlprvenc
               aux_vlpraven = pc_busca_pagto_parc_pos_prog.pr_vlpraven
                              WHEN pc_busca_pagto_parc_pos_prog.pr_vlpraven <> ?
               aux_vlmtapar = pc_busca_pagto_parc_pos_prog.pr_vlmtapar

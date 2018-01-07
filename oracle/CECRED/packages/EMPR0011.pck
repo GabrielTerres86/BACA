@@ -146,7 +146,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
                                         ,pr_qttolatr  IN crapepr.qttolatr%TYPE     --> Tolerancia para cobranca de multa e mora parcelas atraso
-                                        ,pr_vlpreapg OUT NUMBER                    --> Valor atualizado
+                                        ,pr_vlsdeved OUT NUMBER                    --> Valor atualizado
                                         ,pr_vlprvenc OUT NUMBER                    --> Parcela Vencida
                                         ,pr_vlpraven OUT NUMBER                    --> Parcela EM DIA + Parcela A VENCER
                                         ,pr_vlmtapar OUT NUMBER                    --> Valor da multa por atraso
@@ -2151,7 +2151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
           -- Somente sera carregado os valores de vencimento a vencer, dentro do mês (LAUTOM)
           IF (to_char(rw_crappep.dtvencto,'RRRRMM') = to_char(pr_dtmvtolt,'RRRRMM')) THEN
-            pr_tab_parcelas(vr_indice).vlpraven := pr_tab_parcelas(vr_indice).vlatupar;
+            pr_tab_parcelas(vr_indice).vlpraven := NVL(rw_crappep.vlsdvpar,0);
           END IF;         
           
         END IF;
@@ -2184,7 +2184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
                                         ,pr_qttolatr  IN crapepr.qttolatr%TYPE     --> Tolerancia para cobranca de multa e mora parcelas atraso
-                                        ,pr_vlpreapg OUT NUMBER                    --> Valor atualizado
+                                        ,pr_vlsdeved OUT NUMBER                    --> Valor atualizado
                                         ,pr_vlprvenc OUT NUMBER                    --> Parcela Vencida
                                         ,pr_vlpraven OUT NUMBER                    --> Parcela EM DIA + Parcela A VENCER
                                         ,pr_vlmtapar OUT NUMBER                    --> Valor da multa por atraso
@@ -2289,6 +2289,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_vlmrapar := vr_vlmrapar + NVL(vr_tab_parcelas(vr_indice).vlmrapar,0);
 
         CASE vr_tab_parcelas(vr_indice).insitpar
+          -- Em Dia
+          WHEN 1 THEN vr_vlpraven := vr_vlpraven + NVL(vr_tab_parcelas(vr_indice).vlatupar,0);
           -- Em Atraso
           WHEN 2 THEN vr_vlprvenc := vr_vlprvenc + NVL(vr_tab_parcelas(vr_indice).vlatupar,0);
           -- A Vencer
@@ -2299,7 +2301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END LOOP;
 
       -- Retorna valores
-      pr_vlpreapg := vr_vlpreapg;
+      pr_vlsdeved := vr_vlpreapg;
       pr_vlprvenc := vr_vlprvenc;
       pr_vlpraven := vr_vlpraven;
       pr_vlmtapar := vr_vlmtapar;
@@ -5180,7 +5182,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           RAISE vr_exc_erro;
         END IF;
         
-      END IF;      
+      END IF;
+      
+      -- Valor a pagar da parcela precisa diminuir o valor de Juros de Mora + Multa
+      vr_vlpagpar := NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) + NVL(vr_vlmrapar,0);
 
       -- Efetua o Lancamento de Multa do Contrato de Emprestimo
       IF NVL(vr_vlmtapar, 0) > 0 THEN
@@ -5377,7 +5382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF; -- NVL(vr_vlmrapar, 0) > 0
 
       -- Condicao para verificar se a parcela sera liquidada
-      IF NVL(pr_vlsdvpar,0) = NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar, 0) - NVL(vr_vlmrapar, 0) THEN
+      IF NVL(pr_vlsdvpar,0) = NVL(vr_vlpagpar,0) THEN
         vr_inliquid := 1;
         vr_vljura60 := 0;
         -- Saldo Devedor da Parcela
@@ -5401,10 +5406,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       BEGIN
         UPDATE crappep
            SET crappep.dtultpag = pr_dtcalcul
-              ,crappep.vlpagpar = NVL(crappep.vlpagpar,0) + NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) - NVL(vr_vlmrapar,0)
+              ,crappep.vlpagpar = NVL(crappep.vlpagpar,0) + NVL(vr_vlpagpar,0)
 			        ,crappep.vlpagmta = NVL(crappep.vlpagmta,0) + NVL(vr_vlmtapar,0)
 			        ,crappep.vlpagmra = NVL(crappep.vlpagmra,0) + NVL(vr_vlmrapar,0)
-              ,crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) + NVL(vr_vlmtapar,0) + NVL(vr_vlmrapar,0) - NVL(vr_vlpagpar,0)
+              ,crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) - NVL(vr_vlpagpar,0)
               ,crappep.inliquid = vr_inliquid
               ,crappep.vlsdvatu = vr_vlsdvatu
               ,crappep.vljura60 = vr_vljura60              
@@ -5527,7 +5532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            SET --crapepr.dtultpag = pr_dtcalcul
                crapepr.qtprepag = vr_qtprepag
               ,crapepr.qtprecal = vr_qtprecal
-              ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vlmtapar, 0) + NVL(vr_vlmrapar,0) - NVL(vr_vlpagpar,0)
+              ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) - NVL(vr_vlpagpar,0)
          WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
            AND crapepr.nrctremp = pr_nrctremp;

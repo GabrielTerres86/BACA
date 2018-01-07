@@ -116,15 +116,7 @@ BEGIN
        WHERE cdcooper = pr_cdcooper
          AND tpprodut = 2;
 
-    -- Buscar a valor da moeda fixa
-    CURSOR cr_crapmfx(pr_cdcooper IN crapmfx.cdcooper%TYPE
-                     ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE) IS
-      SELECT tpmoefix
-            ,vlmoefix
-        FROM crapmfx
-       WHERE cdcooper = pr_cdcooper
-         AND dtmvtolt = pr_dtmvtolt;
-
+    
     -- Soma os valores lancados dentro do mes
     CURSOR cr_craplem_sum(pr_cdcooper IN craplem.cdcooper%TYPE
                          ,pr_nrdconta IN craplem.nrdconta%TYPE
@@ -161,6 +153,18 @@ BEGIN
          AND crapmcr.tpctrmif = 1; -- Emprestimo
     rw_crapmcr cr_crapmcr%ROWTYPE;
     
+    --Selecionar Moedas
+    CURSOR cr_crapmfx (pr_cdcooper IN crapmfx.cdcooper%TYPE
+                      ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE
+                      ,pr_tpmoefix IN crapmfx.tpmoefix%TYPE) IS
+      SELECT crapmfx.cdcooper
+            ,crapmfx.vlmoefix
+        FROM crapmfx
+       WHERE crapmfx.cdcooper = pr_cdcooper
+         AND crapmfx.dtmvtolt = pr_dtmvtolt
+         AND crapmfx.tpmoefix = pr_tpmoefix;
+    rw_crapmfx cr_crapmfx%ROWTYPE;
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   
     -- Definicao do tipo da tabela para linhas de credito
@@ -242,6 +246,21 @@ BEGIN
       vr_cdcritic := 55;
       RAISE vr_exc_saida;
     END IF;
+    
+    --Selecionar Valor Moeda
+    OPEN cr_crapmfx (pr_cdcooper => pr_cdcooper
+                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                    ,pr_tpmoefix => 2);
+    FETCH cr_crapmfx INTO rw_crapmfx;
+    --Se nao encontrou
+    IF cr_crapmfx%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 140;
+      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      --Complementar mensagem
+      vr_dscritic:= vr_dscritic ||' da UFIR.';
+      RAISE vr_exc_saida;
+    END IF;
 
     -- Carregar linhas de credito
     FOR rw_craplcr IN cr_craplcr(pr_cdcooper => pr_cdcooper) LOOP
@@ -249,12 +268,6 @@ BEGIN
       vr_tab_craplcr(rw_craplcr.cdlcremp).perjurmo := rw_craplcr.perjurmo;
       vr_tab_craplcr(rw_craplcr.cdlcremp).flgcobmu := rw_craplcr.flgcobmu;
       vr_tab_flg_lcr(rw_craplcr.cdlcremp) := 0;
-    END LOOP;
-
-    -- Carregar moedas fixas
-    FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper
-                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-      vr_tab_crapmfx(rw_crapmfx.tpmoefix) := rw_crapmfx.vlmoefix;
     END LOOP;
 
     -- Listagem dos contratos
@@ -364,7 +377,7 @@ BEGIN
           -- Atualizar tabela cotas
           BEGIN
             UPDATE crapcot 
-               SET crapcot.qtjurmfx = NVL(crapcot.qtjurmfx,0) + ROUND(vr_vllanmto / vr_tab_crapmfx(rw_crapepr.cddindex),4)
+               SET crapcot.qtjurmfx = NVL(crapcot.qtjurmfx,0) + ROUND(vr_vllanmto / rw_crapmfx.vlmoefix,4)
              WHERE crapcot.cdcooper = pr_cdcooper
                AND crapcot.nrdconta = rw_crapepr.nrdconta;
           EXCEPTION

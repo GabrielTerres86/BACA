@@ -100,7 +100,6 @@ DEF         VAR aux_cdcritic  AS INT                                   NO-UNDO.
 
 DEF         VAR aux_inhst093  AS LOGICAL                               NO-UNDO.
 DEF         VAR aux_cdempres  AS INT                                   NO-UNDO.
-DEF         VAR aux_vlpreapg  AS DECI                                  NO-UNDO.    
 
 DEF         VAR par_cdcooper AS INTE                                   NO-UNDO.
 DEF         VAR par_cdagenci AS INTE                                   NO-UNDO.
@@ -298,15 +297,14 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
 
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-         ASSIGN aux_vlpreapg = 0
-                aux_vlprvenc = 0
+         ASSIGN aux_vlprvenc = 0
                 aux_vlpraven = 0
                 aux_vlmtapar = 0
                 aux_vlmrapar = 0
                 aux_cdcritic = 0
                 aux_dscritic = ""
-                aux_vlpreapg = pc_busca_pagto_parc_pos_prog.pr_vlpreapg
-                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlpreapg <> ?
+                par_vlsdeved = pc_busca_pagto_parc_pos_prog.pr_vlsdeved
+                               WHEN pc_busca_pagto_parc_pos_prog.pr_vlsdeved <> ?
                 aux_vlprvenc = pc_busca_pagto_parc_pos_prog.pr_vlprvenc
                                WHEN pc_busca_pagto_parc_pos_prog.pr_vlprvenc <> ?
                 aux_vlpraven = pc_busca_pagto_parc_pos_prog.pr_vlpraven
@@ -328,8 +326,7 @@ ELSE IF crapepr.tpemprst = 2 THEN /* POS */
                   RETURN.
               END.
 
-         ASSIGN par_vlsdeved = aux_vlpreapg
-                par_qtprecal = crapepr.qtprecal.
+         ASSIGN par_qtprecal = crapepr.qtprecal.
      END.
 
 /* .......................................................................... */
