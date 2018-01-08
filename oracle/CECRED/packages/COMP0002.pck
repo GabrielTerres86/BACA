@@ -960,12 +960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
        -- Criar cabecalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<Comprovante>');       
-       
-       -- Criar cabecalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Cecred><Protocolos>');       
+                             ,pr_texto_novo     => '<Comprovante>');              
       
       FOR vr_ind IN 1..vr_protocolo.count LOOP
       
