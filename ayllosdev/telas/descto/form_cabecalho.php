@@ -6,6 +6,7 @@
  * OBJETIVO     : Cabeçalho para a tela DESCTO
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -18,6 +19,8 @@ isPostMethod();
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 
     <label for="cddopcao"><?php echo utf8ToHtml('Op&ccedil;&atilde;o') ?></label>
     <select id="cddopcao" name="cddopcao">

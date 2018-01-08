@@ -11,6 +11,8 @@
  *
  *                29/08/2016 - #481330 Ajustes de navegação, validações e layout (Carlos)
  *
+ *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *
  * --------------
  */
 var nometela;
@@ -66,6 +68,11 @@ function estadoInicial() {
 	cTodosCabecalho.limpaFormulario();
 	
 	removeOpacidade('frmCab');	
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+    }
 	
 	return false;
 	

@@ -9,6 +9,7 @@
  * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CECRED) : AJuste para novo esquema de impressao em funcao Gera_Impressao()
  * [21/09/2016] Jaison (CECRED)          : Projeto 300 - Inclusao das opcoes L e N.
+ * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
 
 //Formulários e Tabela
@@ -336,6 +337,11 @@ function formataOpcao() {
     } else if (cddopcao == 'N') {
         formataOpcaoN();
         cDtiniper.focus();
+    }
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmOpcao").val($("#crm_nrdconta","#frmCab").val());
     }
 
     controlaPesquisas();

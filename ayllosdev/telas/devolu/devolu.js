@@ -12,6 +12,8 @@
  * 
  *				  07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055(Lucas Ranghetti #539626)
  * 
+ *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 
  */
 
 // Definição de algumas variáveis globais
@@ -109,6 +111,11 @@ function estadoInicial() {
 
     // Desabilita Campos
 	$('#nmprimtl','#'+frmCab).desabilitaCampo();
+	
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+    }
 	
     controlaFoco();
 	highlightObjFocus( $('#'+frmCab) );
@@ -254,7 +261,11 @@ function controlaFoco() {
 
 	$('#cdagenci','#'+frmCab).unbind('keydown').bind('keydown', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) { 
-			$('#nrdconta','#frmCab').select().val('');
+            // Caso NAO tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCab").val() != 1) {
+                $('#nrdconta','#frmCab').val('');
+            }
+			$('#nrdconta','#frmCab').select();
 			return false;
 	    }
 	});	
