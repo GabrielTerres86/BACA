@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 18/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -32,6 +32,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
   --  24/10/2017 - #714566 Procedimento para verificar/controlar a execução de programas (Belli-Envolti)
   --
+  --  14/12/2017 - Criação nova funçao para busca de quantidade total de paralelismo por cooperativa
+  --               e por programa - Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)
+  --  18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
+  --               Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)  
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -371,6 +375,36 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
 
+  /* Verificacao do controle do batch por agencia ou convenio */
+  PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                      ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                      ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                      ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                      ,pr_cdrestart  OUT tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+
+  /* Grava o controle do batch por agencia ou convenio */
+  PROCEDURE pc_grava_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                   ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                   ,pr_cdrestart   IN tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+
+  /* Finaliza o controle do batch por agencia ou convenio */
+  PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE);              -- Descricao da critica
+  
+
   -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
   -- Chamado 665812
   TYPE typ_reg_crapcri IS
@@ -411,6 +445,30 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                               ,pr_qtdexec  OUT INTEGER                       --> Retorna a quantidade
                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                               ,pr_dscritic OUT VARCHAR2);                   --> descrição do erro se ocorrer                         
+
+  /* Informação de quantidade máxima de jobs para o paralelismo */
+  FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                  ,pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+           RETURN tbgen_batch_param.qtparalelo%TYPE; 
+  
+  /* Informação de quantidade máxima número de registro para realizar commit por transação*/
+  FUNCTION fn_retorna_qt_reg_commit( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                   , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+           RETURN tbgen_batch_param.qtreg_transacao%TYPE;
+
+  /* Informação de registro para restart da execução da rotina*/
+  FUNCTION fn_retorna_restart(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE,    --> Código da coopertiva
+                              pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE,    --> Codigo do programa
+                              pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE,  --> Número da execução do programa
+                              pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE) --Código agrupadar do job paralelo
+           RETURN tbgen_batch_controle.cdrestart%TYPE;
+           
+  FUNCTION fn_ret_qt_erro_paralelo(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                  ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                  ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                  ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                  ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                  ) RETURN NUMBER;
 --           
 END GENE0001;
 /
@@ -453,6 +511,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          (Adriano - SD 734960).
   --
   --             24/10/2017 - #714566 Procedimento para verificar/controlar a execução de programas (Belli-Envolti)
+  --
+  --             14/12/2017 - Criação nova funçao para busca de quantidade total de paralelismo por cooperativa
+  --                          e por programa - Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)  
+  --
+  --             18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
+  --                          Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)   
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -2627,6 +2691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- Cria uma nova seção para commitar
     -- somente esta escopo de alterações
     PRAGMA AUTONOMOUS_TRANSACTION;
+    
   BEGIN
     /*..............................................................................
 
@@ -2653,6 +2718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 devido a rotina ser autonoma. (Odirlei-AMcom)             
                                 
     ..............................................................................*/
+    
     BEGIN
       -- Efetuar geração de nome para o JOB
       pr_jobname := pr_jobname;
@@ -2683,7 +2749,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                     ||' Nenhum registro de erro no momento da submissao '||chr(13)
                     ||'*******************************************************************************************************');
                     
-      -- Efetuar commit
       COMMIT;
       
     EXCEPTION
@@ -2903,6 +2968,179 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   	  END LOOP;
     END;
   END pc_lista_cooperativas;
+
+  /* Verificacao do controle do batch por agencia ou convenio */
+  PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                      ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                      ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                      ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                      ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                      ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                      ,pr_cdrestart  OUT tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                      ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_verifica_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Verifica o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    DECLARE
+      -- Busca a existencia do registro
+      CURSOR cr_controle IS
+        SELECT tbc.cdrestart
+              ,tbc.insituacao
+          FROM tbgen_batch_controle tbc
+         WHERE tbc.cdcooper    = pr_cdcooper
+           AND tbc.cdprogra    = pr_cdprogra
+           AND tbc.dtmvtolt    = pr_dtmvtolt
+           AND tbc.tpagrupador = pr_tpagrupador
+           AND tbc.cdagrupador = pr_cdagrupador
+           AND tbc.nrexecucao  = pr_nrexecucao;
+      rw_controle cr_controle%ROWTYPE;
+
+      -- Variavel
+      vr_flgachou BOOLEAN;
+
+    BEGIN
+      -- Inicializa
+      pr_cdrestart  := 0;
+      pr_insituacao := 1;
+
+      -- Leitura do controle
+      OPEN cr_controle;
+      FETCH cr_controle INTO rw_controle;
+      vr_flgachou := cr_controle%FOUND;
+      CLOSE cr_controle;
+
+      -- Se achou
+      IF vr_flgachou THEN
+        pr_cdrestart  := NVL(rw_controle.cdrestart,0);
+        pr_insituacao := NVL(rw_controle.insituacao,1);
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_verifica_batch_controle: ' || SQLERRM;
+    END;
+
+  END pc_verifica_batch_controle;
+
+  /* Grava o controle do batch por agencia ou convenio */
+  PROCEDURE pc_grava_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                   ,pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE -- Codigo do agrupador conforme (tpagrupador)
+                                   ,pr_cdrestart   IN tbgen_batch_controle.cdrestart%TYPE   -- Controle do registro de restart em caso de erro na execucao
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_grava_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Grava o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    BEGIN
+      -- Atualiza registro na tabela de controle
+      UPDATE tbgen_batch_controle tbc
+         SET tbc.cdrestart   = pr_cdrestart
+       WHERE tbc.cdcooper    = pr_cdcooper
+         AND tbc.cdprogra    = pr_cdprogra
+         AND tbc.dtmvtolt    = pr_dtmvtolt
+         AND tbc.tpagrupador = pr_tpagrupador
+         AND tbc.cdagrupador = pr_cdagrupador
+         AND tbc.nrexecucao  = pr_nrexecucao
+   RETURNING tbc.idcontrole 
+        INTO pr_idcontrole;
+
+      -- Caso NAO tenha alterado, inclui
+      IF SQL%ROWCOUNT = 0 THEN
+        -- Insere registro na tabela de controle
+        INSERT INTO tbgen_batch_controle tbc
+                   (tbc.cdcooper
+                   ,tbc.cdprogra
+                   ,tbc.dtmvtolt
+                   ,tbc.tpagrupador
+                   ,tbc.cdagrupador
+                   ,tbc.cdrestart
+                   ,tbc.insituacao
+                   ,tbc.nrexecucao)
+             VALUES(pr_cdcooper
+                   ,pr_cdprogra
+                   ,pr_dtmvtolt
+                   ,pr_tpagrupador
+                   ,pr_cdagrupador
+                   ,0
+                   ,1 -- Executado com erro
+                   ,pr_nrexecucao)
+          RETURNING tbc.idcontrole 
+               INTO pr_idcontrole;
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_grava_batch_controle: ' || SQLERRM;
+    END;
+
+  END pc_grava_batch_controle;
+
+  /* Finaliza o controle do batch por agencia ou convenio */
+  PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS            -- Descricao da critica
+  
+
+  BEGIN
+    /*..............................................................................
+
+       Programa: pc_finaliza_batch_controle
+       Autor   : Jaison
+       Data    : Agosto/2017                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Finaliza o controle do batch por agencia ou convenio.
+
+       Alteracoes: 
+
+    ..............................................................................*/
+
+    BEGIN
+      -- Atualiza registro na tabela de controle
+      UPDATE tbgen_batch_controle tbc
+         SET tbc.insituacao = 2 -- Executado com sucesso
+            ,tbc.cdrestart  = 0
+       WHERE tbc.idcontrole = pr_idcontrole;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_finaliza_batch_controle: ' || SQLERRM;
+    END;
+    
+
+  END pc_finaliza_batch_controle;
 
 /* Retorno do cadastro de critica crapcri */
   PROCEDURE pc_le_crapcri 
@@ -3279,6 +3517,173 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Controla Controla log em banco de dados
       pc_controla_log_programa;
   END;
+  --
+  FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                 , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+           RETURN tbgen_batch_param.qtparalelo%TYPE IS
+ 
+    -- ..........................................................................
+    --
+    --  Programa : fn_retorna_qt_paralelo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Jonatas Jaqmam(AMcom)
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 14/12/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : Sempre que chamado por outros programas.
+    --   Objetivo    : Buscar o parâmetro de quantidade de jobs paralelos
+    --   Observações : Projeto Ligeirinho
+    --                 
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+  
+    vr_qtparalelo tbgen_batch_param.qtparalelo%TYPE;
+                                
+  BEGIN
+    
+    BEGIN
+      SELECT t.qtparalelo
+        INTO vr_qtparalelo
+        FROM tbgen_batch_param t
+       WHERE t.cdcooper   = pr_cdcooper
+         AND t.cdprograma = pr_cdprogra;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        vr_qtparalelo := 0;  
+    END;
+
+    RETURN vr_qtparalelo;
+
+  END fn_retorna_qt_paralelo;                                 
+  --
+  FUNCTION fn_retorna_qt_reg_commit( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
+                                   , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
+           RETURN tbgen_batch_param.qtreg_transacao%TYPE IS
+ 
+    -- ..........................................................................
+    --
+    --  Programa : fn_retorna_qt_reg_commit
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Jonatas Jaqmam(AMcom)
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 18/12/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : Sempre que chamado por outros programas.
+    --   Objetivo    : Buscar o parâmetro de quantidade de registro para realizar commit
+    --   Observações : Projeto Ligeirinho
+    --                 
+    --
+    --   Alteracoes:
 --  
+    -- .............................................................................
+  
+    vr_registro tbgen_batch_param.qtreg_transacao%TYPE;
+                                
+  BEGIN
+    
+    BEGIN
+      SELECT t.qtreg_transacao
+        INTO vr_registro
+        FROM tbgen_batch_param t
+       WHERE t.cdcooper   = pr_cdcooper
+         AND t.cdprograma = pr_cdprogra;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        vr_registro := 0;  
+    END;
+
+    RETURN vr_registro;
+
+  END fn_retorna_qt_reg_commit;      
+  -- 
+  FUNCTION fn_retorna_restart(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE,
+                              pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE,
+                              pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE,
+                              pr_cdagrupador IN tbgen_batch_controle.cdagrupador%TYPE) 
+           RETURN tbgen_batch_controle.cdrestart%TYPE IS
+  
+    -- ..........................................................................
+    --
+    --  Programa : fn_retorna_restart
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Jonatas Jaqmam(AMcom)
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: 18/12/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : Sempre que chamado por outros programas.
+    --   Objetivo    : Buscar o identificador de restart das rotinas 
+    --   Observações : Projeto Ligeirinho
+    --                 
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................   
+  
+   CURSOR cr_controle IS
+      SELECT tbc.cdrestart
+        FROM tbgen_batch_controle tbc
+       WHERE tbc.cdcooper    = pr_cdcooper 
+         and tbc.cdprogra    = pr_cdprogra
+         and tbc.nrexecucao  = pr_nrexecucao
+         and tbc.cdagrupador = pr_cdagrupador
+         and tbc.dtmvtolt    = (select max(a.dtmvtolt)
+                                  from tbgen_batch_controle a
+                                 where a.cdcooper = tbc.cdcooper
+                                   and a.cdprogra = tbc.cdprogra
+                                   and a.nrexecucao = tbc.nrexecucao
+                                   and a.cdagrupador = tbc.cdagrupador);
+
+    vr_cdrestart tbgen_batch_controle.cdrestart%TYPE;
+    
+  BEGIN
+    
+    OPEN cr_controle;
+    FETCH cr_controle INTO vr_cdrestart;
+    IF cr_controle%NOTFOUND THEN  
+      vr_cdrestart := 0;
+    END IF;
+    CLOSE cr_controle;
+    
+    RETURN vr_cdrestart; 
+    
+  END fn_retorna_restart;
+  
+  FUNCTION fn_ret_qt_erro_paralelo(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                  ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                  ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                  ,pr_tpagrupador IN tbgen_batch_controle.tpagrupador%TYPE -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                  ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                  ) RETURN NUMBER IS
+    
+    v_qt_erro NUMBER := 0;
+  BEGIN
+    
+    BEGIN
+      select count(*)
+        into v_qt_erro
+        from tbgen_batch_controle c
+       where c.cdcooper    = pr_cdcooper
+         and c.cdprogra    = pr_cdprogra
+         and c.dtmvtolt    = pr_dtmvtolt
+         and c.nrexecucao  = pr_nrexecucao
+         AND c.tpagrupador = pr_tpagrupador
+         and c.insituacao  = 1;
+     EXCEPTION
+       WHEN OTHERS THEN
+         v_qt_erro := 0;
+     END; 
+     
+     RETURN v_qt_erro; 
+    
+  END;  
+
 END GENE0001;
 /
