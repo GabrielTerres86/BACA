@@ -424,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 31/08/2017
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/12/2017
   --
   --  Dados referentes ao programa:
   --
@@ -438,6 +438,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       20/09/2017 - #753579 Utilizando o parametro pr_dsiduser concatenado com _, rotina 
                    DSCC0001.pc_gera_impressao_bordero, chamada pela DSCC0002.pc_imprime_bordero_ib pois o
                    comando rm está removendo todos os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
+                   
+      20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
+                  (Adriano - SD 791712).                   
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -4988,7 +4991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_analisar_bordero_cheques
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Novembro/2016                 Ultima atualizacao: 27/12/2017
+    Data    : Novembro/2016                 Ultima atualizacao: 20/12/2017
 
     Dados referentes ao programa:
 
@@ -4997,6 +5000,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Objetivo  : Rotina para analisar cheques do bordero
 
     Alteracoes: 23/08/2017 - Ajuste para gravar o cpf/cnpj na tabela crapabc. (Lombardi)
+    
+                20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
+                             (Adriano - SD 791712).                           
+                             
 
                 27/12/2017 - Ajuste para passar o parametro Numero da Agencia do Cheque para a procedure
                              pc_ver_fraude_chq_extern (Douglas - Chamado 820177)
@@ -5292,7 +5299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		 WHERE cdb.cdcooper = pr_cdcooper
 		   AND cdb.nrdconta = pr_nrdconta
 			 AND cdb.dtmvtolt >= add_months(pr_dtmvtolt, (pr_qtmesliq * -1))
-			 AND cdb.insitchq > 0;
+			 AND cdb.insitchq > 0
+       AND cdb.dtlibbdc IS NOT NULL;
 			 
 	-- Buscar limite de desconto de cheque
 	CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
@@ -5599,14 +5607,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END IF;
 			
 			-- Verificar se o cheque é fraudado
-            CHEQ0001.pc_ver_fraude_chq_extern(pr_cdcooper => pr_tab_cheques(vr_index).cdcooper
+      CHEQ0001.pc_ver_fraude_chq_extern(pr_cdcooper => pr_tab_cheques(vr_index).cdcooper
 			                                 ,pr_cdprogra => 'DSCC0001'
                                              ,pr_cdbanco  => pr_tab_cheques(vr_index).cdbanchq
-                                             ,pr_nrcheque => pr_tab_cheques(vr_index).nrcheque
-                                             ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
-                                             ,pr_cdoperad => pr_cdoperad
+																			 ,pr_nrcheque => pr_tab_cheques(vr_index).nrcheque
+																			 ,pr_nrctachq => pr_tab_cheques(vr_index).nrctachq
+																			 ,pr_cdoperad => pr_cdoperad
                                              ,pr_cdagenci => pr_tab_cheques(vr_index).cdagechq
-                                             ,pr_des_erro => vr_dscritic);
+																			 ,pr_des_erro => vr_dscritic);
 																			 
       -- Se retornou crítica
 			IF TRIM(vr_dscritic) IS NOT NULL THEN
