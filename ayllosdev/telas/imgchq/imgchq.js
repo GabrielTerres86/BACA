@@ -13,7 +13,7 @@
  *                15/03/2016 - Projeto 316 - Buscar "certificado" e novo botão para gerar zip para download
  *                           - Passado 'cdcooper' para cobra_tarifa.php. (Guilherme/SUPERO)
  *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
- *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -166,6 +166,11 @@ function mostraCamposChq() {
             cAgencchq.css({ 'width': '100px' });
 
             cDtcompen.focus();
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmConsultaImagem").val() == 1) {
+                $("#contachq","#frmConsultaImagem").val($("#crm_nrdconta","#frmConsultaImagem").val());
+            }
         } else {
             $('#divDadosChq').css({ 'display': 'none' });
 
@@ -217,32 +222,32 @@ function buscaAgeCtl(flag) {
         aux_cdcooper = cooploga;
     }
     
-    if (flag == 1){
+    if (flag == 1) {
         //veio pela mudanca de Coop entao limpa
         aux_cdagechq = '';        
     }
 
     if (aux_cdagechq == '') {
         $.ajax({
-                type  : 'POST',
-                async : false ,
-                url   : UrlSite + 'telas/imgchq/busca_agectl.php',
+            type: 'POST',
+            async: false,
+            url: UrlSite + 'telas/imgchq/busca_agectl.php',
                 data: {
-                    cdcooper  : aux_cdcooper,
-                    redirect  : 'script_ajax'
+                cdcooper: aux_cdcooper,
+                redirect: 'script_ajax'
                 },
-                error: function(objAjax,responseError,objExcept) {
+            error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
                 },
-                success: function(response) {
+            success: function (response) {
 
                     try {
                         eval(response);
                         return false;
-                    } catch(error) {
+                } catch (error) {
                         hideMsgAguardo();
-                        showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
                     }
                 }
             });

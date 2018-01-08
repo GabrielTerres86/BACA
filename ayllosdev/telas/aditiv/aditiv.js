@@ -33,6 +33,8 @@
  *
  * 010: 23/12/2015 - Odirlei(AMcom)            : Ajustado validacao no campo chassi para nao digitar letras I,O e Q  
  *                                               devido ao keycode nao diferenciar maiusculos e minusculos (Odirlei-AMcom SD378702)
+ *
+ * 011: 11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  *
  */
@@ -414,6 +416,10 @@ function formataCabecalho() {
 			cCddopcao.val(cddopcao);
 			controlaLayout();
 
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmCab").val() == 1) {
+                $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+            }
 		}
 
 		return false;

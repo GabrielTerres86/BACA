@@ -122,11 +122,11 @@ $(document).ready(function() {
 		if ($('#flgdsenh','#frmAcesso').val() == "yes" && $('#telatual','#frmAcesso').val() == "") {	
 			if (existeTela("mudsen")) {
 				direcionaTela("mudsen",false);		
-			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela("atenda")) {
-				direcionaTela("atenda",false);		
+			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela(glb_nmdatela)) {
+				direcionaTela(glb_nmdatela,false);		
 			}
-		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela("atenda")) {
-			direcionaTela("atenda",false);
+		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela(glb_nmdatela)) {
+			direcionaTela(glb_nmdatela,false);
 		}
 	}
 	
