@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   --                           > Rotina para efetuar a reversão de situação de contas (Opcao G - MATRIC)
   --                         (Jonata - RKAM M364).
   --
-  -- 
+  --
   --
   --  Alteracoes: 04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
@@ -78,6 +78,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                   ,pr_retxml           OUT CLOB                  --> Arquivo de retorno do XML
                                   ,pr_cdcritic         OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic         OUT VARCHAR2);            --> Descrição da crítica
+
+  PROCEDURE pc_lista_contas_prog(pr_cdcooper IN crapass.cdcooper%TYPE  --> Codigo da cooperativa
+                           ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF / CGC do cooperado
+                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                           ,pr_retxml   OUT CLOB     --> Arquivo de retorno do XML
+                           );
 
   -- Rotina para retornar as contas permitidas para duplicacao
   PROCEDURE pc_lista_contas(pr_cdcooper IN crapass.cdcooper%TYPE  --> Codigo da cooperativa
@@ -752,7 +759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
-  --                         
+  --
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -761,19 +768,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             06/05/2017 - Ajustes realizados:
   --                          - Inclusão de rotinas para atender a tela MINCAP;
-  --                          - Ajustado rotina fn_produto_habilitado devido a liberação de novos produtos na tela PRODUTOS                            
+  --                          - Ajustado rotina fn_produto_habilitado devido a liberação de novos produtos na tela PRODUTOS
   --							- Rotina para efetuar a reversão de situação de contas (Opcao G - MATRIC)
   --                          (Jonata - RKAM M364).
-  -- 
+  --
   --  			 25/07/2017 - Inclusão de rotinas para atendar a nova opção/botão desligamento (Mateus - Mouts M364)
-  -- 
-  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
+  --
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)
   --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
-  --                          esteja cadastrado na cooperativa. (Kelvin)  
+  --                          esteja cadastrado na cooperativa. (Kelvin)
   --
   --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
   --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
@@ -781,9 +788,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             14/11/2017 - Inclusao de novas rotinas e corrigido lancamentos decorrente a deoluvcao
   --                         capital (JOnata - RKAM P364).
   --
+  --             14/11/2017 - Efetuar tratamentos para gravar corretamente os registros na tabela
+  --                          crapdoc na procedure pc_duplica_conta (Lucas Ranghetti #760235)
+  --
   --             16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
   --
-  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).	   
+  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).
   --
   --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
@@ -1513,21 +1523,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
   END pc_lista_servicos;
 
-
-  -- Rotina para retornar as contas permitidas para duplicacao
-  PROCEDURE pc_lista_contas(pr_cdcooper IN crapass.cdcooper%TYPE  --> Codigo da cooperativa
+  -- Rotina para retornar as contas permitidas para duplicacao - chamada progress
+  PROCEDURE pc_lista_contas_prog(pr_cdcooper IN crapass.cdcooper%TYPE  --> Codigo da cooperativa
                            ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF / CGC do cooperado
-                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                            ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                           ,pr_retxml   OUT CLOB     --> Arquivo de retorno do XML
+                           ) IS
 
-    
+
     CURSOR cr_tbcadast_pessoa(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
-      SELECT pss.dtconsulta_rfb dtconsultaRfb      
-            ,pss.nrcpfcgc 
+      SELECT pss.dtconsulta_rfb dtconsultaRfb
+            ,pss.nrcpfcgc
             ,pss.cdsituacao_rfb cdsituacaoRfb
             ,pss.nmpessoa
             ,pss.nmpessoa_receita nmpessoaReceita
@@ -1542,101 +1549,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,psf.cdnacionalidade
             ,psf.inhabilitacao_menor inhabilitacaoMenor
             ,psf.dthabilitacao_menor dthabilitacaoMenor
-            ,psf.cdestado_civil cdestadoCivil 
+            ,psf.cdestado_civil cdestadoCivil
             ,pre.cdocupacao cdNaturezaOcupacao
-            ,pre.nrcadastro cdCadastroEmpresa 
+            ,pre.nrcadastro cdCadastroEmpresa
             ,pssMae.Nmpessoa nmmae
             ,pssConjugue.Nmpessoa nmconjugue
             ,pssPai.Nmpessoa nmpai
             ,munNaturalidade.dscidade naturalidadeDsCidade
             ,munNaturalidade.cdestado naturalidadeCdEstado
             ,(SELECT nrddd
-                FROM (SELECT ptlComercialDdd.nrddd 
-                            ,ptlComercialDdd.Idpessoa 
+                FROM (SELECT ptlComercialDdd.nrddd
+                            ,ptlComercialDdd.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlComercialDdd
                        WHERE ptlComercialDdd.tptelefone = 3
                        ORDER BY ptlComercialDdd.Idpessoa, ptlComercialDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) comercialNrddd 
+                 AND ROWNUM = 1) comercialNrddd
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlComercialTelefone.Nrtelefone 
-                            ,ptlComercialTelefone.Idpessoa 
+                FROM (SELECT ptlComercialTelefone.Nrtelefone
+                            ,ptlComercialTelefone.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlComercialTelefone
                        WHERE ptlComercialTelefone.tptelefone = 3
                        ORDER BY ptlComercialTelefone.Idpessoa, ptlComercialTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) comercialNrTelefone  
+                 AND ROWNUM = 1) comercialNrTelefone
             ,(SELECT nrddd
-                FROM (SELECT ptlResidencialDdd.nrddd 
-                            ,ptlResidencialDdd.Idpessoa 
+                FROM (SELECT ptlResidencialDdd.nrddd
+                            ,ptlResidencialDdd.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlResidencialDdd
                        WHERE ptlResidencialDdd.tptelefone = 1
                        ORDER BY ptlResidencialDdd.Idpessoa, ptlResidencialDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) residencialNrddd                   
-            
+                 AND ROWNUM = 1) residencialNrddd
+
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlResidencialTelefone.Nrtelefone 
-                            ,ptlResidencialTelefone.Idpessoa 
+                FROM (SELECT ptlResidencialTelefone.Nrtelefone
+                            ,ptlResidencialTelefone.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlResidencialTelefone
                        WHERE ptlResidencialTelefone.tptelefone = 1
                        ORDER BY ptlResidencialTelefone.Idpessoa, ptlResidencialTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) residencialNrTelefone                 
+                 AND ROWNUM = 1) residencialNrTelefone
             ,(SELECT cdoperadora
-                FROM (SELECT ptlCelularOperadora.cdoperadora 
-                            ,ptlCelularOperadora.Idpessoa 
+                FROM (SELECT ptlCelularOperadora.cdoperadora
+                            ,ptlCelularOperadora.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlCelularOperadora
                        WHERE ptlCelularOperadora.tptelefone = 2
                        ORDER BY ptlCelularOperadora.Idpessoa, ptlCelularOperadora.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) celularCdOperadora                                            
+                 AND ROWNUM = 1) celularCdOperadora
             ,(SELECT nrddd
-                FROM (SELECT ptlCelularDdd.nrddd 
-                            ,ptlCelularDdd.Idpessoa 
+                FROM (SELECT ptlCelularDdd.nrddd
+                            ,ptlCelularDdd.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlCelularDdd
                        WHERE ptlCelularDdd.tptelefone = 2
                        ORDER BY ptlCelularDdd.Idpessoa, ptlCelularDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) celularNrDdd            
+                 AND ROWNUM = 1) celularNrDdd
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlCelularTelefone.Nrtelefone 
-                            ,ptlCelularTelefone.Idpessoa 
+                FROM (SELECT ptlCelularTelefone.Nrtelefone
+                            ,ptlCelularTelefone.Idpessoa
                         FROM tbcadast_pessoa_telefone ptlCelularTelefone
                        WHERE ptlCelularTelefone.tptelefone = 2
                        ORDER BY ptlCelularTelefone.Idpessoa, ptlCelularTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
                  AND ROWNUM = 1) celularNrTelefone
             ,(SELECT Dsemail
-                FROM (SELECT pemEmail.Dsemail 
-                            ,pemEmail.Idpessoa 
+                FROM (SELECT pemEmail.Dsemail
+                            ,pemEmail.Idpessoa
                         FROM tbcadast_pessoa_email pemEmail
                        ORDER BY pemEmail.Idpessoa, pemEmail.Nrseq_Email)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) dsdemail     
-            ,penResidencial.nrcep residencialNrCep             
-            ,penResidencial.nmlogradouro residencialNmLogradouro   
-            ,penResidencial.nrlogradouro residencialNrLogradouro  
-            ,penResidencial.dscomplemento residencialDsComplemento   
-            ,penResidencial.nmbairro residencialNmBairro    
+                 AND ROWNUM = 1) dsdemail
+            ,penResidencial.nrcep residencialNrCep
+            ,penResidencial.nmlogradouro residencialNmLogradouro
+            ,penResidencial.nrlogradouro residencialNrLogradouro
+            ,penResidencial.dscomplemento residencialDsComplemento
+            ,penResidencial.nmbairro residencialNmBairro
             ,munResidencial.Cdestado residencialCdEstado
-            ,munResidencial.Dscidade residencialDsCidade    
+            ,munResidencial.Dscidade residencialDsCidade
             ,penResidencial.tporigem_cadastro residencialTporigem
-            ,penCorrespondencia.nrcep correspondenciaNrCep             
-            ,penCorrespondencia.nmlogradouro correspondenciaNmLogradouro   
-            ,penCorrespondencia.nrlogradouro correspondenciaNrLogradouro  
-            ,penCorrespondencia.dscomplemento correspondenciaDsComplemento   
-            ,penCorrespondencia.nmbairro correspondenciaNmBairro    
+            ,penCorrespondencia.nrcep correspondenciaNrCep
+            ,penCorrespondencia.nmlogradouro correspondenciaNmLogradouro
+            ,penCorrespondencia.nrlogradouro correspondenciaNrLogradouro
+            ,penCorrespondencia.dscomplemento correspondenciaDsComplemento
+            ,penCorrespondencia.nmbairro correspondenciaNmBairro
             ,munCorrespondencia.Cdestado correspondenciaCdEstado
             ,munCorrespondencia.Dscidade correspondenciaDsCidade
-            ,penCorrespondencia.tporigem_cadastro correspondenciaTporigem 
-            ,penComercial.nrcep comercialNrCep             
-            ,penComercial.nmlogradouro comercialNmLogradouro   
-            ,penComercial.nrlogradouro comercialNrLogradouro  
-            ,penComercial.dscomplemento comercialDsComplemento   
-            ,penComercial.nmbairro comercialNmBairro    
+            ,penCorrespondencia.tporigem_cadastro correspondenciaTporigem
+            ,penComercial.nrcep comercialNrCep
+            ,penComercial.nmlogradouro comercialNmLogradouro
+            ,penComercial.nrlogradouro comercialNrLogradouro
+            ,penComercial.dscomplemento comercialDsComplemento
+            ,penComercial.nmbairro comercialNmBairro
             ,munComercial.Cdestado comercialCdEstado
-            ,munComercial.Dscidade comercialDsCidade    
+            ,munComercial.Dscidade comercialDsCidade
             ,penComercial.tporigem_cadastro comercialTporigem
             ,nac.dsnacion
             ,oxp.cdorgao_expedidor cdExpedidor
@@ -1664,38 +1671,380 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,tbcadast_pessoa_endereco penComercial
             ,crapmun munComercial
             ,crapnac nac
-            ,tbgen_orgao_expedidor oxp 
-            ,tbcadast_pessoa_juridica pju 
+            ,tbgen_orgao_expedidor oxp
+            ,tbcadast_pessoa_juridica pju
             ,tbcadast_pessoa_renda pre
        WHERE psf.idpessoa(+)                  = pss.idpessoa
          AND prlConjugue.Idpessoa(+)          = pss.idpessoa
          AND prlConjugue.tprelacao(+)         = 1
-         AND pssConjugue.Idpessoa(+)          = prlConjugue.Idpessoa_Relacao   
+         AND pssConjugue.Idpessoa(+)          = prlConjugue.Idpessoa_Relacao
          AND prlPai.Idpessoa(+)               = pss.idpessoa
          AND prlPai.tprelacao(+)              = 3
-         AND pssPai.Idpessoa(+)               = prlPai.Idpessoa_Relacao   
+         AND pssPai.Idpessoa(+)               = prlPai.Idpessoa_Relacao
          AND prlMae.Idpessoa(+)               = pss.idpessoa
          AND prlMae.tprelacao(+)              = 4
-         AND pssMae.Idpessoa(+)               = prlMae.Idpessoa_Relacao   
-         AND munNaturalidade.idcidade(+)      = psf.cdnaturalidade  
+         AND pssMae.Idpessoa(+)               = prlMae.Idpessoa_Relacao
+         AND munNaturalidade.idcidade(+)      = psf.cdnaturalidade
          AND penResidencial.idpessoa(+)       = pss.idpessoa
-         AND penResidencial.tpendereco(+)     = 10   
-         AND munResidencial.Idcidade(+)       = penResidencial.Idcidade     
+         AND penResidencial.tpendereco(+)     = 10
+         AND munResidencial.Idcidade(+)       = penResidencial.Idcidade
          AND penCorrespondencia.idpessoa(+)   = pss.idpessoa
-         AND penCorrespondencia.tpendereco(+) = 13     
+         AND penCorrespondencia.tpendereco(+) = 13
          AND munCorrespondencia.Idcidade(+)   = penCorrespondencia.Idcidade
          AND penComercial.idpessoa(+)         = pss.idpessoa
-         AND penComercial.tpendereco(+)       = 9   
-         AND munComercial.Idcidade(+)         = penComercial.Idcidade   
+         AND penComercial.tpendereco(+)       = 9
+         AND munComercial.Idcidade(+)         = penComercial.Idcidade
          AND nac.cdnacion(+)  = psf.cdnacionalidade
          AND oxp.idorgao_expedidor(+) = psf.idorgao_expedidor
          AND pju.idpessoa(+) = pss.idpessoa
-         AND pre.idpessoa(+)           = pss.idpessoa 
-         AND pre.nrseq_renda(+)        = 1            
+         AND pre.idpessoa(+)           = pss.idpessoa
+         AND pre.nrseq_renda(+)        = 1
          AND pss.nrcpfcgc = pr_nrcpfcgc;
-       
+
       rw_tbcadast_pessoa cr_tbcadast_pessoa%ROWTYPE;
-      
+
+    -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
+    CURSOR cr_crapass IS
+      SELECT nrdconta,
+             dtadmiss
+        FROM crapass
+       WHERE cdcooper = pr_cdcooper
+         AND nrcpfcgc = pr_nrcpfcgc
+         AND dtdemiss IS NULL -- Nao exibir demitidos
+         AND dtelimin IS NULL -- Nao exibir contas que possuam valores eliminados
+         AND cdsitdtl NOT IN (5,6,7,8) -- Nao exibir contas com prejuizo
+         AND cdsitdtl NOT IN (2,4,6,8) -- Titular da conta bloqueado
+       ORDER BY dtadmiss DESC;
+
+      -- Variável de críticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Variaveis de log
+      vr_cdoperad      VARCHAR2(100);
+      vr_cdcooper      NUMBER;
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      vr_flgdpcnt      NUMBER;
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+      vr_retxml        xmltype;
+
+    BEGIN
+
+      -- Criar cabeçalho do XML
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+      vr_flgdpcnt := 1; --Continua operacao normalmente.
+
+      OPEN cr_tbcadast_pessoa(pr_nrcpfcgc);
+        FETCH cr_tbcadast_pessoa
+          INTO rw_tbcadast_pessoa;
+        -- Criar cabeçalho do XML
+
+        IF cr_tbcadast_pessoa%FOUND THEN
+
+          CLOSE cr_tbcadast_pessoa;
+
+      -- Loop sobre as versoes do questionario de microcredito
+      FOR rw_crapass IN cr_crapass LOOP
+
+        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
+
+      END LOOP;
+
+          IF vr_contador > 0 THEN
+            vr_flgdpcnt := 2; --Duplicar conta
+          ELSE
+
+            vr_flgdpcnt := 3; --Relacionamento
+
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'infcadastro', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtconsultarfb', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtconsultaRfb,'DD/MM/RRRR'),  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => rw_tbcadast_pessoa.nrcpfcgc,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdsituacaoRfb', pr_tag_cont => rw_tbcadast_pessoa.cdsituacaoRfb, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmpessoa', pr_tag_cont => rw_tbcadast_pessoa.nmpessoa, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmpessoaReceita', pr_tag_cont => rw_tbcadast_pessoa.nmpessoaReceita,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'tpsexo', pr_tag_cont => rw_tbcadast_pessoa.tpsexo, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtnascimento', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtnascimento,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'tpdocumento', pr_tag_cont => rw_tbcadast_pessoa.tpdocumento, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nrdocumento', pr_tag_cont => rw_tbcadast_pessoa.nrdocumento, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'idorgaoExpedidor', pr_tag_cont => rw_tbcadast_pessoa.idorgaoExpedidor,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdufOrgaoExpedidor', pr_tag_cont => rw_tbcadast_pessoa.cdufOrgaoExpedidor, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtemissaoDocumento', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtemissaoDocumento,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'tpnacionalidade', pr_tag_cont => rw_tbcadast_pessoa.tpnacionalidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'inhabilitacaoMenor', pr_tag_cont => rw_tbcadast_pessoa.inhabilitacaoMenor, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dthabilitacaoMenor', pr_tag_cont => to_char(rw_tbcadast_pessoa.dthabilitacaoMenor,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdestadoCivil', pr_tag_cont => rw_tbcadast_pessoa.cdestadoCivil, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmmae', pr_tag_cont => rw_tbcadast_pessoa.nmmae,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmconjugue', pr_tag_cont => rw_tbcadast_pessoa.nmconjugue, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmpai', pr_tag_cont => rw_tbcadast_pessoa.nmpai,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'naturalidadeDsCidade', pr_tag_cont => rw_tbcadast_pessoa.naturalidadeDsCidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'naturalidadeCdEstado', pr_tag_cont => rw_tbcadast_pessoa.naturalidadeCdEstado,  pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNrddd', pr_tag_cont => rw_tbcadast_pessoa.residencialNrddd, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNrTelefone', pr_tag_cont => rw_tbcadast_pessoa.comercialNrTelefone, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNrddd', pr_tag_cont => rw_tbcadast_pessoa.comercialNrddd, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNrTelefone', pr_tag_cont => rw_tbcadast_pessoa.residencialNrTelefone, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'celularCdOperadora', pr_tag_cont => rw_tbcadast_pessoa.celularCdOperadora, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'celularNrDdd', pr_tag_cont => rw_tbcadast_pessoa.celularNrDdd, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'celularNrTelefone', pr_tag_cont => rw_tbcadast_pessoa.celularNrTelefone, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNrCep', pr_tag_cont => rw_tbcadast_pessoa.residencialNrCep, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNmLogradouro', pr_tag_cont => rw_tbcadast_pessoa.residencialNmLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNrLogradouro', pr_tag_cont => rw_tbcadast_pessoa.residencialNrLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialDsComplemento', pr_tag_cont => rw_tbcadast_pessoa.residencialDsComplemento, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialNmBairro', pr_tag_cont => rw_tbcadast_pessoa.residencialNmBairro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialCdEstado', pr_tag_cont => rw_tbcadast_pessoa.residencialCdEstado, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialDsCidade', pr_tag_cont => rw_tbcadast_pessoa.residencialDsCidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'residencialTporigem', pr_tag_cont => rw_tbcadast_pessoa.residencialTporigem, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaNrCep', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaNrCep, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaNmLogradouro', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaNmLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaNrLogradouro', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaNrLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaDsComplemento', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaDsComplemento, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaNmBairro', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaNmBairro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaCdEstado', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaCdEstado, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaDsCidade', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaDsCidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'correspondenciaTporigem', pr_tag_cont => rw_tbcadast_pessoa.correspondenciaTporigem, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNrCep', pr_tag_cont => rw_tbcadast_pessoa.comercialNrCep, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNmLogradouro', pr_tag_cont => rw_tbcadast_pessoa.comercialNmLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNrLogradouro', pr_tag_cont => rw_tbcadast_pessoa.comercialNrLogradouro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialDsComplemento', pr_tag_cont => rw_tbcadast_pessoa.comercialDsComplemento, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialNmBairro', pr_tag_cont => rw_tbcadast_pessoa.comercialNmBairro, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialCdEstado', pr_tag_cont => rw_tbcadast_pessoa.comercialCdEstado, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialDsCidade', pr_tag_cont => rw_tbcadast_pessoa.comercialDsCidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'comercialTporigem', pr_tag_cont => rw_tbcadast_pessoa.comercialTporigem, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dsnacion', pr_tag_cont => rw_tbcadast_pessoa.dsnacion, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdExpedidor', pr_tag_cont => rw_tbcadast_pessoa.cdExpedidor, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dsdemail', pr_tag_cont => rw_tbcadast_pessoa.dsdemail, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nmfantasia', pr_tag_cont => rw_tbcadast_pessoa.nmfantasia, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nrInscricao', pr_tag_cont => rw_tbcadast_pessoa.nrInscricao, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'nrLicenca', pr_tag_cont => rw_tbcadast_pessoa.nrLicenca, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNatureza', pr_tag_cont => rw_tbcadast_pessoa.cdNatureza, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdSetor', pr_tag_cont => rw_tbcadast_pessoa.cdSetor, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdRamo', pr_tag_cont => rw_tbcadast_pessoa.cdRamo, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdCnae', pr_tag_cont => rw_tbcadast_pessoa.cdCnae, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtInicioAtividade', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtInicioAtividade,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNaturezaOcupacao', pr_tag_cont => rw_tbcadast_pessoa.cdNaturezaOcupacao, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNacionalidade', pr_tag_cont => rw_tbcadast_pessoa.cdNacionalidade, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdCadastroEmpresa', pr_tag_cont => rw_tbcadast_pessoa.cdCadastroEmpresa, pr_des_erro => vr_dscritic);
+
+          END IF;
+
+        END IF;
+
+        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'flgopcao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'flgopcao', pr_posicao => 0, pr_tag_nova => 'flgdpcnt', pr_tag_cont => vr_flgdpcnt, pr_des_erro => vr_dscritic);
+
+        pr_retxml := vr_retxml.getClobVal();
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em pc_lista_conta: ' || SQLERRM;
+
+  END pc_lista_contas_prog;
+
+
+
+  -- Rotina para retornar as contas permitidas para duplicacao
+  PROCEDURE pc_lista_contas(pr_cdcooper IN crapass.cdcooper%TYPE  --> Codigo da cooperativa
+                           ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF / CGC do cooperado
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+
+    CURSOR cr_tbcadast_pessoa(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+      SELECT pss.dtconsulta_rfb dtconsultaRfb
+            ,pss.nrcpfcgc
+            ,pss.cdsituacao_rfb cdsituacaoRfb
+            ,pss.nmpessoa
+            ,pss.nmpessoa_receita nmpessoaReceita
+            ,psf.tpsexo
+            ,psf.dtnascimento
+            ,psf.tpdocumento
+            ,psf.nrdocumento
+            ,psf.idorgao_expedidor idorgaoExpedidor
+            ,psf.cduf_orgao_expedidor cdufOrgaoExpedidor
+            ,psf.dtemissao_documento dtemissaoDocumento
+            ,psf.tpnacionalidade
+            ,psf.cdnacionalidade
+            ,psf.inhabilitacao_menor inhabilitacaoMenor
+            ,psf.dthabilitacao_menor dthabilitacaoMenor
+            ,psf.cdestado_civil cdestadoCivil
+            ,pre.cdocupacao cdNaturezaOcupacao
+            ,pre.nrcadastro cdCadastroEmpresa
+            ,pssMae.Nmpessoa nmmae
+            ,pssConjugue.Nmpessoa nmconjugue
+            ,pssPai.Nmpessoa nmpai
+            ,munNaturalidade.dscidade naturalidadeDsCidade
+            ,munNaturalidade.cdestado naturalidadeCdEstado
+            ,(SELECT nrddd
+                FROM (SELECT ptlComercialDdd.nrddd
+                            ,ptlComercialDdd.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlComercialDdd
+                       WHERE ptlComercialDdd.tptelefone = 3
+                       ORDER BY ptlComercialDdd.Idpessoa, ptlComercialDdd.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) comercialNrddd
+            ,(SELECT Nrtelefone
+                FROM (SELECT ptlComercialTelefone.Nrtelefone
+                            ,ptlComercialTelefone.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlComercialTelefone
+                       WHERE ptlComercialTelefone.tptelefone = 3
+                       ORDER BY ptlComercialTelefone.Idpessoa, ptlComercialTelefone.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) comercialNrTelefone
+            ,(SELECT nrddd
+                FROM (SELECT ptlResidencialDdd.nrddd
+                            ,ptlResidencialDdd.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlResidencialDdd
+                       WHERE ptlResidencialDdd.tptelefone = 1
+                       ORDER BY ptlResidencialDdd.Idpessoa, ptlResidencialDdd.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) residencialNrddd
+
+            ,(SELECT Nrtelefone
+                FROM (SELECT ptlResidencialTelefone.Nrtelefone
+                            ,ptlResidencialTelefone.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlResidencialTelefone
+                       WHERE ptlResidencialTelefone.tptelefone = 1
+                       ORDER BY ptlResidencialTelefone.Idpessoa, ptlResidencialTelefone.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) residencialNrTelefone
+            ,(SELECT cdoperadora
+                FROM (SELECT ptlCelularOperadora.cdoperadora
+                            ,ptlCelularOperadora.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlCelularOperadora
+                       WHERE ptlCelularOperadora.tptelefone = 2
+                       ORDER BY ptlCelularOperadora.Idpessoa, ptlCelularOperadora.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) celularCdOperadora
+            ,(SELECT nrddd
+                FROM (SELECT ptlCelularDdd.nrddd
+                            ,ptlCelularDdd.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlCelularDdd
+                       WHERE ptlCelularDdd.tptelefone = 2
+                       ORDER BY ptlCelularDdd.Idpessoa, ptlCelularDdd.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) celularNrDdd
+            ,(SELECT Nrtelefone
+                FROM (SELECT ptlCelularTelefone.Nrtelefone
+                            ,ptlCelularTelefone.Idpessoa
+                        FROM tbcadast_pessoa_telefone ptlCelularTelefone
+                       WHERE ptlCelularTelefone.tptelefone = 2
+                       ORDER BY ptlCelularTelefone.Idpessoa, ptlCelularTelefone.Nrseq_Telefone)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) celularNrTelefone
+            ,(SELECT Dsemail
+                FROM (SELECT pemEmail.Dsemail
+                            ,pemEmail.Idpessoa
+                        FROM tbcadast_pessoa_email pemEmail
+                       ORDER BY pemEmail.Idpessoa, pemEmail.Nrseq_Email)
+               WHERE Idpessoa = pss.idpessoa
+                 AND ROWNUM = 1) dsdemail
+            ,penResidencial.nrcep residencialNrCep
+            ,penResidencial.nmlogradouro residencialNmLogradouro
+            ,penResidencial.nrlogradouro residencialNrLogradouro
+            ,penResidencial.dscomplemento residencialDsComplemento
+            ,penResidencial.nmbairro residencialNmBairro
+            ,munResidencial.Cdestado residencialCdEstado
+            ,munResidencial.Dscidade residencialDsCidade
+            ,penResidencial.tporigem_cadastro residencialTporigem
+            ,penCorrespondencia.nrcep correspondenciaNrCep
+            ,penCorrespondencia.nmlogradouro correspondenciaNmLogradouro
+            ,penCorrespondencia.nrlogradouro correspondenciaNrLogradouro
+            ,penCorrespondencia.dscomplemento correspondenciaDsComplemento
+            ,penCorrespondencia.nmbairro correspondenciaNmBairro
+            ,munCorrespondencia.Cdestado correspondenciaCdEstado
+            ,munCorrespondencia.Dscidade correspondenciaDsCidade
+            ,penCorrespondencia.tporigem_cadastro correspondenciaTporigem
+            ,penComercial.nrcep comercialNrCep
+            ,penComercial.nmlogradouro comercialNmLogradouro
+            ,penComercial.nrlogradouro comercialNrLogradouro
+            ,penComercial.dscomplemento comercialDsComplemento
+            ,penComercial.nmbairro comercialNmBairro
+            ,munComercial.Cdestado comercialCdEstado
+            ,munComercial.Dscidade comercialDsCidade
+            ,penComercial.tporigem_cadastro comercialTporigem
+            ,nac.dsnacion
+            ,oxp.cdorgao_expedidor cdExpedidor
+            ,pju.nmfantasia
+            ,pju.nrinscricao_estadual nrInscricao
+            ,pju.nrlicenca_ambiental nrLicenca
+            ,pju.cdnatureza_juridica cdNatureza
+            ,pju.cdsetor_economico cdSetor
+            ,pju.cdramo_atividade cdRamo
+            ,pju.Cdcnae
+            ,pju.dtinicio_atividade dtInicioAtividade
+        FROM tbcadast_pessoa pss
+            ,tbcadast_pessoa_fisica psf
+            ,tbcadast_pessoa_relacao prlConjugue
+            ,tbcadast_pessoa pssConjugue
+            ,tbcadast_pessoa_relacao prlPai
+            ,tbcadast_pessoa pssPai
+            ,tbcadast_pessoa_relacao prlMae
+            ,tbcadast_pessoa pssMae
+            ,crapmun munNaturalidade
+            ,tbcadast_pessoa_endereco penResidencial
+            ,crapmun munResidencial
+            ,tbcadast_pessoa_endereco penCorrespondencia
+            ,crapmun munCorrespondencia
+            ,tbcadast_pessoa_endereco penComercial
+            ,crapmun munComercial
+            ,crapnac nac
+            ,tbgen_orgao_expedidor oxp
+            ,tbcadast_pessoa_juridica pju
+            ,tbcadast_pessoa_renda pre
+       WHERE psf.idpessoa(+)                  = pss.idpessoa
+         AND prlConjugue.Idpessoa(+)          = pss.idpessoa
+         AND prlConjugue.tprelacao(+)         = 1
+         AND pssConjugue.Idpessoa(+)          = prlConjugue.Idpessoa_Relacao
+         AND prlPai.Idpessoa(+)               = pss.idpessoa
+         AND prlPai.tprelacao(+)              = 3
+         AND pssPai.Idpessoa(+)               = prlPai.Idpessoa_Relacao
+         AND prlMae.Idpessoa(+)               = pss.idpessoa
+         AND prlMae.tprelacao(+)              = 4
+         AND pssMae.Idpessoa(+)               = prlMae.Idpessoa_Relacao
+         AND munNaturalidade.idcidade(+)      = psf.cdnaturalidade
+         AND penResidencial.idpessoa(+)       = pss.idpessoa
+         AND penResidencial.tpendereco(+)     = 10
+         AND munResidencial.Idcidade(+)       = penResidencial.Idcidade
+         AND penCorrespondencia.idpessoa(+)   = pss.idpessoa
+         AND penCorrespondencia.tpendereco(+) = 13
+         AND munCorrespondencia.Idcidade(+)   = penCorrespondencia.Idcidade
+         AND penComercial.idpessoa(+)         = pss.idpessoa
+         AND penComercial.tpendereco(+)       = 9
+         AND munComercial.Idcidade(+)         = penComercial.Idcidade
+         AND nac.cdnacion(+)  = psf.cdnacionalidade
+         AND oxp.idorgao_expedidor(+) = psf.idorgao_expedidor
+         AND pju.idpessoa(+) = pss.idpessoa
+         AND pre.idpessoa(+)           = pss.idpessoa
+         AND pre.nrseq_renda(+)        = 1
+         AND pss.nrcpfcgc = pr_nrcpfcgc;
+
+      rw_tbcadast_pessoa cr_tbcadast_pessoa%ROWTYPE;
+
     -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
     CURSOR cr_crapass IS
       SELECT nrdconta,
@@ -1733,33 +2082,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Criar cabeçalho do XML
       
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-      
+
       vr_flgdpcnt := 1; --Continua operacao normalmente.
-      
+
       OPEN cr_tbcadast_pessoa(pr_nrcpfcgc);
         FETCH cr_tbcadast_pessoa
           INTO rw_tbcadast_pessoa;
         -- Criar cabeçalho do XML
-        
-        IF cr_tbcadast_pessoa%FOUND THEN          
-          
-          CLOSE cr_tbcadast_pessoa;          
-          
-          -- Loop sobre as versoes do questionario de microcredito
-          FOR rw_crapass IN cr_crapass LOOP
-            
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
 
-            vr_contador := vr_contador + 1;
-            
-          END LOOP; 
-          
+        IF cr_tbcadast_pessoa%FOUND THEN
+
+          CLOSE cr_tbcadast_pessoa;
+
+      -- Loop sobre as versoes do questionario de microcredito
+      FOR rw_crapass IN cr_crapass LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
+
+      END LOOP;
+
           IF vr_contador > 0 THEN
             vr_flgdpcnt := 2; --Duplicar conta
           ELSE
-            
+
             vr_flgdpcnt := 3; --Relacionamento
             
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'infcadastro', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2093,8 +2442,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --
     --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
     --                            PRJ339-CRM  (Odirlei-AMcom)
-    --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de 
+    --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de
     --                            duplicacao de contas. (PRJ339  - Kelvin/Andrino)
+    
+                     14/11/2017 - Efetuar tratamentos para gravar corretamente os registros
+                                  na tabela crapdoc (Lucas Ranghetti #760235)
+
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2674,7 +3027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 1..7 LOOP
+      FOR x IN 1..7 LOOP      
         -- Insere na tabela de documentos digitalizados - GED
         BEGIN
           INSERT INTO crapdoc
@@ -2923,7 +3276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-        
+
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN
@@ -4313,8 +4666,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           CLOSE cr_craplcm_inss;        
           RETURN 'N'; -- Retorna como produto nao aderido
         
-        END IF;
-        
+      END IF;
+
       ELSIF pr_cdproduto = 34 THEN -- Borderô de cheques
         
         --Busca registro de bordero de titulos
@@ -5353,7 +5706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND craplcm.nrdconta = pr_nrdconta
          AND INSTR(pr_cdhistor,';'||craplcm.cdhistor||';') > 0;
     rw_craplcm_cred cr_craplcm%ROWTYPE;
-    rw_craplcm_debi cr_craplcm%ROWTYPE;    
+    rw_craplcm_debi cr_craplcm%ROWTYPE;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
