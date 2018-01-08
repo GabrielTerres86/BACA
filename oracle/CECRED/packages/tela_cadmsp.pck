@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_cadmsp AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Reinert
-    Data    : Setembro/2017                       Ultima atualizacao: 
+    Data    : Outubro/2017                       Ultima atualizacao: 
     
     Dados referentes ao programa:
     

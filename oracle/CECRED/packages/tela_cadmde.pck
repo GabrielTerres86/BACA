@@ -40,7 +40,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_cadmde AS
   --
   --    Programa: TELA_CADMDE
   --    Autor   : Everton Souza
-  --    Data    : Setembro/2017                   Ultima Atualizacao: 
+  --    Data    : Outubro/2017                   Ultima Atualizacao: 
   --
   --    Dados referentes ao programa:
   --
