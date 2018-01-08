@@ -327,7 +327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                 ,pr_des_erro => pr_dscritic);
           w_dsgraupr := null;
           FOR r_grau_parente in (SELECT dscodigo
-                                   FROM TBCADAST_DOMINIO_CAMPO
+                                   FROM TBCC_DOMINIO_CAMPO
                                   WHERE nmdominio = 'CRAPTTL.CDGRAUPR'
                                     AND cddominio = r_busca_tit_fis.cdgraupr)
           LOOP
