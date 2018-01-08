@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   --                           > Rotina para efetuar a reversão de situação de contas (Opcao G - MATRIC)
   --                         (Jonata - RKAM M364).
   --
-  --
+  -- 
   --
   --  Alteracoes: 04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
@@ -749,7 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          pois estava ocasionando problemas na abertura de contas 
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   --
-  --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
+  --             19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
   --
   --             21/02/2017 - Removido um dos meses exibido pela rotina pc_lista_cred_recebidos,
   --                          pois a tela é semestral e estava sendo exibido 7 meses, conforme 
@@ -759,7 +759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
-  --
+  --                         
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -768,19 +768,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             06/05/2017 - Ajustes realizados:
   --                          - Inclusão de rotinas para atender a tela MINCAP;
-  --                          - Ajustado rotina fn_produto_habilitado devido a liberação de novos produtos na tela PRODUTOS
+  --                          - Ajustado rotina fn_produto_habilitado devido a liberação de novos produtos na tela PRODUTOS                            
   --							- Rotina para efetuar a reversão de situação de contas (Opcao G - MATRIC)
   --                          (Jonata - RKAM M364).
-  --
+  -- 
   --  			 25/07/2017 - Inclusão de rotinas para atendar a nova opção/botão desligamento (Mateus - Mouts M364)
-  --
-  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  -- 
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
   --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
   --
   --             28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
-  --                          esteja cadastrado na cooperativa. (Kelvin)
+  --                          esteja cadastrado na cooperativa. (Kelvin)  
   --
   --             18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
   --                          rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
@@ -793,7 +793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
   --
-  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).
+  --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).	   
   --
   --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
   ---------------------------------------------------------------------------------------------------------------
@@ -1873,10 +1873,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
 
-
+    
     CURSOR cr_tbcadast_pessoa(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
-      SELECT pss.dtconsulta_rfb dtconsultaRfb
-            ,pss.nrcpfcgc
+      SELECT pss.dtconsulta_rfb dtconsultaRfb      
+            ,pss.nrcpfcgc 
             ,pss.cdsituacao_rfb cdsituacaoRfb
             ,pss.nmpessoa
             ,pss.nmpessoa_receita nmpessoaReceita
@@ -1891,101 +1891,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,psf.cdnacionalidade
             ,psf.inhabilitacao_menor inhabilitacaoMenor
             ,psf.dthabilitacao_menor dthabilitacaoMenor
-            ,psf.cdestado_civil cdestadoCivil
+            ,psf.cdestado_civil cdestadoCivil 
             ,pre.cdocupacao cdNaturezaOcupacao
-            ,pre.nrcadastro cdCadastroEmpresa
+            ,pre.nrcadastro cdCadastroEmpresa 
             ,pssMae.Nmpessoa nmmae
             ,pssConjugue.Nmpessoa nmconjugue
             ,pssPai.Nmpessoa nmpai
             ,munNaturalidade.dscidade naturalidadeDsCidade
             ,munNaturalidade.cdestado naturalidadeCdEstado
             ,(SELECT nrddd
-                FROM (SELECT ptlComercialDdd.nrddd
-                            ,ptlComercialDdd.Idpessoa
+                FROM (SELECT ptlComercialDdd.nrddd 
+                            ,ptlComercialDdd.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlComercialDdd
                        WHERE ptlComercialDdd.tptelefone = 3
                        ORDER BY ptlComercialDdd.Idpessoa, ptlComercialDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) comercialNrddd
+                 AND ROWNUM = 1) comercialNrddd 
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlComercialTelefone.Nrtelefone
-                            ,ptlComercialTelefone.Idpessoa
+                FROM (SELECT ptlComercialTelefone.Nrtelefone 
+                            ,ptlComercialTelefone.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlComercialTelefone
                        WHERE ptlComercialTelefone.tptelefone = 3
                        ORDER BY ptlComercialTelefone.Idpessoa, ptlComercialTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) comercialNrTelefone
+                 AND ROWNUM = 1) comercialNrTelefone  
             ,(SELECT nrddd
-                FROM (SELECT ptlResidencialDdd.nrddd
-                            ,ptlResidencialDdd.Idpessoa
+                FROM (SELECT ptlResidencialDdd.nrddd 
+                            ,ptlResidencialDdd.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlResidencialDdd
                        WHERE ptlResidencialDdd.tptelefone = 1
                        ORDER BY ptlResidencialDdd.Idpessoa, ptlResidencialDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) residencialNrddd
-
+                 AND ROWNUM = 1) residencialNrddd                   
+            
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlResidencialTelefone.Nrtelefone
-                            ,ptlResidencialTelefone.Idpessoa
+                FROM (SELECT ptlResidencialTelefone.Nrtelefone 
+                            ,ptlResidencialTelefone.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlResidencialTelefone
                        WHERE ptlResidencialTelefone.tptelefone = 1
                        ORDER BY ptlResidencialTelefone.Idpessoa, ptlResidencialTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) residencialNrTelefone
+                 AND ROWNUM = 1) residencialNrTelefone                 
             ,(SELECT cdoperadora
-                FROM (SELECT ptlCelularOperadora.cdoperadora
-                            ,ptlCelularOperadora.Idpessoa
+                FROM (SELECT ptlCelularOperadora.cdoperadora 
+                            ,ptlCelularOperadora.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlCelularOperadora
                        WHERE ptlCelularOperadora.tptelefone = 2
                        ORDER BY ptlCelularOperadora.Idpessoa, ptlCelularOperadora.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) celularCdOperadora
+                 AND ROWNUM = 1) celularCdOperadora                                            
             ,(SELECT nrddd
-                FROM (SELECT ptlCelularDdd.nrddd
-                            ,ptlCelularDdd.Idpessoa
+                FROM (SELECT ptlCelularDdd.nrddd 
+                            ,ptlCelularDdd.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlCelularDdd
                        WHERE ptlCelularDdd.tptelefone = 2
                        ORDER BY ptlCelularDdd.Idpessoa, ptlCelularDdd.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) celularNrDdd
+                 AND ROWNUM = 1) celularNrDdd            
             ,(SELECT Nrtelefone
-                FROM (SELECT ptlCelularTelefone.Nrtelefone
-                            ,ptlCelularTelefone.Idpessoa
+                FROM (SELECT ptlCelularTelefone.Nrtelefone 
+                            ,ptlCelularTelefone.Idpessoa 
                         FROM tbcadast_pessoa_telefone ptlCelularTelefone
                        WHERE ptlCelularTelefone.tptelefone = 2
                        ORDER BY ptlCelularTelefone.Idpessoa, ptlCelularTelefone.Nrseq_Telefone)
                WHERE Idpessoa = pss.idpessoa
                  AND ROWNUM = 1) celularNrTelefone
             ,(SELECT Dsemail
-                FROM (SELECT pemEmail.Dsemail
-                            ,pemEmail.Idpessoa
+                FROM (SELECT pemEmail.Dsemail 
+                            ,pemEmail.Idpessoa 
                         FROM tbcadast_pessoa_email pemEmail
                        ORDER BY pemEmail.Idpessoa, pemEmail.Nrseq_Email)
                WHERE Idpessoa = pss.idpessoa
-                 AND ROWNUM = 1) dsdemail
-            ,penResidencial.nrcep residencialNrCep
-            ,penResidencial.nmlogradouro residencialNmLogradouro
-            ,penResidencial.nrlogradouro residencialNrLogradouro
-            ,penResidencial.dscomplemento residencialDsComplemento
-            ,penResidencial.nmbairro residencialNmBairro
+                 AND ROWNUM = 1) dsdemail     
+            ,penResidencial.nrcep residencialNrCep             
+            ,penResidencial.nmlogradouro residencialNmLogradouro   
+            ,penResidencial.nrlogradouro residencialNrLogradouro  
+            ,penResidencial.dscomplemento residencialDsComplemento   
+            ,penResidencial.nmbairro residencialNmBairro    
             ,munResidencial.Cdestado residencialCdEstado
-            ,munResidencial.Dscidade residencialDsCidade
+            ,munResidencial.Dscidade residencialDsCidade    
             ,penResidencial.tporigem_cadastro residencialTporigem
-            ,penCorrespondencia.nrcep correspondenciaNrCep
-            ,penCorrespondencia.nmlogradouro correspondenciaNmLogradouro
-            ,penCorrespondencia.nrlogradouro correspondenciaNrLogradouro
-            ,penCorrespondencia.dscomplemento correspondenciaDsComplemento
-            ,penCorrespondencia.nmbairro correspondenciaNmBairro
+            ,penCorrespondencia.nrcep correspondenciaNrCep             
+            ,penCorrespondencia.nmlogradouro correspondenciaNmLogradouro   
+            ,penCorrespondencia.nrlogradouro correspondenciaNrLogradouro  
+            ,penCorrespondencia.dscomplemento correspondenciaDsComplemento   
+            ,penCorrespondencia.nmbairro correspondenciaNmBairro    
             ,munCorrespondencia.Cdestado correspondenciaCdEstado
             ,munCorrespondencia.Dscidade correspondenciaDsCidade
-            ,penCorrespondencia.tporigem_cadastro correspondenciaTporigem
-            ,penComercial.nrcep comercialNrCep
-            ,penComercial.nmlogradouro comercialNmLogradouro
-            ,penComercial.nrlogradouro comercialNrLogradouro
-            ,penComercial.dscomplemento comercialDsComplemento
-            ,penComercial.nmbairro comercialNmBairro
+            ,penCorrespondencia.tporigem_cadastro correspondenciaTporigem 
+            ,penComercial.nrcep comercialNrCep             
+            ,penComercial.nmlogradouro comercialNmLogradouro   
+            ,penComercial.nrlogradouro comercialNrLogradouro  
+            ,penComercial.dscomplemento comercialDsComplemento   
+            ,penComercial.nmbairro comercialNmBairro    
             ,munComercial.Cdestado comercialCdEstado
-            ,munComercial.Dscidade comercialDsCidade
+            ,munComercial.Dscidade comercialDsCidade    
             ,penComercial.tporigem_cadastro comercialTporigem
             ,nac.dsnacion
             ,oxp.cdorgao_expedidor cdExpedidor
@@ -2013,38 +2013,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,tbcadast_pessoa_endereco penComercial
             ,crapmun munComercial
             ,crapnac nac
-            ,tbgen_orgao_expedidor oxp
-            ,tbcadast_pessoa_juridica pju
+            ,tbgen_orgao_expedidor oxp 
+            ,tbcadast_pessoa_juridica pju 
             ,tbcadast_pessoa_renda pre
        WHERE psf.idpessoa(+)                  = pss.idpessoa
          AND prlConjugue.Idpessoa(+)          = pss.idpessoa
          AND prlConjugue.tprelacao(+)         = 1
-         AND pssConjugue.Idpessoa(+)          = prlConjugue.Idpessoa_Relacao
+         AND pssConjugue.Idpessoa(+)          = prlConjugue.Idpessoa_Relacao   
          AND prlPai.Idpessoa(+)               = pss.idpessoa
          AND prlPai.tprelacao(+)              = 3
-         AND pssPai.Idpessoa(+)               = prlPai.Idpessoa_Relacao
+         AND pssPai.Idpessoa(+)               = prlPai.Idpessoa_Relacao   
          AND prlMae.Idpessoa(+)               = pss.idpessoa
          AND prlMae.tprelacao(+)              = 4
-         AND pssMae.Idpessoa(+)               = prlMae.Idpessoa_Relacao
-         AND munNaturalidade.idcidade(+)      = psf.cdnaturalidade
+         AND pssMae.Idpessoa(+)               = prlMae.Idpessoa_Relacao   
+         AND munNaturalidade.idcidade(+)      = psf.cdnaturalidade  
          AND penResidencial.idpessoa(+)       = pss.idpessoa
-         AND penResidencial.tpendereco(+)     = 10
-         AND munResidencial.Idcidade(+)       = penResidencial.Idcidade
+         AND penResidencial.tpendereco(+)     = 10   
+         AND munResidencial.Idcidade(+)       = penResidencial.Idcidade     
          AND penCorrespondencia.idpessoa(+)   = pss.idpessoa
-         AND penCorrespondencia.tpendereco(+) = 13
+         AND penCorrespondencia.tpendereco(+) = 13     
          AND munCorrespondencia.Idcidade(+)   = penCorrespondencia.Idcidade
          AND penComercial.idpessoa(+)         = pss.idpessoa
-         AND penComercial.tpendereco(+)       = 9
-         AND munComercial.Idcidade(+)         = penComercial.Idcidade
+         AND penComercial.tpendereco(+)       = 9   
+         AND munComercial.Idcidade(+)         = penComercial.Idcidade   
          AND nac.cdnacion(+)  = psf.cdnacionalidade
          AND oxp.idorgao_expedidor(+) = psf.idorgao_expedidor
          AND pju.idpessoa(+) = pss.idpessoa
-         AND pre.idpessoa(+)           = pss.idpessoa
-         AND pre.nrseq_renda(+)        = 1
+         AND pre.idpessoa(+)           = pss.idpessoa 
+         AND pre.nrseq_renda(+)        = 1            
          AND pss.nrcpfcgc = pr_nrcpfcgc;
-
+       
       rw_tbcadast_pessoa cr_tbcadast_pessoa%ROWTYPE;
-
+      
     -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
     CURSOR cr_crapass IS
       SELECT nrdconta,
@@ -2082,33 +2082,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Criar cabeçalho do XML
       
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-
+      
       vr_flgdpcnt := 1; --Continua operacao normalmente.
-
+      
       OPEN cr_tbcadast_pessoa(pr_nrcpfcgc);
         FETCH cr_tbcadast_pessoa
           INTO rw_tbcadast_pessoa;
         -- Criar cabeçalho do XML
+        
+        IF cr_tbcadast_pessoa%FOUND THEN          
+          
+          CLOSE cr_tbcadast_pessoa;          
+          
+          -- Loop sobre as versoes do questionario de microcredito
+          FOR rw_crapass IN cr_crapass LOOP
+            
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
 
-        IF cr_tbcadast_pessoa%FOUND THEN
-
-          CLOSE cr_tbcadast_pessoa;
-
-      -- Loop sobre as versoes do questionario de microcredito
-      FOR rw_crapass IN cr_crapass LOOP
-
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
-
-        vr_contador := vr_contador + 1;
-
-      END LOOP;
-
+            vr_contador := vr_contador + 1;
+            
+          END LOOP; 
+          
           IF vr_contador > 0 THEN
             vr_flgdpcnt := 2; --Duplicar conta
           ELSE
-
+            
             vr_flgdpcnt := 3; --Relacionamento
             
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'infcadastro', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2433,7 +2433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 16/10/2017
+    --  Data     :                      Ultima atualizacao: 14/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2442,7 +2442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --
     --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
     --                            PRJ339-CRM  (Odirlei-AMcom)
-    --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de
+    --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de 
     --                            duplicacao de contas. (PRJ339  - Kelvin/Andrino)
     
                      14/11/2017 - Efetuar tratamentos para gravar corretamente os registros
@@ -2530,6 +2530,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Variaveis gerais
       vr_contador PLS_INTEGER := 0;
       vr_vlcapmin crapmat.vlcapini%TYPE; --> Valor de capital minumo para a conta
+      vr_cdestcvl INTEGER;
+      vr_criestcv BOOLEAN;
+      vr_idseqttl INTEGER;
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -2771,7 +2774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           (pr_nrdconta_dst,
            rw_crapdat.dtmvtolt,
            pr_cdoperad,
-           'Duplicacao com base na conta '||gene0002.fn_mask_conta(pr_nrdconta_org),
+           'Duplicacao com base na conta '||gene0002.fn_mask_conta(pr_nrdconta_org)||',',
            1,
            2,
            pr_cdcooper);
@@ -3027,7 +3030,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 1..7 LOOP      
+      FOR x IN 1..7 LOOP
+        
+        -- Tratamentos efetuados com base na b1wgen0055
+        -- Para os documentos (CPF,CARTEIRA DE IDENTIFICACAO E COMPROVANTE DE RENDA) 
+        -- criar pendencia somemente para pessoa fisica
+        IF x IN(1,2,5) AND rw_crapass.inpessoa <> 1 THEN
+          continue;
+        END IF;        
+        
+        -- Validar estado civil
+        IF x = 4 THEN        
+          IF rw_crapass.inpessoa = 1 THEN
+            SELECT cdestcvl INTO vr_cdestcvl
+                FROM crapttl
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta_org
+                 AND idseqttl = 1;        
+          ELSE
+            vr_cdestcvl:= 0;
+          END IF;  
+          
+          IF vr_cdestcvl IN(2,3,4,8,9,11,12) AND 
+             rw_crapass.inpessoa = 1 THEN
+            vr_criestcv:= TRUE;
+          ELSE
+            vr_criestcv:= FALSE;
+          END IF;
+          
+          -- Estado civil criar somente para pessoa fisica e a variavel vr_criestcv seja true
+          IF NOT vr_criestcv THEN
+            continue;
+          END IF;
+        END IF;
+        
+        -- Pessoa juridica vamos gravar como zero a titularidade
+        IF rw_crapass.inpessoa <> 1 THEN
+          vr_idseqttl:= 0;
+        ELSE
+          vr_idseqttl:= 1;        
+        END IF;
+        
         -- Insere na tabela de documentos digitalizados - GED
         BEGIN
           INSERT INTO crapdoc
@@ -3037,15 +3080,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              dtmvtolt,
              tpdocmto,
              idseqttl,
-             nrcpfcgc)
+             nrcpfcgc,
+             cdoperad)
            VALUES
             (pr_cdcooper,
              pr_nrdconta_dst,
              0,
              rw_crapdat.dtmvtolt,
              x,
-             1,
-             rw_crapass.nrcpfcgc);
+             vr_idseqttl,
+             rw_crapass.nrcpfcgc,
+             nvl(pr_cdoperad,' '));
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
@@ -3276,7 +3321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-
+        
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN
@@ -4666,8 +4711,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           CLOSE cr_craplcm_inss;        
           RETURN 'N'; -- Retorna como produto nao aderido
         
-      END IF;
-
+        END IF;
+        
       ELSIF pr_cdproduto = 34 THEN -- Borderô de cheques
         
         --Busca registro de bordero de titulos
@@ -5706,7 +5751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND craplcm.nrdconta = pr_nrdconta
          AND INSTR(pr_cdhistor,';'||craplcm.cdhistor||';') > 0;
     rw_craplcm_cred cr_craplcm%ROWTYPE;
-    rw_craplcm_debi cr_craplcm%ROWTYPE;
+    rw_craplcm_debi cr_craplcm%ROWTYPE;    
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;

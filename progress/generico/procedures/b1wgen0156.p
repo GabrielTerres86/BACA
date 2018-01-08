@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0156.p
     Autor   : Jorge I. Hamaguchi
-    Data    : Maio/2013                Ultima Atualizacao: 21/09/2017
+    Data    : Maio/2013                Ultima Atualizacao: 11/12/2017
      
     Dados referentes ao programa:
    
@@ -38,6 +38,9 @@
                21/09/2017 - Atualizado possibilidades de cod. de porte de beneficiario
                             PF/PJ de acordo com a atualizacao do layout promovida pelo BRDE.
                             (Chamado 732059) - (Fabricio)
+                            
+              11/12/2017 - Ajustar mensagem do Porte conta fisica e Juridica para exibier o
+                           campo da tabela crapprm (Lucas Ranghetti #809661)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0156tt.i }
@@ -1037,12 +1040,12 @@ PROCEDURE fechar_lote:
             END.
             /* PF pode ter porte 11, 12, 13, 14 ou 17 - atualizacao layout BRDE (Setembro/2017 - Fabricio) */
             IF NOT CAN-DO(crapprm.dsvlrprm, STRING(crapipc.cdporben)) THEN
-                aux_dscriti3 = aux_dscriti3 +
-                               " - Porte conta fisica deve ser 11,12,13,14 ou 17.\n".
+            aux_dscriti3 = aux_dscriti3 +
+                               " - Porte conta fisica deve ser " + crapprm.dsvlrprm + ".\n".
                                
             IF crapipc.cdporben = 17   AND
                crapipc.cdgenben <> 230 THEN
-            aux_dscriti3 = aux_dscriti3 +
+                aux_dscriti3 = aux_dscriti3 +
                                " - Porte 17 PF somente com genero 230.\n".
         END.
         ELSE
@@ -1065,7 +1068,7 @@ PROCEDURE fechar_lote:
             /* PJ pode ter porte 21, 24, 25, 26 ou 27 - atualizacao layout BRDE (Setembro/2017 - Fabricio) */
             IF NOT CAN-DO(crapprm.dsvlrprm, STRING(crapipc.cdporben)) THEN
             aux_dscriti3 = aux_dscriti3 +
-                           " - Porte conta juridica deve ser de 21 a 27.\n".
+                           " - Porte conta juridica deve ser " + crapprm.dsvlrprm + ".\n".
                            
             IF crapipc.dtvencnd = ? THEN
             aux_dscriti3 = aux_dscriti3 +

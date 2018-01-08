@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 02/06/2017
+    Ultima Atualizacao: 12/12/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -242,11 +242,13 @@
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
                17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339). 
+                             crapass, crapttl, crapjur (Adriano - P339). 
 
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 									 		 
+							
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 -----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
@@ -2204,7 +2206,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                  INPUT p-idtipcar, 
                                  INPUT i-nro-docto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT p-nrcartao,
+                                 INPUT STRING(p-nrcartao),
                                  INPUT aux_vllanmto,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT p-cod-banco,
@@ -3144,7 +3146,7 @@ PROCEDURE verifica-operador-ted:
         TRIM(p-senha-operador) <> "" THEN
         DO:
             IF  crapope.cddsenha <> p-senha-operador THEN
-                DO:
+            DO:
                     RUN cria-erro (INPUT p-cooper,        
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,

@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 13/10/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 16/10/2017
     
    Dados referentes ao programa:
    
@@ -199,6 +199,10 @@
 
               13/10/2017 - #765295 Criada a rotina busca_convenio_nome para logar no TAA o
                            nome do convenio que esta sendo pago (Carlos)
+			   
+              16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
+                           a referencia do convenio de acordo com o cadastrado na tabela crapprm 
+                           (Lucas Ranghetti #712492)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1092,6 +1096,8 @@ PROCEDURE valida-dados:
     DEF VAR aux_cdrefere AS DECI                                    NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGI                                    NO-UNDO.
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
+    DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1113,13 +1119,45 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:                                 
+            DO:   
+            
                 IF  par_cdrefere = 0 THEN              
                     DO:
                         ASSIGN aux_dscritic = "Informe o Codigo Identificador "
                                par_nmdcampo = "cdrefere".
                         LEAVE Valida.
                     END.
+                              
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+                  RUN STORED-PROCEDURE pc_retorna_referencia_conv
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT 0, /* cdconven */
+                                               INPUT par_cdhistor,
+                                               INPUT STRING(par_cdrefere),
+                                               OUTPUT aux_nrrefere,
+                                               OUTPUT aux_qtdigito,
+                                               OUTPUT 0,   /* pr_cdcritic */
+                                               OUTPUT ""). /* pr_dscritic */
+
+                  CLOSE STORED-PROC pc_retorna_referencia_conv
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_nrrefere = ""
+                         aux_qtdigito = 0
+                         aux_nrrefere = pc_retorna_referencia_conv.pr_nrrefere
+                                            WHEN pc_retorna_referencia_conv.pr_nrrefere <> ?
+                         aux_qtdigito = pc_retorna_referencia_conv.pr_qtdigito                          
+                                            WHEN pc_retorna_referencia_conv.pr_qtdigito <> ?
+                         aux_cdcritic = pc_retorna_referencia_conv.pr_cdcritic                          
+                                            WHEN pc_retorna_referencia_conv.pr_cdcritic <> ?
+                         aux_dscritic = pc_retorna_referencia_conv.pr_dscritic
+                                            WHEN pc_retorna_referencia_conv.pr_dscritic <> ?.        
                               
                 IF  par_cdhistor = 0 THEN
                     DO:
@@ -1128,25 +1166,17 @@ PROCEDURE valida-dados:
                         LEAVE Valida.
                     END.
                 ELSE
-                IF  par_cdhistor = 2291 THEN /* CERSAD */
+                IF  aux_qtdigito <> 0 THEN /* CERSAD E SANEPAR */
                     DO:                    
-                        IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
+                         IF  LENGTH(STRING(par_cdrefere)) > aux_qtdigito THEN
                             DO:
                                 ASSIGN aux_cdcritic = 654
                                        par_nmdcampo = "cdrefere".
                                 LEAVE Valida.
                             END.   
-                    END.
-                ELSE
+                       
                 IF par_cdhistor = 2263 THEN /* SANEPAR */
                    DO:                   
-                       IF  LENGTH(STRING(par_cdrefere)) > 8 THEN
-                           DO:
-                               ASSIGN aux_cdcritic = 654
-                                      par_nmdcampo = "cdrefere".
-                               LEAVE Valida.
-                           END. 
-                           
                        ASSIGN aux_cdrefere = par_cdrefere.
                        
                        RUN dig_sanepar ( INPUT-OUTPUT aux_cdrefere,
@@ -1161,6 +1191,7 @@ PROCEDURE valida-dados:
                                LEAVE Valida.
                            END. 
                    END.
+                    END.                
                 ELSE
                 IF  par_cdhistor = 509   THEN   /* UNIMED */
                     DO:
@@ -1450,7 +1481,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -2251,7 +2282,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                        
+                             
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2382,10 +2413,10 @@ PROCEDURE busca_convenios_codbarras:
                   IF(crapscn.dsnomres <> "") then
                       ASSIGN aux_nmempcon = crapscn.dsnomres.
                   ELSE
-                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2406,13 +2437,13 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
-                       ASSIGN aux_nmempcon = gnconve.nmempres.
+						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
          IF aux_nmresumi <> "" THEN

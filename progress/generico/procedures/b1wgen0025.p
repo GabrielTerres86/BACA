@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 12/12/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 26/12/2017
     
     Dados referentes ao programa:
 
@@ -344,6 +344,9 @@
 
                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                26/12/2017 - #820634 Aumentado o limite de saque noturno, 
+                             de R$300 para R$500 (Carlos)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -2498,9 +2501,9 @@ PROCEDURE verifica_saque:
     IF  STRING(TIME,"HH:MM") > "20:00"  OR
         STRING(TIME,"HH:MM") < "06:00"  THEN
         DO:
-            IF  aux_vlsaqnot > 300  THEN
+            IF  aux_vlsaqnot > 500  THEN
                 DO:
-                    par_dssaqmax = " Limite  para  saque  noturno:  R$ 300,00".
+                    par_dssaqmax = " Limite  para  saque  noturno:  R$ 500,00".
                     par_dscritic = "Limite de Saque Excedido. " + par_dssaqmax.
                     RETURN "NOK".
                 END.

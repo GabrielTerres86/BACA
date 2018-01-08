@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 13/09/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 23/10/2017
 
   Dados referentes ao programa:
 
@@ -154,6 +154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               13/09/2017 - Atribuir ao nome resumido o nome completo limitando em 20
                            caracteres. (Jaison/Aline - #744121)
 
+              23/10/2017 - Tratamento para lancamentos duplicados também para os consorcios 
+                           (Lucas Ranghetti #739738)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -1045,8 +1047,6 @@ BEGIN
               END;
               
               IF nvl(vr_cdcritic,0) = 0 THEN      
-                -- Somente vamos verificar se for deb. aut. sicredi        
-                IF vr_cdhistor = 1019 THEN                
                   LOOP
                     -- Busca os lancamentos automaticos
                     IF cr_craplau_dup%ISOPEN THEN
@@ -1078,7 +1078,6 @@ BEGIN
                     END IF;
                     CLOSE cr_craplau_dup;
                   END LOOP;
-                END IF;
                 
               -- Inclusao deve verificar duplicidade 
               OPEN cr_craplau(pr_nrdconta => vr_nrdconta
@@ -1309,7 +1308,8 @@ BEGIN
                    AND nrdconta = vr_nrdconta       
                    AND (nrdocmto = vr_cdrefere
                     OR nrcrcard = vr_cdrefere)
-                   AND insitlau = 1;
+                   AND insitlau = 1
+                   AND vllanaut = vr_vllanmto;
                 -- Se encontrou registro 
                 IF sql%ROWCOUNT > 0 THEN 
                   -- Gerar critica 739 e NDB 99

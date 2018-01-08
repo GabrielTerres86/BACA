@@ -1552,6 +1552,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
                     para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
+                    
+       12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                    pc_gera_log_ope_cartao (Lucas Ranghetti #810576)         
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -3964,7 +3967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 04/02/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3981,9 +3984,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
     --                            De 30 seg. para 10 min. (Jorge/David) - SD 397867 
 	--
-	--    			    28/03/2016 - Adicionados parâmetros para geraçao de LOG
-    --                          (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
+	  --    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
+    --                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
 	--
+    --               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+    --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
     -- ..........................................................................
 
   BEGIN
@@ -5123,7 +5128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 									                 ,pr_indtipo_cartao => pr_idtipcar    -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) Alterar Andrino
 									                 ,pr_nrdocmto 	    => pr_nrdocdeb    -- Numero do documento utilizado no lancamento
 									                 ,pr_cdhistor 	    => pr_cdhisdeb    -- Codigo do historico utilizado no lancamento
-									                 ,pr_nrcartao 	    => pr_nrcartao    -- Numero do cartao utilizado. Zeros quando nao existe cartao
+									                 ,pr_nrcartao 	    => to_char(pr_nrcartao) -- Numero do cartao utilizado. Zeros quando nao existe cartao
 									                 ,pr_vllanmto 	    => pr_vllanmto    -- Valor do lancamento
 									                 ,pr_cdoperad 	    => pr_cdoperad    -- Codigo do operador
 									                 ,pr_cdbccrcb 	    => 0              -- Codigo do banco de destino para os casos de TED e DOC
@@ -16831,8 +16836,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;
-
+      END IF;      
+      
       /* Preparar Lote de Retorno Cooperado */
       PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => pr_idtabcob     --ROWID da cobranca
                                          ,pr_cdocorre => pr_cdocorre     --Codigo Ocorrencia

@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 02/08/2017
+   Data    : Junho/95.                       Ultima atualizacao: 16/11/2017
 
    Dados referentes ao programa:
 
@@ -222,8 +222,8 @@ BEGIN
                  02/03/2017 - Incluido nas consultas da craplau 
                               craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
-         		     04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-				                     (Jonata - RKAM M311).
+         		 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				             (Jonata - RKAM M311).
                  
                  26/07/2017 - Inclusão na tabela de erros Oracle
                             - Padronização de logs
@@ -235,6 +235,10 @@ BEGIN
 
                  21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
+														   
+                 18/10/2017 - Ajustar para não verificar mais os consorcios nesta rotina
+                              e sim no crps663 (Lucas Ranghetti #739738) 
+
   ............................................................................................*/
   
   DECLARE
@@ -376,7 +380,7 @@ BEGIN
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
                                  ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
-         AND lau.cdhistor <> 1019 --> 1019 será processado pelo crps642
+         AND lau.cdhistor NOT IN( 1019,1230,1231,1232,1233,1234) --> 1019 será processado pelo crps642, consorcio no debcns
        ORDER BY lau.cdagenci
                ,lau.cdbccxlt
                ,lau.cdbccxpg
@@ -1212,7 +1216,7 @@ BEGIN
       vr_nrdolot1 := rw_craplot.nrdolote;
     END IF;
 
-	-- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+	  -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
@@ -1234,10 +1238,10 @@ BEGIN
       vr_auxcdcri := 0;
       vr_nrdolote := vr_nrdolot1;
       vr_cdcooper := pr_cdcooper;
-      vr_cdagenci := rw_craplau.cdagenci;
+     vr_cdagenci := rw_craplau.cdagenci;
       vr_nrdconta := rw_craplau.nrdconta;
 
-	  -- Condicao para verificar se permite incluir as linhas parametrizadas
+	    -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || vr_nrdconta || ',') > 0 THEN
         IF rw_craplau.cdhistor = 38 THEN
 		      CONTINUE;        
@@ -1520,10 +1524,10 @@ BEGIN
 
       -- ATRIBUICAO DE NUMERO DE DOCUMENTO
       vr_nrdocmto := rw_craplau.nrdocmto;
-      
+
       -- TRATAMENTO DÉBITO FÁCIL
       IF vr_cdcritic = 0 AND rw_craplau.flgblqdb = 1 THEN
-        
+
         -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
         CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
                              ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -1624,19 +1628,12 @@ BEGIN
 
       END IF;
 
-      -- VERIFICA SE CRITICA NÃO EXISTE E QTD. DIAS SALDO NEGATIVO OU FOR HISTORICO DE CONSORCIO
-      IF (vr_cdcritic = 0 AND rw_crapsld.qtddsdev > 0) OR
-        (rw_craplau.cdhistor IN (1230,1231,1232,1233,1234) AND rw_crapsld.qtddsdev > 0) THEN
+      -- VERIFICA SE CRITICA NÃO EXISTE E QTD. DIAS SALDO NEGATIVO
+      IF (vr_cdcritic = 0 AND rw_crapsld.qtddsdev > 0) THEN
 
         vr_cdcritic := 722;                                                   -- SALDO NEGATIVO
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
-
-        -- VERIFICA CODIGO DO HISTORICO
-        IF rw_craplau.cdhistor IN (1230,1231,1232,1233,1234) THEN
-          vr_flgentra := 0;
-        ELSE
           vr_flgentra := 1;
-        END IF;
 
       END IF;
 
@@ -2098,7 +2095,7 @@ BEGIN
       --Geração de log de erro - Chamado 709894
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                              ' --> ' || 'ERRO: ' ||vr_dscritic ||
-                             '. Cdcooper=' || pr_cdcooper ||
+                                                   '. Cdcooper=' || pr_cdcooper ||
                              ','||vr_dsparam;
 
       --Geração de log de erro - Chamado 709894

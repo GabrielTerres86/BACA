@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/06/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   
    Dados referentes ao programa:
   
@@ -37,6 +37,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   				              "Desligamento por determinação do BACEN" 
   							  ( Jonata - RKAM P364).
 
+                 12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -521,7 +523,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) 
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -752,7 +754,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
                                     );
-                                    
+
   PROCEDURE pc_pode_impr_dec_pj_coop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
                                     ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
                                     ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
@@ -803,7 +805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/12/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -858,6 +860,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                            "Valores a devolver" da tela ATENDA  (Jonata - RKAM P364).
   --
   --               03/12/2017 - Alterado cursor para ler da tbcotas e eliminado cursor da craplcm (Jonata - RKAM P364).
+  --
+  --                12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+  --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2232,7 +2237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
      WHERE crapepr.cdcooper = pr_cdcooper
        AND crapepr.nrdconta = pr_nrdconta
        AND crapepr.inprejuz = 1;
-       
+    
     --> Buscar Rating efetivo 
     CURSOR cr_crapnrc (pr_cdcooper crapsld.cdcooper%TYPE,
                        pr_nrdconta crapsld.nrdconta%TYPE) IS 
@@ -2585,7 +2590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_ocorren(vr_idx).qtdevolu := vr_qtdevolu;
     pr_tab_ocorren(vr_idx).dtcnsspc := rw_crapass.dtcnsspc;
     pr_tab_ocorren(vr_idx).dtdsdsps := rw_crapass.dtdsdspc;
-       pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+    pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
     pr_tab_ocorren(vr_idx).dtdsdclq := rw_crapsld.dtdsdclq;
     pr_tab_ocorren(vr_idx).qtddtdev := rw_crapsld.qtddtdev;
     pr_tab_ocorren(vr_idx).flginadi := vr_flginadi;
@@ -3099,7 +3104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 16/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              14/11/2017 - Auste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).
-	--
+    --
 	--              03/12/2017 - Alterado cursor para ler da tbcotas (Jonata - RKAM P364).                 
     -- ..........................................................................*/
     
@@ -3549,7 +3554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_crapsld;
     
     vr_qtddtdev := nvl(rw_crapsld.qtddtdev,0);
-      vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+    vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
     
     /* Data SFN */
     IF  nvl(rw_crapass.vledvmto,0) <> 0 THEN
@@ -4232,9 +4237,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--						    ( Jonata - RKAM P364).	
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
-    --   
+    --   										  
     --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
-    --
+    -- 
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
     --                           de cartao de credito em atraso (Anderson).
     -- ..........................................................................*/
@@ -8671,7 +8676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred)
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -8687,7 +8692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-    --  Data     : Abril/2016.                   Ultima atualizacao: 14/11/2016
+    --  Data     : Abril/2016.                   Ultima atualizacao: 12/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -8703,7 +8708,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
     --                           ifs no programa(Odirlei-AMcom)  
-    -- ..........................................................................*/
+    
+                    12/12/2017 - Alterar para para varchar2 o campo nrcartao
+                                 (Lucas Ranghetti #810576) 
+     ............................................................................*/
 
     -- Cursor para retornar o nome do banco
     CURSOR cr_crapban IS
