@@ -16,6 +16,8 @@
 							
 				30/04/2015 - Evitar erros no ENTER de campos que nao tem eventos (Gabriel-RKAM).			
 							
+                24/10/2017 - Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
+							
  */	 
 function formataAvalista() {
 	
@@ -30,7 +32,8 @@ function formataAvalista() {
 	var rConta	= $('label[for="nrctaav1"],label[for="nrctaav2"]','#'+nomeForm);
 	var rNome	= $('label[for="nmdaval1"],label[for="nmdaval2"]','#'+nomeForm);
 	var rConjuge= $('label[for="nmdcjav1"],label[for="nmdcjav2"]','#'+nomeForm);
-	var rCpfCnpj= $('label[for="nrcpfav1"],label[for="cpfcjav1"],label[for="nrcpfav2"],label[for="cpfcjav2"]','#'+nomeForm);
+    var rCpfCnpj= $('label[for="nrcpfav1"],label[for="nrcpfav2"]','#'+nomeForm);
+	var rCpfCjea= $('label[for="cpfcjav1"],label[for="cpfcjav2"]','#'+nomeForm);
 	var rTDoc	= $('label[for="tpdocav1"],label[for="tdccjav1"],label[for="tpdocav2"],label[for="tdccjav2"]','#'+nomeForm);
 	var rDDoc	= $('label[for="dsdocav1"],label[for="doccjav1"],label[for="dsdocav2"],label[for="doccjav2"]','#'+nomeForm);
 	var rCep	= $('label[for="nrcepav1"],label[for="nrcepav2"]','#'+nomeForm);
@@ -45,9 +48,10 @@ function formataAvalista() {
 	var rTel	= $('label[for="nrfonav1"],label[for="nrfonav2"]','#'+nomeForm);
 
 	rConta.addClass('rotulo').css('width','64px');
-	rNome.addClass('rotulo-linha').css('width','38px');
+	rNome.addClass('rotulo').css('width','64px');
 	rConjuge.addClass('rotulo').css('width','64px');
-	rCpfCnpj.addClass('rotulo').css('width','64px');
+	rCpfCnpj.addClass('rotulo-linha').css('width','64px');
+    rCpfCjea.addClass('rotulo').css('width','64px');
 	rTDoc.addClass('rotulo-linha');
 
 	rCep.addClass('rotulo').css('width','64px');
@@ -81,12 +85,12 @@ function formataAvalista() {
 	var cRenda  = $('#vlrenme1,#vlrenme2','#'+nomeForm);
 
 	cContas.addClass('conta pesquisa').css('width','70px');
-	cNome.addClass('alphanum').css('width','273px').attr('maxlength','57');
+	cNome.addClass('alphanum').css('width','220px').attr('maxlength','57');
 	cConjuge.addClass('alphanum').css('width','429px').attr('maxlength','40');
 	cCpfTit.addClassCpfCnpj().css({'width':'118px','text-align':'right'});
 	cCpfCon.addClass('cpf').css('width','118px');
 	cTDoc.css('width','42px');
-	cDDoc.css('width','233px').attr('maxlength','40');
+	cDDoc.css('width','130px').attr('maxlength','40');
 
 	cCEPs.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
 	cEnd.addClass('alphanum').css('width','230px').attr('maxlength','40');
@@ -155,8 +159,8 @@ function controlaAvalista() {
 	// Evitar erros no ENTER dos campos sem eventos especificos
 	cTodos.unbind('keypress').bind('keypress',function(e) {
 	
-		// Focar no proximo campo quando ENTER
-		if ( e.keyCode == 13 ) {
+		// Focar no proximo campo quando ENTER ou tab
+		if ( e.keyCode == 13 || e.keyCode == 9) {
 			
 			var campo =  $("input",'#'+nomeForm);
 			var indice = campo.index(this);
@@ -190,13 +194,14 @@ function controlaAvalista() {
  * PARÂMETRO : i -> [int] Valores válidos 1 ou 2. Representa se é o primeiro ou segundo avalista. 
  */	 
 function pesquisaContaAvalista(i) {
+    
 	var cConta  = $('#nrctaav'+i,'#'+nomeForm);	
+    var cCpfAva = $('#nrcpfav'+i,'#'+nomeForm);	
 	var nrConta = normalizaNumero( cConta.val() );	
 	if (nrConta == 0) {
-		$('input, select','.fsAvalista:eq('+(i-1)+')').habilitaCampo();		
-		$('#ende1av'+i+',#ende2av'+i+',#cdufava'+i+',#nmcidav'+i,'#'+nomeForm).desabilitaCampo();
 		cConta.val('').desabilitaCampo();
-		$('#nmdaval'+i,'#'+nomeForm).focus();
+        cCpfAva.habilitaCampo();
+		cCpfAva.focus();
 	} else if (!validaNroConta(nrConta)) {			
 		showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrctaav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");		
 	} else {
@@ -221,6 +226,11 @@ function pesquisaCpfAvalista(i) {
 		showError("error","CPF/CNPJ inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");				
 	} else {
 		carregaAvalista(i);
+        // Se nao for acessado via CRM, pode habilitar os campos
+        if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+            $('input, select','.fsAvalista:eq('+(i-1)+')').habilitaCampo();		
+            $('#ende1av'+i+',#ende2av'+i+',#cdufava'+i+',#nmcidav'+i,'#'+nomeForm).desabilitaCampo();
+        }
 	}
 	return false;
 }
@@ -288,6 +298,7 @@ function habilitaAvalista(boHabilita,operacao) {
 		estadoInicial(1,operacao);
 		estadoInicial(2,operacao);
 		$('#nrctaav1','#'+nomeForm).focus();	
+        
 	} else {
 		$('input, select','#'+nomeForm+' .fsAvalista').desabilitaCampo();
 		$('a.pointer','#'+nomeForm+' .fsAvalista').removeClass('pointer');

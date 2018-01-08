@@ -223,6 +223,8 @@
 				             ja estiver com situacao = 4
 							( Jonata - RKAM P364).		
 
+                14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -290,7 +292,7 @@ PROCEDURE Busca_Dados:
         /* pesquisa o associado */
         FOR FIRST crapass FIELDS(nrdconta cdagenci cdtipcta cdbcochq cdsitdct 
                                  tpavsdeb tpextcta cdsecext nrdctitg 
-                                 flgiddep dtcnsspc dtcnsscr dtdsdspc 
+                                 flgiddep dtcnsspc dtcnsscr dtdsdspc dtadmiss
                                  dtmvtolt dtelimin dtabtcct dtdemiss inadimpl 
                                  inlbacen inpessoa flgctitg flgrestr nrctacns
                                  incadpos indserma idastcjt dtdscore dsdscore)
@@ -347,6 +349,7 @@ PROCEDURE Busca_Dados:
             tt-conta-corr.dtelimin = crapass.dtelimin
             tt-conta-corr.dtabtcct = crapass.dtabtcct
             tt-conta-corr.dtdemiss = crapass.dtdemiss
+            tt-conta-corr.dtadmiss = crapass.dtadmiss
             tt-conta-corr.inadimpl = crapass.inadimpl
             tt-conta-corr.inlbacen = crapass.inlbacen
             tt-conta-corr.cdbcoitg = 1
@@ -1122,7 +1125,7 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 
-                   END.				   
+                   END.
 				   
 				/*Se for demissao BACEN, deve informar que nao ha reversao ao prosseguir 
 				  com a alteracao da situacao para 8 (Processo demissa BACEN)*/
@@ -1137,7 +1140,7 @@ PROCEDURE Valida_Dados_Altera:
 
                       LEAVE ValidaAltera.
 				   
-				   END.   
+            END.
 				ELSE IF crapass.cdsitdct = 4 THEN
 				   DO:
 				      ASSIGN par_dscritic = "Conta ja encerrada por demissao."
@@ -3762,7 +3765,7 @@ PROCEDURE Grava_Dados_Altera:
                crabass.cdtipcta = par_cdtipcta
                crabass.cdbcochq = par_cdbcochq
                crabass.cdsitdct = par_cdsitdct
-			   crabass.flgiddep = par_flgiddep
+               crabass.flgiddep = par_flgiddep
                crabass.tpavsdeb = par_tpavsdeb
                crabass.tpextcta = par_tpextcta
                crabass.cdsecext = par_cdsecext

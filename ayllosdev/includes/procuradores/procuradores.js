@@ -25,6 +25,8 @@
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
  *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
+ *                27/10/2017 - Ajustes tela CADCTA. PRJ339-CRM (Odirlei-AMcom)
+
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -226,6 +228,13 @@ function guarda (dsproftl) {
 
 function controlaOperacaoProc( operacao_proc ){
 	
+    // tela CADCTA não abrirá a listagem, assim quando for enviado para essa tela deverá fechar div e recarregar a tela
+    if ((operacao_proc == 'CT' || operacao_proc == undefined)  && nmdatela == 'CADCTA' ){
+        fechaRotina(divRotina,'','obtemCabecalho();');
+        return false;
+    }
+    
+    
 	if ( operacao_proc != 'EV' && operacao_proc !='EC' && !verificaContadorSelect() ) return false;
 	
 	// Se não possui acesso para alterar, emitir mensagem	
@@ -252,7 +261,12 @@ function controlaOperacaoProc( operacao_proc ){
 			
 		});	
 											
-		if ( nrcpfcgc_proc == '' && nrdctato == '' ) { return false; }
+        
+        if (nmdatela == 'CADCTA' ){
+            nrdrowid 	= $('#nrdrowid','#frmDadosProcuradores').val();            
+        } else {
+	    	if ( nrcpfcgc_proc == '' && nrdctato == '' ) { return false; }
+        }
 		
 	}
 
@@ -793,33 +807,46 @@ function controlaLayoutProc( operacao_proc ) {
 				
 			//Caso é inclusão, apos a busca de dados pela conta ou pelo CPF 
 			case 'IB':
-				//Se o nº da conta for igual a 0 ou vazio então o formulario é desbloqueado para preenchimento 
-				if ( cNrConta.val() == '0' || cNrConta.val() == '' ){
-					camposGrupo2.habilitaCampo();
-					sexo.habilitaCampo();	
-					cDescBem.habilitaCampo();
-					cDescBem.prop('disabled',true);					
-					endDesabilita.desabilitaCampo();	
+                
+                // tela CADCTA nao permitirá alterar dados, pois os mesmos só podem ser editados no CRM 
+                if (nmdatela != 'CADCTA') {
+				 //Se o nº da conta for igual a 0 ou vazio então o formulario é desbloqueado para preenchimento 
+			  	  if ( cNrConta.val() == '0' || cNrConta.val() == '' ){
+					  camposGrupo2.habilitaCampo();
+					  sexo.habilitaCampo();	
+					  cDescBem.habilitaCampo();
+					  cDescBem.prop('disabled',true);					
+					  endDesabilita.desabilitaCampo();	
 					
-					if( $('#cdestcvl','#'+nomeFormProc).val() == "2" ||
-						$('#cdestcvl','#'+nomeFormProc).val() == "3" ||
-						$('#cdestcvl','#'+nomeFormProc).val() == "4" || 
-						$('#cdestcvl','#'+nomeFormProc).val() == "8" || 
-						$('#cdestcvl','#'+nomeFormProc).val() == "9" || 
-						$('#cdestcvl','#'+nomeFormProc).val() == "11" ){
+					  if( $('#cdestcvl','#'+nomeFormProc).val() == "2" ||
+						  $('#cdestcvl','#'+nomeFormProc).val() == "3" ||
+						  $('#cdestcvl','#'+nomeFormProc).val() == "4" || 
+						  $('#cdestcvl','#'+nomeFormProc).val() == "8" || 
+						  $('#cdestcvl','#'+nomeFormProc).val() == "9" || 
+						  $('#cdestcvl','#'+nomeFormProc).val() == "11" ){
 					
-						$('#inhabmen','#'+nomeFormProc).desabilitaCampo();
-						$('#dthabmen','#'+nomeFormProc).desabilitaCampo();
+						  $('#inhabmen','#'+nomeFormProc).desabilitaCampo();
+						  $('#dthabmen','#'+nomeFormProc).desabilitaCampo();
 			
-					}else{			
+					  }else{			
 					
-						( $('#inhabmen','#'+nomeFormProc).val() != 1 ) ? $('#dthabmen','#'+nomeFormProc).desabilitaCampo() : $('#dthabmen','#'+nomeFormProc).habilitaCampo();
+						  ( $('#inhabmen','#'+nomeFormProc).val() != 1 ) ? $('#dthabmen','#'+nomeFormProc).desabilitaCampo() : $('#dthabmen','#'+nomeFormProc).habilitaCampo();
 						
-					}
+					  }
 
 					
-				}
-				camposGrupo3.habilitaCampo();
+				  }
+                    
+			    	camposGrupo3.habilitaCampo();
+                // tela CADCTA somente exibirá procurador e nao permitira alterar.    
+                }else {
+                    //cCargo.val('PROCURADOR');
+                    dsProfissao = 'PROCURADOR';
+				    camposGrupo3.habilitaCampo();
+                    cCargo.desabilitaCampo();
+                    
+                }
+				
 				break;
 				
 			// Caso é alteração, se conta = 0, libera grupo 2 e 3, senão libera somente grupo 3 	
@@ -2237,9 +2264,9 @@ function controlaLayoutPoder() {
 	largura = '570px';
 	divRotina.css('width',largura);	
 		
-	$('.divRegistros').css('height',altura);
+	$('.divRegistrosPoderes').css('height',altura);
 		
-	var divRegistro = $('div.divRegistros');		
+	var divRegistro = $('div.divRegistrosPoderes');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 	

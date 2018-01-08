@@ -39,6 +39,8 @@
                 18/03/2016 - Inclusao campos na tt-conta-corr
 				             PRJ207 - Esteira (Odirlei-AMcom)    
                              
+                14/11/2017 - Incluido campo FIELD dtadmiss. PRJ339-CRM(Odirlei-AMcom)
+                             
 .............................................................................*/
 
 
@@ -88,7 +90,8 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD indserma LIKE crapass.indserma
     FIELD idastcjt LIKE crapass.idastcjt
 	FIELD dtdscore LIKE crapass.dtdscore
-	FIELD dsdscore LIKE crapass.dsdscore.
+	FIELD dsdscore LIKE crapass.dsdscore
+    FIELD dtadmiss LIKE crapass.dtadmiss.
 
 DEFINE TEMP-TABLE tt-titulares NO-UNDO 
     FIELD idseqttl LIKE crapttl.idseqttl

@@ -149,8 +149,8 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)	  	
-
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
+				
 				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
@@ -4352,6 +4352,13 @@ PROCEDURE Inclui PRIVATE :
                        crabass.dtinsori = TODAY
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdbcochq = 85 NO-ERROR.  
+
+                       /* Para esta tela deve gravar essas informaçoes como padrao */
+                       IF par_nmdatela = 'CADMAT' THEN
+                       DO:
+                          ASSIGN crabass.cdsecext = 999 NO-ERROR.
+                       END.
+                       
 
                    IF  ERROR-STATUS:ERROR THEN 
                        DO:

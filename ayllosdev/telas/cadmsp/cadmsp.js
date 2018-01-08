@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 25/09/2017
  * OBJETIVO     : Biblioteca de funções da tela CADMSP
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :  27/12/2017 - Ajustes para não permitir informar acentuação. PRJ2339 - CRM(Odirlei-AMcom)
  * --------------
  */
 
@@ -79,10 +79,16 @@ function controlaFoco() {
 
 	/* ----------- Form Detalhe - INICIO ----------- */
 	$('#dsmotivo','#frmCadmsp').unbind('keydown').bind('keydown', function(e) {
+        
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			$('#flgpessf','#frmCadmsp').focus();
 			return false;
 		}	
+	});
+	
+    $('#dsmotivo','#frmCadmsp').unbind('change').bind('change', function(e) {        
+        $('#dsmotivo','#frmCadmsp').val( removeCaracteresInvalidos($('#dsmotivo','#frmCadmsp').val(),true) );
+		return false;
 	});
 	
 	$('#flgpessf','#frmCadmsp').unbind('keydown').bind('keydown', function(e) {
@@ -205,7 +211,7 @@ function formataMotivos() {
 	rFlgpessj.addClass('rotulo').css({'width':'160px'});
 	
 	$('#cdmotivo','#frmCadmsp').addClass('campo pesquisa inteiro').css({'width':'80px'}).attr('maxlength', '8'); 
-	$('#dsmotivo','#frmCadmsp').addClass('campo').css({'width':'350px'});
+	$('#dsmotivo','#frmCadmsp').addClass('campo').addClass('alpha').css({'width':'350px'});
 	$('#flgpessf','#frmCadmsp').addClass('campo');
 	$('#flgpessj','#frmCadmsp').addClass('campo');
 	
