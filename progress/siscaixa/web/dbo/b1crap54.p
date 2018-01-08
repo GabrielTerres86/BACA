@@ -1,10 +1,10 @@
-/* .............................................................................
+ï»¿/* .............................................................................
 
    Programa: siscaixa/web/b1crap54.p
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 12/12/2017
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -32,9 +32,9 @@
                
                19/01/2011 - Alterar nrsencar para dssencar (Guilherme).
                
-               04/06/2013 - Alterado função lista-saldo-conta para retorno de saldo (Jean Michel).
+               04/06/2013 - Alterado funÃ§Ã£o lista-saldo-conta para retorno de saldo (Jean Michel).
                
-               23/10/2013 - Incluída validação do nível do operador na 
+               23/10/2013 - IncluÃ­da validaÃ§Ã£o do nÃ­vel do operador na 
                             procedure 'valida-permissao-saldo-conta' (Diego).
                
                28/05/2014 - Retirada validacao do nivel de operador na 
@@ -49,19 +49,18 @@
                02/02/2016 - Incluido verificacao da flag "flsaqpre" para isentar 
                             taxas de saque presencial.(Lombardi #393807).
                             
-               23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
+               23/02/2016 - Tratamentos para utilizaÃ§ao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                            crapass, crapttl, crapjur (Adriano - P339).
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
                             
-               23/08/2017 - Alterado para validar as informacoes do operador 
-                            pelo AD. (PRJ339 - Reinert)
-
-               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
-                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+          07/12/2017 - Melhoria 458 criada proc consulta-provisao e valida-permissao-provisao
+                       Antonio R. Jr(mouts)
+                            
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -565,50 +564,18 @@ PROCEDURE valida-permissao-saldo-conta:
                     RETURN "NOK".
                 END.
            
-        /* PRJ339 - REINERT (INICIO) */         
-            /* Validacao de senha do usuario no AD somente no ambiente de producao */
-            IF TRIM(OS-GETENV("PKGNAME")) = "pkgprod" THEN                
+            IF  p-senha <> crapope.cddsenha  THEN 
                 DO:
-              
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-               /* Efetuar a chamada da rotina Oracle */ 
-               RUN STORED-PROCEDURE pc_valida_senha_AD
-                   aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
-                                                       INPUT p-codigo,         /*Operador   */
-                                                       INPUT p-senha,          /*Nr.da Senha*/
-                                                      OUTPUT 0,                /*Cod. critica */
-                                                      OUTPUT "").              /*Desc. critica*/
-
-               /* Fechar o procedimento para buscarmos o resultado */ 
-               CLOSE STORED-PROC pc_valida_senha_AD
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-               HIDE MESSAGE NO-PAUSE.
-
-               /* Busca possíveis erros */ 
-               ASSIGN i-cod-erro  = 0
-                      c-desc-erro = ""
-                      i-cod-erro  = pc_valida_senha_AD.pr_cdcritic 
-                                    WHEN pc_valida_senha_AD.pr_cdcritic <> ?
-                      c-desc-erro = pc_valida_senha_AD.pr_dscritic 
-                                    WHEN pc_valida_senha_AD.pr_dscritic <> ?.
-                                    
-              /* Apresenta a crítica */
-              IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                DO:
+                    ASSIGN i-cod-erro  = 3
+                           c-desc-erro = " ".
                     RUN cria-erro (INPUT p-cooper,
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
                                    INPUT i-cod-erro,
-                                     INPUT "",
+                                   INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
                 END.
-            END.
-        /* PRJ339 - REINERT (FIM) */
 
             /******* Comentado em 28/05/2014 *******
             IF   p-opcao = "crap051a2"  THEN
@@ -1003,8 +970,8 @@ PROCEDURE atualiza-cheque-avulso:
     
     RUN STORED-PROCEDURE pc_verifica_tarifa_operacao
         aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT crapcop.cdcooper, /* Código da Cooperativa */
-                                 INPUT p-cod-operador,   /* Código do Operador */
+                                (INPUT crapcop.cdcooper, /* CÃ³digo da Cooperativa */
+                                 INPUT p-cod-operador,   /* CÃ³digo do Operador */
                                  INPUT 1,                /* Codigo Agencia */
                                  INPUT 100,              /* Codigo banco caixa */
                                  INPUT crapdat.dtmvtolt, /* Data de Movimento */
@@ -1013,11 +980,11 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT p-nro-conta,      /* Numero da Conta */
                                  INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                  INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
-                                   INPUT 0,                /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
-                                  OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operação */
-                                  OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
-                                OUTPUT 0,                /* Código da crítica */
-                                OUTPUT "").              /* Descrição da crítica */
+                                   INPUT 0,                /* Quantidade de registros da operaÃ§Ã£o (CustÃ³dia, contra-ordem, folhas de cheque) */
+                                  OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operaÃ§Ã£o */
+                                  OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-NÃ£o isenta,1-Isenta */
+                                OUTPUT 0,                /* CÃ³digo da crÃ­tica */
+                                OUTPUT "").              /* DescriÃ§Ã£o da crÃ­tica */
     
     CLOSE STORED-PROC pc_verifica_tarifa_operacao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -1055,7 +1022,7 @@ PROCEDURE atualiza-cheque-avulso:
      END.                          
     /*FIM VERIFICACAO TARIFAS DE SAQUE*/
     END. 
-	/* GERAÇAO DE LOG */
+	/* GERAÃ‡AO DE LOG */
     IF (p-opcao = "R" )   THEN
         ASSIGN aux_cdhistor = 22
                aux_idtipcar = 0
@@ -1069,25 +1036,25 @@ PROCEDURE atualiza-cheque-avulso:
     
     RUN STORED-PROCEDURE pc_gera_log_ope_cartao
         aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT crapcop.cdcooper, /* Código da Cooperativa */
+                                (INPUT crapcop.cdcooper, /* CÃ³digo da Cooperativa */
                                  INPUT p-nro-conta,      /* Numero da Conta */ 
                                  INPUT 1,                /* Saque */
                                  INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */ 
                                  INPUT aux_idtipcar, 
                                  INPUT p-nrdocto,        /* Nrd Documento */               
                                  INPUT aux_cdhistor,
-                                 INPUT STRING(aux_nrcartao),
+                                 INPUT aux_nrcartao,
                                  INPUT p-valor,
-                                 INPUT p-cod-operador,   /* Código do Operador */
+                                 INPUT p-cod-operador,   /* CÃ³digo do Operador */
                                  INPUT 0,
                                  INPUT 0,
                                  INPUT p-cod-agencia,
                                  INPUT 0,
                                  INPUT "",
                                  INPUT 0,
-                                OUTPUT "").              /* Descrição da crítica */
+                                OUTPUT "").              /* DescriÃ§Ã£o da crÃ­tica */
 
-    /* Código da crítica */    
+    /* CÃ³digo da crÃ­tica */    
     CLOSE STORED-PROC pc_gera_log_ope_cartao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
@@ -1110,7 +1077,173 @@ PROCEDURE atualiza-cheque-avulso:
          RETURN "NOK".            
       END.     
 
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_atualiza_operacao_especie
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
+                                             INPUT crapdat.dtmvtolt,
+                                             INPUT p-nro-conta,
+                                             INPUT p-valor,
+                                             INPUT "", /**CMC7**/
+                                             OUTPUT 0,
+                                             OUTPUT "").
+
+    CLOSE STORED-PROC pc_atualiza_operacao_especie
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                      
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_dscritic = pc_atualiza_operacao_especie.pr_dscritic
+                          WHEN pc_atualiza_operacao_especie.pr_dscritic <> ?.
+           
+    IF (aux_dscritic <> "" AND aux_dscritic <> ?) THEN
+      DO:
+        RUN cria-erro(INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa,
+                      INPUT aux_cdcritic,
+                      INPUT aux_dscritic,
+                      INPUT YES).
+        RETURN "NOK".
+      END.
+
     RETURN "OK".
+END PROCEDURE.
+
+
+PROCEDURE consulta-provisao:
+    DEF INPUT PARAM p-cooper AS CHAR.
+    DEF INPUT PARAM p-cod-agencia AS INTEGER. /* Cod. Agencia */
+    DEF INPUT PARAM p-nro-caixa AS INTEGER. /* Numero Caixa */
+    DEF INPUT PARAM p-nro-conta AS DEC.
+    DEF INPUT PARAM p-valor AS DEC.
+    DEF INPUT PARAM p-cmc7-cheque AS CHAR.
+    DEF OUTPUT PARAM p-solicita AS CHAR.
+    DEF VAR aux_insolici AS INT.
+  
+    FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_busca_operacao_especie
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper, /*CODIGO DA COOPERATIVA*/
+                                                 INPUT p-nro-conta, /*NUMERO DA CONTA*/
+                                                 INPUT p-valor, /*VALOR DO SAQUE*/
+                                                 INPUT p-cmc7-cheque, /*CMC7 CHEQUE*/
+                                                 OUTPUT 0).
+
+    CLOSE STORED-PROC pc_busca_operacao_especie
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_insolici= pc_busca_operacao_especie.pr_insolici
+                         WHEN pc_busca_operacao_especie.pr_insolici <> ?.
+     
+    IF aux_insolici = 1 THEN
+      DO:
+         p-solicita = "TRUE".
+         
+         ASSIGN i-cod-erro = 0
+         c-desc-erro = "AtenÃ§Äƒo! ProvisÄƒo para saque nÄƒo realizada.
+        Saque nÄƒo autorizado." .
+       
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+    END.
+    RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE valida-permissao-provisao:
+
+   DEF INPUT PARAM p-cooper AS CHAR.
+   DEF INPUT PARAM p-cod-agencia AS INTEGER. /* Cod. Agencia */
+   DEF INPUT PARAM p-nro-caixa AS INTEGER. /* Numero Caixa */
+   DEF INPUT PARAM p-codigo AS CHAR.
+   DEF INPUT PARAM p-senha AS CHAR.
+   DEF INPUT PARAM p-conta AS INTEGER.
+   DEF INPUT PARAM p-valor AS DECIMAL.
+   DEF INPUT PARAM p-solicita AS CHAR.
+   
+   FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
+   
+   IF p-solicita <> "" THEN
+      DO:
+        IF p-codigo = "" THEN
+          DO:
+            ASSIGN i-cod-erro = 0
+                   c-desc-erro = "Informe Codigo/Senha.".
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+          END.
+   
+        FIND crapope WHERE crapope.cdcooper = crapcop.cdcooper AND
+                           crapope.cdoperad = p-codigo
+                           NO-ERROR.
+
+        IF NOT AVAIL crapope THEN
+          DO:
+            ASSIGN i-cod-erro = 67
+                   c-desc-erro = "".
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+          END.
+
+        IF p-senha <> crapope.cddsenha THEN
+          DO:
+            ASSIGN i-cod-erro = 3
+                   c-desc-erro = "".
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+          END.
+          
+        IF crapope.insaqesp <> TRUE THEN
+          DO:
+            ASSIGN i-cod-erro = 0
+                   c-desc-erro = "Operador nao possui permissao para liberar saque sem provisao.".
+         
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+          END.
+          
+        UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " " +
+                                    STRING(TIME,"HH:MM:SS") + " ' ---> '" +
+                                    " Operador " + p-codigo +
+                                    " liberou saque sem provisao. Conta: " +
+                                    STRING(p-conta) +
+                                    " Valor: " + STRING(p-valor) +
+                                    " PA: " + STRING(p-cod-agencia) +
+                                    " Caixa: " + STRING(p-nro-caixa) +
+                                    " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                                    "/log/provisao_especie.log").
+      END.
+      RETURN "OK".         
 END PROCEDURE.
 
 /* b1crap54.p */
