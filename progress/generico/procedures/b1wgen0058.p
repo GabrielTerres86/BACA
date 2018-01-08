@@ -177,6 +177,8 @@
 				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
 				             (Adriano - SD 761431)
  
+                14/11/2017 - Ajustes PRJ339-CRM para buscar dados do cadastro unificado.
+                             PRJ339-CRM(Odirlei-AMcom)
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -282,6 +284,7 @@ PROCEDURE Busca_Dados:
                             INPUT par_nrdctato,
                             INPUT par_nrcpfcto,
                             INPUT par_cddopcao,
+                            INPUT par_nmdatela,
                            OUTPUT aux_cdcritic,
                            OUTPUT aux_dscritic ) NO-ERROR.
 
@@ -669,6 +672,7 @@ PROCEDURE Busca_Dados_Cto:
     DEF  INPUT PARAM par_nrdctato AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcto AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -713,6 +717,43 @@ PROCEDURE Busca_Dados_Cto:
             DO:
                IF  par_nrdctato <> 0 THEN
                    ASSIGN par_cdcritic = 9.
+                   
+               
+               /* Se foi informado o cpf/cnpj */
+               IF par_nrcpfcto <> 0  THEN
+               DO:                
+                  
+                 /* Verificar se ja encontrou os dados
+                    senao tenta buscar no cadastro unificado */
+                 FIND FIRST tt-crapavt 
+                       NO-LOCK NO-ERROR.
+                 IF NOT AVAILABLE tt-crapavt THEN     
+                    DO:
+                      RUN Busca_Dados_Cadast_Unif
+                        ( INPUT par_nrcpfcto,              
+                         OUTPUT par_cdcritic,
+                         OUTPUT par_dscritic ). 
+                    
+                      IF  par_dscritic <> "" or par_cdcritic <> 0 THEN
+                      DO:
+               LEAVE BuscaCto.
+                      END.
+                      
+                      IF par_nmdatela = "CADCTA" THEN
+                      DO:
+                        FIND FIRST tt-crapavt 
+                             NO-LOCK NO-ERROR.
+                        IF NOT AVAILABLE tt-crapavt THEN
+                        DO:
+                          ASSIGN par_dscritic = "CPF nao encontrado no Ayllos e CRM".
+                          LEAVE BuscaCto.
+                        END.
+                      END.
+                    
+                    END.
+                
+                END.    
+                   
                LEAVE BuscaCto.
             END.
 		ELSE
@@ -995,6 +1036,148 @@ PROCEDURE Busca_Dados_Ass:
     RETURN aux_retorno.
 
 END PROCEDURE.
+
+
+
+PROCEDURE Busca_Dados_Cadast_Unif:
+
+    DEF  INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO.
+    
+
+    /* Odirlei PRJ339 - CRM */
+        /* Chamar rotina para buscar dados da pessoa para utilizaçao como avalista */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_ret_dados_pessoa_prog 
+              aux_handproc = PROC-HANDLE NO-ERROR
+                               (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                 ,OUTPUT ""   /* pr_dsxmlret */                                        
+                                 ,OUTPUT ""). /* pr_dscritic */
+          
+          IF  ERROR-STATUS:ERROR  THEN DO:
+              DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+                  ASSIGN aux_msgerora = aux_msgerora + 
+                                        ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+              END.
+                
+            ASSIGN par_dscritic = "pc_ret_dados_pessoa_prog --> "  +
+                                    "Erro ao executar Stored Procedure: " +
+                                    aux_msgerora.              
+              RETURN "NOK".
+              
+          END. 
+
+        CLOSE STORED-PROC pc_ret_dados_pessoa_prog 
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+                              
+        /*Leitura do XML de retorno da proc e criacao dos registros na temptable
+         para visualizacao dos registros na tela */
+
+        /* Buscar o XML na tabela de retorno da procedure Progress */ 
+        ASSIGN xml_req = pc_ret_dados_pessoa_prog.pr_dsxmlret.
+       
+       
+       
+
+        /* Efetuar a leitura do XML*/ 
+        SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+        PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+        /* Inicializando objetos para leitura do XML */ 
+        CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+        CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+        CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+        CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+        CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+        IF ponteiro_xml <> ? THEN
+            DO:
+                xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+                xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+                DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+                    xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                 
+                    IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+
+                    IF xRoot2:NUM-CHILDREN > 0 THEN
+                    DO:
+                      CREATE tt-crapavt.
+                      ASSIGN tt-crapavt.nrcpfcgc    = par_nrcpfcgc.
+                             
+                    END.
+                    
+                    DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                        xRoot2:GET-CHILD(xField,aux_cont).
+                        
+                        IF xField:SUBTYPE <> "ELEMENT" THEN 
+                            NEXT. 
+
+                        xField:GET-CHILD(xText,1) NO-ERROR.
+                        
+                        ASSIGN tt-crapavt.nmdavali    = xText:NODE-VALUE WHEN xField:NAME = "nmpessoa" NO-ERROR. 
+                        ASSIGN tt-crapavt.tpdocava    = xText:NODE-VALUE WHEN xField:NAME = "tpdocume" NO-ERROR.
+                        ASSIGN tt-crapavt.nrdocava    = xText:NODE-VALUE WHEN xField:NAME = "nrdocume" NO-ERROR.
+                        ASSIGN tt-crapavt.cdoeddoc    = xText:NODE-VALUE WHEN xField:NAME = "cdorgemi" NO-ERROR.
+                        ASSIGN tt-crapavt.cdufddoc    = xText:NODE-VALUE WHEN xField:NAME = "cdufddoc" NO-ERROR.
+                        ASSIGN tt-crapavt.dtemddoc    = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtemddoc" NO-ERROR.
+                        ASSIGN tt-crapavt.dtnascto    = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtnascto" NO-ERROR.
+                        ASSIGN tt-crapavt.cdsexcto    = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdsexcto" NO-ERROR.
+                        ASSIGN tt-crapavt.cdestcvl    = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdestcvl" NO-ERROR.
+                        ASSIGN tt-crapavt.cdnacion    = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdnacion" NO-ERROR.                        
+                        ASSIGN tt-crapavt.dsnacion    = xText:NODE-VALUE WHEN xField:NAME = "dsnacion" NO-ERROR.
+                        ASSIGN tt-crapavt.dsnatura    = xText:NODE-VALUE WHEN xField:NAME = "dsnatura" NO-ERROR.
+                        ASSIGN tt-crapavt.nmmaecto    = xText:NODE-VALUE WHEN xField:NAME = "nmmaecto" NO-ERROR.
+                        ASSIGN tt-crapavt.nmpaicto    = xText:NODE-VALUE WHEN xField:NAME = "nmpaicto" NO-ERROR.
+                        ASSIGN tt-crapavt.nrcepend    = DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrcepend" NO-ERROR.
+                        ASSIGN tt-crapavt.dsendres[1] = xText:NODE-VALUE WHEN xField:NAME = "dsendre1" NO-ERROR.
+                        ASSIGN tt-crapavt.nrendere    = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrendere" NO-ERROR.
+                        ASSIGN tt-crapavt.complend    = xText:NODE-VALUE WHEN xField:NAME = "complend" NO-ERROR.
+                        ASSIGN tt-crapavt.nmbairro    = xText:NODE-VALUE WHEN xField:NAME = "dsbairro" NO-ERROR.
+                        ASSIGN tt-crapavt.nmcidade    = xText:NODE-VALUE WHEN xField:NAME = "nmcidade" NO-ERROR.
+                        ASSIGN tt-crapavt.cdufresd    = xText:NODE-VALUE WHEN xField:NAME = "cdufresd" NO-ERROR.
+                        ASSIGN tt-crapavt.cdcpfcgc    = xText:NODE-VALUE WHEN xField:NAME = "nrcpfcjg" NO-ERROR.
+                        ASSIGN tt-crapavt.inhabmen    = INT(xText:NODE-VALUE) WHEN xField:NAME = "inhabmen" NO-ERROR.
+                        ASSIGN tt-crapavt.dthabmen    = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dthabmen" NO-ERROR.
+                        ASSIGN tt-crapavt.tpctrato    = 6. /*Procuradores*/
+                        
+                             
+            END.
+
+                END.
+
+                SET-SIZE(ponteiro_xml) = 0. 
+
+            END.
+
+
+        /*Elimina os objetos criados*/
+        DELETE OBJECT xDoc. 
+        DELETE OBJECT xRoot. 
+        DELETE OBJECT xRoot2. 
+        DELETE OBJECT xField. 
+        DELETE OBJECT xText.
+    
+
+END PROCEDURE.
+
 
 PROCEDURE Busca_Dados_Bens:
 

@@ -330,7 +330,7 @@ function controlaPesquisas() {
 			return false;
 		});
 
-        linkPAC.prev().unbind('blur').bind('blur', function () {
+        linkPAC.prev().unbind('change').bind('change', function () {            
             procedure = 'busca_pac';
             titulo = 'Agência PA';
 			filtrosDesc = '';
@@ -369,6 +369,7 @@ function controlaPesquisas() {
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresemp', $(this).val(), 'nmresemp', filtrosDesc, 'frmCadmat');
 			return false;
 		});
+        /*somente onChange
         linkEmp.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_empresa';
@@ -377,7 +378,7 @@ function controlaPesquisas() {
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresemp', $(this).val(), 'nmresemp', filtrosDesc, 'frmCadmat');
 				return false;
 			});
-		});
+		});*/
 	}
 	
 }
@@ -475,6 +476,7 @@ function btnContinuar(){
 			}
 		}
 	}else if (cddopcao == 'C'){
+        nrdconta = cNrdconta.val();
 		buscaDados();
 	}else if (cddopcao == 'I' ){
 		validaInclusao();

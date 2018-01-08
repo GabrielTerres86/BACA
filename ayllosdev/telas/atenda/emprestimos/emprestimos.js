@@ -116,6 +116,8 @@
  * 090: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 091: [29/11/2017] Retirar caracteres especiais do campo Nome da tela Portabilidade - SD 779305 - Marcelo Telles Coelho - Mouts
 
+ * 093: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                                            
+ 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2341,11 +2343,12 @@ function controlaLayout(operacao) {
         largura = '508px';
 
         var cTodos = $('select,input', '#' + nomeForm + ' fieldset:eq(0)');
-
-        var rRotulo = $('label[for="qtpromis"],label[for="nmdavali"],label[for="tpdocava"]', '#' + nomeForm);
+        //odirlei PRJ339
+        var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"]', '#' + nomeForm);
 
         var rConta = $('label[for="nrctaava"]', '#' + nomeForm);
-        var rCpf = $('label[for="nrcpfcgc"]', '#' + nomeForm);
+        //odirlei PRJ339
+        var rNmdavali = $('label[for="nmdavali"]', '#' + nomeForm);
         var rInpessoa = $('label[for="inpessoa"]', '#' + nomeForm);
         var rNacio = $('label[for="cdnacion"]', '#' + nomeForm);
         var rDtnascto = $('label[for="dtnascto"]', '#' + nomeForm);
@@ -2362,8 +2365,10 @@ function controlaLayout(operacao) {
         var cDtnascto = $('#dtnascto', '#' + nomeForm);
 
         rRotulo.addClass('rotulo').css('width', '40px');
-        rConta.css('width', '241px');
-        rCpf.css('width', '45px');
+        //odirlei PRJ339
+        rConta.css('width', '70px');
+        rInpessoa.css('width', '70px');
+        rNmdavali.css('width', '45px');
         rNacio.addClass('rotulo').css('width', '40px');
         rDtnascto.css('width', '72px');
 
@@ -2373,7 +2378,7 @@ function controlaLayout(operacao) {
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
         cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');        
-        cInpessoa.css({'width': '100px'});
+        cInpessoa.css({'width': '99px'});
         cNacio.addClass('codigo pesquisa').css('width', '50px');
         cDsnacio.css('width', '155px');
         cDtnascto.addClass('data').css({'width': '100px'});
@@ -2417,8 +2422,8 @@ function controlaLayout(operacao) {
                     }
                 } else {
                     //	$('#'+nomeForm).limpaFormulario();
-
-                    cTodos.habilitaCampo();
+                    // odirlei prj339
+                    /*cTodos.habilitaCampo();
                     cTodos_1.habilitaCampo();
                     cTodos_2.habilitaCampo();
                     cTodos_3.habilitaCampo();
@@ -2428,13 +2433,17 @@ function controlaLayout(operacao) {
 
                     $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
                     controlaPesquisas();
-                    cNome.focus();
+                    cNome.focus();*/
+                    cInpessoa.habilitaCampo();
+                    cInpessoa.focus();
+                    
                 }
 
                 return false;
             }
         });
 
+        // Odirlei PRJ339
         // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
         cInpessoa.unbind('keydown').bind('keydown', function(e) { // Zimmermann
 
@@ -2444,6 +2453,29 @@ function controlaLayout(operacao) {
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
             if (e.keyCode == 9) {
+                
+                pessoa = normalizaNumero(cInpessoa.val());
+                if (pessoa == "" ) {
+                    showError('error', 'Selecione o tipo de pessoa', 'Aten;&atilde;o', '$("#inpessoa","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                }else {
+                
+                    cCPF.habilitaCampo();
+                    cCPF.focus();
+                }
+
+                return false;
+            }
+        });
+        
+        // Odirlei PRJ339
+        // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
+        cCPF.unbind('change').bind('change', function (e) {
+
+            if (divError.css('display') == 'block') {
+                return false;
+            }
+
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
                 nrcpfcgcOld = nrcpfcgc;
@@ -2460,6 +2492,23 @@ function controlaLayout(operacao) {
 
                         Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
 
+                    // Se nao for acessado via CRM, pode habilitar os campos
+                    if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+                        cTodos.habilitaCampo();
+                        cTodos_1.habilitaCampo();
+                        cTodos_2.habilitaCampo();
+                        cTodos_3.habilitaCampo();
+                        cTodos_4.habilitaCampo();
+                        cConta.desabilitaCampo().val(nrctaava);
+                        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
+
+                        $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
+                        controlaPesquisas();
+                        cNome.focus();
+                        
+                    }
+                    
+
                     }
 
                     // Caso em que o cpf é zero
@@ -2468,8 +2517,10 @@ function controlaLayout(operacao) {
                 }
 
                 return false;
-            }
+        
         });
+
+        
 
         var cTodos_1 = $('select,input', '#' + nomeForm + ' fieldset:eq(1)');
 

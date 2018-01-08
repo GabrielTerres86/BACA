@@ -207,6 +207,8 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
+                14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -274,7 +276,7 @@ PROCEDURE Busca_Dados:
         /* pesquisa o associado */
         FOR FIRST crapass FIELDS(nrdconta cdagenci cdtipcta cdbcochq cdsitdct 
                                  tpavsdeb tpextcta cdsecext nrdctitg 
-                                 flgiddep dtcnsspc dtcnsscr dtdsdspc 
+                                 flgiddep dtcnsspc dtcnsscr dtdsdspc dtadmiss
                                  dtmvtolt dtelimin dtabtcct dtdemiss inadimpl 
                                  inlbacen inpessoa flgctitg flgrestr nrctacns
                                  incadpos indserma idastcjt dtdscore dsdscore)
@@ -331,6 +333,7 @@ PROCEDURE Busca_Dados:
             tt-conta-corr.dtelimin = crapass.dtelimin
             tt-conta-corr.dtabtcct = crapass.dtabtcct
             tt-conta-corr.dtdemiss = crapass.dtdemiss
+            tt-conta-corr.dtadmiss = crapass.dtadmiss
             tt-conta-corr.inadimpl = crapass.inadimpl
             tt-conta-corr.inlbacen = crapass.inlbacen
             tt-conta-corr.cdbcoitg = 1

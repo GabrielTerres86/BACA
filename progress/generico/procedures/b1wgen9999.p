@@ -271,12 +271,12 @@
                             
                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                             PRJ339 - CRM (Odirlei-AMcom) 
-
+                            
                18/07/2017 - Incluir o lote 650003 e 650004 na procedure 
                             critica_numero_lote. (Jaison/James - PRJ298)
 
-			   30/08/2017 - Ajuste para incluir o lote 7600
-					        (Adriano - SD 746815).
+			         30/08/2017 - Ajuste para incluir o lote 7600
+					                 (Adriano - SD 746815).
                             
                13/09/2017 - #706145 Rotina acha-lock limpada pois a mesma faz
                             buscas em tabelas exclusivamente progress, que não 
@@ -286,6 +286,11 @@
                             
                16/10/2017 - Ajsutes ao carregar DSNACION.
                             PRJ339 - CRM (Odirlei-AMcom)               
+
+               24/10/2017 - Alterado rotina consulta-avalista para chamar rotina pc_ret_dados_pessoa_prog
+                            para buscar os dados quando informado CPF/CNPJ, para busca no Cadastro unificado.
+                            PRJ339-CRM (Odirlei-AMcom)             
+                            
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -1058,9 +1063,9 @@ PROCEDURE lista_avalistas:
                 /* Buscar nacionalidade */
                 IF crapass.cdnacion > 0 THEN
                 DO:
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                     NO-LOCK NO-ERROR.              
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                       NO-LOCK NO-ERROR.              
                 END.
 
                 CREATE tt-dados-avais.
@@ -1109,9 +1114,9 @@ PROCEDURE lista_avalistas:
             /* Buscar nacionalidade */
             IF  crapavt.cdnacion > 0 THEN
             DO:
-            FIND FIRST crapnac
-                 WHERE crapnac.cdnacion = crapavt.cdnacion
-                 NO-LOCK NO-ERROR.  			
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapavt.cdnacion
+                   NO-LOCK NO-ERROR.  			
             END. 
 
             CREATE tt-dados-avais.
@@ -1288,11 +1293,11 @@ PROCEDURE lista_avalistas:
                 /* Buscar nacionalidade */
                 IF crapass.cdnacion > 0 THEN
                 DO:
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                     NO-LOCK NO-ERROR.  
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                       NO-LOCK NO-ERROR.  
                 END. 
-
+                 
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -1319,7 +1324,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
-                       tt-dados-avais.cdnacion = crapass.cdnacion
+                       tt-dados-avais.cdnacion = crapass.cdnacion 
                        tt-dados-avais.dsnacion = crapnac.dsnacion WHEN AVAIL crapnac
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes
@@ -1484,11 +1489,11 @@ PROCEDURE lista_avalistas:
                 /* Buscar nacionalidade */
                 IF crapass.cdnacion > 0 THEN
                 DO:
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                     NO-LOCK NO-ERROR. 
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                       NO-LOCK NO-ERROR. 
                 END.
-
+                
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -1536,10 +1541,10 @@ PROCEDURE lista_avalistas:
 
             IF crapavt.cdnacion > 0 THEN
             DO:
-            /* Buscar nacionalidade */
-            FIND FIRST crapnac
-                 WHERE crapnac.cdnacion = crapavt.cdnacion
-                 NO-LOCK NO-ERROR. 
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapavt.cdnacion
+                   NO-LOCK NO-ERROR. 
             END. 
             CREATE tt-dados-avais.
             ASSIGN aux_contador            = aux_contador + 1
@@ -1764,15 +1769,15 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
-                          
+                         
                 IF crapass.cdnacion > 0 THEN         
                 DO:
-                /* Buscar nacionalidade */
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                     NO-LOCK NO-ERROR.
+                  /* Buscar nacionalidade */
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                       NO-LOCK NO-ERROR.
                 END.          
-                          
+                
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -1969,12 +1974,12 @@ PROCEDURE lista_avalistas:
                                   
                         IF crapass.cdnacion > 0 THEN
                         DO:
-                        /* Buscar nacionalidade */
-                        FIND FIRST crapnac
-                             WHERE crapnac.cdnacion = crapass.cdnacion
-                             NO-LOCK NO-ERROR.
+                          /* Buscar nacionalidade */
+                          FIND FIRST crapnac
+                               WHERE crapnac.cdnacion = crapass.cdnacion
+                               NO-LOCK NO-ERROR.                               
                         END.  
-          
+                        
                         CREATE tt-dados-avais.
                         ASSIGN aux_contador            = aux_contador + 1
                                tt-dados-avais.nrctaava = crapass.nrdconta
@@ -2020,10 +2025,10 @@ PROCEDURE lista_avalistas:
                     
                     IF crapavt.cdnacion > 0 THEN
                     DO:
-                    /* Buscar nacionalidade */
-                    FIND FIRST crapnac
-                         WHERE crapnac.cdnacion = crapavt.cdnacion
-                         NO-LOCK NO-ERROR.
+                      /* Buscar nacionalidade */
+                      FIND FIRST crapnac
+                           WHERE crapnac.cdnacion = crapavt.cdnacion
+                           NO-LOCK NO-ERROR.
                     END.
 
                     CREATE tt-dados-avais.
@@ -2200,11 +2205,11 @@ PROCEDURE lista_avalistas:
                                   
                         IF crapavt.cdnacion > 0 THEN
                         DO:
-                        /* Buscar nacionalidade */
-                        FIND FIRST crapnac
-                             WHERE crapnac.cdnacion = crapavt.cdnacion
-                             NO-LOCK NO-ERROR.
-   
+                          /* Buscar nacionalidade */
+                          FIND FIRST crapnac
+                               WHERE crapnac.cdnacion = crapavt.cdnacion
+                               NO-LOCK NO-ERROR.
+                               
                         END.
    
                         CREATE tt-dados-avais.
@@ -2396,13 +2401,13 @@ PROCEDURE lista_avalistas:
                         ASSIGN aux_nmconjug = crapcje.nmconjug
                                aux_nrcpfcjg = crapcje.nrcpfcjg.
                 END.
-                
+                                
                 IF crapass.cdnacion > 0 THEN
                 DO:
-                /* Buscar nacionalidade */
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                     NO-LOCK NO-ERROR.
+                  /* Buscar nacionalidade */
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                       NO-LOCK NO-ERROR.
                 END.
 
                 CREATE tt-dados-avais.
@@ -2450,12 +2455,12 @@ PROCEDURE lista_avalistas:
             
             IF crapavt.cdnacion > 0 THEN
             DO:
-            /* Buscar nacionalidade */
-            FIND FIRST crapnac
-                 WHERE crapnac.cdnacion = crapavt.cdnacion
-                 NO-LOCK NO-ERROR.            
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapavt.cdnacion
+                   NO-LOCK NO-ERROR.            
             END. 
-
+            
             CREATE tt-dados-avais.
             ASSIGN aux_contador            = aux_contador + 1
                    tt-dados-avais.nrctaava = 0
@@ -2630,11 +2635,11 @@ PROCEDURE lista_avalistas:
                 /* Buscar nacionalidade */
                 IF  crapass.cdnacion > 0 THEN
                 DO:
-                FIND FIRST crapnac
-                     WHERE crapnac.cdnacion = crapass.cdnacion
-                   NO-LOCK NO-ERROR.
+                  FIND FIRST crapnac
+                       WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.
                 END.
-
+                
                 CREATE tt-dados-avais.
                 ASSIGN aux_contador            = aux_contador + 1
                        tt-dados-avais.nrctaava = crapass.nrdconta
@@ -2730,6 +2735,19 @@ PROCEDURE consulta-avalista:
     DEF VAR aux_nrcpfcjg LIKE crapcje.nrcpfcjg                      NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR avt_inpessoa AS INTEGER                                 NO-UNDO.
+    DEF VAR aux_nmdavali AS CHAR                                    NO-UNDO.
+
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO. 
+
 
     EMPTY TEMP-TABLE tt-dados-avais.
     EMPTY TEMP-TABLE tt-erro.
@@ -2958,12 +2976,12 @@ PROCEDURE consulta-avalista:
 
             IF crapass.cdnacion > 0 THEN
             DO:
-            /* Buscar nacionalidade */
-            FIND FIRST crapnac
-                 WHERE crapnac.cdnacion = crapass.cdnacion
-                 NO-LOCK NO-ERROR.
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapass.cdnacion
+                   NO-LOCK NO-ERROR.
             END.
-
+            
             CREATE tt-dados-avais.
             ASSIGN tt-dados-avais.nrctaava = par_nrctaava
                    tt-dados-avais.nmdavali = crapass.nmprimtl
@@ -3003,53 +3021,126 @@ PROCEDURE consulta-avalista:
     ELSE
     IF  par_nrcpfcgc > 0  THEN
         DO:  
-            FIND LAST crapavt WHERE crapavt.cdcooper = par_cdcooper AND
-                                    crapavt.nrcpfcgc = par_nrcpfcgc 
-                                    NO-LOCK NO-ERROR.
   
-            IF  AVAILABLE crapavt  THEN 
-                DO:
-                    IF crapavt.cdnacion > 0 THEN
-                    DO:
-                    /* Buscar nacionalidade */
-                    FIND FIRST crapnac
-                         WHERE crapnac.cdnacion = crapavt.cdnacion
-                         NO-LOCK NO-ERROR.
+       
+            /* Odirlei PRJ339 - CRM */
+            /* Chamar rotina para buscar dados da pessoa para utilizaçao como avalista */
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+            RUN STORED-PROCEDURE pc_ret_dados_pessoa_prog 
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                   (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                     ,OUTPUT ""   /* pr_dsxmlret */                                        
+                                     ,OUTPUT ""). /* pr_dscritic */
+              
+              IF  ERROR-STATUS:ERROR  THEN DO:
+                  DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+                      ASSIGN aux_msgerora = aux_msgerora + 
+                                            ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
                     END.
                     
+                ASSIGN aux_dscritic = "pc_ret_dados_pessoa_prog --> "  +
+                                        "Erro ao executar Stored Procedure: " +
+                                        aux_msgerora.
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,         /** Sequencia **/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+                  RETURN "NOK".
+                  
+              END. 
+
+            CLOSE STORED-PROC pc_ret_dados_pessoa_prog 
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+              
+            /*Leitura do XML de retorno da proc e criacao dos registros na temptable
+             para visualizacao dos registros na tela */
+
+            /* Buscar o XML na tabela de retorno da procedure Progress */ 
+            ASSIGN xml_req = pc_ret_dados_pessoa_prog.pr_dsxmlret.
+           
+           
+           
+
+            /* Efetuar a leitura do XML*/ 
+            SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+            PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+            /* Inicializando objetos para leitura do XML */ 
+            CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+            CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+            CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+            CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+            CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+            IF ponteiro_xml <> ? THEN
+                DO:
+                    xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+                    xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+                    DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+                        xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                     
+                        IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                            NEXT. 
+
+                        IF xRoot2:NUM-CHILDREN > 0 THEN
+                    DO:
                     CREATE tt-dados-avais.
-                    ASSIGN tt-dados-avais.nrctaava = 0
-                           tt-dados-avais.nmdavali = crapavt.nmdavali
-                           tt-dados-avais.nrcpfcgc = crapavt.nrcpfcgc
-                           tt-dados-avais.nrdocava = crapavt.nrdocava
-                           tt-dados-avais.tpdocava = crapavt.tpdocava
-                           tt-dados-avais.nmconjug = crapavt.nmconjug
-                           tt-dados-avais.nrcpfcjg = crapavt.nrcpfcjg
-                           tt-dados-avais.nrdoccjg = IF crapavt.nrcpfcjg > 0 THEN 
-                                                        "C.P.F. " +
-                                                        STRING(STRING(crapavt.nrcpfcjg,
-                                                        "99999999999"),"xxx.xxx.xxx-xx")
-                                                     ELSE 
-                                                        crapavt.nrdoccjg
-                           tt-dados-avais.tpdoccjg = crapavt.tpdoccjg
-                           tt-dados-avais.nrfonres = crapavt.nrfonres
-                           tt-dados-avais.dsdemail = crapavt.dsdemail
-                           tt-dados-avais.dsendre1 = crapavt.dsendres[1]
-                           tt-dados-avais.dsendre2 = crapavt.dsendres[2]
-                           tt-dados-avais.nmcidade = crapavt.nmcidade
-                           tt-dados-avais.cdufresd = crapavt.cdufresd
-                           tt-dados-avais.nrcepend = crapavt.nrcepend
-                           tt-dados-avais.cdnacion = crapavt.cdnacion
-                           tt-dados-avais.dsnacion = crapnac.dsnacion
-                                                     WHEN AVAIL crapnac
-                           tt-dados-avais.vlrenmes = crapavt.vlrenmes
-                           tt-dados-avais.vledvmto = crapavt.vledvmto
-                           tt-dados-avais.nrendere = crapavt.nrendere
-                           tt-dados-avais.nrcxapst = crapavt.nrcxapst                 
-                           tt-dados-avais.complend = crapavt.complend
-                           tt-dados-avais.inpessoa = crapavt.inpessoa
-                           tt-dados-avais.dtnascto = crapavt.dtnascto.
+                          ASSIGN tt-dados-avais.nrcpfcgc = par_nrcpfcgc.
                 END.    
+                        
+                        DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                            xRoot2:GET-CHILD(xField,aux_cont).
+                            
+                            IF xField:SUBTYPE <> "ELEMENT" THEN 
+                                NEXT. 
+
+                            xField:GET-CHILD(xText,1) NO-ERROR.
+                            
+                            ASSIGN tt-dados-avais.nmdavali = xText:NODE-VALUE WHEN xField:NAME = "nmpessoa" NO-ERROR. 
+                            ASSIGN tt-dados-avais.tpdocava = xText:NODE-VALUE WHEN xField:NAME = "tpdocume" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrdocava = xText:NODE-VALUE WHEN xField:NAME = "nrdocume" NO-ERROR.
+                            ASSIGN tt-dados-avais.nmconjug = xText:NODE-VALUE WHEN xField:NAME = "nmconjug" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrcpfcjg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcjg" NO-ERROR.                            
+                            ASSIGN tt-dados-avais.tpdoccjg = xText:NODE-VALUE WHEN xField:NAME = "tpdoccjg" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrdoccjg = xText:NODE-VALUE WHEN xField:NAME = "nrdoccjg" NO-ERROR. 
+                            ASSIGN tt-dados-avais.dsendre1 = xText:NODE-VALUE WHEN xField:NAME = "dsendre1" NO-ERROR. 
+                            ASSIGN tt-dados-avais.dsendre2 = xText:NODE-VALUE WHEN xField:NAME = "dsbairro" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrfonres = xText:NODE-VALUE WHEN xField:NAME = "nrfonres" NO-ERROR. 
+                            ASSIGN tt-dados-avais.dsdemail = xText:NODE-VALUE WHEN xField:NAME = "dsdemail" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nmcidade = xText:NODE-VALUE WHEN xField:NAME = "nmcidade" NO-ERROR. 
+                            ASSIGN tt-dados-avais.cdufresd = xText:NODE-VALUE WHEN xField:NAME = "cdufresd" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrcepend = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcepend" NO-ERROR. 
+                            ASSIGN tt-dados-avais.dsnacion = xText:NODE-VALUE WHEN xField:NAME = "dsnacion" NO-ERROR. 
+                            ASSIGN tt-dados-avais.vledvmto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vledvmto" NO-ERROR. 
+                            ASSIGN tt-dados-avais.vlrenmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrenmes" NO-ERROR.    
+                            ASSIGN tt-dados-avais.complend = xText:NODE-VALUE WHEN xField:NAME = "complend" NO-ERROR. 
+                            ASSIGN tt-dados-avais.nrendere = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrendere" NO-ERROR.                                 
+                            ASSIGN tt-dados-avais.inpessoa = INT(xText:NODE-VALUE) WHEN xField:NAME = "inpessoa" NO-ERROR.  
+                            ASSIGN tt-dados-avais.dtnascto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtnascto" NO-ERROR.  
+                            ASSIGN tt-dados-avais.cdnacion = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdnacion" NO-ERROR.
+                                   
+                END.
+
+                    END.
+                    
+                    SET-SIZE(ponteiro_xml) = 0. 
+
+                END.    
+
+            /*Elimina os objetos criados*/
+            DELETE OBJECT xDoc. 
+            DELETE OBJECT xRoot. 
+            DELETE OBJECT xRoot2. 
+            DELETE OBJECT xField. 
+            DELETE OBJECT xText.
+                  
+             
         END.
     
     RETURN "OK".

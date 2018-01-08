@@ -4326,6 +4326,13 @@ PROCEDURE Inclui PRIVATE :
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdbcochq = 85 NO-ERROR.  
 
+                       /* Para esta tela deve gravar essas informaçoes como padrao */
+                       IF par_nmdatela = 'CADMAT' THEN
+                       DO:
+                          ASSIGN crabass.cdsecext = 999 NO-ERROR.
+                       END.
+                       
+
                    IF  ERROR-STATUS:ERROR THEN 
                        DO:
                           ASSIGN par_dscritic = {&GET-MSG}.

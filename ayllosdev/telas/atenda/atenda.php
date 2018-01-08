@@ -64,6 +64,9 @@
 
 			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
+             23/11/2017 - Quando acessado a tela Atenda diretamente pelo CRM nao precisa apresentar produtos
+                          PRJ339-CRM(Odirlei-AMcom) 
+
 
 //**************************************************************************/
 session_start();
@@ -452,6 +455,13 @@ setVarSession("rotinasTela", $rotinasTela);
 		</table>
 	</body>
 </html>
+
+<?
+    $crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
+    $crm_nmdatela = isset($glbvars['CRM_NMDATELA']) ? $glbvars['CRM_NMDATELA'] : 0;
+
+?>
+
 <script type="text/javascript">
 
 	var nrdconta           = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
@@ -501,8 +511,8 @@ setVarSession("rotinasTela", $rotinasTela);
 		var executandoProdutosServicosAdicionais = (produtosTelasServicosAdicionais.length > 0);
 		var posicao = '<? echo $_POST['posicao']; ?>';
 		executandoProdutos = true;
-	}
-	
+	}								   
+
 	if (executandoImpedimentos){
 		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
 		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
@@ -515,9 +525,18 @@ setVarSession("rotinasTela", $rotinasTela);
 		produtosCancMCheque = produtosCheque.split("|");
 	}
 
+    var CRM_INACESSO =  <? echo $crm_inacesso; ?>;
+    var CRM_NMDATELA = '<? echo $crm_nmdatela; ?>';
+
 	if (nrdconta != '' && executandoImpedimentos == '') {
 		 $("#nrdconta","#frmCabAtenda").val(nrdconta);
-		 flgProdutos = true;		 
+
+         // Quando acessado a tela Atenda diretamente pelo CRM nao precisa apresentar produtos
+         if (CRM_INACESSO == 1 && CRM_NMDATELA.toUpperCase() == 'ATENDA'){
+            flgProdutos = false;		  
+         }else{
+		    flgProdutos = true;
+         }		 
 	} else if (nrdconta != '' && executandoImpedimentos) {
 		$("#nrdconta","#frmCabAtenda").val(nrdconta);		
 	}

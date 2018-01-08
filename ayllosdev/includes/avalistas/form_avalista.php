@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulário da rotina LIMITE DE CREDITO da aba NOVO LIMITE do AVALISTA da tela de ATENDA
  *
  * ALTERACOES   : 22/04/2015 - Consultas automatizadas para o limite de credito (Gabriel-RKAM)
+ *                24/10/2017 - Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
  */	
  
 ?>
@@ -18,13 +19,18 @@
 	<a class="lupa"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>	
 	<a class="pointer"><img src="<? echo $UrlImagens; ?>geral/refresh.png"></a>		
 	
-	<label for="nmdaval1"><? echo utf8ToHtml('Nome:') ?></label>
-	<input name="nmdaval1" id="nmdaval1" type="text" value="<? echo getByTagName($registros[0]->tags,'nmdavali') ?>" />
-	<br />
 	
 	<label for="nrcpfav1"><? echo utf8ToHtml('CPF/CNPJ:') ?></label>
 	<input name="nrcpfav1" id="nrcpfav1" type="text" value="<? echo getByTagName($registros[0]->tags,'nrcpfcgc') ?>" />
+     
+	<br />
     
+    <input name="crm_inacesso" id="crm_inacesso" type="hidden" value="<? echo $glbvars["CRM_INACESSO"] ?>" />	
+	
+   	<label for="nmdaval1"><? echo utf8ToHtml('Nome:') ?></label>
+	<input name="nmdaval1" id="nmdaval1" type="text" value="<? echo getByTagName($registros[0]->tags,'nmdavali') ?>" />
+
+
 	<label for="tpdocav1"><? echo utf8ToHtml('Doc.:') ?></label>
 	<select name="tpdocav1" class="campo" id="tpdocav1">
 		<option value=""   <? if (getByTagName($registros[0]->tags,'tpdocava') == ""  ){ echo " selected"; } ?>> </option>
@@ -112,12 +118,15 @@
 	<a class="lupa"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 	<a class="pointer"><img src="<? echo $UrlImagens; ?>geral/refresh.png"></a>
 	
-	<label for="nmdaval2"><? echo utf8ToHtml('Nome:') ?></label>
-	<input name="nmdaval2" id="nmdaval2" type="text" value="<? echo getByTagName($registros[1]->tags,'nmdavali') ?>" />
+	
+    <label for="nrcpfav2"><? echo utf8ToHtml('CPF/CNPJ:') ?></label>
+	<input name="nrcpfav2" id="nrcpfav2" type="text" value="<? echo getByTagName($registros[1]->tags,'nrcpfcgc') ?>" />
+
 	<br />	
 
-	<label for="nrcpfav2"><? echo utf8ToHtml('CPF/CNPJ:') ?></label>
-	<input name="nrcpfav2" id="nrcpfav2" type="text" value="<? echo getByTagName($registros[1]->tags,'nrcpfcgc') ?>" />
+	<label for="nmdaval2"><? echo utf8ToHtml('Nome:') ?></label>
+	<input name="nmdaval2" id="nmdaval2" type="text" value="<? echo getByTagName($registros[1]->tags,'nmdavali') ?>" />
+
 	
 	<label for="tpdocav2"><? echo utf8ToHtml('Doc.:') ?></label>
 	<select name="tpdocav2" class="campo" id="tpdocav2">	
