@@ -1682,6 +1682,9 @@ PROCEDURE process-web-request :
         IF  GET-VALUE("flcadast") <> ""  THEN
             ASSIGN aux_flcadast = INT(GET-VALUE("flcadast")).
             
+        IF  GET-VALUE("aux_indvalid") <> ""  THEN    
+            ASSIGN aux_indvalid = INTE(GET-VALUE("aux_indvalid")).    
+            
         IF  GET-VALUE("tpoperac") <> ""  THEN
             ASSIGN aux_tpoperac = INT(GET-VALUE("tpoperac")).
 
@@ -1698,6 +1701,10 @@ PROCEDURE process-web-request :
                   /** Nao utiliza criptografia se for confirmacao de transferencia/TED **/
                   CAN-DO("22",STRING(aux_operacao)) AND aux_flgexecu 
                ) OR
+               (
+                  /** Nao utiliza criptografia se for aprovacao de transacao pendente **/
+                  CAN-DO("75",STRING(aux_operacao)) AND aux_indvalid = 1 
+               ) OR               
                (
                   /** Nao utiliza criptografia se for cancelamento de aplicacao **/
                   CAN-DO("85",STRING(aux_operacao))
@@ -1717,10 +1724,14 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de GPS **/
                   CAN-DO("153",STRING(aux_operacao)) AND (aux_tpoperac = 3 OR aux_tpoperac = 5)
-               ) 
+               ) OR
                (
                   /** Nao utiliza criptografia se for pagamento de emprestimo **/
                   CAN-DO("158",STRING(aux_operacao))
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for reprovacao de transacao pendente **/
+                  CAN-DO("163",STRING(aux_operacao))
                ) OR
                (
                   /** Nao utiliza criptografia se for pagamento de DARF e DAS **/
@@ -4964,8 +4975,7 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao75:
 
-    ASSIGN aux_cdditens = GET-VALUE("aux_cdditens")
-           aux_indvalid = INTE(GET-VALUE("aux_indvalid")).
+    ASSIGN aux_cdditens = GET-VALUE("aux_cdditens").
 
     RUN sistema/internet/fontes/InternetBank75.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -5240,6 +5250,11 @@ PROCEDURE proc_operacao84:
            aux_qtdiacar = INTE(GET-VALUE("qtdiacar"))
            aux_cdperapl = INTE(GET-VALUE("cdperapl"))
            aux_flgvalid = LOGICAL(GET-VALUE("flgvalid")).
+           
+    IF  GET-VALUE("idtipapl") <> '' THEN
+        aux_idtipapl = GET-VALUE("idtipapl").
+    ELSE
+        aux_idtipapl = 'A'.           
 
     RUN sistema/internet/fontes/InternetBank84.p (INPUT aux_cdcooper,
                                                   INPUT 90, /*cdagenci*/
@@ -5263,6 +5278,7 @@ PROCEDURE proc_operacao84:
                                                   INPUT 0, /*Nao debitar da CI*/
                                                   INPUT 1, /*Gera log*/
                                                   INPUT aux_flgvalid,
+                                                  INPUT aux_idtipapl,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -7362,8 +7378,7 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao153:
 
-    ASSIGN aux_dtmvtolt = DATE(  GET-VALUE("dtmvtolt"))
-           aux_nrcpfope = DECI(  GET-VALUE("nrcpfope"))
+    ASSIGN aux_nrcpfope = DECI(  GET-VALUE("nrcpfope"))
            aux_idseqttl = INTE(  GET-VALUE("idseqttl")) 
            aux_lisrowid = STRING(GET-VALUE("dsdrowid"))
            aux_tpoperac = INTE(  GET-VALUE("tpoperac"))
