@@ -6046,6 +6046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_exc_erro EXCEPTION;
 
       --Variáveis locais
+      vr_nriniseq INTEGER := 0;
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
       vr_nrcpfgui VARCHAR2(100) := '';
@@ -6313,7 +6314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       END IF;
       
       -- Atualiza somente se for pesquisa de todas as transações no período informado
-      IF NVL(pr_cdtransa,0) = 0 AND pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND pr_nrregist > 0 THEN
+      IF NVL(pr_cdtransa,0) = 0 AND pr_dtiniper IS NULL AND pr_dtfimper IS NULL AND pr_nrregist = 0 THEN
         PAGA0001.pc_atualiza_trans_nao_efetiv(pr_cdcooper => pr_cdcooper
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_cdagenci => pr_cdagenci
@@ -6622,6 +6623,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           vr_dscritic := 'Nao existem responsaveis legais para a conta informada.';
           RAISE vr_exc_erro;
         END IF; 
+        
+        -- IB Antigo passa o parâmetro com valores pares (Ex.: 0, 10, 20)
+        -- Novo IB está padronizado para iniciar a sequencia com valor 1. 
+        -- Para manter as 2 plataformas funcionais durante o piloto do novo IB é necessário decremetar o valor
+        IF MOD(pr_nriniseq,2) <> 0 THEN
+          vr_nriniseq := pr_nriniseq - 1;
+        ELSE
+          vr_nriniseq := pr_nriniseq;
+        END IF;
 
         FOR rw_tbgen_trans_pend IN cr_tbgen_trans_pend (pr_cdcooper => pr_cdcooper
                                                        ,pr_nrdconta => pr_nrdconta
@@ -6752,8 +6762,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             
                       --Controle de paginacao
                       vr_qttotpen := vr_qttotpen + 1;
-                      IF ((vr_qttotpen <= pr_nriniseq) OR
-                         (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                          CONTINUE;
                       END IF;
 
@@ -6818,8 +6828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                            
                       --Controle de paginação
                       vr_qttotpen := vr_qttotpen + 1;
-                      IF ((vr_qttotpen <= pr_nriniseq) OR
-                         (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                      IF ((vr_qttotpen <= vr_nriniseq) OR
+                         (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                          CONTINUE;
                       END IF;
                    END IF;
@@ -6862,8 +6872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -6967,8 +6977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7007,8 +7017,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7258,8 +7268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7342,8 +7352,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7376,8 +7386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
-                    IF ((vr_qttotpen <= pr_nriniseq) OR
-                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                    IF ((vr_qttotpen <= vr_nriniseq) OR
+                       (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                        CONTINUE;
                     END IF;
                  END IF;
@@ -7406,8 +7416,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   CLOSE cr_tbpagto_darf_das_trans_pend;
                   --Controle de paginação
                   vr_qttotpen := vr_qttotpen + 1;
-                  IF ((vr_qttotpen <= pr_nriniseq) OR
-                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                  IF ((vr_qttotpen <= vr_nriniseq) OR
+                    (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                     CONTINUE;
                   END IF;	
                END IF;
@@ -7466,8 +7476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
@@ -7496,8 +7506,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               
                 --Controle de paginação
                 vr_qttotpen := vr_qttotpen + 1;
-                IF ((vr_qttotpen <= pr_nriniseq) OR
-                   (vr_qttotpen > (pr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                    CONTINUE;
                 END IF;
               END IF;
