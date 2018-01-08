@@ -121,13 +121,24 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   rw_craptab   cr_craptab%rowtype;
 
   -- Agências por cooperativa, com poupança programada
-  cursor cr_craprpp_age (pr_cdcooper in craprpp.cdcooper%type) is 
+  cursor cr_craprpp_age (pr_cdcooper in craprpp.cdcooper%type,
+                         pr_dtmvtolt in crapdat.dtmvtolt%type,
+                         pr_cdprogra in tbgen_batch_controle.cdprogra%type) is 
     select distinct crapass.cdagenci
       from craprpp,
            crapass
      where craprpp.cdcooper  = pr_cdcooper
-       AND crapass.cdcooper  = craprpp.cdcooper
-       AND crapass.nrdconta  = craprpp.nrdconta ;
+       and crapass.cdcooper  = craprpp.cdcooper
+       and crapass.nrdconta  = craprpp.nrdconta
+       and (pr_flgresta = 0 or
+           (pr_flgresta = 1 and exists (select 1
+                                          from tbgen_batch_controle
+                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                           and tbgen_batch_controle.tpagrupador = 1
+                                           and tbgen_batch_controle.cdagrupador = crapass.cdagenci
+                                           and tbgen_batch_controle.insituacao  = 1
+                                           and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
 
   -- Informações da poupança programada
   cursor cr_craprpp(pr_cdcooper in craptab.cdcooper%type) is
@@ -345,20 +356,20 @@ begin
                           vr_dtmvtolt,
                           vr_dtmvtopr;
   close cr_crapdat;
-
+  
   --Apenas valida cooperativa se for o programa principal, no paralelismo não tem necessidade
   IF pr_idparale = 0 THEN
   
-  -- Buscar os dados da cooperativa
-  open cr_crapcop(pr_cdcooper);
-    fetch cr_crapcop into rw_crapcop;
-    if cr_crapcop%notfound then
-      close cr_crapcop;
-      vr_cdcritic := 651;
-      raise vr_exc_saida;
-    end if;
-  close cr_crapcop;
-
+    -- Buscar os dados da cooperativa
+    open cr_crapcop(pr_cdcooper);
+      fetch cr_crapcop into rw_crapcop;
+      if cr_crapcop%notfound then
+        close cr_crapcop;
+        vr_cdcritic := 651;
+        raise vr_exc_saida;
+      end if;
+    close cr_crapcop;
+  
   END IF;
   
   -- Buscar quantidade parametrizada de Jobs
@@ -392,7 +403,7 @@ begin
     END IF;
                                           
     -- Retorna as agências, com poupança programada
-    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper) loop
+    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,vr_dtmvtolt,vr_cdprogra) loop
                                           
       -- Montar o prefixo do código do programa para o jobname
       vr_jobname := vr_cdprogra ||'_'|| rw_craprpp_age.cdagenci || '$';  
@@ -465,7 +476,7 @@ begin
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
-                                                  pr_dtmvtolt    => trunc(sysdate),
+                                                  pr_dtmvtolt    => vr_dtmvtolt,
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);
     if vr_qterro > 0 then 
@@ -486,7 +497,7 @@ begin
     -- Grava controle de batch por agência
     gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper               -- Codigo da Cooperativa
                                     ,pr_cdprogra    => vr_cdprogra               -- Codigo do Programa
-                                    ,pr_dtmvtolt    => vr_dtmvtopr               -- Data de Movimento
+                                    ,pr_dtmvtolt    => vr_dtmvtolt               -- Data de Movimento
                                     ,pr_tpagrupador => 1                         -- Tipo de Agrupador (1-PA/ 2-Convenio)
                                     ,pr_cdagrupador => pr_cdagenci               -- Codigo do agrupador conforme (tpagrupador)
                                     ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
@@ -502,7 +513,7 @@ begin
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => vr_tpexecucao,     -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini_par); 
-
+                      
     -- Grava LOG de ocorrência inicial do cursor cr_craprpp
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
@@ -512,36 +523,36 @@ begin
                     pr_dsmensagem         => 'Início - cursor cr_craprpp. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                     PR_IDPRGLOG           => vr_idlog_ini_par);  
 
-  -- Leitura das poupanças programadas
-  for rw_craprpp in cr_craprpp(pr_cdcooper) loop
+    -- Leitura das poupanças programadas
+    for rw_craprpp in cr_craprpp(pr_cdcooper) loop
 
-    -- Executa cálculo de poupança (antigo poupanca.i)
-    apli0001.pc_calc_poupanca (pr_cdcooper => pr_cdcooper,
-                               pr_dstextab => rw_craptab.dstextab,
-                               pr_cdprogra => vr_cdprogra,
-                               pr_inproces => vr_inproces,
-                               pr_dtmvtolt => vr_dtmvtolt,
-                               pr_dtmvtopr => vr_dtmvtopr,
-                               pr_rpp_rowid => rw_craprpp.rowid,
-                               pr_vlsdrdpp => vr_vlsdrdpp,
-                               pr_cdcritic => vr_cdcritic,
-                               pr_des_erro => vr_dscritic);
+      -- Executa cálculo de poupança (antigo poupanca.i)
+      apli0001.pc_calc_poupanca (pr_cdcooper => pr_cdcooper,
+                                 pr_dstextab => rw_craptab.dstextab,
+                                 pr_cdprogra => vr_cdprogra,
+                                 pr_inproces => vr_inproces,
+                                 pr_dtmvtolt => vr_dtmvtolt,
+                                 pr_dtmvtopr => vr_dtmvtopr,
+                                 pr_rpp_rowid => rw_craprpp.rowid,
+                                 pr_vlsdrdpp => vr_vlsdrdpp,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_des_erro => vr_dscritic);
                                  
-    if vr_dscritic is not null or vr_cdcritic is not null then
-      raise vr_exc_saida;
-    end if;
-    -- Verifica o saldo e a situação da poupança programada
-    if (vr_vlsdrdpp = 0 and (rw_craprpp.cdsitrpp = 3 or rw_craprpp.cdsitrpp = 4 or rw_craprpp.cdsitrpp = 5)) or
-       vr_vlsdrdpp < 0 then
-      -- Descarta o registro e passa para a próxima iteração do loop
-      continue;
-    end if;
+      if vr_dscritic is not null or vr_cdcritic is not null then
+        raise vr_exc_saida;
+      end if;
+      -- Verifica o saldo e a situação da poupança programada
+      if (vr_vlsdrdpp = 0 and (rw_craprpp.cdsitrpp = 3 or rw_craprpp.cdsitrpp = 4 or rw_craprpp.cdsitrpp = 5)) or
+         vr_vlsdrdpp < 0 then
+        -- Descarta o registro e passa para a próxima iteração do loop
+        continue;
+      end if;
 
-    -- Cabeçalho agência
+      -- Cabeçalho agência
       vr_tab_agencia(rw_craprpp.cdagenci).cdagenci := rw_craprpp.cdagenci;
       vr_tab_agencia(rw_craprpp.cdagenci).nmresage := rw_craprpp.nmresage;
-    -- Aplicações
-    vr_indice_aplicacao := lpad(rw_craprpp.nrdconta, 10, '0')||lpad(rw_craprpp.nrctrrpp, 10, '0');
+      -- Aplicações
+      vr_indice_aplicacao := lpad(rw_craprpp.nrdconta, 10, '0')||lpad(rw_craprpp.nrctrrpp, 10, '0');
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).nrdconta := rw_craprpp.nrdconta;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).nrctrrpp := rw_craprpp.nrctrrpp;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).diapoupa := to_number(to_char(rw_craprpp.dtdebito, 'dd'));
@@ -552,80 +563,80 @@ begin
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).nmprimtl := rw_craprpp.nmprimtl;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dsdacstp := to_char(rw_craprpp.cdsitdct)||lpad(to_char(rw_craprpp.cdtipcta), 2, '0');
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dssituac := rw_craprpp.dssituac;
-    -- Acumula os totalizadores
-    if vr_vlsdrdpp > 0 then
+      -- Acumula os totalizadores
+      if vr_vlsdrdpp > 0 then
         vr_tab_agencia(rw_craprpp.cdagenci).qtaplica := nvl(vr_tab_agencia(rw_craprpp.cdagenci).qtaplica, 0) + 1;
-    end if;
-    if rw_craprpp.cdsitrpp = 1 then
+      end if;
+      if rw_craprpp.cdsitrpp = 1 then
         vr_tab_agencia(rw_craprpp.cdagenci).vlprerpp := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlprerpp, 0) + rw_craprpp.vlprerpp;
-    end if;
+      end if;
       vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl, 0) + vr_vlsdrdpp;
-    -- Criando base para calculo do VAR
-    if vr_vlsdrdpp <= 0 then
-      -- Não calcula e passa para o próximo registro
-      continue;
-    end if;
-    -- Buscar as taxas a serem aplicadas
-    open cr_craptrd (rw_craprpp.dtiniper,
-                     vr_vlsdrdpp);
-      fetch cr_craptrd into rw_craptrd;
-      if cr_craptrd%notfound then
-        open cr_craptrd2 (vr_vlsdrdpp);
-          fetch cr_craptrd2 into rw_craptrd;
-          if cr_craptrd2%notfound then
-            close cr_craptrd;
-            close cr_craptrd2;
-            vr_cdcritic := 347;
-            vr_dscritic := gene0001.fn_busca_critica(347)||
-                           ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy')||
-                           ' Conta: '||rw_craprpp.nrdconta||
-                           ' Poup: '||rw_craprpp.nrctrrpp;
-            raise vr_exc_saida;
-          end if;
-        close cr_craptrd2;
+      -- Criando base para calculo do VAR
+      if vr_vlsdrdpp <= 0 then
+        -- Não calcula e passa para o próximo registro
+        continue;
       end if;
-    close cr_craptrd;
-    -- Define qual taxa utilizar
-    if rw_craptrd.txofidia > 0 then
-      vr_txaplica := rw_craptrd.txofidia / 100;
-    else
-      if rw_craptrd.txprodia > 0 then
-        vr_txaplica := rw_craptrd.txprodia / 100;
+      -- Buscar as taxas a serem aplicadas
+      open cr_craptrd (rw_craprpp.dtiniper,
+                       vr_vlsdrdpp);
+        fetch cr_craptrd into rw_craptrd;
+        if cr_craptrd%notfound then
+          open cr_craptrd2 (vr_vlsdrdpp);
+            fetch cr_craptrd2 into rw_craptrd;
+            if cr_craptrd2%notfound then
+              close cr_craptrd;
+              close cr_craptrd2;
+              vr_cdcritic := 347;
+              vr_dscritic := gene0001.fn_busca_critica(347)||
+                             ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy')||
+                             ' Conta: '||rw_craprpp.nrdconta||
+                             ' Poup: '||rw_craprpp.nrctrrpp;
+              raise vr_exc_saida;
+            end if;
+          close cr_craptrd2;
+        end if;
+      close cr_craptrd;
+      -- Define qual taxa utilizar
+      if rw_craptrd.txofidia > 0 then
+        vr_txaplica := rw_craptrd.txofidia / 100;
       else
-        vr_cdcritic := 427;
-        vr_dscritic := gene0001.fn_busca_critica(427)||
-                       ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy')||
-                       ' Conta: '||rw_craprpp.nrdconta||
-                       ' Poup: '||rw_craprpp.nrctrrpp;
-        raise vr_exc_saida;
+        if rw_craptrd.txprodia > 0 then
+          vr_txaplica := rw_craptrd.txprodia / 100;
+        else
+          vr_cdcritic := 427;
+          vr_dscritic := gene0001.fn_busca_critica(427)||
+                         ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy')||
+                         ' Conta: '||rw_craprpp.nrdconta||
+                         ' Poup: '||rw_craprpp.nrctrrpp;
+          raise vr_exc_saida;
+        end if;
       end if;
-    end if;
-    --
-    vr_dtcalcul := rw_craprpp.dtiniper;
-    vr_vltotren := vr_vlsdrdpp;
-    --
-    while vr_dtcalcul < rw_craprpp.dtfimper loop
-      -- Busca o próximo dia útil
-      vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
-                                                 vr_dtcalcul);
+      --
+      vr_dtcalcul := rw_craprpp.dtiniper;
+      vr_vltotren := vr_vlsdrdpp;
+      --
+      while vr_dtcalcul < rw_craprpp.dtfimper loop
+        -- Busca o próximo dia útil
+        vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper,
+                                                   vr_dtcalcul);
 
-      -- Verifica novamente a data - Renato Darosci - 19/03/2014
-      EXIT WHEN vr_dtcalcul >= rw_craprpp.dtfimper;
+        -- Verifica novamente a data - Renato Darosci - 19/03/2014
+        EXIT WHEN vr_dtcalcul >= rw_craprpp.dtfimper;
 
-      -- Acumula os valores
-      vr_vlrendim := trunc(APLI0001.fn_round(vr_vltotren * vr_txaplica,10), 8);
-      vr_vltotren := vr_vltotren + vr_vlrendim;
-      -- Incrementa a data
-      vr_dtcalcul := vr_dtcalcul + 1;
+        -- Acumula os valores
+        vr_vlrendim := trunc(APLI0001.fn_round(vr_vltotren * vr_txaplica,10), 8);
+        vr_vltotren := vr_vltotren + vr_vlrendim;
+        -- Incrementa a data
+        vr_dtcalcul := vr_dtcalcul + 1;
+      end loop;
+      --
+      if rw_craprpp.dtfimper < vr_dtmvtopr then
+        vr_dtdpagto := vr_dtmvtopr;
+      else
+        vr_dtdpagto := rw_craprpp.dtfimper;
+      end if;
+      --
     end loop;
-    --
-    if rw_craprpp.dtfimper < vr_dtmvtopr then
-      vr_dtdpagto := vr_dtmvtopr;
-    else
-      vr_dtdpagto := rw_craprpp.dtfimper;
-    end if;
-    --
-  end loop;
     -- Grava LOG de ocorrência final do cursor cr_craprpp
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
@@ -634,20 +645,20 @@ begin
                     pr_tpocorrencia       => 4,
                     pr_dsmensagem         => 'Fim - cursor cr_craprpp. AGENCIA: '||pr_cdagenci||' - INPROCES: '||vr_inproces,
                     PR_IDPRGLOG           => vr_idlog_ini_par); 
-
-  -- *******************
-  -- Leitura da PL/Table e geração do XML para o relatório
-  -- *******************
+                     
+    -- *******************
+    -- Leitura da PL/Table e geração do XML para o relatório
+    -- *******************
     
-  -- Busca do diretório base da cooperativa
-  vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
-                                            pr_cdcooper => pr_cdcooper,
-                                            pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-  --
-  vr_indice_agencia := vr_tab_agencia.first;
-  -- Se houver informação, deve criar o arquivo
-  if vr_indice_agencia is not null then
-    while vr_indice_agencia is not null loop
+    -- Busca do diretório base da cooperativa
+    vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                              pr_cdcooper => pr_cdcooper,
+                                              pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+    --
+    vr_indice_agencia := vr_tab_agencia.first;
+    -- Se houver informação, deve criar o arquivo
+    if vr_indice_agencia is not null then
+      while vr_indice_agencia is not null loop
         
     -- Grava LOG de ocorrência inicial geração relatório
     pc_log_programa(PR_DSTIPLOG           => 'O',
@@ -658,68 +669,68 @@ begin
                     pr_dsmensagem         => 'Início - Geração Relatório crrl124. AGENCIA: '||vr_indice_agencia,
                     PR_IDPRGLOG           => vr_idlog_ini_par);       
       
-      -- Deve gerar um arquivo para cada agência
-      -- Inicializar o CLOB
-      vr_des_xml := null;
-      vr_dstexto := null;
-      dbms_lob.createtemporary(vr_des_xml, true);
-      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-      -- Inicilizar as informações do XML
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="utf-8"?>');
-      -- Início da leitura das informações
-      -- Incluir o cabeçalho
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                    '<agencia cdagenci="'||vr_indice_agencia||'">'||
-                       '<nmresage>'||vr_tab_agencia(vr_indice_agencia).nmresage||'</nmresage>'||
-                       '<qtaplica>'||to_char(vr_tab_agencia(vr_indice_agencia).qtaplica, '9G999G990')||'</qtaplica>'||
-                       '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).vlprerpp, '999G999G999G990D00')||'</vlprerpp>'||
-                       '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).vlsldapl, '999G999G999G990D00')||'</vlsldapl>');
-      -- Inclui os dados das contas (tab_aplicacao)
-      vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.first;
-      while vr_indice_aplicacao is not null loop
+        -- Deve gerar um arquivo para cada agência
+        -- Inicializar o CLOB
+        vr_des_xml := null;
+        vr_dstexto := null;
+        dbms_lob.createtemporary(vr_des_xml, true);
+        dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+        -- Inicilizar as informações do XML
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<?xml version="1.0" encoding="utf-8"?>');
+        -- Início da leitura das informações
+        -- Incluir o cabeçalho
         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
-                      '<conta nrdconta="'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrdconta, 'fm9G999G999G9')||'">'||
-                         '<dsdacstp>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dsdacstp||'</dsdacstp>'||
-                         '<nmprimtl>'||SUBSTR(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nmprimtl,0,40)||'</nmprimtl>'||
-                         '<nrramemp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrramemp, '9999')||'</nrramemp>'||
-                         '<nrctrrpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrctrrpp, 'fm9999G999')||'</nrctrrpp>'||
-                         '<diapoupa>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).diapoupa, '00')||'</diapoupa>'||
-                         '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlprerpp, '9G999G990D00')||'</vlprerpp>'||
-                         '<qtprepag>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).qtprepag, '990')||'</qtprepag>'||
-                         '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
-                         '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
-                      '</conta>');
-        vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.next(vr_indice_aplicacao);
-      end loop;
-      gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencia>',true);
-      -- Nome base do arquivo é crrl124_
-      vr_nom_arquivo := 'crrl124_'||to_char(vr_indice_agencia, 'fm009');
-      -- Gerar o arquivo de XML com mesmo nome e na mesma pasta do arquivo de saída
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
-                                  pr_cdprogra  => vr_cdprogra,         --> Programa chamador
-                                  pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
-                                  pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
-                                  pr_dsxmlnode => '/agencia/conta',    --> Nó base do XML para leitura dos dados
-                                  pr_dsjasper  => 'crrl124.jasper',    --> Arquivo de layout do iReport
-                                  pr_dsparams  => null,                --> Enviar como parâmetro apenas a agência
-                                  pr_dsarqsaid => vr_nom_diretorio||'/'||vr_nom_arquivo||'.lst', --> Arquivo final com código da agência
-                                  pr_flg_gerar => 'N',
-                                  pr_qtcoluna  => 132,
-                                  pr_flg_impri => fn_imprime(vr_indice_agencia),    --> Chamar a impressão (Imprim.p)
-                                  pr_nmformul  => '132dm',             --> Nome do formulário para impressão
-                                  pr_nrcopias  => 1,                   --> Número de cópias para impressão
-                                  pr_des_erro  => vr_dscritic);        --> Saída com erro
-      -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_des_xml);
-      dbms_lob.freetemporary(vr_des_xml);
-      -- Limpar variavel texto do clob
-      vr_dstexto:= NULL;
-      -- Testar se houve erro
-      if vr_dscritic is not null then
-        -- Gerar exceção
-        vr_cdcritic := 0;
-        raise vr_exc_saida;
-      end if;
+                      '<agencia cdagenci="'||vr_indice_agencia||'">'||
+                         '<nmresage>'||vr_tab_agencia(vr_indice_agencia).nmresage||'</nmresage>'||
+                         '<qtaplica>'||to_char(vr_tab_agencia(vr_indice_agencia).qtaplica, '9G999G990')||'</qtaplica>'||
+                         '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).vlprerpp, '999G999G999G990D00')||'</vlprerpp>'||
+                         '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).vlsldapl, '999G999G999G990D00')||'</vlsldapl>');
+        -- Inclui os dados das contas (tab_aplicacao)
+        vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.first;
+        while vr_indice_aplicacao is not null loop
+          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,
+                        '<conta nrdconta="'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrdconta, 'fm9G999G999G9')||'">'||
+                           '<dsdacstp>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dsdacstp||'</dsdacstp>'||
+                           '<nmprimtl>'||SUBSTR(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nmprimtl,0,40)||'</nmprimtl>'||
+                           '<nrramemp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrramemp, '9999')||'</nrramemp>'||
+                           '<nrctrrpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrctrrpp, 'fm9999G999')||'</nrctrrpp>'||
+                           '<diapoupa>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).diapoupa, '00')||'</diapoupa>'||
+                           '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlprerpp, '9G999G990D00')||'</vlprerpp>'||
+                           '<qtprepag>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).qtprepag, '990')||'</qtprepag>'||
+                           '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
+                           '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
+                        '</conta>');
+          vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.next(vr_indice_aplicacao);
+        end loop;
+        gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencia>',true);
+        -- Nome base do arquivo é crrl124_
+        vr_nom_arquivo := 'crrl124_'||to_char(vr_indice_agencia, 'fm009');
+        -- Gerar o arquivo de XML com mesmo nome e na mesma pasta do arquivo de saída
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                    pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                    pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                    pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
+                                    pr_dsxmlnode => '/agencia/conta',    --> Nó base do XML para leitura dos dados
+                                    pr_dsjasper  => 'crrl124.jasper',    --> Arquivo de layout do iReport
+                                    pr_dsparams  => null,                --> Enviar como parâmetro apenas a agência
+                                    pr_dsarqsaid => vr_nom_diretorio||'/'||vr_nom_arquivo||'.lst', --> Arquivo final com código da agência
+                                    pr_flg_gerar => 'N',
+                                    pr_qtcoluna  => 132,
+                                    pr_flg_impri => fn_imprime(vr_indice_agencia),    --> Chamar a impressão (Imprim.p)
+                                    pr_nmformul  => '132dm',             --> Nome do formulário para impressão
+                                    pr_nrcopias  => 1,                   --> Número de cópias para impressão
+                                    pr_des_erro  => vr_dscritic);        --> Saída com erro
+        -- Liberando a memória alocada pro CLOB
+        dbms_lob.close(vr_des_xml);
+        dbms_lob.freetemporary(vr_des_xml);
+        -- Limpar variavel texto do clob
+        vr_dstexto:= NULL;
+        -- Testar se houve erro
+        if vr_dscritic is not null then
+          -- Gerar exceção
+          vr_cdcritic := 0;
+          raise vr_exc_saida;
+        end if;
 
         -- Grava LOG de ocorrência final geração relatório
         pc_log_programa(PR_DSTIPLOG           => 'O',
@@ -739,36 +750,36 @@ begin
                         pr_tpocorrencia       => 4,
                         pr_dsmensagem         => 'Início - Atualização gninfpl. AGENCIA: '||vr_indice_agencia,
                         PR_IDPRGLOG           => vr_idlog_ini_par);
-      -- Gravacao de dados no banco GENERICO - Relatorios Gerenciais
-      begin
-        update gninfpl
-           set vltotppr = vr_tab_agencia(vr_indice_agencia).vlsldapl
-         where gninfpl.cdcooper = pr_cdcooper
-           and gninfpl.cdagenci = vr_indice_agencia
-           and gninfpl.dtmvtolt = vr_dtmvtolt;
-        if sql%rowcount = 0 then
-          begin
-            insert into gninfpl (cdcooper,
-                                 cdagenci,
-                                 dtmvtolt,
-                                 vltotppr)
-            values (pr_cdcooper,
-                    vr_indice_agencia,
-                    vr_dtmvtolt,
-                    vr_tab_agencia(vr_indice_agencia).vlsldapl);
-          exception
-            when others then
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao inserir GNINFPL: '||sqlerrm;
-              raise vr_exc_saida;
-          end;
-        end if;
-      exception
-        when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao atualizar GNINFPL: '||sqlerrm;
-          raise vr_exc_saida;
-      end;
+        -- Gravacao de dados no banco GENERICO - Relatorios Gerenciais
+        begin
+          update gninfpl
+             set vltotppr = vr_tab_agencia(vr_indice_agencia).vlsldapl
+           where gninfpl.cdcooper = pr_cdcooper
+             and gninfpl.cdagenci = vr_indice_agencia
+             and gninfpl.dtmvtolt = vr_dtmvtolt;
+          if sql%rowcount = 0 then
+            begin
+              insert into gninfpl (cdcooper,
+                                   cdagenci,
+                                   dtmvtolt,
+                                   vltotppr)
+              values (pr_cdcooper,
+                      vr_indice_agencia,
+                      vr_dtmvtolt,
+                      vr_tab_agencia(vr_indice_agencia).vlsldapl);
+            exception
+              when others then
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao inserir GNINFPL: '||sqlerrm;
+                raise vr_exc_saida;
+            end;
+          end if;
+        exception
+          when others then
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar GNINFPL: '||sqlerrm;
+            raise vr_exc_saida;
+        end;
         -- Grava LOG de ocorrência final Atualização gninfpl
         pc_log_programa(PR_DSTIPLOG           => 'O',
                         PR_CDPROGRAMA         => vr_cdprogra ||'_'|| vr_indice_agencia || '$',
@@ -777,34 +788,36 @@ begin
                         pr_tpocorrencia       => 4,
                         pr_dsmensagem         => 'Fim - Atualização gninfpl. AGENCIA: '||vr_indice_agencia,
                         PR_IDPRGLOG           => vr_idlog_ini_par);        
-      -- Passar para a próxima agência
-      vr_indice_agencia := vr_tab_agencia.next(vr_indice_agencia);
-    end loop;
-  end if;
+        -- Passar para a próxima agência
+        vr_indice_agencia := vr_tab_agencia.next(vr_indice_agencia);
+      end loop;
+    end if;
     
     --Grava data fim para o JOB na tabela de LOG 
     pc_log_programa(pr_dstiplog   => 'F',    
                     pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                    pr_idprglog   => vr_idlog_ini_par);       
+                    pr_idprglog   => vr_idlog_ini_par,
+                    pr_flgsucesso => 1);       
     
   end if;
 
   if pr_idparale = 0 then
-  -- Processo OK, devemos chamar a fimprg
+    -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
-                           ,pr_cdprogra => vr_cdprogra
-                           ,pr_infimsol => pr_infimsol
-                           ,pr_stprogra => pr_stprogra);
-
+                              ,pr_cdprogra => vr_cdprogra
+                              ,pr_infimsol => pr_infimsol
+                              ,pr_stprogra => pr_stprogra);
+    
     if vr_inproces > 2 then 
       --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
       pc_log_programa(pr_dstiplog   => 'F',    
                       pr_cdprograma => vr_cdprogra,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_ger);                 
+                      pr_idprglog   => vr_idlog_ini_ger,
+                      pr_flgsucesso => 1);                 
     end if;
 
     --Salvar informacoes no banco de dados
@@ -837,7 +850,7 @@ exception
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
-
+    
     if pr_idparale <> 0 then 
       -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
       pc_log_programa(PR_DSTIPLOG           => 'E',
@@ -854,7 +867,8 @@ exception
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_par);  
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);  
                       
       -- Encerrar o job do processamento paralelo dessa agência
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -886,7 +900,8 @@ exception
                       pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
                       pr_cdcooper   => pr_cdcooper, 
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_idprglog   => vr_idlog_ini_par);  
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);  
     
       -- Encerrar o job do processamento paralelo dessa agência
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale

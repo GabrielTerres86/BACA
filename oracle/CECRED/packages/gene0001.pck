@@ -374,7 +374,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
-
+  
   /* Verificacao do controle do batch por agencia ou convenio */
   PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
                                       ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
@@ -2748,7 +2748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                     ||' - Prox Exec: '||pr_interva|| chr(13) ||'Bloco PLSQL: '||chr(13)||pr_dsplsql||chr(13)
                     ||' Nenhum registro de erro no momento da submissao '||chr(13)
                     ||'*******************************************************************************************************');
-                    
+
       COMMIT;
       
     EXCEPTION
@@ -2980,6 +2980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                       ,pr_insituacao OUT tbgen_batch_controle.insituacao%TYPE  -- Situacao da execucao (1-Executado erro/ 2-Executado sucesso)
                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+
   BEGIN
     /*..............................................................................
 
@@ -3047,6 +3048,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                    ,pr_idcontrole OUT tbgen_batch_controle.idcontrole%TYPE  -- ID de Controle
                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
                                    ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+    PRAGMA AUTONOMOUS_TRANSACTION;  
+  
   BEGIN
     /*..............................................................................
 
@@ -3103,7 +3106,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina GENE0001.pc_grava_batch_controle: ' || SQLERRM;
     END;
-
+    --
+    COMMIT;   
+    --
   END pc_grava_batch_controle;
 
   /* Finaliza o controle do batch por agencia ou convenio */
@@ -3111,6 +3116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS            -- Descricao da critica
   
+
+    PRAGMA AUTONOMOUS_TRANSACTION;   
 
   BEGIN
     /*..............................................................................
@@ -3138,7 +3145,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina GENE0001.pc_finaliza_batch_controle: ' || SQLERRM;
     END;
-    
+    --
+    COMMIT;
+    --
 
   END pc_finaliza_batch_controle;
 
@@ -3580,7 +3589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --                 
     --
     --   Alteracoes:
---  
+    --
     -- .............................................................................
   
     vr_registro tbgen_batch_param.qtreg_transacao%TYPE;
