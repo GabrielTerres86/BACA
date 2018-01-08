@@ -37,6 +37,9 @@
                13/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
+                        
+               08/12/2017 - Melhoria 458, incluir chamada da b1crap054.p consulta-provisao
+                            Antonio R. Jr (mouts)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -181,6 +184,7 @@ DEF VAR p-flg-cta-migrada AS LOG NO-UNDO.
 DEF VAR p-coop-migrada AS CHAR NO-UNDO.
 DEF VAR p-nro-conta-nova AS INT NO-UNDO.
 DEF VAR p-flg-coop-host AS LOG NO-UNDO.
+DEF VAR v_solicita      AS CHAR.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -775,7 +779,52 @@ PROCEDURE process-web-request :
                                  {include/i-erro.i}
                              END.
                              ELSE DO:
+                                    RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
+                                    
+                                    RUN consulta-provisao IN h-b1crap54(
+                                                                         INPUT v_coop,
+                                                                         INPUT INT(v_pac),
+                                                                         INPUT INT(v_caixa),
+                                                                         INPUT DEC(v_conta),
+                                                                         INPUT DEC(v_valor),
+                                                                         INPUT v_cmc7, /** CMC7**/
+                                                                         OUTPUT v_solicita).
 
+                                    DELETE PROCEDURE h-b1crap54.
+                                    
+                                    IF v_solicita <> "" THEN
+                                       ASSIGN l-habilita = YES.
+                                    IF RETURN-VALUE = "NOK" THEN DO:
+                                       ASSIGN v_cod = ""
+                                              v_senha = "".
+                                              
+                                       {include/i-erro.i}
+                                    END.
+                                    
+                                    ELSE DO:
+                                          RUN dbo/b1crap54.p
+                                               PERSISTENT SET h-b1crap54.
+                                               
+                                          RUN valida-permissao-provisao IN h-b1crap54(
+                                                                                       INPUT v_coop,
+                                                                                       INPUT INT(v_pac),
+                                                                                       INPUT INT(v_caixa),
+                                                                                       INPUT v_cod,
+                                                                                       INPUT v_senha,
+                                                                                       INPUT INT(v_conta),
+                                                                                       INPUT DEC(v_valor),
+                                                                                       INPUT v_solicita).
+                                          
+                                          DELETE PROCEDURE h-b1crap54.
+
+                                          IF RETURN-VALUE = 'NOK' THEN DO:
+                                             ASSIGN v_cod = ""
+                                                    v_senha = ""
+                                                    vh_foco = "19".
+                                                    
+                                             {include/i-erro.i}
+                                          END.
+                                          ELSE DO:                                                   
                                  DO TRANSACTION ON ERROR UNDO:
                                            
                                     RUN dbo/b1crap53.p 
@@ -953,7 +1002,8 @@ PROCEDURE process-web-request :
                                    '<script>window.location = "crap053.html"
                                    </script>'.
                                  END.
-                          
+                                          END.
+                                    END.      
                              END. 
                           
                          END. /* get-value("OK") */

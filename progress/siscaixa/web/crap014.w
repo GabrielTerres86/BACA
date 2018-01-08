@@ -152,7 +152,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_fmtcodbar   AS CHARACTER FORMAT "X(256)":U
        FIELD v_tipdocto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_tpproces    AS CHARACTER FORMAT "X(256)":U
-       FIELD v_flblqval    AS CHARACTER FORMAT "X(256)":U .
+       FIELD v_flblqval    AS CHARACTER FORMAT "X(256)":U
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U.
        
 
 
@@ -271,8 +272,8 @@ DEF TEMP-TABLE tt-crapcbl NO-UNDO LIKE crapcbl
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ab_unmap.v_tppagmto
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_valor ab_unmap.radio ab_unmap.v_codbarras ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_msg_vencido ab_unmap.v_fmtcodbar ab_unmap.v_tipdocto ab_unmap.v_tpproces ab_unmap.v_flblqval ab_unmap.v_tppagmto
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -361,6 +362,12 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
      WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -394,6 +401,7 @@ DEFINE FRAME Web-Frame
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_msg_vencido AS CHARACTER FORMAT "X(256)":U
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -451,6 +459,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_msg_vencido IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -532,7 +542,8 @@ PROCEDURE htmOffsets :
     ("v_tpproces":U,"ab_unmap.v_tpproces":U,ab_unmap.v_tpproces:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_flblqval":U,"ab_unmap.v_flblqval":U,ab_unmap.v_flblqval:HANDLE IN FRAME {&FRAME-NAME}).  
-    
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
 END PROCEDURE.
 
 
@@ -691,7 +702,8 @@ PROCEDURE process-web-request:
                             v_valor     = ""
                             v_codbarras = ""
                             v_msg       = ""
-                            vh_foco     = "7".
+                            vh_foco     = "7"
+                            v_tppagmto  = "0".
                  END.
              ELSE 
              DO:    
@@ -709,7 +721,7 @@ PROCEDURE process-web-request:
                          ASSIGN v_conta = TRIM(STRING(tt-crapcbl.nrdconta, "zzzz,zzz,9"))
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
-
+                     
                  ASSIGN aux_des_erro = "OK".
 
                  /*se o cod barras estiver preenchido verifica o campo 
@@ -717,8 +729,8 @@ PROCEDURE process-web-request:
                    ou o campo nao estiver preenchido*/
                  IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
-                    DO:
-                                
+                    DO:       
+
                         /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
                         IF  INT(v_tpproces) = 1 THEN
                         DO:
@@ -726,40 +738,40 @@ PROCEDURE process-web-request:
                             ASSIGN aux_des_erro = ""
                                    aux_dscritic = "".
                            
-                       RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
-                                                  INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
-                                                  INPUT 1,     
-                                                  INPUT INT(glb_cdagenci),     
-                                                  INPUT INT(glb_cdbccxlt),     
+                            RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
+                                                       INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
+                                                       INPUT 1,     
+                                                       INPUT INT(glb_cdagenci),     
+                                                       INPUT INT(glb_cdbccxlt),     
                                                        INPUT glb_cdoperad,    /*Operador*/
                                                        INPUT 0,
                                                        INPUT 0,
                                                        INPUT 0,
                                                        INPUT 0,
                                                        INPUT 0,
-                                                  INPUT v_codbarras,
-                                                 OUTPUT aux_vltitulo,    
-                                                 OUTPUT aux_vlrjuros,    
-                                                 OUTPUT aux_vlrmulta,    
-                                                 OUTPUT aux_fltitven,    
+                                                       INPUT v_codbarras,
+                                                      OUTPUT aux_vltitulo,    
+                                                      OUTPUT aux_vlrjuros,    
+                                                      OUTPUT aux_vlrmulta,    
+                                                      OUTPUT aux_fltitven,    
                                                       OUTPUT v_flblqval,
                                                       OUTPUT aux_nmbenefi,
                                                       OUTPUT aux_inpesbnf,
                                                       OUTPUT aux_nrdocbnf,
                                                       OUTPUT aux_cdctrlcs,
-                                                 OUTPUT aux_des_erro,    
-                                                 OUTPUT aux_dscritic).   
-                  
+                                                      OUTPUT aux_des_erro,    
+                                                      OUTPUT aux_dscritic).   
+                          
                             /* Tratamento de erro */ 
-                       IF  aux_des_erro <> "OK" THEN
-                           DO:
+                            IF  aux_des_erro <> "OK" THEN
+                            DO:
                                 IF aux_dscritic = "" THEN
                                 DO:
                                     ASSIGN aux_dscritic = "Erro na busca do valor do titulo. " + 
                                                           "Retornou NOK porem sem mensagem de erro. " +
                                                           "(Processo automatico)".
                                 END.
-                             
+                                
                                 /* Limpar as criticas */
                                 RUN elimina-erro(INPUT glb_nmrescop,
                                                  INPUT glb_cdagenci,
@@ -778,16 +790,16 @@ PROCEDURE process-web-request:
                                 
                                 /* Setar o foco no campo Codigo de Barras */ 
                                 ASSIGN vh_foco = "10".
-                           END.
-                       ELSE
-                          DO:
+                            END.
+                            ELSE
+                                DO:
                                     /* Atribuir valor e setar foco no campo de VALOR */
-                             ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
-                          END.
+                                    ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
+                                END.
                         END.
                         ELSE 
                             DO:
-                           
+                            
                                /* Limpar as variaveis de critica */
                                ASSIGN aux_des_erro = ""
                                       aux_dscritic = "".
@@ -815,12 +827,12 @@ PROCEDURE process-web-request:
                                                          OUTPUT aux_cdctrlcs,
                                                          OUTPUT aux_des_erro,    
                                                          OUTPUT aux_dscritic).   
-                 
+                          
                                /* Tratamento de erro */ 
                                IF  aux_des_erro <> "OK" THEN
-                    DO:       
+                               DO:
                                    IF aux_dscritic = "" THEN
-                           DO:                                   
+                                   DO:
                                        ASSIGN aux_dscritic = "Erro na busca do valor do titulo. " + 
                                                              "Retornou NOK porem sem mensagem de erro."+
                                                              "(Processo manual)".
@@ -840,10 +852,10 @@ PROCEDURE process-web-request:
                                                  INPUT YES).
                                                  
                                    /* Exibir o erro */ 
-                              RUN gera-erro(INPUT glb_cdcooper,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt).
-                              
+                                   RUN gera-erro(INPUT glb_cdcooper,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt).                                   
+                                   
                                    /* Setar o foco no campo Codigo de Barras */ 
                                    ASSIGN vh_foco = "10".
                                END.
@@ -853,84 +865,86 @@ PROCEDURE process-web-request:
                                        ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
                                    END.
                             END.
-                           END.         
+                    END.
                 
                IF aux_des_erro = "OK" THEN
                DO:
-               /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
-               IF  INT(v_tpproces) = 1 THEN
-                   DO:
-                       /*pagamento de titulo ou fatura lido pela leitora, 
-                         processo automatico*/  
-                       RUN processo-automatico(INPUT glb_cdcooper,    /*Cooperativa*/
-                                               INPUT glb_nmrescop,    /*Nome resumido coop*/
-                                               INPUT glb_cdoperad,    /*Operador*/
-                                               INPUT glb_cdagenci,    /*PA*/
-                                               INPUT glb_cdbccxlt,    /*Caixa*/
-                                               INPUT glb_dtmvtolt,    /*Data Movimento*/
-                                               INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
-                                               INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
-                                               INPUT v_conta,                   /*Numero da conta*/
-                                               INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
-                                               INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
-                                               INPUT 0, /*CPF/CNPJ CEDENTE */
-                                               INPUT 0, /*CPF/CNPJ SACADO */
+                   /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
+                   IF  INT(v_tpproces) = 1 THEN
+                       DO:
+                           /*pagamento de titulo ou fatura lido pela leitora, 
+                             processo automatico*/  
+                           RUN processo-automatico(INPUT glb_cdcooper,    /*Cooperativa*/
+                                                   INPUT glb_nmrescop,    /*Nome resumido coop*/
+                                                   INPUT glb_cdoperad,    /*Operador*/
+                                                   INPUT glb_cdagenci,    /*PA*/
+                                                   INPUT glb_cdbccxlt,    /*Caixa*/
+                                                   INPUT glb_dtmvtolt,    /*Data Movimento*/
+                                                   INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
+                                                   INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
+                                                   INPUT v_conta,                   /*Numero da conta*/
+                                                   INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
+                                                   INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
+                                                   INPUT 0, /*CPF/CNPJ CEDENTE */
+                                                   INPUT 0, /*CPF/CNPJ SACADO */
                                                    INPUT aux_nmbenefi,
                                                    INPUT aux_inpesbnf,
                                                    INPUT aux_nrdocbnf,
                                                    INPUT aux_cdctrlcs,
-                                               OUTPUT aux_funcaojs,
-                                               OUTPUT vh_foco).       /*Foco do campo da tela*/
-        
-                       
-                       
-                       IF  RETURN-VALUE = "NOK" THEN
-                           DO:
-                              RUN gera-erro(INPUT glb_cdcooper,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt).
+                                                   INPUT INT(v_tppagmto), /*0-Conta | 1-Especie*/
+                                                   OUTPUT aux_funcaojs,
+                                                   OUTPUT vh_foco).       /*Foco do campo da tela*/
 
-                           END.      
-                       ELSE
-                           DO:
-                             aux_funcaojs = aux_funcaojs + "$('#v_valor').val('');".
-                           END.
-                       
-                       ASSIGN aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');"
-                              aux_funcaojs = aux_funcaojs + "$('#v_codbarras').val('');". 
-                   END.
-               ELSE     
-                   DO:
-                        RUN processo-manual(INPUT glb_cdcooper,
-                                            INPUT glb_nmrescop,
-                                            INPUT glb_cdoperad,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt,
-                                            INPUT glb_dtmvtolt,
-                                            INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
-                                            INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
-                                            INPUT v_conta,                   /*Numero da conta*/
-                                            INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
-                                            INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
-                                            INPUT 0, /*CPF/CNPJ CEDENTE */
-                                            INPUT 0, /*CPF/CNPJ SACADO */
+
+                           
+                           IF  RETURN-VALUE = "NOK" THEN
+                               DO:
+                                  RUN gera-erro(INPUT glb_cdcooper,
+                                                INPUT glb_cdagenci,
+                                                INPUT glb_cdbccxlt).
+
+            END.
+                           ELSE
+                               DO:
+                                 aux_funcaojs = aux_funcaojs + "$('#v_valor').val('');".
+        END.
+                           
+                           ASSIGN aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');"
+                                  aux_funcaojs = aux_funcaojs + "$('#v_codbarras').val('');". 
+     END.
+                   ELSE     
+                       DO:
+                            RUN processo-manual(INPUT glb_cdcooper,
+                                                INPUT glb_nmrescop,
+                                                INPUT glb_cdoperad,
+                                                INPUT glb_cdagenci,
+                                                INPUT glb_cdbccxlt,
+                                                INPUT glb_dtmvtolt,
+                                                INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
+                                                INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
+                                                INPUT v_conta,                   /*Numero da conta*/
+                                                INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
+                                                INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
+                                                INPUT 0, /*CPF/CNPJ CEDENTE */
+                                                INPUT 0, /*CPF/CNPJ SACADO */
                                                 INPUT aux_nmbenefi,
                                                 INPUT aux_inpesbnf,
                                                 INPUT aux_nrdocbnf,
                                                 INPUT aux_cdctrlcs,
-                                            OUTPUT aux_funcaojs,
-                                            OUTPUT vh_foco).
+                                                INPUT INT(v_tppagmto), /*0-Conta | 1-Especie*/
+                                                OUTPUT aux_funcaojs,
+                                                OUTPUT vh_foco).
 
-                        IF  RETURN-VALUE = "NOK" THEN
-                            DO:
-                               RUN gera-erro(INPUT glb_cdcooper,
-                                             INPUT glb_cdagenci,
-                                             INPUT glb_cdbccxlt).
-                            END.
-                   END. 
+                            IF  RETURN-VALUE = "NOK" THEN
+                                DO:
+                                   RUN gera-erro(INPUT glb_cdcooper,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt).
+                                END.
+                       END. 
+               END.
             END.
         END.
-     END.
      END.
 
      /* aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');". */
@@ -1068,7 +1082,8 @@ PROCEDURE processa-titulo:
     DEF INPUT  PARAM par_inpesbnf    AS  INTEGER                 NO-UNDO.
     DEF INPUT  PARAM par_nrdocbnf    AS  DECIMAL                 NO-UNDO.    
     DEF INPUT  PARAM par_cdctrlcs    AS CHAR                     NO-UNDO. /* Numero de controle consulta NPC*/
-    
+    DEF INPUT  PARAM par_tppagmto    AS INTEGER                  NO-UNDO.
+
     DEF OUTPUT PARAM par_funcaojs    AS  CHARACTER               NO-UNDO.
     DEF OUTPUT PARAM par_setafoco    AS  CHARACTER               NO-UNDO.
      
@@ -1311,7 +1326,8 @@ PROCEDURE processa-titulo:
                    par_funcaojs = par_funcaojs + "&v_nmbenefi=" + STRING(par_nmbenefi)
                    par_funcaojs = par_funcaojs + "&v_inpesbnf=" + STRING(par_inpesbnf)
                    par_funcaojs = par_funcaojs + "&v_nrdocbnf=" + STRING(par_nrdocbnf)
-                   par_funcaojs = par_funcaojs + "&v_cdctrlcs=" + STRING(par_cdctrlcs). 
+                   par_funcaojs = par_funcaojs + "&v_cdctrlcs=" + STRING(par_cdctrlcs)
+                   par_funcaojs = par_funcaojs + "&v_tppagmto=" + STRING(par_tppagmto). 
                    
 
             IF  par_flmanual = TRUE THEN
@@ -1345,11 +1361,13 @@ PROCEDURE processa-fatura:
     DEF INPUT PARAM par_vlfatura    AS  DECIMAL                 NO-UNDO.
     DEF INPUT PARAM par_dscodbar    AS  CHARACTER               NO-UNDO.
     DEF INPUT PARAM par_tpproces    AS  INTEGER                 NO-UNDO.
+    DEF INPUT PARAM par_tppagmto    AS INTEGER                  NO-UNDO.
 
     DEF OUTPUT PARAM par_funcaojs   AS  CHARACTER               NO-UNDO.
     DEF OUTPUT PARAM par_setafoco   AS  CHARACTER               NO-UNDO.
 
     DEF VAR aux_vltitfat            AS  DECIMAL                 NO-UNDO.
+    DEF VAR aux_vllimite            AS  INTEGER                 NO-UNDO.
     DEF VAR p_sequencia             AS  DECIMAL                 NO-UNDO.
     DEF VAR p_digito                AS  DECIMAL                 NO-UNDO.
     DEF VAR p_iptu                  AS  LOGICAL                 NO-UNDO.
@@ -1464,6 +1482,7 @@ PROCEDURE processa-fatura:
                                                    INPUT par_cdagetfn,
                                                    INPUT par_nrterfin,
                                                    INPUT par_tpproces,
+                                                   INPUT  par_tppagmto,  /*indicador do tipo pagamento 0-Conta | 1-Especie*/
                                                    OUTPUT p-histor,
                                                    OUTPUT p-pg,    
                                                    OUTPUT p-docto,
@@ -1600,6 +1619,36 @@ PROCEDURE processa-fatura:
                        par_funcaojs = par_funcaojs + '","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true");'.
             END.
     
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_consultar_parmon_pld_car
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
+                                                     OUTPUT 0,
+                                                     OUTPUT 0,
+                                                     OUTPUT 0,
+                                                     OUTPUT 0,
+                                                     OUTPUT 0,
+                                                     OUTPUT "").
+
+        CLOSE STORED-PROC pc_consultar_parmon_pld_car
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                          
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_vllimite = pc_consultar_parmon_pld_car.pr_vlmonitoracao_pagamento. 
+        
+        IF par_tppagmto = 1 THEN
+            DO:
+               /**** Busca parametro através da rotina ORACLE. ***/
+               IF aux_vltitfat > aux_vllimite THEN
+                  ASSIGN par_funcaojs = par_funcaojs + 'window.location = "crap051e.html?v_pvalor='
+                                        par_funcaojs = par_funcaojs + STRING(aux_vltitfat,"zzz,zzz,zz9.99")
+                                        par_funcaojs = par_funcaojs + "&v_pult_sequencia=" + STRING(p-ult-sequencia)
+                                        par_funcaojs = par_funcaojs + "&v_pprograma=CRAP014"
+                                        par_funcaojs = par_funcaojs + "&v_ptpdocmto=1"
+                                        par_funcaojs = par_funcaojs + '";'.
+            END.
+        
         END.        
    END.
    
@@ -1632,6 +1681,7 @@ PROCEDURE processo-automatico:
     DEF INPUT PARAM par_inpesbnf AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_nrdocbnf AS DECIMAL                         NO-UNDO.    
     DEF INPUT PARAM par_cdctrlcs AS CHAR                            NO-UNDO. /* Numero de controle consulta NPC*/
+    DEF INPUT PARAM par_tppagmto AS INTEGER                         NO-UNDO.
 
     DEF OUTPUT PARAM par_funcaojs AS CHARACTER                      NO-UNDO.
     DEF OUTPUT PARAM par_setafoco AS CHARACTER                      NO-UNDO.
@@ -1678,6 +1728,7 @@ PROCEDURE processo-automatico:
                                        INPUT  par_inpesbnf,  /* Tipo de pessoa beneficiario*/
                                        INPUT  par_nrdocbnf,  /* CPF/CNPJ Beneficiario */
                                        INPUT  par_cdctrlcs,  /*Numero de controle consulta NPC*/  
+                                       INPUT  par_tppagmto,  /*indicador do tipo pagamento 0-Conta | 1-Especie*/
                                        OUTPUT par_funcaojs,  /*Funcao javascript de retorno*/
                                        OUTPUT par_setafoco). 
 
@@ -1700,6 +1751,7 @@ PROCEDURE processo-automatico:
                                                INPUT par_vltitfat,   /*Valor fatura*/                 
                                                INPUT par_dscodbar,   /*Cod barras*/
                                                INPUT 1,   /*Tipo processo - automatico*/
+                                               INPUT  par_tppagmto,  /*indicador do tipo pagamento 0-Conta | 1-Especie*/
                                                OUTPUT par_funcaojs,
                                                OUTPUT par_setafoco). /*Campo que indica onde deve setar foco da tela*/
 
@@ -1740,6 +1792,8 @@ PROCEDURE processo-manual:
     DEF INPUT PARAM par_inpesbnf AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_nrdocbnf AS DECIMAL                         NO-UNDO.    
     DEF INPUT PARAM par_cdctrlcs AS CHAR                            NO-UNDO. /* Numero de controle consulta NPC*/
+    DEF INPUT PARAM par_tppagmto AS INTEGER                         NO-UNDO.
+    
     DEF OUTPUT PARAM par_funcaojs AS CHARACTER                      NO-UNDO.
     DEF OUTPUT PARAM par_setafoco AS CHARACTER                      NO-UNDO.
     
@@ -1799,6 +1853,7 @@ PROCEDURE processo-manual:
                                        INPUT  par_inpesbnf,  /* Tipo de pessoa beneficiario*/
                                        INPUT  par_nrdocbnf,  /* CPF/CNPJ Beneficiario */
                                        INPUT  par_cdctrlcs,  /*Numero de controle consulta NPC*/  
+                                       INPUT  par_tppagmto,  /*indicador do tipo pagamento 0-Conta | 1-Especie*/
                                        OUTPUT par_funcaojs,  /*Funcao javascript de retorno*/
                                        OUTPUT par_setafoco). 
 
@@ -1821,6 +1876,7 @@ PROCEDURE processo-manual:
                                                INPUT par_vltitfat,   /*Valor fatura*/                 
                                                INPUT par_dscodbar,   /*Cod barras*/
                                                INPUT 2, /*Tipo processo - manual*/
+                                               INPUT par_tppagmto,  /*indicador do tipo pagamento 0-Conta | 1-Especie*/
                                                OUTPUT par_funcaojs,
                                                OUTPUT par_setafoco). /*Campo que indica onde deve setar foco da tela*/
 
@@ -1974,10 +2030,10 @@ PROCEDURE retorna-vlr-tit-vencto:
       ASSIGN par_inpesbnf = 1.
     ELSE
       ASSIGN par_inpesbnf = 2.
-
+    
     IF  par_des_erro <> "OK" OR
         par_dscritic <> ""   THEN DO: 
-        
+
         RETURN "NOK".
         
     END.

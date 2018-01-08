@@ -35,6 +35,9 @@
 				14/02/2017 - Ajustes para imprimir boletim de fechamento de
 				             caixa corretamente pois imprimia como aberto
 							 (Tiago/Elton SD584098)
+               
+        08/12/2017 - Melhoria 458, auste fechamento-boletim-caixa.
+                    Antonio R. Jr (mouts)
 ------------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -128,6 +131,7 @@ PROCEDURE fechamento-boletim-caixa:
     DEF VAR aux_sdfinbol        LIKE crapbcx.vldsdfin NO-UNDO.
     DEF VAR aux_nmarqimp        AS CHAR               NO-UNDO.
     DEF VAR aux_nmarqpdf        AS CHAR               NO-UNDO.
+    DEF VAR aux_vllimite        AS DECIMAL            NO-UNDO.
          
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 	
@@ -235,6 +239,87 @@ PROCEDURE fechamento-boletim-caixa:
                                INPUT i-cod-erro,
                                INPUT c-desc-erro,
                                INPUT YES).
+                RETURN "NOK".
+            END.
+    END.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_consultar_parmon_pld_car
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
+                                               OUTPUT 0,
+                                               OUTPUT 0,
+                                               OUTPUT 0,
+                                               OUTPUT 0,
+                                               OUTPUT 0,
+                                               OUTPUT "").
+
+    CLOSE STORED-PROC pc_consultar_parmon_pld_car
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_vllimite = pc_consultar_parmon_pld_car.pr_vlmonitoracao_pagamento.
+    
+    For each craplft where craplft.cdcooper = crapcop.cdcooper AND
+                           Craplft.dtmvtolt = crapdat.dtmvtolt and
+                           Craplft.cdagenci = p-cod-agencia and
+                           Craplft.nrdolote = 15000 + p-nro-caixa and
+                           Craplft.tppagmto = 1 and
+                           Craplft.vllanmto >= aux_vllimite no-lock:
+                           
+           FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper AND
+                              crapcme.dtmvtolt = craplft.dtmvtolt AND
+                              crapcme.cdagenci = craplft.cdagenci AND
+                              crapcme.cdbccxlt = craplft.cdbccxlt AND
+                              crapcme.nrdolote = craplft.nrdolote AND
+                              crapcme.nrdctabb = craplft.nrdconta AND
+                              crapcme.nrdocmto = craplft.nrseqdig
+                              NO-LOCK NO-ERROR.
+                              
+          IF NOT AVAILABLE crapcme THEN
+           DO:
+              ASSIGN i-cod-erro = 768
+                     c-desc-erro = " ".
+               
+              RUN cria-erro (INPUT p-cooper,
+                             INPUT p-cod-agencia,
+                             INPUT p-nro-caixa,
+                             INPUT i-cod-erro,
+                             INPUT c-desc-erro,
+                             INPUT YES).
+              RETURN "NOK".
+           END.
+    END.
+    
+    For each craptit where craptit.cdcooper = crapcop.cdcooper AND
+                           Craptit.dtmvtolt = crapdat.dtmvtolt and
+                           Craptit.cdagenci = p-cod-agencia and
+                           Craptit.nrdolote = 16000 + p-nro-caixa and
+                           Craptit.tppagmto = 1 and
+                           Craptit.vldpagto >= aux_vllimite no-lock:
+                           
+         FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper AND
+                            crapcme.dtmvtolt = craptit.dtmvtolt AND
+                            crapcme.cdagenci = craptit.cdagenci AND
+                            crapcme.cdbccxlt = craptit.cdbccxlt AND
+                            crapcme.nrdolote = craptit.nrdolote AND
+                            crapcme.nrdctabb = craptit.nrdconta AND
+                            crapcme.nrdocmto = craptit.nrseqdig
+                            NO-LOCK NO-ERROR.
+                            
+        IF NOT AVAILABLE crapcme THEN
+          DO:
+            ASSIGN i-cod-erro = 768
+                   c-desc-erro = "".
+                   
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+                           
                 RETURN "NOK".
             END.
     END.
