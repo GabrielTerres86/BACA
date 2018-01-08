@@ -58,6 +58,7 @@
  * 033: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
 
  * 034: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
+ * 035: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
  */
 
 // Definição de algumas variáveis globais 
@@ -85,6 +86,9 @@ var flgRelatorio = ''; // Permissão para emitir o relatório
 var flgNome = ''; // Permissão para alterar o nome
 var flgDesvincula = ''; // Permissão para Desvincular
 var flgCpfCnpj = ''; // Permissão para alterar o cpf ou o cnpj
+var flgAcessoCRM = ''; // Permissão de acesso do operador ao CRM
+var flgDesligarCRM = ''; // Permissão para o botão Desligar
+var flgSaldoPclCRM = ''; // Permissão para o botão Saldo Parcial
 
 // Opções que o operador tem acesso na rotina PROCURADORES da tela MATRIC
 var flgAlterarProc = ''; // Permissão para Alterar Procurador
@@ -1077,14 +1081,15 @@ function controlaBotoes() {
     $('#btVoltarAltNome').css('display', 'none');
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
+    $('#btDemissCRM').css('display', 'none');
+    $('#btSaqueCRM').css('display', 'none');
     $('#btSaqueParcial').css('display', 'none');
+    $('#btDesligarAlt').css('display', 'none');
     $('#btProsseguirCns').css('display', 'none');
     $('#btVoltarDesvinc').css('display', 'none');
     $('#btSalvarDesvinc').css('display', 'none');
     $('#btVoltarAltCpfCnpj').css('display', 'none');
     $('#btSalvarAltCpfCnpj').css('display', 'none');
-    $('#btDesligarAlt').css('display', 'none');
-
 
     aux_cdrotina = operacao;
 
@@ -1097,6 +1102,9 @@ function controlaBotoes() {
             }));
 
             $('#btVoltarCns').css('display', 'inline');
+
+            // Verifica se o operador não possui acesso ao CRM
+            if (flgAcessoCRM == 'N') {
 
             if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 
@@ -1137,6 +1145,19 @@ function controlaBotoes() {
                 abrirRotinaSaqueParcial();
             }));
 					
+            } else {   // Caso operador possua acesso
+                if (flgDesligarCRM == 'S') {
+                    // Exibir o botão de desligamento
+                    $('#btDemissCRM').css('display', 'inline');
+                }
+
+                if (flgSaldoPclCRM == 'S') {
+                    // Exibir o botão de saque parcial
+                    $('#btSaqueCRM').css('display', 'inline');
+                }
+
+            }
+            
             break;
 
         case 'CI':
@@ -3264,7 +3285,58 @@ function validaAcessoEexecuta(UrlSite, tipo) {
 }
 
 
+// Função para acessar rotina de Saque Parcial 
+/*function apresentarDesligamento() {
 
+    // Mostra mensagem de aguardo	
+    showMsgAguardo("Aguarde, carregando ...");
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/matric/apresentar_desligamento.php',
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            redirect: 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+        },
+        success: function (response) {
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            hideMsgAguardo();
+            bloqueiaFundo($('#divRotina'));
+            formataDesligamento();
+        }
+    });
+
+    return false;
+
+}
+
+function formataDesligamento() {
+
+    //Campos do frmDesligamento
+    cVldcotas = $('#vldcotas', '#frmDesligamento');
+    cNrdconta = $('#nrdconta', '#frmDesligamento');
+    cQtdparce = $('#qtdparce', '#frmDesligamento');
+    cDatadevo = $('#datadevo', '#frmDesligamento');
+
+    cVldcotas.css('width', '130px').addClass('moeda').desabilitaCampo();
+    cNrdconta.css('width', '130px').addClass('conta campoTelaSemBorda').desabilitaCampo();
+    cQtdparce.css('width', '130px').css('display', 'none').addClass('campo');
+    cDatadevo.css('width', '130px').addClass('data campo');
+
+    layoutPadrao();
+
+}
+*/
+function confirmarDesligamento(cdmotdem, dsmotdem) {
+    showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotas();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+}
 
 function buscarContasDemitidas(nriniseq,nrregist) {
 
@@ -4213,8 +4285,6 @@ function formataTelaDesligamento(){
 	}
 	
 
-
-
 function verificaProdutosAtivos() {
 
     var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
@@ -4411,4 +4481,372 @@ function formataFiltroContasAntigasDemitidas() {
     cNrConta.habilitaCampo().focus();
 
     return false;
+}
+
+
+function confirmarDesligamentoCRM(cdmotdem, dsmotdem) {
+    showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+}
+
+function efetuarDevolucaoCotasCRM() {
+
+    var rowiddes = $('#rowiddes', '#frmDesligamento').val();
+    var vldcotas = isNaN(parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."));
+    var mtdemiss = $('#cdmotdem', '#frmDesligamento').val();
+    var dtdemiss = $('#dtdemiss', '#frmDesligamento').val();
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando devolucao ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/efetuar_devolucao_cotasCRM.php",
+        data: {
+            rowiddes: rowiddes,
+            nrdconta: normalizaNumero(nrdconta),
+            vldcotas: vldcotas,
+            mtdemiss: mtdemiss,
+            dtdemiss: dtdemiss,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesSaqueParcial').focus();");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'blockBackground(parseInt($("#divRotina").css("z-index")));$("#btVoltar","#divBotoesSaqueParcial").focus();');
+            }
+        }
+    });
+}
+
+// Função para acessar rotina de Desligamento
+function apresentarDesligamentoCRM() {
+
+    // Mostra mensagem de aguardo	
+    showMsgAguardo("Aguarde, carregando ...");
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/matric/apresentar_desligamentoCRM.php',
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            redirect: 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+        },
+        success: function (response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                $('#divRotina').html(response);
+            } else {
+                eval(response);
+            }
+
+            $('#divRotina').html(response);
+            //exibeRotina($('#divRotina'));
+            //hideMsgAguardo();
+            //bloqueiaFundo($('#divRotina'));
+            //formataDesligamento();
+        }
+    });
+
+    return false;
+
+}
+
+
+function formataTelaDesligamentoCRM() {
+
+    //highlightObjFocus($('#frmMotivoDesligamento'));
+    highlightObjFocus($('#frmDesligamento'));
+
+    //Label do frmMotivoDesligamento
+    //rDtdemiss = $('label[for="dtdemiss"]', '#frmMotivoDesligamento');
+    //rCdmotdem = $('label[for="cdmotdem"]', '#frmMotivoDesligamento');
+    //rDsmotdem = $('label[for="dsmotdem"]', '#frmMotivoDesligamento');
+
+    //rDtdemiss.css('width', '70px').addClass('rotulo');
+    //rCdmotdem.css('width', '75px').addClass('rotulo-linha');
+    //rDsmotdem.css('width', '227px').addClass('rotulo-linha');
+
+    //Campos do frmMotivoDesligamento
+    //cDtdemiss = $('#dtdemiss', '#frmMotivoDesligamento');
+    //cCdmotdem = $('#cdmotdem', '#frmMotivoDesligamento');
+    //cDsmotdem = $('#dsmotdem', '#frmMotivoDesligamento');
+
+    //cDtdemiss.css({ 'width': '100px' }).addClass('data').desabilitaCampo();
+    //cCdmotdem.addClass('codigo pesquisa').css({ 'width': '40px' }).habilitaCampo();
+    //cDsmotdem.addClass('descricao').css('width', '227px');
+
+
+    //Label do frmDesligamento
+    rVldcotas = $('label[for="vldcotas"]', '#frmDesligamento');
+    rNrdconta = $('label[for="nrdconta"]', '#frmDesligamento');
+    rMotivoSq = $('label[for="motivosaq"]', '#frmDesligamento');
+
+    rVldcotas.css('width', '120px').addClass('rotulo');
+    rNrdconta.css('width', '120px').addClass('rotulo');
+    rMotivoSq.css('width', '120px').addClass('rotulo');
+
+    //Campos do frmDesligamento
+    cVldcotas = $('#vldcotas', '#frmDesligamento');
+    cNrdconta = $('#nrdconta', '#frmDesligamento');
+    cMotivoSq = $('#motivosaq', '#frmDesligamento');
+
+    //Campos do frmDesligamento
+    cVldcotas = $('#vldcotas', '#frmDesligamento');
+    cNrdconta = $('#nrdconta', '#frmDesligamento');
+    cMotivoSq = $('#motivosaq', '#frmDesligamento');
+
+    cVldcotas.css({ 'width': '100px' }).addClass('moeda').desabilitaCampo();
+    cNrdconta.addClass('inteiro').css({ 'width': '100px' }).desabilitaCampo();
+    cMotivoSq.css({ 'width': '400px' }).desabilitaCampo();
+
+    /*
+    // Definindo as variáveis
+    var bo = 'b1wgen0059.p';
+    var procedure = '';
+    var titulo = '';
+    var qtReg = '';
+    var filtrosPesq = '';
+    var filtrosDesc = '';
+    var colunas = '';
+
+    var motivoLink = $('a:eq(0)', '#frmMotivoDesligamento');
+
+    if (motivoLink.prev().hasClass('campoTelaSemBorda')) {
+        motivoLink.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
+    } else {
+        motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
+            procedure = 'busca_motivo_demissao';
+            titulo = 'Motivo de saída';
+            qtReg = '30';
+            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
+            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
+            mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
+            return false;
+        });
+
+        motivoLink.prev().unbind('change').bind('change', function () {
+            procedure = 'busca_motivo_demissao';
+            titulo = 'Motivo de saída';
+            filtrosDesc = '';
+            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
+            return false;
+        });
+        motivoLink.prev().unbind('blur').bind('blur', function () {
+            $(this).unbind('change').bind('change', function () {
+                procedure = 'busca_motivo_demissao';
+                titulo = 'Motivo de saída';
+                filtrosDesc = '';
+                buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
+                return false;
+            });
+        });
+
+    }
+    */
+    //$('#divMotivoDesligamento').css('display', 'block');
+    //$('#divDesligamento').css('display', 'none');
+
+    layoutPadrao();
+
+    //$('#cdmotdem', '#frmMotivoDesligamento').focus();
+
+    return false;
+}
+
+function verificaProdutosAtivosCRM() {
+
+    var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+    // Obtem o nome do formulario
+    var fomulario = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
+
+    var cddopcao = 'C';
+
+    showMsgAguardo("Aguarde...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/verifica_produtos_ativosCRM.php",
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            cddopcao: cddopcao,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+            }
+        }
+
+    });
+
+    return false;
+
+}
+
+// Função para acessar rotina de Saque Parcial 
+function abrirRotinaSaqueParcialCRM() {
+
+    var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+
+    // Mostra mensagem de aguardo	
+    showMsgAguardo("Aguarde, carregando ...");
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/matric/apresentar_rotina_saque_parcialCRM.php',
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            redirect: 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+        },
+        success: function (response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                $('#divRotina').html(response);
+                exibeRotina($('#divRotina'));
+                hideMsgAguardo();
+                bloqueiaFundo($('#divRotina'));
+                formataRotinaSaqueParcialCRM();
+            } else {
+                eval(response);
+            }
+        }
+    });
+
+    return false;
+
+}
+
+function formataRotinaSaqueParcialCRM() {
+
+    highlightObjFocus($('#frmSaqueParcial'));
+
+    //Label do frmSaqueParcial
+    rVldsaque = $('label[for="vldsaque"]', '#frmSaqueParcial');
+    rNrdconta = $('label[for="nrdconta"]', '#frmSaqueParcial');
+    rDsmotivo = $('label[for="dsmotivo"]', '#frmSaqueParcial');
+    rVldcotas = $('label[for="vldcotas"]', '#frmSaqueParcial');
+
+    rVldsaque.css('width', '150px').addClass('rotulo');
+    rNrdconta.css('width', '150px').addClass('rotulo');
+    rDsmotivo.css('width', '150px').addClass('rotulo');
+    rVldcotas.css('width', '150px').addClass('rotulo');
+
+    //Campos do frmSaqueParcial
+    cVldsaque = $('#vldsaque', '#frmSaqueParcial');
+    cNrdconta = $('#nrdconta', '#frmSaqueParcial');
+    cDsmotivo = $('#dsmotivo', '#frmSaqueParcial');
+    cVldcotas = $('#vldcotas', '#frmSaqueParcial');
+
+    cVldsaque.css({ 'width': '150px' }).addClass('moeda').desabilitaCampo();
+    cNrdconta.addClass('conta pesquisa').css('width', '150px').desabilitaCampo();
+    cDsmotivo.css({ 'width': '300px' }).desabilitaCampo();
+    cVldcotas.css({ 'width': '150px' }).addClass('moeda').desabilitaCampo();
+
+    //Ao pressionar do campo cVldsaque
+    /*cVldsaque.unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        //Ao pressionar ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).removeClass('campoErro');
+
+            cNrdconta.focus();
+            return false;
+        }
+
+    });
+
+    // Evento change no campo cNrdconta
+    cNrdconta.unbind("change").bind("change", function () {
+
+        $(this).removeClass('campoErro');
+
+        if ($(this).val() == "") {
+            return true;
+        }
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Valida número da conta
+        if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
+
+            showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmSaqueParcial').focus();");
+            return false;
+
+        }
+
+        return true;
+
+    });*/
+
+    //controlaPesquisaSaquelPacial();
+
+    layoutPadrao();
+
+    cVldsaque.focus();
+
+    return false;
+
+}
+
+function efetuarSaqueParcialCRM() {
+
+    var rowidsaq = $('#rowidsaq', '#frmSaqueParcial').val();
+    var nrctadst = $('#nrdconta', '#frmSaqueParcial').val();
+    var vldsaque = isNaN(parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."));
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando saque ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/matric/efetuar_saque_parcialCRM.php",
+        data: {
+            rowidsaq: rowidsaq,
+            nrctaori: normalizaNumero(nrdconta),
+            nrctadst: normalizaNumero(nrctadst),
+            vldsaque: vldsaque,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesSaqueParcial').focus();");
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'blockBackground(parseInt($("#divRotina").css("z-index")));$("#btVoltar","#divBotoesSaqueParcial").focus();');
+            }
+        }
+    });
 }
