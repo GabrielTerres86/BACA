@@ -252,6 +252,32 @@
 		echo "$('#dtiniatv','#frmCadmat').val('$dtiniatv');";
 
 	}
+
+	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
+
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+    $xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+		
+	$xmlResult = mensageria($xml, "TELA_CADMAT", "VERIFICA_BOTOES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto 	= getObjectXML($xmlResult);		
+	
+	// Se ocorrer um erro, mostra mensagem
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
+		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nrdconta\', \'#frmCab\').focus()',false);
+		exit();
+	}
+	
+	$flgsaqpr = $xmlObjeto->roottag->tags[0]->tags[0]->cdata;
+	$flgdesli = $xmlObjeto->roottag->tags[0]->tags[1]->cdata;
+
+	// Alimenta as variaveis com flag de visualizacao dos botoes saque parcial e desligamento
+	echo "flgsaqpr = $flgsaqpr;";
+	echo "flgdesli = $flgdesli;";
 	
 	echo "formataTitular();";
 	echo "trocaBotoes();";

@@ -25,7 +25,7 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		
-			<table border="0" cellpadding="0" cellspacing="0" width="350">
+			<table border="0" cellpadding="0" cellspacing="0" width="600">
 				<tr>
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -44,41 +44,40 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
 
-									<form id="frmDesligamento" name="frmDesligamento" class="formulario" onsubmit="return false;">
-										
-										<fieldset>
+									<div id="divDesligamento">
 
-											<label for="vldcotas" style="width: 140px">Valor das cotas: </label>
-											<input name="vldcotas" id="vldcotas" type="text" value="<?php echo $vldcotas; ?>" />
-											<br />
+										<form id="frmDesligamento" name="frmDesligamento" class="formulario" onsubmit="return false;">
+											<input name="rowiddes" id="rowiddes" type="hidden" value="<?php echo getByTagName($registro,'rowiddes'); ?>" />
 
-											<label for="nrdconta" style="width: 140px"><?php echo utf8ToHtml('Conta para crédito:') ?></label>
-											<input name="nrdconta" id="nrdconta" type="text" value="<?php echo formataContaDV($nrdconta); ?>" />
-											<br />
+											<label for="vldcotas" >Valor das cotas: </label>
+											<input name="vldcotas" id="vldcotas" type="text" value="<?php echo getByTagName($registro,'vlsaque'); ?>" />
+											<br style="clear:both">
 
-											<label for="formaTot" style="width: 140px"><?php echo utf8ToHtml('Forma de devolução:') ?></label>	
-											<input name="formadev" id="formaTot" type="radio" class="radio" onclick="alteraFormaDevolucao(1)" value="1" <? echo getByTagName($situacao,'cdsitdct') == 7 && getByTagName($situacao,'cdmotdem') == 12 ? 'checked' : '';  ?> />
-											<label for="formaTot" class="radio"><? echo utf8ToHtml('Total') ?></label>
-											<input name="formadev" id="formaPar" type="radio" class="radio" onclick="alteraFormaDevolucao(2)" value="2" style="<? echo getByTagName($situacao,'cdsitdct') == 7 && getByTagName($situacao,'cdmotdem') == 12 ? 'display:none' : '';  ?>" />
-											<label for="formaPar" class="radio" style="<? echo getByTagName($situacao,'cdsitdct') == 7 && getByTagName($situacao,'cdmotdem') == 12 ? 'display:none' : '';  ?>"><? echo utf8ToHtml('Parcelada') ?></label>
-											<br />
+											<label for="nrdconta"><? echo utf8ToHtml('Conta para crédito:') ?></label>
+											<input type="text" id="nrdconta" name="nrdconta" value="<?php echo formataContaDVsimples(getByTagName($registro,'nrdconta')); ?>" />
+											<br style="clear:both">
 
-											<label for="qtdparce" style="width: 140px; display: none"><?php echo utf8ToHtml('Quantidade de parcelas:') ?></label>
-											<input name="qtdparce" id="qtdparce" type="text" class="campo" />
-											<br />
+											<label for="dtdemiss"><? echo utf8ToHtml('Saída:') ?></label>
+											<input type="text" name="dtdemiss" id="dtdemiss" value="<? echo $glbvars['dtmvtolt'] ?>" />
+											<br style="clear:both">
+												
+											<label for="cdmotdem">Motivo:</label>
+											<input type="text" name="cdmotdem" id="cdmotdem" value="<? echo getByTagName($registro,'cdmotivo') ?>" />
+											<input type="text" name="dsmotdem" id="dsmotdem" value="<? echo getByTagName($registro,'dsmotivo') ?>" />
+											<br style="clear:both" />
 
-											<label for="datadevo" style="width: 140px"><?php echo utf8ToHtml('Data da devolução:') ?></label>
-											<input name="datadevo" id="datadevo" type="text" class="data campo"/>
-											<br />
+										</form>
 
-										</fieldset>
+										<div style="clear: both"></div>
 
-									</form>
-									<div style="clear: both"></div>
-									<div id="divBotoes2">
-										<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); return false;">Voltar</a>
-										<a href="#" class="botao" id="btOk" <? echo getByTagName($situacao,'cdmotdem') != 12 && getByTagName($situacao,'cdmotdem') != 13 ? 'onclick="confirmarDesligamento('.getByTagName($situacao,'cdmotdem').', '.getByTagName($situacao,'dsmotdem').');"' : 'onclick="efetuarDevolucaoCotas();"';  ?>>Prosseguir</a>
+										<div id="divBotoes2">
+										  <a href="#" class="botao" id="btVoltar" onclick="controlaBotoesTelaDesligamento('1'); return false;">Voltar</a>
+										  <a href="#" class="botao" id="btOk" onclick="controlaBotoesTelaDesligamento('2'); return false;">Prosseguir</a>
+										  
+										</div>
+
 									</div>
+                  
 								</td>
 							</tr>
 						</table>			    
@@ -88,3 +87,15 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 		</td>
 	</tr>
 </table>
+
+<script>
+
+	exibeRotina($('#divRotina'));
+	hideMsgAguardo();
+	bloqueiaFundo($('#divRotina'));
+	
+	formataTelaDesligamento();
+	
+	$('#nrdconta','#frmDesligamento').val('<?php echo formataContaDV($nrdconta); ?>');
+	
+</script>

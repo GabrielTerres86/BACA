@@ -441,10 +441,14 @@ function trocaBotoes(){
 		$('#btVoltar','#divBotoes').show();
 		if (cddopcao == 'C'){
 			$('#btProsseguir','#divBotoes').hide();
-			$('#btDemiss','#divBotoes').show();
+			if(flgdesli == 1){
+				$('#btDemiss','#divBotoes').show();
+			}
 			$('#btTermDemiss','#divBotoes').show();
 			$('#btGerarTed','#divBotoes').show();
-			$('#btSaqParcial','#divBotoes').show();
+			if(flgsaqpr == 1){
+				$('#btSaqParcial','#divBotoes').show();
+			}
 		}else{
 			$('#btProsseguir','#divBotoes').show();
 		}
@@ -1418,14 +1422,7 @@ function gerarTedCapital(){
 	
 }
 
-function verificarDesligamento(){
-	
-	showConfirmacao('Atrav&eacute;s da tela CONTAS, na op&ccedil;&atilde;o Impedimentos de Desligamento, todos os produtos e servi&ccedil;os foram cancelados?','Confirma&ccedil;&atilde;o - Ayllos','apresentarDesligamento();','fechaRotina($(\'#divRotina\'));','sim.gif','nao.gif');
-	
-	return false;	
-}
-
-// Função para acessar rotina de Saque Parcial 
+// Função para acessar rotina de Desligamento
 function apresentarDesligamento() {			
 	
 	// Mostra mensagem de aguardo	
@@ -1445,33 +1442,17 @@ function apresentarDesligamento() {
 			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
-			$('#divRotina').html(response);
-			exibeRotina($('#divRotina'));
-			hideMsgAguardo();
-			bloqueiaFundo($('#divRotina'));
-			formataDesligamento();
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				$('#divRotina').html(response);
+			} else {
+				eval(response);
+			}
+						
 		}				
 	});
 	
   return false;
  	
-}
-
-function formataDesligamento(){
-
-	//Campos do frmDesligamento
-	cVldcotas = $('#vldcotas','#frmDesligamento');
-	cNrdconta = $('#nrdconta','#frmDesligamento');
-	cQtdparce = $('#qtdparce','#frmDesligamento');
-	cDatadevo = $('#datadevo','#frmDesligamento');	
-
-	cVldcotas.css('width','130px').addClass('moeda').desabilitaCampo();
-	cNrdconta.css('width','130px').addClass('conta campoTelaSemBorda').desabilitaCampo();
-	cQtdparce.css('width','130px').css('display','none').addClass('campo');
-	cDatadevo.css('width','130px').addClass('data campo');
-
-	layoutPadrao();
-
 }
 
 function confirmarDesligamento(cdmotdem, dsmotdem){
@@ -1480,26 +1461,22 @@ function confirmarDesligamento(cdmotdem, dsmotdem){
 
 function efetuarDevolucaoCotas() {
 	
+	var rowiddes = $('#rowiddes','#frmDesligamento').val();
 	var vldcotas = isNaN(parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldcotas', '#frmDesligamento').val().replace(/\./g, "").replace(/\,/g, "."));
-	var formadev = $('input[name="formadev"]:checked', '#frmDesligamento').val();
-	var qtdparce = $('#qtdparce','#frmDesligamento').val() ? $('#qtdparce','#frmDesligamento').val() : 0;
-	var datadevo = $('#datadevo','#frmDesligamento').val();
-	var mtdemiss = $('#cdmotdem','#frmCadmat').val();
-	var dtdemiss = $('#dtdemiss','#frmCadmat').val();
+	var mtdemiss = $('#cdmotdem','#frmDesligamento').val();
+	var dtdemiss = $('#dtdemiss','#frmDesligamento').val();
 
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, efetuando devolução ...");
+	showMsgAguardo("Aguarde, efetuando devolucao ...");
 			
 	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/cadmat/efetuar_devolucao_cotas.php",
 		data: {
+			rowiddes: rowiddes,
 			nrdconta: normalizaNumero(nrdconta),
 			vldcotas: vldcotas,
-			formadev: formadev,
-			qtdparce: qtdparce,
-			datadevo: datadevo,
 			mtdemiss: mtdemiss,
 			dtdemiss: dtdemiss,			
 			redirect: "script_ajax"
@@ -1517,4 +1494,301 @@ function efetuarDevolucaoCotas() {
 			}
 		}				
 	});	
+}
+
+// Função para acessar rotina de Saque Parcial 
+function abrirRotinaSaqueParcial() {
+			
+    var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();			
+	
+	// Mostra mensagem de aguardo	
+	showMsgAguardo("Aguarde, carregando ...");
+	
+    // Executa script através de ajax
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/cadmat/apresentar_rotina_saque_parcial.php', 
+		data: {			
+			nrdconta: normalizaNumero(nrdconta),
+			redirect: 'html_ajax'			
+			}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				$('#divRotina').html(response);
+				exibeRotina($('#divRotina'));
+				hideMsgAguardo();
+				bloqueiaFundo($('#divRotina'));
+				formataRotinaSaqueParcial();
+			}else{
+				eval(response);
+			}							
+		}				
+	});
+	
+  return false;
+ 	
+}
+
+function formataRotinaSaqueParcial(){
+	
+	highlightObjFocus( $('#frmSaqueParcial') );
+	
+	//Label do frmSaqueParcial
+	rVldsaque = $('label[for="vldsaque"]','#frmSaqueParcial');
+	rNrdconta = $('label[for="nrdconta"]','#frmSaqueParcial');
+	rDsmotivo = $('label[for="dsmotivo"]','#frmSaqueParcial');
+	rVldcotas = $('label[for="vldcotas"]','#frmSaqueParcial');
+
+	rVldsaque.css('width','230px').addClass('rotulo');
+	rNrdconta.css('width','230px').addClass('rotulo');
+	rDsmotivo.css('width','230px').addClass('rotulo');
+	rVldcotas.css('width','230px').addClass('rotulo');
+	
+	//Campos do frmSaqueParcial
+	cVldsaque = $('#vldsaque','#frmSaqueParcial');
+	cNrdconta = $('#nrdconta','#frmSaqueParcial');
+	cDsmotivo = $('#dsmotivo','#frmSaqueParcial');
+	cVldcotas = $('#vldcotas','#frmSaqueParcial');
+
+	cVldsaque.css({'width':'150px'}).addClass('moeda').desabilitaCampo();
+	cNrdconta.addClass('conta pesquisa').css('width', '150px').desabilitaCampo();
+	cDsmotivo.css({'width':'150px'}).desabilitaCampo();
+	cVldcotas.css({'width':'150px'}).addClass('moeda').desabilitaCampo();
+	
+	//Ao pressionar do campo cVldsaque
+	cVldsaque.unbind('keypress').bind('keypress', function(e){
+		
+		if ( divError.css('display') == 'block' ) { return false; }		
+		
+		//Ao pressionar ENTER, TAB
+		if(e.keyCode == 13 || e.keyCode == 9){
+		
+			$(this).removeClass('campoErro');
+			
+			cNrdconta.focus();	
+			return false;
+		}
+		
+	});
+		
+	// Evento change no campo cNrdconta
+	cNrdconta.unbind("change").bind("change",function() {
+		
+		$(this).removeClass('campoErro');
+		
+		if ($(this).val() == "") {
+			return true;
+		}
+				
+		if ( divError.css('display') == 'block' ) { return false; }		
+		
+		// Valida número da conta
+		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
+		
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmSaqueParcial').focus();");
+			return false;
+			
+		} 
+		
+		return true;
+		
+	});
+	
+	controlaPesquisaSaquelPacial();
+	
+	layoutPadrao();
+	
+	cVldsaque.focus();
+	
+	return false;
+	
+}
+
+function efetuarSaqueParcial() {
+	
+	var rowidsaq = $('#rowidsaq','#frmSaqueParcial').val(); 
+	var nrctadst = $('#nrdconta','#frmSaqueParcial').val();
+	var vldsaque = isNaN(parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vldsaque', '#frmSaqueParcial').val().replace(/\./g, "").replace(/\,/g, "."));
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, efetuando saque ...");
+			
+	// Executa script de consulta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/cadmat/efetuar_saque_parcial.php",
+		data: {
+			rowidsaq: rowidsaq,
+			nrctaori: normalizaNumero(nrdconta),
+			nrctadst: normalizaNumero(nrctadst),
+			vldsaque: vldsaque,
+			redirect: "script_ajax"
+		}, 
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesSaqueParcial').focus();");							
+		},
+        success: function (response) {
+			hideMsgAguardo();				
+			try {
+				eval( response );						
+			} catch(error) {						
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($("#divRotina").css("z-index")));$("#btVoltar","#divBotoesSaqueParcial").focus();');
+			}
+		}				
+	});	
+}
+
+function controlaPesquisaSaquelPacial(){
+		
+	// Definindo as variáveis
+    var bo = 'b1wgen0059.p';
+    var procedure = '';
+    var titulo = '';
+    var qtReg = '';
+    var filtrosPesq = '';
+    var filtrosDesc = '';
+    var colunas = '';
+	var nomeForm = 'frmSaqueParcial';
+	
+	/*-------------------------------------*/
+    /*       CONTROLE DAS PESQUISAS        */
+    /*-------------------------------------*/
+
+    // Atribui a classe lupa para os links 
+    $('a', '#' + nomeForm).addClass('lupa').css('cursor', 'auto');
+
+    // Percorrendo todos os links
+    $('a', '#' + nomeForm).each(function () {
+
+        if (!$(this).prev().hasClass('campoTelaSemBorda')) { $(this).css('cursor', 'pointer'); }
+
+        $(this).unbind("click").bind("click", (function () {
+            if ($(this).prev().hasClass('campoTelaSemBorda')) {
+                return false;
+			} else {
+                campoAnterior = $(this).prev().attr('name');
+				
+				// Número da conta
+                if (campoAnterior == 'nrdconta') {
+					
+					mostraPesquisaAssociado('nrdconta', 'frmSaqueParcial',$('#divRotina') );
+					return false;
+	
+				}
+
+            }
+            return false;
+        }));
+	
+	});
+	
+	return false;
+
+}
+
+function verificaProdutosAtivos() {
+
+    var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+    // Obtem o nome do formulario
+    var fomulario = 'frmCadmat';
+	
+    var dtdemiss = $("#dtdemiss", "#" + fomulario).val();
+    var cdmotdem = $("#cdmotdem", "#" + fomulario).val();
+    var cddopcao = 'C';
+	
+    showMsgAguardo("Aguarde...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/cadmat/verifica_produtos_ativos.php",
+        data: {
+            nrdconta: normalizaNumero(nrdconta),
+            cddopcao : cddopcao, 
+            dtdemiss : dtdemiss, 
+            cdmotdem : cdmotdem,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            try {
+                eval(response);
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'blockBackground(parseInt($("#divRotina").css("z-index")));');
+            }
+        }
+
+    });
+
+    return false;
+
+}
+
+function formataTelaDesligamento(){	
+	
+	highlightObjFocus( $('#frmDesligamento') );
+	
+	//Label do frmDesligamento
+	rVldcotas = $('label[for="vldcotas"]','#frmDesligamento');
+	rNrdconta = $('label[for="nrdconta"]','#frmDesligamento');
+	rDtdemiss = $('label[for="dtdemiss"]','#frmDesligamento');
+	rCdmotdem = $('label[for="cdmotdem"]','#frmDesligamento');
+	rDsmotdem = $('label[for="dsmotdem"]','#frmDesligamento');
+	
+	rVldcotas.css('width','240px').addClass('rotulo');
+	rNrdconta.css('width','240px').addClass('rotulo');
+	rDtdemiss.css('width','240px').addClass('rotulo');
+	rCdmotdem.css('width','240px').addClass('rotulo');
+	rDsmotdem.css('width','240px').addClass('rotulo');
+	
+	
+	//Campos do frmDesligamento
+	cVldcotas = $('#vldcotas','#frmDesligamento');
+	cNrdconta = $('#nrdconta','#frmDesligamento');
+	cDtdemiss = $('#dtdemiss','#frmDesligamento');
+	cCdmotdem = $('#cdmotdem','#frmDesligamento');
+	cDsmotdem = $('#dsmotdem','#frmDesligamento');
+
+	cDtdemiss.css({'width':'130px'}).addClass('data').desabilitaCampo();
+	cCdmotdem.addClass('codigo pesquisa').css({ 'width': '130px', 'display': 'none' }).habilitaCampo();
+	cDsmotdem.addClass('descricao').css('width', '130px');
+	cVldcotas.css({'width':'130px'}).addClass('moeda').desabilitaCampo();
+	cNrdconta.addClass('inteiro').css({ 'width': '130px' }).desabilitaCampo();
+			
+	$('#divParcelas').css('display', 'none');
+	
+	layoutPadrao();
+	
+	return false;
+}
+
+function controlaBotoesTelaDesligamento(tipoAcao) {
+   
+    switch (tipoAcao) {
+
+        case '1':
+
+            fechaRotina($('#divRotina'));
+
+        break;
+
+        case '2':
+
+			showConfirmacao('Deseja confirmar o desligamento?','Confirma&ccedil;&atilde;o - Ayllos','efetuarDevolucaoCotas();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));','sim.gif','nao.gif');
+			
+        break;
+
+    }
+    
+    return false;
 }

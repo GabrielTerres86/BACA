@@ -100,10 +100,10 @@
 																			<? include('form_cadmat.php'); ?>
 																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none">
 																				<a href="#" class="botao" id="btVoltar" 	onclick="btnVoltar(); return false;">Voltar</a>
-																				<a href="#" class="botao" id="btDemiss"     onclick="verificarDesligamento();">Desligamento</a>
-																				<a href="#" class="botao" id="btTermDemiss" onclick="alert('Em desenvolvimento');">Termo Desligamento</a>
-																				<a href="#" class="botao" id="btGerarTed"   onclick="gerarTedCapital();">Gerar TED Capital</a>
-																				<a href="#" class="botao" id="btSaqParcial" onclick="alert('Em desenvolvimento');">Saque Parcial</a>
+																				<a href="#" class="botao" id="btDemiss"     onclick="verificaProdutosAtivos();">Desligar</a>
+																				<!-- <a href="#" class="botao" id="btTermDemiss" onclick="alert('Em desenvolvimento');">Termo Desligamento</a> -->
+																				<!-- <a href="#" class="botao" id="btGerarTed"   onclick="gerarTedCapital();">Gerar TED Capital</a> -->
+																				<a href="#" class="botao" id="btSaqParcial" onclick="abrirRotinaSaqueParcial();">Saque Parcial</a>
 																				<a href="#" class="botao" id="btProsseguir">Prosseguir</a>
 																			</div>
 																		</div>

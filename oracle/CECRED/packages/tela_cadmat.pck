@@ -15,6 +15,47 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADMAT AS
 																		,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
 																		,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
 																		,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+                                    
+  PROCEDURE pc_verifica_botoes(pr_nrdconta IN crapass.nrdconta%TYPE --> NR. da conta
+		                          ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                              ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+                              
+  PROCEDURE pc_busca_dados_saque_parcial(pr_nrdconta IN crapass.nrdconta%TYPE --> NR. da conta
+                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                        ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+                                        
+  PROCEDURE pc_busca_dados_desligamento(pr_nrdconta IN crapass.nrdconta%TYPE --> NR. da conta
+                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                       ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+                                       
+  PROCEDURE pc_atualiza_tbcotas_saque (pr_rowiddes IN ROWID    --> ROWID
+                                      ,pr_nrdconta IN NUMBER   --> Número da conta
+                                      ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                      ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+                                      
+  PROCEDURE pc_busca_cotas_liberada(pr_nrdconta  IN INTEGER                 --> Número da conta
+                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);             --> Descrição do erro                                                                                                                                                                                        
 
 END TELA_CADMAT;
 /
@@ -75,11 +116,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 						,ass.inpessoa
 						,to_char(ass.dtdemiss, 'DD/MM/RRRR') dtdemiss
 						,(SELECT dom.dscodigo
-						    FROM tbcadast_dominio_campo dom 
+						    FROM tbcc_dominio_campo dom 
 							 WHERE dom.nmdominio = 'CRAPASS.INTIPSAI'
 							   AND dom.cddominio = ass.intipsai) dstipsai
 						,(SELECT dom.dscodigo
-						    FROM tbcadast_dominio_campo dom 
+						    FROM tbcc_dominio_campo dom 
 							 WHERE dom.nmdominio = 'CRAPASS.ININCTVA'
 							   AND dom.cddominio = ass.ininctva) dsinctva
             ,ass.cdmotdem
@@ -778,19 +819,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 			 WHERE a.cdcooper = pr_cdcooper
 			   AND a.nrdconta = pr_nrdconta
 				 AND a.tpsaque  = 2 -- Desligamento
-				 AND a.iddevolucao = 1 OR (a.iddevolucao = 2 AND a.dtago IS NOT NULL)
+				 AND (a.iddevolucao = 1 OR (a.iddevolucao = 2 --AND a.dtago IS NOT NULL --> Retirada a necessidade da DTAGO, pois a retirada das cotas será feita no próprio PA - Definição da SARAH
+                                    ))
 				 AND a.dtefetivacao IS NULL; -- Processo de devolução ainda não efetivado
 		rw_desligamento cr_desligamento%ROWTYPE;
 		
 		-- Verificar se cooperado está desligado
-		CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+		/*CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
 		  SELECT 1
 			  FROM crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta
 				 AND ass.dtdemiss IS NOT NULL;
-		rw_crapass cr_crapass%ROWTYPE;
+		rw_crapass cr_crapass%ROWTYPE;*/
 		
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
@@ -829,7 +871,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 			-- Levanta exceção
 			RAISE vr_exc_erro;
 		END IF;
-
+    
+    /*
     -- Buscar dados do cooperado
     OPEN cr_crapass(pr_cdcooper => vr_cdcooper
 		               ,pr_nrdconta => pr_nrdconta);
@@ -847,7 +890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 			RAISE vr_exc_fim;
 		END IF;
 		-- Fechar cursor
-		CLOSE cr_crapass;
+		CLOSE cr_crapass;*/
 
     -- Verificar botão de saque parcial
     OPEN cr_saque_parcial(pr_cdcooper => vr_cdcooper
@@ -923,7 +966,556 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
     
-  END pc_verifica_botoes;	
+  END pc_verifica_botoes;
+  
+  PROCEDURE pc_busca_dados_saque_parcial(pr_nrdconta IN crapass.nrdconta%TYPE --> NR. da conta
+                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                        ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_busca_dados_saque_parcial
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Mateus Zimmermann
+    Data    : Outubro/2017                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para buscar os dados de desligamento
+    
+    Alteracoes: 
+    ............................................................................. */
+  
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+	
+    --Cursor para buscar dados saque parcial
+    CURSOR cr_saque_parcial(pr_cdcooper IN crapass.cdcooper%TYPE
+		                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT a.rowid,
+             a.nrdconta,
+			       a.vlsaque,
+						 a.cdmotivo,
+             b.dsmotivo
+			  FROM tbcotas_saque_controle a
+           , tbcotas_motivo_saqueparcial b
+			 WHERE a.cdcooper = pr_cdcooper
+			   AND a.nrdconta = pr_nrdconta
+				 AND a.tpsaque  = 1 -- Saque parcial
+				 AND a.dtefetivacao IS NULL -- Processo de devolução ainda não efetivado
+         AND b.cdmotivo = a.cdmotivo;
+		rw_saque_parcial cr_saque_parcial%ROWTYPE;
+		
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variaveis locais
+    vr_contador INTEGER := 0;
+      
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+  
+  BEGIN
+		
+		-- Incluir nome do módulo logado
+		GENE0001.pc_informa_acesso(pr_module => 'TELA_CADMAT'
+															,pr_action => null); 
+			
+		-- Extrai os dados vindos do XML
+		GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);
+
+		-- Se retornou algum erro
+		IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+
+    -- Buscar dados do cooperado
+    OPEN cr_saque_parcial(pr_cdcooper => vr_cdcooper
+		                     ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_saque_parcial INTO rw_saque_parcial;
+		
+		-- Se não encontrou cooperado
+		IF cr_saque_parcial%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_saque_parcial;
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Saque Parcial nao encontrado';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_saque_parcial;
+		
+		-- Iniciar o XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+		
+		--Escrever no XML
+    -- ROWID
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'rowidsaq',
+													 pr_tag_cont => rw_saque_parcial.rowid,
+													 pr_des_erro => vr_dscritic);
+                           
+		-- Conta
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'nrdconta',
+													 pr_tag_cont => rw_saque_parcial.nrdconta,
+													 pr_des_erro => vr_dscritic);
+	  -- Natureza
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'vlsaque',
+													 pr_tag_cont => rw_saque_parcial.vlsaque,
+													 pr_des_erro => vr_dscritic);
+    -- CPF/CNPJ
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'dsmotivo',
+													 pr_tag_cont => rw_saque_parcial.dsmotivo,
+													 pr_des_erro => vr_dscritic);											 											 
+											 											 
+    pr_des_erro := 'OK';
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_CADMAT.pc_busca_dados_saque_parcial --> ' ||
+                     SQLERRM;
+                                  
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+  END pc_busca_dados_saque_parcial;
+  
+  PROCEDURE pc_busca_dados_desligamento(pr_nrdconta IN crapass.nrdconta%TYPE --> NR. da conta
+                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                       ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_busca_dados_desligamento
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Mateus Zimmermann
+    Data    : Outubro/2017                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para buscar os dados desligamento
+    
+    Alteracoes: 
+    ............................................................................. */
+  
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+	
+    --Cursor para buscar dados desligamento
+    CURSOR cr_desligamento(pr_cdcooper IN crapass.cdcooper%TYPE
+		                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT a.rowid,
+             a.nrdconta,
+			       a.vlsaque,
+						 a.cdmotivo,
+             b.dsmotivo
+			  FROM tbcotas_saque_controle a
+           , tbcotas_motivo_desligamento b
+			 WHERE a.cdcooper = pr_cdcooper
+			   AND a.nrdconta = pr_nrdconta
+				 AND a.tpsaque  = 2 -- Desligamento
+         AND (a.iddevolucao = 1 OR (a.iddevolucao = 2 --AND a.dtago IS NOT NULL --> Retirada a necessidade da DTAGO, pois a retirada das cotas será feita no próprio PA - Definição da SARAH
+                                    ))
+         AND a.dtefetivacao IS NULL -- Processo de devolução ainda não efetivado
+         AND b.cdmotivo = a.cdmotivo;
+		rw_desligamento cr_desligamento%ROWTYPE;
+		
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variaveis locais
+    vr_contador INTEGER := 0;
+      
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+  
+  BEGIN
+		
+		-- Incluir nome do módulo logado
+		GENE0001.pc_informa_acesso(pr_module => 'TELA_CADMAT'
+															,pr_action => null); 
+			
+		-- Extrai os dados vindos do XML
+		GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);
+
+		-- Se retornou algum erro
+		IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+
+    -- Buscar dados do cooperado
+    OPEN cr_desligamento(pr_cdcooper => vr_cdcooper
+		                     ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_desligamento INTO rw_desligamento;
+		
+		-- Se não encontrou cooperado
+		IF cr_desligamento%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_desligamento;
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Desligamento nao encontrado';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_desligamento;
+		
+		-- Iniciar o XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+		
+		--Escrever no XML
+    --ROWID
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'rowiddes',
+													 pr_tag_cont => rw_desligamento.rowid,
+													 pr_des_erro => vr_dscritic);
+                           
+		-- Conta
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'nrdconta',
+													 pr_tag_cont => rw_desligamento.nrdconta,
+													 pr_des_erro => vr_dscritic);
+	  -- vlsaque
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'vlsaque',
+													 pr_tag_cont => rw_desligamento.vlsaque,
+													 pr_des_erro => vr_dscritic);
+    -- cdmotdem
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'cdmotivo',
+													 pr_tag_cont => rw_desligamento.cdmotivo,
+													 pr_des_erro => vr_dscritic);
+    -- dsmotdem
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+													 pr_tag_pai  => 'Dados',
+													 pr_posicao  => vr_contador,
+													 pr_tag_nova => 'dsmotivo',
+													 pr_tag_cont => rw_desligamento.dsmotivo,
+													 pr_des_erro => vr_dscritic);											 											 
+											 											 
+    pr_des_erro := 'OK';
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_CADMAT.pc_busca_dados_desligamento --> ' ||
+                     SQLERRM;
+                                  
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+  END pc_busca_dados_desligamento;
+  
+  -- Rotina para atualizar colunas da tbcotas_saque_controle após saque parcial ou desligamento                              
+  PROCEDURE pc_atualiza_tbcotas_saque (pr_rowiddes IN ROWID    --> ROWID
+                                      ,pr_nrdconta IN NUMBER   -- Número da conta
+                                      ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                      ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* ..........................................................................
+    --
+    --  Programa : pc_atualiza_tbcotas_saque
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann
+    --  Data     : Novembro/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para atualizar colunas da tbcotas_saque_controle após saque parcial ou desligamento
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+        
+    -- Tratamento de erros  																			
+		vr_exc_erro EXCEPTION;
+		vr_cdcritic PLS_INTEGER;
+		vr_dscritic VARCHAR2(4000);
+																			
+  BEGIN
+    
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_CADMAT'
+                                ,pr_action => null); 
+  			
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou algum erro
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+      END IF;          
+
+      -- Atualiza tabela tbcotas_saque_controle
+      BEGIN
+        UPDATE tbcotas_saque_controle
+           set dtefetivacao = SYSDATE,
+               tpsituacao = 2 
+         where cdcooper = vr_cdcooper
+           and nrdconta = pr_nrdconta
+           and rowid = pr_rowiddes;
+      EXCEPTION
+        WHEN OTHERS THEN
+				  -- Gerar crítica
+			  	vr_dscritic := 'Erro UPDATE tabela TBCOTAS_SAQUE_CONTROLE: ' ||
+                     SQLERRM;
+				  -- Levantar exceção
+			  	RAISE vr_exc_erro;          
+      END;
+		
+  EXCEPTION
+		WHEN vr_exc_erro THEN
+			-- Se possui código da crítica
+			IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL THEN
+				-- Buscar descrição da crítica
+				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+			END IF;
+			-- Retornar crítica parametrizada
+			pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_atualiza_tbcotas_saque: ' ||
+                     SQLERRM;
+  END pc_atualiza_tbcotas_saque;
+  
+  PROCEDURE pc_busca_cotas_liberada(pr_nrdconta  IN INTEGER                 --> Número da conta
+                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS           --> Descrição do erro
+  /* ..........................................................................
+    --
+    --  Programa : pc_busca_cotas_liberada
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann
+    --  Data     : Novembro/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para atualizar colunas da tbcotas_saque_controle após saque parcial ou desligamento
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/                                 
+
+    --Variaveis locais
+    vr_cdoperad VARCHAR2(100);
+    vr_cdcooper NUMBER;
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_vldcotas crapcot.vldcotas%TYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+
+    vr_exc_saida EXCEPTION;
+
+  BEGIN
+
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'MATRIC'
+                              ,pr_action => null);
+
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Busca as cidades
+    CADA0012.pc_retorna_cotas_liberada(pr_cdcooper    => vr_cdcooper    --> Codigo da coperativa
+                                      ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
+                                      ,pr_vldcotas    => vr_vldcotas    --> Variavel com o valor das cotas retornado
+                                      ,pr_dscritic    => vr_dscritic);  --> Descricao da critica
+                                      
+    -- Se retornou erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;                                      
+
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'cotas', pr_tag_cont => null, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cotas', pr_posicao => 0, pr_tag_nova => 'vldcotas', pr_tag_cont => to_char(nvl(vr_vldcotas,0),'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
+
+    pr_des_erro := 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+
+      cecred.pc_internal_exception(3);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em TELA_CADMAT.pc_busca_cotas_liberada.';
+      pr_des_erro := 'NOK';
+
+      pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_busca_cotas_liberada;
 	
 END TELA_CADMAT;
 /
