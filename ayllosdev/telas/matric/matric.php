@@ -10,6 +10,8 @@
 				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
 
 				  14/11/2017 - Ajuste para inclusão da nova opção H (Jonata - RKAM P364).
+
+				  04/01/2017 - Preparar a tela para receber a conta como parametro (Renato Darosci - P339)
  * --------------
  */
 ?>
@@ -23,6 +25,14 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");	
+
+	// Armazena variáveis vindas do CRM
+	$crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
+	$crm_nrdconta = isset($glbvars['CRM_NRDCONTA']) ? $glbvars['CRM_NRDCONTA'] : 0;
+	$crm_nrcpfcgc = isset($glbvars['CRM_NRCPFCGC']) ? $glbvars['CRM_NRCPFCGC'] : 0;
+	$crm_cdoperad = isset($glbvars['CRM_CDOPERAD']) ? $glbvars['CRM_CDOPERAD'] : '';
+	$crm_cdagenci = isset($glbvars['CRM_CDAGENCI']) ? $glbvars['CRM_CDAGENCI'] : 0;
+	
 ?>
 
 <html>
@@ -129,3 +139,11 @@
 </table>
 </body>
 </html>
+<script>
+// Alimenta variáveis do CRM para o js
+var crm_inacesso = <?php echo $crm_inacesso; ?>;
+var crm_nrdconta = '<?php echo formataContaDVsimples($crm_nrdconta); ?>';
+var crm_nrcpfcgc = normalizaNumero('<?php echo $crm_nrcpfcgc; ?>');
+var crm_cdoperad = '<?php echo $crm_cdoperad; ?>';
+var crm_cdagenci = <?php echo $crm_cdagenci; ?>;
+</script>

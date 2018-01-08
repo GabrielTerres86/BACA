@@ -20,49 +20,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
   -- Variaveis Globais
   vr_xml xmltype; -- XML qye sera enviado
 
-  -- Buscar dados complementares do titular para cadastramento do titular
-  PROCEDURE pc_ret_dados_pessoa( pr_nrcpfcgc     IN crapttl.nrcpfcgc%TYPE,
-                               pr_nmpessoa OUT crapavt.nmdavali%TYPE,
-                               pr_tpdocume OUT crapavt.tpdocava%TYPE,
-                               pr_nrdocume OUT crapavt.nrdocava%TYPE,
-                               pr_nmconjug OUT crapavt.nmconjug%TYPE,
-                               pr_nrcpfcjg OUT crapavt.nrcpfcjg%TYPE,
-                               pr_tpdoccjg OUT crapavt.tpdoccjg%TYPE,
-                               pr_nrdoccjg OUT crapavt.nrdoccjg%TYPE,
-                               pr_dsendre1 OUT crapavt.dsendres##1%TYPE,
-                               pr_dsbairro OUT crapavt.dsendres##2%TYPE,
-                               pr_nrfonres OUT crapavt.nrfonres%TYPE,
-                               pr_dsdemail OUT crapavt.dsdemail%TYPE,
-                               pr_nmcidade OUT crapavt.nmcidade%TYPE,
-                               pr_cdufresd OUT crapavt.cdufresd%TYPE,
-                               pr_nrcepend OUT crapavt.nrcepend%TYPE,
-                               pr_dsnacion OUT crapnac.dsnacion%TYPE,
-                               pr_vledvmto OUT crapavt.vledvmto%TYPE,
-                               pr_vlrenmes OUT crapavt.vlrenmes%TYPE,
-                               pr_complend OUT VARCHAR2,
-                               pr_nrendere OUT crapavt.nrendere%TYPE,                                       
-                               pr_inpessoa OUT crapavt.inpessoa%TYPE,
-                               pr_dtnascto OUT crapavt.dtnascto%TYPE,
-                               pr_tpnacion OUT crapttl.tpnacion%TYPE,
-                               pr_cdnacion OUT crapavt.cdnacion%TYPE,
-                               pr_cdufddoc OUT crapavt.cdufddoc%TYPE,
-                               pr_dtemddoc OUT crapavt.dtemddoc%TYPE,
-                               pr_cdsexcto OUT crapavt.cdsexcto%TYPE,
-                               pr_cdestcvl OUT crapavt.cdestcvl%TYPE,
-                               pr_cdnatura OUT crapmun.idcidade%TYPE,
-                               pr_dsnatura OUT crapnat.dsnatura%TYPE,
-                               pr_cdufnatu OUT crapttl.cdufnatu%TYPE,
-                               pr_nmmaecto OUT crapavt.nmmaecto%TYPE,
-                               pr_nmpaicto OUT crapavt.nmpaicto%TYPE,
-                               pr_inhabmen OUT crapavt.inhabmen%TYPE,
-                               pr_dthabmen OUT crapavt.dthabmen%TYPE,  
-                               pr_cdorgao_expedidor OUT tbgen_orgao_expedidor.cdorgao_expedidor%TYPE,                            
-                               pr_cdsitrfb OUT tbcadast_pessoa.cdsituacao_rfb%TYPE,
-                               pr_dtconrfb OUT tbcadast_pessoa.dtconsulta_rfb%TYPE,
-                               pr_grescola OUT tbcadast_pessoa_fisica.cdgrau_escolaridade%TYPE,
-                               pr_cdfrmttl OUT tbcadast_pessoa_fisica.cdcurso_superior%TYPE,                               
-                               pr_dscritic OUT VARCHAR2);
-
 
   -- Rotina para retornar os titulares de uma conta
   PROCEDURE pc_retorna_titulares(pr_cdcooper IN NUMBER                 --> Codigo da cooperativa
@@ -507,7 +464,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_busca_nrseqtel: ' ||
                      SQLERRM;		
-  
+  END pc_busca_nrseqtel;
+
   -- Buscar nr. de sequência de telefone para inclusoes de telefone pela MATRIC
   PROCEDURE pc_busca_crapjur(pr_nrcpfcgc IN  tbcadast_pessoa.nrcpfcgc%TYPE
 		                    ,pr_qtfuncio out tbcadast_pessoa_juridica.qtfuncionario%TYPE
@@ -948,7 +906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       SELECT a.nmpessoa,
              a.tpcadastro
         FROM tbcadast_pessoa a
-       WHERE a.nrcpfcgc = pr_nrcpfcgc;                                 
+       WHERE a.nrcpfcgc = pr_nrcpfcgc;
     rw_pessoa cr_pessoa%ROWTYPE;
   BEGIN
     -- Busca os dados da pessoa
@@ -1306,7 +1264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     CLOSE cr_ctrl_saque;
       
     -- Montar o XML de retorno com os dados
-    vr_string := '<vldsaque>'||rw_ctrl_saque.vlsaque ||'</vldsaque>'||
+    vr_string := '<vldsaque>'||to_char(rw_ctrl_saque.vlsaque,'FM999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ||'</vldsaque>'||
                  '<nrdconta>'||rw_ctrl_saque.nrdconta||'</nrdconta>'||
                  '<cdmotivo>'||rw_ctrl_saque.cdmotivo||'</cdmotivo>';
     

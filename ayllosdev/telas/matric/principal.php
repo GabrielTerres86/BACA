@@ -61,10 +61,10 @@
 		case 'CJ': $cddopcao = 'J'; break;
 		default  : $cddopcao = 'C'; break;
 	}
-
+	
 	// Se conta informada não for um número inteiro válido
 	if (!validaInteiro($nrdconta) && $operacao != 'CI') exibirErro('error','Conta/dv inválida.','Alerta - Matric','',false);
-	
+		
 		// Monta o xml de requisição
 		$xmlMatric  = '';
 		$xmlMatric .= '<Root>';
@@ -88,7 +88,7 @@
 		// Executa script para envio do XML e cria objeto para classe de tratamento de XML
 		$xmlResult 	= getDataXML($xmlMatric);
 		$xmlObjeto 	= getObjectXML($xmlResult);		
-
+		
 		// Se ocorrer um erro, mostra mensagem
 		if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 			$operacao = '';
@@ -307,8 +307,8 @@
 		$xml  .= "  </Dados>";
 		$xml  .= "</Root>";
 
-		// Executa script para envio do XML
-		$xmlResult = mensageria($xml, "MATRIC", "ACESSO_OPERADOR_CRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		// Executa script para envio do XML  -- Passa como agencia o cdpactra, pois a agencia está sempre com valor zero
+		$xmlResult = mensageria($xml, "MATRIC", "ACESSO_OPERADOR_CRM", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
 
 		// Se ocorrer um erro, mostra crítica
@@ -347,7 +347,7 @@
 	<a href="#" class="opAltCpfCnpj botao" id="btVoltarAltCpfCnpj" onclick="controlaOperacao('JC'); return false;">Cancelar</a>
 	<a href="#" class="opAltCpfCnpj botao" id="btSalvarAltCpfCnpj" onclick="controlaOperacao('JV'); return false;">Concluir</a>
 	
-	<a href="#" class="opConsultar botao" id="btVoltarCns">Voltar</a>
+	<a href="#" class="opConsultar botao" id="btVoltarCns">Voltar</a>	  
 <!-- Utiliza classes diferentes para que o foco não se posicione no botão errado -->
 	<a href="#" class="opBtnCRM    botao" id="btDemissCRM"     onclick="verificaProdutosAtivosCRM();">Desligar</a>
 	<a href="#" class="opBtnCRM    botao" id="btSaqueCRM"      onclick="abrirRotinaSaqueParcialCRM();">Saque Parcial</a>

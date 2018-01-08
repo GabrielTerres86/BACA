@@ -70,7 +70,7 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 									<div style="clear: both"></div>
 									<div id="divBotoes2">
 										<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); return false;">Voltar</a>
-										<a href="#" class="botao" id="btOk" <? echo getByTagName($situacao,'cdmotdem') != 12 && getByTagName($situacao,'cdmotdem') != 13 ? 'onclick="confirmarDesligamentoCRM('.getByTagName($situacao,'cdmotdem').', '.getByTagName($situacao,'dsmotdem').');"' : 'onclick="efetuarDevolucaoCotasCRM();"';  ?>>Prosseguir</a>
+										<a href="#" class="botao" id="btOk" onclick="confirmarDesligamentoCRM(); return false;">Prosseguir</a>
 									</div>
 								</td>
 							</tr>
