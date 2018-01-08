@@ -693,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 07/12/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 08/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -786,6 +786,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).	   
   --
   --             07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).
+  --
+  --             08/01/2018 - #823792 Alteração da mensagem de existência de agendamentos quando o acesso a
+  --                          internet está sendo cancelado (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -11152,7 +11155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         vr_cdindice := pr_tab_msg_confirma.COUNT() + 1;
 
         pr_tab_msg_confirma(vr_cdindice).inconfir := vr_inconfir;
-        pr_tab_msg_confirma(vr_cdindice).dsmensag := 'ATENCAO!!! O cooperado possui agendamentos programados.';   
+        pr_tab_msg_confirma(vr_cdindice).dsmensag := 'ATENCAO! Existem agendamentos programados. Caso o acesso seja cancelado, os agendamentos programados serão cancelados.';
         
         RAISE vr_exc_confirma; 
         
