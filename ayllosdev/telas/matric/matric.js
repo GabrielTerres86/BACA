@@ -130,6 +130,26 @@ $(document).ready(function() {
     exibeAlerta = false;
 	estadoInicial();
 
+    // Se origem foi do CRM
+	if (crm_inacesso == 1) {
+	    nrdconta = crm_nrdconta;
+
+	    cNrdconta = $('#nrdconta', '#frmFiltro');
+	    cCddopcao = $('#opcao', '#frmCabMatric');
+
+	    if (normalizaNumero(nrdconta) > 0) {
+	        cCddopcao.val('FC');
+	        cddopcao = 'FC';
+	        controlaLayout('1');
+	        cNrdconta.val(nrdconta);
+	        $('#btProsseguir', '#divBotoesFiltro').click();
+	    } /*else {
+	        cCddopcao.val('I');
+	        cddopcao = 'I';
+	        prosseguirInicio();
+	        consultaPreInclusao();
+	    }*/
+	}
 });
 
 
@@ -1081,7 +1101,12 @@ function controlaBotoes() {
     $('#btVoltarAltNome').css('display', 'none');
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
-    $('#btDemissCRM').css('display', 'none');
+
+    // Ocultar o botão
+    $('#btDemissCRM').css('display', 'none'); 
+    // Troca a classe do botão e retira a chamada da função do OnClick
+    $('#btDemissCRM').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
+ 
     $('#btSaqueCRM').css('display', 'none');
     $('#btSaqueParcial').css('display', 'none');
     $('#btDesligarAlt').css('display', 'none');
@@ -1102,7 +1127,7 @@ function controlaBotoes() {
             }));
 
             $('#btVoltarCns').css('display', 'inline');
-			
+            
             // Verifica se o operador não possui acesso ao CRM
             if (flgAcessoCRM == 'N') {
 
@@ -1146,9 +1171,14 @@ function controlaBotoes() {
                 }));
 
             } else {   // Caso operador possua acesso
-                if (flgDesligarCRM == 'S') {
-                    // Exibir o botão de desligamento
+                // Se não tem data de demissão... exibe o botão
+                if (!$('#dtdemiss', '#frmFisico').val()) {
                     $('#btDemissCRM').css('display', 'inline');
+                }
+
+                if (flgDesligarCRM == 'S') {
+                    // Troca a classe do botão e atribui a chamada da função do OnClick
+                    $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
                 }
 
                 if (flgSaldoPclCRM == 'S') {
@@ -4484,8 +4514,9 @@ function formataFiltroContasAntigasDemitidas() {
 }
 
 
-function confirmarDesligamentoCRM(cdmotdem, dsmotdem) {
-    showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+function confirmarDesligamentoCRM() {
+    showConfirmacao('Deseja confirmar o desligamento?','Confirma&ccedil;&atilde;o - Ayllos','efetuarDevolucaoCotasCRM();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));','sim.gif','nao.gif');
+    //showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
 }
 
 function efetuarDevolucaoCotasCRM() {

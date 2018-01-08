@@ -1981,7 +1981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     CLOSE cr_ctrl_saque;
       
     -- Montar o XML de retorno com os dados
-    vr_string := '<vldsaque>'||rw_ctrl_saque.vlsaque ||'</vldsaque>'||
+    vr_string := '<vldsaque>'||to_char(rw_ctrl_saque.vlsaque,'FM999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ||'</vldsaque>'||
                  '<nrdconta>'||rw_ctrl_saque.nrdconta||'</nrdconta>'||
                  '<cdmotivo>'||rw_ctrl_saque.cdmotivo||'</cdmotivo>';
     

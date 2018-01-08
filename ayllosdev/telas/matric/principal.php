@@ -307,8 +307,8 @@
 		$xml  .= "  </Dados>";
 		$xml  .= "</Root>";
 
-		// Executa script para envio do XML
-		$xmlResult = mensageria($xml, "MATRIC", "ACESSO_OPERADOR_CRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		// Executa script para envio do XML  -- Passa como agencia o cdpactra, pois a agencia está sempre com valor zero
+		$xmlResult = mensageria($xml, "MATRIC", "ACESSO_OPERADOR_CRM", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
 
 		// Se ocorrer um erro, mostra crítica
