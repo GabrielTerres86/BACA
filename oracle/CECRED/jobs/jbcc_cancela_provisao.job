@@ -17,10 +17,10 @@ BEGIN
 	 nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
 	 nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
 
-	/*sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBTBCC_CANCELA_PROVISAO');*/
+	/*sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCC_CANCELA_PROVISAO');*/
 
 	sys.dbms_scheduler.create_job(
-		job_name => 'CECRED.JBTBCC_CANCELA_PROVISAO',
+		job_name => 'CECRED.JBCC_CANCELA_PROVISAO',
 		job_type => 'PLSQL_BLOCK',
 		job_action => 'declare
 			vr_dscritic VARCHAR2(4000);
