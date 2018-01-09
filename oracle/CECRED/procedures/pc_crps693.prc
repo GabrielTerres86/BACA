@@ -719,15 +719,15 @@ BEGIN
                             gene0002.fn_mask(rw_crapcob.nrdocmto, '999999999');
                             
           -- Nro Dias Protesto
-          IF rw_crapcob.qtdiaprt = 5 AND rw_crapcob.flgdprot = 1 THEN
-             vr_dias_protesto := '06';
+          --IF rw_crapcob.qtdiaprt = 5 AND rw_crapcob.flgdprot = 1 THEN
+          --   vr_dias_protesto := '06';
+          --ELSE 
+          IF rw_crapcob.qtdiaprt >= 5 AND rw_crapcob.flgdprot = 1 THEN
+             vr_dias_protesto := gene0002.fn_mask(rw_crapcob.qtdiaprt,'99');
           ELSE 
-            IF rw_crapcob.qtdiaprt >= 6 AND rw_crapcob.flgdprot = 1 THEN
-               vr_dias_protesto := gene0002.fn_mask(rw_crapcob.qtdiaprt,'99');
-            ELSE 
-              vr_dias_protesto := '00';
-            END IF;
-          END IF;   
+            vr_dias_protesto := '00';
+          END IF;
+          --END IF;   
           
           -- Codigo do Desconto
           IF rw_crapcob.vldescto > 0 THEN

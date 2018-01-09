@@ -39,7 +39,16 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
+  --             04/12/2017 - Colocado no final pc_retorna_conaut_esteira chamada para pc_atualiza_tab_controle 
+  --                          para atualizar tabela craprpf e craprsc (restricoes de crédito) (Alexandre-Mouts)
+
   ---------------------------------------------------------------------------------------------------------------
+
+-- Atualiza as tabelas de controle com as informacoes finais
+PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da consulta do biro 
+                                   pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
+                                   pr_dscritic OUT VARCHAR2);          --> Texto de erro/critica encontrada
+
 
 -- Rotina geral de insert, update, select e delete da tela CONAUT da opção cadastro de Biros
 PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (A - ALteracao / C - Consulta / E - Exclur / I - Inclur)
@@ -10165,7 +10174,9 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 			vr_exc_erro EXCEPTION;
 		  vr_cdcritic crapcri.cdcritic%TYPE;
 			vr_dscritic crapcri.dscritic%TYPE;
-
+	    vr_dscritic_padrao VARCHAR2(400); --> descricao do erro padrao para nao exibir erros tecnicos para o usuario
+      vr_nrprotoc crapcbd.nrprotoc%TYPE; --> Numero do protocolo do envio da requisicao
+		
 		  -- Variáveis auxiliares
 			vr_nrconbir crapcbd.nrconbir%TYPE; --> Numero da consulta no biro
 	    vr_xmlret   XMLtype;               --> XML de retorno
@@ -10173,6 +10184,8 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 	    vr_inconscr PLS_INTEGER := 0;      --> Indicador de consulta de SCR do titular
 		
 		  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
@@ -10414,7 +10427,22 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 				-- Forca saida da rotina
 				RAISE vr_exc_erro;
 			END IF;  			
+			
 
+      -- Atualiza as tabelas finais de controle
+      pc_atualiza_tab_controle(pr_nrconbir => vr_nrconbir,
+                               pr_cdcritic => vr_cdcritic,
+                               pr_dscritic => vr_dscritic);
+      -- Se ocorreu erro na atualizacao
+      IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+
+        -- Joga um texto padrao de retorno para a rotina
+        vr_dscritic_padrao := 'Houve erro no acesso ao biro (SPC/Serasa/SCR), consulta nao realizada!';
+
+        -- Forca saida da rotina
+        RAISE vr_exc_erro;
+      END IF;
+     
 		EXCEPTION
 			WHEN vr_exc_erro THEN
 				-- Se possuir código da crítica e descrição for nula

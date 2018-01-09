@@ -531,6 +531,7 @@ PROCEDURE impressao-admiss:
                                   (IF par_numdopac <> 0              THEN
                                    crapass.cdagenci = par_numdopac   ELSE 
                                    crapass.cdagenci > 0)
+                                  AND crapass.dtdemiss = ?
                                    BREAK BY crapass.cdagenci
                                          BY crapass.nrdconta:
    

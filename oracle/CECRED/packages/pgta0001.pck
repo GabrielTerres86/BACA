@@ -583,7 +583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 27/10/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 18/12/2017
 --
 -- Dados referentes ao programa:
 --
@@ -622,6 +622,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
+--
+--             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -4131,7 +4133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 18/12/2017
     --
     -- Dados referentes ao programa:
     --
@@ -4139,6 +4141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Objetivo  : Cadastrar o agendamento do Pagamento do Titulo
 
     -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
+    --
+    --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -4189,7 +4193,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            AND craplot.dtmvtolt = pr_dtmvtolt
            AND craplot.cdagenci = pr_cdagenci
            AND craplot.cdbccxlt = 100
-           AND craplot.nrdolote = pr_nrdolote;
+           AND craplot.nrdolote = pr_nrdolote
+           FOR UPDATE NOWAIT;
       rw_craplot cr_craplot%ROWTYPE;
 
       vr_cdcritic_aux crapcri.cdcritic%TYPE;
@@ -4301,35 +4306,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             END IF;
          END IF;
 
-         -- Verifica se existe capa de lote agendamento
-         OPEN cr_craplot(pr_cdcooper
-                        ,pr_dtmvtolt
-                        ,pr_cdagenci
-                        ,vr_nrdolote);
-         FETCH cr_craplot INTO rw_craplot;
-         IF cr_craplot%NOTFOUND THEN
-            -- Se nao existir cria a capa de lote
-            BEGIN
-               INSERT INTO craplot
-                  (cdcooper,
-                   cdagenci,
-                   dtmvtolt,
-                   cdbccxlt,
-                   nrdolote,
-                   nrdcaixa,
-                   cdoperad,
-                   cdopecxa,
-                   tplotmov)
-                   VALUES
-                  (pr_cdcooper,
-                   pr_cdagenci,
-                   pr_dtmvtolt,
-                   100,          --cdbccxlt
-                   vr_nrdolote,
-                   pr_nrdcaixa,
-                   pr_cdoperad,
-                   pr_cdoperad,
-                   12)           --tplotmov
+         -- Tentar criar registro de lote ate 10 vezes
+         -- senao abortar
+         FOR i IN 1..10 LOOP
+           vr_dscritic := NULL;
+
+           BEGIN
+             --> buscar lote
+             OPEN cr_craplot (pr_cdcooper  => pr_cdcooper ,
+                              pr_dtmvtolt  => pr_dtmvtolt ,
+                              pr_cdagenci  => pr_cdagenci ,
+                              pr_nrdolote  => vr_nrdolote );
+             FETCH cr_craplot INTO rw_craplot;
+             IF cr_craplot%NOTFOUND THEN
+               CLOSE cr_craplot;
+               -- se não localizou, deve criar o registro de lote
+               BEGIN
+                 INSERT INTO craplot
+                            (cdcooper,
+                             cdagenci,
+                             dtmvtolt,
+                             cdbccxlt,
+                             nrdolote,
+                             nrdcaixa,
+                             cdoperad,
+                             cdopecxa,
+                             tplotmov)
+                             VALUES
+                            (pr_cdcooper,
+                             pr_cdagenci,
+                             pr_dtmvtolt,
+                             100,          --cdbccxlt
+                             vr_nrdolote,
+                             pr_nrdcaixa,
+                             pr_cdoperad,
+                             pr_cdoperad,
+                             12)           --tplotmov
                    RETURNING dtmvtolt,
                              cdagenci,
                              cdbccxlt,
@@ -4352,21 +4364,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                          rw_craplot.qtcompln,
                          rw_craplot.nrseqdig,
                          rw_craplot.rowid;
-            EXCEPTION
-               WHEN OTHERS THEN
-                  -- Gerar erro 0 com critica montada com o erro do insert
-                  vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
-                  -- Levantar excecao
-                  RAISE vr_exc_saida;
-            END;
+               EXCEPTION
+                 WHEN OTHERS THEN
+                   -- Gerar erro 0 com critica montada com o erro do insert
+                   vr_dscritic := 'Erro ao inserir na CRAPLOT : ' || SQLERRM;
+                   -- Levantar excecao
+           RAISE vr_exc_saida;
+               END;
+ 
+             ELSE
+               CLOSE cr_craplot;
          END IF;
-         -- Fecha o cursor de capas de lote
-         CLOSE cr_craplot;
+             -- se não deu erro, sair do loop
+             EXIT;
+ 
+           EXCEPTION
+             WHEN vr_exc_saida THEN
+               RAISE vr_exc_saida;
+             WHEN OTHERS THEN
+ 
+               vr_dscritic := 'Tabela de lotes esta '||
+                              'sendo alterada. Tente novamente.';
+               -- aguardar um segundo e tentar novamente
+               sys.dbms_lock.sleep(1);
+               continue;
+           END;
 
+         END LOOP;
+        
          vr_nmprepos := ' ';
          vr_nrcpfpre := 0;
-
-
 
          IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
               vr_idastcjt = 1 THEN
@@ -4397,7 +4424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                 ,pr_tpcptdoc => 2              --> Tipo de captura do documento
                                                 ,pr_idtitdda => 0              --> Identificador do titulo no DDA
                                                 ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
-												,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
+												                        ,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
                                                 ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                                 ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
 
@@ -4416,7 +4443,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 RAISE vr_exc_saida;
               END IF;
          ELSE 
-         BEGIN
+           
+           BEGIN
             INSERT INTO craplau
                (cdcooper
                ,nrdconta
