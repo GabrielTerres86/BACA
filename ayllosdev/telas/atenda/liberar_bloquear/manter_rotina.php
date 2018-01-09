@@ -11,6 +11,9 @@
  *				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado
  *                             (Lombardi).
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *				  09/11/2017 - Ajuste para remover acentos e caracteres especiais do campo
+ *                             dsmotmaj. Chamado 783434 - Mateus Z (Mouts)
+ *
  * --------------
  */	
 	session_start();
@@ -31,6 +34,10 @@
 	$flgcrdpa = (isset($_POST['flgcrdpa'])) ? $_POST['flgcrdpa'] : '0';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '1';
 	$dsmotmaj = (isset($_POST['dsmotmaj'])) ? $_POST['dsmotmaj'] : '';
+	
+	$dsmotmaj = utf8_decode($dsmotmaj);
+	$dsmotmaj = removeCaracteresInvalidos($dsmotmaj);
+	$dsmotmaj = retiraAcentos($dsmotmaj);
 
 	$flgrenli = strtoupper($flgrenli) == 'NO' ? 0 : 1;
 	$flgcrdpa = strtoupper($flgcrdpa) == 'NO' ? 0 : 1;

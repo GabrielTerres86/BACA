@@ -1070,8 +1070,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
-														
-
+										
+  
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -1305,11 +1305,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
                 30/11/2017 - Incluido update na crapsli quando dinheiro para aplicacao nova vem da conta investimento. 
 							 (M460 BACENJUD - Thiago Rodrigues).
-
+               
                 30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
 
                 05/12/2017 - Alterei a procedure pc_cad_resgate_aplica para gravacao do lote de forma autonoma. Criei
                              a procedure pc_processa_lote_regt. (SD 799728 - Carlos Rafael Tanholi)
+
+                04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+                             com debito em Conta Investimento.
+                             Heitor (Mouts) - Chamado 821010.
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -5207,8 +5211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,cdagenci
                        ,cdbccxlt
                        ,nrdolote                      
-                       ,vlinfocr
-                       ,vlcompcr
+                       ,vlinfodb
+                       ,vlcompdb
                        ,qtinfoln
                        ,qtcompln
                        ,nrseqdig
@@ -5217,8 +5221,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,rw_craplot.cdagenci
                        ,rw_craplot.cdbccxlt
                        ,rw_craplot.nrdolote
-                       ,rw_craplot.vlinfocr
-                       ,rw_craplot.vlcompcr
+                       ,rw_craplot.vlinfodb
+                       ,rw_craplot.vlcompdb
                        ,rw_craplot.qtinfoln
                        ,rw_craplot.qtcompln
                        ,rw_craplot.nrseqdig
@@ -5275,7 +5279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            -- Apenas fechar o cursor
            CLOSE cr_crapsli;
         END IF;
-
+        
         -- Demetrius - Melhoria 460
         BEGIN
           UPDATE crapsli ci
@@ -5299,15 +5303,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
              SET craplot.nrseqdig = craplot.nrseqdig + 1
                 ,craplot.qtinfoln = craplot.qtinfoln + 1
                 ,craplot.qtcompln = craplot.qtcompln + 1
-                ,craplot.vlinfocr = craplot.vlinfodb + pr_vllanmto
+                ,craplot.vlinfodb = craplot.vlinfodb + pr_vllanmto
                 ,craplot.vlcompdb = craplot.vlcompdb + pr_vllanmto              
            WHERE craplot.rowid = rw_craplot.rowid
            RETURNING dtmvtolt
                      ,cdagenci
                      ,cdbccxlt
                      ,nrdolote                   
-                     ,vlinfocr
-                     ,vlcompcr
+                     ,vlinfodb
+                     ,vlcompdb
                      ,qtinfoln
                      ,qtcompln
                      ,nrseqdig
@@ -5316,8 +5320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                      ,rw_craplot.cdagenci
                      ,rw_craplot.cdbccxlt
                      ,rw_craplot.nrdolote
-                     ,rw_craplot.vlinfocr
-                     ,rw_craplot.vlcompcr
+                     ,rw_craplot.vlinfodb
+                     ,rw_craplot.vlcompdb
                      ,rw_craplot.qtinfoln
                      ,rw_craplot.qtcompln
                      ,rw_craplot.nrseqdig
@@ -9401,7 +9405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   -- Objetivo  : Retornar o saldo das Cotas do Associado.
   --
   -- Alteracoes: 24/06/2014 - Conversao Progress -> Oracle (Alisson - AMcom).      
-  --
+  --       
   --             14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).			
   --       
   --             19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
@@ -18716,9 +18720,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-        END IF;
-        
-      
+      END IF;   
+    
+    
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
