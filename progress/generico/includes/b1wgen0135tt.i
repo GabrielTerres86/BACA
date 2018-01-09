@@ -11,8 +11,6 @@
   
     Alteracoes: 
                              
-                 04/12/2017 - Melhoria 458, adicionado coluna cpfcgrcb e table tt-crapcme2 - Antonio R. Junior (mouts)
-                             
 .............................................................................*/
 
 DEF TEMP-TABLE tt-transacoes-especie NO-UNDO
@@ -36,7 +34,6 @@ DEF TEMP-TABLE tt-crapcme NO-UNDO
     FIELD cdagenci LIKE crapcme.cdagenci
     FIELD nrdconta LIKE crapcme.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
-    FIELD nrcpfcgc AS CHAR
     FIELD nrdocmto LIKE crapcme.nrdocmto
     FIELD tpoperac AS CHAR
     FIELD vllanmto LIKE crapcme.vllanmto
@@ -50,8 +47,3 @@ DEF TEMP-TABLE tt-crapcme NO-UNDO
     INDEX cdcooper cdagenci nrdconta.
 
 DEF TEMP-TABLE tt-reg-crapcme NO-UNDO LIKE tt-crapcme.
-DEF TEMP-TABLE tt-crapcme2 NO-UNDO
-    FIELD cdcooper LIKE crapcop.cdcooper
-    FIELD nrcpfcgc AS CHAR
-    FIELD tpoperac AS CHAR
-    FIELD dtmvtolt LIKE crapcme.dtmvtolt.

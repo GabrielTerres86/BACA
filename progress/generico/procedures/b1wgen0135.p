@@ -1,16 +1,16 @@
-ï»¿/*.............................................................................
+/*.............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0135.p
     Autor(a): Fabricio
-    Data    : Fevereiro/2012                     Ultima atualizacao: 29/02/2016
+    Data    : Fevereiro/2012                     Ultima atualizacao: 23/06/2016
   
     Dados referentes ao programa:
   
     Objetivo  : BO com regras de negocio refente a tela TRAESP.
                 
   
-    Alteracoes: 13/11/2013 - Nova forma de chamar as agÃªncias, de PAC agora 
-                             a escrita serÃ¡ PA (Guilherme Gielow) 
+    Alteracoes: 13/11/2013 - Nova forma de chamar as agências, de PAC agora 
+                             a escrita será PA (Guilherme Gielow) 
                              
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
@@ -21,14 +21,12 @@
                              
                 23/06/2016 - Ajuste na rotina consulta-transacoes-sem-documento
                              para resolver o problema referente o chamado 467402. (Kelvin)
-                
-                04/12/2017 - Melhoria 458 adicionado informacao do CPF a tela Traesp, Antonio R. Junior (mouts)             
+                             
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgen0135tt.i }
-{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -71,7 +69,7 @@ PROCEDURE consulta-transacoes-especie:
         
         ASSIGN par_contador = par_contador + 1.
         
-        /* controles da paginaÃ§Ã£o */
+        /* controles da paginação */
         IF (par_contador < par_nriniseq) OR
            (par_contador > (par_nriniseq + par_nrregist)) THEN
             NEXT.
@@ -86,10 +84,7 @@ PROCEDURE consulta-transacoes-especie:
             IF crapcme.tpoperac = 1 THEN
                 ASSIGN aux_tpoperac = "DEPOSITO".
             ELSE
-            IF crapcme.tpoperac = 2 THEN
                 ASSIGN aux_tpoperac = "SAQUE".
-            ELSE
-                ASSIGN aux_tpoperac = "PAGAMENTO".
 
             CREATE tt-transacoes-especie.
             ASSIGN tt-transacoes-especie.cdagenci = STRING(crapcme.cdagenci, "999")
@@ -147,7 +142,6 @@ PROCEDURE consulta-transacoes-sem-documento:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VARIABLE    aux_vlctrmve AS DECI NO-UNDO.
-    DEF VARIABLE    aux_vllimite AS DECI NO-UNDO.
     DEF VARIABLE    aux_tpoperac AS CHAR NO-UNDO.
     DEF VARIABLE    aux_nrdolote AS INTE NO-UNDO.
     DEF VARIABLE    aux_regexist AS LOGI NO-UNDO.
@@ -202,7 +196,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 DO:
                     ASSIGN par_contador = par_contador + 1.
         
-                    /* controles da paginaÃ§Ã£o */
+                    /* controles da paginação */
                     IF (par_contador < par_nriniseq) OR
                        (par_contador > (par_nriniseq + par_nrregist)) THEN
                         NEXT.
@@ -293,7 +287,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 DO:
                     ASSIGN par_contador = par_contador + 1.
         
-                    /* controles da paginaÃ§Ã£o */
+                    /* controles da paginação */
                     IF (par_contador < par_nriniseq) OR
                        (par_contador > (par_nriniseq + par_nrregist)) THEN
                         NEXT.
@@ -328,131 +322,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 END.                                       
         END.
                            
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }          
-          /* Efetuar a chamada a rotina Oracle */ 
-          RUN STORED-PROCEDURE pc_consultar_parmon_pld_car
-           aux_handproc = PROC-HANDLE NO-ERROR 
-                       ( INPUT par_cdcooper /* pr_cdcooper --> Codigo da cooperativa */                                             
-                        /* --------- OUT --------- */
-                        ,OUTPUT 0          /* pr_vllimite --> Retorno da operacao     */
-                        ,OUTPUT 0          /* pr_vlcredito_diario_pf --> Retorno da operacao     */
-                        ,OUTPUT 0          /* pr_vlcredito_diario_pj --> Retorno da operacao     */
-                        ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
-                        ,OUTPUT 0
-                        ,OUTPUT "" ).      /* pr_dscritic --> DescriÃ§ao da critica    */
-          
-          /* Fechar o procedimento para buscarmos o resultado */ 
-          CLOSE STORED-PROC pc_consultar_parmon_pld_car
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-          ASSIGN aux_vllimite = pc_consultar_parmon_pld_car.pr_vllimite
-                     WHEN pc_consultar_parmon_pld_car.pr_vllimite <> ?.
-          
-          FOR EACH craplft WHERE
-               craplft.cdcooper = par_cdcooper AND
-               craplft.dtmvtolt = par_dtmvtolt AND
-               craplft.cdagenci = par_cdagenci AND
-               craplft.cdbccxlt = 11 AND
-               craplft.nrdolote = 15000 + crapbcx.nrdcaixa AND
-               craplft.tppagmto = 1 AND /*** Pagamento em espÃ©cie ***/
-               craplft.vllanmto >= aux_vllimite NO-LOCK
-               BY craplft.dtmvtolt:
-
-               FIND crapcme WHERE crapcme.cdcooper = par_cdcooper AND
-                    crapcme.dtmvtolt = craplft.dtmvtolt AND
-                    crapcme.cdagenci = craplft.cdagenci AND
-                    crapcme.cdbccxlt = craplft.cdbccxlt AND
-                    crapcme.nrdolote = craplft.nrdolote AND
-                    crapcme.nrdctabb = craplft.nrdconta AND
-                    crapcme.nrdocmto = craplft.nrseqdig
-                    NO-LOCK NO-ERROR.
-               
-               IF NOT AVAILABLE crapcme THEN
-                 DO:
-                  ASSIGN par_contador = par_contador + 1.
-
-                  /* controles da paginaÃ§Äƒo */
-                  IF (par_contador < par_nriniseq) OR
-                     (par_contador > (par_nriniseq + par_nrregist)) THEN
-                     NEXT.
-                   
-                  IF aux_nrregist > 0 THEN
-                   DO:
-                       FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                                          crapass.nrdconta = craplft.nrdconta
-                                          NO-LOCK NO-ERROR.
-
-                       ASSIGN aux_tpoperac = "PAGAMENTO".
-                    
-                       CREATE tt-transacoes-especie.
-                       ASSIGN tt-transacoes-especie.cdagenci = STRING(craplft.cdagenci, "999")
-                              tt-transacoes-especie.nrdolote = craplft.nrdolote
-                              tt-transacoes-especie.nrdconta = STRING(craplft.nrdconta, "zzzz,zzz,9")
-                              tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                              tt-transacoes-especie.nrdocmto = STRING(craplft.nrseqdig, "zz,zzz,zz9")
-                              tt-transacoes-especie.tpoperac = aux_tpoperac
-                              tt-transacoes-especie.vllanmto = STRING(craplft.vllanmto, "zzz,zzz,zz9.99")
-                              tt-transacoes-especie.dtmvtolt = craplft.dtmvtolt.
         END.
-                    
-                   ASSIGN aux_nrregist = aux_nrregist - 1.
-                 END.
-          END.
-
-          FOR EACH craptit WHERE
-                   craptit.cdcooper = par_cdcooper AND
-                   craptit.dtmvtolt = par_dtmvtolt AND
-                   craptit.cdagenci = par_cdagenci AND
-                   craptit.cdbccxlt = 11 AND
-                   craptit.nrdolote = 16000 + crapbcx.nrdcaixa AND
-                   craptit.tppagmto = 1 AND
-                   craptit.vldpagto >= aux_vllimite NO-LOCK
-                   BY craptit.dtmvtolt:
-
-               FIND crapcme WHERE crapcme.cdcooper = par_cdcooper AND
-                    crapcme.dtmvtolt = craptit.dtmvtolt AND
-                    crapcme.cdagenci = craptit.cdagenci AND
-                    crapcme.cdbccxlt = craptit.cdbccxlt AND
-                    crapcme.nrdolote = craptit.nrdolote AND
-                    crapcme.nrdctabb = craptit.nrdconta AND
-                    crapcme.nrdocmto = craptit.nrseqdig
-                    NO-LOCK NO-ERROR.
-               
-               IF NOT AVAILABLE crapcme THEN
-                DO:
-                  ASSIGN par_contador = par_contador + 1.
-
-                  /* controles da paginaÃ§Äƒo */
-                  IF (par_contador < par_nriniseq) OR
-                     (par_contador > (par_nriniseq + par_nrregist)) THEN
-                      NEXT.
-                  IF aux_nrregist > 0 THEN
-                   DO:
-                     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                          crapass.nrdconta = craptit.nrdconta
-                          NO-LOCK NO-ERROR.
-
-                     ASSIGN aux_tpoperac = "PAGAMENTO".
-                     
-                     CREATE tt-transacoes-especie.
-                     ASSIGN tt-transacoes-especie.cdagenci = STRING(craptit.cdagenci, "999")
-                            tt-transacoes-especie.nrdolote = craptit.nrdolote
-                            tt-transacoes-especie.nrdconta = STRING(craptit.nrdconta, "zzzz,zzz,9")
-                            tt-transacoes-especie.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
-                            tt-transacoes-especie.nrdocmto = STRING(craptit.nrseqdig, "zz,zzz,zz9")
-                            tt-transacoes-especie.tpoperac = aux_tpoperac
-                            tt-transacoes-especie.vllanmto = STRING(craptit.vldpagto, "zzz,zzz,zz9.99")
-                            tt-transacoes-especie.dtmvtolt = craptit.dtmvtolt.
-                   END.
-                    
-                   ASSIGN aux_nrregist = aux_nrregist - 1.
-                  
-                END.
-          END.
-                       
-    END.
 
         /* Transferencia intercooperativa */
         FOR EACH craplcx WHERE craplcx.cdcooper = par_cdcooper  AND
@@ -475,7 +345,7 @@ PROCEDURE consulta-transacoes-sem-documento:
 
             ASSIGN par_contador = par_contador + 1.
         
-            /* controles da paginaÃ§Ã£o */
+            /* controles da paginação */
             IF (par_contador < par_nriniseq) OR
                (par_contador > (par_nriniseq + par_nrregist)) THEN
                 NEXT.
@@ -589,12 +459,9 @@ PROCEDURE consulta-controle-movimentacao:
                            NO-LOCK NO-ERROR.
 
     IF crapcme.tpoperac = 1 THEN
-        ASSIGN aux_tpoperac = "DEPOSITO".
+        aux_tpoperac = "DEPOSITO".
     ELSE
-    IF crapcme.tpoperac = 2 THEN
-        ASSIGN aux_tpoperac = "SAQUE".
-    ELSE
-        ASSIGN aux_tpoperac = "PAGAMENTO".
+        aux_tpoperac = "SAQUE".
 
     CREATE tt-transacoes-especie.
     ASSIGN tt-transacoes-especie.cdagenci = STRING(crapcme.cdagenci, "999")
@@ -668,8 +535,7 @@ PROCEDURE reimprime-controle-movimentacao:
                       STRING(MONTH(par_dtmvtolt),"99") +
                       STRING(YEAR(par_dtmvtolt),"9999")).
     
-    IF par_tpoperac = 1 OR 
-       par_tpoperac = 3 THEN
+    IF par_tpoperac = 1 THEN
     DO:
         RUN dbo/bo_controla_depositos.p PERSISTENT SET h_bo_depos.
 
@@ -1003,11 +869,6 @@ PROCEDURE imprime-listagem-transacoes:
         DO:
             aux_tpoperac = "SAQUE".
         END.
-        ELSE
-        IF crapcme.tpoperac = 3 THEN
-        DO:
-            aux_tpoperac = "PAGAMENTO".
-        END.
              
         FIND LAST crapalt WHERE crapalt.cdcooper = crapcme.cdcooper AND
                                 crapalt.nrdconta = crapcme.nrdconta AND
@@ -1037,8 +898,7 @@ PROCEDURE imprime-listagem-transacoes:
                            crapass.nrdconta = crapcme.nrdconta
                            NO-LOCK NO-ERROR.
 
-        IF crapcme.tpoperac = 1 OR
-           crapcme.tpoperac = 3 THEN 
+        IF crapcme.tpoperac = 1 THEN 
         DO:
             DISPLAY STREAM str_1 crapcop.nmextcop
                                  aux_dsagenci
@@ -1267,70 +1127,20 @@ PROCEDURE consulta-dados-fechamento:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdagenci AS INTE NO-UNDO.
     DEF INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
-    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
 
     DEF OUTPUT PARAM par_contador AS INT NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-crapcme.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
-    DEF VARIABLE aux_vllanmto AS DECIMAL.
-    DEF VARIABLE aux_vloperac AS DECIMAL.
-    
-	
-    FOR EACH crapcme WHERE crapcme.dtmvtolt = par_dtmvtolt,
-        EACH crapass WHERE crapass.cdcooper = crapcme.cdcooper AND
-                           crapass.nrdconta = crapcme.nrdconta 
-                           BREAK BY crapcme.tpoperac 
-                                    BY crapass.nrcpfcgc:
-                                    
-        ASSIGN aux_vllanmto = aux_vllanmto + crapcme.vllanmto.
-        
-        IF LAST-OF(nrcpfcgc) THEN
-          DO:          
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }          
-          /* Efetuar a chamada a rotina Oracle */ 
-          RUN STORED-PROCEDURE pc_busca_limite_operacao
-           aux_handproc = PROC-HANDLE NO-ERROR 
-                       ( INPUT crapcme.cdcooper /* pr_cdcooper --> Codigo da cooperativa */                     
-                        ,INPUT crapcme.tpoperac /* pr_tpoperac --> tipo da operacao */
-                        /* --------- OUT --------- */
-                        ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
-                        ,OUTPUT ""          /* pr_dscritic --> DescriÃ§ao da critica    */
-                        ,OUTPUT 0 ).        /* pr_vloperac --> Retorno da operacao     */
-          
-          /* Fechar o procedimento para buscarmos o resultado */ 
-          CLOSE STORED-PROC pc_busca_limite_operacao
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-          ASSIGN aux_vloperac = pc_busca_limite_operacao.pr_vloperac
-                     WHEN pc_busca_limite_operacao.pr_vloperac <> ?.        
-             
-          IF aux_vllanmto >= aux_vloperac THEN
-            DO:
-              CREATE tt-crapcme2.
-              ASSIGN tt-crapcme2.cdcooper = crapcme.cdcooper
-                     tt-crapcme2.tpoperac = STRING(crapcme.tpoperac)
-                     tt-crapcme2.nrcpfcgc = STRING(crapass.nrcpfcgc)                    
-                     tt-crapcme2.dtmvtolt = crapcme.dtmvtolt.
-            END.
-          ASSIGN aux_vllanmto = 0.  
-        END.
-    END.     
-    
-    FOR EACH tt-crapcme2, 
-              EACH crapass WHERE crapass.cdcooper = tt-crapcme2.cdcooper AND
-                                 crapass.nrcpfcgc = DECIMAL(tt-crapcme2.nrcpfcgc),                                
-                   EACH crapcme WHERE (IF par_cdcooper <> 3 THEN
+    FOR EACH crapcme WHERE (IF par_cdcooper <> 3 THEN
                               (crapcme.cdcooper = par_cdcooper    AND
-                                       crapcme.infrepcf <> 2             )     ELSE
-                                       crapcme.infrepcf <> 2             )     AND
-                                       crapcme.dtmvtolt = tt-crapcme2.dtmvtolt AND
-                                       STRING(crapcme.tpoperac) = tt-crapcme2.tpoperac AND 
-                                       crapcme.cdcooper = tt-crapcme2.cdcooper AND                               
-                                       crapcme.nrdconta = crapass.nrdconta                                   
+                               crapcme.infrepcf = 1             ) ELSE
+                               crapcme.infrepcf = 1             )
                             NO-LOCK:
+   
+        FIND crapass WHERE crapass.cdcooper = crapcme.cdcooper AND
+                           crapass.nrdconta = crapcme.nrdconta 
+                           NO-LOCK NO-ERROR.
 
         ASSIGN par_contador = par_contador + 1.
     
@@ -1342,9 +1152,7 @@ PROCEDURE consulta-dados-fechamento:
                tt-crapcme.nrdocmto = crapcme.nrdocmto
                tt-crapcme.tpoperac = (IF crapcme.tpoperac = 1 THEN
                                       "DEPOSITO" ELSE
-                                        IF crapcme.tpoperac = 2 THEN
-                                        "SAQUE" ELSE
-                                        "PAGAMENTO")
+                                      "SAQUE")
                tt-crapcme.recursos = crapcme.recursos
                tt-crapcme.dstrecur = crapcme.dstrecur
                tt-crapcme.flinfdst = crapcme.flinfdst
@@ -1352,11 +1160,7 @@ PROCEDURE consulta-dados-fechamento:
                tt-crapcme.dtmvtolt = crapcme.dtmvtolt  
                tt-crapcme.infrepcf = "Informar"
                tt-crapcme.nrdrowid = ROWID(crapcme)
-                 tt-crapcme.dsdjusti = crapcme.dsdjusti               
-                 tt-crapcme.nrcpfcgc = (IF crapass.inpessoa = 1 THEN 
-                                           STRING(STRING(crapass.nrcpfcgc,"99999999999"),"xxx.xxx.xxx-xx")
-                                        ELSE 
-                                           STRING(STRING(crapass.nrcpfcgc,"99999999999999"),"xx.xxx.xxx/xxxx-xx")).
+               tt-crapcme.dsdjusti = crapcme.dsdjusti.
                
     END.
 
@@ -1411,8 +1215,7 @@ PROCEDURE efetua-confirmacao-sisbacen:
                 ASSIGN crapcme.infrepcf = 2.
             ELSE
             IF par_infocoaf THEN
-                ASSIGN crapcme.dsdjusti = par_justific
-                       crapcme.infrepcf = 2
+                ASSIGN crapcme.infrepcf = 2
                        crapcme.sisbacen = YES
                        crapcme.opeenvcf = par_cdoperad.
             ELSE

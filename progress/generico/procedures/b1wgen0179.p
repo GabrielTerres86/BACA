@@ -13,9 +13,6 @@
 
                 06/02/2017 - #552068 Inclusao da descricao extensa do historico
                              na rotina Busca_Consulta (Carlos)
-                             
-                05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
-        
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -556,7 +553,6 @@ PROCEDURE Busca_Historico:
            tt-histor.inautori = craphis.inautori   
            tt-histor.inclasse = craphis.inclasse   
            tt-histor.incremes = craphis.incremes   
-           tt-histor.inmonpld = craphis.inmonpld
            tt-histor.indcompl = craphis.indcompl   
            tt-histor.indebcta = craphis.indebcta   
            tt-histor.indebfol = craphis.indebfol   
@@ -752,7 +748,6 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_inavisar AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inclasse AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_incremes AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_inmonpld AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indcompl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indebcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indoipmf AS INTE                           NO-UNDO.
@@ -915,14 +910,6 @@ PROCEDURE Grava_Dados:
                 ASSIGN aux_cdcritic = 0
                        aux_dscritic = "Indicador para estatistica de credito do mes invalido."
                        par_nmdcampo = "incremes".
-                LEAVE Grava.
-            END.
-
-        IF par_inmonpld <> 0 AND par_inmonpld <> 1 THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Indicador para monitoramento invalido."
-                       par_nmdcampo = "inmonpld".
                 LEAVE Grava.
             END.
 
@@ -1117,7 +1104,6 @@ PROCEDURE Grava_Dados:
                                        INPUT par_indcompl,
                                        INPUT par_indebcta,
                                        INPUT par_incremes,
-                                       INPUT par_inmonpld,
                                        INPUT par_tpctbcxa,
                                        INPUT par_vltarayl,
                                        INPUT par_vltarcxo,
@@ -1157,7 +1143,6 @@ PROCEDURE Grava_Dados:
                            craphis.inavisar  =  par_inavisar
                            craphis.inclasse  =  par_inclasse
                            craphis.incremes  =  par_incremes
-                           craphis.inmonpld  =  par_inmonpld
                            craphis.indcompl  =  par_indcompl
                            craphis.indebcta  =  par_indebcta
                            craphis.indebfol  =  0 
@@ -1408,7 +1393,6 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.indcompl,
                                INPUT craphis.indebcta,
                                INPUT craphis.incremes,
-                               INPUT craphis.inmonpld,
                                INPUT craphis.tpctbcxa,
                                INPUT aux_vltarayl,
                                INPUT aux_vltarcxo,
@@ -1880,7 +1864,6 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_indcompl AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_indebcta AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_incremes AS INTE                            NO-UNDO.
-    DEF INPUT PARAM par_inmonpld AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_tpctbcxa AS INTE                            NO-UNDO.
     DEF INPUT PARAM aux_vltarayl AS DECI                            NO-UNDO.
     DEF INPUT PARAM aux_vltarcxo AS DECI                            NO-UNDO.
@@ -2036,15 +2019,6 @@ PROCEDURE gera_item_log:
                       INPUT "Ind. p/estat. credito do mes",
                       INPUT STRING(b-craphis.incremes),
                       INPUT STRING(par_incremes)).
- 
-    IF par_inmonpld <> b-craphis.inmonpld THEN
-        RUN gera_log (INPUT par_cdcooper,
-                      INPUT par_cdoperad,
-                      INPUT par_cdhistor,
-                      INPUT par_cdcoprep,
-                      INPUT "Ind. Monitoramento",
-                      INPUT STRING(b-craphis.inmonpld),
-                      INPUT STRING(par_inmonpld)).
  
     IF par_tpctbcxa <> b-craphis.tpctbcxa THEN
         RUN gera_log (INPUT par_cdcooper,
@@ -2276,4 +2250,3 @@ PROCEDURE gera_logtel:
                       "/log/histor.log").
 
 END PROCEDURE.
-

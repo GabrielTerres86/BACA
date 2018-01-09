@@ -214,10 +214,7 @@
              07/02/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio SD653830)
 
-	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174
-           
-           08/12/2017 - Melhoria 458, adicionado campo tppagmto na procedure gera-faturas
-                        Antonio R. Jr (mouts)
+	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -1156,7 +1153,6 @@ PROCEDURE gera-faturas.
     DEF INPUT  PARAM par_nrterfin        AS INTE                       NO-UNDO.
     /* Tipo de captura 1-codbarra 2- linha digitavel*/
     DEF INPUT  PARAM par_tpcptdoc        AS INTE                       NO-UNDO. 
-    DEF INPUT  PARAM p-tppagmto          AS INTE                       NO-UNDO. /** 0 - Conta / 1 - Especie **/
                                                                      
     DEF OUTPUT PARAM p-histor            AS INTE                       NO-UNDO.
     DEF OUTPUT PARAM p-pg                AS LOG                        NO-UNDO.
@@ -1469,7 +1465,6 @@ PROCEDURE gera-faturas.
            craplft.cdempcon = crapcon.cdempcon
            craplft.cdsegmto = crapcon.cdsegmto
            craplft.tpcptdoc = par_tpcptdoc
-           craplft.tppagmto = p-tppagmto
            craplot.nrseqdig = craplot.nrseqdig + 1
            craplot.qtcompln = craplot.qtcompln + 1
            craplot.qtinfoln = craplot.qtinfoln + 1

@@ -9,8 +9,6 @@
  *
  *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
  *                             departamento como parametros e passar o o código (Renato Darosci)
- *
- *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
  * -------------- 
  *
  * -------------- 
@@ -91,7 +89,6 @@
 	echo "$('#indcompl','#frmHistorico').val('" . getByTagName($historico,'indcompl') . "');";
 	echo "$('#indebcta','#frmHistorico').val('" . getByTagName($historico,'indebcta') . "');";
 	echo "$('#incremes','#frmHistorico').val('" . getByTagName($historico,'incremes') . "');";
-	echo "$('#inmonpld','#frmHistorico').val('" . getByTagName($historico,'inmonpld') . "');";
 	
 	// Dados Contabeis
 	echo "$('#cdhstctb','#frmHistorico').val('" . getByTagName($historico,'cdhstctb') . "');";

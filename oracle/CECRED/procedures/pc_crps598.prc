@@ -35,8 +35,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS598 (pr_cdcooper  IN crapcop.cdcooper%
                25/04/2016 - Adicionar o historico 478 - CR.APL.RDCPRE, na lista de 
                             historicos ignorados para geração do controle de 
                             lavagem de dinheiro (Douglas - Chamado 405588)
-                            
-               05/12/2017 - Alterado cursor cr_craplcm para utilizar os historicos indicados no campo inmonpld - Antonio R. Jr (Mouts)
 ............................................................................. */
 
   -- Variaveis de uso no programa
@@ -61,7 +59,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS598 (pr_cdcooper  IN crapcop.cdcooper%
   vr_dscritic         VARCHAR2(2000);              -- Descricao da critica
   vr_exc_saida        EXCEPTION;                   -- Tratamento de excecao generica
   vr_exc_fimprg       EXCEPTION;                   -- Tratamento de excecao generica
-  vr_indrenda         tbcc_monitoramento_parametro.inrenda_zerada%TYPE; -- indica renda zerada
 
   -- Cursor da cooperativa logada
   CURSOR cr_crapcop (pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -82,7 +79,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS598 (pr_cdcooper  IN crapcop.cdcooper%
        AND lcm.cdhistor = his.cdhistor
        -- Historicos de credito
        AND his.indebcre = 'C'
-       AND his.inmonpld = 1
+       AND his.cdhistor NOT IN ( 2, 15, 47, 191, 270, 338, 478, 483, 497, 499, 501, 530, 573, 600, 622, 686, 766, 794, 801, 802, 803, 804, 887)
      GROUP BY lcm.nrdconta
     HAVING SUM(lcm.vllanmto) > 0;
 
@@ -110,16 +107,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS598 (pr_cdcooper  IN crapcop.cdcooper%
      FROM crapjur jur
     WHERE jur.cdcooper = pr_cdcooper
       AND jur.nrdconta = pr_nrdconta;
-
-  -- Cursor para obter os parametros da tabela TBCC_MONITOR_PARAMETROS
-  CURSOR cr_monitora (pr_cdcooper IN tbcc_monitoramento_parametro.cdcooper%TYPE)IS
-  SELECT mon.qtrenda_diario_pf,
-         mon.qtrenda_diario_pj,
-         mon.vlcredito_diario_pf,
-         mon.vlcredito_diario_pj,
-         mon.inrenda_zerada
-  FROM tbcc_monitoramento_parametro mon
-  WHERE mon.cdcooper = pr_cdcooper;  
 
   -- Busca o ano e mês mais recente (anoftbru e mesftbru), depois busca o valor correspondente ao mesmo mês (vlrftbru).
   -- Dados financeiros dos cooperados pessoa jurídica.
@@ -309,19 +296,25 @@ BEGIN
   END IF;
 
   -- Obter dados parametrizados
-  OPEN cr_monitora(pr_cdcooper => pr_cdcooper);
-  FETCH cr_monitora INTO vr_qtcopfis,
-                         vr_qtcopjur,
-                         vr_vldirfis,
-                         vr_vldirjur,
-                         vr_indrenda;
-  
-  IF cr_monitora%NOTFOUND THEN
-    vr_cdcritic := 055;
-    CLOSE cr_monitora;
-    RAISE vr_exc_saida;
-  ELSE
-    CLOSE cr_monitora;
+  vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                           ,pr_nmsistem => 'LAV'
+                                           ,pr_tptabela => 'CONFIG'
+                                           ,pr_cdempres => 0
+                                           ,pr_cdacesso => 'PARLVDNCP'
+                                           ,pr_tpregist => 0);
+
+  -- Se tem valor na craptab, atribuir nas variaveis
+  IF  vr_dstextab IS NOT NULL  THEN
+
+    --Separar os dados por ";" em um Array
+    vr_vet_craptab := gene0002.fn_quebra_string(pr_string  => vr_dstextab
+                                               ,pr_delimit => ';');
+
+    vr_qtcopfis := to_number(vr_vet_craptab(1));
+    vr_qtcopjur := to_number(vr_vet_craptab(2));
+    vr_vldirfis := to_number(vr_vet_craptab(3));
+    vr_vldirjur := to_number(vr_vet_craptab(4));
+
   END IF;
 
   -- Leitura dos lancamentos agrupados por conta
@@ -390,12 +383,6 @@ BEGIN
 
       END LOOP;
 
-      /*** Indicador de renda zerada ****/
-      IF vr_indrenda = 0 AND 
-         vr_vlrendim = 0 THEN
-         CONTINUE;
-      END IF;
-
       -- Se o valor do credito >= que rendimento vezes uma quantidade estipulada (10)
       -- cria o controle de lavagem de dinheiro
       IF  rw_craplcm.vlcredit >= (vr_vlrendim * vr_qtcopfis)  THEN
@@ -431,12 +418,6 @@ BEGIN
         vr_vlrendim := vr_vlfatano / 12;
       ELSE -- Senao considerar o rendimento do ultimo faturamento
         vr_vlrendim := vr_vlfatmes;
-      END IF;
-      
-      /*** Indicador de renda zerada ****/
-      IF  vr_indrenda = 0 AND
-          vr_vlrendim = 0 THEN
-          CONTINUE;
       END IF;
 
       -- Se o valor do credito > que rendimento vezes uma quantidade estipulada (10)
