@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 14/11/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 09/01/2018
 
    Dados referentes ao programa:
 
@@ -209,6 +209,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             (Jonata - SD 742850). 
                             
                14/11/2017 - Log de trace da exception others (Carlos)
+               
+               09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -5436,7 +5438,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
          -- Efetuar retorno do erro nao tratado
          pr_cdcritic := 0;
-         pr_dscritic := sqlerrm;
+         pr_dscritic := vr_dscritic || ' - ' || sqlerrm;
          -- Efetuar rollback
          ROLLBACK;
          --Zerar tabela de memoria auxiliar

@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 09/01/2018
   --
   --  Dados referentes ao programa:
   --
@@ -350,6 +350,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                          de criptografia para o acesso ao SFTP. (Oscar)
   -- 
+  --              09/01/2018 - #826598 Tratamento na rotina pc_controle_remessas para enviar e-mail e abrir
+  --                           chamado quando ocorrer erro (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -7652,6 +7654,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
       vr_dstiplog    VARCHAR2(1);
       vr_flgerlog    BOOLEAN := FALSE;
+      
+      vr_dstexto VARCHAR2(2000);
+      vr_titulo VARCHAR2(1000);
+      vr_destinatario_email VARCHAR2(500);
+      vr_idprglog   tbgen_prglog.idprglog%TYPE;
 
     BEGIN
 	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
@@ -8020,6 +8027,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
         vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
                                'ERRO: ' || 'CYBE0002.pc_controle_remessas - ' || SQLERRM;   
+
+        -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+        vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+                     'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+        -- Parte inicial do texto do chamado e do email
+        vr_titulo := '<b>Abaixo os erros encontrados no job '|| vr_nomdojob || '</b><br><br>';
+
+        -- Buscar e-mails dos destinatarios do produto cyber
+        vr_destinatario_email := gene0001.fn_param_sistema('CRED',3,'CYBER_RESPONSAVEL');
+
+        cecred.pc_log_programa(
+            PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+           ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+           ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+           -- Parametros para Ocorrencia
+           ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+           ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+           ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+           ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+           ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+           ,pr_texto_chamado => vr_titulo
+           ,pr_destinatario_email => vr_destinatario_email
+           ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+           ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
         -- Gerar o erro no arquivo de log do Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 3
