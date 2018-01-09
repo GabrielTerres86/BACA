@@ -6,6 +6,7 @@
 	* OBJETIVO     : Formulario de alteração e inclusão dos históricos da Tela HISTOR
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
+	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
 	* --------------
 	*/ 
 
@@ -46,7 +47,7 @@
 				<tr>
 					<td>
 						<label for="indebcre">D&eacute;bito/Cr&eacute;dito:</label>
-						<select name="indebcre" id="indebcre">
+						<select name="indebcre" id="indebcre" onchange="liberaMonitoramento(); return false;">
 							<option value="D">D&eacute;bito</option> 
 							<option value="C">Cr&eacute;dito</option> 
 						</select>
@@ -130,11 +131,18 @@
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2">
+					<td>
 						<label for="incremes">Ind. p/Estat. Cr&eacute;dito do M&ecirc;s:</label>
 						<select id="incremes" name="incremes">
 							<option value="1">Soma na estat&iacute;stica </option>
 							<option value="0">N&atilde;o soma </option>
+						</select>
+					</td>
+					<td>
+						<label for="inmonpld">Ind. Monitoramento:</label>
+						<select id="inmonpld" name="inmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 				</tr>

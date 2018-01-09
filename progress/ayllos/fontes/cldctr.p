@@ -32,9 +32,13 @@
               
                22/07/2015 - Ajustar o format do campo e a geraçao do arquivo para
                             gerar com extensao ".csv" (Douglas - Chamado 310866)   
+               
+               05/12/2017 - Melhoria 458 ajuste para pegar parametros da tabela 
+                            tbcc_monitoramento_parametos - Antonio R. Jr(Mouts)
 ..............................................................................*/
 
 { includes/var_online.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1. 
     
@@ -1458,22 +1462,29 @@ PROCEDURE carrega-creditos:
         IF AVAIL crapage THEN
            aux_nmresage = STRING(crapage.cdagenci) + " - " + crapage.nmresage.
                            
-         
-        FIND craptab WHERE craptab.cdcooper = crapcld.cdcooper AND
-                           craptab.nmsistem = "LAV"            AND
-                           craptab.tptabela = "CONFIG"         AND
-                           craptab.cdempres = 0                AND
-                           craptab.cdacesso = "PARLVDNCP"
-                           NO-LOCK NO-ERROR.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }          
+          /* Efetuar a chamada a rotina Oracle */ 
+          RUN STORED-PROCEDURE pc_consultar_parmon_pld_car
+           aux_handproc = PROC-HANDLE NO-ERROR 
+                       ( INPUT glb_cdcooper /* pr_cdcooper --> Codigo da cooperativa */                                             
+                        /* --------- OUT --------- */
+                        ,OUTPUT 0          /* pr_vllimite --> Retorno da operacao     */
+                        ,OUTPUT 0          /* pr_vlcredito_diario_pf --> Retorno da operacao     */
+                        ,OUTPUT 0          /* pr_vlcredito_diario_pj --> Retorno da operacao     */
+                        ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
+                        ,OUTPUT "" ).      /* pr_dscritic --> Descriçao da critica    */
+          
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_consultar_parmon_pld_car
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-        IF AVAIL craptab THEN
-           DO:
-              IF  TRIM(craptab.dstextab) <> "" THEN
-                  ASSIGN tel_vldirfis = INT(ENTRY(3,craptab.dstextab,";"))
-                         tel_vldirjur = INT(ENTRY(4,craptab.dstextab,";")).
-              
-            
-           END.
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN tel_vldirfis = pc_consultar_parmon_pld_car.pr_vlcredito_diario_pf
+                     WHEN pc_consultar_parmon_pld_car.pr_vlcredito_diario_pf <> ?.
+          
+          ASSIGN tel_vldirjur = pc_consultar_parmon_pld_car.pr_vlcredito_diario_pj
+                     WHEN pc_consultar_parmon_pld_car.pr_vlcredito_diario_pj <> ?.  
         
         FIND crapfld WHERE crapfld.cdcooper = crapcld.cdcooper AND   
                            crapfld.dtmvtolt = tel_dtmvtolt     AND

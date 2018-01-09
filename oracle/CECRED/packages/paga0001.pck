@@ -1553,6 +1553,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
                     para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
                     
+	   07/12/2017 - Melhoria 458, incluir parametro tppagmto nas chamadas da pc_gera_titulos_iptu - Antonio R. Jr (mouts)                         
+               
        12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                     pc_gera_log_ope_cartao (Lucas Ranghetti #810576)         
   ---------------------------------------------------------------------------------------------------------------*/
@@ -8883,6 +8885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                     ,pr_vloutcre        => pr_vloutcre         --Valor Saida Creditado
                                     ,pr_tpcptdoc        => pr_tpcptdoc         --Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                     ,pr_cdctrlcs        => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                                    ,pr_tppagmto        => 0         	         --> tipo pagamento
                                     ,pr_rowidcob        => vr_rowidcob         --ROWID da cobranca
                                     ,pr_indpagto        => vr_indpagto         --Indicador Pagamento
                                     ,pr_nrcnvbol        => vr_nrcnvbol         --Numero Convenio Boleto
@@ -23166,3 +23169,4 @@ end;';
 
 END PAGA0001;
 /
+
