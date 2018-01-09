@@ -119,6 +119,7 @@
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
  * 099: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                                            
+ * 100: [29/11/2017] Retirar caracteres especiais do campo Nome da tela Portabilidade - SD 779305 - Marcelo Telles Coelho - Mouts
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3611,6 +3612,13 @@ function controlaLayout(operacao) {
             controlaOperacao('IT');
         });
 
+        // Retirar caracteres especiais - SD 779305
+        $('#nmif_origem', '#frmPortabilidadeCredito').unbind('blur').bind('blur', function () {
+            $(this).val(removeAcentos($(this).val()));
+            $(this).val(removeCaracteresInvalidos($(this).val()));
+        });
+        // Fim SD 779305
+
 
     } else if (operacao == 'PORTAB_CRED_C') { /*Portabilidade - Consulta*/
         nomeForm = 'frmPortabilidadeCredito';
@@ -3673,6 +3681,13 @@ function controlaLayout(operacao) {
         $("#btVoltar", "#divBotoesFormPortabilidade").unbind('click').bind('click', function() {
             controlaOperacao('AT');
         });
+
+        // Retirar caracteres especiais - SD 779305
+        $('#nmif_origem', '#frmPortabilidadeCredito').unbind('blur').bind('blur', function () {
+            $(this).val(removeAcentos($(this).val()));
+            $(this).val(removeCaracteresInvalidos($(this).val()));
+        });
+        // Fim SD 779305
     }
     if (operacao == 'TC') {
         atualizaCampoData();
@@ -6125,6 +6140,9 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
+
+	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+	return false;
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax

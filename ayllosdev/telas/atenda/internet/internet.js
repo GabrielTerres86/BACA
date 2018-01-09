@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 04/09/2017
+ Data : Junho/2008                   Última Alteração: 13/12/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -16,7 +16,7 @@
 						  a habilitacao do botao Liberacao (Fabricio)          
 						                                          
 			 13/07/2011 - Alterado para layout padrão (Gabriel - DB1)
-
+						                                          
 			 17/05/2012 - Projeto TED Internet	(Lucas)           
 						                                          
 			 27/06/2012 - Alterado funcao carregarContrato(),    
@@ -70,6 +70,9 @@
              05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
 
              04/09/2017 - Inclusão de novas functions, Prj. 354 (Jean Michel)
+			 
+			 13/12/2017 - Chamado 793407 - Ajustar teste para esconder botões em caso 
+			              de operadores (Andrei-MOUTs)
 
 *********************************************************************************/
 
@@ -189,7 +192,6 @@ function controlaFoco() {
 // Função para seleção de titular para consulta e alteração de dados
 function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl,cpfcgc) {
 	
-		
 	// Formata cor da linha da tabela que lista titulares e esconde div com dados do mesmo
 	for (var i = 1; i <= qtTitulares; i++) {		
 				
@@ -205,10 +207,6 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl
     }
 	$("#divTitInternet" + id).css("display","block");
 	
-	if(idastcjt == "1"){
-		// Mostra CPF do titular no título da área de dados
-		$("#spanSeqTitular").html(cpf);
-		
 		if (sqttl == "999"){
 			$('#divBotoes').hide();
 			$('#preoroper').html('OPERADOR');
@@ -217,6 +215,9 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl
 			$('#divBotoes').show();
 		}
 		
+	if(idastcjt == "1"){
+		// Mostra CPF do titular no título da área de dados
+		$("#spanSeqTitular").html(cpf);
 	}else{
 		// Mostra sequência do titular no título da área de dados
 		$("#spanSeqTitular").html(id);	
@@ -1792,7 +1793,7 @@ function alterarDadosLimites() {
 function alterarDadosLimites2() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, atualizando dados de habilita&ccedil;&atilde;o ...");
-
+		
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
 		type: "POST",
@@ -2175,7 +2176,7 @@ function controlaLayout( nomeForm ){
 		$('.headerSort', tabela).removeClass();
 		$('#frmOpDesativaPush').addClass('formulario');
 		$("#divConteudoOpcao").css("width","100%");
-	} else if( nomeForm == 'divResponsaveisAss' ){
+	}else if( nomeForm == 'divResponsaveisAss' ){
 				
 		$("#divResponsaveisAss").show();
 		$("#divPrincipalPJ").hide();
@@ -2663,6 +2664,6 @@ function desativarEnvioPush(){
 		success: function(response) {
 			hideMsgAguardo();
 			eval(response);
-		}				
+		}
 	});
 }

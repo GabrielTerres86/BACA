@@ -4188,7 +4188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 29/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4237,11 +4237,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--						    ( Jonata - RKAM P364).	
 	--
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
-    --   										  
+    --   
     --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
     -- 
+	--              29/11/2017 - Chamado 784845 - Prova de vida não aparecendo na AV (Andrei-Mouts)
+	--
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
     --                           de cartao de credito em atraso (Anderson).
+    -- 
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4572,15 +4575,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapccs.nrdconta = pr_nrdconta
          AND crapccs.cdsitcta = 1;
     rw_crapccs cr_crapccs%ROWTYPE;
-    
-    --> Buscar contas migradas
-    CURSOR cr_craptco(pr_cdcooper craptco.cdcooper%TYPE,
-                      pr_nrdconta craptco.nrdconta%TYPE ) IS 
-      SELECT craptco.cdcopant
-        FROM craptco
-       WHERE craptco.cdcooper = pr_cdcooper
-         AND craptco.nrdconta = pr_nrdconta;
-    rw_craptco cr_craptco%ROWTYPE;
     
     --> Buscar alterações
     CURSOR cr_crapalt IS
@@ -5503,19 +5497,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     CLOSE cr_crapccs;
     
-    --> Se for uma conta migrada "Viacredi Alto Vale" sera passado o cdcopant
-    --  para a funcao verificacao_bloqueio a fim de, verificar seus respectivos
-    --  beneficios na Viacredi.
-    OPEN cr_craptco(pr_cdcooper => 16,
-                    pr_nrdconta => rw_crapass.nrdconta); 
-    FETCH cr_craptco INTO rw_craptco;
-    vr_fcraptco := cr_craptco%FOUND;
-    CLOSE cr_craptco;
-		
-		vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => (CASE 
-													 																						   WHEN vr_fcraptco THEN rw_craptco.cdcopant
-																																				  ELSE pr_cdcooper
-																																			 END)                     --> Codigo da cooperativa
+		-- Verificar necessidade de Prova de Vida
+		vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => pr_cdcooper               --> Codigo da cooperativa
 																															,pr_nrdconta => pr_nrdconta               --> Numero da conta
 																															,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt);  --> Data do movimento
 																															
@@ -5528,10 +5511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 		END IF;																															
     
     vr_tpbloque := INSS0001.fn_verifica_bloqueio_inss
-                                            ( pr_cdcooper => (CASE 
-                                                                WHEN vr_fcraptco THEN rw_craptco.cdcopant
-                                                                ELSE pr_cdcooper
-                                                              END)                    --> Codigo da cooperativa
+                                              (pr_cdcooper => pr_cdcooper              --> Codigo da cooperativa
                                               ,pr_nrdcaixa => pr_nrdcaixa              --> Numero do caixa
                                               ,pr_cdagenci => pr_cdagenci              --> Codigo de agencia
                                               ,pr_cdoperad => pr_cdoperad              --> Codigo do operador
@@ -8708,7 +8688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
     --                           ifs no programa(Odirlei-AMcom)  
-    
+
                     12/12/2017 - Alterar para para varchar2 o campo nrcartao
                                  (Lucas Ranghetti #810576) 
      ............................................................................*/

@@ -1626,7 +1626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                Prj. 302 (Jean Michel). 
 
                   22/02/2017 - Passagem de parametros rw_tbacordo para cr_crapass. (Jaison/James)
-                  
+
                   30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
                                a rotina que efetua o lançamento
                                (Adriano - SD 804308).
