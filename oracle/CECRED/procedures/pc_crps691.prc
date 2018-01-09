@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison
-       Data    : Dezembro/2014                     Ultima atualizacao: 04/04/2016
+       Data    : Dezembro/2014                     Ultima atualizacao: 04/08/2016
 
        Dados referentes ao programa:
 
@@ -29,6 +29,10 @@ CREATE OR REPLACE PROCEDURE
                                 na Receita Federal. (Jaison/James)
 
                    04/04/2016 - Criacao do relatorio para conferencia pela area contabil. (James)
+
+                   04/08/2016 - Alteracao para pegar as cidades da tabela crapmun.
+                                (Jaison/Anderson)
+
     ............................................................................ */
 
     DECLARE
@@ -147,12 +151,14 @@ CREATE OR REPLACE PROCEDURE
           ORDER BY nrcpfcgc, dtinicio, dtvigenc ) t;
 
       -- Listagem dos municipios
-      CURSOR cr_crapcid IS
-        SELECT crapcid.dsufibge
-              ,crapcid.cdmuibge
-              ,crapcid.dsmuibge
-              ,crapcid.cdufibge
-          FROM crapcid;
+      CURSOR cr_crapmun IS
+        SELECT crapmun.cdestado
+              ,crapmun.cdcidbge
+              ,crapmun.dscidesp
+              ,crapmun.cdufibge
+          FROM crapmun
+         WHERE crapmun.cdcidbge IS NOT NULL
+           AND crapmun.cdufibge IS NOT NULL;
 
       -- Selecionar informacoes de subscricao do capital dos associados
       CURSOR cr_crapsdc(pr_cdcooper IN crapsdc.cdcooper%TYPE
@@ -178,7 +184,7 @@ CREATE OR REPLACE PROCEDURE
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       -- Tabela temporaria para os municipios
       TYPE typ_tab_cid IS
-        TABLE OF crapcid%ROWTYPE
+        TABLE OF crapmun%ROWTYPE
           INDEX BY VARCHAR2(50);
       -- Vetor para armazenar os dados da central de risco
       vr_tab_cid typ_tab_cid;
@@ -209,8 +215,8 @@ CREATE OR REPLACE PROCEDURE
       vr_vlsdcota crapsda.vlsdcota%TYPE := 0; --> Saldo de cotas
       vr_vlsomado crapsdc.vllanmto%TYPE := 0; --> Subscricao do capital
       vr_vllanmto crapsdc.vllanmto%TYPE := 0; --> Subscricao do capital
-      vr_cdmuibge crapcid.cdmuibge%TYPE;      --> Codigo do municipio
-      vr_cdufibge crapcid.cdufibge%TYPE;      --> Codigo UF do municipio
+      vr_cdmuibge crapmun.cdcidbge%TYPE;      --> Codigo do municipio
+      vr_cdufibge crapmun.cdufibge%TYPE;      --> Codigo UF do municipio
       vr_flgativo BOOLEAN := FALSE;           --> Controla se possui relacionamento atual
       vr_dtdemiss DATE;
       
@@ -310,17 +316,17 @@ CREATE OR REPLACE PROCEDURE
       THEN
 
         -- Carrega a listagem dos municipios
-        FOR rw_crapcid IN cr_crapcid LOOP
+        FOR rw_crapmun IN cr_crapmun LOOP
           
-          vr_dsmuibge := TRIM(UPPER(translate(rw_crapcid.dsmuibge,
+          vr_dsmuibge := TRIM(UPPER(translate(rw_crapmun.dscidesp,
                          '¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸',
                          'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu')));
               				
           vr_dsmuibge := REPLACE(vr_dsmuibge,'''',' ');
         
           -- Adicionar a tabela
-          vr_tab_cid(UPPER(rw_crapcid.dsufibge || vr_dsmuibge)).cdmuibge := rw_crapcid.cdmuibge;
-          vr_tab_cid(UPPER(rw_crapcid.dsufibge || vr_dsmuibge)).cdufibge := rw_crapcid.cdufibge;
+          vr_tab_cid(UPPER(rw_crapmun.cdestado || vr_dsmuibge)).cdcidbge := rw_crapmun.cdcidbge;
+          vr_tab_cid(UPPER(rw_crapmun.cdestado || vr_dsmuibge)).cdufibge := rw_crapmun.cdufibge;
         END LOOP;
 
         -- Ultimo dia util do mes anterior
@@ -462,7 +468,7 @@ CREATE OR REPLACE PROCEDURE
 
             -- Busca o codigo do municipio
             IF vr_tab_cid.EXISTS(vr_ufcidade) THEN
-              vr_cdmuibge := vr_tab_cid(vr_ufcidade).cdmuibge;
+              vr_cdmuibge := vr_tab_cid(vr_ufcidade).cdcidbge;
               vr_cdufibge := vr_tab_cid(vr_ufcidade).cdufibge;
             ELSE
               vr_cdmuibge := 99999;
