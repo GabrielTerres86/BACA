@@ -810,6 +810,13 @@ begin
                               ,pr_infimsol => pr_infimsol
                               ,pr_stprogra => pr_stprogra);
     
+    if vr_idcontrole <> 0 then
+      -- Atualiza finalização do batch na tabela de controle 
+      gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                         ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                         ,pr_dscritic   => pr_dscritic);        
+    end if;    
+    
     if vr_inproces > 2 then 
       --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
       pc_log_programa(pr_dstiplog   => 'F',    
