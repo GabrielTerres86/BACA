@@ -1254,6 +1254,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       vr_corpoemail VARCHAR2(32000);
       vr_pedesenha NUMBER :=0;  
       vr_aux VARCHAR2(1000); 
+      vr_lib_prov_saque tbcc_monitoramento_parametro.inlibera_provisao_saque%TYPE;
       
       ---------->> CURSORES <<--------
       --> Buscar dados operador    
@@ -1551,12 +1552,14 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
              m.hrlimite_provisao,
              m.qtdias_provisao,
              m.inverifica_saldo,
-             m.vlprovisao_email INTO vr_lim_saq,
+             m.vlprovisao_email,
+             m.inlibera_provisao_saque INTO vr_lim_saq,
                                      vr_lim_pagto,
                                      vr_lim_hora,
                                      vr_lim_qtdiasprov,
                                      vr_verifica_saldo,
-                                     vr_provisao_email
+                                     vr_provisao_email,
+                                     vr_lib_prov_saque
       FROM tbcc_monitoramento_parametro m
       WHERE m.cdcooper = vr_cdcooper;
       
@@ -1621,29 +1624,33 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
            
       -- SAQUE EM ESPECIE / PAGAMENTO EM ESPECIE      
       vr_lim := vr_lim_saq;
-      vr_tot := vr_tot_saq;           
+      vr_tot := vr_tot_saq; 
+      vr_pedesenha :=0;   
+      vr_cdcritic := 0;       
       
-       --SE O HORARIO DO SAQUE EXCEDER O HORARIO LIMITE, JOGAR MAIS UM DIA UTIL.
-      IF(TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||TO_CHAR(SYSDATE,'HH24MI')),'DDMMYYYYHH24MI') > TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||vr_lim_hora),'DDMMYYYYHH24MI'))THEN
-        vr_lim_qtdiasprov := vr_lim_qtdiasprov + 1;
+      IF(vr_lib_prov_saque = 0)THEN
+          --SE O HORARIO DO SAQUE EXCEDER O HORARIO LIMITE, JOGAR MAIS UM DIA UTIL.
+          IF(TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||TO_CHAR(SYSDATE,'HH24MI')),'DDMMYYYYHH24MI') > TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||vr_lim_hora),'DDMMYYYYHH24MI'))THEN
+            vr_lim_qtdiasprov := vr_lim_qtdiasprov + 1;
+          END IF;
+          --pr_ind_grava, caso for 1 indica que o operador tem poderes para cadastrar a provisão mesmo qeu ela não respeite a regra dos dias uteis.            
+          IF(pr_ind_grava = 0 AND (vr_tot + pr_vlSaqPagto) > vr_lim)THEN       
+              vr_dhlim := empr0008.fn_retorna_data_util(pr_cdcooper =>vr_cdcooper , pr_dtiniper =>rw_crapdat.dtmvtolt , pr_qtdialib =>vr_lim_qtdiasprov);
+              IF(vr_dhsaque < vr_dhlim)THEN
+               -- Montar mensagem de critica
+               vr_cdcritic := 0;
+               IF(vr_idorigem = 5)THEN
+                 vr_pedesenha :=1;
+                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';             
+               ELSE
+                 vr_pedesenha :=0;
+                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17.';
+               END IF;
+               -- volta para o programa chamador
+               RAISE vr_exc_pedesenha;            
+             END IF;      
+          END IF;                                      
       END IF;
-      --pr_ind_grava, caso for 1 indica que o operador tem poderes para cadastrar a provisão mesmo qeu ela não respeite a regra dos dias uteis.            
-      IF(pr_ind_grava = 0 AND (vr_tot + pr_vlSaqPagto) > vr_lim)THEN       
-          vr_dhlim := empr0008.fn_retorna_data_util(pr_cdcooper =>vr_cdcooper , pr_dtiniper =>rw_crapdat.dtmvtolt , pr_qtdialib =>vr_lim_qtdiasprov);
-          IF(vr_dhsaque < vr_dhlim)THEN
-           -- Montar mensagem de critica
-           vr_cdcritic := 0;
-           IF(vr_idorigem = 5)THEN
-             vr_pedesenha :=1;
-             vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';             
-           ELSE
-             vr_pedesenha :=0;
-             vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17.';
-           END IF;
-           -- volta para o programa chamador
-           RAISE vr_exc_pedesenha;            
-         END IF;      
-      END IF;                                      
       
       gene0006.pc_gera_protocolo(pr_cdcooper => vr_cdcooper, 
                                  pr_dtmvtolt => vr_dtmvtolt, 
@@ -2633,7 +2640,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
           
             -- Montar mensagem de critica
             vr_cdcritic := 0;
-            vr_dscritic := 'Conta nao encontrado!';
+            vr_dscritic := 'Conta nao encontrada.';
             -- volta para o programa chamador
             RAISE vr_exc_saida;
           ELSE
@@ -2657,7 +2664,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
               
                 -- Montar mensagem de critica
                 vr_cdcritic := 0;
-                vr_dscritic := 'Contas nao encontradas!';
+                vr_dscritic := 'Conta nao encontrada.';
                 -- volta para o programa chamador
                 RAISE vr_exc_saida;
               ELSE
@@ -2680,7 +2687,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
                 CLOSE cr_saques_pj;              
                 -- Montar mensagem de critica
                 vr_cdcritic := 0;
-                vr_dscritic := 'Contas nao encontradas!';
+                vr_dscritic := 'Conta nao encontrada.';
                 -- volta para o programa chamador
                 RAISE vr_exc_saida;
               ELSE
