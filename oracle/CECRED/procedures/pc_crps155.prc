@@ -823,16 +823,16 @@ begin
     --Salvar informacoes no banco de dados
     commit;
   else
-    
+    -- Atualiza finalização do batch na tabela de controle 
+    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                       ,pr_dscritic   => pr_dscritic);  
+                                           
     -- Encerrar o job do processamento paralelo dessa agência
     gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                 ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                 ,pr_des_erro => vr_dscritic);  
   
-    -- Atualiza finalização do batch na tabela de controle 
-    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                       ,pr_dscritic   => pr_dscritic);  
     --Salvar informacoes no banco de dados
     commit;
   end if;
