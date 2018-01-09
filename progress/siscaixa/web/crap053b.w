@@ -39,9 +39,6 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
                             
                28/10/2015 - #318705 Retirado o parametro p-flgdebcc (Carlos)
-               
-               08/12/2017 - Melhoria 458, incluido chamada a proc valida-permissao-provisao 
-                            do dbo/b1crap54.p - Antonio R. Jr (mouts)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -202,7 +199,6 @@ DEF VAR p-nro-conta-nova AS INT NO-UNDO.
 DEF VAR p-mensagem         AS CHAR NO-UNDO.
 DEF VAR p-mensagem1        AS CHAR NO-UNDO.
 DEF VAR p-mensagem2        AS CHAR NO-UNDO.
-DEF VAR p-solicita         AS CHAR NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -766,28 +762,7 @@ PROCEDURE process-web-request :
                   {include/i-erro.i}
               END. 
               ELSE DO:
-                    RUN dbo/b1crap54.p
-                        PERSISTENT SET h-b1crap54.
-                        
-                    RUN valida-permissao-provisao IN h-b1crap54(
-                                                                 INPUT v_coop,
-                                                                 INPUT INT(v_pac),
-                                                                 INPUT INT(v_caixa),
-                                                                 INPUT v_cod,
-                                                                 INPUT v_senha,
-                                                                 INPUT v_conta,
-                                                                 INPUT v_valor,
-                                                                 INPUT p-solicita).
-                                                                 
-                    DELETE PROCEDURE h-b1crap54.
-
-                    IF RETURN-VALUE = 'NOK' THEN DO:
-                       ASSIGN v_cod = ""
-                              v_senha = ""
-                              vh_foco = "19".
-                       {include/i-erro.i}
-                    END.
-                    ELSE DO:                                                    
+                    
                    ASSIGN l-houve-erro = NO.
 
                    DO  TRANSACTION ON ERROR UNDO:
@@ -984,7 +959,6 @@ PROCEDURE process-web-request :
                   
              END.
          END.       
-    END.
     END.
     
 

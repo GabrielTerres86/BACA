@@ -42,9 +42,6 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
                
                28/10/2015 - #318705 Retirado o parametro p-flgdebcc (Carlos)
-               
-               07/12/2017 - Ajustes melhoria 458, realizar chamada da procedure 
-                            consultaprovisao da dbo/b1crap54  - Antonio R. Jr (mouts)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -102,7 +99,6 @@ CREATE WIDGET-POOL.
 
 DEFINE VARIABLE h-b1crap00 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap53 AS HANDLE     NO-UNDO.
-DEFINE VARIABLE h-b1crap54 AS HANDLE     NO-UNDO.
  
 DEF VAR p-programa       AS CHAR INITIAL "CRAP053".
 DEF VAR p-flgdebcc       AS LOGI INITIAL FALSE.
@@ -138,7 +134,6 @@ DEF VAR p-ult-sequencia  AS INTE  NO-UNDO.
 
 
 DEF VAR l-houve-erro    AS LOG          NO-UNDO.
-DEF VAR p-solicita      AS CHAR.
 
 DEF TEMP-TABLE w-craperr  NO-UNDO
      FIELD cdcooper   LIKE craperr.cdcooper
@@ -606,31 +601,10 @@ PROCEDURE process-web-request :
                                     {include/i-erro.i}
                                 END.
                                 ELSE DO:
-                                    RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
                                     
-                                    RUN consulta-provisao IN h-b1crap54(
-                                                                       INPUT v_coop,
-                                                                       INPUT INT(v_pac), 
-                                                                       INPUT INT(v_caixa),
-                                                                       INPUT p-nrctabdb, /*conta*/
-                                                                       INPUT DEC(v_valor),
-                                                                       INPUT v_cmc7, /** CMC7**/
-                                                                       OUTPUT p-solicita).
-                                                                       
-                                    DELETE PROCEDURE h-b1crap54.
-                                    
-                                    if RETURN-VALUE = "OK" AND p-solicita <> '' then
-                                          {include/i-erro.i}
-                                    IF RETURN-VALUE = "NOK" THEN DO:
-                                          ASSIGN vh_foco = "8".
-                                          {include/i-erro.i}
-                                    END.
-                                    ELSE DO:                                   
                                     IF TRIM(p-mensagem1) = '' AND
                                        TRIM(p-mensagem2) = '' AND
-                                           TRIM(p-mensagem)  = '' AND
-                                           TRIM(p-solicita)  = '' 
-                                        THEN DO:
+                                       TRIM(p-mensagem)  = '' THEN DO:
 
                                         ASSIGN l-houve-erro = NO.
 
@@ -872,10 +846,11 @@ PROCEDURE process-web-request :
                                             </script>'.
 
                                     END.
+
                                 END.
                             END.
-                          END. /*MELHORIA 458*/
                         END.
+
                     END.
                 END.
             END.

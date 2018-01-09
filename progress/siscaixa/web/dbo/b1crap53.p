@@ -92,10 +92,6 @@
                11/06/2014 - Somente emitir a crítica 950 apenas se a 
                             crapfdc.dtlibtic >= data do movimento (SD. 163588 - Lunelli)
                              
-               08/12/2017 - Melhoria 458, incluir as rotinas atualiza-pagto-cheque, 
-                            atualiza-pagto-cheque-migrado e atualiza-pagto-chequemigrado-host,
-                            a chamada para a torina pc_atualiza_operacao_especie CXON054 (Antonio R. Jr - mouts)
-                             
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap53.p   - Pagto de Cheque                                      */
@@ -216,8 +212,6 @@ DEF VAR aux_nrdctitg            LIKE crapass.nrdctitg               NO-UNDO.
 DEF VAR aux_nrctaass            LIKE crapass.nrdconta               NO-UNDO.
 DEF VAR aux_nritgchq            LIKE crapfdc.nrdctitg               NO-UNDO.
 DEF VAR aux_tpcheque            AS INTE                             NO-UNDO.
-DEF VAR aux_dscritic            AS CHAR                             NO-UNDO.
-DEF VAR aux_cdcritic            AS INTE                             NO-UNDO.
 
 {dbo/bo-vercheque.i}
 {dbo/bo-vercheque-migrado.i}
@@ -2588,40 +2582,6 @@ PROCEDURE atualiza-pagto-cheque:
                                                         INPUT 1). /*Inclusao*/
              DELETE PROCEDURE h-b1crap00.
              ****************/
-             
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-             
-             RUN STORED-PROCEDURE pc_atualiza_operacao_especie
-                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
-                                                      INPUT crapdat.dtmvtolt,
-                                                      INPUT craplcm.nrdconta,
-                                                      INPUT p-valor,
-                                                      INPUT crapfdc.dsdocmc7,
-                                                      OUTPUT 0,
-                                                      OUTPUT "").
-
-              CLOSE STORED-PROC pc_atualiza_operacao_especie
-                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                                
-              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-              
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = ""
-                     aux_dscritic = pc_atualiza_operacao_especie.pr_dscritic
-                                    WHEN pc_atualiza_operacao_especie.pr_dscritic <> ?.
-                                    
-               IF (aux_dscritic <> "" AND aux_dscritic <> ?) THEN
-                  DO:
-                     RUN cria-erro (INPUT p-cooper,
-                                    INPUT p-cod-agencia,
-                                    INPUT p-nro-caixa,
-                                    INPUT aux_cdcritic,
-                                    INPUT aux_dscritic,
-                                    INPUT YES).
-                                    
-                     RETURN "NOK".
-         END.  
-             
          END.  
 
     
@@ -3159,39 +3119,6 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                                                         INPUT 1). /*Inclusao*/
              DELETE PROCEDURE h-b1crap00.
              ******************/
-             
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-             
-             RUN STORED-PROCEDURE pc_atualiza_operacao_especie
-                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
-                                                      INPUT crapdat.dtmvtolt,
-                                                      INPUT craplcm.nrdconta,
-                                                      INPUT p-valor,
-                                                      INPUT crapfdc.dsdocmc7,
-                                                      OUTPUT 0,
-                                                      OUTPUT "").
-
-              CLOSE STORED-PROC pc_atualiza_operacao_especie
-                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                                
-              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-              
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = ""
-                     aux_dscritic = pc_atualiza_operacao_especie.pr_dscritic
-                                    WHEN pc_atualiza_operacao_especie.pr_dscritic <> ?.
-                                    
-               IF (aux_dscritic <> "" AND aux_dscritic <> ?) THEN
-                  DO:
-                     RUN cria-erro (INPUT p-cooper,
-                                    INPUT p-cod-agencia,
-                                    INPUT p-nro-caixa,
-                                    INPUT aux_cdcritic,
-                                    INPUT aux_dscritic,
-                                    INPUT YES).
-                                    
-                     RETURN "NOK".
-         END.  
          END.  
 
     
@@ -3757,39 +3684,6 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
                                                         INPUT 1). /*Inclusao*/
              DELETE PROCEDURE h-b1crap00.
              ***************/
-             
-             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-             
-             RUN STORED-PROCEDURE pc_atualiza_operacao_especie
-                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
-                                                      INPUT crapdat.dtmvtolt,
-                                                      INPUT craplcm.nrdconta,
-                                                      INPUT p-valor,
-                                                      INPUT crapfdc.dsdocmc7,
-                                                      OUTPUT 0,
-                                                      OUTPUT "").
-
-              CLOSE STORED-PROC pc_atualiza_operacao_especie
-                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                                
-              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-              
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = ""
-                     aux_dscritic = pc_atualiza_operacao_especie.pr_dscritic
-                                    WHEN pc_atualiza_operacao_especie.pr_dscritic <> ?.
-                                    
-               IF (aux_dscritic <> "" AND aux_dscritic <> ?) THEN
-                  DO:
-                     RUN cria-erro (INPUT p-cooper,
-                                    INPUT p-cod-agencia,
-                                    INPUT p-nro-caixa,
-                                    INPUT aux_cdcritic,
-                                    INPUT aux_dscritic,
-                                    INPUT YES).
-                                    
-                     RETURN "NOK".
-         END.  
          END.  
 
     
