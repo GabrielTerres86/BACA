@@ -46,6 +46,7 @@
  * 037: [12/01/2015] Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.(Carlos Rafael Tanholi - Pré-Aprovado fase II).
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
  * 039: [27/07/2016] Alterado função controlaFoco(Evandro - RKAM)
+ * 040: [25/05/2017] Permitir gerar extrato de Pos-Fixado. (Jaison/James - PRJ298)
  * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou não. (Projeto 357 - Reinert)
  * 041: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
@@ -87,6 +88,9 @@ var nrdrecid  = '';
 var tplcremp  = '';
 var tpemprst  = 0;
 var intpextr  = '';
+var cdlcremp  = 0;
+var qttolatr  = 0;
+var dtvencto  = '';
 
 var flgPagtoAval  = 0;
 var nrAvalistas   = 0;
@@ -100,6 +104,8 @@ var contHipotecas = 0;
 var dtpesqui      = '';
 var nrparepr	  = 0;
 var vlpagpar	  = 0;
+var nrparepr_pos  = 0;
+var vlpagpar_pos  = 0;
 var glb_nriniseq  = 1;
 var glb_nrregist  = 50;
 var idSocio 	  = 0;
@@ -192,7 +198,7 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA']) ) {
+	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA']) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -230,6 +236,14 @@ function controlaOperacao(operacao) {
 				if (typeof $('#dsdavali', $(this) ).val() != 'undefined'){
 					flgPagtoAval = ((trim($('#dsdavali',$(this)).val()) == "") ? 0 : 1);					
 				}
+
+				if (typeof $('#cdlcremp', $(this) ).val() != 'undefined'){
+					cdlcremp = $('#cdlcremp', $(this) ).val();
+			}
+
+				if (typeof $('#qttolatr', $(this) ).val() != 'undefined'){
+					qttolatr = $('#qttolatr', $(this) ).val();
+				}
 			}
 		});
 		if ( nrctremp == '' && operacao != 'PORTAB_CRED') { return false; }
@@ -241,6 +255,7 @@ function controlaOperacao(operacao) {
 			return false;
 			break;
 		case 'C_DESCONTO':
+		case 'C_DESCONTO_POS':
 			mensagem = 'consultando desconto ...';
 			break;
 		case 'C_EXTRATO' :
@@ -371,8 +386,9 @@ function controlaOperacao(operacao) {
 			mensagem = 'consultando dados ...';	
 			break;	
 		case 'C_PAG_PREST' : 
+		case 'C_PAG_PREST_POS' :
 			fechaRotina($('#divUsoGenerico'),$('#divRotina'));
-			if(tpemprst != 1){
+			if(tpemprst != 1 && tpemprst != 2){
 				showError('error','O produto n&atilde;o possui essa op&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 				return false;
 			}
@@ -444,7 +460,7 @@ function controlaOperacao(operacao) {
 			break;
 	}
 	
-	if (operacao != 'C_DESCONTO' && operacao != 'C_LIQ_MESMO_DIA') {
+	if (operacao != 'C_DESCONTO' && operacao != 'C_DESCONTO_POS' && operacao != 'C_LIQ_MESMO_DIA') {
 		$('.divRegistros').remove();
 	}
 	
@@ -478,6 +494,11 @@ function controlaOperacao(operacao) {
 			tpemprst: tpemprst,
 			nrparepr: nrparepr,
 			vlpagpar: vlpagpar,
+            dtvencto: dtvencto,
+			nrparepr_pos: nrparepr_pos,
+			vlpagpar_pos: vlpagpar_pos,
+            cdlcremp: cdlcremp,
+            qttolatr: qttolatr,
 			inconcje: inconcje,
 			dtcnsspc: dtcnsspc,
 			idSocio : idSocio,
@@ -499,7 +520,7 @@ function controlaOperacao(operacao) {
 		success: function(response) {
 		
 			if ( response.indexOf('showError("error"') == -1 ) {
-				if (operacao == 'C_DESCONTO') {
+				if (operacao == 'C_DESCONTO' || operacao == 'C_DESCONTO_POS') {
 					eval( response );
 					hideMsgAguardo();
 					bloqueiaFundo(divRotina);
@@ -642,11 +663,14 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['TC']) ) {
 
 		nomeForm = 'frmDadosPrest';
-		altura   = '475px';
-		largura  = '485px';
+		altura   = '470px';
+		largura  = '495px';
 
 		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"],label[for="vliofcpl"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
+
+        var rRotulosPosFixado = $('label[for="tpatuidx"],label[for="idcarenc"],label[for="dtcarenc"]','#'+nomeForm);
+        var cPosFixado   = $('#tpatuidx, #idcarenc, #dtcarenc, #nrdiacar','#'+nomeForm);
 
 		var rRotuloLinha = $('label[for="cdpesqui"],label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm);
 
@@ -672,20 +696,23 @@ function controlaLayout(operacao) {
 
 		cMoeda.addClass('moeda');
 		cTodos.addClass('campo').css('width','131px');
+        cPosFixado.css('width','110px');
 
 		rRotulos.addClass('rotulo').css('width','85px');
-		rRotuloLinha.addClass('rotulo-linha').css('width','112px');;
+		rRotuloLinha.addClass('rotulo-linha').css('width','112px');
+        rRotulosPosFixado.addClass('rotulo-linha').css('width','144px');
+        $('label[for="nrdiacar"]','#'+nomeForm).addClass('rotulo').css('width','366px');
 
 		// Hack IE
 		if ( $.browser.msie ) {
-			cTodosGr.css({'width':'377px'});
+			cTodosGr.css({'width':'388px'});
 		} else {
-			cTodosGr.css({'width':'380px'});
+			cTodosGr.css({'width':'391px'});
 		}
 
-		r_Linha2.css('width','112px');
+		r_Linha2.css('width','123px');
 		rPesquisa.css('width','60px');
-		cPesquisa.css({'width':'183px'});
+		cPesquisa.css({'width':'194px'});
 
 		cTodos.desabilitaCampo();
 
@@ -703,7 +730,7 @@ function controlaLayout(operacao) {
 
 		nomeForm = 'frmNovaProp';
 		altura   = '300px';
-		largura  = '440px';
+		largura  = '455px';
 
 		inconfir = 1;
 
@@ -736,6 +763,9 @@ function controlaLayout(operacao) {
 		var rNtPromis    = $('label[for="flgimpnp"]','#'+nomeForm);
 		var rLiquidacoes = $('label[for="dsctrliq"]','#'+nomeForm);
 		var rDtLiberar   = $('label[for="dtlibera"]','#'+nomeForm);
+        var rIdcarenc = $('label[for="idcarenc"]', '#' + nomeForm);
+        var rDtcarenc = $('label[for="dtcarenc"]', '#' + nomeForm);
+
 		var cNivelRic    = $('#nivrisco','#'+nomeForm);
 		var cRiscoCalc   = $('#nivcalcu','#'+nomeForm);
 		var cVlEmpr      = $('#vlemprst','#'+nomeForm);
@@ -756,6 +786,8 @@ function controlaLayout(operacao) {
 		var cProposta    = $('#flgimppr','#'+nomeForm);
 		var cNtPromis    = $('#flgimpnp','#'+nomeForm);
 		var cLiquidacoes = $('#dsctrliq','#'+nomeForm);
+        var cIdcarenc = $('#idcarenc', '#' + nomeForm);
+        var cDtcarenc = $('#dtcarenc', '#' + nomeForm);
 
 		var rDsratpro = $('label[for="dsratpro"]','#'+nomeForm);
 		var rDsratatu = $('label[for="dsratatu"]','#'+nomeForm);
@@ -766,13 +798,13 @@ function controlaLayout(operacao) {
 		cNivelRic.addClass('rotulo').css('width','90px');
         cRiscoCalc.addClass('').css('width','108px');
         cVlEmpr.addClass('rotulo moeda').css('width','90px');
-        cLnCred.css('width','32px').attr('maxlength','3');
+        cLnCred.css('width','35px').attr('maxlength','3');
         cDsLnCred.css('width','108px');
         cVlPrest.addClass('moeda').css('width','90px');
-        cFinali.addClass('rotulo').css('width','32px');
+        cFinali.addClass('rotulo').css('width','35px');
         cDsFinali.css('width','108px');
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
-        cQualiParc.addClass('rotulo').css('width','32px');
+        cQualiParc.addClass('rotulo').css('width','35px');
         cDsQualiParc.addClass('').css('width','108');
         cDebitar.addClass('rotulo').css('width','90px');
         cPercCET.addClass('porcento').css('width','45px');
@@ -783,26 +815,30 @@ function controlaLayout(operacao) {
         cProposta.addClass('rotulo').css('width','108px');
 		cNtPromis.addClass('').css('width','108px');
 		cLiquidacoes.addClass('rotulo alphanum').css('width','320px');
+        cIdcarenc.css('width', '108px');
+        cDtcarenc.css('width', '108px');
 
 		rRotulos.addClass('rotulo').css('width','75px');
-		rDtLiberar.css('width','305px');
+		rDtLiberar.css('width','321px');
 
 		rDsratpro.addClass('rotulo').css('width','75px');
 		rDsratatu.addClass('rotulo-linha').css('width','115px');
 		cDsratpro.addClass('rotulo').css('width','108px');
 		cDsratatu.addClass('rotulo').css('width','108px');
 
-		rLiberar.css('width','137px');
-		rProposta.css('width','305px');
+		rLiberar.css('width','153px');
+		rProposta.css('width','75px');
 
-		rRiscoCalc.addClass('').css('width','137px');
-		rLnCred.addClass('').css('width','82px');
-		rFinali.addClass('').css('width','82px');
-		rQualiParc.addClass('').css('width','82px');
-		rPercCET.addClass('').css('width','177px');
-		rDtPgmento.addClass('rotulo').css('width','305px');
-		rNtPromis.addClass('rotulo').css('width','305px');
+		rRiscoCalc.addClass('').css('width','153px');
+		rLnCred.addClass('').css('width','95px');
+		rFinali.addClass('').css('width','95px');
+		rQualiParc.addClass('').css('width','95px');
+		rPercCET.addClass('').css('width','193px');
+		rDtPgmento.addClass('rotulo').css('width','321px');
+		rNtPromis.addClass('rotulo-linha').css('width', '132px');
 		rDiasUteis.addClass('rotulo-linha');
+        rIdcarenc.addClass('rotulo').css('width', '75px');
+        rDtcarenc.addClass('').css('width', '135px');
 
 		tpemprst = arrayProposta['tpemprst'];
 		cdtpempr = arrayProposta['cdtpempr'];
@@ -818,6 +854,12 @@ function controlaLayout(operacao) {
 		}
 
 		cTodos.desabilitaCampo();
+
+        if (tpemprst == 2) { // Se for Pos-Fixado
+            $("#linCarencia","#frmNovaProp").show();
+        } else {
+            $("#linCarencia","#frmNovaProp").hide();
+        }
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])) {
 
@@ -1560,6 +1602,171 @@ function controlaLayout(operacao) {
 		$('#totpagto','#frmVlParc').val('0,00');
 		$('#vldifpar','#frmVlParc').val('0,00');
 		
+	} else if (in_array(operacao,['C_PAG_PREST_POS'])) {
+
+		nomeForm = 'frmVlParc';
+		altura   = '295px';
+		largura  = '710px';
+
+		var rTotAtual  = $('label[for="totatual"]','#'+nomeForm );
+		var cTotAtual  = $('#totatual','#'+nomeForm);
+		var rTotPagmto = $('label[for="totpagto"]','#'+nomeForm );
+		var cTotPagmto = $('#totpagto','#'+nomeForm);
+		var rVlpagmto  = $('label[for="vlpagmto"]','#frmVlPagar');
+		var cVlpagmto  = $('#vlpagmto','#frmVlPagar');
+		
+		var rPagtaval  = $('label[for="pagtaval"]','#'+nomeForm);
+		var cPagtaval  = $('#pagtaval','#'+nomeForm);
+		
+		rTotAtual.addClass('rotulo').css({'width':'110px','padding-top':'3px','padding-bottom':'3px'  });
+		rVlpagmto.addClass('rotulo').css({'width':'80px','padding-top':'3px','padding-bottom':'3px'});
+
+		if ( $.browser.msie ) {
+			rTotPagmto.addClass('rotulo').css( {'width':'80px' , 'margin-left':'315px' } );
+			cTotAtual.addClass('campo').css({'width':'70px','padding-top':'3px','padding-bottom':'3px'   });
+			cVlpagmto.addClass('campo').css({'width':'70px','margin-right':'10px'});
+			cTotPagmto.addClass('campo').css({'width':'70px','padding-top':'3px','padding-bottom':'3px' , 'margin-left':'09px'  });
+		} else{
+			rTotPagmto.addClass('rotulo').css( {'width':'80px' , 'margin-left':'322px' } );
+			cTotAtual.addClass('campo').css({'width':'70px','padding-top':'3px','padding-bottom':'3px', 'margin-right':'25px'});
+			cVlpagmto.addClass('campo').css({'width':'70px','margin-right':'10px'});
+			cTotPagmto.addClass('campo').css({'width':'70px','padding-top':'3px','padding-bottom':'3px', 'margin-right':'25px'});
+		}
+
+		cTotPagmto.addClass('rotulo moeda').desabilitaCampo();
+		cTotAtual.addClass('rotulo moeda').desabilitaCampo();
+		cVlpagmto.addClass('rotulo moeda');
+		
+		// Define se mostra o campo "Pagamento Avalista"
+		if (flgPagtoAval){
+			rPagtaval.show();
+			cPagtaval.show();
+		}else{						
+			rPagtaval.hide();
+			cPagtaval.hide();
+		}
+		
+		// Configurações da tabela
+		var divTabela    = $('#divTabela');
+		var divRegistro = $('div.divRegistros', divTabela );
+		var tabela      = $('table', divRegistro );
+
+		divRegistro.css({'height':'160px','border-bottom':'1px dotted #777','padding-bottom':'2px'});
+		divTabela.css({'border':'1px solid #777', 'margin-bottom':'3px', 'margin-top':'3px'});
+
+		$('tr.sublinhado > td',divRegistro).css({'text-decoration':'underline'});
+
+		var ordemInicial = new Array();
+
+		var arrayLargura = new Array();
+		arrayLargura[0] = '13px';
+		arrayLargura[1] = '55px';
+		arrayLargura[2] = '55px';
+		arrayLargura[3] = '52px';
+		arrayLargura[4] = '53px';
+		arrayLargura[5] = '43px';
+		arrayLargura[6] = '60px';
+		arrayLargura[7] = '45px';
+		arrayLargura[8] = '57px';
+
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'right';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'right';
+		arrayAlinha[8] = 'right';
+		arrayAlinha[9] = 'center';
+
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+		$("th:eq(0)", tabela).removeClass();
+		$("th:eq(0)", tabela).unbind('click');
+
+		// Adiciona função que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
+
+		// Click do chekbox de Todas as parcelas
+		 $("input[type=checkbox][name='checkTodos']").unbind('click').bind('click', function (){
+
+			var selec = this.checked;
+
+			$("input[type=checkbox][name='checkParcelas[]']").prop("checked", selec );
+
+			$("input[type=checkbox][name='checkParcelas[]']").each(function() {
+				habilitaDesabilitaCampo(this, false);
+			});
+
+			recalculaTotal();
+
+			$("input[type=text][name='vlpagpar[]']").each(function() {
+				nrParcela = this.id.split("_")[1];
+				var vlr = selec ? $('#check_' + nrParcela).attr('vldescto') : '0,00';
+                descontoPos(nrParcela,vlr);
+			});
+
+			// Limpar Valor a pagar
+			cVlpagmto.val("");
+
+		});
+
+		// Desabilita o campo 'Valor a antecipar' e define o click do checkbox para habilitar/desabilitar o campo
+		$("input[type=text][name='vlpagpar[]']").each(function() {
+			nrParcela = this.id.split("_")[1];
+			$('#vlpagpar_'+nrParcela , tabela).addClass('rotulo moeda');
+			$('#vlpagpar_'+nrParcela , tabela).css({'width':'70px'}).desabilitaCampo();
+		});
+
+		$("input[name='checkParcelas[]']",tabela).unbind('click').bind('click', function () {
+			nrParcela = this.id.split("_")[1];
+			habilitaDesabilitaCampo(this,true);
+            var vlr = $(this).is(':checked') ? $(this).attr('vldescto') : '0,00';
+            descontoPos(nrParcela,vlr);
+			cVlpagmto.val("");
+		});
+
+		$("input[type=text][name='vlpagpar[]']").blur(function() {
+			recalculaTotal();
+			cVlpagmto.val("");
+		});
+
+		cVlpagmto.unbind('blur').bind('blur', function () {
+			atualizaParcelas();
+			vlpagpar = "";
+			$("input[type=text][name='vlpagpar[]']").each(function() {
+				nrParcela = this.id.split("_")[1];
+				vlPagar   = this.value;
+				vlpagpar  =  (vlpagpar == "") ?  nrParcela + ";" + vlPagar : vlpagpar + "|" + nrParcela + ";" + vlPagar;
+			});
+		});
+		
+		valorTotAPagar  = 0;
+		$("input[type=hidden][name='vlpagpar[]']").each(function() {
+			// Valor total a pagar
+			valorTotAPagar = valorTotAPagar + parseFloat(this.value.replace(",","."));
+		});
+
+		valorTotAtual = 0;
+		$("input[type=hidden][name='vlatupar[]']").each(function() {
+			// Valor total a atual
+			valorTotAtual += retiraMascara ( this.value );
+		});
+
+		$("input[type=hidden][name='vlmtapar[]']").each(function() {
+			// Valor total a atual
+			valorTotAtual += retiraMascara ( this.value );
+		});
+
+		$("input[type=hidden][name='vlmrapar[]']").each(function() {
+			// Valor total a atual
+			valorTotAtual +=  retiraMascara ( this.value );
+		});
+
+		$('#totatual','#frmVlParc').val(valorTotAtual.toFixed(2).replace(".",",")) ;
+		$('#totpagto','#frmVlParc').val('0,00');
+		
 	} else  if (in_array(operacao,['C_MICRO_PERG'])) {
 			
 		nomeForm = 'frmQuestionario';
@@ -1710,6 +1917,14 @@ function atualizaTela(){
 		$('#vltotpag','#frmDadosPrest').val( arrayRegistros['vltotpag'] );
 		$('#vliofcpl','#frmDadosPrest').val( arrayRegistros['vliofcpl'] );
 
+        // Se for Pos-Fixado
+        if (tpemprst == 2) {
+            $('#tpatuidx','#frmDadosPrest').val( arrayRegistros['tpatuidx'] );
+            $('#idcarenc','#frmDadosPrest').val( arrayRegistros['idcarenc'] );
+            $('#dtcarenc','#frmDadosPrest').val( arrayRegistros['dtcarenc'] );
+            $('#nrdiacar','#frmDadosPrest').val( arrayRegistros['nrdiacar'] );
+        }
+
 	}else if (in_array(operacao,['C_PREJU'])){
 
 		$('#dtprejuz','#frmPreju').val( arrayRegistros['dtprejuz'] );
@@ -1759,6 +1974,12 @@ function atualizaTela(){
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
 		$('#dsratpro','#frmNovaProp').val( arrayProposta['dsratpro'] );
 		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );
+
+        // Se for Pos-Fixado
+        if (tpemprst == 2) {
+            $('#idcarenc','#frmNovaProp').val( arrayProposta['idcarenc'] );
+            $('#dtcarenc','#frmNovaProp').val( arrayProposta['dtcarenc'] );
+        }
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])){
 
@@ -2194,7 +2415,7 @@ function mostraExtrato( operacao ) {
 
 	limpaDivGenerica();
 
-	if  (tpemprst == 1) {
+	if  (tpemprst == 1 || tpemprst == 2) {
 		verificaTipoEmprestimo();
 		return;
 	}
@@ -2305,12 +2526,18 @@ function verificaAbreTelaPagamentoAvalista(){
 
 function verificarImpAntecip() {
 
+	var nmfuncao;
+
 	// Se há dados de antecipação
 	if (qtdregis1 > 0){
-		showError("inform",'Pagamento efetuado com sucesso.',"Alerta - Ayllos","showMsgAutorizacaoAntecipacao();");
+		nmfuncao = "showMsgAutorizacaoAntecipacao();";
 	} else {
-	    showError("inform",'Pagamento efetuado com sucesso.',"Alerta - Ayllos","controlaOperacao('C_PAG_PREST');");
+	    nmfuncao = "controlaOperacao('C_PAG_PREST');";
+        if (tpemprst == 2) { // Pos-Fixado
+            nmfuncao = "controlaOperacao('C_PAG_PREST_POS');";
+        }
 	}
+    showError("inform",'Pagamento efetuado com sucesso.',"Alerta - Ayllos",nmfuncao);
 }
 
 function showMsgAutorizacaoAntecipacao(){
@@ -2334,6 +2561,37 @@ function validaPagamento(){
 			nrdconta: nrdconta,
 			vlapagar: vlapagar,
 			nrctremp: nrctremp,
+			redirect: 'script_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			eval(response);
+		}
+	});
+	
+	return false;
+}
+
+function validaPagamentoPos(){
+
+	
+	showMsgAguardo('Aguarde, validando pagamento...');
+	var vlapagar = $('#totpagto', '#frmVlParc').val();
+	
+	// Carregar os dados de antecipação
+	verificaAntecipacaopgto();
+	
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/valida_pagamentos_pos.php',
+		data: {
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			vlapagar: converteMoedaFloat(vlapagar),
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -2850,6 +3108,11 @@ function geraPagamentos()
 	var nrseqavl = 0;
 	var campospc = 'cdcooper|nrdconta|nrctremp|nrparepr|vlpagpar';
 	var dadosprc = '';
+    var nmscript = 'gera_pagamentos.php';
+    
+    if (tpemprst == 2) { // Se for Pos-Fixado
+        nmscript = 'gera_pagamentos_pos.php';
+    }
 	
 	if ($('#divUsoGenerico').css('visibility') == 'visible') {
 		nrseqavl = $('input:radio[name=nrseqavl]:checked','#frmDadosPagAval').val();
@@ -2862,8 +3125,12 @@ function geraPagamentos()
 		{
 			nrParcela = this.id.split("_")[1];
 
+			if (tpemprst == 1) { // Se for PP
 			dadosprc  += $('#cdcooper_'+nrParcela , tabela).val()+';'+$('#nrdconta_'+nrParcela , tabela).val()+';'+$('#nrctremp_'+nrParcela , tabela).val()+';';
 			dadosprc  += $('#nrparepr_'+nrParcela , tabela).val()+';'+$('#vlpagpar_'+nrParcela , tabela).val()+'|';
+            } else if (tpemprst == 2) { // Se for Pos-Fixado
+                dadosprc  += (dadosprc == '' ? '' : '|') + $('#nrparepr_'+nrParcela , tabela).val() + ';' + $('#vlpagpar_'+nrParcela , tabela).val().replace(/\./g, '');
+            }
 		}
 	});
 
@@ -2874,7 +3141,7 @@ function geraPagamentos()
 	$.ajax({
 		type: "POST",
 		dataType: 'html',
-		url: UrlSite + "telas/atenda/prestacoes/cooperativa/gera_pagamentos.php",
+		url: UrlSite + "telas/atenda/prestacoes/cooperativa/" + nmscript,
 		data: {
 		    nrdconta: nrdconta,	nrctremp: nrctremp,
 			campospc: campospc, dadosprc: dadosprc,
@@ -2908,6 +3175,21 @@ function verificaDesconto(campo , flgantec , parcela) {
 
 }
 
+function verificaDescontoPos(campo , insitpar , parcela , vencto) {
+
+	var vlpagan = $("#vlpagan_" + parcela,"#divTabela");
+
+	if (isHabilitado(campo) && retiraMascara(vlpagan.val()) != retiraMascara(campo.val()) && insitpar == 3) { // 3 - A Vencer
+        nrparepr_pos = parcela;
+        vlpagpar_pos = converteMoedaFloat(campo.val());
+        dtvencto = vencto;
+        controlaOperacao("C_DESCONTO_POS");
+	}
+
+	vlpagan.val(campo.val());
+
+}
+
 function desconto (parcela) {
 
 	if  (parcela != 0) {
@@ -2916,6 +3198,10 @@ function desconto (parcela) {
 
 	controlaOperacao("C_DESCONTO");
 
+}
+
+function descontoPos (parcela,valor) {
+	$('#vldespar_' + parcela ,'#divTabela').html(valor);
 }
 
 
@@ -3143,8 +3429,12 @@ function realizaImpressao(idAntecipacao) {
 	if (idAntecipacao == true) {
 		carregarImpressoAntecipacao('frmAntecipapgto');
 	} else {
+        var nmoperac = 'C_PAG_PREST';
+        if (tpemprst == 2) { // Pos-Fixado
+            nmoperac = 'C_PAG_PREST_POS';
+        }
 		//Controlar a operação da tela
-		controlaOperacao('C_PAG_PREST');
+		controlaOperacao(nmoperac);
 	}
 	
 	return false;
@@ -3249,7 +3539,11 @@ function carregarImpressoAntecipacao(vr_nmform){
 	var controle = 'bloqueiaFundo(divRotina);';
 	
 	if (vr_nmform == 'frmAntecipapgto') {
-	  controle += ' controlaOperacao(\'C_PAG_PREST\');';
+        var nmoperac = 'C_PAG_PREST';
+        if (tpemprst == 2) { // Pos-Fixado
+            nmoperac = 'C_PAG_PREST_POS';
+        }
+        controle += ' controlaOperacao(\'' + nmoperac + '\');';
 	}
 	
 	carregaImpressaoAyllos(vr_nmform, action, controle);
@@ -3423,24 +3717,23 @@ function validarLiquidacao(){
 				if (typeof $('#liquidia', $(this) ).val() != 'undefined'){
 					liquidia = $('#liquidia', $(this) ).val();
 				}
-			/*	if (typeof $('#vlemprst', $(this) ).val() != 'undefined'){
-					vlemprst = $('#vlemprst', $(this) ).val();
+				if (typeof $('#tpemprst', $(this) ).val() != 'undefined'){
+					tpemprst = $('#tpemprst', $(this) ).val();
 				}
-			*/	
+
 			}
 		});
 		if ( nrctremp == '' ) { return false; }
 	
-	
+	if (tpemprst == 2) { // Pos-Fixado
+		controlaOperacao('C_PAG_PREST_POS');
+	} else {
 	if ( liquidia == 1 ) {
-
 		showConfirmacao('Deseja Realizar Liquidação do Contrato?','Confirma&ccedil;&atilde;o - Ayllos','exibeValorLiquidacao();','controlaOperacao(\'C_PAG_PREST\');','sim.gif','nao.gif');
 		return false;
-		
 	} else {
-	
 		controlaOperacao('C_PAG_PREST');
-	
+		}
 	}
 
 }

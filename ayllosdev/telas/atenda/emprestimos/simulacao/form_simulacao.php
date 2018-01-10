@@ -9,6 +9,8 @@ ALTERACOES     : 30/03/2012 - Incluir campo %CET (Gabriel).
                  05/09/2012 - Mudar para layout padrao (Gabriel)	 
                  04/08/2014 - Ajustes referentes ao projeto CET (Lucas R./Gielow)
                  30/06/2015 - Ajustes referentes Projeto 215 DV 3 (Daniel)
+                 03/02/2017 - Reposicionar a Linha de Credito. (Jaison/James - PRJ298)
+
                  20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
 */	
 
@@ -44,6 +46,12 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="vlemprst" id="vlemprst" type="text" value="" />
             <br />
 
+            <label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
+            <input name="cdlcremp" id="cdlcremp" type="text" value="" />
+            <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+            <input name="dslcremp" id="dslcremp" type="text" value="" />
+            <br />
+
             <label for="cdfinemp"><? echo utf8ToHtml('Finalidade:') ?></label>
             <input name="cdfinemp" id="cdfinemp" type="text" value="" />
             <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
@@ -60,12 +68,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                 }
                 ?>                
             </select>
-            <br />
-
-            <label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
-            <input name="cdlcremp" id="cdlcremp" type="text" value="" />
-            <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-            <input name="dslcremp" id="dslcremp" type="text" value="" />
             <br />
 
             <label for="qtparepr">Qtd Parcelas:</label>

@@ -259,6 +259,8 @@
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>';
 			arrayProposta['flgcescr'] = '<? echo ((getByTagName($proposta,'flgcescr') == 'yes') ? true : false); ?>';
+			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
+			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
 			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
 			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '1'; ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr') != '' ? getByTagName($proposta,'vliofepr') : '0'; ?>';

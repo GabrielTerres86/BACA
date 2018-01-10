@@ -104,6 +104,7 @@
  * 083: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
+ * 086: [01/02/2017] Listar todas as Linhas de Credito. Listar as Finalidades conforme Linha selecionada. Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
  * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
  * 087: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * 088: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
@@ -1419,6 +1420,8 @@ function manterRotina(operacao) {
     var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
     var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
     var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
+    var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
+    var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
 
     var nrgarope = (typeof arrayProtCred['nrgarope'] == 'undefined') ? '' : arrayProtCred['nrgarope'];
     var nrperger = (typeof arrayProtCred['nrperger'] == 'undefined') ? '' : arrayProtCred['nrperger'];
@@ -1610,6 +1613,7 @@ function manterRotina(operacao) {
             tpemprst: tpemprst, nrcpfcgc: nrcpfcgc, dsjusren: dsjusren,
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
             blqpreap: (bloquear_pre_aprovado ? 1 : 0),
+            idcarenc: idcarenc, dtcarenc: dtcarenc,
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
@@ -1719,8 +1723,10 @@ function calculaDiasUteis(dataFinal) {
 
 function verificaQtDiaLib() {
 
+    $('#flgpagto').habilitaCampo();
+
     switch ($('#tpemprst').val()) {
-        case '0':
+        case '0': // TR
             $('#qtdialib').habilitaCampo();
             $("#qtdialib").datepicker('enable');
             if ($('#qtdialib').val().length > 1) {
@@ -1729,7 +1735,14 @@ function verificaQtDiaLib() {
                 $('#qtdialib').change();
             }
             break;
-        case '1':
+        case '1': // Pre-Fixado
+            $('#qtdialib').desabilitaCampo();
+            $("#qtdialib").datepicker('disable');
+            $('#qtdialib').val('0');
+            $('#qtdialib').change();
+            break;
+        case '2': // Pos-Fixado
+            $('#flgpagto').desabilitaCampo();
             $('#qtdialib').desabilitaCampo();
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
@@ -1830,6 +1843,8 @@ function controlaLayout(operacao) {
         var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
         var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
+        var rIdcarenc = $('label[for="idcarenc"]', '#' + nomeForm);
+        var rDtcarenc = $('label[for="dtcarenc"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
@@ -1858,6 +1873,8 @@ function controlaLayout(operacao) {
         var cNtPromis = $('#flgimpnp', '#' + nomeForm);
         var cLiquidacoes = $('#dsctrliq', '#' + nomeForm);
         var rImgCalen = $('#imgcalen', '#' + nomeForm);
+        var cIdcarenc = $('#idcarenc', '#' + nomeForm);
+        var cDtcarenc = $('#dtcarenc', '#' + nomeForm);
 
         cNivelRic.addClass('rotulo').css('width', '90px');
         cRiscoCalc.addClass('').css('width', '108px');
@@ -1881,6 +1898,8 @@ function controlaLayout(operacao) {
         cProposta.addClass('rotulo').css('width', '108px');
         cNtPromis.addClass('').css('width', '108px');
         cLiquidacoes.addClass('rotulo alphanum').css('width', '320px');
+        cIdcarenc.css('width', '108px');
+        cDtcarenc.css('width', '108px');
 
         rRotulos.addClass('rotulo').css('width', '75px');
 
@@ -1893,18 +1912,23 @@ function controlaLayout(operacao) {
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
         rProposta.css('width', '97px');
+        rDtLiberar.css('width', '153px');
+        rLiberar.css('width', '135px');
+        rProposta.css('width', '75px');
         rImgCalen.css('margin-top', '-5px');
 
-        rRiscoCalc.addClass('').css('width', '137px');
-        rLnCred.addClass('').css('width', '82px');
-        rFinali.addClass('').css('width', '82px');
-        rQualiParc.addClass('').css('width', '82px');
-        rPercCET.addClass('').css('width', '97px');
-        rDtPgmento.addClass('').css('width', '104px');
-        rDtUltPag.addClass('').css('width', '97px');
+        rRiscoCalc.addClass('').css('width', '153px');
+        rLnCred.addClass('').css('width', '95px');
+        rFinali.addClass('').css('width', '95px');
+        rQualiParc.addClass('').css('width', '95px');
+        rPercCET.addClass('').css('width', '75px');
+        rDtPgmento.addClass('rotulo-linha').css('width', '190px');
+        rDtUltPag.addClass('rotulo').css('width', '321px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
-        rNtPromis.addClass('rotulo').css('width', '265px');
+        rNtPromis.addClass('rotulo-linha').css('width', '132px');
         rDiasUteis.addClass('rotulo-linha');
+        rIdcarenc.addClass('rotulo').css('width', '75px');
+        rDtcarenc.addClass('').css('width', '135px');
 
         cTodos.addClass('campo');
         cDescricao.addClass('descricao');
@@ -1921,8 +1945,14 @@ function controlaLayout(operacao) {
 
             $('#tpemprst', '#frmNovaProp').unbind('change').bind('change', function() {
 
+                // Reseta os campos Finalidade e Linha de Credito
+                cLnCred.val(0);
+                cDsLnCred.val('');
+                cFinali.val(0);
+                cDsFinali.val('');
 
-                if ($('#tpemprst', '#frmNovaProp').val() == 1) { // Price Pre-Fixado
+                if ($('#tpemprst', '#frmNovaProp').val() == 1 || // Price Pre-Fixado
+                    $('#tpemprst', '#frmNovaProp').val() == 2) { // Pos-Fixado
                     // no - Conta   yes - Folha
                     $('#flgpagto', '#frmNovaProp').val('no');
 
@@ -1933,8 +1963,19 @@ function controlaLayout(operacao) {
                 }
 
                 verificaQtDiaLib();
+                exibeLinhaCarencia();
             });
 
+            $('#idcarenc', '#frmNovaProp').unbind('change').bind('change', function() {
+                calculaDataCarencia();
+            });
+
+            $('#dtdpagto', '#frmNovaProp').unbind('blur').bind('blur', function() {
+                // Se for Pos Fixado
+                if ($('#tpemprst', '#frmNovaProp').val() == 2) {
+                    calculaDataCarencia();
+        }
+            });
 
         }
 
@@ -3710,6 +3751,7 @@ function controlaLayout(operacao) {
     removeOpacidade('divConteudoOpcao');
     controlaFoco(operacao);
     divRotina.centralizaRotinaH();
+    exibeLinhaCarencia();
 
     return false;
 }
@@ -3842,6 +3884,8 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['vliofepr'] = $('#vliofepr', '#frmNovaProp').val();
         arrayProposta['vlrtarif'] = $('#vlrtarif', '#frmNovaProp').val();
         arrayProposta['vlrtotal'] = $('#vlrtotal', '#frmNovaProp').val();
+        arrayProposta['idcarenc'] = $('#idcarenc', '#frmNovaProp').val();
+        arrayProposta['dtcarenc'] = $('#dtcarenc', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
         flgimpnp = arrayProposta['flgimpnp'];
@@ -4124,6 +4168,8 @@ function atualizaTela() {
         $('#vliofepr', '#frmNovaProp').val(arrayProposta['vliofepr']);
         $('#vlrtarif', '#frmNovaProp').val(arrayProposta['vlrtarif']);
         $('#vlrtotal', '#frmNovaProp').val(arrayProposta['vlrtotal']);
+        $('#idcarenc', '#frmNovaProp').val(arrayProposta['idcarenc']);
+        $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
 
         if (operacao == 'TI') {
 
@@ -4850,6 +4896,8 @@ function validaDadosGerais() {
     var dtlibera = $('#dtlibera', '#frmNovaProp').val();
     var percetop = $('#percetop', '#frmNovaProp').val();
     var tpfinali = $("#frmNovaprop #tpfinali").val();
+    var idcarenc = $('#idcarenc', '#frmNovaProp').val();
+    var dtcarenc = $('#dtcarenc', '#frmNovaProp').val();
 
     var tpaltera = (operacao == 'A_VALOR') ? '2' : '1';
 
@@ -4900,7 +4948,8 @@ function validaDadosGerais() {
             inmatric: inmatric, operacao: operacao,
             tpemprst: tpemprst, dtlibera: dtlibera,
             inconfi2: inconfi2, percetop: percetop,
-            cdmodali: cdmodali,
+            cdmodali: cdmodali, idcarenc: idcarenc,
+            dtcarenc: dtcarenc,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -7658,10 +7707,16 @@ function controlaLayoutLiq(operacao) {
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
 
         // Tratamento para verificar Tipo de Emprestimo
-        if (arrayLiquidacoes[i]['tpemprst'] == 0) {
+        switch (arrayLiquidacoes[i]['tpemprst']) {
+            case '0': // TR
             aux_tpemprst = 'TR';
-        } else {
+                break;
+            case '1': // Pre-Fixado
             aux_tpemprst = 'PP';
+                break;
+            case '2': // Pos-Fixado
+                aux_tpemprst = 'POS';
+                break;
         }
 
         $('#divTabLiquidacoes > div > table > tbody').append('<tr></tr>');
@@ -7885,7 +7940,7 @@ function controlaPesquisas() {
     // Variável local para guardar o elemento anterior
     var campoAnterior = '';
     var nomeCampo = '';
-    var bo, procedure, titulo, qtReg, filtros, colunas, varAux, varMod, nrtopico, nritetop;
+    var bo, procedure, titulo, qtReg, filtros, colunas, varAux, varMod, nrtopico, nritetop, varTip;
 
     // a variavel camposOrigem deve ser composta:
     // 1) os cincos primeiros campos são os retornados para o formulario de origem
@@ -7971,9 +8026,12 @@ function controlaPesquisas() {
                     procedure = 'busca_linhas_credito';
                     titulo = 'Linhas de Cr&eacute;dito';
                     qtReg = '20';
-                    varAux = $('#cdfinemp', '#' + nomeForm).val();
                     varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade
-                    filtros = 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;' + null + ';;N;;N|;' + null + ';;N;;N|;' + null + ';;N;;N|;cdfinemp;;;' + varAux + ';N|;cdmodali;;;' + varMod + ';N|;flgstlcr;;;yes;N';
+                    varTip = $("#tpemprst", '#' + nomeForm).val();
+                    if (varTip == 0) {
+                        varTip = 1;
+                    }
+                    filtros = 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;' + null + ';;N;;N|;' + null + ';;N;;N|;' + null + ';;N;;N|;cdmodali;;;' + varMod + ';N|;flgstlcr;;;yes;N|;tpprodut;;;' + varTip + ';N';
                     colunas = 'C&oacutedigo;cdlcremp;15%;right|Linha de Cr&eacutedito;dslcremp;40%;left|Taxa;txbaspre;10%;right|Prest. Max.;nrfimpre;10%;right|Garantia;dsgarant;25%;left';
 
                     mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
@@ -8028,8 +8086,8 @@ function controlaPesquisas() {
                     return false;
 
                 } else if (campoAnterior == 'cdfinemp') {
-
-                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N';
+                    varAux = $('#cdlcremp', '#' + nomeForm).val();
+                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N|;cdlcrhab;;;' + varAux + ';N';
                     colunas = 'C&oacutedigo;cdfinemp;20%;right|Finalidade;dsfinemp;80%;left|Flag;flgstfin;0%;left;;N';
                     var vFuncao = (nomeForm == 'frmSimulacao') ? 'habilitaModalidade("")' : '';
                     
@@ -8153,7 +8211,12 @@ function controlaPesquisas() {
         varAux = $('#cdfinemp', '#' + nomeForm).val();
         //modalidade previamente carregada no cadastro da portabilidade
         varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade        
-        filtrosDesc = 'flgstlcr|yes;cdfinemp|' + varAux + ';cdmodali|' + varMod;
+        varMod = (varMod == undefined) ? 0 : varMod;
+        varTip = $("#tpemprst", '#' + nomeForm).val();
+        if (varTip == 0) {
+            varTip = 1;
+        }
+        filtrosDesc = 'flgstlcr|yes;cdfinemp|' + varAux + ';cdmodali|' + varMod + ';tpprodut|' + varTip;
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dslcremp', $(this).val(), 'dslcremp', filtrosDesc, nomeForm);
 		
 		if (nomeForm != 'frmSimulacao') {
@@ -9366,21 +9429,69 @@ function abreProtocoloAcionamento(dsprotocolo) {
     });
 }
 
+function exibeLinhaCarencia() {
+    if ($("#tpemprst", "#frmNovaProp").val() == 2) { // Se for Pos-Fixado
+        $("#linCarencia","#frmNovaProp").show();
+        calculaDataCarencia();
+    } else {
+        $("#linCarencia","#frmNovaProp").hide();
+    }
+}
+
+function calculaDataCarencia() {
+
+    hideMsgAguardo();
+	showMsgAguardo("Aguarde, calculando os dados...");
+
+    var idcarenc = normalizaNumero($("#idcarenc", "#frmNovaProp").val());
+    var dtlibera = $("#dtlibera", "#frmNovaProp").val();
+    var dtdpagto = $("#dtdpagto", "#frmNovaProp").val();
+    var dtcarenc = dtdpagto.substr(0, 2) + '/' + dtlibera.substr(3, 2) + '/' + dtmvtolt.substr(6, 4);
+	
+	$.ajax({
+		type: "POST",
+		url: UrlSite + 'telas/atenda/emprestimos/busca_dados.php',
+		data: {
+			acao    : 'CALC_DATA_CARENCIA',
+            idcarenc: idcarenc,
+			dtcarenc: dtcarenc,
+			redirect: "script_ajax"
+		},
+		error: function(objAjax,responseError,objExcept){
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();
+                bloqueiaFundo(divRotina);
+				eval(response);
+            return false;
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+			}
+        }
+    });
+
+    return false;
+}
+
 function maskTelefone(nrfonemp){
 	fone = nrfonemp.value.replace(/[^0-9]/g,'');	
-
+	
 	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
 	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
-
+	
 	if (fone.length < 14)
 		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígito
 	else
 		fone = fone.replace(/(\d{5})(\d)/,"$1-$2");    //Coloca hífen entre o quinto e o sexto dígito
-
+	
 	nrfonemp.value = fone.substring(0, 15);
 	
 	return true;
-        }
+}
 
 function telefone(fone){
 	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
