@@ -74,9 +74,9 @@
 		
 	$prodservArray = Array();
 				
-	//foreach( $tagsProdServ as $registros){
-	//	$prodservArray[] = getByTagName($registros->tags,'nmproser');
-	//}
+	foreach( $tagsProdServ as $registros){
+		$prodservArray[] = getByTagName($registros->tags,'nmproser');
+	}
 	
 	if(count($prodservArray) > 0 ){
 		$style 	   = "";
