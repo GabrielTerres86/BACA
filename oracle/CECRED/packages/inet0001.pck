@@ -607,12 +607,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         nas variaveis que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                         TED cadastrado realizar esta operação (Tiago #820218).
   --
+  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
+  --                         for o operador realizando alguma transação (Tiago/Adriano).
+  --
   --            03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
   --                         quando nao localizar registro para o 1 titular.
   --                         (Chamado 823977) - (Fabricio)
   --
-  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
-  --                         for o operador realizando alguma transação (Tiago/Adriano).
+  --            05/01/2018 - Na pc_verifica_operacao corrigdo acentuação na frase de critica agendamento 
+  --                         e pagamento (Tiago #818723).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -3798,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 05/01/2018
   
   Dados referentes ao programa:
   
@@ -3870,6 +3873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            
               03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
                            alguma transação (Tiago/Adriano).
+                           
+              05/01/2018 - Corrigdo acentuação na frase de critica agendamento e pagamento (Tiago #818723)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4554,7 +4559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            pr_tpoperac <> 4 AND 
            pr_dtmvtopg = vr_dtdialim THEN
            
-          vr_dscritic := 'Nao e possivel efetuar agendamentos para este dia.';
+          vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
           vr_cdcritic:= 0;
           
           --Levantar Excecao
@@ -4745,9 +4750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
              (pr_idagenda > 1 AND pr_dtmvtopg = vr_dtdialim) THEN
             vr_cdcritic:= 0;
             IF pr_idagenda = 1 THEN
-              vr_dscritic:= 'Nao e possivel efetuar pagamentos neste dia.';
+              vr_dscritic:= 'Não é possível efetuar pagamentos neste dia.';
             ELSE
-              vr_dscritic:= 'Nao e possivel efetuar agendamentos para este dia.';
+              vr_dscritic:= 'Não é possível efetuar agendamentos para este dia.';
             END IF;
             --Levantar Excecao
             RAISE vr_exc_erro;
