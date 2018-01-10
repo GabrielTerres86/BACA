@@ -5185,7 +5185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
       
       -- Valor a pagar da parcela precisa diminuir o valor de Juros de Mora + Multa
-      vr_vlpagpar := NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) + NVL(vr_vlmrapar,0);
+      vr_vlpagpar := NVL(vr_vlpagpar,0) - NVL(vr_vlmtapar,0) - NVL(vr_vlmrapar,0);
 
       -- Efetua o Lancamento de Multa do Contrato de Emprestimo
       IF NVL(vr_vlmtapar, 0) > 0 THEN
@@ -5235,7 +5235,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-
+        
+        -- Se for Financiamento
+        IF pr_floperac THEN
+          vr_cdhistor := 2349;
+        ELSE
+          vr_cdhistor := 2348;
+        END IF;
+        
+        -- Efetuar o lancamento da multa
+        EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                       ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                       ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                       ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                       ,pr_cdoperad => pr_cdoperad   -- Operador
+                                       ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                       ,pr_tplotmov => 5             -- Tipo movimento
+                                       ,pr_nrdolote => 650004        -- Numero Lote
+                                       ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                       ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                       ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                       ,pr_vllanmto => vr_vlmtapar   -- Valor Lancamento
+                                       ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                       ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                       ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                       ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                       ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                       ,pr_flgincre => TRUE          -- Indicador Credito
+                                       ,pr_flgcredi => TRUE          -- Credito
+                                       ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                       ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                       ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                       ,pr_dscritic => vr_dscritic); -- Descricao Erro
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;        
+        
         -- Verificar se o pagamento foi feito por um avalista
         IF NVL(pr_nrseqava,0) = 0 THEN
           -- Se for Financiamento
@@ -5304,6 +5340,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           END IF;
         END IF;
 
+        -- Efetuar o lancamento do juros de mora
+        EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                       ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                       ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                       ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                       ,pr_cdoperad => pr_cdoperad   -- Operador
+                                       ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                       ,pr_tplotmov => 5             -- Tipo movimento
+                                       ,pr_nrdolote => 650004        -- Numero Lote
+                                       ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                       ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                       ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                       ,pr_vllanmto => vr_vlmrapar   -- Valor Lancamento
+                                       ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                       ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                       ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                       ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                       ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                       ,pr_flgincre => TRUE          -- Indicador Credito
+                                       ,pr_flgcredi => TRUE          -- Credito
+                                       ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                       ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                       ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                       ,pr_dscritic => vr_dscritic); -- Descricao Erro
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Se for Financiamento
+        IF pr_floperac THEN
+          vr_cdhistor := 2347;
+        ELSE
+          vr_cdhistor := 2346;
+        END IF;
+          
         -- Efetuar o lancamento do juros de mora
         EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
                                        ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo

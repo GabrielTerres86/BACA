@@ -4233,7 +4233,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     /* ------------------------------------------------------------------------------------------
      * EMPRESTIMO - POS FIXADO    
      * ------------------------------------------------------------------------------------------ */    
-    pc_cria_agencia_pltable(999,7);
+    pc_cria_agencia_pltable(999,16);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     FOR rw_crapris in cr_crapris (pr_cdcooper,
@@ -4255,14 +4255,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         END IF;
       END LOOP;
       --
-      pc_cria_agencia_pltable(rw_crapris.cdagenci,7);
+      pc_cria_agencia_pltable(rw_crapris.cdagenci,16);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
-         vr_arq_op_cred(7)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(7)(rw_crapris.cdagenci)(1) + vr_vlstotal;
-         vr_arq_op_cred(7)(999)(1) := vr_arq_op_cred(7)(999)(1) + vr_vlstotal;
+         vr_arq_op_cred(16)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(16)(rw_crapris.cdagenci)(1) + vr_vlstotal;
+         vr_arq_op_cred(16)(999)(1) := vr_arq_op_cred(16)(999)(1) + vr_vlstotal;
       ELSE
-         vr_arq_op_cred(7)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(7)(rw_crapris.cdagenci)(2) + vr_vlstotal;
-         vr_arq_op_cred(7)(999)(2) := vr_arq_op_cred(7)(999)(2) + vr_vlstotal;
+         vr_arq_op_cred(16)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(16)(rw_crapris.cdagenci)(2) + vr_vlstotal;
+         vr_arq_op_cred(16)(999)(2) := vr_arq_op_cred(16)(999)(2) + vr_vlstotal;
       END IF;
       --
       vr_tab_cratorc(rw_crapris.cdagenci).vr_cdagenci := rw_crapris.cdagenci;
@@ -4289,7 +4289,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     /* ------------------------------------------------------------------------------------------
      * FINANCIAMENTO - POS FIXADO
      * ------------------------------------------------------------------------------------------ */    
-    pc_cria_agencia_pltable(999,8);
+    pc_cria_agencia_pltable(999,17);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     -- Percorrer vencimentos do risco
@@ -4324,14 +4324,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           vr_vlstotal := vr_vlstotal + rw_crapvri.vldivida;
         END IF;
       END LOOP;
-      pc_cria_agencia_pltable(rw_crapris.cdagenci,8);
+      pc_cria_agencia_pltable(rw_crapris.cdagenci,17);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
-         vr_arq_op_cred(8)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(8)(rw_crapris.cdagenci)(1) + vr_vlstotal;
-         vr_arq_op_cred(8)(999)(1) := vr_arq_op_cred(8)(999)(1) + vr_vlstotal;
+         vr_arq_op_cred(17)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(17)(rw_crapris.cdagenci)(1) + vr_vlstotal;
+         vr_arq_op_cred(17)(999)(1) := vr_arq_op_cred(17)(999)(1) + vr_vlstotal;
       ELSE
-         vr_arq_op_cred(8)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(8)(rw_crapris.cdagenci)(2) + vr_vlstotal;
-         vr_arq_op_cred(8)(999)(2) := vr_arq_op_cred(8)(999)(2) + vr_vlstotal;
+         vr_arq_op_cred(17)(rw_crapris.cdagenci)(2) := vr_arq_op_cred(17)(rw_crapris.cdagenci)(2) + vr_vlstotal;
+         vr_arq_op_cred(17)(999)(2) := vr_arq_op_cred(17)(999)(2) + vr_vlstotal;
       END IF;
       --
       vr_tab_cratorc(rw_crapris.cdagenci).vr_cdagenci := rw_crapris.cdagenci;
@@ -5226,6 +5226,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1037).nrctaori_jur := 7122;
         vr_tab_historico(1037).nrctades_jur := 7017;
         vr_tab_historico(1037).dsrefere_jur := 'APROPRIACAO JUROS CONTRATO EMPR. TX. PRE-FIXADA - PESSOA JURIDICA';
+        
+        vr_tab_historico(2342).nrctaori_fis := 7587;
+        vr_tab_historico(2342).nrctades_fis := 7585;
+        vr_tab_historico(2342).dsrefere_fis := 'APROPR. JUROS REMUNERATORIOS EMPRESTIMO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2342).nrctaori_jur := 7587;
+        vr_tab_historico(2342).nrctades_jur := 7586;
+        vr_tab_historico(2342).dsrefere_jur := 'APROPR. JUROS REMUNERATORIOS EMPRESTIMO POS FIXADO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2344).nrctaori_fis := 7590;
+        vr_tab_historico(2344).nrctades_fis := 7588;
+        vr_tab_historico(2344).dsrefere_fis := 'APROPR. JUROS DE CORRECAO EMPRESTIMO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2344).nrctaori_jur := 7590;
+        vr_tab_historico(2344).nrctades_jur := 7589;
+        vr_tab_historico(2344).dsrefere_jur := 'APROPR. JUROS DE CORRECAO EMPRESTIMO POS FIXADO - PESSOA JURIDICA';
 
         vr_tab_historico(1040).nrctaori_fis := 7122;
         vr_tab_historico(1040).nrctades_fis := 7016;
@@ -5254,6 +5268,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1543).nrctaori_jur := 7123;
         vr_tab_historico(1543).nrctades_jur := 7019;
         vr_tab_historico(1543).dsrefere_jur := 'JURO MORA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+        
+        vr_tab_historico(2346).nrctaori_fis := 7593;
+        vr_tab_historico(2346).nrctades_fis := 7591;
+        vr_tab_historico(2346).dsrefere_fis := 'APROPR. JUROS DE MORA EMPRESTIMO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2346).nrctaori_jur := 7593;
+        vr_tab_historico(2346).nrctades_jur := 7592;
+        vr_tab_historico(2346).dsrefere_jur := 'APROPR. JUROS DE MORA EMPRESTIMO POS FIXADO - PESSOA JURIDICA';        
 
         vr_tab_historico(1060).nrctaori_fis := 7124;
         vr_tab_historico(1060).nrctades_fis := 7020;
@@ -5269,6 +5290,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1541).nrctades_jur := 7021;
         vr_tab_historico(1541).dsrefere_jur := 'MULTA EMPRESTIMO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
 
+        vr_tab_historico(2348).nrctaori_fis := 7596;
+        vr_tab_historico(2348).nrctades_fis := 7594;
+        vr_tab_historico(2348).dsrefere_fis := 'APROPR. MULTA EMPRESTIMO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2348).nrctaori_jur := 7596;
+        vr_tab_historico(2348).nrctades_jur := 7595;
+        vr_tab_historico(2348).dsrefere_jur := 'APROPR. MULTA EMPRESTIMO POS FIXADO - PESSOA JURIDICA';
+        
         vr_tab_historico(0597).nrctaori_fis := 7024;
         vr_tab_historico(0597).nrctades_fis := 7132;
         vr_tab_historico(0597).dsrefere_fis := 'ABATIMENTO DE JUROS DE TITULO DESCONTADO PG ANTEC. - PESSOA FISICA';
@@ -5282,6 +5310,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1038).nrctaori_jur := 7135;
         vr_tab_historico(1038).nrctades_jur := 7029;
         vr_tab_historico(1038).dsrefere_jur := 'APROPR.JUROS CONTRATO FINANC. TX. PRE-FIXADA - PESSOA JURIDICA';
+        
+        vr_tab_historico(2343).nrctaori_fis := 7557;
+        vr_tab_historico(2343).nrctades_fis := 7555;
+        vr_tab_historico(2343).dsrefere_fis := 'APROPR. JUROS REMUNERATORIOS FINANC. POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2343).nrctaori_jur := 7557;
+        vr_tab_historico(2343).nrctades_jur := 7556;
+        vr_tab_historico(2343).dsrefere_jur := 'APROPR. JUROS REMUNERATORIOS FINANC. POS FIXADO - PESSOA JURIDICA';
+        
+        vr_tab_historico(2345).nrctaori_fis := 7560;
+        vr_tab_historico(2345).nrctades_fis := 7558;
+        vr_tab_historico(2345).dsrefere_fis := 'APROPR. JUROS DE CORRECAO FINANCIAMENTO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2345).nrctaori_jur := 7560;
+        vr_tab_historico(2345).nrctades_jur := 7559;
+        vr_tab_historico(2345).dsrefere_jur := 'APROPR. JUROS DE CORRECAO FINANCIAMENTO POS FIXADO - PESSOA JURIDICA';
 
         vr_tab_historico(1042).nrctaori_fis := 7028;
         vr_tab_historico(1042).nrctades_fis := 7135;
@@ -5310,6 +5352,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1544).nrctaori_jur := 7136;
         vr_tab_historico(1544).nrctades_jur := 7031;
         vr_tab_historico(1544).dsrefere_jur := 'JURO MORA FINANCIAM. PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+        
+        vr_tab_historico(2347).nrctaori_fis := 7563;
+        vr_tab_historico(2347).nrctades_fis := 7561;
+        vr_tab_historico(2347).dsrefere_fis := 'APROPR. JUROS DE MORA FINANCIAMENTO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2347).nrctaori_jur := 7563;
+        vr_tab_historico(2347).nrctades_jur := 7562;
+        vr_tab_historico(2347).dsrefere_jur := 'APROPR. JUROS DE MORA FINANCIAMENTO POS FIXADO - PESSOA JURIDICA';        
 
         vr_tab_historico(1070).nrctaori_fis := 7138;
         vr_tab_historico(1070).nrctades_fis := 7032;
@@ -5324,6 +5373,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1542).nrctaori_jur := 7138;
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
+        
+        vr_tab_historico(2349).nrctaori_fis := 7566;
+        vr_tab_historico(2349).nrctades_fis := 7564;
+        vr_tab_historico(2349).dsrefere_fis := 'APROPR. MULTA FINANCINANCIAMENTO POS FIXADO - PESSOA FISICA';
+        vr_tab_historico(2349).nrctaori_jur := 7566;
+        vr_tab_historico(2349).nrctades_jur := 7565;
+        vr_tab_historico(2349).dsrefere_jur := 'APROPR. MULTA FINANCINANCIAMENTO POS FIXADO - PESSOA JURIDICA';
      
         vr_tab_historico(1508).nrctaori_fis := 7018;
         vr_tab_historico(1508).nrctades_fis := 7123;
@@ -5949,6 +6005,142 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
        END IF;
 
+		   IF vr_arq_op_cred(16)(999)(1) > 0 THEN
+         -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA
+         vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5321,1603,vr_arq_op_cred(16)(999)(1),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+         /* Deve ser duplicado as linhas separadas por PA */
+         pc_set_linha(pr_cdarquiv => 16
+                     ,pr_inpessoa => 1 -- Tipo de Pessoa
+                     ,pr_inputfile => vr_input_file); 
+                      
+         pc_set_linha(pr_cdarquiv => 16   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+                     ,pr_inpessoa => 1 -- Tipo de Pessoa
+                     ,pr_inputfile => vr_input_file); 
+       
+       END IF;
+
+       IF vr_arq_op_cred(16)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA 
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,5321,vr_arq_op_cred(16)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 16
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 16   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(16)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5322,1603,vr_arq_op_cred(16)(999)(2),'"EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 16
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 16   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(16)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 16 - EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1603,5322,vr_arq_op_cred(16)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 16
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 16   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+	   
+		   IF vr_arq_op_cred(17)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA 
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5325,1607,vr_arq_op_cred(17)(999)(1),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+       
+       END IF;
+
+       IF vr_arq_op_cred(17)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA 
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,5325,vr_arq_op_cred(17)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(17)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5326,1607,vr_arq_op_cred(17)(999)(2),'"FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(17)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 17 - FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1607,5326,vr_arq_op_cred(17)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS POS FIXADO REALIZADOS - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+                      
+          pc_set_linha(pr_cdarquiv => 17
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
        IF vr_arq_op_cred(7)(999)(1) > 0 THEN
           -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5538,vr_arq_op_cred(7)(999)(1),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
@@ -6529,7 +6721,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            
         -- Verifica se existe o historico na PL-Table
         IF vr_tab_historico.EXISTS(rw_craprej.cdhistor) AND 
-           rw_craprej.cdhistor NOT IN (98,277,2093,2094,2090,2091,1038,1072,1544,1713,1722,1070,1542,1710,1510,1719) THEN
+           rw_craprej.cdhistor NOT IN (98,277,2093,2094,2090,2091,1038,1072,1544,1713,1722,1070,1542,1710,1510,1719,2343,2345) THEN
 
               -- Escrever no arquivo somente os registros que o valor for maior que zero
               IF rw_craprej.vlsdapli > 0 THEN

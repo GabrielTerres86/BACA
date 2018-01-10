@@ -525,9 +525,9 @@ BEGIN
 
             -- Se for Financiamento
             IF vr_floperac THEN
-              vr_cdhistor := 2373;
+              vr_cdhistor := 2347;
             ELSE
-              vr_cdhistor := 2371;
+              vr_cdhistor := 2346;
             END IF;
 
             -- Efetuar o lancamento do juros de mora

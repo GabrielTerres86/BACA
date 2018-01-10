@@ -3110,8 +3110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Valor Lancamento
         vr_vllantmo:= rw_craplem.vllanmto;
         /* Se lancamento de pagamento*/
-        IF rw_craplem.cdhistor IN (1044,1039,1057,1045 /* PP */
-                                  ,2330,2331,2335,2336 /* POS */) THEN 
+        IF rw_craplem.cdhistor IN (1044,1039,1057,1045 /* PP */) THEN 
           --Se nao for primeira parcela
           IF vr_tab_flgpripa.EXISTS(rw_craplem.nrparepr) AND
              vr_tab_flgpripa(rw_craplem.nrparepr) = FALSE THEN
@@ -3122,16 +3121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */
-                 /* Pos-Fixado */
-                 WHEN rw_craplem.cdhistor = 2330 THEN
-                 vr_cdhistor := 2371; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2331 THEN
-                 vr_cdhistor := 2373; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2335 THEN
-                 vr_cdhistor := 2375; /* Aval */
-                 WHEN rw_craplem.cdhistor = 2336 THEN
-                 vr_cdhistor := 2377; /* Aval */
+                 vr_cdhistor := 1620; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3158,16 +3148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */
-                 /* Pos-Fixado */
-                 WHEN rw_craplem.cdhistor = 2330 THEN
-                 vr_cdhistor := 2363; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2331 THEN
-                 vr_cdhistor := 2365; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2335 THEN
-                 vr_cdhistor := 2367; /* Aval */
-                 WHEN rw_craplem.cdhistor = 2336 THEN
-                 vr_cdhistor := 2369; /* Aval */
+                 vr_cdhistor := 1618; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -3221,8 +3202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         --Historico de Debito
-        IF rw_craphis.cdhistor IN (1077,1078,1619,1620 /* PP */
-                                  ,2371,2373,2375,2377 /* POS */) THEN
+        IF rw_craphis.cdhistor IN (1077,1078,1619,1620) THEN
            pr_extrato_epr(vr_index).indebcre:= 'D'; 
         END IF;
         

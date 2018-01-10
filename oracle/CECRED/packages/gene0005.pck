@@ -200,6 +200,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                   ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
                                   ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
                                   ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
                                   ,pr_des_erro OUT VARCHAR2 --> Status erro
                                   ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
 
@@ -2572,13 +2573,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   END pc_busca_motivos;
 
 
-  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
-                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
-                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
-                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
-                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
-                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
-                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper   IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo   IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons   IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist   IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons   IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_flg_enviar IN VARCHAR2 DEFAULT 'N'            --> Indicador para enviar o e-mail na hora
+                                  ,pr_des_erro   OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic   OUT VARCHAR2) IS --> Retorno de erro
   BEGIN
     -- ..........................................................................
     --
@@ -2692,7 +2694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                     ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
                                     ,pr_des_corpo       => vr_dscorpo
                                     ,pr_des_anexo       => NULL
-                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_flg_enviar      => pr_flg_enviar
                                     ,pr_des_erro        => vr_dscritic);
           
           IF vr_dscritic IS NOT NULL THEN

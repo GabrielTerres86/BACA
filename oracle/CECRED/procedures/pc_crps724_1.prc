@@ -106,6 +106,19 @@ BEGIN
        WHERE cdcooper = pr_cdcooper
          AND tpprodut = 2;
 
+    CURSOR cr_craplem (pr_cdcooper IN craplem.cdcooper%TYPE
+                      ,pr_nrdconta IN craplem.nrdconta%TYPE
+                      ,pr_nrctremp IN craplem.nrctremp%TYPE
+                      ,pr_dtmvtolt IN craplem.dtmvtolt%TYPE) IS
+      SELECT 1
+        FROM craplem
+       WHERE craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.nrctremp = pr_nrctremp
+         AND craplem.dtmvtolt = pr_dtmvtolt
+         AND craplem.cdhistor IN (2343,2342,2345,2344);
+    rw_craplem cr_craplem%ROWTYPE;
+        
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Definicao do tipo da tabela para linhas de credito
     TYPE typ_reg_craplcr IS
@@ -126,6 +139,7 @@ BEGIN
 
     ------------------------------- VARIAVEIS -------------------------------
     vr_flgachou          BOOLEAN;
+    vr_blnachou          BOOLEAN;
     vr_floperac          BOOLEAN;
     vr_flmensal          BOOLEAN;
     vr_infimsol          PLS_INTEGER;
@@ -449,7 +463,20 @@ BEGIN
           END IF;
 
           -- Tab de controle para somente lancar juros para uma parcela por contrato
-          vr_tab_controle_lcto_juros(vr_index_controle) := TRUE;       
+          vr_tab_controle_lcto_juros(vr_index_controle) := TRUE;
+          
+          -- Condicao para verificar se jah foi lancado Juros Remuneratorio e Juros Correcao
+          OPEN cr_craplem(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_epr_pep.nrdconta
+                         ,pr_nrctremp => rw_epr_pep.nrctremp
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+          FETCH cr_craplem INTO rw_craplem;
+          vr_blnachou := cr_craplem%FOUND;
+          CLOSE cr_craplem;
+          -- Se NAO achou
+          IF vr_blnachou THEN
+            CONTINUE;
+          END IF;          
 
           vr_diarefju := rw_epr_pep.diarefju;
           vr_mesrefju := rw_epr_pep.mesrefju;

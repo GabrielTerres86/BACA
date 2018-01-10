@@ -869,7 +869,7 @@ BEGIN
       ELSE
         -- Verifica a estrutura e se o historico for
         --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
-        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038, 2343) THEN
+        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038, 2343, 2345) THEN
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
                            vr_nrdconta,
@@ -1322,7 +1322,7 @@ BEGIN
   -- Verifica a estrutura e se o historico for
   --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
   if upper(pr_nmestrut) = 'CRAPLEM' and
-     pr_cdhistor in (98, 277, 1038, 2343) then
+     pr_cdhistor in (98, 277, 1038, 2343, 2345) then
     --
     vr_indice_agencia := vr_tab_agencia.first;
     -- Percorre todas as agencias
@@ -1349,7 +1349,7 @@ BEGIN
       vr_dtrefere := 'craplem_499';
     ELSIF pr_cdhistor = '277' THEN
       vr_dtrefere := 'craplem_estfin';
-    ELSIF pr_cdhistor IN ('1038','2343') THEN
+    ELSIF pr_cdhistor IN ('1038','2343','2345') THEN
       vr_dtrefere := 'craplem';
     END IF;
 
