@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 01/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -18,6 +18,11 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   --                        - incluido tratamento de excptions nos cursores para melhorar os erros
   --                          (Belli - Envolti - Chamado 667957)
   --
+  --             01/11/2017 - Alterada procedure pc_gera_log_batch incluindo o parâmetro de codigo da mensagem
+  --                          Origem da informação da tabela crapcri e atributo cdcritic
+  --                          Passar o parâmetro de codigo da mensagem para procedure pc_log_programa
+  --                          (Belli - Envolti - Chamado 786752)
+  --                         
   ---------------------------------------------------------------------------------------------------------------
 
   /* Cursor genérico de calendário */
@@ -98,7 +103,9 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                              ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
                              ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%TYPE DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                              ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1); -- Indicador de sucesso da execução
+                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1 -- Indicador de sucesso da execução
+                             ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%TYPE DEFAULT 0 -- Codigo da mensagem ou critica (Pode ser crapcri.cdcritic)
+                             );
 
   /* Controlar geração de log de execução dos jobs */
   PROCEDURE pc_log_exec_job(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
@@ -169,7 +176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: 17/08/2017
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 01/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -201,6 +208,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   17/08/2017 - #738346 Alteração da rotina pc_log_exec_job para gravar no proc_batch apenas os erros.
                Os log s de Início e Fim de execução irão apenas para as tabelas tbgen_prglog e 
                tbgen_prglog_ocorrencia quando o arquivo for proc_batch ou proc_message (Carlos)
+  
+  01/11/2017 - Alterada procedure pc_gera_log_batch incluindo o parâmetro de codigo da mensagem
+               Origem da informação da tabela crapcri e atributo cdcritic
+               Passar o parâmetro de codigo da mensagem para procedure pc_log_programa
+               (Belli - Envolti - Chamado 786752)
 
   ------------------------------------------------------------------------------------------------------------ */
 
@@ -502,6 +514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                              ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                              ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1 -- Indicador de sucesso da execução
+                             ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%TYPE DEFAULT 0 -- Codigo da mensagem ou critica (Pode ser crapcri.cdcritic)
                              ) IS
   BEGIN
     -- ..........................................................................
@@ -522,6 +535,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --
     --               12/04/2016 - Inclusao do parametro para poder definir diretorio para geracao do log
     --                            PRJ305-e-financeiro  (Odirlei-AMcom) 
+    --
+    --               01/11/2017 - Alterada procedure pc_gera_log_batch incluindo o parâmetro de codigo da mensagem
+    --                            Origem da informação da tabela crapcri e atributo cdcritic
+    --                            Passar o parâmetro de codigo da mensagem para procedure pc_log_programa
+    --                           (Belli - Envolti - Chamado 786752)
+    --
     -- .............................................................................
 
     -- .............................................................................
@@ -609,6 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       vr_des_log := vr_des_log || ' - Module: ' || vr_modulo ||
                                   ' - Action: ' || vr_acao;
 
+      -- Incluido código de mensagem na chamada da pc log programa - 01/11/2017 - Ch 786752
+      -- Gera Log em banco de dados
       cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog,      -- tbgen_prglog
                              PR_CDPROGRAMA => vr_cdprograma,    -- tbgen_prglog
                              pr_cdcooper   => pr_cdcooper,      -- tbgen_prglog
@@ -618,7 +639,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              pr_dsmensagem   => vr_des_log,        -- tbgen_prglog_ocorrencia
                              pr_flgsucesso   => pr_flgsucesso,  -- tbgen_prglog
                              pr_nmarqlog     => vr_nmarqlog,
-                             PR_IDPRGLOG     => vr_idprglog);
+                             PR_IDPRGLOG     => vr_idprglog,                            
+                             pr_cdmensagem   => pr_cdmensagem         --tbgen_prglog_ocorrencia
+                             );
       
       IF pr_dsdirlog IS NOT NULL THEN
         vr_dircop_log := pr_dsdirlog;

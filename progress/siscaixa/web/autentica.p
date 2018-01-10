@@ -21,6 +21,9 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 						 (Tiago/Elton SD585615).
 						 
 			16/11/2017 - Ajuste feito para adptar a rotina na impressao da rotina 97. (SD 788441 - Kelvin).
+   
+            11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica (Origem crapcri.cdcritic)
+                         (Belli - Envolti - Chamado 786752)
 						
 ............................................................................. */
 
@@ -338,17 +341,19 @@ PROCEDURE process-web-request :
 			RUN STORED-PROCEDURE pc_gera_log_batch 
 					aux_handproc = PROC-HANDLE NO-ERROR 
 					 (INPUT crapcop.cdcooper,   /* Cooperativa */  
-					  INPUT 2,               /* Nivel criticidade do log "Erro tratato" */ 			 
+					  INPUT 1,               /* Nivel criticidade do log "Erro tratato" */ 			 
 					  INPUT trim(get-value("v_plit")),   /* Descriçao do log em si */ 
 					  INPUT "rot097",       /* Nome para gravaçao de log  */ 
 					  INPUT "N",            /* Flag S/N para criar um arquivo novo */  
 					  INPUT "N",            /* Flag S/N  para informaR [PL/SQL] */ 
 					  INPUT ?,              /* Diretorio onde será gerado o log */ 
-					  INPUT "F",            /* Tipo do log  */ 
+					  INPUT "O",            /* Tipo do log  */ 
 					  INPUT 'b1crap00.p',   /* Programa/job */ 
 					  INPUT 3,              /* Execucao via BATCH */ 
 					  INPUT 0,              /* Criticidade BAIXA */  
-					  INPUT 1).             /* Processo executado com sucesso */ 
+					  INPUT 1,              /* Processo executado com sucesso */ 
+		              INPUT 0               /* Codigo da mensagem ou critica - 11/12/2017 - Chamado 786752 */
+				      ).
 																			   
 			CLOSE STORED-PROC pc_gera_log_batch 
 				 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 

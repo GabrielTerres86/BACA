@@ -526,7 +526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -606,6 +606,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            26/12/2017 - Na pc_busca_limites foi inicializado as variaveis da pr_tab_internet e feito NVL 
   --                         nas variaveis que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                         TED cadastrado realizar esta operação (Tiago #820218).
+  --
+  --            03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
+  --                         quando nao localizar registro para o 1 titular.
+  --                         (Chamado 823977) - (Fabricio)
+  --
+  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
+  --                         for o operador realizando alguma transação (Tiago/Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -688,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       WHERE crapsnh.cdcooper = pr_cdcooper
       AND   crapsnh.nrdconta = pr_nrdconta
       AND   crapsnh.tpdsenha = pr_tpdsenha
-      ;   
+      AND   crapsnh.cdsitsnh = 1 /*ativo*/ ;
   rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;      
   --Selecionar contas transferencia cadastradas internet
   CURSOR cr_crapcti (pr_cdcooper IN crapcti.cdcooper%type
@@ -1439,7 +1446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedure para buscar os limites para internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1458,6 +1465,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --              26/12/2017 - Inicializado as variaveis da pr_tab_internet e feito NVL nas variaveis
   --                           que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                           TED cadastrado realizar esta operação (Tiago #820218).
+  --
+  --              03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
+  --                           quando nao localizar registro para o 1 titular.
+  --                           (Chamado 823977) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1844,7 +1855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END LOOP;
        
           vr_index:= pr_idseqttl;
-          
+        
           --Se existir valor limite web
           IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimweb > 0  THEN
             --Valor utilizado WEB
@@ -3787,7 +3798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 12/12/2016
+   Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
   
   Dados referentes ao programa:
   
@@ -3856,6 +3867,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            Incluído novas regras para definir se deve seguir o fluxo de aprovação
                            em transações pendentes ou não de acordo com o limite disponível diário
                            de preposto ou operador para contas PJ.              
+                           
+              03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
+                           alguma transação (Tiago/Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4823,8 +4837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       IF  pr_idagenda = 1 THEN
-        /* Nao validar saldo para operadores na internet */
-        IF pr_nrcpfope = 0 THEN
+        
           --Limpar tabela saldo e erro
           vr_tab_saldo.DELETE;
           vr_tab_erro.DELETE;
@@ -4856,7 +4869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-          --Verificar o saldo retornado
+      
           IF vr_tab_saldo.Count = 0 THEN
             --Montar mensagem erro
             vr_cdcritic:= 0;
@@ -4879,7 +4892,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
+          END IF;      
 
+        /* Nao validar saldo para operadores na internet */
+        IF pr_nrcpfope = 0 THEN
+         
             /** Obtem valor da tarifa TED **/
             IF pr_tpoperac = 4 AND
                pr_flgexage = 0 THEN
@@ -4929,7 +4946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
-          END IF;
+                   
         ELSIF pr_tpoperac = 4 AND
               pr_flgexage = 0 THEN
           --Buscar tarifa da TED

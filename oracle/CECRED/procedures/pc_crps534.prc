@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 01/09/2017
+   Data    : Dezembro/2009.                  Ultima atualizacao: 05/01/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -112,19 +112,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
                             do arquivo (Douglas - Chamado 533206)
 
-			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+               10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
 
-			   02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                           (Adriano - P339).
 
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
-			               o nome do arquivo apos processamento, iremos gerar o arquivo
-						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+                            o nome do arquivo apos processamento, iremos gerar o arquivo
+                            _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
 
+               20/11/2017 - Inclusão padrão pc_set_modulo
+                            (Setar o parâmetro pr_module = CRPS594.nome_procedures e pr_action = NULL)
+                          - Inclusão da chamada de procedure em exception others
+                          - Colocado logs no padrão
+                          - Padronização mensagens insert/update/delete
+                            (Ana - Envolti - Chamado 789851)
+                            
+               05/01/2018 - Corrigido data usada no cursor dos registros rejeitados para 
+                            que tanto no processo quanto na compefora sejam buscados os registros
+                            corretamente
+                            (Adriano - SD 825150).                            
   ............................................................................ */
 
 
@@ -316,6 +327,48 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    vc_cdtodascooperativas INTEGER := 0;        
   
   --------------------------- ROTINAS INTERNAS ----------------------------
+
+  --> Controla log proc_batch, atualizando parâmetros conforme tipo de ocorrência
+  PROCEDURE pc_gera_log(pr_cdcooper_in   IN crapcop.cdcooper%TYPE,
+                        pr_dstiplog      IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                        pr_dscritic      IN VARCHAR2 DEFAULT NULL,
+                        pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0,
+                        pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0,
+                        pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2) IS
+
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Novembro/2017           Ultima atualizacao: 20/11/2017
+    --  Chamado  : 789851
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+  BEGIN     
+    --> Controlar geração de log de execução dos jobs
+    --Como executa na cadeira, utiliza pc_gera_log_batch
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                      
+                              ,pr_ind_tipo_log  => pr_ind_tipo_log
+                              ,pr_nmarqlog      => 'proc_batch.log'                 
+                              ,pr_dstiplog      => NVL(pr_dstiplog,'E')             
+                              ,pr_cdprograma    => vr_cdprogra                      
+                              ,pr_tpexecucao    => 1 -- batch                       
+                              ,pr_cdcriticidade => pr_cdcriticidade                      
+                              ,pr_cdmensagem    => pr_cdmensagem                      
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                  || vr_cdprogra || ' --> '|| pr_dscritic);
+  EXCEPTION  
+    WHEN OTHERS THEN  
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+  END pc_gera_log;
   
   -- Função para verificar o indebcre conforme o tipo de documento
   FUNCTION fn_tipo_documento(pr_tpdedocs IN NUMBER) RETURN VARCHAR2 IS
@@ -372,11 +425,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 	 WHERE crapttl.cdcooper = pr_cdcooper
 	   AND crapttl.nrdconta = pr_nrdconta
 	   AND crapttl.idseqttl = pr_idseqttl;
-	rw_crapttl cr_crapttl%ROWTYPE;
+  	rw_crapttl cr_crapttl%ROWTYPE;
 
     vr_cdcrirej NUMBER;
 
   BEGIN
+
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_verifica_conta_integra', pr_action => NULL);
 
     -- Verifica se a cooperativa é a 1 ou a 2
     IF pr_cdcooper IN (1,2) THEN
@@ -394,41 +450,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         FETCH cr_crapass INTO rw_ass;
         CLOSE cr_crapass;
         
-		vr_nrcpfstl := 0;
-		vr_nrcpfttl := 0;
+        vr_nrcpfstl := 0;
+        vr_nrcpfttl := 0;
 
-		IF rw_ass.inpessoa = 1 THEN
+        IF rw_ass.inpessoa = 1 THEN
 
-		  OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
-		                 ,pr_nrdconta => rw_ass.nrdconta
-					        	 ,pr_idseqttl => 2);
+          OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
+                         ,pr_nrdconta => rw_ass.nrdconta
+                         ,pr_idseqttl => 2);
 
-		  FETCH cr_crapttl INTO rw_crapttl;
+          FETCH cr_crapttl INTO rw_crapttl;
 
-		  IF cr_crapttl%FOUND THEN
+          IF cr_crapttl%FOUND THEN
 
-		    vr_nrcpfstl := rw_crapttl.nrcpfcgc;
+            vr_nrcpfstl := rw_crapttl.nrcpfcgc;
 
-		  END IF;
+          END IF;
 
-		  CLOSE cr_crapttl;
+          CLOSE cr_crapttl;
 
-		  OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
-		                 ,pr_nrdconta => rw_ass.nrdconta
-						 ,pr_idseqttl => 3);
+          OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
+                         ,pr_nrdconta => rw_ass.nrdconta
+                 ,pr_idseqttl => 3);
 
-		  FETCH cr_crapttl INTO rw_crapttl;
+          FETCH cr_crapttl INTO rw_crapttl;
 
-		  IF cr_crapttl%FOUND THEN
+          IF cr_crapttl%FOUND THEN
 
-		    vr_nrcpfttl := rw_crapttl.nrcpfcgc;
+            vr_nrcpfttl := rw_crapttl.nrcpfcgc;
 
-		  END IF;
+          END IF;
 
-		  CLOSE cr_crapttl;
+          CLOSE cr_crapttl;
 
-		END IF;
-        
+        END IF;
+            
         -- Verifica o cpf
         IF NOT ((vr_cpfdesti = rw_ass.nrcpfcgc)   OR
                 (vr_cpfdesti = vr_nrcpfstl)     OR
@@ -476,20 +532,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                              ,vr_dsrelcpf -- vldaviso
                              ,pr_cdcooper -- cdcooper
                              ,LTRIM(GENE0002.fn_mask(TO_NUMBER(vr_nrctaint),'zzzzzz.zzz.zzz.z'))); -- nrdctitg
-
         EXCEPTION
           WHEN OTHERS THEN
             -- Crítica: Erro Oracle
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir registro na CRAPREJ[1]: '||SQLERRM;
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratado
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic);
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           ' craprej[1]: cdcritic:' || vr_cdcrirej ||
+                           ', nrdconta:' || vr_nrdconta || ', vllanmto:' || vr_vllanmto ||
+                           ', cdpesqbb:' || vr_cdpesqbb || ', dshistor:' || vr_dshistor ||
+                           ', nrseqdig:' || vr_nrseqarq || ', nrdocmto:' || vr_nrdocmto ||
+                           ', indebcre:' || vr_indebcre || ', dtrefere:' || vr_dtauxili ||
+                           ', vldaviso:' || vr_dsrelcpf || ', cdcooper:' || pr_cdcooper ||
+                           ', nrdctitg:' ||LTRIM(TO_NUMBER(vr_nrctaint)) ||
+                           '. '|| sqlerrm;
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 2,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 3);
+
+          --Inclusão na tabela de erros Oracle - Chamado 789851
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         END;
-        
+            
         -- Se o CPF pertence ao titular lancao o valor da TCO
         pr_out_inctaint := TRUE;          
       ELSE
@@ -523,8 +590,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                        ,pr_dsdrowid OUT VARCHAR2) IS  --> retorna o Rowid do registro inserido
     vr_dslayout VARCHAR2(255);   
     vr_dtmvtaux crapdat.dtmvtolt%TYPE;
+
   BEGIN   
-  
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_cria_ddc', pr_action => NULL);
+
     vr_dslayout := substr(pr_dslayout, 1, 238);
     
     IF pr_cdcooper = 3 THEN
@@ -537,61 +607,78 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     
     -->Formatar data  
     vr_dtmvtaux := to_date(SUBSTR(vr_dslayout,219,2)||SUBSTR(vr_dslayout,221,2)||SUBSTR(vr_dslayout,215,4),'mmddrrrr');
-    
-    /*Inserir dados na crapddc*/
-    INSERT INTO crapddc(cdcooper
-                       ,cdagenci
-                       ,nrdocmto
-                       ,dtmvtolt
-                       ,vldocmto                       
-                       ,nrdconta
-                       ,nmfavore
-                       ,nrcpffav
-                       ,cdcritic
-                       ,cdbandoc
-                       ,cdagedoc
-                       ,nrctadoc
-                       ,nmemiten
-                       ,nrcpfemi
-                       ,cdmotdev
-                       ,flgdevol
-                       ,cdoperad
-                       ,dslayout
-                       ,flgpcctl
-                       ,cdcmpori)
-                 VALUES(pr_cdcooper --> cdcooper
-                       ,pr_cdagenci --> cdagenci
-                       ,pr_nrdocmto --> nrdocmto
-                       ,vr_dtmvtaux --> dtmvtolt
-                       ,pr_vldocmto --> vldocmto
-                       ,pr_nrdconta --> nrdconta
-                       ,pr_nmfavore --> nmfavore
-                       ,pr_nrcpffav --> nrcpffav
-                       ,pr_cdcritic --> cdcritic
-                       ,pr_cdbandoc --> cdbandoc
-                       ,pr_cdagedoc --> cdagedoc
-                       ,pr_nrctadoc --> nrctadoc
-                       ,pr_nmemiten --> nmemiten
-                       ,pr_nrcpfemi --> nrcpfemi
-                       ,DECODE(pr_cdcooper,3,53,57) --> cdmotdev
-                       ,1             --> flgdevol
-                       ,'1'           --> cdoperad
-                       ,SUBSTR(vr_dslayout,1,255) --> dslayout
-                       ,0 --> flgpcctl
-                       ,pr_cdcmpori) --> cdcmpori 
-         RETURNING ROWID INTO pr_dsdrowid;
-  EXCEPTION
-    WHEN OTHERS THEN
-      -- Crítica: Erro Oracle
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao inserir registro na CRAPDDC: '||SQLERRM;
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratado
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-                       
+
+    BEGIN
+      /*Inserir dados na crapddc*/
+      INSERT INTO crapddc(cdcooper
+                         ,cdagenci
+                         ,nrdocmto
+                         ,dtmvtolt
+                         ,vldocmto                       
+                         ,nrdconta
+                         ,nmfavore
+                         ,nrcpffav
+                         ,cdcritic
+                         ,cdbandoc
+                         ,cdagedoc
+                         ,nrctadoc
+                         ,nmemiten
+                         ,nrcpfemi
+                         ,cdmotdev
+                         ,flgdevol
+                         ,cdoperad
+                         ,dslayout
+                         ,flgpcctl
+                         ,cdcmpori)
+                   VALUES(pr_cdcooper --> cdcooper
+                         ,pr_cdagenci --> cdagenci
+                         ,pr_nrdocmto --> nrdocmto
+                         ,vr_dtmvtaux --> dtmvtolt
+                         ,pr_vldocmto --> vldocmto
+                         ,pr_nrdconta --> nrdconta
+                         ,pr_nmfavore --> nmfavore
+                         ,pr_nrcpffav --> nrcpffav
+                         ,pr_cdcritic --> cdcritic
+                         ,pr_cdbandoc --> cdbandoc
+                         ,pr_cdagedoc --> cdagedoc
+                         ,pr_nrctadoc --> nrctadoc
+                         ,pr_nmemiten --> nmemiten
+                         ,pr_nrcpfemi --> nrcpfemi
+                         ,DECODE(pr_cdcooper,3,53,57) --> cdmotdev
+                         ,1             --> flgdevol
+                         ,'1'           --> cdoperad
+                         ,SUBSTR(vr_dslayout,1,255) --> dslayout
+                         ,0 --> flgpcctl
+                         ,pr_cdcmpori) --> cdcmpori 
+           RETURNING ROWID INTO pr_dsdrowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Crítica: Erro Oracle
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       ' crapddc: cdcooper:' || pr_cdcooper ||
+                       ', cdagenci:' || pr_cdagenci ||', nrdocmto:' || pr_nrdocmto ||
+                       ', dtmvtolt:' || vr_dtmvtaux ||', vldocmto:' || pr_vldocmto ||
+                       ', nrdconta:' || pr_nrdconta ||', nmfavore:' || trim(pr_nmfavore) ||
+                       ', nrcpffav:' || pr_nrcpffav ||', cdcritic:' || pr_cdcritic ||
+                       ', cdbandoc:' || pr_cdbandoc ||', cdagedoc:' || pr_cdagedoc ||
+                       ', nrctadoc:' || pr_nrctadoc ||', nmemiten:' || trim(pr_nmemiten) ||
+                       ', nrcpfemi:' || pr_nrcpfemi ||', cdmotdev: se cdcooper=3 -> 53, senão -> 57' ||
+                       ', flgdevol:1, cdoperad:1, dslayout:' || SUBSTR(vr_dslayout,1,255) ||
+                       ', flgpcctl:0, cdcmpori:'    || pr_cdcmpori || ', pr_dsdrowid:' || pr_dsdrowid
+                       ||'. '|| sqlerrm;
+        -- Envio centralizado de log de erro
+        pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => vr_cdcritic,
+                    pr_ind_tipo_log  => 3);
+
+        --Inclusão na tabela de erros Oracle - Chamado 789851
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
+    END;
 
   END pc_cria_ddc;
 
@@ -604,6 +691,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                             ,pr_dslinha  IN VARCHAR2 ) IS
 
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_cria_generico', pr_action => NULL);
 
     /* CRIAÇÃO DA TABELA GENÉRICA - GNCPDOC */
     INSERT INTO gncpdoc(cdcooper
@@ -671,14 +760,40 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   EXCEPTION
     WHEN OTHERS THEN
       -- Crítica: Erro Oracle
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao inserir registro na GNCPDOC: '||SQLERRM;
+      vr_cdcritic := 1034;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     ' gncpdoc[1]: cdcooper:' || pr_cdcooper ||
+                     ', cdagenci:' || pr_cdagenci ||', dtmvtolt:' || vr_dtleiarq ||
+                     ', dtliquid:' || vr_dtmvtolt ||', cdcmpchq:' || vr_cdcmpdoc ||
+                     ', cdbccrcb:' || to_number(SUBSTR(pr_dslinha,4,3))          ||
+                     ', cdagercb:' || to_number(SUBSTR(pr_dslinha,7,4))          ||
+                     ', dvagenci:' || SUBSTR(pr_dslinha,11,1)                    ||
+                     ', nrcctrcb:' || to_number(SUBSTR(pr_dslinha,12,13))        ||
+                     ', nrdocmto:' || vr_nrdocmto ||', vldocmto:' || vr_vllanmto ||
+                     ', nmpesrcb:' || vr_nmdestin  ||', cpfcgrcb:' || to_number(vr_dsrelcpf) ||
+                     ', tpdctacr:' || to_number(SUBSTR(pr_dslinha,103,2))         ||
+                     ', cdfinrcb:' || to_number(SUBSTR(pr_dslinha,105,2))         ||
+                     ', cdagectl:' || pr_cdagectl  ||', nrdconta:' || pr_nrdconta ||
+                     ', nmpesemi:' || SUBSTR(pr_dslinha,142,40)                   ||
+                     ', cpfcgemi:' || to_number(SUBSTR(pr_dslinha,182,14))        ||
+                     ', tpdctadb:' || to_number(SUBSTR(pr_dslinha,196,2))         ||
+                     ', tpdoctrf:' || SUBSTR(pr_dslinha,203,1)                    ||
+                     ', qtdregen:' || vr_vltotreg  ||', nmarquiv:' || pr_nmarquiv ||
+                     ', cdoperad:1, hrtransa:'     || GENE0002.fn_busca_time      ||
+                     ', cdtipreg: se cdcritic=0 -> 4, senao -> 3,'                ||
+                     ', flgconci:0, flgpcctl:0'    ||', nrseqarq:' || vr_nrseqarq ||
+                     ', cdcritic:' || pr_cdcritic  ||', cdmotdev:0. '|| sqlerrm;
       -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratado
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic);
+      pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => vr_cdcritic,
+                  pr_ind_tipo_log  => 3);
+
+      --Inclusão na tabela de erros Oracle - Chamado 789851
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
   END pc_cria_generico;
   
   -- Cria o registro na tabela genérica GNCPDOC - Compensacao Documentos da Central
@@ -687,6 +802,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                 ,pr_rcdoctco IN typ_rcdoctco ) IS
 
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_cria_generico_tco', pr_action => NULL);
 
     /* CRIAÇÃO DA TABELA GENÉRICA - GNCPDOC */
     INSERT INTO gncpdoc(cdcooper
@@ -751,18 +868,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                        ,0                      -- flgpcctl
                        ,pr_cdcritic            -- cdcritic
                        ,0);                    -- cdmotdev
-
   EXCEPTION
     WHEN OTHERS THEN
       -- Crítica: Erro Oracle
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao inserir registro na GNCPDOC: '||SQLERRM;
+      vr_cdcritic := 1034;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     ' gncpdoc[2]: cdcooper:' || pr_rcdoctco.cdcooper ||
+                     ', cdagenci:' || pr_rcdoctco.cdagenci   || ', dtmvtolt:' || vr_dtleiarq          ||
+                     ', dtliquid:' || vr_dtmvtolt            || ', cdagectl:' || rw_crapcop.cdagectl  ||
+                     ', nrdconta:' || pr_rcdoctco.nrdconta   || ', cdcmpchq:' || pr_rcdoctco.cdcmpdoc ||
+                     ', cdbccrcb:' || pr_rcdoctco.cdbccrcb   || ', cdagercb:' || pr_rcdoctco.cdagercb ||
+                     ', dvagenci:' || pr_rcdoctco.dvagenci   || ', nrcctrcb:' || pr_rcdoctco.nrcctrcb ||
+                     ', nrdocmto:' || vr_nrdocmto            || ', vldocmto:' || pr_rcdoctco.vllanmto ||
+                     ', nmpesrcb:' || pr_rcdoctco.nmdestin   || ', cpfcgrcb:' || pr_rcdoctco.cpfdesti ||
+                     ', tpdctacr:' || pr_rcdoctco.tpdctacr   || ', cdfinrcb:' || pr_rcdoctco.cdfinrcb ||
+                     ', nmpesemi:' || pr_rcdoctco.nmpesemi   || ', cpfcgemi:' || pr_rcdoctco.cpfcgemi ||
+                     ', tpdctadb:' || pr_rcdoctco.tpdctadb   || ', tpdoctrf:' || pr_rcdoctco.tpdoctrf ||
+                     ', qtdregen:' || vr_vltotreg            || ', nmarquiv:' || pr_nmarquiv          ||
+                     ', nrseqarq:' || pr_rcdoctco.nrseqarq   || ', cdoperad:1'||
+                     ', hrtransa:' || GENE0002.fn_busca_time ||
+                     ', cdtipreg: se cdcritic=0 -> 4, senao -> 3' || ', flgconci:0, flgpcctl:0'     ||
+                     ', cdcritic:' || pr_cdcritic            || ', cdmotdev:0. '|| sqlerrm;
       -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratado
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic);
+      pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => vr_cdcritic,
+                  pr_ind_tipo_log  => 3);
+
+      --Inclusão na tabela de erros Oracle - Chamado 789851
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
   END pc_cria_generico_tco;
 
   -- Processar os dados dos documentos TCO
@@ -773,6 +910,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     vr_nrlottco      NUMBER;
 
   BEGIN
+
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_processamento_tco', pr_action => NULL);
 
     -- Percorre toda a tabela de memória de Docs TCO
     FOR vr_indoctco IN nvl(rw_tbdoctco.FIRST,0)..nvl(rw_tbdoctco.LAST,-1) LOOP
@@ -805,11 +945,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
           -- FEchar o cursor para a próxima iteração
           CLOSE cr_craplot;
-
         END LOOP;
 
         BEGIN
-
           -- Limpa o registro para guardar os dados inseridos;
           rw_craplot := NULL;
 
@@ -833,18 +971,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           rw_craplot.cdagenci := rw_tbdoctco(vr_indoctco).cdagenci;
           rw_craplot.cdbccxlt := rw_tbdoctco(vr_indoctco).cdbccxlt;
           rw_craplot.nrdolote := vr_nrlottco;
-
         EXCEPTION
           WHEN OTHERS THEN
             -- Crítica: Erro Oracle
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir registro na CRAPLOT[1]: '||SQLERRM;
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratado
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic);
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           ' craplot[1]: dtmvtolt:' || vr_dtmvtolt               ||
+                           ', cdagenci:' || rw_tbdoctco(vr_indoctco).cdagenci    ||
+                           ', cdbccxlt:' || rw_tbdoctco(vr_indoctco).cdbccxlt    ||
+                           ', nrdolote:' || vr_nrlottco                          ||
+                           ', tplotmov:' || rw_tbdoctco(vr_indoctco).tplotmov    ||
+                           ', cdcooper:' || rw_tbdoctco(vr_indoctco).cdcooper    || '. '|| sqlerrm;
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 2,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 3);
+
+          --Inclusão na tabela de erros Oracle - Chamado 789851
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         END;
 
       ELSE
@@ -861,17 +1008,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         IF cr_craplot%NOTFOUND THEN
           vr_cdcritic := 60; -- 060 - Lote inexistente
           -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                        || ' Arquivo:' || pr_nmarquiv
+                        || ' Lote:'    || vr_nrlottco
+                        || ' Seq:'     || to_char(vr_nrseqarq,'999g990');
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratado
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic || ' - Arquivo: '
-                                                        || pr_nmarquiv
-                                                        || ' Lote: '   || vr_nrlottco
-                                                        || ' Seq: ' || to_char(vr_nrseqarq,'999g990') );
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
 
           -- Fecha o cursor e pula para o próximo registro
           CLOSE cr_craplot;
@@ -886,7 +1032,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       END IF;
 
       LOOP
-
         -- buscar o registro de lançamento
         OPEN  cr_craplcm(rw_tbdoctco(vr_indoctco).cdcooper -- pr_cdcooper
                         ,vr_dtmvtolt                       -- pr_dtmvtolt
@@ -910,11 +1055,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         CLOSE cr_craplcm;
       END LOOP;
 
-      DECLARE
-        vr_dsmensag   VARCHAR2(30);
       BEGIN
-        -- Guarda parte da mensagem de erro
-        vr_dsmensag := 'ao inserir CRAPLCM';
 
         -- Inserir o lançamento
         INSERT INTO craplcm(cdcooper
@@ -944,8 +1085,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                            ,rw_craplot.nrdolote                   -- nrdolote
                            ,rw_tbdoctco(vr_indoctco).nrdconta     -- nrdconta
                            ,rw_tbdoctco(vr_indoctco).nrdctabb     -- nrdctabb
-                           ,GENE0002.fn_mask(
-                               rw_tbdoctco(vr_indoctco).nrdconta,'zzzzzz.zzz.zzz.z') -- nrdctitg
+                           ,GENE0002.fn_mask(rw_tbdoctco(vr_indoctco).nrdconta,'zzzzzz.zzz.zzz.z') -- nrdctitg
                            ,vr_nrdocmto                           -- nrdocmto
                            ,rw_tbdoctco(vr_indoctco).cdhistor     -- cdhistor
                            ,rw_tbdoctco(vr_indoctco).vllanmto     -- vllanmto
@@ -956,10 +1096,43 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                            ,rw_tbdoctco(vr_indoctco).cdagedoc     -- cdagechq
                            ,rw_tbdoctco(vr_indoctco).nrctadoc     -- nrctachq
                            ,rw_tbdoctco(vr_indoctco).sqlotdoc );  -- sqlotchq
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Crítica: Erro Oracle
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         ' craplcm[1]: cdcooper: '|| rw_tbdoctco(vr_indoctco).cdcooper ||
+                         ', dtmvtolt: '|| rw_craplot.dtmvtolt               ||
+                         ', dtrefere: '|| vr_dtleiarq                       ||
+                         ', cdagenci: '|| rw_craplot.cdagenci               ||
+                         ', cdbccxlt: '|| rw_craplot.cdbccxlt               ||
+                         ', nrdolote: '|| rw_craplot.nrdolote               ||
+                         ', nrdconta: '|| rw_tbdoctco(vr_indoctco).nrdconta ||
+                         ', nrdctabb: '|| rw_tbdoctco(vr_indoctco).nrdctabb ||
+                         ', nrdctitg: '|| rw_tbdoctco(vr_indoctco).nrdconta ||
+                         ', nrdocmto: '|| vr_nrdocmto                       ||
+                         ', cdhistor: '|| rw_tbdoctco(vr_indoctco).cdhistor ||
+                         ', vllanmto: '|| rw_tbdoctco(vr_indoctco).vllanmto ||
+                         ', nrseqdig: '|| rw_tbdoctco(vr_indoctco).nrseqarq ||
+                         ', cdpesqbb: '|| vr_cdpeslcm                       ||
+                         ', cdbanchq: '|| rw_tbdoctco(vr_indoctco).cdbandoc ||
+                         ', cdcmpchq: '|| rw_tbdoctco(vr_indoctco).cdcmpdoc ||
+                         ', cdagechq: '|| rw_tbdoctco(vr_indoctco).cdagedoc ||
+                         ', nrctachq: '|| rw_tbdoctco(vr_indoctco).nrctadoc ||
+                         ', sqlotchq: '|| rw_tbdoctco(vr_indoctco).sqlotdoc || '. '|| sqlerrm;
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 2,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 3);
 
-        -- Guarda parte da mensagem de erro
-        vr_dsmensag := 'ao atualizar CRAPLOT';
+          --Inclusão na tabela de erros Oracle - Chamado 789851
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      END;
 
+      BEGIN
         -- Atualizar dados da CRAPLOT
         UPDATE CRAPLOT
            SET craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
@@ -968,24 +1141,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
              , craplot.vlcompcr = NVL(craplot.vlcompcr,0) + rw_tbdoctco(vr_indoctco).vllanmto
              , craplot.nrseqdig = rw_tbdoctco(vr_indoctco).nrseqarq
          WHERE craplot.rowid    = rw_craplot.dsrowid;
-
       EXCEPTION
         WHEN OTHERS THEN
           -- Crítica: Erro Oracle
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro '||vr_dsmensag||': '||SQLERRM;
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         ' craplot[1]: qtinfoln: + 1' || ', qtcompln: + 1'      ||
+                         ', vlinfocr: + '  || rw_tbdoctco(vr_indoctco).vllanmto ||
+                         ', vlcompcr: + '  || rw_tbdoctco(vr_indoctco).vllanmto ||
+                         ', nrseqdig:'     || rw_tbdoctco(vr_indoctco).nrseqarq ||
+                         ' com rowid:'     || rw_craplot.dsrowid ||'. '|| sqlerrm;
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratado
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic);
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 2,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 3);
+
+          --Inclusão na tabela de erros Oracle - Chamado 789851
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
       END;
 
       -- Criar registro genérico de documento TCO
       pc_cria_generico_tco(pr_cdcritic  => 0
                           ,pr_nmarquiv  => pr_nmarquiv
                           ,pr_rcdoctco  => rw_tbdoctco(vr_indoctco) );
+
+      -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+      GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_processamento_tco', pr_action => NULL);
 
     END LOOP; -- DOCs TCO
 
@@ -1000,6 +1184,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     vr_nrchave    BINARY_INTEGER;
 
   BEGIN
+
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_cria_doctos_tco', pr_action => NULL);
 
     -- Chave do registro
     vr_nrchave := rw_tbdoctco.COUNT() + 1;
@@ -1034,7 +1221,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     rw_tbdoctco(vr_nrchave).nmdestin := SUBSTR(pr_dslinha,49,40);
     rw_tbdoctco(vr_nrchave).cpfdesti := TO_NUMBER(SUBSTR(pr_dslinha,89,14));
 
-  END;
+  END pc_cria_doctos_tco;
   
   -- Rotina responsável pelo processamento das integrações para a cecred
   PROCEDURE pc_integra_cecred(pr_tbarquiv    IN GENE0002.typ_split )  IS
@@ -1066,8 +1253,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     vr_utlfileh    UTL_FILE.file_type;
     -- Array para guardar as linhas dos arquivos
     vr_arquivo     typ_arquivo;
-
+    -- Variável criada para manter o nome do arquivo e apresentar na crítica 191
+    --Chamado 789851 - 24/11/2017
+    vr_nmarquiv_indice VARCHAR2(200) := NULL;
+    
   BEGIN
+
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cecred', pr_action => NULL);
 
     -- Limpa o registro de dados do relatório
     vr_tbrelato.DELETE;
@@ -1091,6 +1284,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         RAISE vr_exc_saida;
       END IF;
 
+      --Chamado 789851 - 24/11/2017
+      vr_nmarquiv_indice := pr_tbarquiv(vr_nrindice);
+
       -- Limpar o registro de memória, Caso possua registros
       IF vr_arquivo.COUNT() > 0 THEN
         vr_arquivo.DELETE;
@@ -1109,7 +1305,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             WHEN no_data_found THEN -- não encontrar mais linhas
               EXIT;
             WHEN OTHERS THEN
-              pr_dscritic := 'Erro arquivo ['||pr_tbarquiv(vr_nrindice)||']: '||SQLERRM;
+              vr_cdcritic := 1053; -- Erro no arquivo
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' ['||pr_tbarquiv(vr_nrindice)||']: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
         END LOOP;
@@ -1131,14 +1328,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         -- Verifica se o arquivo está completo
         IF SUBSTR(vr_arquivo(vr_arquivo.LAST()),1,10) <> '9999999999' THEN
           -- Gerar a Crítica
-          vr_cdcritic := 258;
+          vr_cdcritic := 258; -- Nao ha arquivo da COMPBB para integrar
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic  );
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;
         END IF;
 
         -- Excluir a ultima linha, pois já foi processada
@@ -1152,25 +1351,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           -- Gerar a Crítica
           vr_cdcritic := 181; -- 181 - Falta registro de controle no arquivo.
         END IF;
-        
+
         BEGIN
-            vr_cdcmpori := NVL(TO_NUMBER(SUBSTR(vr_arquivo(vr_arquivo.first()),39,3)),0);
+          vr_cdcmpori := NVL(TO_NUMBER(SUBSTR(vr_arquivo(vr_arquivo.first()),39,3)),0);
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao converter compe de origem do arquivo';
+            vr_cdcritic := 1052; -- Erro ao converter compe de origem do arquivo
+            -- Buscar a descrição
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             RAISE vr_exc_saida;
         END;    
 
         -- Se tem crítica
         IF NVL(vr_cdcritic,0) <> 0 THEN
+
           -- Buscar a descrição da crítica
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                         || ' - Integrando via CECRED - '
+                         || 'Arquivo: ' || pr_tbarquiv(vr_nrindice);
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - Integrando via CECRED - '
-                                                        || vr_cdprogra || ' --> '||vr_dscritic
-                                                        || ' - Arquivo: ' || pr_tbarquiv(vr_nrindice) );
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
+
           -- Reinicializar a variável de crítica
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
@@ -1181,14 +1386,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Critica de processo: 219 - INTEGRANDO ARQUIVO
         vr_cdcritic := 219;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                      || '. Arquivo: ' || pr_tbarquiv(vr_nrindice);
+
         -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic || ' - Arquivo: '
-                                                      || pr_tbarquiv(vr_nrindice) );
+        pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                    pr_dstiplog      => 'O',
+                    pr_dscritic      => vr_dscritic,
+                    pr_cdcriticidade => 0,
+                    pr_cdmensagem    => vr_cdcritic,
+                    pr_ind_tipo_log  => 1);
+
         -- Reinicializar a variável de crítica
         vr_cdcritic := NULL;
 
@@ -1231,8 +1439,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             vr_vllanmto := (TO_NUMBER(SUBSTR(vr_dslinha, 31,18)) / 100);
             vr_cdbccrcb := TO_NUMBER(SUBSTR(vr_dslinha ,  4, 3));
             vr_cdagercb := TO_NUMBER(SUBSTR(vr_dslinha ,  7, 4));            
-
-
             vr_nrdconta := TO_NUMBER(SUBSTR(vr_dslinha ,17,08));
             vr_cdagedoc := TO_NUMBER(SUBSTR(vr_dslinha ,124,4));
             vr_nrctadoc := TO_NUMBER(SUBSTR(vr_dslinha,129,13));
@@ -1301,6 +1507,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                        ,pr_cdcmpori => vr_cdcmpori   -- cdcmpori  
                        ,pr_dsdrowid => vr_dsdrowid);
 
+            -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+            GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cecred', pr_action => NULL);
+
             -- Atualizar registro
             vr_tbrelato(vr_indchave).cdbandoc := vr_cdbandoc;
             vr_tbrelato(vr_indchave).cdageemi := TO_NUMBER(SUBSTR(vr_dslinha ,124, 3));
@@ -1325,19 +1534,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Se retornar uma indicação de erro
         IF NVL(vr_typ_saida,' ') = 'ERR' THEN
-          -- Incluir erro no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2  -- Erro tratado
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || 'Erro pc_OScommand_Shell: '||vr_des_saida);
-        ELSE
+          vr_cdcritic := 1054; -- Erro pc_OScommand_Shell
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_des_saida;
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
+	      ELSE
           -- Gravação a cada arquivo processado
           COMMIT;
         END IF;
-         
 
       END IF;
+
     END LOOP; -- Fim da leitura dos arquivos
 
     /*** GERAÇÃO DO RELATÓRIO COM OS DADOS PROCESSADOS ***/
@@ -1438,8 +1650,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Verifica se ocorreram erros na geração do XML
         IF vr_des_erro IS NOT NULL THEN
-
-          pr_dscritic := vr_des_erro;
+          vr_dscritic := vr_des_erro;
 
           -- Gerar exceção
           RAISE vr_exc_saida;
@@ -1450,13 +1661,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
     -- Critica de processo: 191 - ARQUIVO INTEGRADO COM REJEITADOS
     vr_cdcritic := 191;
-    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                   || '. Arquivo: ' || vr_nmarquiv_indice;
+
     -- Envio centralizado de log de erro
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                              ,pr_ind_tipo_log => 1 -- Processo Normal
-                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                  || vr_cdprogra || ' --> '
-                                                  || vr_dscritic );
+    pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                pr_dstiplog      => 'E',
+                pr_dscritic      => vr_dscritic,
+                pr_cdcriticidade => 1,
+                pr_cdmensagem    => vr_cdcritic);
+
     -- Reinicializar a variável de crítica
     vr_cdcritic := NULL;
 
@@ -1526,6 +1740,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
   BEGIN
 
+    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
+
     -- Limpa o registro de dados do relatório
     vr_tbrelato.DELETE;
 
@@ -1565,10 +1782,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       IF vr_arquivo.COUNT() > 0 THEN
         vr_arquivo.DELETE;
       END IF;
-
       -- Se o arquivo estiver aberto, percorre o mesmo e guarda todas as linhas
       -- em um registro de memória
       IF  utl_file.IS_OPEN(vr_utlfileh) THEN
+
         -- Ler todas as linhas do arquivo
         LOOP
           BEGIN
@@ -1579,7 +1796,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             WHEN no_data_found THEN -- não encontrar mais linhas
               EXIT;
             WHEN OTHERS THEN
-              pr_dscritic := 'Erro arquivo ['||pr_tbarquiv(vr_nrindice)||']: '||SQLERRM;
+              vr_cdcritic := 1053; -- Erro no arquivo
+              -- Buscar a descrição
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' ['||pr_tbarquiv(vr_nrindice)||']: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
         END LOOP;
@@ -1603,16 +1822,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       IF vr_arquivo.count() > 0 THEN
 
         -- Verifica se o arquivo está completo
-        IF SUBSTR(vr_arquivo(vr_arquivo.last()),1,10) <> '9999999999' THEN
+       IF SUBSTR(vr_arquivo(vr_arquivo.last()),1,10) <> '9999999999' THEN
           -- Gerar a Crítica
-          vr_cdcritic := 258;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_cdcritic := 258; -- Nao ha arquivo da COMPBB para integrar
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic  );
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;
         ELSE
           -- Guarda o valor
           vr_vltotreg := TO_NUMBER(SUBSTR(vr_arquivo(vr_arquivo.LAST()), 71,6));
@@ -1639,23 +1860,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         END IF;
 
         BEGIN
-            vr_cdcmpori := NVL(TO_NUMBER(SUBSTR(vr_arquivo(vr_arquivo.first()),39,3)),0);
+          vr_cdcmpori := NVL(TO_NUMBER(SUBSTR(vr_arquivo(vr_arquivo.first()),39,3)),0);
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao converter compe de origem do arquivo';
+            vr_cdcritic := 1052; -- Erro ao converter compe de origem do arquivo
+            -- Buscar a descrição
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             RAISE vr_exc_saida;
         END;    
         
         -- Se tem crítica
         IF NVL(vr_cdcritic,0) <> 0 THEN
           -- Buscar a descrição da crítica
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                         || ' Arquivo:' || pr_tbarquiv(vr_nrindice);
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '||vr_dscritic
-                                                        || ' - Arquivo: ' || pr_tbarquiv(vr_nrindice) );
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
           -- Reinicializar a variável de crítica
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
@@ -1666,14 +1890,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Critica de processo: 219 - INTEGRANDO ARQUIVO
         vr_cdcritic := 219;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic || ' - Arquivo: '
-                                                      || pr_tbarquiv(vr_nrindice) );
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                       ||'. Arquivo: ' || pr_tbarquiv(vr_nrindice);
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 0,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
 
         -- Reinicializar a variável de crítica e de controle de primeiro registro
         vr_cdcritic := NULL;
@@ -1703,15 +1928,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                WHERE crapass.cdcooper = pr_cdcooper
                  AND crapass.nrdconta = pr_nrdconta;
 
-		    CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
-			                 ,pr_nrdconta IN crapttl.nrdconta%TYPE
-							 ,pr_idseqttl IN crapttl.idseqttl%TYPE)IS
-			SELECT crapttl.nrcpfcgc
- 			  FROM crapttl
-       WHERE crapttl.cdcooper = pr_cdcooper
-			   AND crapttl.nrdconta = pr_nrdconta
-			   AND crapttl.idseqttl = pr_idseqttl;
-		    rw_crapttl cr_crapttl%ROWTYPE;
+            CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
+                             ,pr_nrdconta IN crapttl.nrdconta%TYPE
+                       ,pr_idseqttl IN crapttl.idseqttl%TYPE)IS
+              SELECT crapttl.nrcpfcgc
+                FROM crapttl
+               WHERE crapttl.cdcooper = pr_cdcooper
+                 AND crapttl.nrdconta = pr_nrdconta
+                 AND crapttl.idseqttl = pr_idseqttl;
+	            rw_crapttl cr_crapttl%ROWTYPE;
 
             -- Buscar informações de Transferencia e Duplicacao de Matricula
             CURSOR cr_craptrf(pr_nrdconta  craptrf.nrdconta%TYPE) IS
@@ -1775,18 +2000,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                    ,999999999                                      -- nrdconta
                                    ,vr_nrseqarq                                    -- nrseqdig
                                    ,(to_number(SUBSTR(vr_dslinha,79,18)) / 100) ); -- vllanmto
-
               EXCEPTION
                 WHEN OTHERS THEN
-                  -- Crítica: REtornar erro oracle
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao inserir CRAPREJ: '||SQLERRM;
+                  -- Crítica: Erro Oracle
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) ||
+                                 ' craprej[2]: cdcooper:' || pr_cdcooper ||
+                                 ', dtrefere:' || vr_dtauxili ||
+                                 ', nrdconta: 999999999, nrseqdig:' || vr_nrseqarq ||
+                                 ', vllanmto:' ||(SUBSTR(vr_dslinha,79,18) / 100) ||
+                                 '. '|| sqlerrm;
                   -- Envio centralizado de log de erro
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratado
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                               || vr_cdprogra || ' --> '
-                                                               || vr_dscritic  );
+                  pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                              pr_dstiplog      => 'E',
+                              pr_dscritic      => vr_dscritic,
+                              pr_cdcriticidade => 2,
+                              pr_cdmensagem    => vr_cdcritic,
+                              pr_ind_tipo_log  => 3);
+
+                  --Inclusão na tabela de erros Oracle - Chamado 789851
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               END;
 
               -- Se não processou registro nenhum
@@ -1799,20 +2032,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   vr_cdcritic := 472; -- 472 - Falta tabela de convenio
                   -- Buscar a descrição
                   vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-
                   -- Envio centralizado de log de erro
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratado
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                                || vr_cdprogra || ' --> '
-                                                                || vr_dscritic  );
-
+                  pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                              pr_dstiplog      => 'E',
+                              pr_dscritic      => vr_dscritic,
+                              pr_cdcriticidade => 1,
+                              pr_cdmensagem    => vr_cdcritic);
                   -- Fecha o cursor antes de finalizar
                   CLOSE cr_craptab;
 
                   -- Finaliza com fimprg
                   RAISE vr_exc_fimprg;
-
                 END IF;
 
                 -- Atualizar o registro da CRAPTAB
@@ -1822,20 +2052,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                    WHERE CURRENT OF cr_craptab;
                 EXCEPTION
                   WHEN OTHERS THEN
-                    -- Crítica: REtornar erro oracle
-                    vr_cdcritic := 0;
-                    vr_dscritic := 'Erro ao atualizar CRAPTAB: '||SQLERRM;
+                    -- Crítica: Erro Oracle
+                    vr_cdcritic := 1035;
+                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                   ' craptab: dstextab: se nrdolote=7019 -> 7010, senao -> '|| to_char(vr_nrdolote+1,'9999') || 
+                                   ' com nmsistem:CRED, tptabela:GENERI, cdempres:00, cdacesso:NUMLOTEBCO, tpregist:001'     || 
+                                   '. '|| sqlerrm;
                     -- Envio centralizado de log de erro
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                              ,pr_ind_tipo_log => 2 -- Erro tratado
-                                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                                 || vr_cdprogra || ' --> '
-                                                                 || vr_dscritic  );
+                    pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                                pr_dstiplog      => 'E',
+                                pr_dscritic      => vr_dscritic,
+                                pr_cdcriticidade => 2,
+                                pr_cdmensagem    => vr_cdcritic,
+                                pr_ind_tipo_log  => 3);
+
+                    --Inclusão na tabela de erros Oracle - Chamado 789851
+                    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 END;
 
                 -- Fechar o cursor
                 CLOSE cr_craptab;
-
               END IF;
 
               -- Sai do Loop do arquivo
@@ -1845,7 +2081,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
             -- Ler as informações e tratar possíveis excessões de leitura
             BEGIN
-              
 
               vr_cdagearq := to_number(SUBSTR(vr_dslinha,7,4));
               vr_nrcpfemi := to_number(SUBSTR(vr_dslinha,182,14));
@@ -1865,7 +2100,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               vr_dsrelcpf := SUBSTR(vr_dslinha,89,14);     
               -- Leitura do CPF de destino
               vr_cpfdesti := to_number(SUBSTR(vr_dslinha,89,14));
-              
+
               -- Se o arquivo vem de cooperativa incorporada
               IF vr_flgincorp THEN
                 -- Buscar código de conta transferida substituindo
@@ -1885,15 +2120,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               WHEN OTHERS THEN
                 -- Crítica: 843 - Funcao com caracteres invalido
                 vr_cdcritic := 843;
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                               || '. Arquivo:' || pr_tbarquiv(vr_nrindice)
+                               || ', Seq:' || to_char(vr_nrseqarq,'999G990');
                 -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 1 -- Processo Normal
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic || ' - Arquivo: '
-                                                             || pr_tbarquiv(vr_nrindice)||' Seq: '
-                                                             || to_char(vr_nrseqarq,'999G990'));
+                pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 2,
+                            pr_cdmensagem    => vr_cdcritic,
+                            pr_ind_tipo_log  => 3); --erro gerado em others
+
+                --Inclusão na tabela de erros Oracle - Chamado 789851
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 
                 -- Cria o registro na tabela genérica GNCPDOC - Compensacao Documentos da Central
                 -- Observação: Usando campos da incorporação em caso do arquivo for
@@ -1912,13 +2151,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                   ,pr_nrdconta => vr_nrdconta
                                   ,pr_dslinha  => vr_dslinha);
                 END IF;                  
+
+                -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+                GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
                 
                 -- Inicializa a variável de crítica
                 vr_cdcritic := 0;
                 -- Próxima linha
                 CONTINUE;
             END;
-
             -- Neste primeiro momento tratar somente com historico de DOC.
             -- Ha possibilidade de separar por Imp. Renda e TEC conf. prg. 252
             vr_cdhistor := 575;
@@ -1957,6 +2198,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                          ,pr_cdcmpori => vr_cdcmpori                         -- cdcmpori 
                          ,pr_dsdrowid => vr_dsdrowid);
 
+              -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+              GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
+
               -- Se a crítica é de conta encerrada desde que não seja incorporação
               IF vr_critiass = 64 AND NOT vr_flgincorp THEN
 
@@ -1965,6 +2209,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                          ,pr_out_inctaint => vr_inctaint
                                          ,pr_out_cdcooper => vr_aux_cdcooper
                                          ,pr_out_nrdconta => vr_aux_nrdconta);
+
+                -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+                GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
 
                 -- Verificar conta integrada
                 IF vr_inctaint THEN
@@ -1975,6 +2222,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                       ,pr_nrdconta => vr_aux_nrdconta
                                       ,pr_nrdctabb => vr_aux_nrdconta
                                       ,pr_dslinha  => vr_dslinha);
+
+                    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+                    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
                     
                     -- Eliminar Tabela devolucao DOC da Compensacao.
                     BEGIN
@@ -1984,14 +2234,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                     EXCEPTION
                       WHEN OTHERS THEN
                         -- Crítica: Erro Oracle
-                        vr_cdcritic := 0;
-                        vr_dscritic := 'Erro ao deletar registro na CRAPDDC: '||SQLERRM;
+                        vr_cdcritic := 1037;
+                        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapddc: com ROWID:'||vr_dsdrowid
+                                      ||'. '||SQLERRM;
                         -- Envio centralizado de log de erro
-                        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                  ,pr_ind_tipo_log => 2 -- Erro tratado
-                                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                                   || vr_cdprogra || ' --> '
-                                                                   || vr_dscritic);                      
+                        pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                                    pr_dstiplog      => 'E',
+                                    pr_dscritic      => vr_dscritic,
+                                    pr_cdcriticidade => 2,
+                                    pr_cdmensagem    => vr_cdcritic,
+                                    pr_ind_tipo_log  => 3);
+
+                        --Inclusão na tabela de erros Oracle - Chamado 789851
+                        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                     END;
                   END IF;
                   
@@ -2029,18 +2284,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                    ,vr_indebcre -- indebcre
                                    ,vr_critiass -- cdcritic
                                    ,TO_NUMBER(vr_dsrelcpf)); -- vldaviso
-
               EXCEPTION
                 WHEN OTHERS THEN
                   -- Crítica: Erro Oracle
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao inserir registro na CRAPREJ[2]: '||SQLERRM;
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                 ' craprej[3]: dtrefere:' || vr_dtauxili ||
+                                 ', nrdconta:' || nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                                 ', nrdctitg:' || LTRIM(TO_NUMBER(vr_nrctaint)) ||
+                                 ', dshistor:' || vr_nmdestin || ', nrdocmto:' || vr_nrdocmto ||
+                                 ', vllanmto:' || vr_vllanmto || ', nrseqdig:' || vr_nrseqarq ||
+                                 ', cdpesqbb:' || vr_cdpesqbb || ', cdcooper:' || pr_cdcooper ||
+                                 ', indebcre:' || vr_indebcre || ', cdcritic:' || vr_critiass ||
+                                 ', vldaviso:' || vr_dsrelcpf ||'. '|| sqlerrm;
                   -- Envio centralizado de log de erro
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratado
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic);
+                  pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                              pr_dstiplog      => 'E',
+                              pr_dscritic      => vr_dscritic,
+                              pr_cdcriticidade => 2,
+                              pr_cdmensagem    => vr_cdcritic,
+                              pr_ind_tipo_log  => 3);
+
+                --Inclusão na tabela de erros Oracle - Chamado 789851
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               END;
 
               -- Cria o registro na tabela genérica GNCPDOC - Compensacao Documentos da Central
@@ -2060,6 +2326,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                 ,pr_nrdconta => vr_nrdconta
                                 ,pr_dslinha  => vr_dslinha);
               END IF;                  
+              -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+              GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
 
               -- Próximo registro
               CONTINUE;
@@ -2079,40 +2347,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               CLOSE cr_craptrf;
             END IF;
 
-			vr_nrcpfstl:= 0;
-			vr_nrcpfttl:= 0;
+            vr_nrcpfstl:= 0;
+            vr_nrcpfttl:= 0;
 
-			IF rw_crapass.inpessoa = 1 THEN
+            IF rw_crapass.inpessoa = 1 THEN
+              OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                             ,pr_nrdconta => rw_crapass.nrdconta
+                             ,pr_idseqttl => 2);
 
-			  OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
-			                 ,pr_nrdconta => rw_crapass.nrdconta
-							 ,pr_idseqttl => 2);
+              FETCH cr_crapttl INTO rw_crapttl;
 
-			  FETCH cr_crapttl INTO rw_crapttl;
+              IF cr_crapttl%FOUND THEN
+                vr_nrcpfstl:= rw_crapttl.nrcpfcgc;
+              END IF;
+              CLOSE cr_crapttl;
 
-			  IF cr_crapttl%FOUND THEN
+              OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                             ,pr_nrdconta => rw_crapass.nrdconta
+                             ,pr_idseqttl => 3);
 
-			    vr_nrcpfstl:= rw_crapttl.nrcpfcgc;
+              FETCH cr_crapttl INTO rw_crapttl;
 
-			  END IF;
-
-			  CLOSE cr_crapttl;
-
-			  OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
-			                 ,pr_nrdconta => rw_crapass.nrdconta
-							 ,pr_idseqttl => 3);
-
-			  FETCH cr_crapttl INTO rw_crapttl;
-
-			  IF cr_crapttl%FOUND THEN
-
-			    vr_nrcpfttl:= rw_crapttl.nrcpfcgc;
-
-			  END IF;
-
-			  CLOSE cr_crapttl;
-
-			END IF;
+              IF cr_crapttl%FOUND THEN
+                vr_nrcpfttl:= rw_crapttl.nrcpfcgc;
+              END IF;
+              CLOSE cr_crapttl;
+            END IF;
 
             -- Verificar os tipos de documentos
             IF vr_tpdedocs IN (4,6,9) OR
@@ -2123,7 +2383,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       (vr_cpfdesti = vr_nrcpfstl)           OR
                       (vr_cpfdesti = vr_nrcpfttl))          THEN
                 vr_cdcritic := 301; -- 301 - DADOS NAO CONFEREM!                
-                
+                      
               END IF;
             END IF;
 
@@ -2155,6 +2415,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                 vr_cdcritic := 513;
             END IF;
 
+
             -- Verifica se houve crítica
             IF NVL(vr_cdcritic,0) > 0 THEN
 
@@ -2166,6 +2427,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                          ,pr_out_cdcooper => vr_aux_cdcooper
                                          ,pr_out_nrdconta => vr_aux_nrdconta);
 
+                -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+                GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
+
                 -- Verificar conta integrada
                 IF vr_inctaint THEN
                   -- Verifica se gera a TCO
@@ -2175,6 +2439,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                       ,pr_nrdconta => vr_aux_nrdconta
                                       ,pr_nrdctabb => vr_aux_nrdconta
                                       ,pr_dslinha  => vr_dslinha);
+
+                    -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+                    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
                   END IF;
                   -- Próximo registro
                   CONTINUE;
@@ -2215,197 +2482,152 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                                     ' CPF Destinatario '|| vr_cpfdesti
                                                   , vr_nmdestin )
                                    ,TO_NUMBER(vr_dsrelcpf)); -- vldaviso
-                 
-                -- Criar Tabela devolucao DOC da Compensacao.
-                pc_cria_ddc(pr_cdcooper => pr_cdcooper   -- cdcooper (CECRED)-- Alterado para cooperativa do parametro
-                           ,pr_cdagenci => vr_cdagearq   -- cdagenci
-                           ,pr_nrdocmto => vr_nrdocmto   -- nrdocmto
-                           ,pr_vldocmto => vr_vllanmto   -- vldocmto
-                           ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)   -- nrdconta
-                           ,pr_nmfavore => vr_nmdestin   -- nmfavore
-                           ,pr_nrcpffav => vr_cpfdesti   -- nrcpffav
-                           ,pr_cdcritic => vr_cdcritic   -- cdcritic
-                           ,pr_cdbandoc => vr_cdbandoc   -- cdbandoc
-                           ,pr_cdagedoc => vr_cdagedoc   -- cdagedoc
-                           ,pr_nrctadoc => vr_nrctadoc   -- nrctadoc
-                           ,pr_nmemiten => vr_cdpeslcm   -- nmemiten
-                           ,pr_nrcpfemi => vr_nrcpfemi   -- nrcpfemi
-                           ,pr_dslayout => vr_dslinha    -- dslayout
-                           ,pr_cdcmpori => vr_cdcmpori   -- cdcmpori
-                           ,pr_dsdrowid => vr_dsdrowid);
-
               EXCEPTION
                 WHEN OTHERS THEN
                   -- Crítica: Erro Oracle
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao inserir registro na CRAPREJ[3]: '||SQLERRM;
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                 ' craprej[4]' || '. dtrefere:' || vr_dtauxili ||
+                                 ', nrdconta:' || nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                                 ', nrdctitg:' || LTRIM(TO_NUMBER(vr_nrctaint)) ||
+                                 ', nrdocmto:' || vr_nrdocmto || ', vllanmto:' || vr_vllanmto || 
+                                 ', nrseqdig:' || vr_nrseqarq || ', cdcritic:' || vr_cdcritic || 
+                                 ', cdpesqbb:' || vr_cdpesqbb || ', cdcooper:' || pr_cdcooper || 
+                                 ', indebcre:' || vr_indebcre ||
+                                 ', dshistor:se vr_cdcritic=301 -> '||RPAD(vr_nmdestin,40,' ')||
+                                 ' CPF Remetente '|| vr_cpfremet ||' CPF Destinatario '|| vr_cpfdesti ||
+                                 ' senao -> '||vr_nmdestin ||', vldaviso:'|| TO_NUMBER(vr_dsrelcpf)   ||
+                                 '. '|| sqlerrm;
                   -- Envio centralizado de log de erro
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratado
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic);
+                  pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                              pr_dstiplog      => 'E',
+                              pr_dscritic      => vr_dscritic,
+                              pr_cdcriticidade => 2,
+                              pr_cdmensagem    => vr_cdcritic,
+                              pr_ind_tipo_log  => 3);
+
+                --Inclusão na tabela de erros Oracle - Chamado 789851
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               END;
+            -- Criar Tabela devolucao DOC da Compensacao.
+            pc_cria_ddc(pr_cdcooper => pr_cdcooper   -- cdcooper (CECRED)-- Alterado para cooperativa do parametro
+                       ,pr_cdagenci => vr_cdagearq   -- cdagenci
+                       ,pr_nrdocmto => vr_nrdocmto   -- nrdocmto
+                       ,pr_vldocmto => vr_vllanmto   -- vldocmto
+                       ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)   -- nrdconta
+                       ,pr_nmfavore => vr_nmdestin   -- nmfavore
+                       ,pr_nrcpffav => vr_cpfdesti   -- nrcpffav
+                       ,pr_cdcritic => vr_cdcritic   -- cdcritic
+                       ,pr_cdbandoc => vr_cdbandoc   -- cdbandoc
+                       ,pr_cdagedoc => vr_cdagedoc   -- cdagedoc
+                       ,pr_nrctadoc => vr_nrctadoc   -- nrctadoc
+                       ,pr_nmemiten => vr_cdpeslcm   -- nmemiten
+                       ,pr_nrcpfemi => vr_nrcpfemi   -- nrcpfemi
+                       ,pr_dslayout => vr_dslinha    -- dslayout
+                       ,pr_cdcmpori => vr_cdcmpori   -- cdcmpori
+                       ,pr_dsdrowid => vr_dsdrowid);
 
-              -- Cria o registro na tabela genérica GNCPDOC - Compensacao Documentos da Central
-              -- Observação: Usando campos da incorporação em caso do arquivo for
-              IF vr_flgincorp THEN
-                pc_cria_generico(pr_cdcritic => vr_cdcritic
-                                ,pr_cdagenci => rw_crapass.cdagenci
-                                ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
-                                ,pr_cdagectl => rw_crapcop_incorp.cdagectl
-                                ,pr_nrdconta => vr_nrdconta_incorp
-                                ,pr_dslinha  => vr_dslinha);
-              ELSE
-                pc_cria_generico(pr_cdcritic => vr_cdcritic
-                                ,pr_cdagenci => rw_crapass.cdagenci
-                                ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
-                                ,pr_cdagectl => rw_crapcop.cdagectl
-                                ,pr_nrdconta => vr_nrdconta
-                                ,pr_dslinha  => vr_dslinha);
-              END IF;  
-              
-              -- Limpar as criticas
-              vr_cdcritic := 0;
+            -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+            GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
 
-              -- Próximo registro
-              CONTINUE;
-
-            END IF;
-            
-            -- Se não é incorporação
-            IF NOT vr_flgincorp THEN
-              -- Limpar as variáveis
-              vr_inctaint     := NULL;
-              vr_aux_cdcooper := NULL;
-              vr_aux_nrdconta := NULL;
-
-              -- Verificar a conta migrada
-              pc_verifica_conta_integra(pr_out_fgeratco => vr_fgeratco
-                                       ,pr_out_inctaint => vr_inctaint
-                                       ,pr_out_cdcooper => vr_aux_cdcooper
-                                       ,pr_out_nrdconta => vr_aux_nrdconta);
-
-              -- Valida a conta migrada
-              IF vr_inctaint THEN
-                
-                IF vr_fgeratco THEN
-                  -- Criar o registro do doc
-                  pc_cria_doctos_tco(vr_aux_cdcooper
-                                    ,vr_aux_nrdconta
-                                    ,vr_aux_nrdconta
-                                    ,vr_dslinha);
-                END IF;
-                
-                -- Próximo registro
-                CONTINUE;
-              END IF;
+            -- Cria o registro na tabela genérica GNCPDOC - Compensacao Documentos da Central
+            -- Observação: Usando campos da incorporação em caso do arquivo for
+            IF vr_flgincorp THEN
+              pc_cria_generico(pr_cdcritic => vr_cdcritic
+                              ,pr_cdagenci => rw_crapass.cdagenci
+                              ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
+                              ,pr_cdagectl => rw_crapcop_incorp.cdagectl
+                              ,pr_nrdconta => vr_nrdconta_incorp
+                              ,pr_dslinha  => vr_dslinha);
+            ELSE
+              pc_cria_generico(pr_cdcritic => vr_cdcritic
+                              ,pr_cdagenci => rw_crapass.cdagenci
+                              ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
+                              ,pr_cdagectl => rw_crapcop.cdagectl
+                              ,pr_nrdconta => vr_nrdconta
+                              ,pr_dslinha  => vr_dslinha);
             END IF;  
 
-            -- Verifica se é o primeiro registro a chegar a este ponto
-            IF vr_flgfirst THEN
+            -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+            GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
 
-              -- Buscar informações da tabela genérica
-              OPEN  cr_craptab;
-              FETCH cr_craptab INTO vr_dstextab;
-              -- Se não encontrar registro de convenio
-              IF cr_craptab%NOTFOUND THEN
-                vr_cdcritic := 472; -- 472 - Falta tabela de convenio
-                -- Buscar a descrição
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+            -- Limpar as criticas
+            vr_cdcritic := 0;
 
-                -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                              || vr_cdprogra || ' --> '
-                                                              || vr_dscritic || ' - Arquivo: '
-                                                              || pr_tbarquiv(vr_nrindice)
-                                                              || ' Seq: ' || to_char(vr_nrseqarq,'999g990') );
+            -- Próximo registro
+            CONTINUE;
 
-                -- Fecha o cursor antes de abortar o procedimento
-                CLOSE cr_craptab;
+          END IF;
+                
+          -- Se não é incorporação
+          IF NOT vr_flgincorp THEN
+            -- Limpar as variáveis
+            vr_inctaint     := NULL;
+            vr_aux_cdcooper := NULL;
+            vr_aux_nrdconta := NULL;
 
-                -------------------------------------------------------------
-                -- Neste caso desfaz as alterações e sair da procedure
-                ROLLBACK TO SAVEPOINT falta_tab_convenio;
-                RETURN;
-                -------------------------------------------------------------
+            -- Verificar a conta migrada
+            pc_verifica_conta_integra(pr_out_fgeratco => vr_fgeratco
+                                     ,pr_out_inctaint => vr_inctaint
+                                     ,pr_out_cdcooper => vr_aux_cdcooper
+                                     ,pr_out_nrdconta => vr_aux_nrdconta);
+
+            -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+            GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
+
+            -- Valida a conta migrada
+            IF vr_inctaint THEN
+                    
+              IF vr_fgeratco THEN
+                -- Criar o registro do doc
+                pc_cria_doctos_tco(vr_aux_cdcooper
+                                  ,vr_aux_nrdconta
+                                  ,vr_aux_nrdconta
+                                  ,vr_dslinha);
               END IF;
+                    
+              -- Próximo registro
+              CONTINUE;
+            END IF;
+          END IF;  
 
-              -- Fecha o cursor
+          -- Verifica se é o primeiro registro a chegar a este ponto
+          IF vr_flgfirst THEN
+
+            -- Buscar informações da tabela genérica
+            OPEN  cr_craptab;
+            FETCH cr_craptab INTO vr_dstextab;
+            -- Se não encontrar registro de convenio
+            IF cr_craptab%NOTFOUND THEN
+              vr_cdcritic := 472; -- 472 - Falta tabela de convenio
+              -- Buscar a descrição
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                             ||' Arquivo:' || pr_tbarquiv(vr_nrindice)
+                             ||', Seq: ' || to_char(vr_nrseqarq,'999g990');
+              -- Envio centralizado de log de erro
+              pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                          pr_dstiplog      => 'E',
+                          pr_dscritic      => vr_dscritic,
+                          pr_cdcriticidade => 1,
+                          pr_cdmensagem    => vr_cdcritic);
+
+              -- Fecha o cursor antes de abortar o procedimento
               CLOSE cr_craptab;
 
-              -- Definir o número do lote
-              vr_nrdolote := to_number(vr_dstextab);
+              -------------------------------------------------------------
+              -- Neste caso desfaz as alterações e sair da procedure
+              ROLLBACK TO SAVEPOINT falta_tab_convenio;
+              RETURN;
+              -------------------------------------------------------------
+            END IF;
 
-              LOOP
+            -- Fecha o cursor
+            CLOSE cr_craptab;
 
-                -- buscar o registro de capa de lote
-                OPEN  cr_craplot(pr_cdcooper
-                                ,vr_dtmvtolt
-                                ,vr_cdagenci
-                                ,rw_crapcop.cdbcoctl
-                                ,vr_nrdolote);
-                FETCH cr_craplot INTO rw_craplot;
+            -- Definir o número do lote
+            vr_nrdolote := to_number(vr_dstextab);
 
-                -- Verifica se encontrou registro
-                IF cr_craplot%FOUND THEN
-                  vr_nrdolote := vr_nrdolote + 1;
-                ELSE
-                  -- fecha o cursor e sai do loop
-                  CLOSE cr_craplot;
-                  EXIT;
-                END IF;
-
-                -- Fechar o cursor para a proxima iteração
-                CLOSE cr_craplot;
-
-              END LOOP;
-
-              BEGIN
-
-                -- Limpa o registro para guardar os dados inseridos;
-                rw_craplot := NULL;
-
-                -- insere o novo registro de lote
-                INSERT INTO craplot(dtmvtolt
-                                   ,cdagenci
-                                   ,cdbccxlt
-                                   ,nrdolote
-                                   ,tplotmov
-                                   ,cdcooper)
-                             VALUES(vr_dtmvtolt   -- dtmvtolt
-                                   ,vr_cdagenci   -- cdagenci
-                                   ,rw_crapcop.cdbcoctl -- cdbccxlt
-                                   ,vr_nrdolote   -- nrdolote
-                                   ,vr_tplotmov   -- tplotmov
-                                   ,pr_cdcooper)  -- cdcooper
-                            RETURNING ROWID INTO rw_craplot.dsrowid;
-
-                -- Guardar os dados inseridos no registro
-                rw_craplot.dtmvtolt := vr_dtmvtolt;
-                rw_craplot.cdagenci := vr_cdagenci;
-                rw_craplot.cdbccxlt := rw_crapcop.cdbcoctl;
-                rw_craplot.nrdolote := vr_nrdolote;
-
-              EXCEPTION
-                WHEN OTHERS THEN
-                  -- Crítica: Erro Oracle
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao inserir registro na CRAPLOT[2]: '||SQLERRM;
-                  -- Envio centralizado de log de erro
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratado
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic);
-              END;
-
-              -- Indica que o próximo registro não é o primeiro
-              vr_flgfirst := FALSE;
-
-            ELSE --  se não for o primeiro
+            LOOP
 
               -- buscar o registro de capa de lote
               OPEN  cr_craplot(pr_cdcooper
@@ -2415,151 +2637,259 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                               ,vr_nrdolote);
               FETCH cr_craplot INTO rw_craplot;
 
-              -- Se não encontrar o registro
-              IF cr_craplot%NOTFOUND THEN
-                vr_cdcritic := 60; -- 060 - Lote inexistente
-                -- Buscar a descrição
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-
-                -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                              || vr_cdprogra || ' --> '
-                                                              || vr_dscritic || ' - Arquivo: '
-                                                              || pr_tbarquiv(vr_nrindice)
-                                                              || ' Lote: '   || vr_nrdolote
-                                                              || ' Seq: ' || to_char(vr_nrseqarq,'999g990') );
-
-                -- Fecha o cursor antes de abortar o procedimento
-                CLOSE cr_craplot;
-
-                -------------------------------------------------------------
-                -- Neste caso desfaz as alterações e sair da procedure
-                ROLLBACK TO SAVEPOINT falta_tab_convenio;
-                RETURN;
-                -------------------------------------------------------------
-              END IF;
-
-              CLOSE cr_craplot;
-
-            END IF; -- vr_flgfirst
-
-            LOOP
-
-              -- buscar o registro de lançamento
-              OPEN  cr_craplcm(pr_cdcooper         -- pr_cdcooper
-                              ,vr_dtmvtolt         -- pr_dtmvtolt
-                              ,vr_cdagenci         -- pr_cdagenci
-                              ,rw_crapcop.cdbcoctl -- pr_cdbccxlt
-                              ,vr_nrdolote         -- pr_nrdolote
-                              ,nvl(vr_nrdconta_incorp,vr_nrdconta) -- pr_nrdconta
-                              ,vr_nrdocmto);       -- pr_nrdocmto
-              FETCH cr_craplcm INTO vr_nrdummy;
-
               -- Verifica se encontrou registro
-              IF cr_craplcm%FOUND THEN
-                vr_nrdocmto := vr_nrdocmto + 1000000;
+              IF cr_craplot%FOUND THEN
+                vr_nrdolote := vr_nrdolote + 1;
               ELSE
                 -- fecha o cursor e sai do loop
-                CLOSE cr_craplcm;
+                CLOSE cr_craplot;
                 EXIT;
               END IF;
 
               -- Fechar o cursor para a proxima iteração
-              CLOSE cr_craplcm;
+              CLOSE cr_craplot;
+
             END LOOP;
 
-            DECLARE
-              vr_dsmensag   VARCHAR2(30);
             BEGIN
-              -- Guarda parte da mensagem de erro
-              vr_dsmensag := 'ao inserir CRAPLCM';
 
-              -- Inserir o lançamento
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
+              -- Limpa o registro para guardar os dados inseridos;
+              rw_craplot := NULL;
+
+              -- insere o novo registro de lote
+              INSERT INTO craplot(dtmvtolt
                                  ,cdagenci
                                  ,cdbccxlt
                                  ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,vllanmto
-                                 ,nrseqdig
-                                 ,cdpesqbb
-                                 ,cdbanchq
-                                 ,cdcmpchq
-                                 ,cdagechq
-                                 ,nrctachq
-                                 ,sqlotchq)
-                           VALUES(pr_cdcooper          -- cdcooper
-                                 ,rw_craplot.dtmvtolt  -- dtmvtolt
-                                 ,rw_craplot.cdagenci  -- cdagenci
-                                 ,rw_craplot.cdbccxlt  -- cdbccxlt
-                                 ,rw_craplot.nrdolote  -- nrdolote
-                                 ,nvl(vr_nrdconta_incorp,vr_nrdconta)          -- nrdconta
-                                 ,nvl(vr_nrdconta_incorp,vr_nrdconta)          -- nrdctabb
-                                 ,GENE0002.fn_mask(nvl(vr_nrdconta_incorp,vr_nrdconta),'zzzzzz.zzz.zzz.z') -- nrdctitg
-                                 ,vr_nrdocmto          -- nrdocmto
-                                 ,vr_cdhistor          -- cdhistor
-                                 ,vr_vllanmto          -- vllanmto
-                                 ,vr_nrseqarq          -- nrseqdig
-                                 ,vr_cdpeslcm          -- cdpesqbb
-                                 ,vr_cdbandoc          -- cdbanchq
-                                 ,vr_cdcmpdoc          -- cdcmpchq
-                                 ,vr_cdagedoc          -- cdagechq
-                                 ,vr_nrctadoc          -- nrctachq
-                                 ,vr_nrseqarq );       -- sqlotchq
+                                 ,tplotmov
+                                 ,cdcooper)
+                           VALUES(vr_dtmvtolt   -- dtmvtolt
+                                 ,vr_cdagenci   -- cdagenci
+                                 ,rw_crapcop.cdbcoctl -- cdbccxlt
+                                 ,vr_nrdolote   -- nrdolote
+                                 ,vr_tplotmov   -- tplotmov
+                                 ,pr_cdcooper)  -- cdcooper
+                          RETURNING ROWID INTO rw_craplot.dsrowid;
 
-              -- Guarda parte da mensagem de erro
-              vr_dsmensag := 'ao atualizar CRAPLOT';
-
-              -- Atualizar dados da CRAPLOT
-              UPDATE CRAPLOT
-                 SET craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
-                   , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
-                   , craplot.vlinfocr = NVL(craplot.vlinfocr,0) + vr_vllanmto
-                   , craplot.vlcompcr = NVL(craplot.vlcompcr,0) + vr_vllanmto
-                   , craplot.nrseqdig = vr_nrseqarq
-               WHERE craplot.rowid    = rw_craplot.dsrowid;
-
+              -- Guardar os dados inseridos no registro
+              rw_craplot.dtmvtolt := vr_dtmvtolt;
+              rw_craplot.cdagenci := vr_cdagenci;
+              rw_craplot.cdbccxlt := rw_crapcop.cdbcoctl;
+              rw_craplot.nrdolote := vr_nrdolote;
             EXCEPTION
               WHEN OTHERS THEN
                 -- Crítica: Erro Oracle
-                vr_cdcritic := 0;
-                vr_dscritic := 'Erro '||vr_dsmensag||': '||SQLERRM;
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               ' craplot[2]: dtmvtolt:' || vr_dtmvtolt ||
+                               ', cdagenci:' || vr_cdagenci || ', cdbccxlt:' || rw_crapcop.cdbcoctl ||
+                               ', nrdolote:' || vr_nrdolote || ', tplotmov:' || vr_tplotmov         ||
+                               ', cdcooper:' || pr_cdcooper || '. '||sqlerrm;
                 -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                           || vr_cdprogra || ' --> '
-                                                           || vr_dscritic);
+                pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 2,
+                            pr_cdmensagem    => vr_cdcritic,
+                            pr_ind_tipo_log  => 3);
+
+              --Inclusão na tabela de erros Oracle - Chamado 789851
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             END;
 
-            -- Totalizadores
-            vr_qtcompln := NVL(vr_qtcompln,0) + 1;
-            vr_vlcompcr := NVL(vr_vlcompcr,0) + vr_vllanmto;
+            -- Indica que o próximo registro não é o primeiro
+            vr_flgfirst := FALSE;
 
-            -- Observação: Usando campos da incorporação em caso do arquivo for
-            IF vr_flgincorp THEN
-              pc_cria_generico(pr_cdcritic => 0
-                              ,pr_cdagenci => rw_crapass.cdagenci
-                              ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
-                              ,pr_cdagectl => rw_crapcop_incorp.cdagectl
-                              ,pr_nrdconta => vr_nrdconta_incorp
-                              ,pr_dslinha  => vr_dslinha);
+          ELSE --  se não for o primeiro
+
+            -- buscar o registro de capa de lote
+            OPEN  cr_craplot(pr_cdcooper
+                            ,vr_dtmvtolt
+                            ,vr_cdagenci
+                            ,rw_crapcop.cdbcoctl
+                            ,vr_nrdolote);
+            FETCH cr_craplot INTO rw_craplot;
+
+            -- Se não encontrar o registro
+            IF cr_craplot%NOTFOUND THEN
+              vr_cdcritic := 60; -- 060 - Lote inexistente
+              -- Buscar a descrição
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                            || ' Arquivo:' || pr_tbarquiv(vr_nrindice)
+                            || ', Lote:'    || vr_nrdolote
+                            || ', Seq:'     || to_char(vr_nrseqarq,'999g990');
+              -- Envio centralizado de log de erro
+              pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                          pr_dstiplog      => 'E',
+                          pr_dscritic      => vr_dscritic,
+                          pr_cdcriticidade => 1,
+                          pr_cdmensagem    => vr_cdcritic);
+
+              -- Fecha o cursor antes de abortar o procedimento
+              CLOSE cr_craplot;
+
+              -------------------------------------------------------------
+              -- Neste caso desfaz as alterações e sair da procedure
+              ROLLBACK TO SAVEPOINT falta_tab_convenio;
+              RETURN;
+              -------------------------------------------------------------
+            END IF;
+
+            CLOSE cr_craplot;
+
+          END IF; -- vr_flgfirst
+
+          LOOP
+            -- buscar o registro de lançamento
+            OPEN  cr_craplcm(pr_cdcooper         -- pr_cdcooper
+                            ,vr_dtmvtolt         -- pr_dtmvtolt
+                            ,vr_cdagenci         -- pr_cdagenci
+                            ,rw_crapcop.cdbcoctl -- pr_cdbccxlt
+                            ,vr_nrdolote         -- pr_nrdolote
+                            ,nvl(vr_nrdconta_incorp,vr_nrdconta) -- pr_nrdconta
+                            ,vr_nrdocmto);       -- pr_nrdocmto
+            FETCH cr_craplcm INTO vr_nrdummy;
+
+            -- Verifica se encontrou registro
+            IF cr_craplcm%FOUND THEN
+              vr_nrdocmto := vr_nrdocmto + 1000000;
             ELSE
-              pc_cria_generico(pr_cdcritic => 0
-                              ,pr_cdagenci => rw_crapass.cdagenci
-                              ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
-                              ,pr_cdagectl => rw_crapcop.cdagectl
-                              ,pr_nrdconta => vr_nrdconta
-                              ,pr_dslinha  => vr_dslinha);
-            END IF;                 
-                            
+              -- fecha o cursor e sai do loop
+              CLOSE cr_craplcm;
+              EXIT;
+            END IF;
+
+            -- Fechar o cursor para a proxima iteração
+            CLOSE cr_craplcm;
+          END LOOP;
+
+          BEGIN
+            -- Inserir o lançamento
+            INSERT INTO craplcm(cdcooper
+                               ,dtmvtolt
+                               ,cdagenci
+                               ,cdbccxlt
+                               ,nrdolote
+                               ,nrdconta
+                               ,nrdctabb
+                               ,nrdctitg
+                               ,nrdocmto
+                               ,cdhistor
+                               ,vllanmto
+                               ,nrseqdig
+                               ,cdpesqbb
+                               ,cdbanchq
+                               ,cdcmpchq
+                               ,cdagechq
+                               ,nrctachq
+                               ,sqlotchq)
+                         VALUES(pr_cdcooper          -- cdcooper
+                               ,rw_craplot.dtmvtolt  -- dtmvtolt
+                               ,rw_craplot.cdagenci  -- cdagenci
+                               ,rw_craplot.cdbccxlt  -- cdbccxlt
+                               ,rw_craplot.nrdolote  -- nrdolote
+                               ,nvl(vr_nrdconta_incorp,vr_nrdconta)          -- nrdconta
+                               ,nvl(vr_nrdconta_incorp,vr_nrdconta)          -- nrdctabb
+                               ,GENE0002.fn_mask(nvl(vr_nrdconta_incorp,vr_nrdconta),'zzzzzz.zzz.zzz.z') -- nrdctitg
+                               ,vr_nrdocmto          -- nrdocmto
+                               ,vr_cdhistor          -- cdhistor
+                               ,vr_vllanmto          -- vllanmto
+                               ,vr_nrseqarq          -- nrseqdig
+                               ,vr_cdpeslcm          -- cdpesqbb
+                               ,vr_cdbandoc          -- cdbanchq
+                               ,vr_cdcmpdoc          -- cdcmpchq
+                               ,vr_cdagedoc          -- cdagechq
+                               ,vr_nrctadoc          -- nrctachq
+                               ,vr_nrseqarq );       -- sqlotchq
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- Crítica: Erro Oracle
+              vr_cdcritic := 1034;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             ' craplcm [2]: cdcooper: '||pr_cdcooper ||
+                             ', dtmvtolt: '|| rw_craplot.dtmvtolt ||
+                             ', cdagenci: '|| rw_craplot.cdagenci ||
+                             ', cdbccxlt: '|| rw_craplot.cdbccxlt ||
+                             ', nrdolote: '|| rw_craplot.nrdolote ||
+                             ', nrdconta: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdctabb: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdctitg: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdocmto: '|| vr_nrdocmto ||
+                             ', cdhistor: '|| vr_cdhistor ||
+                             ', vllanmto: '|| vr_vllanmto ||
+                             ', nrseqdig: '|| vr_nrseqarq ||
+                             ', cdpesqbb: '|| vr_cdpeslcm ||
+                             ', cdbanchq: '|| vr_cdbandoc ||
+                             ', cdcmpchq: '|| vr_cdcmpdoc ||
+                             ', cdagechq: '|| vr_cdagedoc ||
+                             ', nrctachq: '|| vr_nrctadoc ||
+                             ', sqlotchq: '|| vr_nrseqarq ||'. '|| sqlerrm;
+            -- Envio centralizado de log de erro
+            pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscritic,
+                        pr_cdcriticidade => 2,
+                        pr_cdmensagem    => vr_cdcritic,
+                        pr_ind_tipo_log  => 3);
+
+            --Inclusão na tabela de erros Oracle - Chamado 789851
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          END;
+
+          BEGIN
+            -- Atualizar dados da CRAPLOT
+            UPDATE CRAPLOT
+               SET craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
+                 , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
+                 , craplot.vlinfocr = NVL(craplot.vlinfocr,0) + vr_vllanmto
+                 , craplot.vlcompcr = NVL(craplot.vlcompcr,0) + vr_vllanmto
+                 , craplot.nrseqdig = vr_nrseqarq
+             WHERE craplot.rowid    = rw_craplot.dsrowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- Crítica: Erro Oracle
+              vr_cdcritic := 1035;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             ' craplot[2]. qtinfoln: + 1' ||
+                             ', qtcompln: + 1' ||
+                             ', vlinfocr: + '  || vr_vllanmto ||
+                             ', vlcompcr: + '  || vr_vllanmto ||
+                             ', nrseqdig:'     || vr_nrseqarq ||
+                             ' com rowid:'     || rw_craplot.dsrowid ||'. '|| sqlerrm;
+              -- Envio centralizado de log de erro
+              pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                          pr_dstiplog      => 'E',
+                          pr_dscritic      => vr_dscritic,
+                          pr_cdcriticidade => 2,
+                          pr_cdmensagem    => vr_cdcritic,
+                          pr_ind_tipo_log  => 3);
+
+            --Inclusão na tabela de erros Oracle - Chamado 789851
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          END;
+
+          -- Totalizadores
+          vr_qtcompln := NVL(vr_qtcompln,0) + 1;
+          vr_vlcompcr := NVL(vr_vlcompcr,0) + vr_vllanmto;
+
+          -- Observação: Usando campos da incorporação em caso do arquivo for
+          IF vr_flgincorp THEN
+            pc_cria_generico(pr_cdcritic => 0
+                            ,pr_cdagenci => rw_crapass.cdagenci
+                            ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
+                            ,pr_cdagectl => rw_crapcop_incorp.cdagectl
+                            ,pr_nrdconta => vr_nrdconta_incorp
+                            ,pr_dslinha  => vr_dslinha);
+          ELSE
+            pc_cria_generico(pr_cdcritic => 0
+                            ,pr_cdagenci => rw_crapass.cdagenci
+                            ,pr_nmarquiv => pr_tbarquiv(vr_nrindice)
+                            ,pr_cdagectl => rw_crapcop.cdagectl
+                            ,pr_nrdconta => vr_nrdconta
+                            ,pr_dslinha  => vr_dslinha);
+          END IF;                 
+          -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+          GENE0001.pc_set_modulo(pr_module => 'PC_CRPS534.pc_integra_cooperativa', pr_action => NULL);
 
             -- Verificar histórico
             IF vr_cdcritic = 301 THEN
@@ -2572,7 +2902,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
             -- Verificar indicador conforme o tipo de documento
             vr_indebcre := fn_tipo_documento(vr_tpdedocs);
-
+                
             BEGIN
               -- Cria no craprej para Listar as Informacoes do DOC
               INSERT INTO craprej(cdcritic
@@ -2599,20 +2929,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                  ,to_number(vr_dsrelcpf) -- vldaviso
                                  ,pr_cdcooper -- cdcooper
                                  ,LTRIM(GENE0002.fn_mask(TO_NUMBER(vr_nrctaint),'zzzzzz.zzz.zzz.z'))); -- nrdctitg
-
             EXCEPTION
               WHEN OTHERS THEN
                 -- Crítica: Erro Oracle
-                vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao inserir registro na CRAPREJ[4]: '||SQLERRM;
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               ' craprej[5]: cdcritic:0' || 
+                               ', nrdconta:' || nvl(vr_nrdconta_incorp,vr_nrdconta)         ||
+                               ', vllanmto:' || vr_vllanmto || ', cdpesqbb:' || vr_cdpesqbb ||
+                               ', dshistor:' || vr_dshistor || ', nrseqdig:' || vr_nrseqarq || 
+                               ', nrdocmto:' || vr_nrdocmto || ', indebcre:' || vr_indebcre || 
+                               ', dtrefere:' || vr_dtauxili || ', vldaviso:' || to_number(vr_dsrelcpf) || 
+                               ', cdcooper:' || pr_cdcooper ||
+                               ', nrdctitg:' || LTRIM(TO_NUMBER(vr_nrctaint)) ||
+                               '. '||sqlerrm;
                 -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                           || vr_cdprogra || ' --> '
-                                                           || vr_dscritic);
+                pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 2,
+                            pr_cdmensagem    => vr_cdcritic,
+                            pr_ind_tipo_log  => 3);
+
+              --Inclusão na tabela de erros Oracle - Chamado 789851
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             END;
           END;
+
         END LOOP;  -- Linhas do arquivo
 
         -- Desde que não seja incorporação
@@ -2631,26 +2974,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Se retornar uma indicação de erro
         IF NVL(vr_typ_saida,' ') = 'ERR' THEN
-          -- Incluir erro no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2  -- Erro tratado
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || 'Erro pc_OScommand_Shell: '||vr_des_saida);
+          vr_cdcritic := 1054; -- Erro pc_OScommand_Shell
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_des_saida;
+          -- Envio centralizado de log de erro
+          pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => vr_cdcritic);
         ELSE
           -- Efetuar gravação a cada arquivo processo movido a salvar
           COMMIT;     
         END IF;
-        
+            
       END IF;
 
-      /*** GERAÇÃO DO RELATÓRIO COM OS DADOS PROCESSADOS ***/
-      -- Bloco responsável pela estruturação do XML para geração do relatório
-      DECLARE
+  /*** GERAÇÃO DO RELATÓRIO COM OS DADOS PROCESSADOS ***/
+  -- Bloco responsável pela estruturação do XML para geração do relatório
+  DECLARE
 
-        -- CURSORES
-        -- Cursor para buscar os dados para o relatório
-        CURSOR cr_craprej(pr_cdcritic  IN NUMBER) IS
+    -- CURSORES
+    -- Cursor para buscar os dados para o relatório
+    CURSOR cr_craprej(pr_cdcritic  IN NUMBER) IS
           SELECT craprej.nrdconta
                , craprej.cdcritic
                , craprej.vllanmto
@@ -2663,7 +3009,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                , craprej.nrseqdig
             FROM craprej
            WHERE craprej.cdcooper = pr_cdcooper
-             AND craprej.dtrefere = to_char(vr_dtmvtolt,'YYYYMMDD')
+             AND craprej.dtrefere = vr_dtauxili
              AND (craprej.cdcritic = pr_cdcritic OR
                     pr_cdcritic = 0)
            ORDER BY craprej.nrdconta
@@ -2671,507 +3017,518 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   , craprej.dshistor
                   , craprej.vllanmto DESC;
 
-        -- Busca contas transferidas entre cooperativas
-        CURSOR cr_craptco(pr_nrdconta   craptco.nrdconta%TYPE) IS
-          SELECT 1
-            FROM craptco
-           WHERE craptco.cdcopant = pr_cdcooper
-             AND craptco.nrctaant = pr_nrdconta
-             AND craptco.tpctatrf = 1
-             AND craptco.flgativo = 1; -- TRUE.
+    -- Busca contas transferidas entre cooperativas
+    CURSOR cr_craptco(pr_nrdconta   craptco.nrdconta%TYPE) IS
+      SELECT 1
+        FROM craptco
+       WHERE craptco.cdcopant = pr_cdcooper
+         AND craptco.nrctaant = pr_nrdconta
+         AND craptco.tpctatrf = 1
+         AND craptco.flgativo = 1; -- TRUE.
 
-        -- VARIÁVEIS
-        vr_clobxml     CLOB;
-        vr_clobcri     CLOB;
+    -- VARIÁVEIS
+    vr_clobxml     CLOB;
+    vr_clobcri     CLOB;
 
-        vr_des_erro    VARCHAR2(4000);
-        vr_stsnrcal    BOOLEAN;
-        vr_inpessoa    NUMBER;
-        vr_dspathcop   VARCHAR2(80);
-        vr_nmrelato    VARCHAR2(80);
-        -- Informações envio de e-mail
-        vr_dsmailcop   crapprm.dstexprm%TYPE;
-        vr_dsassmail   VARCHAR2(100);
-        vr_dscormail   VARCHAR2(2000);
-        -- Totalizadores
-        vr_qtregrej    NUMBER := 0;
-        vr_vlregrej    NUMBER := 0;
-        vr_qtregint     NUMBER := 0;
-        vr_vlregint    NUMBER := 0;
-        vr_vlregrec     NUMBER := 0;
+    vr_des_erro    VARCHAR2(4000);
+    vr_stsnrcal    BOOLEAN;
+    vr_inpessoa    NUMBER;
+    vr_dspathcop   VARCHAR2(80);
+    vr_nmrelato    VARCHAR2(80);
+    -- Informações envio de e-mail
+    vr_dsmailcop   crapprm.dstexprm%TYPE;
+    vr_dsassmail   VARCHAR2(100);
+    vr_dscormail   VARCHAR2(2000);
+    -- Totalizadores
+    vr_qtregrej    NUMBER := 0;
+    vr_vlregrej    NUMBER := 0;
+    vr_qtregint     NUMBER := 0;
+    vr_vlregint    NUMBER := 0;
+    vr_vlregrec     NUMBER := 0;
 
-        -- Subrotina para escrever texto na variável CLOB do XML
-        PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB
-                                 ,pr_desdados IN VARCHAR2) IS
-        BEGIN
-          dbms_lob.writeappend(pr_clobdado, length(pr_desdados),pr_desdados);
-        END;
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB
+                             ,pr_desdados IN VARCHAR2) IS
+    BEGIN
+      dbms_lob.writeappend(pr_clobdado, length(pr_desdados),pr_desdados);
+    END;
 
-      BEGIN
+  BEGIN
 
-        -- Inicializar as variáveis
-        vr_qtregrec := 0;
-        vr_qtregint := 0;
-        vr_qtregrej := 0;
-        vr_vlregrec := 0;
-        vr_vlregint := 0;
-        vr_vlregrej := 0;
-        vr_cdcritic := 0;
-        vr_flgfirst := TRUE;
+    -- Inicializar as variáveis
+    vr_qtregrec := 0;
+    vr_qtregint := 0;
+    vr_qtregrej := 0;
+    vr_vlregrec := 0;
+    vr_vlregint := 0;
+    vr_vlregrej := 0;
+    vr_cdcritic := 0;
+    vr_flgfirst := TRUE;
 
-        -- Preparar o CLOB para armazenar as infos do arquivo
-        dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
-        dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-        pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?>'||chr(10)||
-                                   '<crps527 dsarquiv="integra/'||pr_tbarquiv(vr_nrindice)||'" '||
-                                   '  dtrefere="'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'" '||
-                                   '  cdagenci="'||vr_cdagenci||'"'            ||
-                                   '  cdbccxlt="'||rw_crapcop.cdbcoctl||'" '   ||
-                                   '  nrdolote="'||to_char(vr_nrdolote,'FM999G999G999')||'" '           ||
-                                   '  tplotmov="'||to_char(vr_tplotmov,'FM00')||'" >'||chr(10));
+    -- Preparar o CLOB para armazenar as infos do arquivo
+    dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
+    pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?>'||chr(10)||
+                               '<crps527 dsarquiv="integra/'||pr_tbarquiv(vr_nrindice)||'" '||
+                               '  dtrefere="'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'" '||
+                               '  cdagenci="'||vr_cdagenci||'"'            ||
+                               '  cdbccxlt="'||rw_crapcop.cdbcoctl||'" '   ||
+                               '  nrdolote="'||to_char(vr_nrdolote,'FM999G999G999')||'" '           ||
+                               '  tplotmov="'||to_char(vr_tplotmov,'FM00')||'" >'||chr(10));
 
-        -- Preparar o CLOB para armazenar as infos do arquivo
-        dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
-        dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
+    -- Preparar o CLOB para armazenar as infos do arquivo
+    dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
 
-        -- Percorre as informações guardadas na memória para montar o XML
-        FOR rw_craprej IN cr_craprej( 0 ) LOOP -- Passa zero para desconsiderar o filtro de crítica
+    -- Percorre as informações guardadas na memória para montar o XML
+    FOR rw_craprej IN cr_craprej( 0 ) LOOP -- Passa zero para desconsiderar o filtro de crítica
 
-          -- Verifica o numero da conta
-          IF rw_craprej.nrdconta < 999999999  THEN
-            -- Inicializa as variáveis de crítica e observação
-            vr_dscritic := NULL;
-            vr_dsobserv := NULL;
-            -- Se o cadastro foi feito com crítica
-            IF rw_craprej.cdcritic > 0 THEN
-              -- Seta a flag de rejeitado
-              vr_flgrejei := TRUE;
-              -- Guarda o código da crítica
-              vr_cdcritic := rw_craprej.cdcritic;
-              -- Verifica se o código da crítica é 999, se não for busca a descrição
-              IF vr_cdcritic = 999 THEN
-                vr_dscritic := 'Associado VIACREDI';
-              ELSE
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-              END IF;
-
-              -- Atualiza totalizadores...
-              vr_qtregrej := vr_qtregrej + 1;
-              vr_vlregrej := vr_vlregrej + NVL(rw_craprej.vllanmto,0);
-
-              -- Corta a string no tamanho maximo e retirando o código da critica da mesma
-              vr_dscritic := SUBSTR(vr_dscritic, 7, 59);
-
-              -- Caso esteja dentro da lista abaixo
-              IF vr_cdcritic IN (9,64,301) THEN
-                pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
-                                           ',1455,4894,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                           ',157,"DOC NAO INTEGRADO NA CONTA DO COOPERADO DEVIDO INCONSISTENCIA DE DADOS (CONFORME CRITICA RELATORIO 527)"' || chr(10));
-              END IF;
-
-            END IF;
-
-            -- Verificar se é um CPF ou CNPJ e formatar o mesmo
-            IF length(rw_craprej.vldaviso) > 11 THEN
-              -- formata e guarda o CNPJ
-              vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
-                                                      ,pr_inpessoa => 2);
-            ELSE
-              -- Rotina para validar a informação de CPF ou CNPJ
-              gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_craprej.vldaviso
-                                         ,pr_stsnrcal => vr_stsnrcal
-                                         ,pr_inpessoa => vr_inpessoa);
-
-              -- Se validou
-              IF vr_stsnrcal THEN
-                -- CPF
-                vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
-                                                        ,pr_inpessoa => vr_inpessoa);
-              END IF;
-
-            END IF;
-
-            -- Se há critica dif TCO
-            IF vr_cdcritic <> 999 THEN
-              -- Para arquivo de incorporação
-              IF rw_crapcop_incorp.cdcooper IS NOT NULL AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
-                -- Adicionar a descrição cfme coop integrada
-                IF rw_crapcop_incorp.cdcooper = 4 THEN
-                  vr_dsobserv := 'Ass. Concredi';
-                ELSE
-                  vr_dsobserv := 'Ass. Credimilsul';  
-                END IF;
-              -- PAra transferências entre Cooperativas
-              ELSIF pr_cdcooper IN (1,2) THEN
-                -- Busca informações de contas transferidas
-                OPEN  cr_craptco(rw_craprej.nrdconta);
-                FETCH cr_craptco INTO vr_nrdummy;
-                -- Se encontrar registros
-                IF cr_craptco%FOUND THEN
-                  IF pr_cdcooper = 2 THEN
-                    vr_dsobserv := 'Ass. VIACREDI';
-                  ELSE
-                    vr_dsobserv := 'Ass. ALTOVALE';
-                  END IF;
-                END IF;
-
-                CLOSE cr_craptco;
-              END IF;            
-            END IF;
-
-            -- Montar o XML
-            pc_escreve_clob(vr_clobxml,'  <lancto> '||chr(10)||
-                                       '    <nrdctitg>'|| TRIM(rw_craprej.nrdctitg) ||'</nrdctitg>'||chr(10)||
-                                       '    <dshistor>'|| GENE0007.fn_caract_controle(substr(rw_craprej.dshistor,0,24)) ||'</dshistor>'||chr(10)||
-                                       '    <indebcre>'|| rw_craprej.indebcre ||'</indebcre>'||chr(10)||
-                                       '    <nrdocmto>'|| to_char(rw_craprej.nrdocmto,'FM999G999G999') ||'</nrdocmto>'||chr(10)||
-                                       '    <cdpesqbb>'|| GENE0007.fn_caract_controle(substr(rw_craprej.cdpesqbb,0,35)) ||'</cdpesqbb>'||chr(10)||
-                                       '    <vllanmto>'|| to_char(rw_craprej.vllanmto,'FM999G999G999G990D00') ||'</vllanmto>'||chr(10)||
-                                       '    <dscritic>'|| substr(vr_dscritic,0,24)||'</dscritic>'||chr(10)||
-                                       '    <dsobserv>'|| substr(vr_dsobserv,0,24)||'</dsobserv>'||chr(10)||
-                                       '    <dscpfcgc>'||     vr_dsrelcpf     ||'</dscpfcgc>'||chr(10));
-
-            -- Verifica se há histórico
-            IF TRIM(substr(rw_craprej.dshistor,40,20)) IS NOT NULL THEN
-              pc_escreve_clob(vr_clobxml,'    <dsinform>'|| substr(rw_craprej.dshistor,41,60) ||'</dsinform>'||chr(10));
-            ELSE
-              pc_escreve_clob(vr_clobxml,'    <dsinform></dsinform>'||chr(10));
-            END IF;
-
-            -- Fecha o registro de lançamento
-            pc_escreve_clob(vr_clobxml,'  </lancto>');
-
+      -- Verifica o numero da conta
+      IF rw_craprej.nrdconta < 999999999  THEN
+        -- Inicializa as variáveis de crítica e observação
+        vr_dscritic := NULL;
+        vr_dsobserv := NULL;
+        -- Se o cadastro foi feito com crítica
+        IF rw_craprej.cdcritic > 0 THEN
+          -- Seta a flag de rejeitado
+          vr_flgrejei := TRUE;
+          -- Guarda o código da crítica
+          vr_cdcritic := rw_craprej.cdcritic;
+          -- Verifica se o código da crítica é 999, se não for busca a descrição
+          IF vr_cdcritic = 999 THEN
+            vr_dscritic := 'Associado VIACREDI';
           ELSE
-            -- Totais
-            vr_qtregrec := (rw_craprej.nrseqdig - 2);
-            vr_qtregint := vr_qtcompln;
-            vr_vlregrec := rw_craprej.vllanmto;
-            vr_vlregint := vr_vlcompcr;
-
-            -- Montar o total
-            pc_escreve_clob(vr_clobxml,'  <total> '||chr(10)||
-                                       '    <qtregrec>'||to_char(vr_qtregrec,'FM9G999G999G999G990')||'</qtregrec>'||chr(10)||
-                                       '    <qtregint>'||to_char(vr_qtregint,'FM9G999G999G999G990')||'</qtregint>'||chr(10)||
-                                       '    <qtregrej>'||to_char(vr_qtregrej,'FM9G999G999G999G990')||'</qtregrej>'||chr(10)||
-                                       '    <vlregrec>'||to_char(vr_vlregrec,'FM9G999G999G999G990D00')||'</vlregrec>'||chr(10)||
-                                       '    <vlregint>'||to_char(vr_vlregint,'FM9G999G999G999G990D00')||'</vlregint>'||chr(10)||
-                                       '    <vlregrej>'||to_char(vr_vlregrej,'FM9G999G999G999G990D00')||'</vlregrej>'||chr(10)||
-                                       '  </total> ');
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
-        END LOOP;
 
-        -- Fecha a tag geral
-        pc_escreve_clob(vr_clobxml,chr(10)||'</crps527>');
+          -- Atualiza totalizadores...
+          vr_qtregrej := vr_qtregrej + 1;
+          vr_vlregrej := vr_vlregrej + NVL(rw_craprej.vllanmto,0);
 
-        -- Verifica a flag de rejeitado
-        IF vr_flgrejei THEN
-          vr_cdcritic := 191; -- 191 - ARQUIVO INTEGRADO COM REJEITADOS
+          -- Corta a string no tamanho maximo e retirando o código da critica da mesma
+          vr_dscritic := SUBSTR(vr_dscritic, 7, 59);
+
+          -- Caso esteja dentro da lista abaixo
+          IF vr_cdcritic IN (9,64,301) THEN
+            pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
+                                       ',1455,4894,' || TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                       ',157,"DOC NAO INTEGRADO NA CONTA DO COOPERADO DEVIDO INCONSISTENCIA DE DADOS (CONFORME CRITICA RELATORIO 527)"' || chr(10));
+          END IF;
+
+        END IF;
+
+        -- Verificar se é um CPF ou CNPJ e formatar o mesmo
+        IF length(rw_craprej.vldaviso) > 11 THEN
+          -- formata e guarda o CNPJ
+          vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
+                                                  ,pr_inpessoa => 2);
         ELSE
-          vr_cdcritic := 190; -- 190 - ARQUIVO INTEGRADO COM SUCESSO
+          -- Rotina para validar a informação de CPF ou CNPJ
+          gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_craprej.vldaviso
+                                     ,pr_stsnrcal => vr_stsnrcal
+                                     ,pr_inpessoa => vr_inpessoa);
+
+          -- Se validou
+          IF vr_stsnrcal THEN
+            -- CPF
+            vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
+                                                    ,pr_inpessoa => vr_inpessoa);
+          END IF;
+
         END IF;
 
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        -- Se há critica dif TCO
+        IF vr_cdcritic <> 999 THEN
+          -- Para arquivo de incorporação
+          IF rw_crapcop_incorp.cdcooper IS NOT NULL AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
+            -- Adicionar a descrição cfme coop integrada
+            IF rw_crapcop_incorp.cdcooper = 4 THEN
+              vr_dsobserv := 'Ass. Concredi';
+            ELSE
+              vr_dsobserv := 'Ass. Credimilsul';  
+            END IF;
+          -- PAra transferências entre Cooperativas
+          ELSIF pr_cdcooper IN (1,2) THEN
+            -- Busca informações de contas transferidas
+            OPEN  cr_craptco(rw_craprej.nrdconta);
+            FETCH cr_craptco INTO vr_nrdummy;
+            -- Se encontrar registros
+            IF cr_craptco%FOUND THEN
+              IF pr_cdcooper = 2 THEN
+                vr_dsobserv := 'Ass. VIACREDI';
+              ELSE
+                vr_dsobserv := 'Ass. ALTOVALE';
+              END IF;
+            END IF;
 
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratado
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic || ' - Arquivo: '
-                                                      || pr_tbarquiv(vr_nrindice)  );
-
-        -- Limpa as criticas
-        vr_cdcritic := 0;
-
-        -- Limpa a variavel de controle de cópia do relatório
-        vr_dspathcop := NULL;
-
-        -- Verifica a tela
-        IF pr_nmtelant = 'COMPEFORA' THEN
-          -- Buscar o diretório padrao da cooperativa conectada + /rlnsv
-          vr_dspathcop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                               ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsubdir => 'rlnsv');
+            CLOSE cr_craptco;
+          END IF;            
         END IF;
 
-        -- define o nome do relatório
-        vr_nmrelato := 'crrl527_'
-                      ||to_char(vr_nrindice,'FM00')
-                      ||'.lst';
+        -- Montar o XML
+        pc_escreve_clob(vr_clobxml,'  <lancto> '||chr(10)||
+                                   '    <nrdctitg>'|| TRIM(rw_craprej.nrdctitg) ||'</nrdctitg>'||chr(10)||
+                                   '    <dshistor>'|| GENE0007.fn_caract_controle(substr(rw_craprej.dshistor,0,24)) ||'</dshistor>'||chr(10)||
+                                   '    <indebcre>'|| rw_craprej.indebcre ||'</indebcre>'||chr(10)||
+                                   '    <nrdocmto>'|| to_char(rw_craprej.nrdocmto,'FM999G999G999') ||'</nrdocmto>'||chr(10)||
+                                   '    <cdpesqbb>'|| GENE0007.fn_caract_controle(substr(rw_craprej.cdpesqbb,0,35)) ||'</cdpesqbb>'||chr(10)||
+                                   '    <vllanmto>'|| to_char(rw_craprej.vllanmto,'FM999G999G999G990D00') ||'</vllanmto>'||chr(10)||
+                                   '    <dscritic>'|| substr(vr_dscritic,0,24)||'</dscritic>'||chr(10)||
+                                   '    <dsobserv>'|| substr(vr_dsobserv,0,24)||'</dsobserv>'||chr(10)||
+                                   '    <dscpfcgc>'||     vr_dsrelcpf     ||'</dscpfcgc>'||chr(10));
 
-        -- Submeter o relatório 527
-        GENE0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
-                                   ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
-                                   ,pr_dtmvtolt  => vr_dtmvtolt                          --> Data do movimento atual
-                                   ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
-                                   ,pr_dsxmlnode => '/crps527/lancto'                    --> Nó base do XML para leitura dos dados
-                                   ,pr_dsjasper  => 'crrl527.jasper'                     --> Arquivo de layout do iReport
-                                   ,pr_dsparams  => null                                 --> Sem parâmetros
-                                   ,pr_dsarqsaid => vr_dsdirrel||vr_nmrelato             --> Arquivo final com o path
-                                   ,pr_qtcoluna  => 132                                  --> 132 colunas
-                                   ,pr_sqcabrel  => 1                                    --> Sequencia
-                                   ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
-                                   ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
-                                   ,pr_nmformul  => NULL                                 --> Nome do formulário para impressão
-                                   ,pr_dspathcop => vr_dspathcop                         --> Lista sep. por ';' de diretórios a copiar o relatório
-                                   ,pr_nrcopias  => 1                                    --> Número de cópias
-                                   ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
-
-        -- Liberando a memória alocada pro CLOB
-        dbms_lob.close(vr_clobxml);
-        dbms_lob.freetemporary(vr_clobxml);
-
-        -- Verifica se ocorreram erros na geração do XML
-        IF vr_des_erro IS NOT NULL THEN
-
-          pr_dscritic := vr_des_erro;
-
-          -- Gerar exceção
-          RAISE vr_exc_saida;
+        -- Verifica se há histórico
+        IF TRIM(substr(rw_craprej.dshistor,40,20)) IS NOT NULL THEN
+          pc_escreve_clob(vr_clobxml,'    <dsinform>'|| substr(rw_craprej.dshistor,41,60) ||'</dsinform>'||chr(10));
+        ELSE
+          pc_escreve_clob(vr_clobxml,'    <dsinform></dsinform>'||chr(10));
         END IF;
 
-        -- Se possuir conteudo de critica no CLOB
-        IF LENGTH(vr_clobcri) > 0 THEN
-          -- Busca o diretório para contabilidade
-          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-          vr_dircon := vr_dircon || vc_dircon;
-          vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_527.txt';
+        -- Fecha o registro de lançamento
+        pc_escreve_clob(vr_clobxml,'  </lancto>');
 
-          -- Chama a geracao do TXT
-          GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
-                                             ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
-                                             ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
-                                             ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
-                                             ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
-                                             ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                             ,pr_dspathcop => vr_dircon                --> Copiar para a Micros
-                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
-                                             ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+      ELSE
+        -- Totais
+        vr_qtregrec := (rw_craprej.nrseqdig - 2);
+        vr_qtregint := vr_qtcompln;
+        vr_vlregrec := rw_craprej.vllanmto;
+        vr_vlregint := vr_vlcompcr;
+
+        -- Montar o total
+        pc_escreve_clob(vr_clobxml,'  <total> '||chr(10)||
+                                   '    <qtregrec>'||to_char(vr_qtregrec,'FM9G999G999G999G990')||'</qtregrec>'||chr(10)||
+                                   '    <qtregint>'||to_char(vr_qtregint,'FM9G999G999G999G990')||'</qtregint>'||chr(10)||
+                                   '    <qtregrej>'||to_char(vr_qtregrej,'FM9G999G999G999G990')||'</qtregrej>'||chr(10)||
+                                   '    <vlregrec>'||to_char(vr_vlregrec,'FM9G999G999G999G990D00')||'</vlregrec>'||chr(10)||
+                                   '    <vlregint>'||to_char(vr_vlregint,'FM9G999G999G999G990D00')||'</vlregint>'||chr(10)||
+                                   '    <vlregrej>'||to_char(vr_vlregrej,'FM9G999G999G999G990D00')||'</vlregrej>'||chr(10)||
+                                   '  </total> ');
+      END IF;
+    END LOOP;
+
+    -- Fecha a tag geral
+    pc_escreve_clob(vr_clobxml,chr(10)||'</crps527>');
+
+    -- Verifica a flag de rejeitado
+    IF vr_flgrejei THEN
+      vr_cdcritic := 191; -- 191 - ARQUIVO INTEGRADO COM REJEITADOS
+    ELSE
+      vr_cdcritic := 190; -- 190 - ARQUIVO INTEGRADO COM SUCESSO
+    END IF;
+
+    -- Buscar a descrição
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                   || '. Arquivo:' || pr_tbarquiv(vr_nrindice);
+
+    -- Envio centralizado de log de erro
+    pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                pr_dstiplog      => 'E',
+                pr_dscritic      => vr_dscritic,
+                pr_cdcriticidade => 1,
+                pr_cdmensagem    => vr_cdcritic);
+    -- Limpa as criticas
+    vr_cdcritic := 0;
+
+    -- Limpa a variavel de controle de cópia do relatório
+    vr_dspathcop := NULL;
+
+    -- Verifica a tela
+    IF pr_nmtelant = 'COMPEFORA' THEN
+      -- Buscar o diretório padrao da cooperativa conectada + /rlnsv
+      vr_dspathcop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_nmsubdir => 'rlnsv');
+    END IF;
+
+    -- define o nome do relatório
+    vr_nmrelato := 'crrl527_'
+                  ||to_char(vr_nrindice,'FM00')
+                  ||'.lst';
+
+    -- Submeter o relatório 527
+    GENE0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
+                               ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
+                               ,pr_dtmvtolt  => vr_dtmvtolt                          --> Data do movimento atual
+                               ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
+                               ,pr_dsxmlnode => '/crps527/lancto'                    --> Nó base do XML para leitura dos dados
+                               ,pr_dsjasper  => 'crrl527.jasper'                     --> Arquivo de layout do iReport
+                               ,pr_dsparams  => null                                 --> Sem parâmetros
+                               ,pr_dsarqsaid => vr_dsdirrel||vr_nmrelato             --> Arquivo final com o path
+                               ,pr_qtcoluna  => 132                                  --> 132 colunas
+                               ,pr_sqcabrel  => 1                                    --> Sequencia
+                               ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
+                               ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
+                               ,pr_nmformul  => NULL                                 --> Nome do formulário para impressão
+                               ,pr_dspathcop => vr_dspathcop                         --> Lista sep. por ';' de diretórios a copiar o relatório
+                               ,pr_nrcopias  => 1                                    --> Número de cópias
+                               ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
+
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_clobxml);
+    dbms_lob.freetemporary(vr_clobxml);
+
+    -- Verifica se ocorreram erros na geração do XML
+    IF vr_des_erro IS NOT NULL THEN
+
+      vr_dscritic := vr_des_erro;
+
+      -- Gerar exceção
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Se possuir conteudo de critica no CLOB
+    IF LENGTH(vr_clobcri) > 0 THEN
+      -- Busca o diretório para contabilidade
+      vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+      vr_dircon := vr_dircon || vc_dircon;
+      vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_527.txt';
+
+      -- Chama a geracao do TXT
+      GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
+                                         ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
+                                         ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
+                                         ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
+                                         ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
+                                         ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
+                                         ,pr_flg_gerar => 'N'                      --> Apenas submeter
+                                         ,pr_dspathcop => vr_dircon                --> Copiar para a Micros
+                                         ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
+                                         ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                      
                                              
-        END IF;
+    END IF;
 
-        -- Liberando a memória alocada pro CLOB
-        dbms_lob.close(vr_clobcri);
-        dbms_lob.freetemporary(vr_clobcri);
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_clobcri);
+    dbms_lob.freetemporary(vr_clobcri);
 
-        -- Verifica se ocorreram erros na geracao do TXT
-        IF vr_des_erro IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
-                                                     || vr_des_erro );
-        END IF;
+    -- Verifica se ocorreram erros na geracao do TXT
+    IF vr_des_erro IS NOT NULL THEN
+      vr_cdcritic := 1050; -- Erro ao gerar o arquivo
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_arqcon || ': ' || vr_des_erro;
+      -- Envio centralizado de log de erro
+      pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => vr_cdcritic);
+    END IF;
 
-        /***** RELATÓRIO DE REJEITADOS TCO 999 *****/
+    /***** RELATÓRIO DE REJEITADOS TCO 999 *****/
         
-        -- Gerar apenas para as cooperativas 1 ou 2
-        -- Desde que o arquivo atual não seja de incorporação
-        IF pr_cdcooper IN (1,2) AND NOT vr_flgincorp THEN
+    -- Gerar apenas para as cooperativas 1 ou 2
+    -- Desde que o arquivo atual não seja de incorporação
+    IF pr_cdcooper IN (1,2) AND NOT vr_flgincorp THEN
 
-          -- Zerar as variáveis
-          vr_qtregrec := 0;
-          vr_qtregint := 0;
-          vr_vlregrec := 0;
-          vr_vlregint := 0;
-          vr_cdcritic := 0;
-          vr_flgfirst := TRUE;
+      -- Zerar as variáveis
+      vr_qtregrec := 0;
+      vr_qtregint := 0;
+      vr_vlregrec := 0;
+      vr_vlregint := 0;
+      vr_cdcritic := 0;
+      vr_flgfirst := TRUE;
           
-          -- Seta flag de controle de registros vazios
-          vr_flgregis := FALSE;
+      -- Seta flag de controle de registros vazios
+      vr_flgregis := FALSE;
 
-          -- Preparar o CLOB para armazenar as infos do arquivo
-          dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
-          dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-          pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?>'||chr(10)||
-                                     '<crps527 dsarquiv="integra/'||pr_tbarquiv(vr_nrindice)||'" '||
-                                     '  dtrefere="'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'" '||
-                                     '  cdagenci="'||vr_cdagenci||'"'            ||
-                                     '  cdbccxlt="'||rw_crapcop.cdbcoctl||'" '   ||
-                                     '  nrdolote="'||to_char(vr_nrdolote,'FM999G999')||'" '||
-                                     '  tplotmov="'||to_char(vr_tplotmov,'FM00')||'" >'||chr(10));
+      -- Preparar o CLOB para armazenar as infos do arquivo
+      dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
+      pc_escreve_clob(vr_clobxml,'<?xml version="1.0" encoding="utf-8"?>'||chr(10)||
+                                 '<crps527 dsarquiv="integra/'||pr_tbarquiv(vr_nrindice)||'" '||
+                                 '  dtrefere="'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'" '||
+                                 '  cdagenci="'||vr_cdagenci||'"'            ||
+                                 '  cdbccxlt="'||rw_crapcop.cdbcoctl||'" '   ||
+                                 '  nrdolote="'||to_char(vr_nrdolote,'FM999G999')||'" '||
+                                 '  tplotmov="'||to_char(vr_tplotmov,'FM00')||'" >'||chr(10));
 
-          -- Percorre as informações guardadas na memória para montar o XML
-          FOR rw_craprej IN cr_craprej(999) LOOP -- Retornar apenas registro com critica igual a 999
-            -- Seta flag de controle de registros vazios
-            vr_flgregis := TRUE;
-            -- Guarda o código da crítica
-            vr_cdcritic := rw_craprej.cdcritic;
-            -- Verifica se o código da crítica é 999, se não for busca a descrição
-            IF pr_cdcooper = 2 THEN
-              vr_dscritic := 'Associado VIACREDI';
-            ELSE
-              vr_dscritic := 'Associado ALTOVALE';
-            END IF;
+      -- Percorre as informações guardadas na memória para montar o XML
+      FOR rw_craprej IN cr_craprej(999) LOOP -- Retornar apenas registro com critica igual a 999
+        -- Seta flag de controle de registros vazios
+        vr_flgregis := TRUE;
+        -- Guarda o código da crítica
+        vr_cdcritic := rw_craprej.cdcritic;
+        -- Verifica se o código da crítica é 999, se não for busca a descrição
+        IF pr_cdcooper = 2 THEN
+          vr_dscritic := 'Associado VIACREDI';
+        ELSE
+          vr_dscritic := 'Associado ALTOVALE';
+        END IF;
 
-            -- Atualiza totalizadores...
-            vr_qtregint := vr_qtregint + 1;
-            vr_qtregrec := vr_qtregrec + 1;
-            vr_vlregint := NVL(vr_vlregint,0) + rw_craprej.vllanmto;
-            vr_vlregrec := NVL(vr_vlregrec,0) + rw_craprej.vllanmto;
+        -- Atualiza totalizadores...
+        vr_qtregint := vr_qtregint + 1;
+        vr_qtregrec := vr_qtregrec + 1;
+        vr_vlregint := NVL(vr_vlregint,0) + rw_craprej.vllanmto;
+        vr_vlregrec := NVL(vr_vlregrec,0) + rw_craprej.vllanmto;
 
-            -- Verificar se é um CPF ou CNPJ e formatar o mesmo
-            IF length(rw_craprej.vldaviso) > 11 THEN
-              -- formata e guarda o CNPJ
-              vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
-                                                      ,pr_inpessoa => 2);
-            ELSE
-              -- Rotina para validar a informação de CPF ou CNPJ
-              gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_craprej.vldaviso
-                                         ,pr_stsnrcal => vr_stsnrcal
-                                         ,pr_inpessoa => vr_inpessoa);
+        -- Verificar se é um CPF ou CNPJ e formatar o mesmo
+        IF length(rw_craprej.vldaviso) > 11 THEN
+          -- formata e guarda o CNPJ
+          vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
+                                                  ,pr_inpessoa => 2);
+        ELSE
+          -- Rotina para validar a informação de CPF ou CNPJ
+          gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => rw_craprej.vldaviso
+                                     ,pr_stsnrcal => vr_stsnrcal
+                                     ,pr_inpessoa => vr_inpessoa);
 
-              -- Se validou
-              IF vr_stsnrcal THEN
-                -- CPF
-                vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
-                                                        ,pr_inpessoa => 1);
-              ELSE
-                -- CNPJ
-                vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
-                                                        ,pr_inpessoa => 2);
-              END IF;
-
-            END IF;
-
-            -- Montar o XML
-            pc_escreve_clob(vr_clobxml,'  <lancto> '||chr(10)||
-                                       '    <nrdctitg>'|| TRIM(rw_craprej.nrdctitg) ||'</nrdctitg>'||chr(10)||
-                                       '    <dshistor>'|| GENE0007.fn_caract_controle(substr(rw_craprej.dshistor,0,24)) ||'</dshistor>'||chr(10)||
-                                       '    <indebcre>'|| rw_craprej.indebcre ||'</indebcre>'||chr(10)||
-                                       '    <nrdocmto>'|| to_char(rw_craprej.nrdocmto,'FM999G999G999') ||'</nrdocmto>'||chr(10)||
-                                       '    <cdpesqbb>'|| GENE0007.fn_caract_controle(substr(rw_craprej.cdpesqbb,0,35)) ||'</cdpesqbb>'||chr(10)||
-                                       '    <vllanmto>'|| to_char(rw_craprej.vllanmto,'FM999G999G999G990D00') ||'</vllanmto>'||chr(10)||
-                                       '    <dscritic>'|| substr(vr_dscritic,0,24) ||'</dscritic>'||chr(10)||
-                                       '    <dscpfcgc>'||     vr_dsrelcpf     ||'</dscpfcgc>'||chr(10));
-
-            -- Verifica se há histórico
-            IF TRIM(substr(rw_craprej.dshistor,40,20)) IS NOT NULL THEN
-              pc_escreve_clob(vr_clobxml,'    <dsinform>'|| substr(rw_craprej.dshistor,41,60) ||'</dsinform>'||chr(10));
-            END IF;
-
-            -- Fecha o registro de lançamento
-            pc_escreve_clob(vr_clobxml,'  </lancto>');
-          END LOOP;
-
-          -- Se não inseriu registros no xml
-          IF NOT vr_flgregis THEN
-
-            -- Montar o XML
-            pc_escreve_clob(vr_clobxml,'  <lancto></lancto>');
-
+          -- Se validou
+          IF vr_stsnrcal THEN
+            -- CPF
+            vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
+                                                    ,pr_inpessoa => 1);
+          ELSE
+            -- CNPJ
+            vr_dsrelcpf := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_craprej.vldaviso
+                                                    ,pr_inpessoa => 2);
           END IF;
 
-          -- Totais
-          vr_qtregrej := 0;
-          vr_vlregrej := 0;
+        END IF;
 
-          -- Montar o total
-          pc_escreve_clob(vr_clobxml,'  <total> '||chr(10)||
-                                     '    <qtregrec>'||to_char(vr_qtregrec,'FM9G999G999G999G990')||'</qtregrec>'||chr(10)||
-                                     '    <qtregint>'||to_char(vr_qtregint,'FM9G999G999G999G990')||'</qtregint>'||chr(10)||
-                                     '    <qtregrej>'||to_char(vr_qtregrej,'FM9G999G999G999G990')||'</qtregrej>'||chr(10)||
-                                     '    <vlregrec>'||to_char(vr_vlregrec,'FM9G999G999G999G990D00')||'</vlregrec>'||chr(10)||
-                                     '    <vlregint>'||to_char(vr_vlregint,'FM9G999G999G999G990D00')||'</vlregint>'||chr(10)||
-                                     '    <vlregrej>'||to_char(vr_vlregrej,'FM9G999G999G999G990D00')||'</vlregrej>'||chr(10)||
-                                     '  </total> ');
+        -- Montar o XML
+        pc_escreve_clob(vr_clobxml,'  <lancto> '||chr(10)||
+                                   '    <nrdctitg>'|| TRIM(rw_craprej.nrdctitg) ||'</nrdctitg>'||chr(10)||
+                                   '    <dshistor>'|| GENE0007.fn_caract_controle(substr(rw_craprej.dshistor,0,24)) ||'</dshistor>'||chr(10)||
+                                   '    <indebcre>'|| rw_craprej.indebcre ||'</indebcre>'||chr(10)||
+                                   '    <nrdocmto>'|| to_char(rw_craprej.nrdocmto,'FM999G999G999') ||'</nrdocmto>'||chr(10)||
+                                   '    <cdpesqbb>'|| GENE0007.fn_caract_controle(substr(rw_craprej.cdpesqbb,0,35)) ||'</cdpesqbb>'||chr(10)||
+                                   '    <vllanmto>'|| to_char(rw_craprej.vllanmto,'FM999G999G999G990D00') ||'</vllanmto>'||chr(10)||
+                                   '    <dscritic>'|| substr(vr_dscritic,0,24) ||'</dscritic>'||chr(10)||
+                                   '    <dscpfcgc>'||     vr_dsrelcpf     ||'</dscpfcgc>'||chr(10));
 
-          -- Fecha a tag geral
-          pc_escreve_clob(vr_clobxml,chr(10)||'</crps527>');
+        -- Verifica se há histórico
+        IF TRIM(substr(rw_craprej.dshistor,40,20)) IS NOT NULL THEN
+          pc_escreve_clob(vr_clobxml,'    <dsinform>'|| substr(rw_craprej.dshistor,41,60) ||'</dsinform>'||chr(10));
+        END IF;
 
-          -- Limpa as criticas
-          vr_cdcritic := 0;
+        -- Fecha o registro de lançamento
+        pc_escreve_clob(vr_clobxml,'  </lancto>');
+      END LOOP;
 
-          -- Limpa a variavel de controle de cópia do relatório
-          vr_dspathcop := NULL;
+      -- Se não inseriu registros no xml
+      IF NOT vr_flgregis THEN
 
-          -- Verifica a tela
-          IF pr_nmtelant = 'COMPEFORA' THEN
-            -- Buscar o diretório padrao da cooperativa conectada + /rlnsv
-            vr_dspathcop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                                 ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsubdir => 'rlnsv');
-          END IF;
+        -- Montar o XML
+        pc_escreve_clob(vr_clobxml,'  <lancto></lancto>');
 
-          -- define o nome do relatório
-          vr_nmrelato := 'crrl527_'
-                        ||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL')
-                        ||'_'
-                        ||to_char(vr_nrindice,'FM00')
-                        ||'.lst';
+      END IF;
 
-          -- Buscar os endereços de e-mail para envio do relatório
-          vr_dsmailcop := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRRL527_EMAIL');
+      -- Totais
+      vr_qtregrej := 0;
+      vr_vlregrej := 0;
 
-          -- Montar o assunto do e-mail
-          vr_dsassmail := 'Relatório de Integração DOCs CECRED';
+      -- Montar o total
+      pc_escreve_clob(vr_clobxml,'  <total> '||chr(10)||
+                                 '    <qtregrec>'||to_char(vr_qtregrec,'FM9G999G999G999G990')||'</qtregrec>'||chr(10)||
+                                 '    <qtregint>'||to_char(vr_qtregint,'FM9G999G999G999G990')||'</qtregint>'||chr(10)||
+                                 '    <qtregrej>'||to_char(vr_qtregrej,'FM9G999G999G999G990')||'</qtregrej>'||chr(10)||
+                                 '    <vlregrec>'||to_char(vr_vlregrec,'FM9G999G999G999G990D00')||'</vlregrec>'||chr(10)||
+                                 '    <vlregint>'||to_char(vr_vlregint,'FM9G999G999G999G990D00')||'</vlregint>'||chr(10)||
+                                 '    <vlregrej>'||to_char(vr_vlregrej,'FM9G999G999G999G990D00')||'</vlregrej>'||chr(10)||
+                                 '  </total> ');
 
-          -- Montar o corpo do e-mail
-          vr_dscormail := NULL; -- Em branco
+      -- Fecha a tag geral
+      pc_escreve_clob(vr_clobxml,chr(10)||'</crps527>');
 
-          -- Submeter o relatório 527
-          GENE0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
-                                     ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
-                                     ,pr_dtmvtolt  => vr_dtmvtolt                          --> Data do movimento atual
-                                     ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
-                                     ,pr_dsxmlnode => '/crps527/lancto'                    --> Nó base do XML para leitura dos dados
-                                     ,pr_dsjasper  => 'crrl527.jasper'                     --> Arquivo de layout do iReport
-                                     ,pr_dsparams  => null                                 --> Sem parâmetros
-                                     ,pr_dsarqsaid => vr_dsdirrel||vr_nmrelato             --> Arquivo final com o path
-                                     ,pr_qtcoluna  => 132                                  --> 132 colunas
-                                     ,pr_sqcabrel  => 1                                    --> Sequencia
-                                     ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
-                                     ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
-                                     ,pr_nmformul  => NULL                                 --> Nome do formulário para impressão
-                                     ,pr_dspathcop => vr_dspathcop                         --> Lista sep. por ';' de diretórios a copiar o relatório
-                                     ,pr_nrcopias  => 1                                    --> Número de cópias
-                                     ,pr_dsmailcop => vr_dsmailcop                         --> Lista sep. por ';' de emails para envio do relatório
-                                     ,pr_dsassmail => vr_dsassmail                         --> Assunto do e-mail que enviará o relatório
-                                     ,pr_dscormail => vr_dscormail                         --> HTML corpo do email que enviará o relatório
-                                     ,pr_fldosmail => 'S'                                  --> Converter anexo para DOS antes de enviar
-                                     ,pr_dscmaxmail => ' | tr -d "\032"'                   --> Complemento do comando converte-arquivo
-                                     ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
+      -- Limpa as criticas
+      vr_cdcritic := 0;
 
-          -- Liberando a memória alocada pro CLOB
-          dbms_lob.close(vr_clobxml);
-          dbms_lob.freetemporary(vr_clobxml);
+      -- Limpa a variavel de controle de cópia do relatório
+      vr_dspathcop := NULL;
 
-          -- Verifica se ocorreram erros na geração do XML
-          IF vr_des_erro IS NOT NULL THEN
+      -- Verifica a tela
+      IF pr_nmtelant = 'COMPEFORA' THEN
+        -- Buscar o diretório padrao da cooperativa conectada + /rlnsv
+        vr_dspathcop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsubdir => 'rlnsv');
+      END IF;
 
-            pr_dscritic := vr_des_erro;
+      -- define o nome do relatório
+      vr_nmrelato := 'crrl527_'
+                    ||gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL')
+                    ||'_'
+                    ||to_char(vr_nrindice,'FM00')
+                    ||'.lst';
 
-            -- Gerar exceção
-            RAISE vr_exc_saida;
-          END IF;
-        END IF; -- pr_cdcooper IN (1,2)
-      END; -- Bloco de geração do relatório
+      -- Buscar os endereços de e-mail para envio do relatório
+      vr_dsmailcop := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRRL527_EMAIL');
 
-      -- Limpara todas as informações do processamento
-      BEGIN
-        DELETE craprej
-         WHERE craprej.cdcooper = pr_cdcooper
-           AND craprej.dtrefere = vr_dtauxili;
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Crítica: Erro Oracle
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao excluir registros na CRAPREJ: '||SQLERRM;
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratado
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic);
-      END;
+      -- Montar o assunto do e-mail
+      vr_dsassmail := 'Relatório de Integração DOCs CECRED';
 
-    END LOOP; -- Fim da leitura dos arquivos
+      -- Montar o corpo do e-mail
+      vr_dscormail := NULL; -- Em branco
+
+      -- Submeter o relatório 527
+      GENE0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
+                                 ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
+                                 ,pr_dtmvtolt  => vr_dtmvtolt                          --> Data do movimento atual
+                                 ,pr_dsxml     => vr_clobxml                           --> Arquivo XML de dados
+                                 ,pr_dsxmlnode => '/crps527/lancto'                    --> Nó base do XML para leitura dos dados
+                                 ,pr_dsjasper  => 'crrl527.jasper'                     --> Arquivo de layout do iReport
+                                 ,pr_dsparams  => null                                 --> Sem parâmetros
+                                 ,pr_dsarqsaid => vr_dsdirrel||vr_nmrelato             --> Arquivo final com o path
+                                 ,pr_qtcoluna  => 132                                  --> 132 colunas
+                                 ,pr_sqcabrel  => 1                                    --> Sequencia
+                                 ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
+                                 ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
+                                 ,pr_nmformul  => NULL                                 --> Nome do formulário para impressão
+                                 ,pr_dspathcop => vr_dspathcop                         --> Lista sep. por ';' de diretórios a copiar o relatório
+                                 ,pr_nrcopias  => 1                                    --> Número de cópias
+                                 ,pr_dsmailcop => vr_dsmailcop                         --> Lista sep. por ';' de emails para envio do relatório
+                                 ,pr_dsassmail => vr_dsassmail                         --> Assunto do e-mail que enviará o relatório
+                                 ,pr_dscormail => vr_dscormail                         --> HTML corpo do email que enviará o relatório
+                                 ,pr_fldosmail => 'S'                                  --> Converter anexo para DOS antes de enviar
+                                 ,pr_dscmaxmail => ' | tr -d "\032"'                   --> Complemento do comando converte-arquivo
+                                 ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
+
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_clobxml);
+      dbms_lob.freetemporary(vr_clobxml);
+
+      -- Verifica se ocorreram erros na geração do XML
+      IF vr_des_erro IS NOT NULL THEN
+
+        vr_dscritic := vr_des_erro;
+
+        -- Gerar exceção
+        RAISE vr_exc_saida;
+      END IF;
+    END IF; -- pr_cdcooper IN (1,2)
+  END; -- Bloco de geração do relatório
+
+    -- Limpara todas as informações do processamento
+    BEGIN
+      DELETE craprej
+       WHERE craprej.cdcooper = pr_cdcooper
+         AND craprej.dtrefere = vr_dtauxili;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Crítica: Erro Oracle
+        vr_cdcritic := 1037;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craprej: com cdcooper:'||pr_cdcooper
+                       ||', dtrefere:'||vr_dtauxili||'. '||SQLERRM;
+        -- Envio centralizado de log de erro
+        pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => vr_cdcritic,
+                    pr_ind_tipo_log  => 3);
+
+      --Inclusão na tabela de erros Oracle - Chamado 789851
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+    END;
+
+  END LOOP; -- Fim da leitura dos arquivos
 
   END pc_integra_cooperativa;
+
+  ---------------------------------------
+  -- Inicio Bloco Principal PC_CRPS534
+  ---------------------------------------
 
 BEGIN -- Principal
 
@@ -3189,7 +3546,6 @@ BEGIN -- Principal
     vr_cdcritic := 651;
     RAISE vr_exc_saida;
   END IF;
-
   -- Apenas fechar o cursor
   CLOSE cr_crapcop;
 
@@ -3208,9 +3564,12 @@ BEGIN -- Principal
     vr_dtmvtolt := btch0001.rw_crapdat.dtmvtolt;
     vr_dtmvtoan := btch0001.rw_crapdat.dtmvtoan;
   END IF;
-    
   -- Fechar o cursor
   CLOSE btch0001.cr_crapdat;
+
+  -- Log de início da execução
+  pc_gera_log(pr_cdcooper_in   => rw_crapcop.cdcooper,
+              pr_dstiplog      => 'I');
 
   -- Validações iniciais do programa
   BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
@@ -3284,7 +3643,7 @@ BEGIN -- Principal
     -- Saida
     RAISE vr_exc_saida;
   END IF;
-  
+
   -- Se houver cooperativa incorporada 
   IF vr_nmarquiv_incorp IS NOT NULL THEN
     -- Trazê-los também 
@@ -3354,7 +3713,6 @@ BEGIN -- Principal
   OPEN vr_cursor FOR vr_dsselect;
   -- Percorrer registros retornados
   LOOP
-
     -- Joga os valores das colunas no registro de memória
     FETCH vr_cursor INTO vr_nmarquiv;
 
@@ -3365,7 +3723,6 @@ BEGIN -- Principal
     vr_tbarquiv.EXTEND;
     -- Guarda o nome do arquivo, ordenado
     vr_tbarquiv(vr_tbarquiv.COUNT) := vr_nmarquiv;
-
   END LOOP;
 
   -- Fecha o cursor
@@ -3386,6 +3743,12 @@ BEGIN -- Principal
   ELSE
     pc_integra_cooperativa(pr_tbarquiv => vr_tbarquiv);
   END IF;
+  -- Inclusão do módulo e ação logado - Chamado 789851 - 20/11/2017
+  GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
+
+  -- Log de término da execução
+  pc_gera_log(pr_cdcooper_in   => rw_crapcop.cdcooper,
+              pr_dstiplog      => 'F');
 
   -- Processo OK, devemos chamar a fimprg
   btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -3406,11 +3769,11 @@ EXCEPTION
     -- Se foi gerada critica para envio ao log
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                    || vr_cdprogra || ' --> '
-                                                    || vr_dscritic );
+      pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => vr_cdcritic);
     END IF;
 
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
@@ -3421,6 +3784,7 @@ EXCEPTION
 
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;  
+
   WHEN vr_exc_saida THEN
     -- Se foi retornado apenas código
     IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -3430,12 +3794,32 @@ EXCEPTION
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+
+    -- Log de erro início da execução
+    pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                pr_dstiplog      => 'E',
+                pr_dscritic      => pr_dscritic,
+                pr_cdcriticidade => 1,
+                pr_cdmensagem    => pr_cdcritic);
+
     -- Efetuar rollback
     ROLLBACK;
+
   WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
-    pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
+    pr_cdcritic := 9999;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLErrm;  
+    
+    -- Log de erro início da execução
+    pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                pr_dstiplog      => 'E',
+                pr_dscritic      => pr_dscritic,
+                pr_cdcriticidade => 2,
+                pr_cdmensagem    => pr_cdcritic,
+                pr_ind_tipo_log  => 3);
+
+    --Inclusão na tabela de erros Oracle - Chamado 789851
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
     -- Efetuar rollback
     ROLLBACK;
 

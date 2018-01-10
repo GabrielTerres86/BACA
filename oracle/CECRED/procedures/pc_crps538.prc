@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 26/09/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 04/01/2018
 
    Dados referentes ao programa:
 
@@ -381,6 +381,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             Títulos estavam sendo devolvidos com a crítica 63.
                             (SD#764044-AJFink)
                             
+               03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+                            periodo de convivencia será tratado por faixa de valores
+                           (Douglas - Chamado 823963)
+
+               04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
+                            processo caso não encontre arquivos de retorno (Carlos)
+
    .............................................................................*/
 
      DECLARE
@@ -1858,8 +1865,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
            -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
            pc_controla_log_batch(2, vr_dscritic|| ' - Arquivo: integra/'||vr_nmarqret);           
+
            --Levantar Excecao pois nao tem arquivo para processar
-           RAISE vr_exc_final;
+           IF nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                        pr_cdcooper => 0, 
+                                        pr_cdacesso => 'FL_CRPS538_ABORTAR'),'S') = 'S' THEN
+             RAISE vr_exc_saida;
+           ELSE
+             RAISE vr_exc_final;
+           END IF;
+
          END IF;
          /*  Fim da verificacao se deve executar  */
 
@@ -3162,7 +3177,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  --> Se cobrança ja esta na regra de rollout da nova plataforma de cobrança, 
                  IF vr_flgdnpcb = 1 
                  --> e esta fora do periodo de convivencia /*SD#764044*/
-                 AND npcb0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt) = 0 THEN                                      
+                 AND npcb0001.fn_valid_periodo_conviv (pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                      ,pr_vltitulo => rw_crapcob.vltitulo) = 0 THEN                                      
                    
                    cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                        pr_de_campo => substr(vr_dscodbar_ori,6,4),

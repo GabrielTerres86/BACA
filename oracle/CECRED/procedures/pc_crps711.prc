@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      Sistema : Baixas Operacionais DDA0108R2 - LAUTOM
      Sigla   : CRED
      Autor   : Ricardo Linhares
-     Data    : Dezembro/2016                     Ultima atualizacao: 31/10/2017
+     Data    : Dezembro/2016                     Ultima atualizacao: 02/01/2018
 
      Dados referentes ao programa:
 
@@ -17,8 +17,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      
      08/08/2017 - Ajustado data de credito do boleto em funçao da data de 
                   movimento do sistema. (Rafael)
-                  
+
      31/10/2017 - Utilizar data do cash para registro de movimento da baixa operacional (Rafael).
+
+     02/01/2017 - #778808 Filtro das cooperativas ativas para não gerar logs desnecessários (Carlos)
 
   ............................................................................ */
 
@@ -144,6 +146,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
        SELECT cdcooper
          FROM crapcop
         WHERE cdcooper <> 3
+           AND flgativo = 1
      ORDER BY cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;     
     
@@ -169,7 +172,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
        SELECT cdcooper
          FROM crapcop
         WHERE cdcooper <> 3
+           AND flgativo = 1
      ORDER BY cdcooper;
+
      rw_crapcop cr_crapcop%ROWTYPE;     
      vr_dsdireto VARCHAR2(400);
    

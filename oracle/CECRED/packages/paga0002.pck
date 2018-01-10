@@ -621,21 +621,22 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                       ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
-PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
-                                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
-                                            ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
-                                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
-                                            ,pr_nmdatela IN VARCHAR2               --> Nome da tela
-                                            ,pr_idorigem IN INTEGER                --> Id da origem da transação
-                                            ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
-                                            ,pr_rowidlcs IN craplcs.progress_recid%TYPE
-                                            ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
-                                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
-                                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                                            ,pr_flgerlog IN BOOLEAN
-                                            /* parametros de saida */
-                                            ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
-                                            ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
+  PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
+                                         ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Numero do caixa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                         ,pr_nmdatela IN VARCHAR2               --> Nome da tela
+                                         ,pr_idorigem IN INTEGER                --> Id da origem da transação
+                                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da conta do cooperado
+                                         ,pr_rowidlcs IN craplcs.progress_recid%TYPE
+                                         ,pr_cdagetrf IN crapccs.cdagetrf%TYPE -- Numero do PA.
+                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
+                                         ,pr_flgerlog IN BOOLEAN
+                                         ,pr_rw_craplot OUT lote0001.cr_craplot%ROWTYPE  --> rowtype saida lote
+                                         /* parametros de saida */
+                                         ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
 
   /* Procedimento para listar convenios aceitos */
   PROCEDURE pc_convenios_aceitos(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -2383,7 +2384,7 @@ create or replace package body cecred.PAGA0002 is
 				  01/11/2017 - Adicionada validação de pagamento em lote.
 							   PRJ356.4 - DDA (Ricardo Linhares)
 
-                  
+
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
     vr_tab_limite     INET0001.typ_tab_limite;
@@ -7467,6 +7468,7 @@ create or replace package body cecred.PAGA0002 is
                                           ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
                                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
                                           ,pr_flgerlog IN BOOLEAN
+                                          ,pr_rw_craplot OUT lote0001.cr_craplot%ROWTYPE  --> rowtype saida lote
                                           /* parametros de saida */
                                           ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao critica
@@ -7477,7 +7479,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Vanessa Klein
-    --  Data     : Agosto/2015.                   Ultima atualizacao: 27/01/2016
+    --  Data     : Agosto/2015.                   Ultima atualizacao: 07/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -7489,6 +7491,9 @@ create or replace package body cecred.PAGA0002 is
     --              27/01/2016 - Ajuste no problema que gerava chave duplicada ao inserir
     --                           na craplcm. Problema do chamado 518911 resolvido na melhoria
     --                           342. (Kelvin)
+    --
+    --              07/12/2017 - Gravar lote com autonomous transaction para evitar
+    --                           conflito com as TEDs (Tiago/Adriano #745339)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7562,31 +7567,9 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdolote = pr_nrdolote AND
                 lcm.nrdctabb = pr_nrdctabb AND
                 lcm.nrdocmto = pr_nrdocmto;
-     rw_craplcm cr_craplcm%ROWTYPE;
-
-     --Verifica se já existe o lote criado
-     CURSOR cr_craplot(pr_cdcooper crapemp.cdcooper%TYPE,
-                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
-                       pr_nrdolote craplot.nrdolote%TYPE) IS
-        SELECT nrseqdig,
-               qtinfoln,
-               qtcompln,
-               vlinfodb,
-               vlcompdb,
-               ROWID,
-               cdcooper,
-               dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote
-         FROM craplot
-        WHERE craplot.cdcooper = pr_cdcooper
-          AND craplot.dtmvtolt = pr_dtmvtolt
-          AND craplot.cdagenci = 1
-          AND craplot.cdbccxlt = 85
-          AND craplot.nrdolote = pr_nrdolote;
-    rw_craplot cr_craplot%ROWTYPE;
-
+     rw_craplcm cr_craplcm%ROWTYPE;     
+     
+     rw_craplot lote0001.cr_craplot%ROWTYPE;
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -7724,64 +7707,23 @@ create or replace package body cecred.PAGA0002 is
              RAISE vr_exc_erro;
           END;
 
-        OPEN cr_craplot(pr_cdcooper => rw_crapcop.cdcooper,
-                        pr_dtmvtolt => pr_dtmvtolt,
-                        pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85'));
-        FETCH cr_craplot INTO rw_craplot;
 
-        --Se não achou o lote cria o mesmo
-        IF cr_craplot%NOTFOUND THEN
-           BEGIN
-               INSERT INTO craplot
-                           (cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,tplotmov)
-                     VALUES(rw_crapcop.cdcooper
-                           ,pr_dtmvtolt
-                           ,1   -- cdagenci
-                           ,85 -- cdbccxlt
-                           ,gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
-                           ,1)
-                   RETURNING craplot.ROWID,
-                             craplot.cdcooper,
-                             craplot.dtmvtolt,
-                             craplot.cdagenci,
-                             craplot.cdbccxlt,
-                             craplot.nrdolote,
-                             craplot.nrseqdig,
-                             craplot.qtcompln,
-                             craplot.qtinfoln,
-                             craplot.vlcompdb,
-                             craplot.vlinfodb
-                        INTO rw_craplot.rowid,
-                             rw_craplot.cdcooper,
-                             rw_craplot.dtmvtolt,
-                             rw_craplot.cdagenci,
-                             rw_craplot.cdbccxlt,
-                             rw_craplot.nrdolote,
-                             rw_craplot.nrseqdig,
-                             rw_craplot.qtcompln,
-                             rw_craplot.qtinfoln,
-                             rw_craplot.vlcompdb,
-                             rw_craplot.vlinfodb;
+        LOTE0001.pc_insere_lote(pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_cdagenci => 1
+                               ,pr_cdbccxlt => 85
+                               ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_tplotmov => 1
+                               ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
+                               ,pr_craplot  => rw_craplot
+                               ,pr_dscritic => vr_dscritic);
 
-           EXCEPTION
-              WHEN OTHERS THEN
-                 vr_cdcritic := 9999;
-                 vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
-                 -- fecha cursor de lote e da tab
-                 CLOSE cr_craplot;
-                -- Executa a exceção
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-           END;
-
         END IF;
-
-        -- fecha cursor de lote
-        CLOSE cr_craplot;
 
         OPEN cr_craplcm(pr_cdcooper => rw_craplot.cdcooper,
                         pr_dtmvtolt => rw_craplot.dtmvtolt,
@@ -7803,10 +7745,7 @@ create or replace package body cecred.PAGA0002 is
 
        CLOSE cr_craplcm;
 
-       FOR i IN 1..100 LOOP
          vr_flgerror := 0;
-
-         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
 
        BEGIN
           INSERT INTO craplcm
@@ -7849,45 +7788,20 @@ create or replace package body cecred.PAGA0002 is
                        rw_craplcm.nrdocmto;
 
         EXCEPTION
-            WHEN dup_val_on_index THEN
-              vr_flgerror := 1;
-              CONTINUE;
-
           WHEN OTHERS THEN
             vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
             RAISE vr_exc_erro;
-
         END;
 
-          EXIT;
+        --Atualizar dados do lote no rowtype
+        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+        rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
+        rw_craplot.vlcompdb := rw_craplot.vlcompdb + rw_craplcm.vllanmto;
+        rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
 
-        END LOOP;
-
-        IF vr_flgerror = 1 THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
-          RAISE vr_exc_erro;
-        END IF;
-
-
-        BEGIN
-            UPDATE craplot
-               -- se o numero for maior que o ja existente atualiza
-               SET nrseqdig = rw_craplot.nrseqdig,
-                   qtcompln = rw_craplot.qtcompln + 1,
-                   qtinfoln = rw_craplot.qtinfoln + 1,
-                   vlcompdb = rw_craplot.vlcompdb + rw_craplcm.vllanmto,
-                   vlinfodb = rw_craplot.vlinfodb + rw_craplcm.vllanmto
-             WHERE ROWID = rw_craplot.rowid;
-        EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 9999;
-              vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-              -- Executa a exceção
-              RAISE vr_exc_erro;
-        END;
-
+        pr_rw_craplot := rw_craplot;
+         
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia
                              ,pr_nrdcaixa          --Numero do caixa

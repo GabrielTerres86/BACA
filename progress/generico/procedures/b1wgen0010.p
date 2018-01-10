@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 03/11/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 04/01/2018
 
    Dados referentes ao programa:
 
@@ -452,6 +452,16 @@
                03/11/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
                             do periodo de emissao ("1 - Em Aberto") (Carlos)
 
+               
+               20/12/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
+                            do periodo, sem essa validacao esta sendo feito um loop
+                            entre duas datas vazias, com isso o loop nao para de 
+                            executar (Douglas - Chamado 807531)
+
+               04/01/2018 - Ajuste na verifica-rollout para utilizar a procedure pc_verifica_rollout,
+                            ao invés de executar "SELECT NPCB0001.fn_verifica_rollout FROM DUAL", pois
+                            a execucao dessa funcao atraves de SELECT deixa o cursor aberto na sessao
+                            do Oracle (Douglas - Chamado 824704)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -2147,6 +2157,40 @@ PROCEDURE consulta-bloqueto.
          WHEN 7 THEN                             /* Por Periodo */
                 DO:
                     
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+                    
+                            {sistema/generico/includes/b1wgen0001.i}
+                    
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     FOR EACH crapcco WHERE 
                              crapcco.cdcooper = p-cdcooper
                              NO-LOCK
@@ -2489,11 +2533,34 @@ PROCEDURE consulta-bloqueto.
          WHEN 9 THEN      /* Por Vencimento 1 - Em Aberto */
                 DO:
 
-                    /* Validar Data Emissao */
-                    IF p-ini-emissao = ? OR p-fim-emissao = ? THEN
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
                     DO:
-                        ASSIGN i-cod-erro = 13 
-                               c-dsc-erro = " ".
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                    DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
 
                         {sistema/generico/includes/b1wgen0001.i}
 
@@ -2566,6 +2633,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 10 THEN      /* Por Data de Baixa - 2 - Baixado */
                 DO:
+                
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.                
+                
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2626,6 +2728,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 11 THEN      /* Por Data de Liquidacao - 3 - Liquidado */
                 DO:
+                    
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     ASSIGN aux_nrregist = 0.
                     
                         FOR EACH crapcco WHERE 
@@ -2689,6 +2826,41 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 12 THEN      /* Por Data de Emissao - 4 - Rejeitado */
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                
+                
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2752,6 +2924,40 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 13 THEN      /* Por Data de Movimentacao Cartoraria - 5 - Cartoraria*/
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                    
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2809,6 +3015,40 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 14 THEN  /* Relatorio Francesa - Com Registro */
                 DO:
+                    /* Validar se o periodo foi informado */
+                    IF  p-ini-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Inicial nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-fim-emissao = ? THEN 
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data Final nao informada"
+                                   par_nmdcampo = "inidtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+
+                    IF  p-ini-emissao > p-fim-emissao THEN
+                        DO:
+                            ASSIGN i-cod-erro = 0 
+                                   c-dsc-erro = "Data inicial maior que data final"
+                                   par_nmdcampo = "fimdtmvt".
+           
+                            {sistema/generico/includes/b1wgen0001.i}
+
+                            RETURN "NOK".
+                        END.
+                
 					
                     ASSIGN aux_nrregist = 0.
 
@@ -8776,22 +9016,22 @@ PROCEDURE verifica-rollout:
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
        
-        RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
-                           aux_ponteiro = PROC-HANDLE
-                           ("SELECT npcb0001.fn_verifica_rollout(" + STRING(par_cdcooper) + /* Cooperativa */
-                                                                       ",to_date('" + STRING(par_dtmvtolt) + "', 'DD/MM/RRRR')" + /* Data de movimento */
-                                                                       "," + REPLACE(STRING(par_vltitulo),",",".") + /* Vl. do Título */                                                                      
-                                                                       ",2" +                       /* Tipo de regra de rollout(1-registro,2-pagamento)  */
-                                                                       ") FROM dual").
-        
-        FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
-           ASSIGN par_rollout = INT(proc-text).
-        END.
+    RUN STORED-PROCEDURE pc_verifica_rollout
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper, /* Cooperativa */ 
+                                  INPUT STRING(par_dtmvtolt),  /* Data de movimento */
+                                  INPUT par_vltitulo, /* Vl. do Título */
+                                  INPUT 2, /* Tipo de regra de rollout(1-registro,2-pagamento)  */
+                                 OUTPUT 0). /* Está no Rollout */
        
-        CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
-           WHERE PROC-HANDLE = aux_ponteiro.
+    CLOSE STORED-PROC pc_verifica_rollout
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
         
        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }    
+
+    ASSIGN par_rollout = 0
+           par_rollout = pc_verifica_rollout.pr_rollout
+                           WHEN pc_verifica_rollout.pr_rollout <> ?.
 
     RETURN "OK".
 

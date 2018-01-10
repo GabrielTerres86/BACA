@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 01/09/2017
+   Data    : Novembro/98                     Ultima atualizacao: 03/11/2017
 
    Dados referentes ao programa:
 
@@ -565,10 +565,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
                             PRJ300-Desconto de cheque(Odirlei-AMcom)
                             
-               21/06/2017 - Ajuste devido a descontinuação de históricos contábil de capital e depósitos a devolver                              
-                            (Jonata - RKAM P364).
-
-                            
                10/07/2017 - Ajuste na geração de lançamento contábil de receita de recarga de 
                             celular - SD 707484 - (Jonatas - Supero) 
 
@@ -590,7 +586,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
+               03/11/2017 - Melhorias performance, padronização
+                            (Ana Volles - Envolti - Chamado 734422)
 ............................................................................ */
+
+  --Melhorias performance - Chamado 734422
+  type crapcdb_rec is record (vlcheque crapcdb.vlcheque%type,
+                              vlliquid crapcdb.vlliquid%type,
+                              nrdconta crapcdb.nrdconta%type,
+                              nrborder crapcdb.nrborder%type,
+                              cdagenci crapcdb.cdagenci%type,
+                              nrcheque crapcdb.nrcheque%type,
+                              inchqcop crapcdb.inchqcop%type);
+
+  type tab_crapcdb_rec is table of crapcdb_rec index by binary_integer;
+  rw_crapcdb tab_crapcdb_rec;
 
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -1061,11 +1071,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- Informações do associado
   cursor cr_crapass (pr_cdcooper in crapass.cdcooper%type,
                      pr_nrdconta in crapass.nrdconta%type) is
-    select cdagenci,
-           inpessoa,
-           dtdemiss
-      from crapass
-     where crapass.cdcooper = pr_cdcooper
+    select crapass.cdagenci,
+           crapass.inpessoa,
+           crapass.dtdemiss,
+           crapage.insitage
+      from crapass,
+           crapage
+     where crapass.cdcooper = crapage.cdcooper
+       and crapass.cdagenci = crapage.cdagenci
+       and crapass.cdcooper = pr_cdcooper
        and crapass.nrdconta = pr_nrdconta;
   rw_crapass     cr_crapass%rowtype;
   -- Borderôs de desconto de títulos
@@ -1646,6 +1660,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      order by craplft.cdempcon,
               craplft.cdsegmto,
               craplft.cdagenci;
+
+  TYPE typ_cr_craplft IS TABLE OF cr_craplft%ROWTYPE index by binary_integer;
+  rw_craplft  typ_cr_craplft;
+
   -- Convênio Sicredi
   cursor cr_crapscn2 (pr_cdempres in crapscn.cdempres%type) is
     select crapscn.cdempres,
@@ -2336,6 +2354,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   
   -- Arquivo texto
   vr_arquivo_txt         utl_file.file_type;
+
+  -- Variáveis para processamento do cursor cr_craprda
+  vr_cdagenci_index      NUMBER;
   -- Variáveis para processamento do cursor cr_craprej
   vr_nrctacrd            craphis.nrctacrd%type;
   vr_nrctadeb            craphis.nrctadeb%type;
@@ -2483,6 +2504,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                         ,pr_inpessoa IN NUMBER
                         ,pr_inputfile IN OUT NOCOPY UTL_FILE.file_type) IS       
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_set_linha', pr_action => NULL);
     -- Gravas as informacoes de valores por agencia
     FOR vr_idx_agencia IN vr_arq_op_cred(pr_cdarquiv).FIRST..vr_arq_op_cred(pr_cdarquiv).LAST LOOP
 
@@ -2533,6 +2556,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   PROCEDURE pc_cria_agencia_pltable (pr_agencia   IN crapage.cdagenci%TYPE
                                     ,pr_cdarquiv  IN PLS_INTEGER) IS
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_cria_agencia_pltable', pr_action => NULL);
     -- Se não há o registro da agencia na tabela de memória
     if not vr_tab_agencia.exists(pr_agencia) then
       vr_tab_agencia(pr_agencia).vr_qttottrf := 0;
@@ -2569,8 +2594,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           vr_arq_op_cred(pr_cdarquiv)(pr_agencia)(2) := 0; -- Pessoa Juridica
        END IF;
     END IF;
-    
   end;
+
   -- Insere dados de operações contábeis
   procedure pc_grava_crapopc (pr_cdcooper in crapopc.cdcooper%type,
                               pr_dtrefere in crapopc.dtrefere%type,
@@ -2583,6 +2608,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                               pr_cdtipope in crapopc.cdtipope%type,
                               pr_cdprogra in crapopc.cdprogra%type) IS
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_grava_crapopc', pr_action => NULL);
+
     -- Gravar Dados de Operacoes Contabeis
     INSERT INTO crapopc(cdcooper,
                         dtrefere,
@@ -2606,14 +2634,67 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                         Lower(pr_cdprogra));
   EXCEPTION
     WHEN OTHERS THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao inserir crapopc para o cheque '||pr_nrdocmto||
-                     ', borderô '||pr_nrborder||
-                     ', agência '||pr_cdagenci||
-                     ', conta '||pr_nrdconta||
-                     ': '||sqlerrm;
+      --Inclusão na tabela de erros Oracle - Chamado 734422
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+      vr_cdcritic := 1034;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapopc para o cheque:'||pr_nrdocmto||
+                     '. cdcooper:'||pr_cdcooper||', dtrefere:'||pr_dtrefere||
+                     ', dconta:'||pr_nrdconta||', tpregist:'||pr_tpregist||
+                     ', borderô:'||pr_nrborder||', agência:'||pr_cdagenci||
+                     ', vldocmto:'||pr_vldocmto||', cdtipope:'||pr_cdtipope||
+                     ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
       RAISE vr_exc_saida;
   END;
+
+	--Melhorias performance - Chamado 734422
+  --Insere dados de operações contábeis
+  procedure pc_grava_crapopc_bulk (pr_cdcooper in crapopc.cdcooper%type,
+                              pr_dtrefere in crapopc.dtrefere%type,
+                              rw_crapcdb  in tab_crapcdb_rec,
+                              pr_tpregist in crapopc.tpregist%type,
+                              pr_cdtipope in crapopc.cdtipope%type,
+                              pr_cdprogra in crapopc.cdprogra%type) IS
+  BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_grava_crapopc_bulk', pr_action => NULL);
+
+    forall i in 1 .. rw_crapcdb.count
+
+    -- Gravar Dados de Operacoes Contabeis
+    INSERT INTO crapopc(cdcooper,
+                        dtrefere,
+                        nrdconta,
+                        tpregist,
+                        nrborder,
+                        cdagenci,
+                        nrdocmto,
+                        vldocmto,
+                        cdtipope,
+                        cdprogra)
+                values (pr_cdcooper,
+                        pr_dtrefere,
+                        rw_crapcdb(i).nrdconta,
+                        pr_tpregist,
+                        rw_crapcdb(i).nrborder,
+                        rw_crapcdb(i).cdagenci,
+                        rw_crapcdb(i).nrcheque,
+                        rw_crapcdb(i).vlcheque,
+                        pr_cdtipope,
+                        Lower(pr_cdprogra));
+  EXCEPTION
+    WHEN OTHERS THEN
+      --Inclusão na tabela de erros Oracle - Chamado 734422
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+      vr_cdcritic := 1034;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapopc '||'para o cheque:'||rw_crapcdb(rw_crapcdb.count).nrcheque||
+                     ' cdcooper:'||pr_cdcooper||', dtrefere:'||pr_dtrefere||
+                     ', nrdconta:'||rw_crapcdb(rw_crapcdb.count).nrdconta||', tpregist:'||pr_tpregist||
+                     ', borderô:'||rw_crapcdb(rw_crapcdb.count).nrborder||', agência:'||rw_crapcdb(rw_crapcdb.count).cdagenci||
+                     ', vldocmto:'||rw_crapcdb(rw_crapcdb.count).vlcheque||', cdtipope:'||pr_cdtipope||
+                     ', cdprogra:'||Lower(pr_cdprogra)||'. '||sqlerrm;
+      RAISE vr_exc_saida;
+  END pc_grava_crapopc_bulk;
+
   -- Insere linhas de orçamento no arquivo
   procedure pc_proc_lista_orcamento is
     vr_ger_dsctaorc    varchar2(50);
@@ -2621,6 +2702,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_dtmvto          date;
     vr_indice_agencia  crapass.cdagenci%type;
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_proc_lista_orcamento', pr_action => NULL);
     -- Se o valor total for igual a zero
     if vr_vltotorc = 0 then
       return;
@@ -2737,6 +2820,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     rw_crapsda      cr_crapsda%rowtype;
 
   begin
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_proc_saldo_dep_vista', pr_action => NULL);
     -- Buscar o saldo diário dos associados
     open cr_crapsda (pr_cdcooper,
                      pr_nrdconta,
@@ -2810,6 +2895,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                     pr_vlretorn in crapprb.vlretorn%type) is
     vr_cddprazo    crapprb.cddprazo%type;
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_proc_insere_crapprb', pr_action => NULL);
     -- Verifica o código de prazo conforme o parametro
     case pr_cddprazo
       when 1  then vr_cddprazo := 90;
@@ -2854,11 +2941,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                        '** Prazos retorno do BNDES ja'' existe com Codigo da Cooperativa 3 Data '||to_char(pr_dtmvtolt, 'dd/mm/yy')||
                                        ' Origem 4 conta/dv '||rw_crapcop.nrctactl||' Prazo '||vr_cddprazo||'. (132)');
       when others then
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao inserir CRAPPRB: '||sqlerrm;
+        --Inclusão na tabela de erros Oracle - Chamado 734422
+        CECRED.pc_internal_exception(pr_cdcooper => 3);                                                             
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapprb. cdcooper:3, dtmvtolt: '||pr_dtmvtolt||
+                       ', cdorigem:4, nrdconta:'||rw_crapcop.nrctactl||', cddprazo:'||vr_cddprazo||
+                       ', vlretorn:'||pr_vlretorn||'. '||sqlerrm;
         raise vr_exc_saida;
     end;
   end;
+
   -- Procedimento mensal
   procedure pc_proc_cbl_mensal (pr_cdcooper in craptab.cdcooper%type) is
     -- Juros de descontos de cheques
@@ -3234,18 +3326,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        GROUP BY crapass.cdagenci
                ,DECODE(crapass.inpessoa,3,2,crapass.inpessoa)
        ORDER BY crapass.cdagenci;      
-    -- Aplicação RDCA30, RDCA60, RDCPRE
+
+  	--Melhorias performance - Chamado 734422
+    --Juncao dos cursores cr_craprda e cr_crapass
+    -- Aplicação RDCA30, RDCA60, RDCPRE e Informações do associado
     cursor cr_craprda (pr_cdcooper in craprda.cdcooper%type,
                        pr_tpaplica in craprda.tpaplica%type) is
       select /*+ index (craprda craprda##craprda2)*/
-             craprda.nrdconta,
+             crapass.cdagenci cdagenci,
              sum(craprda.vlslfmes) vlslfmes
-        from craprda
-       where craprda.cdcooper = pr_cdcooper
+        from craprda, crapass
+       where craprda.nrdconta = crapass.nrdconta
+         and craprda.cdcooper = crapass.cdcooper
          and craprda.tpaplica = pr_tpaplica
-         -- and craprda.vlslfmes > 0 -- Comentado devido a erros no relatório de Razão Contábil (Renato-Supero-06/11/2015)
-       group by craprda.nrdconta
-       order by craprda.nrdconta;
+         and crapass.cdcooper = pr_cdcooper
+       group by crapass.cdagenci
+       order by crapass.cdagenci;
+
+    TYPE typ_cr_craprda IS TABLE OF cr_craprda%ROWTYPE index by binary_integer;
+    rw_craprda typ_cr_craprda;
+    --
+
     -- Desconto de cheques
     cursor cr_craprpp (pr_cdcooper in craprpp.cdcooper%type,
                        pr_dtslfmes in craprpp.dtslfmes%type) is
@@ -3278,11 +3379,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_dtrefere            date;
 
   BEGIN
+
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_proc_cbl_mensal', pr_action => NULL);
+
     -- Apropriacao da receita de desconto de cheques ..................
     vr_tab_agencia.delete;
     vr_dtrefere := last_day(vr_dtmvtolt);
     --
     pc_cria_agencia_pltable(999,15); -- 15 - APROPRIACAO RECEITA DE CHEQUE RECEBIDO PARA DESCONTO
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
     -- Buscar juros de descontos de cheques
     FOR rw_crapljd IN cr_crapljd (pr_cdcooper,
@@ -3294,6 +3401,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         FETCH cr_crapass INTO rw_crapass;
 
         pc_cria_agencia_pltable(rw_crapass.cdagenci,15);        
+        -- Incluir nome do módulo logado
+        gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
         -- Separando as informacoes em PF e PJ
         IF rw_crapass.inpessoa = 1 THEN
            vr_arq_op_cred(15)(rw_crapass.cdagenci)(1) := vr_arq_op_cred(15)(rw_crapass.cdagenci)(1) + rw_crapljd.vldjuros;
@@ -3400,6 +3509,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     --
     pc_cria_agencia_pltable(999,12); -- 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO
     pc_cria_agencia_pltable(999,13); -- 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     -- Buscar os juros de descontos de títulos
     for rw_crapljt in cr_crapljt (pr_cdcooper,
                                   vr_dtrefere) loop
@@ -3462,12 +3573,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               fetch cr_crapcob into rw_crapcob;
               -- Se naum encontrar titulo em desconto
               if cr_crapcob%notfound then
-                vr_dscritic := 'Titulo em desconto nao encontrado no crapcob - ROWID(craptdb) = '||to_char(rw_craptdb6.rowid);
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                           pr_ind_tipo_log => 2, -- Erro tratado
-                                           pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                              || vr_cdprogra || ' --> '
-                                                              || vr_dscritic);
+                vr_cdcritic := 1033;
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||to_char(rw_craptdb6.rowid);
+                btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                          ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                          ,pr_nmarqlog      => 'proc_batch.log'
+                                          ,pr_tpexecucao    => 1 -- Job
+                                          ,pr_cdcriticidade => 1 -- Medio
+                                          ,pr_cdmensagem    => vr_cdcritic
+                                          ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '|| vr_dscritic);
                 close cr_craptdb6;
                 close cr_crapcob;
                 continue;
@@ -3476,6 +3591,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
             --
             pc_cria_agencia_pltable(rw_crapass.cdagenci,12);
             pc_cria_agencia_pltable(rw_crapass.cdagenci,13);
+            -- Incluir nome do módulo logado
+            gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
             IF rw_crapcob.flgregis = 1 THEN
 
                -- Separando as informacoes por agencia e por tipo de pessoa
@@ -3514,12 +3631,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               fetch cr_crapcob into rw_crapcob;
               -- Se naum encontrar titulo em desconto
               if cr_crapcob%notfound then
-                vr_dscritic := 'Titulo em desconto nao encontrado no crapcob - ROWID(crapljt) = '||to_char(rw_crapljt.rowid);
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                           pr_ind_tipo_log => 2, -- Erro tratado
-                                           pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                              || vr_cdprogra || ' --> '
-                                                              || vr_dscritic);
+                vr_cdcritic := 1033;
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(crapljt) = '||to_char(rw_crapljt.rowid);
+                btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                          ,pr_ind_tipo_log  => 2 -- Erro de Negócio
+                                          ,pr_nmarqlog      => 'proc_batch.log'
+                                          ,pr_tpexecucao    => 1 -- Job
+                                          ,pr_cdcriticidade => 1 -- Medio
+                                          ,pr_cdmensagem    => vr_cdcritic
+                                          ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '|| vr_dscritic);
                 close cr_craptdb6;
                 close cr_crapcob;
                 continue;
@@ -3528,6 +3649,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
             --
             pc_cria_agencia_pltable(rw_crapass.cdagenci,12);
             pc_cria_agencia_pltable(rw_crapass.cdagenci,13);
+            -- Incluir nome do módulo logado
+            gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
             IF rw_crapcob.flgregis = 1 THEN
 
                -- Separando as informacoes por agencia e por tipo de pessoa
@@ -3723,11 +3846,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     end if;
 */
     -- Contabilizacao para orcamento (Realizado)............................
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+    vr_cdcritic := 0;
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                              ,pr_ind_tipo_log  => 1 -- Informação
+                              ,pr_nmarqlog      => 'proc_batch.log'
+                              ,pr_tpexecucao    => 1 -- Job
+                              ,pr_cdcriticidade => 0 -- Baixa
+                              ,pr_cdmensagem    => vr_cdcritic
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                   || vr_cdprogra || ' --> '
                                                   || 'Inicio da contabilizacao para o orcamento (realizado)');
+
     -- Capital .............................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -3808,6 +3937,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     pc_proc_lista_orcamento;
     -- Emprestimos 0229 ....................................................
     pc_cria_agencia_pltable(999,3);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     -- Buscar dados do controle das informacoes da central de risco
@@ -3831,6 +3962,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       end loop;
       --
       pc_cria_agencia_pltable(rw_crapris.cdagenci,3);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
          vr_arq_op_cred(3)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(3)(rw_crapris.cdagenci)(1) + vr_vlstotal;
@@ -3862,6 +3995,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     pc_proc_lista_orcamento;
     -- Financiamentos ......................................................
     pc_cria_agencia_pltable(999,4);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     -- Buscar o vencimento do risco
@@ -3899,6 +4034,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       end loop;
       --
       pc_cria_agencia_pltable(rw_crapris.cdagenci,4);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
          vr_arq_op_cred(4)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(4)(rw_crapris.cdagenci)(1) + vr_vlstotal;
@@ -3961,6 +4098,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
     /* Emprestimo - PREFIXADO .............................................. */
     pc_cria_agencia_pltable(999,5);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     FOR rw_crapris in cr_crapris (pr_cdcooper,
@@ -3983,6 +4122,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       END LOOP;
       --
       pc_cria_agencia_pltable(rw_crapris.cdagenci,5);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
          vr_arq_op_cred(5)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(5)(rw_crapris.cdagenci)(1) + vr_vlstotal;
@@ -4015,6 +4156,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
     /* Financiamentos - PREFIXADO .............................................. */
     pc_cria_agencia_pltable(999,6);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     -- Percorrer vencimentos do risco
@@ -4050,6 +4193,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         END IF;
       END LOOP;
       pc_cria_agencia_pltable(rw_crapris.cdagenci,6);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapris.inpessoa = 1 THEN
          vr_arq_op_cred(6)(rw_crapris.cdagenci)(1) := vr_arq_op_cred(6)(rw_crapris.cdagenci)(1) + vr_vlstotal;
@@ -4267,6 +4412,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     pc_proc_lista_orcamento;
     -- Desconto de Cheques .................................................
     pc_cria_agencia_pltable(999,2);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
     for rw_crapcdb4 in cr_crapcdb4 (pr_cdcooper => pr_cdcooper,
@@ -4279,6 +4426,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       close cr_crapass;
       --
       pc_cria_agencia_pltable(rw_crapass.cdagenci,2);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       -- Separando as informacoes por agencia e tipo de pessoa
       IF rw_crapass.inpessoa = 1 THEN
          vr_arq_op_cred(2)(rw_crapass.cdagenci)(1) := vr_arq_op_cred(2)(rw_crapass.cdagenci)(1) + rw_crapcdb4.vlcheque;
@@ -4569,17 +4718,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Aplicacao RDCA30 ....................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
-    for rw_craprda in cr_craprda (pr_cdcooper,
-                                  3) loop
-      open cr_crapass (pr_cdcooper,
-                       rw_craprda.nrdconta);
-        fetch cr_crapass into rw_crapass;
-      close cr_crapass;
+
+    --Junção cursores cr_craprda e cr_crapass - Chamado 734422, utilização bulk collection
+    open cr_craprda(pr_cdcooper
+                   ,3);
+    loop
+      --joga dados do cursor na variável de 5000 em 5000
+      fetch cr_craprda bulk collect into rw_craprda limit 5000;
+
+      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+      for i in 1..rw_craprda.count loop
+        --guarda o indexador em variável para ficar mais claro
+        vr_cdagenci_index := rw_craprda(i).cdagenci;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+        vr_tab_cratorc(vr_cdagenci_index).vr_cdagenci := vr_cdagenci_index;
+        vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto := nvl(vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto, 0) + rw_craprda(i).vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda(i).vlslfmes;
     end loop;
+      exit when cr_craprda%rowcount <= 5000;
+    end loop;
+    close cr_craprda;
+    --
+    
     --
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := true;  -- Conta do PASSIVO
@@ -4599,18 +4759,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Aplicacao RDCA60 ....................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
-    -- Percorrer as aplicacoes RDCA.
-    for rw_craprda in cr_craprda (pr_cdcooper,
-                                  5) loop
-      open cr_crapass (pr_cdcooper,
-                       rw_craprda.nrdconta);
-        fetch cr_crapass into rw_crapass;
-      close cr_crapass;
+
+    --Junção cursores cr_craprda e cr_crapass - Chamado 734422, utilização bulk collection
+    open cr_craprda(pr_cdcooper
+                   ,5);
+    loop
+      --joga dados do cursor na variável de 5000 em 5000
+      fetch cr_craprda bulk collect into rw_craprda limit 5000;
+
+      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+      for i in 1..rw_craprda.count loop
+        --guarda o indexador em variável para ficar mais claro
+        vr_cdagenci_index := rw_craprda(i).cdagenci;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+        vr_tab_cratorc(vr_cdagenci_index).vr_cdagenci := vr_cdagenci_index;
+        vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto := nvl(vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto, 0) + rw_craprda(i).vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda(i).vlslfmes;
     end loop;
+      exit when cr_craprda%rowcount <= 5000;
+    end loop;
+    close cr_craprda;
+    --
+    
     --
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := true;  -- Conta do PASSIVO
@@ -4630,18 +4800,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Aplicacao RDCPRE ....................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
-    -- Percorrer as aplicacoes RDCA.
-    for rw_craprda in cr_craprda (pr_cdcooper,
-                                  7) loop
-      open cr_crapass (pr_cdcooper,
-                       rw_craprda.nrdconta);
-        fetch cr_crapass into rw_crapass;
-      close cr_crapass;
+    
+    --Junção cursores cr_craprda e cr_crapass - Chamado 734422, utilização bulk collection
+    open cr_craprda(pr_cdcooper
+                   ,7);
+    loop
+      --joga dados do cursor na variável de 5000 em 5000
+      fetch cr_craprda bulk collect into rw_craprda limit 5000;
+ 
+      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+      for i in 1..rw_craprda.count loop
+        --guarda o indexador em variável para ficar mais claro
+        vr_cdagenci_index := rw_craprda(i).cdagenci;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+        vr_tab_cratorc(vr_cdagenci_index).vr_cdagenci := vr_cdagenci_index;
+        vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto := nvl(vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto, 0) + rw_craprda(i).vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda(i).vlslfmes;
     end loop;
+      exit when cr_craprda%rowcount <= 5000;
+    end loop;
+    close cr_craprda;
+    --
+
     --
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := true;  -- Conta do PASSIVO
@@ -4672,25 +4852,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
          and craprda.vlslfmes <> 0;
     exception
       when others then
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar CRAPRDA para RDCPRE, coop '||pr_cdcooper||': '||sqlerrm;
+        --Inclusão na tabela de erros Oracle - Chamado 734422
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craprda para RDCPRE.'||
+                       ' dtsdfmes = NULL, vlslfmes:0 com cdcooper:'||pr_cdcooper||
+                       ', tpaplica:7, insaqtot:1, vlslfmes <> 0. '||sqlerrm;
         raise vr_exc_saida;
     end;
     -- Aplicacao RDCPOS ....................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
-    -- Percorrer as aplicacoes RDCA.
-    for rw_craprda in cr_craprda (pr_cdcooper,
-                                  8) loop
-      open cr_crapass (pr_cdcooper,
-                       rw_craprda.nrdconta);
-        fetch cr_crapass into rw_crapass;
-      close cr_crapass;
+    
+    --Junção cursores cr_craprda e cr_crapass - Chamado 734422, utilização bulk collection
+    open cr_craprda(pr_cdcooper
+                   ,8);
+    loop
+      --joga dados do cursor na variável de 5000 em 5000
+      fetch cr_craprda bulk collect into rw_craprda limit 5000;
+ 
+      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+      for i in 1..rw_craprda.count loop
+        --guarda o indexador em variável para ficar mais claro
+        vr_cdagenci_index := rw_craprda(i).cdagenci;
       --
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_cdagenci := rw_crapass.cdagenci;
-      vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapass.cdagenci).vr_vllanmto, 0) + rw_craprda.vlslfmes;
-      vr_vltotorc := vr_vltotorc + rw_craprda.vlslfmes;
+        vr_tab_cratorc(vr_cdagenci_index).vr_cdagenci := vr_cdagenci_index;
+        vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto := nvl(vr_tab_cratorc(vr_cdagenci_index).vr_vllanmto, 0) + rw_craprda(i).vlslfmes;
+        vr_vltotorc := vr_vltotorc + rw_craprda(i).vlslfmes;
     end loop;
+      exit when cr_craprda%rowcount <= 5000;
+    end loop;
+    close cr_craprda;
+    --
+    
     --
     vr_flgrvorc := false; -- Lancamento do dia
     vr_flgctpas := true;  -- Conta do PASSIVO
@@ -4721,8 +4915,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
          AND craprda.vlslfmes <> 0;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar CRAPRDA para RDCPOS, coop '||pr_cdcooper||': '||sqlerrm;
+        --Inclusão na tabela de erros Oracle - Chamado 734422
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craprda para RDCPOS.'||
+                       ' dtsdfmes = NULL, vlslfmes:0 com cdcooper:'||pr_cdcooper||
+                       ', tpaplica:8, insaqtot:1, vlslfmes <> 0. '||sqlerrm;
         RAISE vr_exc_saida;
     END;
     -- Poupança Programada .................................................
@@ -4791,8 +4989,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                AND craprac.nraplica = rw_craprac.nraplica;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar CRAPRAC para '|| rw_crapcpc.nmprodut ||', coop '||pr_cdcooper||': '||sqlerrm;
+              --Inclusão na tabela de erros Oracle - Chamado 734422
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+              vr_cdcritic := 1035;
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craprac para '||rw_crapcpc.nmprodut||
+                             ', idcalorc:1 com cdcooper:'||pr_cdcooper||', nrdconta:'||rw_craprac.nrdconta||
+                             ', tpaplica:'||rw_craprac.nraplica||'. '||sqlerrm;
+
               RAISE vr_exc_saida;
           END;
         END IF;  
@@ -4818,12 +5021,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     END LOOP;
     
     --
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+    -- Contabilizacao para orcamento (Realizado)............................
+    vr_cdcritic := 0;
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                              ,pr_ind_tipo_log  => 1 -- Informação
+                              ,pr_nmarqlog      => 'proc_batch.log'
+                              ,pr_tpexecucao    => 1 -- Job
+                              ,pr_cdcriticidade => 0 -- Baixa
+                              ,pr_cdmensagem    => vr_cdcritic
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                   || vr_cdprogra || ' --> '
                                                   || 'Final da contabilizacao para o orcamento (realizado)');
   end;
+
   -- Geracao de Arquivo AAMMDD_OP_CRED.txt - Processo mensal
   PROCEDURE pc_gera_arq_op_cred (pr_dscritic OUT VARCHAR2) IS
 
@@ -4845,6 +5055,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
+        -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_inicia_historico', pr_action => NULL);
         vr_tab_historico.DELETE;
 
         -- removido do trecho fixo de código para tabela de memoria
@@ -5155,6 +5367,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico_mic IS
      BEGIN
+        -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_inicia_historico_mic', pr_action => NULL);
         vr_tab_historico_mic.DELETE;
 
         vr_tab_historico_mic(0098).nrctaori_fis := 7141;
@@ -5238,6 +5452,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    END;  
 
   BEGIN
+    -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+    GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_gera_arq_op_cred', pr_action => NULL);
+
      -- Inicia Variavel
      pr_dscritic := NULL;
      
@@ -6274,7 +6491,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                       
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
-
                        WHILE vr_index IS NOT NULL LOOP
 
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -6549,8 +6765,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
      EXCEPTION
         WHEN OTHERS THEN
+         --Inclusão na tabela de erros Oracle - Chamado 734422
+         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
         -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-        vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||'>: ' || SQLERRM;
+         vr_cdcritic := 1039;
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||'>: ' || SQLERRM;
         RAISE vr_exc_erro;
      END;
      
@@ -6558,12 +6777,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      vr_tab_historico.DELETE;
      vr_arq_op_cred.DELETE;
      
-
   EXCEPTION
      WHEN vr_exc_erro THEN
         NULL;
      WHEN OTHERS THEN
-        pr_dscritic := 'Nao foi possivel gerar o arquivo AAMMDD_OP_CRED.txt. Erro: '||SQLERRM;
+       --Inclusão na tabela de erros Oracle - Chamado 734422
+       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+       vr_cdcritic := 1044;
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' AAMMDD_OP_CRED.txt. Erro: '|| SQLERRM;
   END;
 
   --
@@ -6578,10 +6799,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      -- Variavel de Exception
      vr_exc_erro EXCEPTION;
      
-     
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico_prejuizo IS
      BEGIN
+        -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_inicia_historico_prejuizo', pr_action => NULL);
         vr_tab_historico.DELETE;
 
         vr_tab_historico(0349).nrctaori_fis := 8447;
@@ -6615,6 +6837,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      END;  
 
   BEGIN
+     -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+     GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_gera_arq_prejuizo', pr_action => NULL);
+     
      -- Inicia Variavel
      pr_dscritic := NULL;
         
@@ -6732,12 +6957,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
        EXCEPTION
           WHEN OTHERS THEN
+          --Inclusão na tabela de erros Oracle - Chamado 734422
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
           -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-          vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
+          vr_cdcritic := 1039;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
           RAISE vr_exc_erro;
        END;
      
-
        vr_nmarqdat_prejuizo_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_PREJUIZO.txt';
 
        -- Copia o arquivo gerado para o diretório final convertendo para DOS
@@ -6746,7 +6973,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                    pr_des_saida   => vr_dscritic);
        -- Testar erro
        if vr_typ_said = 'ERR' then
-         gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_prejuizo||': '||vr_dscritic);
+         vr_cdcritic := 1040;
+         gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat_prejuizo||': '||vr_dscritic);
        end if;   
        
                  END IF;
@@ -6754,14 +6982,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      -- Limpa Pl-Table
      vr_tab_historico.DELETE;
      
-
   EXCEPTION
      WHEN vr_exc_erro THEN
         NULL;
      WHEN OTHERS THEN
-        pr_dscritic := 'Nao foi possivel gerar o arquivo AAMMDD_PREJUIZO.txt. Erro: '||SQLERRM;
+       --Inclusão na tabela de erros Oracle - Chamado 734422
+       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+       vr_cdcritic := 1044;
+       pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' AAMMDD_PREJUIZO.txt. Erro: '|| SQLERRM;
   END;
-
 
   PROCEDURE pc_gera_arq_tarifasbb (pr_dscritic OUT VARCHAR2) IS
 
@@ -6775,6 +7004,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      vr_exc_erro EXCEPTION;
      
   BEGIN
+     -- Inclusão do módulo e ação logado - Chamado 734422 - 03/11/2017
+     GENE0001.pc_set_modulo(pr_module => 'PC_CRPS249.pc_gera_arq_tarifasbb', pr_action => NULL);
+     
      -- Inicia Variavel
      pr_dscritic := NULL;
 
@@ -7153,12 +7385,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
      EXCEPTION
         WHEN OTHERS THEN
+        --Inclusão na tabela de erros Oracle - Chamado 734422
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
         -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-          vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
+        vr_cdcritic := 1039;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_nom_diretorio||'/'||vr_nmarqdat_prejuizo||'>: ' || SQLERRM;
         RAISE vr_exc_erro;
      END;
      
-
        vr_nmarqdat_tarifasbb_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_TARIFASBB.txt';
 
        -- Copia o arquivo gerado para o diretório final convertendo para DOS
@@ -7167,7 +7401,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                    pr_des_saida   => vr_dscritic);
        -- Testar erro
        if vr_typ_said = 'ERR' then
-         gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_tarifasbb||': '||vr_dscritic);
+         vr_cdcritic := 1040;
+         gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat_tarifasbb||': '||vr_dscritic);
        end if;   
        
      END IF;     
@@ -7175,14 +7410,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      -- Limpa Pl-Table
      vr_tab_historico.DELETE;
      
-
   EXCEPTION
      WHEN vr_exc_erro THEN
         NULL;
      WHEN OTHERS THEN
-        pr_dscritic := 'Nao foi possivel gerar o arquivo AAMMDD_PREJUIZO.txt. Erro: '||SQLERRM;
+       --Inclusão na tabela de erros Oracle - Chamado 734422
+       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+       pr_dscritic := gene0001.fn_busca_critica(1050)||' AAMMDD_PREJUIZO.txt. Erro: '||SQLERRM;
   END;
-
 
 
   -------------------------------------
@@ -7195,10 +7430,10 @@ BEGIN
   vr_cdprogra := 'CRPS249';
 
    -- Incluir nome do módulo logado
-  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249',
-                             pr_action => vr_cdprogra);
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
   -- Validações iniciais do programa
+  vr_cdcritic := 0;
   btch0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                            ,pr_flgbatch => 1
                            ,pr_cdprogra => vr_cdprogra
@@ -7260,20 +7495,25 @@ BEGIN
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de tarifa não encontrado para histórico '||rw_craphis.cdhistor||' - crapthi';
+        vr_cdcritic := 1041;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico '||rw_craphis.cdhistor||' - crapthi';
         -- Gera a mensagem de erro no log e não prossegue a rotina.
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '||vr_dscritic);
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                  ,pr_ind_tipo_log  => 2 -- Erro de Negócio
+                                  ,pr_nmarqlog      => 'proc_batch.log'
+                                  ,pr_tpexecucao    => 1 -- Job
+                                  ,pr_cdcriticidade => 1 -- Medio
+                                  ,pr_cdmensagem    => vr_cdcritic
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                      ||vr_cdprogra||' --> '||vr_dscritic);
         return;
       end if;
     close cr_crapthi;
     --
+    
     if rw_craphis.tpctbcxa > 3 then -- banco do brasil
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_3',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_3', pr_action => vr_cdprogra);
       pc_crps249_3(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
@@ -7281,12 +7521,10 @@ BEGIN
                    vr_cdcritic,
                    vr_dscritic);
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     elsif rw_craphis.nmestrut = 'CRAPLFT' then
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_2',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_2', pr_action => vr_cdprogra);
       pc_crps249_2(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
@@ -7295,12 +7533,10 @@ BEGIN
                    vr_cdcritic,
                    vr_dscritic);
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     elsif rw_craphis.nmestrut = 'CRAPTVL' then
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_4',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_4', pr_action => vr_cdprogra);
       pc_crps249_4(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
@@ -7309,15 +7545,10 @@ BEGIN
                    vr_cdcritic,
                    vr_dscritic);
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     else
-      
-
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_1',
-                                 pr_action => vr_cdprogra);
-                                 
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_1', pr_action => vr_cdprogra);
       pc_crps249_1(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
@@ -7328,23 +7559,30 @@ BEGIN
                    vr_cdcritic,
                    vr_dscritic);
       -- Incluir nome do módulo logado
-      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249',
-                                 pr_action => vr_cdprogra);
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end if;
+
     --
     if vr_dscritic is not null then
       RAISE vr_exc_saida;
     end if;
   end loop; -- Fim da leitura da craphis
+
   -- Formata a data para criar o nome do arquivo
   vr_dtmvtolt_yymmdd := to_char(vr_dtmvtolt, 'yymmdd');
+
   -- Leitura das agências e criação da PL/Table
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_crapage in cr_crapage loop
     pc_cria_agencia_pltable(rw_crapage.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_agencia2(rw_crapage.cdagenci).vr_cdccuage := rw_crapage.cdccuage;
     vr_tab_agencia2(rw_crapage.cdagenci).vr_cdcxaage := rw_crapage.cdcxaage;
   end loop;
+
   -- Busca do diretório onde ficará o arquivo
   vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                             pr_cdcooper => pr_cdcooper,
@@ -7356,6 +7594,7 @@ BEGIN
                                           ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
   -- Nome do arquivo a ser gerado
   vr_nmarqdat := vr_dtmvtolt_yymmdd||'.txt';
+
   -- Abre o arquivo para escrita
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
                            pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
@@ -7370,7 +7609,6 @@ BEGIN
   vr_cdhistor := 0;
   vr_dtrefere := 'x';
   vr_vldtotal := 0;
-
 
   -- Leitura dos rejeitados na integração
   for rw_craprej in cr_craprej (pr_cdcooper,vr_cdprogra,vr_dtmvtolt,0) loop
@@ -7446,7 +7684,6 @@ BEGIN
         vr_linhadet := '999,'||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
-
       end if;
       --
       if rw_craprej.ingercre = 2 then
@@ -7483,7 +7720,7 @@ BEGIN
 
           end if;
         end if;
-        --
+
         if rw_craprej.tpctbcxa = 3 then -- POR CAIXA CREDITO
           vr_linhadet := trim(vr_cdestrut)||
                          trim(vr_dtmvtolt_yymmdd)||','||
@@ -7580,7 +7817,6 @@ BEGIN
             vr_linhadet := '999,'||trim(to_char(rw_craprej.vllanmto, '999999990.00'));
             gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
-
           end if;
         end if;
       end if;
@@ -7605,10 +7841,11 @@ BEGIN
     IF cr_craphis2%NOTFOUND THEN
       CLOSE cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := rw_craprej2.cdhistor||' - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := rw_craprej2.cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_saida;
     END IF;
     CLOSE cr_craphis2;
+
     --
     IF rw_craphis2.tpctbcxa > 3 AND
        rw_craprej2.dtrefere <> 'TARIFA' THEN
@@ -7758,13 +7995,14 @@ BEGIN
   IF cr_craphis2%NOTFOUND THEN
     CLOSE cr_craphis2;
     vr_cdcritic := 526;
-    vr_dscritic := '1154 - '||gene0001.fn_busca_critica(526);
+    vr_dscritic := '1154 - '||gene0001.fn_busca_critica(vr_cdcritic);
     RAISE vr_exc_saida;
   END IF;
   CLOSE cr_craphis2;
   --
   vr_nrctacrd := rw_craphis2.nrctacrd;
   vr_cdestrut := '50';
+
   -- Convênio Sicredi
   for rw_crapcon in cr_crapcon (pr_cdcooper) LOOP
     OPEN cr_crapscn(rw_crapcon.cdempcon, rw_crapcon.cdsegmto);
@@ -7791,23 +8029,32 @@ BEGIN
 
     vr_vllanmto_fat := 0;
     vr_qtlanmto_fat := 0;
-    for rw_craplft in cr_craplft (pr_cdcooper,
+    open cr_craplft(pr_cdcooper,
                                   vr_dtmvtolt,
                                   rw_crapcon.cdempcon,
                                   rw_crapcon.cdsegmto,
-                                  rw_crapcon.cdhistor) loop
+                    rw_crapcon.cdhistor);
+    loop
+      --joga dados do cursor na variável de 5000 em 5000
+      fetch cr_craplft bulk collect into rw_craplft limit 5000;
+
+      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+      for i in 1..rw_craplft.count loop
+
       -- Incrementa o contador na pl/table de faturas
-      vr_indice_faturas := to_char(rw_craplft.tpfatura, 'fm0')||to_char(rw_craplft.cdagenci_fatura, 'fm000');
-      vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft.tpfatura;
-      vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft.cdagenci_fatura;
-      vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft.qtlanmto;
+        vr_indice_faturas := to_char(rw_craplft(i).tpfatura, 'fm0')||to_char(rw_craplft(i).cdagenci_fatura, 'fm000');
+        vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft(i).tpfatura;
+        vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft(i).cdagenci_fatura;
+        vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft(i).qtlanmto;
+
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
-      vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;
-      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;
+        vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft(i).vllanmto;
+        vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft(i).qtlanmto;
+
       -- Tratamento para Tarifa
-      if rw_craplft.cdagenci = 90 then
+        if rw_craplft(i).cdagenci = 90 then
         vr_tpdarrec := 'D';
-      elsif rw_craplft.cdagenci = 91 then
+        elsif rw_craplft(i).cdagenci = 91 then
         vr_tpdarrec := 'A';
       else
         vr_tpdarrec := 'C';
@@ -7832,30 +8079,38 @@ BEGIN
                                dtrefere,
                                nrdocmto)
           VALUES (pr_cdcooper,
-                  rw_craplft.cdagenci,
-                  rw_craplft.cdhistor,
+                    rw_craplft(i).cdagenci,
+                    rw_craplft(i).cdhistor,
                   vr_dtmvtolt,
                   vr_cdprogra,
-                  rw_craplft.qtlanmto,
-                  rw_craplft.qtlanmto * rw_crapstn.vltrfuni,
+                    rw_craplft(i).qtlanmto,
+                    rw_craplft(i).qtlanmto * rw_crapstn.vltrfuni,
                   rw_crapscn.cdempres,
-                  rw_craplft.cdagenci_fatura);
+                    rw_craplft(i).cdagenci_fatura);
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
+              --Inclusão na tabela de erros Oracle - Chamado 734422
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+              vr_cdcritic := 1034;
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' registros já processados na craprej. '||
+                             ' cdcooper:'||pr_cdcooper||', cdagenci:'||rw_craplft(i).cdagenci||
+                             ', cdhistor:'||rw_craplft(i).cdhistor||', dtmvtolt:'||vr_dtmvtolt||
+                             ', cdpesqbb:'||vr_cdprogra||', nrseqdig:'||rw_craplft(i).qtlanmto||
+                             ', vllanmto:'||rw_craplft(i).qtlanmto * rw_crapstn.vltrfuni||
+                             ', dtrefere:'||rw_crapscn.cdempres||
+                             ', nrdocmto:'||rw_craplft(i).cdagenci_fatura||'. '||sqlerrm;
             RAISE vr_exc_saida;
         END;
       END IF;
       -- Verifica se é a mesma agência e, se for, busca o próximo registro
-      if rw_craplft.cdagenci = rw_craplft.proxima_agencia then
+        if rw_craplft(i).cdagenci = rw_craplft(i).proxima_agencia then
         continue;
       end if;
       --
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                     trim(to_char(vr_tab_agencia2(rw_craplft.cdagenci).vr_cdcxaage, 'fm0000'))||','||
+                       trim(to_char(vr_tab_agencia2(rw_craplft(i).cdagenci).vr_cdcxaage, 'fm0000'))||','||
                      trim(to_char(vr_nrctasic))||','||
                      trim(to_char(vr_vllanmto_fat, '99999999999990.00'))||','||
                      trim(to_char(rw_craphis2.cdhstctb))||','||
@@ -7864,13 +8119,20 @@ BEGIN
                      trim(rw_crapcon.nmextcon)||'"';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
-      vr_linhadet := to_char(rw_craplft.cdagenci,'fm000')||','||trim(to_char(vr_vllanmto_fat, '999999990.00'));
+        vr_linhadet := to_char(rw_craplft(i).cdagenci,'fm000')||','||trim(to_char(vr_vllanmto_fat, '999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
       vr_vllanmto_fat := 0;
       vr_qtlanmto_fat := 0;
-    END LOOP;
-  END LOOP;
+
+      end loop;
+
+      exit when cr_craplft%rowcount <= 5000;
+    end loop;
+    close cr_craplft;
+    --
+  END LOOP; --cr_crapcon
+
   -- DARF's sem código de barras - Sicredi
   -- Primeiro serão lidas as DARF's com código de tributo 6106
   vr_idtributo_6106 := 1;
@@ -7940,8 +8202,16 @@ BEGIN
                   rw_craplft2.cdagenci_fatura);
       exception
         when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
+          --Inclusão na tabela de erros Oracle - Chamado 734422
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' registros já processados na craprej. '||
+                         ' cdcooper:'||pr_cdcooper||', cdagenci:'||rw_craplft2.cdagenci||
+                         ', cdhistor:'||rw_craphis2.cdhistor||', dtmvtolt:'||vr_dtmvtolt||
+                         ', cdpesqbb:'||vr_cdprogra||', nrseqdig:'||rw_craplft2.qtlanmto||
+                         ', vllanmto:'||rw_craplft2.qtlanmto * rw_crapstn.vltrfuni||
+                         ', dtrefere:'||rw_crapscn2.cdempres||
+                         ', nrdocmto:'||rw_craplft2.cdagenci_fatura||'. '||sqlerrm;
           raise vr_exc_saida;
       end;
     end if;
@@ -7977,6 +8247,7 @@ BEGIN
     -- Ja leu DARF's com tributo 6106 e altera para ler DARF's dos demais tributos
     vr_idtributo_6106 := 0;
   end loop;
+
   -- Tarifa Sicredi
   vr_cdestrut := '55';
   for rw_craprej3 in cr_craprej3 (pr_cdcooper,
@@ -8009,6 +8280,8 @@ BEGIN
     vr_linhadet := to_char(rw_craprej3.nrdocmto,'fm000')||','||trim(to_char(rw_craprej3.vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end loop;
+
+
   -- Despesa Sicredi
   vr_indice_faturas := vr_tab_faturas.first;
   while vr_indice_faturas is not null loop
@@ -8054,6 +8327,7 @@ BEGIN
     vr_indice_faturas := vr_tab_faturas.next(vr_indice_faturas);
   end loop;
   --
+
   --*************************--
   -- Convênio Sicredi (debito automatico)
   OPEN cr_craphis2 (pr_cdcooper, 1019);
@@ -8061,13 +8335,14 @@ BEGIN
   IF cr_craphis2%NOTFOUND THEN
     CLOSE cr_craphis2;
     vr_cdcritic := 526;
-    vr_dscritic := '1019 - '||gene0001.fn_busca_critica(526);
+    vr_dscritic := '1019 - '||gene0001.fn_busca_critica(vr_cdcritic);
     RAISE vr_exc_saida;
   END IF;
   CLOSE cr_craphis2;
   --
   vr_nrctacrd := rw_craphis2.nrctacrd;
   vr_cdestrut := '50';
+  
   -- Debito Automatico Sicredi
   FOR rw_craplcm4 IN cr_craplcm4 (pr_cdcooper,
                                   vr_dtmvtolt,
@@ -8088,18 +8363,17 @@ BEGIN
     vr_linhadet := '999,' || TRIM(to_char(rw_craplcm4.vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
-
-
   END LOOP;
+  
   -- Tarifa convênio Sicredi Debito Automatico
   FOR rw_craplcm5 IN cr_craplcm5 (pr_cdcooper,
                                   vr_dtmvtolt,
                                   rw_craphis2.cdhistor) LOOP
-
     OPEN cr_crapstn (rw_craplcm5.cdempres,
                      'E');
       fetch cr_crapstn into rw_crapstn;
     close cr_crapstn;
+
     -- Para DPVAT usar conta 4336
     IF rw_craplcm5.cdempres = '85' THEN
       vr_nrctasic := 4336;
@@ -8126,6 +8400,7 @@ BEGIN
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
   END LOOP;
+
   -- Despesa Sicredi (Debito Automatico)
   FOR rw_craplcm6 IN cr_craplcm6 (pr_cdcooper,
                                   vr_dtmvtolt,
@@ -8360,10 +8635,14 @@ BEGIN
   --
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_craptit in cr_craptit (pr_cdcooper,
                                 vr_dtmvtolt,
                                 0) loop
     pc_cria_agencia_pltable(rw_craptit.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_vltitulo := rw_craptit.vldpagto;
     vr_tab_agencia(rw_craptit.cdagenci).vr_qttottrf := rw_craptit.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit.qttottrf;
@@ -8390,7 +8669,7 @@ BEGIN
           if cr_craphis2%notfound then
             close cr_craphis2;
             vr_cdcritic := 526;
-            vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+            vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
             raise vr_exc_saida;
           end if;
         close cr_craphis2;
@@ -8416,9 +8695,16 @@ BEGIN
   -- MOVIMENTA CONTA 4957 - Boleto de emprestimo (Projeto 210)
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
   FOR rw_craptit4 in cr_craptit4 (pr_cdcooper,
                                   vr_dtmvtolt) LOOP
+
     pc_cria_agencia_pltable(rw_craptit4.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
     vr_vltitulo := rw_craptit4.vldpagto;
     vr_tab_agencia(rw_craptit4.cdagenci).vr_qttottrf := rw_craptit4.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit4.qttottrf;
@@ -8446,15 +8732,22 @@ BEGIN
     --
     vr_linhadet := to_char(rw_craptit4.cdagenci, 'fm000')||','||TRIM(to_char(vr_vltitulo, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
   END LOOP;  -- Fim do loop craptit4
 
   -- TITULOS 085 PAGOS PELOS CAIXAS, INTERNET E CAIXA ONLINE - DESCONTADOS
   -- MOVIMENTA CONTA 4954
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
   FOR rw_craptit5 in cr_craptit5 (pr_cdcooper,
                                   vr_dtmvtolt) LOOP
     pc_cria_agencia_pltable(rw_craptit5.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
     vr_vltitulo := rw_craptit5.vldpagto;
     vr_tab_agencia(rw_craptit5.cdagenci).vr_qttottrf := rw_craptit5.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit5.qttottrf;
@@ -8494,10 +8787,15 @@ BEGIN
   --
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
   /*for rw_craptit in cr_craptit (pr_cdcooper,
                                 vr_dtmvtolt,
                                 1) loop
     pc_cria_agencia_pltable(rw_craptit.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_vltitulo := rw_craptit.vldpagto;
     vr_tab_agencia(rw_craptit.cdagenci).vr_qttottrf := rw_craptit.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit.qttottrf;
@@ -8519,6 +8817,9 @@ BEGIN
   FOR rw_craptit3 in cr_craptit3 (pr_cdcooper,
                                   vr_dtmvtolt) LOOP
     pc_cria_agencia_pltable(rw_craptit3.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
     vr_vltitulo := rw_craptit3.vldpagto;
     vr_tab_agencia(rw_craptit3.cdagenci).vr_qttottrf := rw_craptit3.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit3.qttottrf;
@@ -8559,6 +8860,9 @@ BEGIN
                        rw_crapcdb.vlcheque,
                        1, -- cdtipope = 1 cheque recebido para desconto
                        vr_cdprogra);
+
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end loop;
   end loop;
   --
@@ -8604,28 +8908,29 @@ BEGIN
   vr_qtcdbban := 0;
   vr_vlcdbcop := 0;
   -- Liberacao de cheques descontados do dia -- envio para a COMPE  ...........
-  for rw_crapcdb in cr_crapcdb2 (pr_cdcooper,
+  open cr_crapcdb2(pr_cdcooper,
                                  vr_dtmvtoan,
-                                 vr_dtmvtolt) loop
-    if rw_crapcdb.inchqcop <> 1 then
-      vr_vlcdbban := vr_vlcdbban + rw_crapcdb.vlcheque;
-      vr_qtcdbban := vr_qtcdbban + 1;
-    else
-      vr_vlcdbcop := vr_vlcdbcop + rw_crapcdb.vlcheque;
-    end if;
+                   vr_dtmvtolt);
+  loop
+    fetch cr_crapcdb2 bulk collect into rw_crapcdb limit 5000;
+
     -- Grava dados operacionais contábeis
-    pc_grava_crapopc(pr_cdcooper,
+    pc_grava_crapopc_bulk(pr_cdcooper,
                      vr_dtmvtolt,
-                     rw_crapcdb.nrdconta,
+                     rw_crapcdb,
                      1, -- tpregist = 1 desconto de cheques
-                     rw_crapcdb.nrborder,
-                     rw_crapcdb.cdagenci,
-                     rw_crapcdb.nrcheque,
-                     rw_crapcdb.vlcheque,
                      2, -- cdtipope = 2 liquidacao cheque recebido para desconto
                      vr_cdprogra);
+
+    exit when cr_crapcdb2%rowcount <= 5000;
+
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
+
   end loop;
+  close cr_crapcdb2;
   --
+  
   if vr_vlcdbban > 0 then  -- Cheques de outros bancos
     open cr_crapage2(pr_cdcooper,
                      1);
@@ -8652,7 +8957,7 @@ BEGIN
           if cr_craphis2%notfound then
             close cr_craphis2;
             vr_cdcritic := 526;
-            vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+            vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
             RAISE vr_exc_saida;
           end if;
         close cr_craphis2;
@@ -8695,7 +9000,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := '547 - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := '547 - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -8706,12 +9011,17 @@ BEGIN
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de tarifa não encontrado para histórico 547 - crapthi';
+        vr_cdcritic := 1041;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 547 - crapthi';
         -- Gera a mensagem de erro no log e não prossegue a rotina.
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '||vr_dscritic);
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                  ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                  ,pr_nmarqlog      => 'proc_batch.log'
+                                  ,pr_tpexecucao    => 1 -- Job
+                                  ,pr_cdcriticidade => 1 -- Medio
+                                  ,pr_cdmensagem    => vr_cdcritic
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '|| vr_dscritic);
         return;
       end if;
     close cr_crapthi;
@@ -8775,6 +9085,8 @@ BEGIN
                      rw_crapcdb.vlcheque,
                      3, -- cdtipope = 3 Resgate de cheque descontado
                      vr_cdprogra);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   end loop;
   --
   if vr_vlcdbban > 0 then  -- Valor do cheque descontado
@@ -8855,6 +9167,8 @@ BEGIN
                        rw_craptdb.vltitulo,
                        1, -- cdtipope = 1 titulo recebido pra desconto
                        vr_cdprogra);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end loop;
   end loop;
   --
@@ -8981,6 +9295,8 @@ BEGIN
       close cr_crapass;
       -- Acumula valores
       pc_cria_agencia_pltable(rw_crapass.cdagenci,NULL);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       --
       if rw_crapcob.flgregis = 1 then -- true
         vr_tdbtotcr_001 := vr_tdbtotcr_001 + rw_crapcob.vldpagto;
@@ -9013,6 +9329,8 @@ BEGIN
                     rw_crapcob.vldpagto,
                     2, -- cdtipope = 2 liquidacao de titulo recebido pra desconto
                     vr_cdprogra);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end if;
   end loop;
   --
@@ -9037,7 +9355,7 @@ BEGIN
         if cr_craphis2%notfound then
           close cr_craphis2;
           vr_cdcritic := 526;
-          vr_dscritic := '266 - '||gene0001.fn_busca_critica(526);
+          vr_dscritic := '266 - '||gene0001.fn_busca_critica(vr_cdcritic);
           raise vr_exc_saida;
         end if;
       close cr_craphis2;
@@ -9048,12 +9366,17 @@ BEGIN
         fetch cr_crapthi into rw_crapthi;
         if cr_crapthi%notfound then
           close cr_crapthi;
-          vr_cdcritic := 0;
-          vr_dscritic := 'Registro de tarifa não encontrado para histórico 266 - crapthi';
+          vr_cdcritic := 1041;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 266 - crapthi';
           -- Gera a mensagem de erro no log e não prossegue a rotina.
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                     pr_ind_tipo_log => 2, -- Erro tratato
-                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '||vr_dscritic);
+          btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                    ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                    ,pr_nmarqlog      => 'proc_batch.log'
+                                    ,pr_tpexecucao    => 1 -- Job
+                                    ,pr_cdcriticidade => 1 -- Medio
+                                    ,pr_cdmensagem    => vr_cdcritic
+                                    ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                        || vr_cdprogra || ' --> '|| vr_dscritic);
           return;
         end if;
       close cr_crapthi;
@@ -9173,6 +9496,8 @@ BEGIN
        vr_tdbjurcr_001 := vr_tdbjurcr_001 + (rw_craptdb.vltitulo - rw_craptdb.vlliquid);
        -- Acumula valores
        pc_cria_agencia_pltable(rw_crapass.cdagenci,NULL);
+       -- Incluir nome do módulo logado
+       gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
        vr_tab_agencia(rw_crapass.cdagenci).vr_qttarpac_001 := vr_tab_agencia(rw_crapass.cdagenci).vr_qttarpac_001 + 1;
        vr_qtdtdbcr_001 := vr_qtdtdbcr_001 + 1;
      ELSE
@@ -9200,6 +9525,8 @@ BEGIN
                       rw_crapcob.vldpagto,
                       2, -- cdtipope = 2 liquidacao de titulo recebido pra desconto
                       vr_cdprogra);
+     -- Incluir nome do módulo logado
+     gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
    END IF;
 
  end loop;  -- Fim loop craptdb
@@ -9271,6 +9598,8 @@ BEGIN
       close cr_crapass;
       -- Acumula valores
       pc_cria_agencia_pltable(rw_crapass.cdagenci,NULL);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
       --
       vr_tdbtotcr_085 := vr_tdbtotcr_085 + rw_crapcob.vldpagto;
       vr_tdbjurcr_085 := vr_tdbjurcr_085 + (rw_craptdb.vltitulo - rw_craptdb.vlliquid);
@@ -9294,6 +9623,8 @@ BEGIN
                     rw_crapcob.vldpagto,
                     2, -- cdtipope = 2 liquidacao de titulo recebido pra desconto
                     vr_cdprogra);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end if;
   end loop;
   --
@@ -9336,13 +9667,16 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Título em desconto não encontrado no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratado
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic);
+        vr_cdcritic := 1033;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                  ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                  ,pr_nmarqlog      => 'proc_batch.log'
+                                  ,pr_tpexecucao    => 1 -- Job
+                                  ,pr_cdcriticidade => 1 -- Medio
+                                  ,pr_cdmensagem    => vr_cdcritic
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '|| vr_dscritic);
         continue;
       end if;
     close cr_crapcob;
@@ -9372,6 +9706,8 @@ BEGIN
                     rw_crapcob.vldpagto,
                     2, -- cdtipope = 2 liquidacao de titulo recebido pra desconto
                     vr_cdprogra);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     end if;
   end loop;
   --
@@ -9415,6 +9751,7 @@ BEGIN
                                  vr_dtmvtoan);
   for rw_craptdb in cr_craptdb4 (pr_cdcooper
                                 ,btch0001.rw_crapdat.dtmvtolt) loop
+
     open cr_crapcob (rw_craptdb.cdcooper,
                      rw_craptdb.cdbandoc,
                      rw_craptdb.nrdctabb,
@@ -9425,13 +9762,16 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Pagos pelo cedente Título em desconto não encontrado no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratado
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic);
+        vr_cdcritic := 1033;
+        vr_dscritic := 'Pagos pelo cedente '||gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                  ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                  ,pr_nmarqlog      => 'proc_batch.log'
+                                  ,pr_tpexecucao    => 1 -- Job
+                                  ,pr_cdcriticidade => 1 -- Medio
+                                  ,pr_cdmensagem    => vr_cdcritic
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '|| vr_dscritic);
         continue;
       end if;
     close cr_crapcob;
@@ -9466,6 +9806,8 @@ BEGIN
                   rw_crapcob.vltitulo,
                   2, -- cdtipope = 2 liquidacao de titulo recebido pra desconto
                   vr_cdprogra);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   end loop;
   --
   if vr_vltdbtot > 0 then
@@ -9520,13 +9862,16 @@ BEGIN
       --
       if cr_crapcob%notfound then
         close cr_crapcob;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Nao eh considerada Título em desconto não encontrado no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratado
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                      || vr_cdprogra || ' --> '
-                                                      || vr_dscritic);
+        vr_cdcritic := 1033;
+        vr_dscritic := 'Nao eh considerada '||gene0001.fn_busca_critica(vr_cdcritic)||' no crapcob - ROWID(craptdb) = '||rw_craptdb.rowid;
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                  ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                  ,pr_nmarqlog      => 'proc_batch.log'
+                                  ,pr_tpexecucao    => 1 -- Job
+                                  ,pr_cdcriticidade => 1 -- Medio
+                                  ,pr_cdmensagem    => vr_cdcritic
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '|| vr_dscritic);
         continue;
       end if;
     close cr_crapcob;
@@ -9549,6 +9894,7 @@ BEGIN
                       rw_craptdb.nrdconta);
       fetch cr_crapbdt2 into rw_crapbdt2;
     close cr_crapbdt2;
+
     -- Grava dados operacionais contábeis
     pc_grava_crapopc(pr_cdcooper,
                   vr_dtmvtolt,
@@ -9560,6 +9906,8 @@ BEGIN
                   rw_crapcob.vltitulo,
                   3, -- cdtipope = 3 resgate de titulo recebido pra desconto
                   vr_cdprogra);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   end loop;
   --
   if vr_vltdbtot > 0 then
@@ -9661,13 +10009,16 @@ BEGIN
   for rw_crapret2 in cr_crapret2 (pr_cdcooper,
                                   vr_dtmvtolt) loop
     -- busca a agência
-    vr_cdcritic := 0;
-    vr_dscritic := 'Associado não encontrado na Cob. Registrada crapret - ROWID(crapret) = '||rw_crapret2.rowid;
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratado
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                  || vr_cdprogra || ' --> '
-                                                  || vr_dscritic);
+    vr_cdcritic := 1042;
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' na Cob. Registrada crapret - ROWID(crapret) = '||rw_crapret2.rowid;
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                              ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                              ,pr_nmarqlog      => 'proc_batch.log'
+                              ,pr_tpexecucao    => 1 -- Job
+                              ,pr_cdcriticidade => 1 -- Medio
+                              ,pr_cdmensagem    => vr_cdcritic
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                  || vr_cdprogra || ' --> '|| vr_dscritic);
   end loop;
 
   -- PROCESSAR LANÇAMENTOS DOS TITULOS 085 CREDITADOS AOS COOPERADOS
@@ -9807,17 +10158,13 @@ BEGIN
                            ' - ('||to_char(rw_crapafi.cdhistor)||')'||
                            ' - TARIFA COBRANCA S/REGISTRO."';
           END IF;
-
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
         END IF;
 
       END LOOP;
-
       vr_indice_hist_cob := vr_tab_hist_cob.NEXT(vr_indice_hist_cob);
 
     END LOOP;
-
   END IF;
   --
   if pr_cdcooper = 16  or
@@ -9865,6 +10212,8 @@ BEGIN
 
         -- acuuula por PA
         pc_cria_agencia_pltable(rw_crapafi.cdagenci,NULL);
+        -- Incluir nome do módulo logado
+        gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
         vr_tab_agencia(rw_crapafi.cdagenci).vr_vltarpac := vr_tab_agencia(rw_crapafi.cdagenci).vr_vltarpac + rw_crapafi.vllanmto;
 
         -- Se tem valor e for o ultimo do historico
@@ -9969,8 +10318,8 @@ BEGIN
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
-      vr_cdcritic := 0;
-      vr_dscritic := 'Registro de tarifa não encontrado para histórico 373 - crapthi';
+      vr_cdcritic := 1041;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 373 - crapthi';
       raise vr_exc_saida;
     end if;
   close cr_crapthi;
@@ -9983,16 +10332,20 @@ BEGIN
     if cr_craphis2%notfound then
       close cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := '373 - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := '373 - '||gene0001.fn_busca_critica(vr_cdcritic);
       raise vr_exc_saida;
     end if;
   close cr_craphis2;
   --
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_craptit2 in cr_craptit2 (pr_cdcooper,
                                   vr_dtmvtolt) loop
     pc_cria_agencia_pltable(rw_craptit2.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_vltitulo := rw_craptit2.vldpagto;
     vr_tab_agencia(rw_craptit2.cdagenci).vr_qttottrf := rw_craptit2.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_craptit2.qttottrf;
@@ -10009,6 +10362,8 @@ BEGIN
     --
     vr_linhadet := '999,'||trim(to_char(vr_vltitulo, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   end loop;
   -- Cria registro de total de tarifa de iptu
   if nvl(vr_tab_agencia(999).vr_qttottrf, 0) > 0 then
@@ -10044,8 +10399,8 @@ BEGIN
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
-      vr_cdcritic := 0;
-      Vr_dscritic := 'Registro de tarifa não encontrado para histórico 750 - crapthi';
+      vr_cdcritic := 1041;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 750 - crapthi';
       raise vr_exc_saida;
     end if;
   close cr_crapthi;
@@ -10056,15 +10411,19 @@ BEGIN
     if cr_craphis2%notfound then
       close cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := '750 - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := '750 - '||gene0001.fn_busca_critica(vr_cdcritic);
       raise vr_exc_saida;
     end if;
   close cr_craphis2;
   --
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_crapcbb in cr_crapcbb (pr_cdcooper,
                                 vr_dtmvtolt) loop
     pc_cria_agencia_pltable(rw_crapcbb.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_vltitulo := rw_crapcbb.valorpag;
     vr_tab_agencia(rw_crapcbb.cdagenci).vr_qttottrf := rw_crapcbb.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_crapcbb.qttottrf;
@@ -10117,8 +10476,8 @@ BEGIN
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
-      vr_cdcritic := 0;
-      vr_dscritic := 'Registro de tarifa não encontrado para histórico 459 - crapthi';
+      vr_cdcritic := 1041;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 459 - crapthi';
       raise vr_exc_saida;
     end if;
   close cr_crapthi;
@@ -10130,15 +10489,19 @@ BEGIN
     if cr_craphis2%notfound then
       close cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := '459 - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := '459 - '||gene0001.fn_busca_critica(vr_cdcritic);
       raise vr_exc_saida;
     end if;
   close cr_craphis2;
   --
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_crapcbb in cr_crapcbb2 (pr_cdcooper,
                                  vr_dtmvtolt) loop
     pc_cria_agencia_pltable(rw_crapcbb.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_vltitulo := rw_crapcbb.valorpag;
     vr_tab_agencia(rw_crapcbb.cdagenci).vr_qttottrf := rw_crapcbb.qttottrf;
     vr_tab_agencia(999).vr_qttottrf := vr_tab_agencia(999).vr_qttottrf + rw_crapcbb.qttottrf;
@@ -10207,14 +10570,18 @@ BEGIN
     if cr_craphis2%notfound then
       close cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := '580 - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := '580 - '||gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_saida;
     end if;
   close cr_craphis2;
   --
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_crapage in cr_crapage loop
     pc_cria_agencia_pltable(rw_crapage.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     -- Verifica se eh PAC pioneiro
     if rw_crapage.tpagenci = 1   then
       vr_flgpione := true;
@@ -10330,8 +10697,8 @@ BEGIN
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de tarifa não encontrado para histórico '||vr_cdhistor||' - crapthi';
+        vr_cdcritic := 1041;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico '||vr_cdhistor||' - crapthi';
         raise vr_exc_saida;
       end if;
     close cr_crapthi;
@@ -10344,8 +10711,8 @@ BEGIN
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de tarifa não encontrado para histórico '||vr_cdhistor||' - crapthi';
+        vr_cdcritic := 1041;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico '||vr_cdhistor||' - crapthi';
         raise vr_exc_saida;
       end if;
     close cr_crapthi;
@@ -10357,7 +10724,7 @@ BEGIN
     if cr_craphis2%notfound then
       close cr_craphis2;
       vr_cdcritic := 526;
-      vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+      vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
       raise vr_exc_saida;
     end if;
   close cr_craphis2;
@@ -10388,6 +10755,8 @@ BEGIN
                                             vr_dtmvtolt) loop
       --
       pc_cria_agencia_pltable(rw_gps_despesas.cdagenci,NULL);
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
       vr_tab_agencia(rw_gps_despesas.cdagenci).vr_qttottrf := rw_gps_despesas.qttottrf;
       vr_tab_agencia(rw_gps_despesas.cdagenci).vr_vltottar := rw_crapthi.vltarifa * rw_gps_despesas.qttottrf;
@@ -10405,9 +10774,7 @@ BEGIN
 
       vr_linhadet := to_char(rw_gps_despesas.cdagenci, 'fm000')||','||trim(to_char(vr_tab_agencia(rw_gps_despesas.cdagenci).vr_vltottar, '999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
     END LOOP;
-
   END IF;
 
 
@@ -10420,7 +10787,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := rw_craplci.cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := rw_craplci.cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10490,7 +10857,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := rw_craplcx.cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := rw_craplcx.cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10574,7 +10941,7 @@ BEGIN
           if cr_craphis2%notfound then
             close cr_craphis2;
             vr_cdcritic := 526;
-            vr_dscritic := '705 - '||gene0001.fn_busca_critica(526);
+            vr_dscritic := '705 - '||gene0001.fn_busca_critica(vr_cdcritic);
             raise vr_exc_saida;
           end if;
         close cr_craphis2;
@@ -10609,7 +10976,7 @@ BEGIN
           if cr_craphis2%notfound then
             close cr_craphis2;
             vr_cdcritic := 526;
-            vr_dscritic := '706 - '||gene0001.fn_busca_critica(526);
+            vr_dscritic := '706 - '||gene0001.fn_busca_critica(vr_cdcritic);
             raise vr_exc_saida;
           end if;
         close cr_craphis2;
@@ -10664,7 +11031,7 @@ BEGIN
             if cr_craphis2%notfound then
               close cr_craphis2;
               vr_cdcritic := 526;
-              vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+              vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
               raise vr_exc_saida;
             end if;
           close cr_craphis2;
@@ -10696,6 +11063,8 @@ BEGIN
   -- *****  Incluir lancamento de tarifa para o historico 547  *****
   vr_tab_agencia.delete;
   pc_cria_agencia_pltable(999,NULL);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   for rw_craplot in cr_craplot (pr_cdcooper,
                                 vr_dtmvtolt) loop
     if rw_craplot.qtcompel > 0 then
@@ -10710,6 +11079,8 @@ BEGIN
         else
           if rw_crapage2.cdbanchq = 756 then -- Bancoob
             pc_cria_agencia_pltable(rw_craplot.cdagenci,NULL);
+            -- Incluir nome do módulo logado
+            gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
             vr_tab_agencia(rw_craplot.cdagenci).vr_qttarcmp := vr_tab_agencia(rw_craplot.cdagenci).vr_qttarcmp + rw_craplot.qtcompel;
             vr_tab_agencia(999).vr_qttarcmp := vr_tab_agencia(999).vr_qttarcmp + rw_craplot.qtcompel;
           end if;
@@ -10727,8 +11098,8 @@ BEGIN
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de tarifa não encontrado para histórico 547 - crapthi';
+        vr_cdcritic := 1041;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' para histórico 547 - crapthi';
         raise vr_exc_saida;
       end if;
     close cr_crapthi;
@@ -10739,7 +11110,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := '547 - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := '547 - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10779,6 +11150,8 @@ BEGIN
                                 vr_dtmvtolt,
                                 vr_cdhistor) loop
     pc_cria_agencia_pltable(rw_craplcs.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_agencia(rw_craplcs.cdagenci).vr_vltagenc := rw_craplcs.vllanmto;
     vr_vltitulo := vr_vltitulo + rw_craplcs.vllanmto;
   end loop;
@@ -10790,7 +11163,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10839,7 +11212,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10875,6 +11248,8 @@ BEGIN
                                 vr_dtmvtolt,
                                 vr_cdhistor) loop
     pc_cria_agencia_pltable(rw_craplcs.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_agencia(rw_craplcs.cdagenci).vr_vltagenc := rw_craplcs.vllanmto;
     vr_vltitulo := vr_vltitulo + rw_craplcs.vllanmto;
   end loop;
@@ -10886,7 +11261,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10931,6 +11306,8 @@ BEGIN
                                 vr_dtmvtolt,
                                 vr_cdhistor) loop
     pc_cria_agencia_pltable(rw_craplcs.cdagenci,NULL);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     vr_tab_agencia(rw_craplcs.cdagenci).vr_vltagenc := rw_craplcs.vllanmto;
     vr_vltitulo := vr_vltitulo + rw_craplcs.vllanmto;
   end loop;
@@ -10942,7 +11319,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -10992,7 +11369,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11031,7 +11408,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11070,7 +11447,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11109,7 +11486,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11147,7 +11524,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11185,7 +11562,7 @@ BEGIN
       if cr_craphis2%notfound then
         close cr_craphis2;
         vr_cdcritic := 526;
-        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(526);
+        vr_dscritic := vr_cdhistor||' - '||gene0001.fn_busca_critica(vr_cdcritic);
         raise vr_exc_saida;
       end if;
     close cr_craphis2;
@@ -11256,7 +11633,7 @@ BEGIN
                    trim(to_char(vr_vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end loop;
-
+  
  -- DEMETRIUS
  -- SAQUE DE CAPITAL E DEPOSITOS DE COOPERADOS DEMITIDOS
   vr_vllanmto := 0;
@@ -11379,10 +11756,14 @@ BEGIN
       pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                   ,pr_inpessoa => 1
                   ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
       pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                   ,pr_inpessoa => 1
                   ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
    END IF;
 
@@ -11396,10 +11777,14 @@ BEGIN
       pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                   ,pr_inpessoa => 2
                   ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
       pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                   ,pr_inpessoa => 2
                   ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+      -- Incluir nome do módulo logado
+      gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
    END IF;
   
@@ -11695,14 +12080,18 @@ BEGIN
 		CLOSE cr_craptvl_recarg;
   END IF;
   --  Contabilizacao mensal ...................................................
-  if to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') then
+  IF to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') THEN
 
     pc_proc_cbl_mensal(pr_cdcooper);
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
 
   END IF;
   
   -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
   pc_gera_arq_op_cred (vr_dscritic);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
     
   IF vr_dscritic IS NOT NULL THEN
      vr_cdcritic := 0;
@@ -11717,12 +12106,15 @@ BEGIN
                               pr_des_saida   => vr_dscritic);
   -- Testar erro
   if vr_typ_said = 'ERR' then
-    gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_ope_cred||': '||vr_dscritic);
+     vr_cdcritic := 1040;
+     gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat_ope_cred||': '||vr_dscritic);
   end if; 
   --Fim geração arquivo AAMMDD_OPCRED.txt
   
   --Gera arquivo AAMMDD_PREJUIZO.txt
   pc_gera_arq_prejuizo(vr_dscritic);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   
   IF vr_dscritic IS NOT NULL THEN
      vr_cdcritic := 0;
@@ -11732,6 +12124,8 @@ BEGIN
   
   --Gera arquivo AAMMDD_TARIFASBB.txt
   pc_gera_arq_tarifasbb(vr_dscritic);
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
   
   IF vr_dscritic IS NOT NULL THEN
      vr_cdcritic := 0;
@@ -11748,8 +12142,10 @@ BEGIN
        AND craprej.dtmvtolt = vr_dtmvtolt;
   EXCEPTION
     WHEN OTHERS THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao excluir registros de despesa Sicredi: '||sqlerrm;
+      --Inclusão na tabela de erros Oracle - Chamado 734422
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+      vr_cdcritic := 1037;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' registros de despesa Sicredi: '||sqlerrm;
       RAISE vr_exc_saida;
   END;
 
@@ -11764,7 +12160,8 @@ BEGIN
                               pr_des_saida   => vr_dscritic);
   -- Testar erro
   if vr_typ_said = 'ERR' then
-    gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat||': '||vr_dscritic);
+     vr_cdcritic := 1040;
+     gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
   end if;
 
   -- Inicializa CLOB XML
@@ -11839,17 +12236,17 @@ BEGIN
   
   --Gerar arquivos contábeis de lançamentos centralizados para cada filiada.
   IF pr_cdcooper = 3 then
-    
     BEGIN
       cont0001.pc_gera_arquivos_contabeis(to_date(to_char(vr_dtmvtolt,'dd/mm/rrrr'),'dd/mm/rrrr'),
                                           to_date(to_char(vr_dtmvtopr,'dd/mm/rrrr'),'dd/mm/rrrr'));
     EXCEPTION
       WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao gerar arquivos contábeis de lançamentos centralizados para cada filiada: '||sqlerrm;
+        --Inclusão na tabela de erros Oracle - Chamado 734422
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
+        vr_cdcritic := 1043;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||sqlerrm;
         RAISE vr_exc_saida;        
     END; 
-
   END IF;                          
   
   -- Finalizar o programa
@@ -11872,10 +12269,14 @@ EXCEPTION
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+                                ,pr_ind_tipo_log  => 2 -- Erro de negócio
+                                ,pr_nmarqlog      => 'proc_batch.log'
+                                ,pr_tpexecucao    => 1 -- Job
+                                ,pr_cdcriticidade => 1 -- Medio
+                                ,pr_cdmensagem    => vr_cdcritic
+                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                    || vr_cdprogra || ' --> '|| vr_dscritic);
+                                                 
     END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -11896,6 +12297,8 @@ EXCEPTION
     -- Efetuar
     ROLLBACK;
   WHEN OTHERS THEN
+    --Inclusão na tabela de erros Oracle - Chamado 734422
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                                                             
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;

@@ -1,5 +1,17 @@
 CREATE OR REPLACE PACKAGE cecred.lote0001 IS
 
+ /*..............................................................................
+   Programa: LOTE0001
+   Autor   : Odirlei
+   Data    : 28/07/2015                        Ultima atualizacao: 07/12/2017
+  
+   Dados referentes ao programa: 
+  
+   Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
+  
+   Alteracoes: 07/12/2017 - Incluido novos campos no cursor da craplot (Tiago/Adriano #745339)
+  ..............................................................................*/
+
   --Testar se o lote esta em lock
   CURSOR cr_craplot_rowid (pr_rowid IN ROWID) IS
   SELECT  1
@@ -27,6 +39,8 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
           ,craplot.qtinfoln
           ,craplot.vlcompcr
           ,craplot.vlinfocr
+          ,craplot.vlcompdb
+          ,craplot.vlinfodb
           ,craplot.rowid
       FROM craplot craplot
      WHERE craplot.cdcooper = pr_cdcooper
