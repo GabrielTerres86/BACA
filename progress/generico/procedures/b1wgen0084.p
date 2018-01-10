@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 27/12/2017
+    Data    : Fevereiro/2011               ultima Atualizacao: 29/12/2017
 
     Dados referentes ao programa:
 
@@ -277,6 +277,8 @@
                            de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                            liberaçao do projeto (Renato - Supero)
 
+              04/05/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
               07/07/2017 - Nao permitir utilizar linha 100, quando possuir acordo
                            de estouro de conta ativo. (Jaison/James)
 
@@ -285,6 +287,10 @@
                            
               27/12/2017 - Ajuste transferencia para prejuizo permitir transferir a partir 180 dias 
                            para prejuizo. (Oscar)
+                           
+              28/12/2017 - Buscar da central de risco do dia anterior inves do fechamento do mes anterior. (Oscar)
+              
+              29/12/2017 - Ajuste para desfazer prejuizo retirar agencia do loop. (Oscar)
                            
 ............................................................................. */
 
@@ -1812,13 +1818,24 @@ PROCEDURE busca_dados_efetivacao_proposta:
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
                aux_dstransa = "Busca dados de efetivacao da proposta.".
 
-    IF NOT fnValidaEmprTipo1(INPUT par_cdcooper,
+    /* Se a proposta de emprestimo for TR, exibe critica */
+    IF  CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                           AND crawepr.nrdconta = par_nrdconta
+                           AND crawepr.nrctremp = par_nrctremp
+                           AND crawepr.tpemprst = 0) THEN
+        DO:
+             ASSIGN aux_cdcritic = 0
+                    aux_dscritic = "Efetive o contrato na tela Lote.".
+
+             RUN gera_erro (INPUT par_cdcooper,
                              INPUT par_cdagenci,
-                             INPUT 0,
-                             INPUT par_nrdconta,
-                             INPUT par_nrctremp,
-                             INPUT TRUE) THEN
+                            INPUT par_nrdcaixa,
+                            INPUT 1,
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+
        RETURN "NOK".
+        END.
 
     RUN valida_dados_efetivacao_proposta ( INPUT par_cdcooper,
                                            INPUT par_cdagenci,
@@ -3163,6 +3180,9 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_flcescrd AS LOGI INIT FALSE                           NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                      NO-UNDO.
     DEF VAR aux_flgativo AS INTE                                      NO-UNDO.
+    DEF VAR aux_vltottar AS DECI                                      NO-UNDO.
+    DEF VAR aux_vltariof AS DECI                                      NO-UNDO.
+    DEF VAR aux_flcaliof AS LOGI INIT FALSE                           NO-UNDO.
 
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
@@ -3368,12 +3388,25 @@ PROCEDURE grava_efetivacao_proposta:
 
           END. /* END IF AVAIL crappre AND par_cdfinemp = crappre.cdfinemp  */
 
+       /* Se for Pos-Fixado */
+       IF  crawepr.tpemprst = 2  THEN
+           DO:
+               ASSIGN aux_nrdolote = 650004.
+
        IF   aux_floperac   THEN             /* Financiamento*/
+                    ASSIGN aux_cdhistor = 2327.
+               ELSE                                 /* Emprestimo */
+                    ASSIGN aux_cdhistor = 2326.
+           END.
+       ELSE
+           DO:
+               IF   aux_floperac   THEN             /* Financiamento*/
             ASSIGN aux_cdhistor = 1059
                    aux_nrdolote = 600030.
        ELSE                                 /* Emprestimo */
             ASSIGN aux_cdhistor = 1036
                    aux_nrdolote = 600005.
+           END.
 
        RUN sistema/generico/procedures/b1wgen0134.p PERSISTENT SET h-b1wgen0134.
 
@@ -3409,6 +3442,75 @@ PROCEDURE grava_efetivacao_proposta:
               UNDO EFETIVACAO , LEAVE EFETIVACAO.
           END.
 
+       /* Se for Pos-Fixado */
+       IF  crawepr.tpemprst = 2  THEN
+           DO:
+               /* Caso NAO seja Refinanciamento efetua credito na conta  */
+               IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                          AND crawepr.nrdconta = par_nrdconta
+                                          AND crawepr.nrctremp = par_nrctremp
+                                          AND (crawepr.nrctrliq[1]  > 0   OR
+                                               crawepr.nrctrliq[2]  > 0   OR
+                                               crawepr.nrctrliq[3]  > 0   OR
+                                               crawepr.nrctrliq[4]  > 0   OR
+                                               crawepr.nrctrliq[5]  > 0   OR
+                                               crawepr.nrctrliq[6]  > 0   OR
+                                               crawepr.nrctrliq[7]  > 0   OR
+                                               crawepr.nrctrliq[8]  > 0   OR
+                                               crawepr.nrctrliq[9]  > 0   OR
+                                               crawepr.nrctrliq[10] > 0)) THEN
+                   DO:
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                               
+                       /* Efetuar a chamada a rotina Oracle  */
+                       RUN STORED-PROCEDURE pc_efetua_credito_conta
+                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                                INPUT par_nrdconta,
+                                                                INPUT par_nrctremp,
+                                                                INPUT par_dtmvtolt,
+                                                                INPUT par_nmdatela,
+                                                                INPUT crapass.inpessoa,
+                                                                INPUT par_cdagenci,
+                                                                INPUT par_nrdcaixa,
+                                                                INPUT par_cdagenci, /* pr_cdpactra */
+                                                                INPUT par_cdoperad,
+                                                               OUTPUT 0,   /* pr_vltottar */
+                                                               OUTPUT 0,   /* pr_vltariof */
+                                                               OUTPUT 0,   /* pr_cdcritic */
+                                                               OUTPUT ""). /* pr_dscritic */
+
+                       /* Fechar o procedimento para buscarmos o resultado */ 
+                       CLOSE STORED-PROC pc_efetua_credito_conta
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                       
+                       ASSIGN aux_vltottar = 0
+                              aux_vltariof = 0
+                              aux_cdcritic = 0
+                              aux_dscritic = ""
+                              aux_vltottar = pc_efetua_credito_conta.pr_vltottar
+                                             WHEN pc_efetua_credito_conta.pr_vltottar <> ?
+                              aux_vltariof = pc_efetua_credito_conta.pr_vltariof
+                                             WHEN pc_efetua_credito_conta.pr_vltariof <> ?
+                              aux_cdcritic = INT(pc_efetua_credito_conta.pr_cdcritic) 
+                                             WHEN pc_efetua_credito_conta.pr_cdcritic <> ?
+                              aux_dscritic = pc_efetua_credito_conta.pr_dscritic
+                                             WHEN pc_efetua_credito_conta.pr_dscritic <> ?
+                              par_vltarifa = aux_vltottar
+                              par_vltaxiof = 0
+                              par_vltariof = aux_vltariof
+                              aux_vliofepr = aux_vltariof
+                              aux_flcaliof = TRUE.
+
+                       IF   aux_cdcritic <> 0    OR
+                            aux_dscritic <> ""   THEN
+                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
+
+                   END. /* NOT CAN-FIND */
+
+           END. /* crawepr.tpemprst = 2 */
+
        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                           crapass.nrdconta = par_nrdconta
                           NO-LOCK NO-ERROR.
@@ -3439,8 +3541,8 @@ PROCEDURE grava_efetivacao_proposta:
 
           END.
 
-
-       IF aux_flgportb = FALSE THEN
+       /* Se NAO calculou IOF */
+       IF aux_flcaliof = FALSE THEN
             DO:
        RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
 
@@ -3453,6 +3555,7 @@ PROCEDURE grava_efetivacao_proposta:
                                          INPUT crawepr.cdlcremp,
                                          INPUT crawepr.vlpreemp,
                                          INPUT crawepr.dtlibera,
+                                         INPUT crawepr.tpemprst,
                                         OUTPUT aux_vliofepr,
                                         OUTPUT TABLE tt-erro).
 
@@ -3502,6 +3605,12 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltaxiof = par_vltaxiof
               crapepr.vltariof = par_vltariof
 			  crapepr.iddcarga = aux_idcarga.
+
+       /* Se for Pos-Fixado */
+       IF   crawepr.tpemprst = 2   THEN
+            DO:
+                ASSIGN crapepr.vlsprojt = crawepr.vlemprst.
+            END.
 
        IF   crapepr.cdlcremp = 100   THEN
             DO:
@@ -3835,13 +3944,24 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
 
     DELETE PROCEDURE h-b1wgen9999.
 
-    IF NOT fnValidaEmprTipo1(INPUT par_cdcooper,
+    /* Se a proposta de emprestimo for TR, exibe critica */
+    IF  CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                           AND crawepr.nrdconta = par_nrdconta
+                           AND crawepr.nrctremp = par_nrctremp
+                           AND crawepr.tpemprst = 0) THEN
+        DO:
+             ASSIGN aux_cdcritic = 0
+                    aux_dscritic = "Opcao invalida para esse tipo de contrato.".
+
+             RUN gera_erro (INPUT par_cdcooper,
                              INPUT par_cdagenci,
-                             INPUT 0,
-                             INPUT par_nrdconta,
-                             INPUT par_nrctremp,
-                             INPUT FALSE) THEN
+                            INPUT par_nrdcaixa,
+                            INPUT 1,
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+
        RETURN "NOK".
+        END.
 
     FIND   crapass WHERE crapass.nrdconta = par_nrdconta   AND
                          crapass.cdcooper = par_cdcooper   NO-LOCK NO-ERROR.
@@ -3937,11 +4057,45 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
 
          END.
 
+    /* Se for Pos-Fixado */
+    IF  crapepr.tpemprst = 2  THEN
+        DO:
+           /* Caso NAO seja Refinanciamento, exibe critica  */
+           IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                      AND crawepr.nrdconta = par_nrdconta
+                                      AND crawepr.nrctremp = par_nrctremp
+                                      AND (crawepr.nrctrliq[1]  > 0   OR
+                                           crawepr.nrctrliq[2]  > 0   OR
+                                           crawepr.nrctrliq[3]  > 0   OR
+                                           crawepr.nrctrliq[4]  > 0   OR
+                                           crawepr.nrctrliq[5]  > 0   OR
+                                           crawepr.nrctrliq[6]  > 0   OR
+                                           crawepr.nrctrliq[7]  > 0   OR
+                                           crawepr.nrctrliq[8]  > 0   OR
+                                           crawepr.nrctrliq[9]  > 0   OR
+                                           crawepr.nrctrliq[10] > 0)) THEN
+               DO:
+                   ASSIGN aux_cdcritic = 0
+                          aux_dscritic = "Nao e possivel desfazer a efetivacao. Efetue a liquidacao do contrato.".
+
+                   RUN gera_erro (INPUT par_cdcooper,
+                                  INPUT par_cdagenci,
+                                  INPUT par_nrdcaixa,
+                                  INPUT 1,
+                                  INPUT aux_cdcritic,
+                                  INPUT-OUTPUT aux_dscritic).
+
+                   RETURN "NOK".
+
+               END. /* NOT CAN-FIND */
+
+        END. /* crapepr.tpemprst = 2 */
+
     FOR EACH craplem WHERE craplem.cdcooper = par_cdcooper     AND
                            craplem.nrdconta = par_nrdconta     AND
                            craplem.nrctremp = par_nrctremp     NO-LOCK:
 
-        IF   NOT CAN-DO("1036,1059",STRING(craplem.cdhistor)) THEN
+        IF   NOT CAN-DO("1036,1059,2326,2327",STRING(craplem.cdhistor)) THEN
              DO:
                  ASSIGN aux_cdcritic = 368
                         aux_dscritic = "".
@@ -4144,6 +4298,31 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                ASSIGN aux_dscritic = "Ja possui lancamento em conta".
                UNDO Desfaz , LEAVE Desfaz.
            END.
+
+        /* Se for Pos-Fixado */
+        IF  crapepr.tpemprst = 2  THEN
+            DO:
+               /* Caso NAO seja Refinanciamento, exibe critica  */
+               IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                          AND crawepr.nrdconta = par_nrdconta
+                                          AND crawepr.nrctremp = par_nrctremp
+                                          AND (crawepr.nrctrliq[1]  > 0   OR
+                                               crawepr.nrctrliq[2]  > 0   OR
+                                               crawepr.nrctrliq[3]  > 0   OR
+                                               crawepr.nrctrliq[4]  > 0   OR
+                                               crawepr.nrctrliq[5]  > 0   OR
+                                               crawepr.nrctrliq[6]  > 0   OR
+                                               crawepr.nrctrliq[7]  > 0   OR
+                                               crawepr.nrctrliq[8]  > 0   OR
+                                               crawepr.nrctrliq[9]  > 0   OR
+                                               crawepr.nrctrliq[10] > 0)) THEN
+                   DO:
+                       ASSIGN aux_dscritic = "Operacao nao permitida para emprestimo do tipo Pos-Fixado.".
+                       UNDO Desfaz , LEAVE Desfaz.
+
+                   END. /* NOT CAN-FIND */
+
+            END. /* crapepr.tpemprst = 2 */
 
         ASSIGN aux_floperac = ( craplcr.dsoperac = "FINANCIAMENTO" )
                aux_vltotemp = crapepr.vlemprst
@@ -4868,7 +5047,7 @@ PROCEDURE transf_contrato_prejuizo.
        ELSE
        DO:
            ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Erro ao lista Ocorrencias!".
+                  aux_dscritic = "Operacao nao permitida. Verifique Risco e Dias no Risco!".
 
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -5131,7 +5310,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
             FOR EACH craplem
                 WHERE craplem.cdcooper = par_cdcooper
                   AND craplem.dtmvtolt = par_dtmvtolt
-                  AND craplem.cdagenci = par_cdagenci
                   AND craplem.cdbccxlt = 100
                   AND craplem.nrdolote = 600029
                   AND craplem.nrdconta = par_nrdconta
