@@ -1332,6 +1332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
      Alteracoes: 05/10/2016 -  Ajustes referente a melhoria M271 (Kelvin).
 
+	             10/01/2018 - Buscar se eh carne pelo texto completo (Andrino Mouts)
   ............................................................................ */      
 
 	DECLARE
@@ -1482,7 +1483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                         AND col.nrdconta (+) = cob.nrdconta
                         AND col.nrcnvcob (+) = cob.nrcnvcob
                         AND col.nrdocmto (+) = cob.nrdocmto
-                        AND upper(col.dslogtit(+)) LIKE '%CARNE%'),0) flgcarne
+                        AND col.dslogtit (+) = 'Titulo gerado - Carne'),0) flgcarne
                ,nvl((SELECT 1 FROM craptdb tdb
                       WHERE tdb.cdcooper (+) = cob.cdcooper
                         AND tdb.nrdconta (+) = cob.nrdconta
