@@ -3126,7 +3126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */ 
+                 vr_cdhistor := 1620; /* Aval */
                  /* Pos-Fixado */
                  WHEN rw_craplem.cdhistor = 2330 THEN
                  vr_cdhistor := 2371; /* Devedor */
@@ -3162,7 +3162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */ 
+                 vr_cdhistor := 1618; /* Aval */
                  /* Pos-Fixado */
                  WHEN rw_craplem.cdhistor = 2330 THEN
                  vr_cdhistor := 2363; /* Devedor */
@@ -12881,7 +12881,7 @@ END pc_consulta_ir_pj_trim;
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
       END;
-    END pc_imprime_extrato;  
+    END pc_imprime_extrato;
 
     -- Subrotina para Imprimir Extrato Emprestimo
     PROCEDURE pc_extrato_pos_fixado(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
@@ -13009,7 +13009,7 @@ END pc_consulta_ir_pj_trim;
         --Tabela de Memoria pra guardar informacoes das parcelas
         TYPE typ_tab_linha_parcela IS TABLE OF VARCHAR2(200) INDEX BY PLS_INTEGER;
         vr_tab_linha_parcela typ_tab_linha_parcela;
-        
+
         --Indices para as tabelas de memoria
         vr_index_extrato PLS_INTEGER;
         vr_index_epr_aux PLS_INTEGER;
@@ -13059,7 +13059,7 @@ END pc_consulta_ir_pj_trim;
 
         --Limpar tabela Memoria
         pr_tab_extrato_epr_aux.DELETE;
-        
+
         --Buscar Data do Sistema para a cooperativa 
         OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -13409,12 +13409,12 @@ END pc_consulta_ir_pj_trim;
           -- Se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF;
-
+          END IF; 
+					 
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
           vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="">';
-					--Escrever no XML
+          --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
           --Escrever no XML interno
@@ -13437,10 +13437,10 @@ END pc_consulta_ir_pj_trim;
                 vr_dsvltaxa := '';
                 -- Lancamento de Juros de Correcao
                 IF pr_tab_extrato_epr_aux(vr_index_epr_aux).cdhistor IN (2344,2345) THEN
-                  
+                
                   OPEN cr_crappep_taxa (pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_nrctremp => pr_nrctremp
                                        ,pr_nrparepr => pr_tab_extrato_epr_aux(vr_index_epr_aux).nrparepr);
                   FETCH cr_crappep_taxa INTO rw_crappep_taxa;
                   IF cr_crappep_taxa%FOUND THEN
@@ -13902,7 +13902,7 @@ END pc_consulta_ir_pj_trim;
 
             IF vr_tab_dados_epr(vr_index).tpemprst = 1 THEN -- PP
 
-            --Imprimir Extrato
+              --Imprimir Extrato
               pc_imprime_extrato (pr_cdcooper => pr_cdcooper      --Codigo Cooperativa
                                  ,pr_cdagenci => pr_cdagenci      --Codigo Agencia
                                  ,pr_nrdcaixa => 0                --Numero do Caixa
@@ -13947,7 +13947,7 @@ END pc_consulta_ir_pj_trim;
 
                 --Levantar Excecao
                 RAISE vr_exc_sair;
-               END IF;            
+               END IF;
 
             ELSIF vr_tab_dados_epr(vr_index).tpemprst = 2 THEN -- POS-FIXADO
 
@@ -13980,7 +13980,7 @@ END pc_consulta_ir_pj_trim;
                 --se tem erro na tabela 
                 IF pr_tab_erro.COUNT > 0 THEN
                   vr_dscritic:= pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-            ELSE
+                ELSE
                   vr_dscritic:= 'Nao foi possivel carregar o extrato.';
                 END IF;  
                 --Colocar todo o texto na variavel auxiliar
