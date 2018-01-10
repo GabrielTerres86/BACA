@@ -139,7 +139,8 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
                                          and tbgen_batch_controle.tpagrupador = 1
                                          and tbgen_batch_controle.cdagrupador = crapass.cdagenci
                                          and tbgen_batch_controle.insituacao  = 1
-                                         and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
+                                         and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
+    order by crapass.cdagenci;
 
   -- Informações da poupança programada
   cursor cr_craprpp(pr_cdcooper in craptab.cdcooper%type) is
@@ -401,7 +402,7 @@ begin
     END IF;
     
     -- Verifica se algum job paralelo executou com erro
-    vr_qterro := 0
+    vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
                                                   pr_dtmvtolt    => vr_dtmvtolt,
@@ -409,7 +410,10 @@ begin
                                                   pr_nrexecucao  => 1);    
                                           
     -- Retorna as agências, com poupança programada
-    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,vr_dtmvtolt,vr_cdprogra) loop
+    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => vr_dtmvtolt
+                                         ,pr_cdprogra => vr_cdprogra
+                                         ,pr_qterro   => vr_qterro) loop
                                           
       -- Montar o prefixo do código do programa para o jobname
       vr_jobname := vr_cdprogra ||'_'|| rw_craprpp_age.cdagenci || '$';  
@@ -486,7 +490,7 @@ begin
                                 
 
     -- Verifica se algum job paralelo executou com erro
-    vr_qterro := 0
+    vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
                                                   pr_dtmvtolt    => vr_dtmvtolt,
