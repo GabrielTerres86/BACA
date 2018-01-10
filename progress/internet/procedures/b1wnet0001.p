@@ -2347,65 +2347,31 @@ PROCEDURE gera-dados:
             RETURN "NOK".
         END.*/
         
-    RUN seleciona-sacados (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT par_cdoperad,
-                           INPUT par_nmdatela,
-                           INPUT par_idorigem,
-                           INPUT par_nrdconta,
-                           INPUT par_idseqttl,
-                           INPUT "",
-                           INPUT (IF par_vldsacad = 1 THEN TRUE ELSE FALSE),
-                           INPUT FALSE,
-                          OUTPUT TABLE tt-erro,
-                          OUTPUT TABLE tt-sacados-blt).
-                         
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
-        
-                IF  AVAILABLE tt-erro  THEN
-                    aux_dscritic = tt-erro.dscritic.
-                ELSE        
-                    aux_dscritic = "Nao foi possivel concluir a requisicao3".
-            
-                IF  par_flgerlog  THEN
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT aux_dscritic,
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT par_idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid).
-        
-                RETURN "NOK".
-            END.
-
-        IF  par_vldsacad = 1  THEN
+    IF  par_vldsacad < 2 THEN /* Quando receber valor 2 nao deve consultar sacados */
         DO:
-        
-            FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
-    
-            IF  NOT AVAILABLE tt-sacados-blt  THEN
-                DO: 
-                    ASSIGN aux_cdcritic = 0 
-                           aux_dscritic = "Nao foram encontrados registros de" +
-                                          " Pagadores.\nEfetue o cadastro de " +
-                                          "pagador na secao " + '"BOLETO"' + 
-                                          " no item " + '"CADASTRAR/' + 
-                                          'ALTERAR PAGADOR".'.
-               
-                    RUN gera_erro (INPUT par_cdcooper,
+            RUN seleciona-sacados (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
                                    INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                           
+                                   INPUT par_cdoperad,
+                                   INPUT par_nmdatela,
+                                   INPUT par_idorigem,
+                                   INPUT par_nrdconta,
+                                   INPUT par_idseqttl,
+                                   INPUT "",
+                                   INPUT (IF par_vldsacad = 1 THEN TRUE ELSE FALSE),
+                                   INPUT FALSE,
+                                  OUTPUT TABLE tt-erro,
+                                  OUTPUT TABLE tt-sacados-blt).
+                                 
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            
+                    IF  AVAILABLE tt-erro  THEN
+                        aux_dscritic = tt-erro.dscritic.
+                    ELSE        
+                        aux_dscritic = "Nao foi possivel concluir a requisicao3".
+                
                     IF  par_flgerlog  THEN
                         RUN proc_gerar_log (INPUT par_cdcooper,
                                             INPUT par_cdoperad,
@@ -2417,8 +2383,44 @@ PROCEDURE gera-dados:
                                             INPUT par_nmdatela,
                                             INPUT par_nrdconta,
                                            OUTPUT aux_nrdrowid).
-                                   
+            
                     RETURN "NOK".
+                END.
+
+            IF  par_vldsacad = 1  THEN
+                DO:                
+                    FIND FIRST tt-sacados-blt NO-LOCK NO-ERROR.
+            
+                    IF  NOT AVAILABLE tt-sacados-blt  THEN
+                        DO: 
+                            ASSIGN aux_cdcritic = 0 
+                                   aux_dscritic = "Nao foram encontrados registros de" +
+                                                  " Pagadores.\nEfetue o cadastro de " +
+                                                  "pagador na secao " + '"BOLETO"' + 
+                                                  " no item " + '"CADASTRAR/' + 
+                                                  'ALTERAR PAGADOR".'.
+                       
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                                                   
+                            IF  par_flgerlog  THEN
+                                RUN proc_gerar_log (INPUT par_cdcooper,
+                                                    INPUT par_cdoperad,
+                                                    INPUT aux_dscritic,
+                                                    INPUT aux_dsorigem,
+                                                    INPUT aux_dstransa,
+                                                    INPUT FALSE,
+                                                    INPUT par_idseqttl,
+                                                    INPUT par_nmdatela,
+                                                    INPUT par_nrdconta,
+                                                   OUTPUT aux_nrdrowid).
+                                           
+                            RETURN "NOK".
+                        END.
                 END.
         END.
          

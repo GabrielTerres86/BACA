@@ -125,6 +125,9 @@ DEF  INPUT PARAM par_flgregon AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_inpagdiv AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_vlminimo AS DECI                                  NO-UNDO.
 
+/* Configuracao do nome de emissao */
+DEF  INPUT PARAM par_idrazfan AS INTE                   			         NO-UNDO.
+
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -214,6 +217,24 @@ DO:
            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
     RETURN "NOK".
 END.
+
+IF  par_idrazfan > 0  THEN /* Se houve alteracao na configuracao do nome de emissao */
+    DO:
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_grava_config_nome_blt
+          aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT par_cdcooper,
+                              INPUT par_nrdconta,
+                              INPUT par_idrazfan,
+                              OUTPUT "",
+                              OUTPUT "").                              
+                             
+        CLOSE STORED-PROC pc_grava_config_nome_blt aux_statproc = PROC-STATUS
+              WHERE PROC-HANDLE = aux_handproc.
+                
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    END.
 
 RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    INPUT 90,             /** PAC      **/

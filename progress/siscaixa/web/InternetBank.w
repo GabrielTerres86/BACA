@@ -930,6 +930,7 @@ DEF VAR aux_dtdiadeb AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpvalida AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstpcons AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsprotoc AS CHAR                                           NO-UNDO.
+DEF VAR aux_idtipapl AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
@@ -2585,7 +2586,10 @@ PROCEDURE proc_operacao4:
            /* NPC */
            aux_flgregon = INTE(GET-VALUE("flgregon"))
            aux_inpagdiv = INTE(GET-VALUE("inpagdiv"))
-           aux_vlminimo = DECI(GET-VALUE("vlminimo")).
+           aux_vlminimo = DECI(GET-VALUE("vlminimo"))
+           
+           /* Configuracao do nome de emissao */
+           aux_idrazfan = INTE(GET-VALUE("aux_idrazfan")).
     
     RUN sistema/internet/fontes/InternetBank4.p (INPUT aux_cdcooper,
                                                  INPUT aux_nrdconta,
@@ -2640,7 +2644,8 @@ PROCEDURE proc_operacao4:
                                                  INPUT aux_flgregon,
                                                  INPUT aux_inpagdiv,
                                                  INPUT aux_vlminimo,
-
+                                                 
+                                                 INPUT aux_idrazfan,
                                                   
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
