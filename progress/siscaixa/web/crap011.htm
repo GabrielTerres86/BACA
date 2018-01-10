@@ -1,7 +1,7 @@
 <!--
 Programa: siscaixa/web/crap011.htm
 Sistema : CAIXA ON-LINE                                       
-                                             Ultima atualizacao: 14/11/2017
+                                             Ultima atualizacao: 08/01/2018
    
 Dados referentes ao programa:
 
@@ -26,6 +26,11 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 			
 			11/12/2017 - Alterado para desabilitar o botão de estorno para os tipos 
 						 de operação Devolução de Capital e Devolução de Disponível. (Reinert)
+
+            27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
+                        (Jonata - MOUTS SD 812703/810959 )
+						
+			08/01/2018 - Alteracao para permitir estorno apenas para a opcao Acertos via caixa - Jonata MOUTS.
 ------------------------------------------------------------------------------->
 
 <html>
@@ -44,6 +49,19 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 <title>LAN€AMENTO INCLUSÇO - BOLETIM CAIXA</title>
 
     <script language="JavaScript">
+
+		
+	    var auxSub = false;
+ 
+	
+		function VerificaSubmit(){
+			if(!auxSub){
+				auxSub = true;
+				return true;
+			}else{
+				return false;
+			}
+		}
 
        function efetuaOperacao(){
         
@@ -89,7 +107,6 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
                    $('#v_conta2').css('display','none');
                    $('#v_nome').css('display','none');
                    
-                   
 						 document.form1.v_conta.disabled=true;
                    document.form1.v_valor.disabled=false;
 						 document.form1.v_conta.value="";
@@ -98,6 +115,9 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 						 document.form1.v_hist.value="";
 						 document.form1.v_aux_hist.value="";
 						 $('#estorno').css('display', 'block');
+						 
+						  $('#v_doc').css('display','none');
+						 document.form1.v_hist.focus();
 						 
 					 }else if(document.form1.v_tpoperacao[i].value == "2"){
 					 
@@ -151,13 +171,39 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
            } 
         }
                
+		
+		function controlaEstorno(){
+          
+			for (var i=0;i< document.form1.v_tpoperacao.length;i++) {
+            
+              
+			    if (document.form1.v_tpoperacao[i].checked) {				 
+                   
+					 if(document.form1.v_tpoperacao[i].value == "1"){				 
+					 
+						 redir_login('crap010.w');						 					 
+						 
+					 }else{
+					 
+						return false;
+					 
+					 }
+					 
+				}
+				  
+			}
+            
+
+        }
+		
+               
     </script>
 
 </head>
 
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); click(); escondeCampo();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);"> 
-	<form name="form1" onKeyDown="change_page(event)" method=post>
+	<form name="form1" onKeyDown="change_page(event)" onsubmit="return VerificaSubmit();" method=post>
 <input type="hidden" name="vh_foco" value="7">
 <input type="hidden" name="v_msg">
 		<input type="hidden" name="v_sequencia_ope">
@@ -281,7 +327,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 
                                     <tr>
                                         <td width="34%" align="right" class="linhaform">Documento:<br><br></td>
-                                        <td width="67%"><input type="text" name="v_doc" maxlength="6" onkeydown="JavaScript:validaInteiro(event)" size="8" class="input"><br><br></td>
+                                        <td width="67%"><input type="text" id="v_doc" name="v_doc" maxlength="6" onkeydown="JavaScript:validaInteiro(event)" size="8" class="input"><br><br></td>
 											<td width="20%"></td>
                                     </tr>
 
@@ -323,7 +369,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
  <table width="100%">
        <tr>
           <td align="right" class="linhaform">
-          <input type="button" value="Estorno" name="estorno" id="estorno" class="button" onClick="JavaScript:redir_login('crap010.w')">
+          <input type="button" value="Estorno" name="estorno" id="estorno" class="button" onClick="controlaEstorno()">
           <input type="button" value="Consulta" name="consul" class="button" onClick="location='crap009.p'"></td>
        </tr>
  </table>
