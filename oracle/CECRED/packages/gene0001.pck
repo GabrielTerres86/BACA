@@ -374,7 +374,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
-  
+
   /* Verificacao do controle do batch por agencia ou convenio */
   PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
                                       ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
@@ -2748,7 +2748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                     ||' - Prox Exec: '||pr_interva|| chr(13) ||'Bloco PLSQL: '||chr(13)||pr_dsplsql||chr(13)
                     ||' Nenhum registro de erro no momento da submissao '||chr(13)
                     ||'*******************************************************************************************************');
-
+                    
       COMMIT;
       
     EXCEPTION
@@ -3526,7 +3526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Controla Controla log em banco de dados
       pc_controla_log_programa;
   END;
-  --
+--  
   FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                  , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtparalelo%TYPE IS

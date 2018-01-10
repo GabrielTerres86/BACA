@@ -754,7 +754,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
                                     );
-
+                                    
   PROCEDURE pc_pode_impr_dec_pj_coop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
                                     ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
                                     ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
@@ -2132,7 +2132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Setembro/2015.                   Ultima atualizacao: 14/09/2015
+    --  Data     : Setembro/2015.                   Ultima atualizacao: 30/01/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2141,6 +2141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 14/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
+    --              30/01/2017 - Exibir mensagem de atrasado quando for produto Pos-Fixado.
+    --                           (Jaison/James - PRJ298)
     --
     -- ..........................................................................*/
     
@@ -2237,7 +2239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
      WHERE crapepr.cdcooper = pr_cdcooper
        AND crapepr.nrdconta = pr_nrdconta
        AND crapepr.inprejuz = 1;
-    
+       
     --> Buscar Rating efetivo 
     CURSOR cr_crapnrc (pr_cdcooper crapsld.cdcooper%TYPE,
                        pr_nrdconta crapsld.nrdconta%TYPE) IS 
@@ -2450,7 +2452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       IF(vr_tab_dados_epr(vr_idxempr).tpemprst = 0   AND
          vr_tab_dados_epr(vr_idxempr).vlpreapg > 0)  OR
 
-        (vr_tab_dados_epr(vr_idxempr).tpemprst = 1   AND
+        (vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2)  AND
          vr_tab_dados_epr(vr_idxempr).flgatras = 1)      AND                              
 
          vr_tab_dados_epr(vr_idxempr).inprejuz = 0 THEN
@@ -2590,7 +2592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_ocorren(vr_idx).qtdevolu := vr_qtdevolu;
     pr_tab_ocorren(vr_idx).dtcnsspc := rw_crapass.dtcnsspc;
     pr_tab_ocorren(vr_idx).dtdsdsps := rw_crapass.dtdsdspc;
-    pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+       pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
     pr_tab_ocorren(vr_idx).dtdsdclq := rw_crapsld.dtdsdclq;
     pr_tab_ocorren(vr_idx).qtddtdev := rw_crapsld.qtddtdev;
     pr_tab_ocorren(vr_idx).flginadi := vr_flginadi;
@@ -3104,7 +3106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 16/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              14/11/2017 - Auste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).
-    --
+	--
 	--              03/12/2017 - Alterado cursor para ler da tbcotas (Jonata - RKAM P364).                 
     -- ..........................................................................*/
     
@@ -3554,7 +3556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_crapsld;
     
     vr_qtddtdev := nvl(rw_crapsld.qtddtdev,0);
-    vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+      vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
     
     /* Data SFN */
     IF  nvl(rw_crapass.vledvmto,0) <> 0 THEN
@@ -4226,6 +4228,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
     --                           empréstimos, Prj. 302 (Jean Michel).	
     --
+    --              30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
+    --                           (Jaison/James - PRJ298)
+    --
     --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
     --                           PRJ-300 Desconto de Cheque (Daniel)
     --
@@ -4239,7 +4244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
     --   
     --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
-    -- 
+    --
 	--              29/11/2017 - Chamado 784845 - Prova de vida não aparecendo na AV (Andrei-Mouts)
 	--
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
@@ -5180,7 +5185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
 
-        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
+        IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
                vr_tab_dados_epr(vr_idxepr).dtdpagto < pr_rw_crapdat.dtmvtolt                    THEN
@@ -5313,7 +5318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_dsmensag := NULL;
                 
-      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
+      IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
         vr_dsmensag := 'Fiador de emprestimo em atraso: ';

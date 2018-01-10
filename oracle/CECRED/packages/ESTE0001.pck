@@ -173,7 +173,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       ---- OUT ----                           
                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
                                       pr_dscritic OUT VARCHAR2);              --> Descricao da critica 
- 
+                                      
   --> Rotina responsavel por gerar a interrupção da proposta para a esteira
   PROCEDURE pc_interrompe_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
@@ -1273,7 +1273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 12/09/2016
+      Data     : Março/2016.                   Ultima atualizacao: 20/07/2017
     
       Dados referentes ao programa:
     
@@ -1286,6 +1286,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
                   12/09/2016 Enviar o saldo do pre-aprovado se estiver liberado na conta
                   para ter pre-aprovado. (Oscar)
+                  
+                  30/01/2017 - Exibir o tipo de emprestimo Pos-Fixado. (Jaison/James - PRJ298)
 
                   27/02/2017 SD610862 - Enviar novas informações para a esteira:
                                - cooperadoColaborador: Flag se eh proposta de colaborador
@@ -1344,7 +1346,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              TO_CHAR(NRCTRLIQ##5) || ',' || TO_CHAR(NRCTRLIQ##6) || ',' ||
              TO_CHAR(NRCTRLIQ##7) || ',' || TO_CHAR(NRCTRLIQ##8) || ',' ||
              TO_CHAR(NRCTRLIQ##9) || ',' || TO_CHAR(NRCTRLIQ##10) dsliquid,
-             decode(epr.tpemprst,1,'PP','TR') tpproduto,
+             CASE epr.tpemprst
+               WHEN 0 THEN 'TR'
+               WHEN 1 THEN 'PP'
+               WHEN 2 THEN 'POS'
+             END tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
              DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
         FROM crawepr epr,
@@ -1817,8 +1823,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                ,pr_dscritic       => vr_dscritic);
         IF TRIM(vr_dscritic) IS NOT NULL THEN                        
           RAISE vr_exc_erro;
-        END IF;
-                  
+      END IF;
+                 
         -- Gerar objeto json para a imagem 
         vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
         vr_obj_imagem.put('conteudo'    ,vr_json_valor);
@@ -2368,7 +2374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                          ,pr_cdcritic => vr_cdcritic          
                                          ,pr_dscritic => vr_dscritic);
 
-      END IF;
+        END IF;
       
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_obj_proposta_clob);
@@ -2623,11 +2629,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Se não houve erro
     IF vr_dscritic IS NULL THEN 
-  
-      --> Atualizar proposta
-      BEGIN
-        UPDATE crawepr epr 
-           SET epr.insitest = 2, -->  2 – Reenviado para Analise
+    
+    --> Atualizar proposta
+    BEGIN
+      UPDATE crawepr epr 
+         SET epr.insitest = 2, -->  2 – Reenviado para Analise
                epr.dtenvest = trunc(SYSDATE), 
                epr.hrenvest = to_char(SYSDATE,'sssss'),
                epr.cdopeste = pr_cdoperad,
@@ -2636,12 +2642,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                epr.cdopeapr = NULL,
                epr.dtaprova = NULL,
                epr.hraprova = 0
-         WHERE epr.cdcooper = pr_cdcooper
-           AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctremp = pr_nrctremp;      
-      EXCEPTION    
-        WHEN OTHERS THEN
-          vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp;      
+    EXCEPTION    
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
       END;         
 
     
@@ -2665,7 +2671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
+        RAISE vr_exc_erro;
     END IF; 
     
     
@@ -3760,7 +3766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 20/09/2016
+      Data     : Março/2016.                   Ultima atualizacao: 30/01/2017
     
       Dados referentes ao programa:
     
@@ -3771,6 +3777,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                   
                   22/09/2016 - Enviar a data em que a proposta foi efetivada ao invés
                   da data do dia.
+        
+                  30/01/2017 - Remocao do campo tipo de emprestimo. (Jaison/James - PRJ298)
 
     ..........................................................................*/ 
     
@@ -3812,7 +3820,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              epr.cdopeefe,
              ope.nmoperad nmoperad_efet,
              epr.cdagenci cdagenci_efet,             
-             decode(wepr.tpemprst,1,'PP','TR') tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
              DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc,
              epr.dtmvtolt
@@ -4127,13 +4134,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 09/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 30/01/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por buscar informações da proposta na esteira
-      Alteração : 
+      Alteração : 30/01/2017 - Remocao do campo tipo de emprestimo. (Jaison/James - PRJ298)
         
     ..........................................................................*/
     -----------> CURSORES <-----------        
@@ -4151,8 +4158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              epr.hrinclus,
              epr.cdlcremp,
              epr.cdfinemp,
-             epr.cdagenci,
-             decode(epr.tpemprst,1,'PP','TR') tpproduto
+             epr.cdagenci
         FROM crawepr epr
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta

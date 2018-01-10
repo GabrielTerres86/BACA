@@ -3114,7 +3114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Valor Lancamento
         vr_vllantmo:= rw_craplem.vllanmto;
         /* Se lancamento de pagamento*/
-        IF rw_craplem.cdhistor IN (1044,1039,1057,1045) THEN 
+        IF rw_craplem.cdhistor IN (1044,1039,1057,1045 /* PP */
+                                  ,2330,2331,2335,2336 /* POS */) THEN 
           --Se nao for primeira parcela
           IF vr_tab_flgpripa.EXISTS(rw_craplem.nrparepr) AND
              vr_tab_flgpripa(rw_craplem.nrparepr) = FALSE THEN
@@ -3126,6 +3127,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
                  vr_cdhistor := 1620; /* Aval */ 
+                 /* Pos-Fixado */
+                 WHEN rw_craplem.cdhistor = 2330 THEN
+                 vr_cdhistor := 2371; /* Devedor */
+                 WHEN rw_craplem.cdhistor = 2331 THEN
+                 vr_cdhistor := 2373; /* Devedor */
+                 WHEN rw_craplem.cdhistor = 2335 THEN
+                 vr_cdhistor := 2375; /* Aval */
+                 WHEN rw_craplem.cdhistor = 2336 THEN
+                 vr_cdhistor := 2377; /* Aval */
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3153,6 +3163,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
                  vr_cdhistor := 1618; /* Aval */ 
+                 /* Pos-Fixado */
+                 WHEN rw_craplem.cdhistor = 2330 THEN
+                 vr_cdhistor := 2363; /* Devedor */
+                 WHEN rw_craplem.cdhistor = 2331 THEN
+                 vr_cdhistor := 2365; /* Devedor */
+                 WHEN rw_craplem.cdhistor = 2335 THEN
+                 vr_cdhistor := 2367; /* Aval */
+                 WHEN rw_craplem.cdhistor = 2336 THEN
+                 vr_cdhistor := 2369; /* Aval */
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -3206,7 +3225,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         --Historico de Debito
-        IF rw_craphis.cdhistor IN (1077,1078,1619,1620) THEN
+        IF rw_craphis.cdhistor IN (1077,1078,1619,1620 /* PP */
+                                  ,2371,2373,2375,2377 /* POS */) THEN
            pr_extrato_epr(vr_index).indebcre:= 'D'; 
         END IF;
         
@@ -5433,19 +5453,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;  
         /* caso exista valor iof sera criado registro para debito */
         IF rw_crapsld.vliofmes > 0 AND (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
-          --Resultado 4
-          vr_tab_resulta(4):= rw_crapsld.vliofmes;
-          --Incrementar Conta          
-          vr_contadct:= vr_contadct + 1;
-          --Incrementar contador lancamentos na tabela
-          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
-          --Criar Lancamento Futuro na tabela
-          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
-          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
-          pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
-          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
-          pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);          
+            --Resultado 4
+            vr_tab_resulta(4):= rw_crapsld.vliofmes;
+            --Incrementar Conta          
+            vr_contadct:= vr_contadct + 1;
+            --Incrementar contador lancamentos na tabela
+            vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+            --Criar Lancamento Futuro na tabela
+            pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+            pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. IOF S/EMPR.CC';
+            pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+            pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
       
@@ -13555,6 +13575,8 @@ END pc_consulta_ir_pj_trim;
   --			               crapass, crapttl, crapjur 
   --				  		  (Adriano - P339).
   --
+  --              25/05/2017 - Passagem do tpemprst. Permitir gerar extrato de Pos-Fixado. (Jaison/James - PRJ298)
+  --
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -13880,7 +13902,7 @@ END pc_consulta_ir_pj_trim;
 
             IF vr_tab_dados_epr(vr_index).tpemprst = 1 THEN -- PP
 
-              --Imprimir Extrato
+            --Imprimir Extrato
               pc_imprime_extrato (pr_cdcooper => pr_cdcooper      --Codigo Cooperativa
                                  ,pr_cdagenci => pr_cdagenci      --Codigo Agencia
                                  ,pr_nrdcaixa => 0                --Numero do Caixa
@@ -14266,6 +14288,7 @@ END pc_consulta_ir_pj_trim;
               gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
               --Escrever no XML interno
               gene0002.pc_escreve_xml(vr_clobxml73,vr_dstexto73,vr_dstexto);
+
             END IF; --tpemprst = 1
             
             /* Finalizar tag conta */

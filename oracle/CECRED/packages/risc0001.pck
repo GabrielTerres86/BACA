@@ -392,7 +392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: 21/07/2017
+  --  Data     : ?????                         Ultima atualizacao: 03/10/2017
   --
   --  Dados referentes ao programa:
   --
@@ -401,6 +401,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --               21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
   --                            cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
+  --
+  --               03/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   --
   -- .............................................................................
 
@@ -617,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-      ELSIF rw_crapris_jur.tpemprst = 1 THEN  -- Pre-Fixado
+      ELSIF rw_crapris_jur.tpemprst IN (1,2) THEN  -- Pre-Fixado ou Pos-Fixado
         
         vr_fleprces := 0; 
         --> Verificar se é um emprestimo de cessao de credito
