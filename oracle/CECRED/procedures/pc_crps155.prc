@@ -123,22 +123,24 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   -- Agências por cooperativa, com poupança programada
   cursor cr_craprpp_age (pr_cdcooper in craprpp.cdcooper%type,
                          pr_dtmvtolt in crapdat.dtmvtolt%type,
-                         pr_cdprogra in tbgen_batch_controle.cdprogra%type) is 
+                         pr_cdprogra in tbgen_batch_controle.cdprogra%type,
+                         pr_qterro   in number) is 
     select distinct crapass.cdagenci
       from craprpp,
            crapass
      where craprpp.cdcooper  = pr_cdcooper
        and crapass.cdcooper  = craprpp.cdcooper
        and crapass.nrdconta  = craprpp.nrdconta
-       and (pr_flgresta = 0 or
-           (pr_flgresta = 1 and exists (select 1
-                                          from tbgen_batch_controle
-                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
-                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
-                                           and tbgen_batch_controle.tpagrupador = 1
-                                           and tbgen_batch_controle.cdagrupador = crapass.cdagenci
-                                           and tbgen_batch_controle.insituacao  = 1
-                                           and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
+       and (pr_qterro = 0 or
+           (pr_qterro > 0 and exists (select 1
+                                        from tbgen_batch_controle
+                                       where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                         and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                         and tbgen_batch_controle.tpagrupador = 1
+                                         and tbgen_batch_controle.cdagrupador = crapass.cdagenci
+                                         and tbgen_batch_controle.insituacao  = 1
+                                         and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
+    order by crapass.cdagenci;
 
   -- Informações da poupança programada
   cursor cr_craprpp(pr_cdcooper in craptab.cdcooper%type) is
@@ -382,28 +384,36 @@ begin
      vr_qtdjobs   > 0 and 
      pr_cdagenci  = 0 then  
 
-
-    -- Gerar o ID para o paralelismo
-    vr_idparale := gene0001.fn_gera_id_paralelo;
-    
     --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
     pc_log_programa(pr_dstiplog   => 'I',    
                     pr_cdprograma => vr_cdprogra,           
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini_ger);
+
+    -- Gerar o ID para o paralelismo
+    vr_idparale := gene0001.fn_gera_id_paralelo;
     
---    dbms_output.put_line('ID PARALELO : '||vr_idparale);
-     
     -- Se houver algum erro, o id vira zerado
     IF vr_idparale = 0 THEN
        -- Levantar exceção
-       pr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
+       vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
        RAISE vr_exc_saida;
     END IF;
+
+    -- Verifica se algum job paralelo executou com erro
+    vr_qterro := 0;
+    vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                  pr_cdprogra    => vr_cdprogra,
+                                                  pr_dtmvtolt    => vr_dtmvtolt,
+                                                  pr_tpagrupador => 1,
+                                                  pr_nrexecucao  => 1);    
                                           
     -- Retorna as agências, com poupança programada
-    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper,vr_dtmvtolt,vr_cdprogra) loop
+    for rw_craprpp_age in cr_craprpp_age (pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => vr_dtmvtolt
+                                         ,pr_cdprogra => vr_cdprogra
+                                         ,pr_qterro   => vr_qterro) loop
                                           
       -- Montar o prefixo do código do programa para o jobname
       vr_jobname := vr_cdprogra ||'_'|| rw_craprpp_age.cdagenci || '$';  
@@ -411,10 +421,10 @@ begin
       -- Cadastra o programa paralelo
       gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
                                 ,pr_idprogra => LPAD(rw_craprpp_age.cdagenci,3,'0') --> Utiliza a agência como id programa
-                                ,pr_des_erro => pr_dscritic);
+                                ,pr_des_erro => vr_dscritic);
                                 
       -- Testar saida com erro
-      if pr_dscritic is not null then
+      if vr_dscritic is not null then
         -- Levantar exceçao
         raise vr_exc_saida;
       end if;     
@@ -446,10 +456,10 @@ begin
                              ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
                              ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
                              ,pr_jobname  => vr_jobname   --> Nome randomico criado
-                             ,pr_des_erro => pr_dscritic);    
+                             ,pr_des_erro => vr_dscritic);    
                              
        -- Testar saida com erro
-       if pr_dscritic is not null then 
+       if vr_dscritic is not null then 
           -- Levantar exceçao
           raise vr_exc_saida;
        end if;
@@ -458,9 +468,9 @@ begin
        -- caso tenhamos excedido a quantidade de JOBS em execuçao
        gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                    ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
-                                   ,pr_des_erro => pr_dscritic);
+                                   ,pr_des_erro => vr_dscritic);
        -- Testar saida com erro
-       if  pr_dscritic is not null then 
+       if  vr_dscritic is not null then 
          -- Levantar exceçao
          raise vr_exc_saida;
        end if;                                 
@@ -470,10 +480,17 @@ begin
     -- até que todos os Jobs tenha finalizado seu processamento
     gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                 ,pr_qtdproce => 0
-                                ,pr_des_erro => pr_dscritic);
+                                ,pr_des_erro => vr_dscritic);
+                                
+    -- Testar saida com erro
+    if  vr_dscritic is not null then 
+      -- Levantar exceçao
+      raise vr_exc_saida;
+    end if;                                  
                                 
 
     -- Verifica se algum job paralelo executou com erro
+    vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
                                                   pr_cdprogra    => vr_cdprogra,
                                                   pr_dtmvtolt    => vr_dtmvtolt,
@@ -504,8 +521,13 @@ begin
                                     ,pr_nrexecucao  => 1                         -- Numero de identificacao da execucao do programa
                                     ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
                                     ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
-                                    ,pr_dscritic    => pr_dscritic              
-                                     );       
+                                    ,pr_dscritic    => vr_dscritic              
+                                     );   
+    -- Testar saida com erro
+    if  vr_dscritic is not null then 
+      -- Levantar exceçao
+      raise vr_exc_saida;
+    end if;                                         
   
     --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
     pc_log_programa(pr_dstiplog   => 'I',    
@@ -541,6 +563,7 @@ begin
       if vr_dscritic is not null or vr_cdcritic is not null then
         raise vr_exc_saida;
       end if;
+
       -- Verifica o saldo e a situação da poupança programada
       if (vr_vlsdrdpp = 0 and (rw_craprpp.cdsitrpp = 3 or rw_craprpp.cdsitrpp = 4 or rw_craprpp.cdsitrpp = 5)) or
          vr_vlsdrdpp < 0 then
@@ -814,7 +837,14 @@ begin
       -- Atualiza finalização do batch na tabela de controle 
       gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
                                          ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                         ,pr_dscritic   => pr_dscritic);        
+                                         ,pr_dscritic   => vr_dscritic);
+                                         
+      -- Testar saida com erro
+      if  vr_dscritic is not null then 
+        -- Levantar exceçao
+        raise vr_exc_saida;
+      end if; 
+                                                      
     end if;    
     
     if vr_inproces > 2 then 
@@ -830,16 +860,16 @@ begin
     --Salvar informacoes no banco de dados
     commit;
   else
+    -- Atualiza finalização do batch na tabela de controle 
+    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                       ,pr_dscritic   => vr_dscritic);  
                                            
     -- Encerrar o job do processamento paralelo dessa agência
     gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                 ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                 ,pr_des_erro => vr_dscritic);  
   
-    -- Atualiza finalização do batch na tabela de controle 
-    gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                       ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
-                                       ,pr_dscritic   => pr_dscritic);  
     --Salvar informacoes no banco de dados
     commit;
   end if;
