@@ -3114,8 +3114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Valor Lancamento
         vr_vllantmo:= rw_craplem.vllanmto;
         /* Se lancamento de pagamento*/
-        IF rw_craplem.cdhistor IN (1044,1039,1057,1045 /* PP */
-                                  ,2330,2331,2335,2336 /* POS */) THEN 
+        IF rw_craplem.cdhistor IN (1044,1039,1057,1045 /* PP */) THEN 
           --Se nao for primeira parcela
           IF vr_tab_flgpripa.EXISTS(rw_craplem.nrparepr) AND
              vr_tab_flgpripa(rw_craplem.nrparepr) = FALSE THEN
@@ -3127,15 +3126,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
                  vr_cdhistor := 1620; /* Aval */
-                 /* Pos-Fixado */
-                 WHEN rw_craplem.cdhistor = 2330 THEN
-                 vr_cdhistor := 2371; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2331 THEN
-                 vr_cdhistor := 2373; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2335 THEN
-                 vr_cdhistor := 2375; /* Aval */
-                 WHEN rw_craplem.cdhistor = 2336 THEN
-                 vr_cdhistor := 2377; /* Aval */
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3163,15 +3153,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
                  vr_cdhistor := 1618; /* Aval */
-                 /* Pos-Fixado */
-                 WHEN rw_craplem.cdhistor = 2330 THEN
-                 vr_cdhistor := 2363; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2331 THEN
-                 vr_cdhistor := 2365; /* Devedor */
-                 WHEN rw_craplem.cdhistor = 2335 THEN
-                 vr_cdhistor := 2367; /* Aval */
-                 WHEN rw_craplem.cdhistor = 2336 THEN
-                 vr_cdhistor := 2369; /* Aval */
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -3225,8 +3206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         --Historico de Debito
-        IF rw_craphis.cdhistor IN (1077,1078,1619,1620 /* PP */
-                                  ,2371,2373,2375,2377 /* POS */) THEN
+        IF rw_craphis.cdhistor IN (1077,1078,1619,1620) THEN
            pr_extrato_epr(vr_index).indebcre:= 'D'; 
         END IF;
         
@@ -12053,7 +12033,7 @@ END pc_consulta_ir_pj_trim;
   -- 		                   crapass, crapttl, crapjur 
   -- 						  (Adriano - P339).
   --              25/05/2017 - Passagem do tpemprst. (Jaison/James - PRJ298)
-  -- 
+  --
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -13009,7 +12989,7 @@ END pc_consulta_ir_pj_trim;
         --Tabela de Memoria pra guardar informacoes das parcelas
         TYPE typ_tab_linha_parcela IS TABLE OF VARCHAR2(200) INDEX BY PLS_INTEGER;
         vr_tab_linha_parcela typ_tab_linha_parcela;
-
+        
         --Indices para as tabelas de memoria
         vr_index_extrato PLS_INTEGER;
         vr_index_epr_aux PLS_INTEGER;
@@ -13059,7 +13039,7 @@ END pc_consulta_ir_pj_trim;
 
         --Limpar tabela Memoria
         pr_tab_extrato_epr_aux.DELETE;
-
+        
         --Buscar Data do Sistema para a cooperativa 
         OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -13409,12 +13389,12 @@ END pc_consulta_ir_pj_trim;
           -- Se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF; 
-					 
+          END IF;
+
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
           vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="">';
-          --Escrever no XML
+					--Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
           --Escrever no XML interno
@@ -13437,10 +13417,10 @@ END pc_consulta_ir_pj_trim;
                 vr_dsvltaxa := '';
                 -- Lancamento de Juros de Correcao
                 IF pr_tab_extrato_epr_aux(vr_index_epr_aux).cdhistor IN (2344,2345) THEN
-                
+                  
                   OPEN cr_crappep_taxa (pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_nrctremp => pr_nrctremp
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
                                        ,pr_nrparepr => pr_tab_extrato_epr_aux(vr_index_epr_aux).nrparepr);
                   FETCH cr_crappep_taxa INTO rw_crappep_taxa;
                   IF cr_crappep_taxa%FOUND THEN
