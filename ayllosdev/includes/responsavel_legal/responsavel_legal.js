@@ -18,6 +18,9 @@
  *                23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
  *                             replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)   
  *				  25/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).
+ *                08/01/2018 - Ajuste para carregar nome do avalista do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's   
+ 
  */
 
 var nrcpfcto = "";
@@ -423,6 +426,13 @@ function controlaOperacaoResp( operacao_rsp ){
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
 				$('#divOpcoesDaOpcao2').html(response);
+				
+				if (operacao_rsp == 'TA' ||
+				    operacao_rsp == 'TB' ){
+					// Validar se o nome pode ser alterado
+                    buscaNmPessoa_resp($('#nrcpfcto','#'+nomeFormResp ).val(),'nmdavali', nomeFormResp);                                            
+				}
+				
 			} else {
 				eval( response );
 				controlaFocoResp( operacao_rsp );
@@ -1938,4 +1948,54 @@ function voltarRotina() {
 
 function proximaRotina () {
 	acessaOpcaoAbaDados(6,2,'@');			
+}
+
+
+// Rotina para buscar nome da pessoa responsavel legal e validar se poderá ser alterado
+function buscaNmPessoa_resp(nrcpfcgc,nmdcampo, nmdoform){
+
+    var nrdocnpj = nrcpfcgc;
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);    
+
+    nrdocnpj = normalizaNumero(nrdocnpj);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrdocnpj == "" || nrdocnpj == "0" ){   
+        $('#'+nmdcampo,'#'+nmdoform ).habilitaCampo();     
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/busca_nome_pessoa.php',
+        data: {
+            nrdocnpj: nrdocnpj,
+            nmdcampo: nmdcampo,
+            nmdoform: nmdoform,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }

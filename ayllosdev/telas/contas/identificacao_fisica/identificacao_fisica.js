@@ -26,6 +26,10 @@
  * 016: [31/07/2017](Odirlei-AMcom)      : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM .
  * 017: [12/08/2015] Lombardi            : Criada a função dossieDigidoc.
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 019: [08/01/2018] Evandro G.(Mout's)  : Ajuste para carregar nome do titular do cadastro unificado e 
+                                           não permitir alterar caso possua cadastro completo.(P339)
+                                
+ 
  */
 
 
@@ -227,6 +231,14 @@ function controlaOperacao( novaOp ) {
 			semaforo--;
 			if ( response.indexOf('showError("error"') == -1 ) {
 				$('#divConteudoOpcao').html(response);
+				
+				if (operacao == 'BI' || 
+				    operacao == 'BA' ){
+					// Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeForm ).val(),'nmextttl', nomeForm);                        
+                    
+				}
+				
 			} else {
 				eval( response );
 				controlaFoco();

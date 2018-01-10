@@ -10,13 +10,17 @@
  
 <?	
     session_start();
-	require_once("../../../includes/config.php");
-	require_once("../../../includes/funcoes.php");
-	require_once("../../../includes/controla_secao.php");
-	require_once("../../../class/xmlfile.php");
+	require_once("../../includes/config.php");
+	require_once("../../includes/funcoes.php");
+	require_once("../../includes/controla_secao.php");
+	require_once("../../class/xmlfile.php");
 	isPostMethod();		
 	
     $nrdocnpj = $_POST['nrdocnpj'] == '' ?  0  : $_POST['nrdocnpj'];
+    $nmdcampo = $_POST['nmdcampo'] == '' ?  0  : $_POST['nmdcampo'];
+    $nmdoform = $_POST['nmdoform'] == '' ?  0  : $_POST['nmdoform'];
+    
+    
 
 	// Monta o xml de requisição
 	$xml  = "";
@@ -46,11 +50,15 @@
 	$idaltera = getByTagName($result,'idaltera');
     
     $nmpessoa = substr($nmpessoa,0,40);
+    
+    if ($nmpessoa != ""){
+        echo "$('#".$nmdcampo."','#".$nmdoform."').val('".$nmpessoa."');";
+    }
 	
 	if($idaltera == 1){
-		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda');";
+		echo "$('#".$nmdcampo."','#".$nmdoform."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda');";
 	}else{
-		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+		echo "$('#".$nmdcampo."','#".$nmdoform."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
 	}
 ?>	
 
