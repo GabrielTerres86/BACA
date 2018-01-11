@@ -206,6 +206,8 @@
                14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
                             valido para que seja excluido (Douglas - Chamado 524133)
 
+               09/08/2017 - Inclusao da verificacao do produto TR. (Jaison/James - PRJ298)
+
 			   18/08/2017 - Ajuste para efetuar o controle de lock ao realizar a atualizacao
 			                da tabela craplfp
 							(Adriano - SD 733103).
@@ -217,7 +219,7 @@
 
 			   19/12/2017 - Efetuado alteracao para validar corretamente o tipo de pessoa e conta (Jonata - MOUTS).
 
-             #######################################################
+			   #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -511,9 +513,9 @@ IF  aux_flestcri > 0  THEN
 
 /* recebe os parametros de sessao (criterio de separacao) ***/
 ASSIGN aux_idparale = INT(ENTRY(1,SESSION:PARAMETER))
-       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER)) 
-       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).     
-
+       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER))
+       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).
+	   
 /* Cooperativa - CECRED */
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
@@ -524,7 +526,7 @@ IF   NOT AVAILABLE crapcop THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  +
                            glb_dscritic + " >> log/proc_batch.log").
-         RUN finaliza_paralelo.
+		 RUN finaliza_paralelo.
          QUIT.
      END. 
 
@@ -662,7 +664,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_vlsldliq      = 0
            aux_CNPJNLiqdant  = ""
 		   aux_Hist          = "".
-                              
+		   
     EMPTY TEMP-TABLE tt-situacao-if.   
 
     RUN importa_xml.
@@ -780,7 +782,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+		     IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
 			    DO:
 					/* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -825,7 +827,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 							   " - " + glb_cdprogra + "' --> '"  +
 							   glb_dscritic + " >> log/proc_batch.log"). 
 			
-			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 				
             /* Efetuar a chamada a rotina Oracle */
             RUN STORED-PROCEDURE pc_insere_msg_domicilio
@@ -840,8 +842,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 					RUN salva_arquivo.
 					RUN deleta_objetos.
 					NEXT.
-         END.
-    /* VR Boleto */
+				END.
+	 /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
              
@@ -1879,7 +1881,7 @@ PROCEDURE deleta_objetos.
     IF  VALID-HANDLE (hNameTag)  THEN
         DELETE OBJECT hNameTag.
     
-    IF  VALID-HANDLE (hSubNode2)  THEN
+	IF  VALID-HANDLE (hSubNode2)  THEN
         DELETE OBJECT hSubNode2.
     
     IF  VALID-HANDLE (hSubNode)  THEN
@@ -1887,8 +1889,8 @@ PROCEDURE deleta_objetos.
     
     IF  VALID-HANDLE (hNode)  THEN
         DELETE OBJECT hNode.
-    
-    IF  VALID-HANDLE (hRoot)  THEN
+
+		IF  VALID-HANDLE (hRoot)  THEN
         DELETE OBJECT hRoot.
 
     IF  VALID-HANDLE (hDoc)  THEN
@@ -1898,7 +1900,7 @@ END PROCEDURE.
 
 
 PROCEDURE importa_xml.
-     
+
    DEF VAR aux_setlinha AS CHAR                                     NO-UNDO.
    DEF VAR aux_setlinh2 AS CHAR                                     NO-UNDO.
 
@@ -2393,7 +2395,7 @@ PROCEDURE verifica_conta.
 				ELSE
                 DO:                                                   
 						IF crapass.inpessoa = 1 THEN
-							DO:
+                DO:                                                   
 							    /*Verifica se o problema esta no CPF*/
                     FIND FIRST crapttl WHERE crapttl.cdcooper = val_cdcooper AND
                                              crapttl.nrdconta = val_nrdconta AND
@@ -3596,7 +3598,7 @@ PROCEDURE trata_dados_transferencia.
 
 END PROCEDURE.
 
-										
+
 PROCEDURE trata_lancamentos.
 
    DEF VAR aux_cdhistor AS INT.
@@ -4507,6 +4509,7 @@ PROCEDURE trata_lancamentos.
                                                                  "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
 
                                                           ,INPUT "TED BacenJud: Rejeitada pela cabine"
+														  ,INPUT "N"
                                                           ,OUTPUT ?               /* Status do erro */
                                                           ,OUTPUT ?).             /* Retorno do Erro */
 
@@ -4645,6 +4648,7 @@ PROCEDURE trata_lancamentos.
                                                                      "   Valor: " + STRING(aux_VlrLanc) +
                                                                      "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
                                                               ,INPUT "TED BacenJud: Devolvida"
+															  ,INPUT "N"
                                                               ,OUTPUT ?               /* Status do erro */
                                                               ,OUTPUT ?).             /* Retorno do Erro */
 
@@ -4922,7 +4926,7 @@ PROCEDURE trata_lancamentos.
                                 END. 
                         END.
                     /* TR */
-                    ELSE
+                    ELSE IF  aux_tpemprst = 0 THEN
                         DO:
                             RUN liquida_contrato_emprestimo_antigo
                                    (INPUT b-crabcop.cdcooper,
