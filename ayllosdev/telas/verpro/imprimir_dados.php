@@ -112,6 +112,13 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
+  //FGTS/DAE
+  $cdconven     = $_POST['cdconven'];
+  $dtvalida     = $_POST['dtvalida'];
+  $cdcompet     = $_POST['cdcompet'];
+  $nrdocpes     = $_POST['nrdocpes'];
+  $cdidenti     = $_POST['cdidenti'];
+  $nrdocmto_dae = $_POST['nrdocmto_dae'];
 	
 	$dsiduser 	= session_id();	
 
@@ -135,7 +142,10 @@
 			$cdbarras   = $_POST['cdbarrax'];
 			$lndigita   = $_POST['lndigitx'];
 		}
-	} else {
+	} elseif ($cdtippro == '24' || $cdtippro == '23') { //FGTS/DAE
+    $cdbarras   = $_POST['cdbarrax'];
+		$lndigita   = $_POST['lndigitx'];
+  } else {
 		$cdbarras   = $_POST['cdbarras'];
 		$lndigita   = $_POST['lndigita'];
 	}
@@ -218,7 +228,14 @@
 	$xml .= '		<dtrecarga>'.$dtrecarga.'</dtrecarga>';	
 	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
 	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
-	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
+	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';
+  //FGTS/DAE
+  $xml .= '		<cdconven>'.$cdconven.'</cdconven>';
+  $xml .= '		<dtvalida>'.$dtvalida.'</dtvalida>';
+  $xml .= '		<cdcompet>'.$cdcompet.'</cdcompet>';
+  $xml .= '		<nrdocpes>'.$nrdocpes.'</nrdocpes>';
+  $xml .= '		<cdidenti>'.$cdidenti.'</cdidenti>';
+  $xml .= '		<nrdocmto_dae>'.$nrdocmto_dae.'</nrdocmto_dae>';
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	

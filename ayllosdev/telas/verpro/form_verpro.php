@@ -22,6 +22,7 @@
  * 013: [23/03/2017] - Inclusão do protocolo de Recarga de celular (PRJ321 - Reinert)
  * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
  * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
+ * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406)
 
  */
 
@@ -140,7 +141,51 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 	$vlrted    = trim($aux_dslinha2[4]); 
 	$vlrvrbol  = trim($aux_dslinha2[5]); 
 	$vlrflpgto = trim($aux_dslinha2[6]); 
-}
+  
+} elseif ($cdtippro == 24) { //FGTS
+    
+    $cdbarras = trim(substr($aux_dslinha3[1], strpos($aux_dslinha3[1], ":") + 1));
+    $tpdocmto = trim(substr($aux_dslinha3[0], strpos($aux_dslinha3[0], ":") + 1));
+    $dslindig = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[2], ":") + 1));
+    
+    $nrconven = substr($cdbarras, 15, 4);
+    
+    if ($nrconven == '0179' || $nrconven == '0180' || $nrconven == '0181' || $nrconven == '0178' || $nrconven == '0240') { // Modelo 01 e 02
+      
+      $nrdocpes = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
+      $cdconven = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
+      $dtvalida = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
+      $cdcompet = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+      $vltotfat = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
+      $dsidepag = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+      $dtpagmto = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+      $hrpagmto = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
+      
+    } elseif ($nrconven == '0239' || $nrconven == '0451') { // Modelo 03
+
+      $cdconven = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
+      $dtvalida = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
+      $cdidenti = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
+      $vltotfat = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+      $dsidepag = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
+      $dtpagmto = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+      $hrpagmto = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+      
+    }
+    
+} elseif ($cdtippro == 23) { //DAE // Modelo 04
+
+    $dsagtare = trim(substr($aux_dslinha3[1], strpos($aux_dslinha3[1], ":") + 1));
+    $tpdocmto = trim(substr($aux_dslinha3[0], strpos($aux_dslinha3[0], ":") + 1));
+    $cdbarras = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[2], ":") + 1));
+    $dslindig = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
+    $nrdocmto_dae = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
+    $dsidepag = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+    $vltotfat = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
+    $dtpagmto = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
+    $hrpagmto = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+    
+  }
 
 ?>
 <table cellpadding="0" cellspacing="0" border="0" >
@@ -365,18 +410,104 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<?php } 
 														}
 													?>
+                          
+                          <?php if ($cdtippro == 24) { //FGTS ?>
+                          
+                            <label for="tpdocmto"><? echo utf8ToHtml('Tipo de Documento:') ?></label>
+                            <input name="tpdocmto" id="tpdocmto" type="text" value="<? echo $tpdocmto; ?>" />
+                            
+                            <label for="cdbarras"><? echo utf8ToHtml('Código de Barras:') ?></label>
+                            <input name="cdbarras" id="cdbarras" type="text" value="<? echo $cdbarras; ?>" />
+                            
+                            <label for="dslindig"><? echo utf8ToHtml('Linha Digitável:') ?></label>
+                            <input name="dslindig" id="dslindig" type="text" value="<? echo $dslindig; ?>" />
+                            
+                            <?php if ($cdconven == '0179' || $cdconven == '0180' || $cdconven == '0181') { //Modelo 01 ?>
+                            
+                              <label for="nrdocpes"><? echo utf8ToHtml('CNPJ/CEI Empresa/CPF:') ?></label>
+                              <input name="nrdocpes" id="nrdocpes" type="text" value="<? echo $nrdocpes; ?>" />
+                            
+                            <?php } elseif ($cdconven == '0178' || $cdconven == '0240') { //Modelo 02 ?>
+                            
+                              <label for="nrdocpes"><? echo utf8ToHtml('CNPJ/CEI Empresa:') ?></label>
+                              <input name="nrdocpes" id="nrdocpes" type="text" value="<? echo $nrdocpes; ?>" />
+                            
+                            <?php } ?>
+                          
+                            <label for="cdconven"><? echo utf8ToHtml('Cod. Convênio:') ?></label>
+                            <input name="cdconven" id="cdconven" type="text" value="<? echo $cdconven; ?>" />
+                            
+                            <label for="dtvalida"><? echo utf8ToHtml('Data da Validade:') ?></label>
+                            <input name="dtvalida" id="dtvalida" type="text" value="<? echo $dtvalida; ?>" />
+                            
+                            <?php if ($cdconven == '0179' || $cdconven == '0180' || $cdconven == '0181' || $cdconven == '0178' || $cdconven == '0240') { //Modelo 01 e 02 ?>
+                            
+                              <label for="cdcompet"><? echo utf8ToHtml('Competência:') ?></label>
+                              <input name="cdcompet" id="cdcompet" type="text" value="<? echo $cdcompet; ?>" />
+                            
+                            <?php } elseif ($cdconven == '0239' || $cdconven == '0451') { //Modelo 03 ?>
+                              
+                              <label for="cdidenti"><? echo utf8ToHtml('Identificador:') ?></label>
+                              <input name="cdidenti" id="cdidenti" type="text" value="<? echo $cdidenti; ?>" />
+                              
+                            <?php } ?>
+                            
+                            <label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
+                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
+                            
+                            <label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
+                            <input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag; ?>" />
+                            
+                            <label for="dtmvtdrf"><? echo utf8ToHtml('Data Pagamento:') ?></label>
+                            <input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtpagmto ?>" />
+                          
+                            <label for="hrautdrf"><? echo utf8ToHtml('Hora Pagamento:') ?></label>
+                            <input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrpagmto ?>" />
 
-                                                <label for="dstransf"><? echo utf8ToHtml('Cod.Identificador:') ?></label>
-                                                <input name="dstransf" id="dstransf" type="text" value="<? echo $dstransf ?>" />
+                          <?php } elseif ($cdtippro == 23) { //DAE ?>
+                            
+                            <label for="tpdocmto"><? echo utf8ToHtml('Tipo de Documento:') ?></label>
+                            <input name="tpdocmto" id="tpdocmto" type="text" value="<? echo $tpdocmto; ?>" />
 
-                                                <label for="dscedent"><? echo utf8ToHtml('Cedente:') ?></label>
-                                                <input name="dscedent" id="dscedent" type="text" value="<? echo $dscedent ?>" />
+                            <label for="dsagtare"><? echo utf8ToHtml('Agente Arrecadador:') ?></label>
+                            <input name="dsagtare" id="dsagtare" type="text" value="<? echo $dsagtare; ?>" />
+                            
+                            <label for="cdbarras"><? echo utf8ToHtml('Código de Barras:') ?></label>
+                            <input name="cdbarras" id="cdbarras" type="text" value="<? echo $cdbarras; ?>" />
+                            
+                            <label for="dslindig"><? echo utf8ToHtml('Linha Digitável:') ?></label>
+                            <input name="dslindig" id="dslindig" type="text" value="<? echo $dslindig; ?>" />
+                            
+                            <label for="nrdocmto_dae"><? echo utf8ToHtml('Nr. Docmto. (DAE):') ?></label>
+                            <input name="nrdocmto_dae" id="nrdocmto_dae" type="text" value="<? echo $nrdocmto_dae; ?>" />
+                            
+                            <label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
+                            <input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
+                            
+                            <label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
+                            <input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag; ?>" />
+                            
+                            <label for="dtmvtdrf"><? echo utf8ToHtml('Data Pagamento:') ?></label>
+                            <input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtpagmto ?>" />
+                          
+                            <label for="hrautdrf"><? echo utf8ToHtml('Hora Pagamento:') ?></label>
+                            <input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrpagmto ?>" />
+                          
+                          <?php
+                          }
+                          ?>
 
-                                                <label for="dttransa"><? echo utf8ToHtml('Data Transação:') ?></label>
-                                                <input name="dttransa" id="dttransa" type="text" value="<? echo $dttransa ?>" />
+                          <label for="dstransf"><? echo utf8ToHtml('Cod.Identificador:') ?></label>
+                          <input name="dstransf" id="dstransf" type="text" value="<? echo $dstransf ?>" />
 
-                                                <label for="hrautenx"><? echo utf8ToHtml('Hora:') ?></label>
-                                                <input name="hrautenx" id="hrautenx" type="text" value="<? echo $hrautenx ?>" />
+                          <label for="dscedent"><? echo utf8ToHtml('Cedente:') ?></label>
+                          <input name="dscedent" id="dscedent" type="text" value="<? echo $dscedent ?>" />
+
+                          <label for="dttransa"><? echo utf8ToHtml('Data Transação:') ?></label>
+                          <input name="dttransa" id="dttransa" type="text" value="<? echo $dttransa ?>" />
+
+                          <label for="hrautenx"><? echo utf8ToHtml('Hora:') ?></label>
+                          <input name="hrautenx" id="hrautenx" type="text" value="<? echo $hrautenx ?>" />
 
 												<!-- Pacote de tarfas -->
 												<?php if ($cdtippro == 14){?>
