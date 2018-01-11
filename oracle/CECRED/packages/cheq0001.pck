@@ -173,14 +173,14 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                             ,pr_des_erro     OUT VARCHAR2);       --> Erros do processo
 
     -- Verificar possivel fraude dos cheques de outras instituicoes com sinistros (UNICRED).                       
-    PROCEDURE pc_ver_fraude_chq_extern(pr_cdcooper IN NUMBER                                  --> Cooperativa
+    PROCEDURE pc_ver_fraude_chq_extern (pr_cdcooper IN NUMBER                                  --> Cooperativa
                                       ,pr_cdprogra IN VARCHAR2                                --> Programa chamador
-                                      ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Código da Agencia do Cheque
-                                      ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero da Conta do Cheque
-                                      ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Data de Referencia
-                                      ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Numero da Conta
-                                      ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Numero do Documento
-                                      ,pr_des_erro OUT VARCHAR2); 
+                                       ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Número do Banco do Chque
+                                       ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero do Cheque
+                                       ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Numero da Conta do Cheque
+                                       ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Operador 
+                                       ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Código da Agencia do Cheque
+                                       ,pr_des_erro OUT VARCHAR2);                             --> Descrição do erro 
 
   /* Rotina para criar registros de devolucao/taxa de cheques. */
   PROCEDURE pc_gera_devolu_cheque_car (pr_cdcooper  IN crapdev.cdcooper%TYPE    --> Código da cooperativa
@@ -2372,7 +2372,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
     END pc_obtem_cheques_deposito; 
-
+    
                         
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
@@ -2967,12 +2967,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              
   PROCEDURE pc_ver_fraude_chq_extern (pr_cdcooper IN NUMBER                                  --> Cooperativa
                                      ,pr_cdprogra IN VARCHAR2                                --> Programa chamador
-                                     ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Código da Agencia do Cheque
-                                     ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero da Conta do Cheque
-                                     ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Data de Referencia
-                                     ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Numero da Conta
-                                     ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Numero do Documento
-                                     ,pr_des_erro OUT VARCHAR2) IS
+                                     ,pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE    --> Número do Banco do Chque
+                                     ,pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE   --> Numero do Cheque
+                                     ,pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE --> Numero da Conta do Cheque
+                                     ,pr_cdoperad IN tbchq_sinistro_outrasif.cdoperad%TYPE   --> Operador 
+                                     ,pr_cdagenci IN tbchq_sinistro_outrasif.cdagencia%TYPE  --> Código da Agencia do Cheque
+                                     ,pr_des_erro OUT VARCHAR2) IS                           --> Descrição do erro 
   BEGIN
     /* .............................................................................
 
@@ -2980,20 +2980,22 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Ranghetti
-    Data    : Agosto/2015                          Ultima alteracao: 
+    Data    : Agosto/2015                          Ultima alteracao: 27/12/2017
 
     Dados referentes ao programa:
 
     Frequencia: Diario (Batch)
     Objetivo  : Verificar possivel fraude dos cheques de outras instituicoes com sinistros (UNICRED).
 
-    Alteracoes:  
-                             
+    Alteracoes: 27/12/2017 - Adicionar o Número da Agencia do Cheque como parametro e buscar 
+                             a informação de cheque sinistrado com a informação da agencia
+                             do cheque (Douglas - Chamado 820177)
     ............................................................................. */
     DECLARE
       -- buscar cheques de outras instituicoes com sinistros
       CURSOR cr_tbchq (pr_cdbanco  IN tbchq_sinistro_outrasif.cdbanco%TYPE,
                        pr_nrcheque IN tbchq_sinistro_outrasif.nrcheque%TYPE,
+                       pr_cdagechq IN tbchq_sinistro_outrasif.cdagencia%TYPE,
                        pr_nrctachq IN tbchq_sinistro_outrasif.nrcontachq%TYPE) IS
         SELECT tbchq.nrcheque,
                tbchq.nrcontachq,
@@ -3001,7 +3003,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
           FROM tbchq_sinistro_outrasif tbchq
          WHERE tbchq.cdbanco    = pr_cdbanco
            AND tbchq.nrcheque   = pr_nrcheque
-           AND tbchq.cdagencia  = pr_cdagenci           
+           AND tbchq.cdagencia  = pr_cdagechq
            /* nr da conta cadastrada LIKE qlqr str terminando no Conta completa do cmc7  */
            AND regexp_like(pr_nrctachq, '.*'||tbchq.nrcontachq||'$');
            
@@ -3023,6 +3025,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       -- Verificar cheque contem fraude
       OPEN cr_tbchq (pr_cdbanco  => pr_cdbanco,
                      pr_nrcheque => pr_nrcheque,
+                     pr_cdagechq => pr_cdagenci,
                      pr_nrctachq => pr_nrctachq);
       FETCH cr_tbchq INTO rw_tbchq;
       -- caso tenha fraude
