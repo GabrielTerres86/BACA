@@ -19647,7 +19647,7 @@ end;';
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2014.                   Ultima atualizacao: 08/12/2017
+    --  Data     : Maio/2014.                   Ultima atualizacao: 03/01/2018
     --
     --  Dados referentes ao programa:
     --
@@ -19660,6 +19660,9 @@ end;';
     --               08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
     --                            (SD#791193 - AJFink)
     --
+    --               03/01/2018 - Adicionar chamada para a CECRED.pc_internal_exception,
+    --                            para possibilitar a identificação do erro
+    --                            (Douglas - Chamado 822826)
     -- .........................................................................
 
   --buscar solicitações pendentes
@@ -19839,6 +19842,9 @@ end;';
 
   EXCEPTION
     WHEN OTHERS THEN
+      -- Adicionar chamada para possibilitar a identificação do erro
+      CECRED.pc_internal_exception;
+      
       pr_dscritic := 'Erro na rotina PAGA0001.pc_processa_crapdda: '||SQLErrm;
       ROLLBACK;
       npcb0002.pc_libera_sessao_sqlserver_npc('PAGA0001_2');
