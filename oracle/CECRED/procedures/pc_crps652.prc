@@ -205,6 +205,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             "Pagto. Boleto Prejuízo", "Descto. Boleto Prejuízo" e "Pagto. de Boleto".
                             Inclusão de verificação dos historicos 2277, 2278 e 2279. Prj. 210.2 (Lombardi)
 
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
                17/09/2017 - Ajuste para efetuar a regularização do contrato quando o mesmo for liquidado
                             (Jonata - SD 742850). 
                             
@@ -572,7 +574,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            FROM craplcm, craphis, crapepr
           WHERE crapepr.cdcooper = craplcm.cdcooper
             AND crapepr.nrdconta = craplcm.nrdconta
-            and crapepr.tpemprst = 1
+            and crapepr.tpemprst IN (1,2) -- PP ou POS
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
             AND craplcm.cdcooper = pr_cdcooper
@@ -580,7 +582,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND crapepr.nrctremp = pr_nrctremp
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
-            AND craphis.cdhistor in (1070, 1060, 1071, 1072)
+            AND craphis.cdhistor in (1070, 1060, 1071, 1072, 2362, 2364, 2370, 2372)
          GROUP BY craplcm.cdhistor,craphis.dshistor
          UNION
          SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
@@ -623,7 +625,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    crawepr.nrctrliq##8 ,
                    crawepr.nrctrliq##9 ,
                    crawepr.nrctrliq##10 );
-   
+
        
        CURSOR cr_boleto (pr_cdcooper IN crapcyb.cdcooper%TYPE
                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -2042,8 +2044,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
          CLOSE cr_crapcyb;
 
-         -- Se for produto novo, deve-se fazer o calculo antigo
-         IF rw_crapcyb.tpemprst = 1 THEN
+         -- Se for PP ou POS, deve-se fazer o calculo antigo
+         IF rw_crapcyb.tpemprst IN (1,2) THEN
            --Data Pagamento preenchida e Data de Baixa nula
            IF rw_crapcyb.dtdpagto IS NOT NULL AND rw_crapcyb.dtdbaixa IS NULL THEN
              IF rw_crapcyb.cdlcremp = 100 AND rw_crapcyb.flgpreju = 1 THEN

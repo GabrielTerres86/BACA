@@ -338,8 +338,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               Radar e Matera (Jonatas-Supero)   
 
                  23/03/2017 - Ajustes PRJ343 - Cessao de credito.
-                              (Odirlei-AMcom)   
-							  
+                              (Odirlei-AMcom)
+
+                 23/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
                               (Rafael Faria - Supero)
   ............................................................................. */
@@ -2428,8 +2430,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                         vr_tab_dados_epr(vr_indice).dtdpagto := rw_crapepr.dtvencto_original;
                      END IF;
 
-                     -- Para empréstimo pré-fixado
-                     IF rw_crapepr.tpemprst = 1 THEN
+                     -- Para empréstimo pré-fixado ou Pos-Fixado
+                     IF rw_crapepr.tpemprst IN (1,2) THEN
                         -- Utilizaremos o valor da tabela
                         vr_qtdiaatr := rw_crapris.qtdiaatr;
                      ELSE
@@ -2470,18 +2472,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_cdusolcr := rw_craplcr.cdusolcr;
                      vr_dsorgrec := rw_craplcr.dsorgrec;
 
-                     IF rw_crapepr.tpemprst = 0 THEN
-                       vr_tpemprst := 'TR';
-                     ELSE 
-                       IF rw_crapepr.tpemprst = 1 THEN
-                          vr_tpemprst := 'PP';
-                       ELSE
-                          vr_tpemprst := '-';
-                       END IF;
-                     END IF;
-                     
-                     -- Para empréstimo pré-fixado
-                     IF rw_crapepr.tpemprst = 1 THEN
+                     CASE rw_crapepr.tpemprst
+                       WHEN 0 THEN vr_tpemprst := 'TR';
+                       WHEN 1 THEN vr_tpemprst := 'PP';
+                       WHEN 2 THEN vr_tpemprst := 'POS';
+                       ELSE        vr_tpemprst := '-';
+                     END CASE;
+
+                     -- Para empréstimo pré-fixado ou Pos-Fixado
+                     IF rw_crapepr.tpemprst IN (1,2) THEN
                         -- Número prestações recebe qtde decorrida - parcelas calculadas
                         vr_nroprest := rw_crapepr.qtmesdec - nvl(rw_crapepr.qtpcalat,0);
 

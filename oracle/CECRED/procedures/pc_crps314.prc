@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 28/07/2017
+   Data    : Julho/2001                          Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -154,6 +154,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
 
                28/07/2017 - Incluso tratativa para nao incluir cheques nao aprovados ao compor valor
 			                do bordero de desconto de cheques (Daniel)
+
+               08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
  ............................................................................ */
   --
@@ -765,8 +767,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_indice_geral2 := '1'||'1'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.cdagenci, 'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.vlemprst, 'fm0000000000000000000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
@@ -791,8 +795,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
@@ -882,8 +888,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crapepr.cdagenci;
@@ -905,8 +913,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
@@ -981,8 +991,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vlfim, 'fm999G999G990D00')||' INCLUSIVE';
@@ -1008,8 +1020,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSE
+            ELSIF rw_crapepr.tpemprst = 1 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
+            ELSIF rw_crapepr.tpemprst = 2 THEN
+              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
