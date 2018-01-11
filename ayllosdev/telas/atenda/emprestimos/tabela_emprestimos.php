@@ -96,7 +96,7 @@
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
 	
-	<?php if(!($sitaucaoDaContaCrm == '4' || 
+	<?php if(!(/* $sitaucaoDaContaCrm == '4' || */ 
 			   $sitaucaoDaContaCrm == '7' || 
 			   $sitaucaoDaContaCrm == '8'  )){?>
 
