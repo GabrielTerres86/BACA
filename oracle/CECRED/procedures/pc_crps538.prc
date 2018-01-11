@@ -1874,8 +1874,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                         pr_cdacesso => 'FL_CRPS538_ABORTAR'),'S') = 'S' THEN
              RAISE vr_exc_saida;
            ELSE
-             RAISE vr_exc_final;
-           END IF;
+           RAISE vr_exc_final;
+         END IF;
 
          END IF;
          /*  Fim da verificacao se deve executar  */
@@ -3179,7 +3179,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  --> Se cobrança ja esta na regra de rollout da nova plataforma de cobrança, 
                  IF vr_flgdnpcb = 1 
                  --> e esta fora do periodo de convivencia /*SD#764044*/
-                 AND npcb0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt) = 0 THEN                                      
+                 AND npcb0001.fn_valid_periodo_conviv (pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                      ,pr_vltitulo => rw_crapcob.vltitulo) = 0 THEN                                      
                    
                    cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                        pr_de_campo => substr(vr_dscodbar_ori,6,4),
