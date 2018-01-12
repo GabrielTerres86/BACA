@@ -107,7 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
      pc_cabecalho_to_clob(pr_cabecalho => pr_resposta.cabecalho
                          ,pr_clob      => vr_clob_cabecalho_resposta);                         
    
-     INSERT INTO TBGEN_REQ_WEBSERVICE(dhrequis
+     INSERT INTO TBGEN_WEBSERVICE_REQ(dhrequis
                                      ,dhresposta
                                      ,dsservico
                                      ,dsverbo_http

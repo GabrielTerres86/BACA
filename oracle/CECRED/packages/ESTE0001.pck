@@ -25,21 +25,21 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   --> Funcao para formatar data hora conforme padrao da IBRATAN
   FUNCTION fn_Data_ibra (pr_data IN DATE) RETURN VARCHAR2;
 	
-    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
-    FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
-                                       ,pr_nrdconta IN NUMBER
-                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE;
+  --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
+  FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
+                                     ,pr_nrdconta IN NUMBER
+                                     ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE;
   
-    --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
-    PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
-                                            ,pr_nrctremp IN NUMBER
-                                            ,pr_xmllog   IN VARCHAR2 -- XML com informações de LOG
-                                            ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
-                                            ,pr_dscritic OUT VARCHAR2 -- Descrição da crítica
-                                            ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
-                                            ,pr_nmdcampo OUT VARCHAR2          -- Nome do campo com erro
-                                            ,pr_des_erro OUT VARCHAR2);        -- Erros do processo
-                                  
+  --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
+  PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
+                                          ,pr_nrctremp IN NUMBER
+                                          ,pr_xmllog   IN VARCHAR2 -- XML com informações de LOG
+                                          ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2 -- Descrição da crítica
+                                          ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                          ,pr_nmdcampo OUT VARCHAR2          -- Nome do campo com erro
+                                          ,pr_des_erro OUT VARCHAR2);        -- Erros do processo
+                                
   --> Rotina responsavel por gerar o objeto Json da proposta
   PROCEDURE pc_gera_json_proposta(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                   pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                            
@@ -93,24 +93,30 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   FUNCTION fn_retorna_critica (pr_jsonreto IN VARCHAR2) RETURN VARCHAR2;
    
   --> Rotina responsavel por gravar registro de log de acionamento
-  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
-                                 pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
-                                 pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
-                                 pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
-                                 pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
-                                 pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
-                                 pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
-                                 pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
-                                 pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
-                                 pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
-                                 pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                                 pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
-                                 pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
-                                 pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
+  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+                                 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+                                 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+                                 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+                                 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+                                 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                                 pr_cdcliente                IN tbgen_webservice_aciona.cdcliente%TYPE, 
+                                 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+                                 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+                                 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE,
+                                 pr_dsmetodo                 IN tbgen_webservice_aciona.dsmetodo%TYPE,
+                                 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+                                 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                                 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+                                 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+                                 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL,
+                                 pr_flgreenvia               IN tbgen_webservice_aciona.flgreenvia%TYPE,
+                                 pr_nrreenvio                IN tbgen_webservice_aciona.nrreenvio%TYPE,
+                                 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE,
+                                 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE,
+                                 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2);
-                                 
+                                                                 
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
   PROCEDURE pc_incluir_proposta_est (pr_cdcooper  IN crawepr.cdcooper%TYPE
                                     ,pr_cdagenci  IN crapage.cdagenci%TYPE
@@ -120,7 +126,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                     ,pr_nrctremp  IN crawepr.nrctremp%TYPE
                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
                                     ,pr_nmarquiv  IN VARCHAR2
-                                      ---- OUT ----
+                                     ---- OUT ----
                                     ,pr_dsmensag OUT VARCHAR2
                                     ,pr_cdcritic OUT NUMBER
                                     ,pr_dscritic OUT VARCHAR2);
@@ -152,9 +158,30 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
                                       pr_dscritic OUT VARCHAR2);              --> Descricao da critica
   
+  --> Rotina para efetuar a derivação de uma proposta para a Esteira
+  PROCEDURE pc_derivar_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE     --> Codigo da cooperativa
+                                   ,pr_cdagenci  IN crapage.cdagenci%TYPE     --> Codigo da agencia           
+                                   ,pr_cdoperad  IN crapope.cdoperad%TYPE     --> codigo do operador
+                                   ,pr_cdorigem  IN INTEGER                   --> Origem da operacao
+                                   ,pr_nrdconta  IN crawepr.nrdconta%TYPE     --> Numero da conta do cooperado
+                                   ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero da proposta de emprestimo 
+                                   ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE);   --> Data do movimento
+
  
   --> Rotina responsavel por gerar o cancelamento da proposta para a esteira
   PROCEDURE pc_cancelar_proposta_est( pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
+                                      pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                      pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                      pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                      pr_nrdconta  IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                      pr_nrctremp  IN crawepr.nrctremp%TYPE,  --> Numero da proposta de emprestimo atual/antigo                                      
+                                      pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                      ---- OUT ----                           
+                                      pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                      pr_dscritic OUT VARCHAR2);              --> Descricao da critica 
+ 
+  --> Rotina responsavel por gerar a interrupção da proposta para a esteira
+  PROCEDURE pc_interrompe_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
@@ -192,6 +219,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_cdcritic OUT NUMBER,                   --> Codigo da critica
                                       pr_dscritic OUT VARCHAR2);                --> Descricao da critica.                                    
 																			
+  -- Rotina para retornar a obrigação de envio ou não da análise automática
   PROCEDURE pc_obrigacao_analise_automatic(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cód. cooperativa
 		                                      ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo da Pessoa
                                           ,pr_cdfinemp IN crawepr.cdfinemp%TYPE --> Cód. finalidade do credito
@@ -201,6 +229,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
 																					,pr_cdcritic OUT PLS_INTEGER          --> Cód. da crítica
 																					,pr_dscritic OUT VARCHAR2);           --> Desc. da crítica
 						
+  -- Interface para acionamento web da pc_obrigacao_analise_automatic
   PROCEDURE pc_obrigacao_analise_autom_web(pr_cdfinemp IN crawepr.cdfinemp%TYPE  --> Finalidade de crédito
                                           ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo da Pessoa
                                           ,pr_cdlcremp IN crawepr.cdlcremp%TYPE  --> Cód. linha de crédito
@@ -212,6 +241,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                           ,pr_nmdcampo OUT VARCHAR2                    -- Nome do campo com erro
                                           ,pr_des_erro OUT VARCHAR2);  
                                           
+  -- Rotina para solicitar analises não respondidas via POST ou solicitar a proposta enviada
   PROCEDURE pc_solicita_retorno_analise(pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_nrdconta IN crawepr.nrdconta%TYPE
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE
@@ -260,22 +290,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
     FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
                                        ,pr_nrdconta IN NUMBER
-                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE IS
+                                       ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE IS
                                        
-      CURSOR cr_tbepr_acionamento IS
+      CURSOR cr_tbgen_webservice_aciona IS
         SELECT aci.dsprotocolo dsprotocolo
-          FROM tbepr_acionamento aci
+          FROM tbgen_webservice_aciona aci
          WHERE aci.cdcooper = pr_cdcooper
            AND aci.nrdconta = pr_nrdconta
            AND aci.nrctrprp = pr_nrctremp
            AND aci.tpacionamento = 2 /* Retorno */
            AND aci.dsprotocolo IS NOT NULL
          ORDER BY aci.dhacionamento DESC;
-       rw_tbepr_acionamento cr_tbepr_acionamento%ROWTYPE;
+       rw_tbgen_webservice_aciona cr_tbgen_webservice_aciona%ROWTYPE;
     BEGIN
-      OPEN cr_tbepr_acionamento;
-      FETCH cr_tbepr_acionamento INTO rw_tbepr_acionamento;
-      RETURN rw_tbepr_acionamento.dsprotocolo;
+      OPEN cr_tbgen_webservice_aciona;
+      FETCH cr_tbgen_webservice_aciona INTO rw_tbgen_webservice_aciona;
+      RETURN rw_tbgen_webservice_aciona.dsprotocolo;
     END fn_protocolo_analise_auto;
     
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
@@ -320,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       
-      vr_dsprotocolo tbepr_acionamento.dsprotocolo%TYPE;
+      vr_dsprotocolo tbgen_webservice_aciona.dsprotocolo%TYPE;
       
 		BEGIN
 			-- Recupera dados de log para consulta posterior
@@ -597,7 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       IF cr_crawepr%NOTFOUND THEN
         CLOSE cr_crawepr;
         vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
-        RAISE vr_exc_erro;  
+        RAISE vr_exc_erro;
       END IF;
       
       -- Somente permitirá se ainda não enviada 
@@ -613,9 +643,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       END IF;
       -- Não será possível enviar/reenviar para a Esteira
       vr_dscritic := 'A proposta não pode ser enviada para Análise de crédito, verifique a situação da proposta!';
-        RAISE vr_exc_erro;      
-      END IF; 
-  
+      RAISE vr_exc_erro;      
+    END IF;
+    
   EXCEPTION
     WHEN vr_exc_erro THEN     
       --> Buscar critica
@@ -726,35 +756,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END IF;         
 			
 		ELSE
-    --> Buscar hots so webservice da esteira
-    pr_host_esteira := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-                                                  pr_cdcooper => pr_cdcooper, 
-                                                  pr_cdacesso => 'HOSWEBSRVCE_ESTEIRA_IBRA');
-    IF pr_host_esteira IS NULL THEN      
-      vr_dscritic := 'Parametro HOSWEBSRVCE_ESTEIRA_IBRA não encontrado.';
-      RAISE vr_exc_erro;      
-    END IF;
-                                                  
-    --> Buscar recurso uri da esteira
-    pr_recurso_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-                                                  pr_cdcooper => pr_cdcooper, 
-                                                  pr_cdacesso => 'URIWEBSRVCE_RECURSO_IBRA');                                             
-  
-    IF pr_recurso_este IS NULL THEN      
-      vr_dscritic := 'Parametro URIWEBSRVCE_RECURSO_IBRA não encontrado.';
-      RAISE vr_exc_erro;      
-    END IF;  
-    
-    --> Buscar chave de acesso da esteira
+			--> Buscar hots so webservice da esteira
+			pr_host_esteira := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+																										pr_cdcooper => pr_cdcooper, 
+																										pr_cdacesso => 'HOSWEBSRVCE_ESTEIRA_IBRA');
+			IF pr_host_esteira IS NULL THEN      
+				vr_dscritic := 'Parametro HOSWEBSRVCE_ESTEIRA_IBRA não encontrado.';
+				RAISE vr_exc_erro;      
+			END IF;
+	                                                  
+			--> Buscar recurso uri da esteira
+			pr_recurso_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+																										pr_cdcooper => pr_cdcooper, 
+																										pr_cdacesso => 'URIWEBSRVCE_RECURSO_IBRA');                                             
+	  
+			IF pr_recurso_este IS NULL THEN      
+				vr_dscritic := 'Parametro URIWEBSRVCE_RECURSO_IBRA não encontrado.';
+				RAISE vr_exc_erro;      
+			END IF;  
+	    
+			--> Buscar chave de acesso da esteira
 			pr_autori_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-                                                pr_cdcooper => pr_cdcooper, 
-                                                pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');                                             
-  
+																								 	pr_cdcooper => pr_cdcooper, 
+																								 	pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');                                             
+	  
 			IF pr_autori_este IS NULL THEN      
-      vr_dscritic := 'Parametro KEYWEBSRVCE_ESTEIRA_IBRA não encontrado.';
-      RAISE vr_exc_erro;      
-    END IF;   
-    
+				vr_dscritic := 'Parametro KEYWEBSRVCE_ESTEIRA_IBRA não encontrado.';
+				RAISE vr_exc_erro;      
+			END IF;  
+			 			
     END IF;
     --> Buscar diretorio do log
     pr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C', 
@@ -859,22 +889,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   END;
   
   --> Rotina responsavel por gravar registro de log de acionamento
-  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
-                                 pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
-                                 pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
-                                 pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
-                                 pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
-                                 pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
-                                 pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
-                                 pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
-                                 pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
-                                 pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
-                                 pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                                 pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
-                                 pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
-                                 pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
+  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+                                 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+                                 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+                                 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+                                 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+                                 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                                 pr_cdcliente                IN tbgen_webservice_aciona.cdcliente%TYPE, 
+                                 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+                                 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+                                 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE,
+                                 pr_dsmetodo                 IN tbgen_webservice_aciona.dsmetodo%TYPE,
+                                 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+                                 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                                 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+                                 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+                                 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL,
+                                 pr_flgreenvia               IN tbgen_webservice_aciona.flgreenvia%TYPE,
+                                 pr_nrreenvio                IN tbgen_webservice_aciona.nrreenvio%TYPE,
+                                 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE,
+                                 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE,
+                                 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2) IS
                                  
   /* ..........................................................................
@@ -890,49 +926,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Grava registro de log de acionamento
     
-    Alteração : 
+    Alteração : 11/11/2018 - Alterações referentes ao Projeto 402. (Rafael Faria)
         
   ..........................................................................*/
-    PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
-    INSERT INTO tbepr_acionamento 
-                ( cdcooper, 
-                  cdagenci_acionamento, 
-                  cdoperad, 
-                  cdorigem, 
-                  nrctrprp, 
-                  nrdconta, 
-                  tpacionamento, 
-                  dhacionamento, 
-                  dsoperacao, 
-                  dsuriservico, 
-                  dtmvtolt, 
-                  cdstatus_http, 
-                  dsconteudo_requisicao,
-                  dsresposta_requisicao,
-									dsprotocolo)  
-          VALUES( pr_cdcooper,        --cdcooper
-                  pr_cdagenci,        -- cdagenci_acionamento, 
-                  pr_cdoperad,        -- cdoperad, 
-                  pr_cdorigem,        -- cdorigem
-                  pr_nrctrprp,        -- nrctrprp
-                  pr_nrdconta,        -- nrdconta
-                  pr_tpacionamento,   -- tpacionamento 
-                  pr_dhacionamento,   -- dhacionamento
-                  pr_dsoperacao,      -- dsoperacao
-                  pr_dsuriservico,    -- dsuriservico
-                  pr_dtmvtolt,        -- dtmvtolt
-                  pr_cdstatus_http,   -- cdstatus_http
-                  pr_dsconteudo_requisicao,
-                  pr_dsresposta_requisicao, --dsresposta_requisicao       
-									pr_dsprotocolo)     -- protocolo
-           RETURNING tbepr_acionamento.idacionamento INTO pr_idacionamento;
-   
-    --> Commit para garantir que guarde as informações do log de acionamento
-    COMMIT;
+     -- Criada rotina generica para manter os acionamentos webservice
+     WEBS0003.pc_grava_acionamento(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci    => pr_cdagenci
+                                  ,pr_cdoperad    => pr_cdoperad
+                                  ,pr_cdorigem    => pr_cdorigem
+                                  ,pr_nrctrprp    => pr_nrctrprp
+                                  ,pr_nrdconta    => pr_nrdconta
+                                  ,pr_cdcliente   => pr_cdcliente
+                                  ,pr_tpacionamento => pr_tpacionamento
+                                  ,pr_dhacionamento => pr_dhacionamento
+                                  ,pr_dsoperacao    => pr_dsoperacao
+                                  ,pr_dsuriservico  => pr_dsuriservico
+                                  ,pr_dsmetodo      => pr_dsmetodo
+                                  ,pr_dtmvtolt      => pr_dtmvtolt
+                                  ,pr_cdstatus_http => pr_cdstatus_http
+                                  ,pr_dsconteudo_requisicao  => pr_dsconteudo_requisicao
+                                  ,pr_dsresposta_requisicao  => pr_dsresposta_requisicao
+                                  ,pr_flgreenvia    => pr_flgreenvia
+                                  ,pr_nrreenvio     => pr_nrreenvio
+                                  ,pr_tpconteudo    => pr_tpconteudo
+                                  ,pr_tpproduto     => pr_tpproduto
+                                  ,pr_dsprotocolo   => pr_dsprotocolo
+                                  ,pr_idacionamento => pr_idacionamento
+                                  ,pr_dscritic      => pr_dscritic);
+
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao inserir tbepr_acionamento: '||SQLERRM;
+      pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
       ROLLBACK;
   END pc_grava_acionamento;
   
@@ -962,7 +987,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -----------> CURSORES <-----------
   BEGIN
   
-    UPDATE tbepr_acionamento aci
+    UPDATE tbgen_webservice_aciona aci
        SET aci.nrctrprp = pr_nrctremp_novo
      WHERE aci.cdcooper = pr_cdcooper
        AND aci.nrdconta = pr_nrdconta
@@ -1068,8 +1093,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
     
-    vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
-    
+    vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
+		
     vr_tab_split     gene0002.typ_split;
     vr_idx_split     VARCHAR2(1000);
     
@@ -1124,23 +1149,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
+		
     --> Gravar dados log acionamento
     pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
                          pr_cdagenci              => pr_cdagenci,          
                          pr_cdoperad              => pr_cdoperad,          
                          pr_cdorigem              => pr_cdorigem,          
                          pr_nrctrprp              => pr_nrctremp,          
-                         pr_nrdconta              => pr_nrdconta,          
+                         pr_nrdconta              => pr_nrdconta,
+                         pr_cdcliente             => 1,          
                          pr_tpacionamento         => 1,  /* 1 - Envio, 2 – Retorno */      
                          pr_dsoperacao            => pr_dsoperacao,       
-                         pr_dsuriservico          => vr_host_esteira||vr_recurso_este||pr_comprecu,       
+                         pr_dsuriservico          => vr_host_esteira||vr_recurso_este||pr_comprecu,
+                         pr_dsmetodo              => pr_dsmetodo,
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => pr_conteudo,
                          pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
                                                      ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
                                                      ',"Content":'||vr_response.content||'}',
+                         pr_flgreenvia            => 0,
+                         pr_nrreenvio             => 0,
+                         pr_tpconteudo            => 1,
+                         pr_tpproduto             => 0,
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -1165,7 +1196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           vr_dscritic_aux := 'Nao foi possivel solicitar o retorno da Análise Automática de Crédito.';
         ELSE
           vr_dscritic_aux := 'Nao foi possivel enviar informacoes para Análise de Crédito.';  
-      END CASE;    
+        END CASE;
 
       IF vr_response.status_code = 400 THEN
         pr_dscritic := fn_retorna_critica('{"Content":'||vr_response.content||'}');
@@ -1183,7 +1214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         
       ELSE  
         pr_dscritic := vr_dscritic_aux;    
-      END IF;                       
+      END IF;                         
       
     END IF;
 		
@@ -1208,7 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         -- Se conseguiu encontrar Protocolo
         IF pr_dsprotocolo IS NOT NULL THEN 
   				-- Atualizar acionamento																										 
-	  			UPDATE tbepr_acionamento
+	  			UPDATE tbgen_webservice_aciona
 		  			 SET dsprotocolo = pr_dsprotocolo
 			  	 WHERE idacionamento = vr_idacionamento;
         ELSE    
@@ -1216,7 +1247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           vr_dscritic := 'Nao foi possivel retornar Protocolo da Análise Automática de Crédito!';
 					RAISE vr_exc_erro;																						 
 				END IF;
-  EXCEPTION
+			EXCEPTION
 				WHEN OTHERS THEN   
 					vr_dscritic := 'Nao foi possivel retornar Protocolo de Análise Automática de Crédito!';
 					RAISE vr_exc_erro;
@@ -1262,7 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
                   12/09/2016 Enviar o saldo do pre-aprovado se estiver liberado na conta
                   para ter pre-aprovado. (Oscar)
-                  
+
                   27/02/2017 SD610862 - Enviar novas informações para a esteira:
                                - cooperadoColaborador: Flag se eh proposta de colaborador
                                - codigoCargo: Codigo do Cargo do Colaborador
@@ -1321,8 +1352,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              TO_CHAR(NRCTRLIQ##7) || ',' || TO_CHAR(NRCTRLIQ##8) || ',' ||
              TO_CHAR(NRCTRLIQ##9) || ',' || TO_CHAR(NRCTRLIQ##10) dsliquid,
              decode(epr.tpemprst,1,'PP','TR') tpproduto,
-             -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+             -- Indica de a proposta e CDC
+             DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc
         FROM crawepr epr,
              craplcr lcr,
              crapfin fin,
@@ -1448,9 +1480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_vllimdis     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
-        vr_dsprotoc  tbepr_acionamento.dsprotocolo%TYPE;
-        vr_dsdirarq  VARCHAR2(1000);
-        vr_dscomando VARCHAR2(1000);
+    vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
+    vr_dsdirarq  VARCHAR2(1000);
+    vr_dscomando VARCHAR2(1000);
       
   BEGIN
     
@@ -1543,27 +1575,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
        5 – Cartão de Crédito 
        6 – Limite de Crédito) */
        
-    -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN
+    -- Se for CDC e diversos
+    IF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
       vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Diversos');
+    -- Se for CDC e veiculos
+    ELSIF rw_crawepr.cdfinemp = 59 AND rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,1); -- CDC Veiculos
+      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Veiculos');
     ELSE
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo' ,2); -- Emprestimos/Financiamento
       vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Emprestimos/Financiamento');      
     END IF;
     
-    -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN    
-      vr_obj_proposta.put('linhaCreditoCodigo'    ,'');
-      vr_obj_proposta.put('linhaCreditoDescricao' ,'');
-      vr_obj_proposta.put('finalidadeCodigo'      ,''); 
-      vr_obj_proposta.put('finalidadeDescricao'   ,'');
-    ELSE
-      vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_crawepr.cdlcremp);
-      vr_obj_proposta.put('linhaCreditoDescricao' ,rw_crawepr.dslcremp);
-      vr_obj_proposta.put('finalidadeCodigo'      ,rw_crawepr.cdfinemp);       
-      vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawepr.dsfinemp);      
-    END IF;
+    vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_crawepr.cdlcremp);
+    vr_obj_proposta.put('linhaCreditoDescricao' ,rw_crawepr.dslcremp);
+    vr_obj_proposta.put('finalidadeCodigo'      ,rw_crawepr.cdfinemp);       
+    vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawepr.dsfinemp);      
     
     vr_obj_proposta.put('tipoProduto'           ,rw_crawepr.tpproduto);
     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawepr.tpctrato );
@@ -1611,214 +1639,210 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       /* Zerado para CDC */
       vr_obj_proposta.put('parecerPreAnalise', 0);
     END IF; 
-    
-    
-    IF rw_crawepr.inlcrcdc = 0 THEN
-      --Verificar se usa tabela juros
-      vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'USUARI'
-                                               ,pr_cdempres => 11
-                                               ,pr_cdacesso => 'TAXATABELA'
-                                               ,pr_tpregist => 0);
-      -- Se a primeira posição do campo
-      -- dstextab for diferente de zero
-      vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';
+
+    vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'USUARI'
+                                             ,pr_cdempres => 11
+                                             ,pr_cdacesso => 'TAXATABELA'
+                                             ,pr_tpregist => 0);
+    -- Se a primeira posição do campo
+    -- dstextab for diferente de zero
+    vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';
       
-      -- Busca endividamento do cooperado
-      RATI0001.pc_calcula_endividamento( pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
-                                        ,pr_cdagenci   => pr_cdagenci     --> Código da agência
-                                        ,pr_nrdcaixa   => 0               --> Número do caixa
-                                        ,pr_cdoperad   => pr_cdoperad     --> Código do operador
-                                        ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parâmetro (CRAPDAT)
-                                        ,pr_nrdconta   => pr_nrdconta     --> Conta do associado
-                                        ,pr_dsliquid   => rw_crawepr.dsliquid --> Lista de contratos a liquidar
-                                        ,pr_idseqttl   => 1               --> Sequencia de titularidade da conta
-                                        ,pr_idorigem   => 1 /*AYLLOS*/    --> Indicador da origem da chamada
-                                        ,pr_inusatab   => vr_inusatab     --> Indicador de utilização da tabela de juros
-                                        ,pr_tpdecons   => 3               --> Tipo da consulta 3 - Considerar a data atual
-                                        ,pr_vlutiliz   => vr_vlutiliz     --> Valor da dívida
-                                        ,pr_cdcritic   => vr_cdcritic     --> Critica encontrada no processo
-                                        ,pr_dscritic   => vr_dscritic);   --> Saída de erro
-      -- Se houve erro
-      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Encerrar o processo
+    -- Busca endividamento do cooperado
+    RATI0001.pc_calcula_endividamento( pr_cdcooper   => pr_cdcooper     --> Código da Cooperativa
+                                      ,pr_cdagenci   => pr_cdagenci     --> Código da agência
+                                      ,pr_nrdcaixa   => 0               --> Número do caixa
+                                      ,pr_cdoperad   => pr_cdoperad     --> Código do operador
+                                      ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parâmetro (CRAPDAT)
+                                      ,pr_nrdconta   => pr_nrdconta     --> Conta do associado
+                                      ,pr_dsliquid   => rw_crawepr.dsliquid --> Lista de contratos a liquidar
+                                      ,pr_idseqttl   => 1               --> Sequencia de titularidade da conta
+                                      ,pr_idorigem   => 1 /*AYLLOS*/    --> Indicador da origem da chamada
+                                      ,pr_inusatab   => vr_inusatab     --> Indicador de utilização da tabela de juros
+                                      ,pr_tpdecons   => 3               --> Tipo da consulta 3 - Considerar a data atual
+                                      ,pr_vlutiliz   => vr_vlutiliz     --> Valor da dívida
+                                      ,pr_cdcritic   => vr_cdcritic     --> Critica encontrada no processo
+                                      ,pr_dscritic   => vr_dscritic);   --> Saída de erro
+    -- Se houve erro
+    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Encerrar o processo
+      RAISE vr_exc_erro;
+    END IF;
+      
+    vr_vllimdis := 0.0;
+    vr_vlprapne := 0.0;
+    FOR rw_crapass_cpfcgc IN cr_crapass_cpfcgc(pr_cdcooper => pr_cdcooper,
+                                               pr_nrcpfcgc => rw_crapass.nrcpfcgc) LOOP
+
+        IF rw_crapass_cpfcgc.nrdconta = pr_nrdconta THEN
+           vr_nrctremp := pr_nrctremp;
+        ELSE
+           vr_nrctremp := 0;
+        END IF;
+
+        rw_crawepr_pend := NULL;
+        OPEN cr_crawepr_pend(pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
+                             pr_nrdconta => rw_crapass_cpfcgc.nrdconta,
+                             pr_nrctremp => vr_nrctremp);
+        FETCH cr_crawepr_pend INTO rw_crawepr_pend;        
+        CLOSE cr_crawepr_pend; 
+          
+        vr_vlprapne := nvl(rw_crawepr_pend.vlemprst, 0) + vr_vlprapne; 
+          
+        --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
+        IF rw_crapass_cpfcgc.flgcrdpa = 1 THEN
+        rw_crapcpa := NULL;
+        OPEN cr_crapcpa (pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
+                         pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
+        FETCH cr_crapcpa INTO rw_crapcpa;
+        CLOSE cr_crapcpa;                  
+        vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
+        END IF;
+    END LOOP;
+      
+      
+    vr_obj_proposta.put('endividamentoContaValor'     ,vr_vlutiliz);
+    vr_obj_proposta.put('propostasPendentesValor'     ,fn_decimal_ibra(vr_vlprapne) );
+    vr_obj_proposta.put('limiteCooperadoValor'        ,fn_decimal_ibra(nvl(vr_vllimdis,0)) );
+      
+    -- Busca PDF gerado pela análise automática do Motor        
+    vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nrdconta => pr_nrdconta
+                                                     ,pr_nrctremp => pr_nrctremp);
+                                                       
+    vr_obj_proposta.put('protocoloPolitica'          ,vr_dsprotoc);
+      
+    -- Copiar parâmetro
+    vr_nmarquiv := pr_nmarquiv;
+      
+    -- Caso não tenhamos recebido o PDF
+    IF vr_nmarquiv IS NULL THEN 
+        
+      -- Gerar ID aleatório
+      vr_dsiduser := dbms_random.string('A', 27);
+        
+      -- Nome do PDF para gerar
+      vr_nmarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_nmsubdir => '/rl')
+                  ||'/'||vr_dsiduser||'.pdf';
+        
+      -- Acionaremos a geração do PDF da Proposta
+      -- via Schell Script pois esta funcionalidade
+      -- esta no Progress e não há previsão de conversão
+      empr0003.pc_gera_proposta_pdf(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => 1
+                                   ,pr_nmdatela => 'ATENDA'
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_idorigem => pr_cdorigem
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                   ,pr_dtmvtopr => rw_crapdat.dtmvtopr
+                                   ,pr_nrctremp => pr_nrctremp
+                                   ,pr_dsiduser => vr_dsiduser
+                                   ,pr_nmarqpdf => vr_nmarquiv);
+      -- Se o arquivo não existir
+      IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN 
+        -- Remover o conteudo do nome do arquivo para não enviar
+        vr_nmarquiv := null;
+      END IF;
+        
+    END IF;
+      
+    IF vr_nmarquiv IS NOT NULL THEN
+      -- Converter arquivo PDF para clob em base64 para enviar via json
+      pc_arq_para_clob_base64(pr_nmarquiv       => vr_nmarquiv
+                             ,pr_json_value_arq => vr_json_valor
+                             ,pr_dscritic       => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN                        
         RAISE vr_exc_erro;
       END IF;
-      
-      vr_vllimdis := 0.0;
-      vr_vlprapne := 0.0;
-      FOR rw_crapass_cpfcgc IN cr_crapass_cpfcgc(pr_cdcooper => pr_cdcooper,
-                                                 pr_nrcpfcgc => rw_crapass.nrcpfcgc) LOOP
-
-          IF rw_crapass_cpfcgc.nrdconta = pr_nrdconta THEN
-             vr_nrctremp := pr_nrctremp;
-          ELSE
-             vr_nrctremp := 0;
-          END IF;
-
-          rw_crawepr_pend := NULL;
-          OPEN cr_crawepr_pend(pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
-                               pr_nrdconta => rw_crapass_cpfcgc.nrdconta,
-                               pr_nrctremp => vr_nrctremp);
-          FETCH cr_crawepr_pend INTO rw_crawepr_pend;        
-          CLOSE cr_crawepr_pend; 
-          
-          vr_vlprapne := nvl(rw_crawepr_pend.vlemprst, 0) + vr_vlprapne; 
-          
-          --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
-          IF rw_crapass_cpfcgc.flgcrdpa = 1 THEN
-          rw_crapcpa := NULL;
-          OPEN cr_crapcpa (pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
-                           pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
-          FETCH cr_crapcpa INTO rw_crapcpa;
-          CLOSE cr_crapcpa;                  
-          vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
-	        END IF;
-      END LOOP;
-      
-      
-      vr_obj_proposta.put('endividamentoContaValor'     ,vr_vlutiliz);
-      vr_obj_proposta.put('propostasPendentesValor'     ,fn_decimal_ibra(vr_vlprapne) );
-      vr_obj_proposta.put('limiteCooperadoValor'        ,fn_decimal_ibra(nvl(vr_vllimdis,0)) );
-      
-      -- Busca PDF gerado pela análise automática do Motor        
-      vr_dsprotoc := este0001.fn_protocolo_analise_auto(pr_cdcooper => pr_cdcooper
-                                                       ,pr_nrdconta => pr_nrdconta
-                                                       ,pr_nrctremp => pr_nrctremp);
-                                                       
-      vr_obj_proposta.put('protocoloPolitica'          ,vr_dsprotoc);
-      
-      -- Copiar parâmetro
-      vr_nmarquiv := pr_nmarquiv;
-      
-      -- Caso não tenhamos recebido o PDF
-      IF vr_nmarquiv IS NULL THEN 
+      -- Gerar objeto json para a imagem 
+      vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
+      vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+      vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
+      vr_obj_imagem.put('validadeData', '');
+      -- incluir objeto imagem na proposta
+      vr_lst_doctos.append(vr_obj_imagem.to_json_value());
         
-        -- Gerar ID aleatório
-        vr_dsiduser := dbms_random.string('A', 27);
-        
-        -- Nome do PDF para gerar
-        vr_nmarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C',
-                                             pr_cdcooper => pr_cdcooper,
-                                             pr_nmsubdir => '/rl')
-                    ||'/'||vr_dsiduser||'.pdf';
-        
-        -- Acionaremos a geração do PDF da Proposta
-        -- via Schell Script pois esta funcionalidade
-        -- esta no Progress e não há previsão de conversão
-        empr0003.pc_gera_proposta_pdf(pr_cdcooper => pr_cdcooper
-                                     ,pr_cdagenci => pr_cdagenci
-                                     ,pr_nrdcaixa => 1
-                                     ,pr_nmdatela => 'ATENDA'
-                                     ,pr_cdoperad => pr_cdoperad
-                                     ,pr_idorigem => pr_cdorigem
-                                     ,pr_nrdconta => pr_nrdconta
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                     ,pr_dtmvtopr => rw_crapdat.dtmvtopr
-                                     ,pr_nrctremp => pr_nrctremp
-                                     ,pr_dsiduser => vr_dsiduser
-                                     ,pr_nmarqpdf => vr_nmarquiv);
-        -- Se o arquivo não existir
-        IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN 
-          -- Remover o conteudo do nome do arquivo para não enviar
-          vr_nmarquiv := null;
-        END IF;
-        
-      END IF;
-      
-      IF vr_nmarquiv IS NOT NULL THEN
-        -- Converter arquivo PDF para clob em base64 para enviar via json
-        pc_arq_para_clob_base64(pr_nmarquiv       => vr_nmarquiv
-                               ,pr_json_value_arq => vr_json_valor
-                               ,pr_dscritic       => vr_dscritic);
-        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
-          RAISE vr_exc_erro;
-        END IF;
-        -- Gerar objeto json para a imagem 
-        vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
-        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
-        vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
-        vr_obj_imagem.put('validadeData', '');
-        -- incluir objeto imagem na proposta
-        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
-        
-        -- Caso o PDF tenha sido gerado nesta rotina
-        IF vr_nmarquiv <> NVL(pr_nmarquiv,' ') THEN 
-          -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
-          GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nmarquiv);
-        END IF;
-      END IF;  
-                
-      -- Se encontrou PDF de análise Motor
-      IF vr_dsprotoc IS NOT NULL THEN
-                
-        -- Diretorio para salvar
-        vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
-                                             ,pr_cdcooper => 3
-                                             ,pr_nmsubdir => '/log/webservices'); 
-
-        -- Utilizar o protocolo para nome do arquivo
-        vr_nmarquiv := vr_dsprotoc || '.pdf';
-
-        -- Comando para download
-        vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
-
-        -- Substituir o caminho do arquivo a ser baixado
-        vr_dscomando := replace(vr_dscomando
-                               ,'[local-name]'
-                               ,vr_dsdirarq || '/' || vr_nmarquiv);
-
-        -- Substiruir a URL para Download
-        vr_dscomando := REPLACE(vr_dscomando
-                               ,'[remote-name]'
-                               ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
-                               ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
-                               || '_result/' || vr_dsprotoc || '/pdf');
-
-        -- Executar comando para Download
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_dscomando);
-
-        
-        -- Se NAO encontrou o arquivo
-        IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
-          vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
-          RAISE vr_exc_erro;
-          END IF;
-          
-        -- Converter arquivo PDF para clob em base64 para enviar via json
-        pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
-                               ,pr_json_value_arq => vr_json_valor
-                               ,pr_dscritic       => vr_dscritic);
-        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
-          RAISE vr_exc_erro;
-        END IF;
-                  
-        -- Gerar objeto json para a imagem 
-        vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
-        vr_obj_imagem.put('conteudo'    ,vr_json_valor);
-        vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
-        vr_obj_imagem.put('validadeData','');
-        -- incluir objeto imagem na proposta
-        vr_lst_doctos.append(vr_obj_imagem.to_json_value());
-          
+      -- Caso o PDF tenha sido gerado nesta rotina
+      IF vr_nmarquiv <> NVL(pr_nmarquiv,' ') THEN 
         -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
-        GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
-                
+        GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nmarquiv);
       END IF;
-        
-      -- Incluiremos os documentos ao json principal
-      vr_obj_proposta.put('documentos',vr_lst_doctos);
+    END IF;
                  
-    ELSE -- caso for CDC, enviar vazio
-      vr_obj_proposta.put('endividamentoContaValor'     ,'');
-      vr_obj_proposta.put('propostasPendentesValor'     ,'');
-      vr_obj_proposta.put('endividamentoContaValor'     ,'');
-    END IF;            
+    -- Se encontrou PDF de análise Motor
+    IF vr_dsprotoc IS NOT NULL THEN
+                
+      -- Diretorio para salvar
+      vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
+                                           ,pr_cdcooper => 3
+                                           ,pr_nmsubdir => '/log/webservices'); 
+
+      -- Utilizar o protocolo para nome do arquivo
+      vr_nmarquiv := vr_dsprotoc || '.pdf';
+
+      -- Comando para download
+      vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+
+      -- Substituir o caminho do arquivo a ser baixado
+      vr_dscomando := replace(vr_dscomando
+                             ,'[local-name]'
+                             ,vr_dsdirarq || '/' || vr_nmarquiv);
+
+      -- Substiruir a URL para Download
+      vr_dscomando := REPLACE(vr_dscomando
+                             ,'[remote-name]'
+                             ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                             ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                             || '_result/' || vr_dsprotoc || '/pdf');
+
+      -- Executar comando para Download
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomando);
+
+        
+      -- Se NAO encontrou o arquivo
+      IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+        vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
+        RAISE vr_exc_erro;
+      END IF;
+          
+        -- Converter arquivo PDF para clob em base64 para enviar via json
+      pc_arq_para_clob_base64(pr_nmarquiv       => vr_dsdirarq || '/' || vr_nmarquiv
+                             ,pr_json_value_arq => vr_json_valor
+                             ,pr_dscritic       => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+        RAISE vr_exc_erro;
+      END IF;
+                  
+      -- Gerar objeto json para a imagem 
+      vr_obj_imagem.put('codigo'      ,'RESULTADO_POLITICA');
+      vr_obj_imagem.put('conteudo'    ,vr_json_valor);
+      vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
+      vr_obj_imagem.put('validadeData','');
+      -- incluir objeto imagem na proposta
+      vr_lst_doctos.append(vr_obj_imagem.to_json_value());
+        
+      -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+      GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv);
+                
+    END IF;
+        
+    -- Incluiremos os documentos ao json principal
+    vr_obj_proposta.put('documentos',vr_lst_doctos);
+                 
+    vr_obj_proposta.put('endividamentoContaValor'     ,'');
+    vr_obj_proposta.put('propostasPendentesValor'     ,'');
+    vr_obj_proposta.put('endividamentoContaValor'     ,'');
+      
     
     vr_obj_proposta.put('contratoNumero'     ,rw_crawepr.nrctremp);
-    
+
     -- Verificar se a conta é de colaborador do sistema Cecred
     vr_cddcargo := NULL;
     OPEN cr_tbcolab(pr_cdcooper => pr_cdcooper
@@ -1856,7 +1880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       CLOSE cr_crapjfn;
       vr_obj_proposta.put('faturamentoAnual',fn_decimal_ibra(rw_crapjfn.vltotfat));
     END IF;
-    
+
     -- Devolver o objeto criado
     pr_proposta := vr_obj_proposta;
   
@@ -1887,7 +1911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                    ,pr_nrctremp  IN crawepr.nrctremp%TYPE
                                    ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
                                    ,pr_nmarquiv  IN VARCHAR2
-                                      ---- OUT ----
+                                    ---- OUT ----
                                    ,pr_dsmensag OUT VARCHAR2
                                    ,pr_cdcritic OUT NUMBER
                                    ,pr_dscritic OUT VARCHAR2) IS
@@ -1906,6 +1930,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Alteração : 
                   13/07/2017 - P337 - Ajustes para envio ao Motor - Marcos(Supero)
         
+                  15/12/2017 - P337 - SM - Ajustes no envio para retormar reinício 
+                               de fluxo (Marcos-Supero)        
     ..........................................................................*/
     
     -----------> VARIAVEIS <-----------
@@ -1948,13 +1974,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Acionamentos de retorno
     CURSOR cr_aciona_retorno(pr_dsprotocolo VARCHAR2) IS
       SELECT ac.dsconteudo_requisicao
-        FROM tbepr_acionamento ac
+        FROM tbgen_webservice_aciona ac
        WHERE ac.cdcooper = pr_cdcooper
          AND ac.nrdconta = pr_nrdconta
          AND ac.nrctrprp = pr_nrctremp
          AND ac.dsprotocolo = pr_dsprotocolo
          AND ac.tpacionamento = 2; -- Somente Retorno
-    vr_dsconteudo_requisicao tbepr_acionamento.dsconteudo_requisicao%TYPE;
+    vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
     
     -- Hora de Envio
     vr_hrenvest crawepr.hrenvest%TYPE;
@@ -1975,7 +2001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN    
     
@@ -1988,13 +2014,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO INCLUIR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,   
+                           pr_dsmetodo              => NULL,    
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2063,13 +2095,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                              pr_cdorigem              => pr_cdorigem,          
                              pr_nrctrprp              => pr_nrctremp,          
                              pr_nrdconta              => pr_nrdconta,          
+                             pr_cdcliente             => 1,
                              pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                              pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
-                             pr_dsuriservico          => NULL,       
+                             pr_dsuriservico          => NULL,  
+                             pr_dsmetodo              => NULL,     
                              pr_dtmvtolt              => pr_dtmvtolt,       
                              pr_cdstatus_http         => 0,
                              pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                              pr_dsresposta_requisicao => null,
+                             pr_flgreenvia            => 0,
+                             pr_nrreenvio             => 0,
+                             pr_tpconteudo            => 1,
+                             pr_tpproduto             => 0,
                              pr_idacionamento         => vr_idaciona,
                              pr_dscritic              => vr_dscritic);
         -- Sem tratamento de exceção para DEBUG                    
@@ -2108,8 +2146,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 	    BEGIN
 				UPDATE crawepr wpr 
 					 SET wpr.insitest = 1, -->  1 – Enviada para Analise 
-							 wpr.dtenvest = trunc(SYSDATE), 
-							 wpr.hrenvest = vr_hrenvest,
+							 wpr.dtenvmot = trunc(SYSDATE), 
+							 wpr.hrenvmot = vr_hrenvest,
 							 wpr.cdopeste = pr_cdoperad,
 							 wpr.dsprotoc = nvl(vr_dsprotoc,' '),
                wpr.insitapr = 0,
@@ -2220,7 +2258,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                       vr_desmens := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_msg.get('texto').to_char(),'"'),'"'),'\u','\')));
                       vr_destipo := REPLACE(RTRIM(LTRIM(vr_obj_msg.get('tipo').to_char(),'"'),'"'),'ERRO','REPROVAR');
                     end if;
+                    IF vr_destipo <> 'DETALHAMENTO' THEN
                     vr_dsmensag := vr_dsmensag || '<BR>['||vr_destipo||'] '||vr_desmens;                              
+                    END IF;
                   EXCEPTION
                     WHEN OTHERS THEN
                       NULL; -- Ignorar essa linha
@@ -2253,25 +2293,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       COMMIT;
       
 		ELSE
-    
-    --> Gerar informações no padrao JSON da proposta de emprestimo
-    pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
-                          pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia                                            
-                          pr_cdoperad  => pr_cdoperad,  --> codigo do operado
-                          pr_cdorigem  => pr_cdorigem,  --> Origem da operacao
-                          pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
-                          pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
-                          pr_nmarquiv  => pr_nmarquiv,  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
-                          ---- OUT ----
-                          pr_proposta  => vr_obj_proposta,  --> Retorno do clob em modelo json da proposta de emprestimo
-                          pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
-                          pr_dscritic  => vr_dscritic); --> Descricao da critica
-    
-    IF nvl(vr_cdcritic,0) > 0 OR
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;        
-    END IF;           
-    
+            
+      --> Gerar informações no padrao JSON da proposta de emprestimo
+      pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
+                            pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia                                            
+                            pr_cdoperad  => pr_cdoperad,  --> codigo do operado
+                            pr_cdorigem  => pr_cdorigem,  --> Origem da operacao
+                            pr_nrdconta  => pr_nrdconta,  --> Numero da conta do cooperado
+                            pr_nrctremp  => pr_nrctremp,  --> Numero da proposta de emprestimo
+                            pr_nmarquiv  => pr_nmarquiv,  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                            ---- OUT ----
+                            pr_proposta  => vr_obj_proposta,  --> Retorno do clob em modelo json da proposta de emprestimo
+                            pr_cdcritic  => vr_cdcritic,  --> Codigo da critica
+                            pr_dscritic  => vr_dscritic); --> Descricao da critica
+      
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;        
+      END IF;  
+  
       --> Se origem veio do Motor/Esteira
       IF pr_cdorigem = 9 THEN 
         -- É uma derivação
@@ -2293,14 +2332,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                              pr_cdoperad              => pr_cdoperad,          
                              pr_cdorigem              => pr_cdorigem,          
                              pr_nrctrprp              => pr_nrctremp,          
-                             pr_nrdconta              => pr_nrdconta,          
+                             pr_nrdconta              => pr_nrdconta,   
+                             pr_cdcliente             => 1,       
                              pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                              pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
-                             pr_dsuriservico          => NULL,       
+                             pr_dsuriservico          => NULL,   
+                             pr_dsmetodo              => NULL,
                              pr_dtmvtolt              => pr_dtmvtolt,       
                              pr_cdstatus_http         => 0,
                              pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                              pr_dsresposta_requisicao => null,
+                             pr_flgreenvia            => 0,
+                             pr_nrreenvio             => 0,
+                             pr_tpconteudo            => 1,
+                             pr_tpproduto             => 0,
                              pr_idacionamento         => vr_idaciona,
                              pr_dscritic              => vr_dscritic);
         -- Sem tratamento de exceção para DEBUG                    
@@ -2308,69 +2353,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         --  RAISE vr_exc_erro;
         --END IF;
       END IF;  
-
-    --> Enviar dados para Esteira
-    pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
-                        pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
-                        pr_cdoperad    => pr_cdoperad,          --> codigo do operador
-                        pr_cdorigem    => pr_cdorigem,          --> Origem da operacao
-                        pr_nrdconta    => pr_nrdconta,          --> Numero da conta do cooperado
-                        pr_nrctremp    => pr_nrctremp,          --> Numero da proposta de emprestimo atual/antigo
-                        pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
-                        pr_comprecu    => NULL,                 --> Complemento do recuros da URI
-                        pr_dsmetodo    => 'POST',               --> Descricao do metodo
+      
+      --> Enviar dados para Esteira
+      pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
+                          pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
+                          pr_cdoperad    => pr_cdoperad,          --> codigo do operador
+                          pr_cdorigem    => pr_cdorigem,          --> Origem da operacao
+                          pr_nrdconta    => pr_nrdconta,          --> Numero da conta do cooperado
+                          pr_nrctremp    => pr_nrctremp,          --> Numero da proposta de emprestimo atual/antigo
+                          pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
+                          pr_comprecu    => NULL,                 --> Complemento do recuros da URI
+                          pr_dsmetodo    => 'POST',               --> Descricao do metodo
                           pr_conteudo    => vr_obj_proposta_clob, --> Conteudo no Json para comunicacao
                           pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO',   --> Operacao realizada
                           pr_tpenvest    => vr_tpenvest,          --> Tipo de envio
                           pr_dsprotocolo => vr_dsprotoc,
-                        pr_dscritic    => vr_dscritic);            
+                          pr_dscritic    => vr_dscritic);            
       
       -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
       IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
 
-        -- Tentaremos enviar um cancelamento para a Esteira 
-        este0001.pc_cancelar_proposta_est(pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+        -- Tentaremos enviar alteração com reinício de fluxo para a Esteira 
+        este0001.pc_alterar_proposta_est(pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
                                          ,pr_cdagenci => pr_cdagenci          --> Codigo da agencia 
                                          ,pr_cdoperad => pr_cdoperad          --> codigo do operador
                                          ,pr_cdorigem => pr_cdorigem          --> Origem da operacao
                                          ,pr_nrdconta => pr_nrdconta          --> Numero da conta do cooperado
                                          ,pr_nrctremp => pr_nrctremp          --> Numero da proposta de emprestimo atual/antigo
                                          ,pr_dtmvtolt => pr_dtmvtolt          --> Data do movimento   
+                                        ,pr_flreiflx => 1                    --> Reiniciar o fluxo
+                                        ,pr_nmarquiv => pr_nmarquiv
                                          ,pr_cdcritic => vr_cdcritic          
                                          ,pr_dscritic => vr_dscritic);
-        -- Somente se não houve erro 
-        IF vr_dscritic IS NULL THEN 
-          -- Tentaremos enviar novamente a proposta para a Esteira
-          pc_enviar_esteira (pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
-                             pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
-                             pr_cdoperad    => pr_cdoperad,          --> codigo do operador
-                             pr_cdorigem    => pr_cdorigem,          --> Origem da operacao
-                             pr_nrdconta    => pr_nrdconta,          --> Numero da conta do cooperado
-                             pr_nrctremp    => pr_nrctremp,          --> Numero da proposta de emprestimo atual/antigo
-                             pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
-                             pr_comprecu    => NULL,                 --> Complemento do recuros da URI
-                             pr_dsmetodo    => 'POST',               --> Descricao do metodo
-                             pr_conteudo    => vr_obj_proposta_clob, --> Conteudo no Json para comunicacao
-                             pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO',   --> Operacao realizada
-                             pr_tpenvest    => vr_tpenvest,          --> Tipo de envio
-                             pr_dsprotocolo => vr_dsprotoc,
-                             pr_dscritic    => vr_dscritic);              
-        END IF;
+
       END IF;
       
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_obj_proposta_clob);
       dbms_lob.freetemporary(vr_obj_proposta_clob);    
-    
-    -- verificar se retornou critica
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF; 
+      
+      -- verificar se retornou critica
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
       
       vr_hrenvest := to_char(SYSDATE,'sssss');
-    
-    --> Atualizar proposta
-    BEGIN
+      
+      --> Atualizar proposta
+      BEGIN
         UPDATE crawepr wpr 
            SET wpr.insitest = 2, -->  2 – Enviada para Analise Manual
                wpr.dtenvest = trunc(SYSDATE), 
@@ -2382,11 +2412,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                wpr.dtaprova = NULL,
                wpr.hraprova = 0
          WHERE wpr.rowid = rw_crawepr.rowid;      
-    EXCEPTION    
-      WHEN OTHERS THEN
+      EXCEPTION    
+        WHEN OTHERS THEN
           vr_dscritic := 'Nao foi possivel atualizar proposta apos envio para Análise de Crédito: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
+          RAISE vr_exc_erro;
+      END;
       
       pr_dsmensag := 'Proposta Enviada para Analise Manual de Credito.';
       
@@ -2403,14 +2433,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,         
+                           pr_cdcliente             => 1, 
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO INCLUIR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2419,7 +2455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --END IF;
     END IF;  
     
-    COMMIT;    
+    COMMIT;   
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -2483,17 +2519,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Tratamento de erros
     vr_cdcritic NUMBER := 0;
     vr_dscritic VARCHAR2(4000);
+    vr_dsmensag VARCHAR2(4000);
     vr_exc_erro EXCEPTION;
       
     -- Objeto json da proposta
     vr_obj_alter    json := json();
     vr_obj_proposta json := json();
-    vr_obj_agencia  json := json();            
+    vr_obj_agencia  json := json();  
 		vr_dsprotocolo  VARCHAR2(1000);
+    vr_obj_proposta_clob clob;
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;    
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;    
     
   BEGIN                  
     
@@ -2505,14 +2543,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,  
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO ALTERAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,     
+                           pr_dsmetodo              => NULL,  
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2520,7 +2564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --  RAISE vr_exc_erro;
       --END IF;
     END IF;   
-    
+  
     --> Gerar informações no padrao JSON da proposta de emprestimo
     pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
                           pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia                                            
@@ -2563,6 +2607,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_alter.put('operadorAlteracaoPA'      , vr_obj_agencia);
     
+    -- Criar o CLOB para converter JSON para CLOB
+    dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
+    json.to_clob(vr_obj_alter,vr_obj_proposta_clob);
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2571,14 +2620,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,  
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES ALTERAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,  
+                           pr_dsmetodo              => NULL,     
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
-                           pr_dsconteudo_requisicao => vr_obj_alter.to_char,
+                           pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2597,29 +2652,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                         pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
                         pr_comprecu    => NULL,                 --> Complemento do recuros da URI
                         pr_dsmetodo    => 'PUT',                --> Descricao do metodo
-                        pr_conteudo    => vr_obj_alter.to_char, --> Conteudo no Json para comunicacao
+                        pr_conteudo    => vr_obj_proposta_clob, --> Conteudo no Json para comunicacao
                         pr_dsoperacao  => 'REENVIO DA PROPOSTA PARA ANALISE DE CREDITO', --> Operacao realizada
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
+    -- Se não houve erro
+    IF vr_dscritic IS NULL THEN 
+  
+      --> Atualizar proposta
+      BEGIN
+        UPDATE crawepr epr 
+           SET epr.insitest = 2, -->  2 – Reenviado para Analise
+               epr.dtenvest = trunc(SYSDATE), 
+               epr.hrenvest = to_char(SYSDATE,'sssss'),
+               epr.cdopeste = pr_cdoperad,
+               epr.dsprotoc = nvl(vr_dsprotocolo,' '),
+               epr.insitapr = 0,
+               epr.cdopeapr = NULL,
+               epr.dtaprova = NULL,
+               epr.hraprova = 0
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;      
+      EXCEPTION    
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
+      END;         
+
+    
+    -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
+    ELSIF lower(vr_dscritic) LIKE '%proposta nao encontrada%' THEN
+
+      -- Tentaremos enviar inclusão novamente na Esteira
+      pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+                             ,pr_cdagenci => pr_cdagenci --> Codigo da agencia                                          
+                             ,pr_cdoperad => pr_cdoperad --> codigo do operador
+                             ,pr_cdorigem => pr_cdorigem --> Origem da operacao
+                             ,pr_nrdconta => pr_nrdconta --> Numero da conta do cooperado
+                             ,pr_nrctremp => pr_nrctremp --> Numero da proposta de emprestimo atual/antigo
+                             ,pr_dtmvtolt => pr_dtmvtolt --> Data do movimento                                      
+                             ,pr_nmarquiv => NULL
+                             ,pr_dsmensag => vr_dsmensag
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+
+    END IF;  
+
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF; 
     
-    --> Atualizar proposta
-    BEGIN
-      UPDATE crawepr epr 
-         SET epr.insitest = 2, -->  2 – Reenviado para Analise
-             epr.cdopeste = pr_cdoperad
-       WHERE epr.cdcooper = pr_cdcooper
-         AND epr.nrdconta = pr_nrdconta
-         AND epr.nrctremp = pr_nrctremp;      
-    EXCEPTION    
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
@@ -2629,14 +2713,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,       
+                           pr_cdcliente             => 1,   
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO ALTERAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,   
+                           pr_dsmetodo              => NULL,    
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2749,10 +2839,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
     
-  BEGIN                  
+  BEGIN      
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
@@ -2762,14 +2852,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta, 
+                           pr_cdcliente             => 1,         
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO ALTERAR NUMERO PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,     
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2859,14 +2955,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,  
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES ALTERAR NUMERO PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,   
+                           pr_dsmetodo              => NULL,         
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_alter.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2893,8 +2995,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF; 
-  
+    END IF;      
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2903,14 +3005,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta, 
+                           pr_cdcliente             => 1,                                    
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO ALTERAR NUMERO PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2938,6 +3046,206 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel realizar alteracao do numero da proposta para Analise de Credito: '||SQLERRM;
   END pc_alter_numproposta_est;
+  
+  --> Rotina para efetuar a derivação de uma proposta para a Esteira
+  PROCEDURE pc_derivar_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                   ,pr_cdagenci  IN crapage.cdagenci%TYPE
+                                   ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                   ,pr_cdorigem  IN INTEGER
+                                   ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                   ,pr_nrctremp  IN crawepr.nrctremp%TYPE
+                                   ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) IS
+    /* ..........................................................................
+    
+      Programa : pc_derivar_proposta_est        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Marcos Martini (Supero)
+      Data     : Dezembro/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por verificar a proposta e enviar 
+                  inclusao ou alteração da proposta na esteira
+      Alteração : 
+        
+    ..........................................................................*/
+    
+    -----------> VARIAVEIS <-----------
+
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_dsmensag VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+		
+    -- Buscar informações da Proposta
+		CURSOR cr_crawepr IS
+			SELECT wpr.insitest
+            ,wpr.insitapr
+            ,wpr.dtenvest
+            ,wpr.dtenvmot
+            ,wpr.dsprotoc
+				FROM crawepr wpr
+			 WHERE wpr.cdcooper = pr_cdcooper
+				 AND wpr.nrdconta = pr_nrdconta
+				 AND wpr.nrctremp = pr_nrctremp;
+    rw_crawepr cr_crawepr%ROWTYPE;
+    
+    -- Obrigação de envio ao Motor 
+    vr_inobriga VARCHAR2(1);
+    
+    -- Variaveis para DEBUG
+    vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    
+  BEGIN    
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => pr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,   
+                           pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'INICIO DERIVAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,      
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF; 
+  
+	  -- Buscar informações da proposta
+	  OPEN cr_crawepr;
+		FETCH cr_crawepr INTO rw_crawepr;
+		CLOSE cr_crawepr;
+    
+    -- Para Propostas ainda não enviada para a Esteira
+    IF rw_crawepr.dtenvest IS NULL THEN
+      -- Inclusão na esteira
+      pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_cdorigem => pr_cdorigem
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => pr_nrctremp
+                             ,pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_nmarquiv => NULL
+                             ,pr_dsmensag => vr_dsmensag
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+    ELSE
+      -- Atualização com reinício de fluxo 
+      pc_alterar_proposta_est(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_cdorigem => pr_cdorigem
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => pr_nrctremp
+                             ,pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_flreiflx => 1
+                             ,pr_nmarquiv => NULL
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+      
+    END IF;
+    
+    -- Testar erro
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => pr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,  
+                           pr_cdcliente             => 1,        
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'TERMINO DERIVAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;  
+    
+    COMMIT;    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      --> Gerar em LOG
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                pr_ind_tipo_log => 2,
+                                pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')
+                                                || ' - WEBS0001 --> Erro ao solicitor Derivacao Automatica '
+                                                || ' do Protocolo: '||rw_crawepr.dsprotoc
+                                                || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
+                                pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                pr_flnovlog     => 'N',
+                                pr_flfinmsg     => 'S',
+                                pr_dsdirlog     => NULL,
+                                pr_dstiplog     => 'O',
+                                PR_CDPROGRAMA   => NULL);
+    
+    WHEN OTHERS THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Não foi possivel realizar derivacao da proposta de Análise de Crédito: '||SQLERRM;
+      
+      --> Gerar em LOG
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                pr_ind_tipo_log => 2,
+                                pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')
+                                                || ' - WEBS0001 --> Erro ao solicitor Derivacao Automatica '
+                                                || ' do Protocolo: '||rw_crawepr.dsprotoc
+                                                || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
+                                pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                pr_flnovlog     => 'N',
+                                pr_flfinmsg     => 'S',
+                                pr_dsdirlog     => NULL,
+                                pr_dstiplog     => 'O',
+                                PR_CDPROGRAMA   => NULL);      
+  END pc_derivar_proposta_est;
   
   --> Rotina responsavel por gerar o cancelamento da proposta para a esteira
   PROCEDURE pc_cancelar_proposta_est( pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
@@ -3024,7 +3332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
     
   BEGIN
@@ -3037,14 +3345,328 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,   
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO CANCELAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,      
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;     
+     
+    -- Buscar dados do operador
+    OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
+                     pr_cdoperad  => pr_cdoperad);
+    FETCH cr_crapope INTO rw_crapope;
+    IF cr_crapope%NOTFOUND THEN
+      CLOSE cr_crapope;
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      RAISE vr_exc_erro; 
+    ELSE
+      CLOSE cr_crapope;
+    END IF;        
+    
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;  
+    
+    --> Buscar dados da proposta de emprestimo
+    OPEN cr_crawepr(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrctremp => pr_nrctremp);
+    FETCH cr_crawepr INTO rw_crawepr;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crawepr%NOTFOUND THEN
+      CLOSE cr_crawepr;
+      vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crawepr; 
+          
+    
+    --> Criar objeto json para agencia da proposta
+    /***************** VERIFICAR *********************/
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crawepr.cdagenci);    
+    vr_obj_cancelar.put('PA' ,vr_obj_agencia);    
+    vr_obj_agencia := json();
+    
+    --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
+    vr_obj_cancelar.put('cooperadoContaPA' ,vr_obj_agencia);
+    vr_obj_agencia := json();
+    
+    -- Nr. conta sem o digito
+    vr_obj_cancelar.put('cooperadoContaNum'     , to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
+    -- Somente o digito
+    vr_obj_cancelar.put('cooperadoContaDv'      , to_number(substr(rw_crapass.nrdconta,-1)));    
+    IF rw_crapass.inpessoa = 1 THEN
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,11,'0'));
+    ELSE
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
+    END IF;
+    
+    vr_obj_cancelar.put('numero'                , pr_nrctremp);
+    vr_obj_cancelar.put('operadorCancelamentoLogin',lower(pr_cdoperad));
+    vr_obj_cancelar.put('operadorCancelamentoNome' ,rw_crapope.nmoperad) ;
+     --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
+    vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
+    vr_obj_cancelar.put('operadorCancelamentoPA'   , vr_obj_agencia);    
+    vr_obj_cancelar.put('dataHora'              ,fn_DataTempo_ibra(SYSDATE)) ;        
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => pr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,    
+                           pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'ANTES CANCELAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,   
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
+                           pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;  
+    
+    --> Enviar dados para Esteira
+    pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,               --> Codigo da cooperativa
+                        pr_cdagenci    => pr_cdagenci,               --> Codigo da agencia                                          
+                        pr_cdoperad    => pr_cdoperad,               --> codigo do operador
+                        pr_cdorigem    => pr_cdorigem,               --> Origem da operacao
+                        pr_nrdconta    => pr_nrdconta,               --> Numero da conta do cooperado
+                        pr_nrctremp    => pr_nrctremp,               --> Numero da proposta de emprestimo atual/antigo
+                        pr_dtmvtolt    => pr_dtmvtolt,               --> Data do movimento                                      
+                        pr_comprecu    => '/cancelar',               --> Complemento do recuros da URI
+                        pr_dsmetodo    => 'PUT',                     --> Descricao do metodo
+                        pr_conteudo    => vr_obj_cancelar.to_char,   --> Conteudo no Json para comunicacao
+                        pr_dsoperacao  => 'ENVIO DO CANCELAMENTO DA PROPOSTA DE ANALISE DE CREDITO',       --> Operacao realizada
+												pr_dsprotocolo => vr_dsprotocolo,
+                        pr_dscritic    => vr_dscritic);            
+    
+    -- verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada
+    IF vr_dscritic IS NOT NULL AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' THEN
+      RAISE vr_exc_erro;
+    END IF;      
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => pr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,    
+                           pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'TERMINO CANCELAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;   
+    
+    --> Atualizar proposta
+    BEGIN
+      UPDATE crawepr wpr 
+         SET wpr.dtenvest = NULL
+            ,wpr.hrenvest = 0
+            ,wpr.cdopeste = ' '
+       WHERE wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
+    EXCEPTION    
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar proposta apos cancelamento: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END; 
+    
+    COMMIT;  
+        
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o cancelamento da Analise de Credito: '||SQLERRM;
+  END pc_cancelar_proposta_est;
+  
+  --> Rotina responsavel por gerar o cancelamento da proposta para a esteira
+  PROCEDURE pc_interrompe_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
+                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                       pr_nrdconta  IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                       pr_nrctremp  IN crawepr.nrctremp%TYPE,  --> Numero da proposta de emprestimo atual/antigo                                      
+                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                       ---- OUT ----                           
+                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                       pr_dscritic OUT VARCHAR2) IS            --> Descricao da critica
+    /* ..........................................................................
+    
+      Programa : pc_interrompe_proposta_est        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Marcos Martini (Supero)
+      Data     : Dezembro/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por interromper o fluxo da proposta na esteira
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    
+    --> Buscar operador
+    CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
+                       pr_cdoperad  crapope.cdoperad%TYPE) IS
+      SELECT ope.nmoperad
+        FROM crapope ope
+       WHERE ope.cdcooper = pr_cdcooper
+         AND upper(ope.cdoperad) = upper(pr_cdoperad);
+    
+    rw_crapope cr_crapope%ROWTYPE;
+    
+    -----------> CURSORES <-----------
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.nrdconta,
+             ass.nmprimtl,
+             ass.cdagenci,
+             age.nmextage,
+             ass.inpessoa,
+             decode(ass.inpessoa,1,0,2,1) inpessoa_ibra,
+             ass.nrcpfcgc
+               
+        FROM crapass ass,
+             crapage age
+       WHERE ass.cdcooper = age.cdcooper
+         AND ass.cdagenci = age.cdagenci
+         AND ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta; 
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+    --> Buscar dados da proposta de emprestimo
+    CURSOR cr_crawepr (pr_cdcooper crawepr.cdcooper%TYPE,
+                       pr_nrdconta crawepr.nrdconta%TYPE,
+                       pr_nrctremp crawepr.nrctremp%TYPE)IS
+      SELECT epr.nrctremp,
+             epr.cdagenci
+        FROM crawepr epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp; 
+    rw_crawepr cr_crawepr%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+    
+    
+    -- Objeto json da proposta
+    vr_obj_cancelar json := json();
+    vr_obj_agencia  json := json();
+    -- Auxiliares
+    vr_dsprotocolo VARCHAR2(1000);
+    
+    -- Variaveis para DEBUG
+    vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    
+    
+  BEGIN
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => pr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,    
+                           pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'INICIO INTERROMPE PROPOSTA',       
+                           pr_dsuriservico          => NULL,      
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3133,14 +3755,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,    
+                           pr_cdcliente             => 1,      
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
-                           pr_dsoperacao            => 'ANTES CANCELAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsoperacao            => 'ANTES INTERROMPER PROPOSTA',       
+                           pr_dsuriservico          => NULL,  
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3157,15 +3785,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                         pr_nrdconta    => pr_nrdconta,               --> Numero da conta do cooperado
                         pr_nrctremp    => pr_nrctremp,               --> Numero da proposta de emprestimo atual/antigo
                         pr_dtmvtolt    => pr_dtmvtolt,               --> Data do movimento                                      
-                        pr_comprecu    => '/cancelar',               --> Complemento do recuros da URI
+                        pr_comprecu    => '/interromperFluxo',       --> Complemento do recuros da URI
                         pr_dsmetodo    => 'PUT',                     --> Descricao do metodo
                         pr_conteudo    => vr_obj_cancelar.to_char,   --> Conteudo no Json para comunicacao
-                        pr_dsoperacao  => 'ENVIO DO CANCELAMENTO DA PROPOSTA DE ANALISE DE CREDITO',       --> Operacao realizada
+                        pr_dsoperacao  => 'ENVIO DA INTERRUPÇÃO DA PROPOSTA DE ANALISE DE CREDITO',       --> Operacao realizada
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
-    -- verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada
-    IF vr_dscritic IS NOT NULL AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' THEN
+    -- Verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada ou proposta nao permite interromper o fluxo
+    IF vr_dscritic IS NOT NULL 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao permite interromper o fluxo%'
+      AND lower(vr_dscritic) NOT LIKE '%produto cdc nao integrado%' THEN
       RAISE vr_exc_erro;
     END IF;    
     
@@ -3177,14 +3808,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta, 
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
-                           pr_dsoperacao            => 'TERMINO CANCELAR PROPOSTA',       
+                           pr_dsoperacao            => 'TERMINO INTERROMPER PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3193,23 +3830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --END IF;
     END IF;   
     
-    --> Atualizar proposta
-    BEGIN
-      UPDATE crawepr wpr 
-         SET wpr.dtenvest = NULL
-            ,wpr.hrenvest = 0
-            ,wpr.cdopeste = ' '
-       WHERE wpr.cdcooper = pr_cdcooper
-         AND wpr.nrdconta = pr_nrdconta
-         AND wpr.nrctremp = pr_nrctremp;
-    EXCEPTION    
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar proposta apos cancelamento: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END; 
-    
-    COMMIT;  
-        
+    COMMIT;          
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3226,8 +3847,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel realizar o cancelamento da Analise de Credito: '||SQLERRM;
-  END pc_cancelar_proposta_est;
+      pr_dscritic := 'Não foi possivel realizar a interrupcao da Analise de Credito: '||SQLERRM;
+  END pc_interrompe_proposta_est;  
   
   --> Rotina responsavel por gerar efetivacao da proposta para a esteira
   PROCEDURE pc_efetivar_proposta_est( pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
@@ -3304,8 +3925,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              epr.cdagenci cdagenci_efet,             
              decode(wepr.tpemprst,1,'PP','TR') tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc,
-             epr.dtmvtolt
+             DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc,
+             epr.dtmvtolt,
+             epr.vltarifa,
+             epr.vliofepr
         FROM crawepr wepr,
              craplcr lcr,
              crapope ope,
@@ -3357,7 +3981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN
     
@@ -3369,14 +3993,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,   
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO EFETIVAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,     
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3384,7 +4014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --  RAISE vr_exc_erro;
       --END IF;
     END IF;     
-    
+  
     --> Buscar dados do associado
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);
@@ -3473,30 +4103,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawepr.qtpreemp);
     vr_obj_efetivar.put('parcelaPrimeiroVencimento' , fn_Data_ibra( rw_crawepr.dtvencto));
     vr_obj_efetivar.put('parcelaValor'           , fn_decimal_ibra(rw_crawepr.vlpreemp));
+    vr_obj_efetivar.put('CETValor'               , rw_crawepr.vltarifa);
+    vr_obj_efetivar.put('IOFValor'               , rw_crawepr.vliofepr);
     
-    -- Gerar imagem apensa se nao for CDC
-    IF rw_crawepr.inlcrcdc = 0 THEN
-      IF pr_nmarquiv IS NOT NULL THEN
-        --> converter arquivo PDF para clob em base64 para enviar via json
-        pc_arq_para_clob_base64(pr_nmarquiv       => pr_nmarquiv,
-                                pr_json_value_arq => vr_json_valor, 
-                                pr_dscritic       => vr_dscritic);
+    IF pr_nmarquiv IS NOT NULL THEN
+      --> converter arquivo PDF para clob em base64 para enviar via json
+      pc_arq_para_clob_base64(pr_nmarquiv       => pr_nmarquiv,
+                              pr_json_value_arq => vr_json_valor, 
+                              pr_dscritic       => vr_dscritic);
                                 
-        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
-          RAISE vr_exc_erro;
-        END IF;
-        
-        -- Gerar objeto json para a imagem 
-        vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
-        vr_obj_imagem.put('imagem'      , vr_json_valor);
-        vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
-        vr_obj_imagem.put('validadeData', '');
-        -- incluir objeto imagem na proposta
-        vr_obj_efetivar.put('imagem'    ,vr_obj_imagem);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+        RAISE vr_exc_erro;
       END IF;
-                 
+        
+      -- Gerar objeto json para a imagem 
+      vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
+      vr_obj_imagem.put('imagem'      , vr_json_valor);
+      vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
+      vr_obj_imagem.put('validadeData', '');
+      -- incluir objeto imagem na proposta
+      vr_obj_efetivar.put('imagem'    ,vr_obj_imagem);
     END IF;
-    
+
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -3505,14 +4133,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,     
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES EFETIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_efetivar.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3562,14 +4196,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,  
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO EFETIVAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL, 
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3676,11 +4316,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_cdtpprod_ret  VARCHAR2(100);
     vr_nrctremp_ret  crawepr.nrctremp%TYPE;
     vr_nrctremp_ret2 crawepr.nrctremp%TYPE;
-    vr_idacionamento tbepr_acionamento.idacionamento%TYPE;    
+    vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;    
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;    
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;    
     
   BEGIN
     
@@ -3692,14 +4332,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta,    
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO CONSULTAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3707,7 +4353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --  RAISE vr_exc_erro;
       --END IF;
     END IF;    
-    
+  
     -- Carregar parametros para a comunicacao com a esteira
     pc_carrega_param_ibra(pr_cdcooper      => pr_cdcooper,                   -- Codigo da cooperativa
                           pr_nrdconta      => pr_nrdconta,                   -- Numero da conta do cooperado
@@ -3768,14 +4414,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdoperad              => pr_cdoperad,          
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
-                           pr_nrdconta              => pr_nrdconta,          
+                           pr_nrdconta              => pr_nrdconta, 
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES CONSULTAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,  
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3801,16 +4453,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                          pr_cdoperad              => pr_cdoperad,          
                          pr_cdorigem              => pr_cdorigem,          
                          pr_nrctrprp              => pr_nrctremp,          
-                         pr_nrdconta              => pr_nrdconta,          
+                         pr_nrdconta              => pr_nrdconta, 
+                         pr_cdcliente             => 1,
                          pr_tpacionamento         => 1,  /* 1 - Envio, 2 – Retorno */      
                          pr_dsoperacao            => 'CONSULTA DA PROPOSTA DE ANALISE DE CREDITO',
-                         pr_dsuriservico          => vr_recurso_este,       
+                         pr_dsuriservico          => vr_recurso_este, 
+                         pr_dsmetodo              => 'GET',      
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
                          pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
                                                      ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
                                                      ',"Content":'||vr_response.content||'}',
+                         pr_flgreenvia            => 0,
+                         pr_nrreenvio             => 0,
+                         pr_tpconteudo            => 1,
+                         pr_tpproduto             => 0,
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -3867,7 +4525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     --> Retornar valores
     pr_cdstatan := vr_cdstatan;
-    pr_cdsitest := vr_cdsitest;    
+    pr_cdsitest := vr_cdsitest;
     
 
     
@@ -3880,13 +4538,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO CONSULTAR PROPOSTA',       
-                           pr_dsuriservico          => NULL,       
+                           pr_dsuriservico          => NULL,     
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3957,13 +4621,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       -- Cursor para verificar se a linha de crédito não é de Aprovação Automática
       CURSOR cr_craplcr IS
         SELECT lcr.flgdisap
-              ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+              ,DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => pr_cdcooper
+                                                 ,pr_cdfinemp => pr_cdfinemp),3,1,0) AS inlcrcdc
           FROM craplcr lcr
          WHERE lcr.cdcooper = pr_cdcooper
            AND lcr.cdlcremp = pr_cdlcremp;
       vr_flgdisap craplcr.flgdisap%TYPE;
       vr_inlcrcdc PLS_INTEGER;
-           
+
     BEGIN 
       
       -- Verificação de finalidade pré-aprovada
@@ -4103,11 +4768,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     END;
   END pc_obrigacao_analise_autom_web;   
   
-  -- Rotina acionada via JOB para solicitar analises não respondidas via POST ou solicitar a proposta enviada
+  -- Rotina para solicitar analises não respondidas via POST ou solicitar a proposta enviada
 	PROCEDURE pc_solicita_retorno_analise(pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_nrdconta IN crawepr.nrdconta%TYPE
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE
                                        ,pr_dsprotoc IN crawepr.dsprotoc%TYPE) IS
+	  /* .........................................................................
+    
+    Programa : pc_solicita_retorno_analise
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Marcos Martini
+    Data     : Agosto/2017                    Ultima atualizacao: --/--/----
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
+    Alteração : 
+        
+  ..........................................................................*/
+
+  
 		-- Tratamento de exceções
 	  vr_exc_erro EXCEPTION;	
 		vr_cdcritic PLS_INTEGER;
@@ -4121,7 +4803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_dsdirlog      VARCHAR2(500);
     vr_chave_aplica  VARCHAR2(500);
     vr_autori_este   VARCHAR2(500);
-		vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
+		vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
 	  vr_nrdrowid ROWID;
 		vr_dsresana VARCHAR2(100);
     vr_dssitret VARCHAR2(100);
@@ -4169,6 +4851,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
             ,wpr.insitest
             ,wpr.cdagenci
             ,wpr.insitapr
+            ,wpr.dtenvmot
+            ,wpr.hrenvmot
             ,wpr.rowid
         FROM crawepr wpr
        WHERE wpr.cdcooper = pr_cdcooper 
@@ -4180,7 +4864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
               
 	BEGIN
     
@@ -4218,14 +4902,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                pr_cdoperad              => '1',          
                                pr_cdorigem              => 5,          
                                pr_nrctrprp              => 0,          
-                               pr_nrdconta              => 0,          
+                               pr_nrdconta              => 0,
+                               pr_cdcliente             => 1,          
                                pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                pr_dsoperacao            => 'INICIO SOLICITA RETORNOS',       
-                               pr_dsuriservico          => NULL,       
+                               pr_dsuriservico          => NULL,     
+                               pr_dsmetodo              => NULL,  
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => 0,
                                pr_dsconteudo_requisicao => null,
                                pr_dsresposta_requisicao => null,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idaciona,
                                pr_dscritic              => vr_dscritic);
           -- Sem tratamento de exceção para DEBUG                    
@@ -4279,14 +4969,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                  pr_cdoperad              => 'MOTOR',          
                                  pr_cdorigem              => 5,          
                                  pr_nrctrprp              => rw_crawepr.nrctremp,          
-                                 pr_nrdconta              => rw_crawepr.nrdconta,         
+                                 pr_nrdconta              => rw_crawepr.nrdconta,  
+                                 pr_cdcliente             => 1,       
                                  pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                  pr_dsoperacao            => 'ANTES SOLICITA RETORNOS',       
-                                 pr_dsuriservico          => NULL,       
+                                 pr_dsuriservico          => NULL,      
+                                 pr_dsmetodo              => NULL,
                                  pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                  pr_cdstatus_http         => 0,
                                  pr_dsconteudo_requisicao => null,
                                  pr_dsresposta_requisicao => null,
+                                 pr_flgreenvia            => 0,
+                                 pr_nrreenvio             => 0,
+                                 pr_tpconteudo            => 1,
+                                 pr_tpproduto             => 0,
                                  pr_idacionamento         => vr_idaciona,
                                  pr_dscritic              => vr_dscritic);
             -- Sem tratamento de exceção para DEBUG                    
@@ -4332,15 +5028,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                pr_cdoperad              => 'MOTOR',
                                pr_cdorigem              => 5, /*Ayllos*/
                                pr_nrctrprp              => rw_crawepr.nrctremp,          
-                               pr_nrdconta              => rw_crawepr.nrdconta,          
+                               pr_nrdconta              => rw_crawepr.nrdconta, 
+                               pr_cdcliente             => 1,         
                                pr_tpacionamento         => 2,  /* 1 - Envio, 2 – Retorno */      
                                pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA DE CREDITO - '||vr_dssitret,
                                pr_dsuriservico          => vr_host_esteira||vr_recurso_este,       
+                               pr_dsmetodo              => 'GET',
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => vr_response.status_code,
                                pr_dsconteudo_requisicao => vr_response.content,
                                pr_dsresposta_requisicao => null,
                                pr_dsprotocolo           => rw_crawepr.dsprotoc,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idacionamento,
                                pr_dscritic              => vr_dscritic);
     			                     
@@ -4358,8 +5060,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           -- Se recebemos o código diferente de 200 
           IF vr_response.status_code != 200 THEN
             -- Checar expiração
-            IF trunc(SYSDATE) > rw_crawepr.dtenvest 
-            OR to_number(to_char(SYSDATE, 'sssss')) - rw_crawepr.hrenvest > vr_qtsegund THEN
+            IF trunc(SYSDATE) > rw_crawepr.dtenvmot 
+            OR to_number(to_char(SYSDATE, 'sssss')) - rw_crawepr.hrenvmot > vr_qtsegund THEN
               BEGIN
                 UPDATE crawepr epr
                    SET epr.insitest = 3 --> Analise Finalizada
@@ -4460,13 +5162,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                    pr_cdorigem              => 5,          
                                    pr_nrctrprp              => rw_crawepr.nrctremp,          
                                    pr_nrdconta              => rw_crawepr.nrdconta,         
+                                   pr_cdcliente             => 1,
                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                    pr_dsoperacao            => 'ANTES PROCESSAMENTO RETORNO',       
-                                   pr_dsuriservico          => NULL,       
+                                   pr_dsuriservico          => NULL,    
+                                   pr_dsmetodo              => NULL,
                                    pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                    pr_cdstatus_http         => 0,
                                    pr_dsconteudo_requisicao => null,
                                    pr_dsresposta_requisicao => null,
+                                   pr_flgreenvia            => 0,
+                                   pr_nrreenvio             => 0,
+                                   pr_tpconteudo            => 1,
+                                   pr_tpproduto             => 0,
                                    pr_idacionamento         => vr_idaciona,
                                    pr_dscritic              => vr_dscritic);
               -- Sem tratamento de exceção para DEBUG                    
@@ -4511,13 +5219,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                pr_cdorigem              => 5,          
                                pr_nrctrprp              => 0,          
                                pr_nrdconta              => 0,          
+                               pr_cdcliente             => 1,
                                pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                pr_dsoperacao            => 'TERMINO SOLICITA RETORNOS',       
-                               pr_dsuriservico          => NULL,       
+                               pr_dsuriservico          => NULL, 
+                               pr_dsmetodo              => NULL,
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => 0,
                                pr_dsconteudo_requisicao => null,
                                pr_dsresposta_requisicao => null,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idaciona,
                                pr_dscritic              => vr_dscritic);
           -- Sem tratamento de exceção para DEBUG                    
@@ -4554,6 +5268,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                  pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                                                               pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
 	END pc_solicita_retorno_analise;
-    
+	
 END ESTE0001;
 /
