@@ -25,6 +25,8 @@
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
  *                24/10/2017 - Remocao da caixa postal. (PRJ339 - Kelvin).
+ *                08/01/2018 - Ajuste para carregar nome do avalista do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's   
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -416,6 +418,11 @@ function controlaOperacaoProc( operacao_proc ){
 				if (flgPoderes) {
 					controlaOperacaoProc('TP');
 				}	
+							
+				if (operacao_proc == 'IB'){
+					// Validar se o nome pode ser alterada
+                    buscaNmPessoa_procur($('#nrcpfcgc','#'+nomeFormProc ).val(),'nmdavali', nomeFormProc);                                            
+				}
 							
 			} else {
 				eval( response );
@@ -2583,4 +2590,53 @@ function selecionaPoder(check){
         }
     }
 
+}
+
+// Rotina para buscar nome da pessoa procurador e validar se poderá ser alterado
+function buscaNmPessoa_procur(nrcpfcgc,nmdcampo, nmdoform){
+
+    var nrdocnpj = nrcpfcgc;
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);    
+
+    nrdocnpj = normalizaNumero(nrdocnpj);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrdocnpj == "" || nrdocnpj == "0" ){   
+        $('#'+nmdcampo,'#'+nmdoform ).habilitaCampo();     
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/busca_nome_pessoa.php',
+        data: {
+            nrdocnpj: nrdocnpj,
+            nmdcampo: nmdcampo,
+            nmdoform: nmdoform,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
 }

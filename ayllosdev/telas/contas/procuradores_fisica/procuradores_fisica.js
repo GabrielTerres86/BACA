@@ -14,6 +14,9 @@
  *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).		                         
  *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ *                08/01/2018 - Ajuste para carregar nome do cadastro unificado e não permitir alterar caso possua cadastro completo.
+                               P339 - Evandro Guaranha - Mout's 
+ 
  */
 
 var nrcpfcgc = '';
@@ -203,6 +206,13 @@ function controlaOperacaoProcuradores( operacao ){
 					controlaOperacaoProcuradores('TP');
 				}
 				
+                if (operacao == "A"){
+                    
+                    // Validar se o nome pode ser alterada
+                    buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);                        
+                        
+                }
+                
 			} else {
 				eval( response );
 				controlaFocoProcuradores( operacao );
@@ -712,6 +722,9 @@ function controlaLayoutProcuradores( operacao ) {
 				nrdrowid 	= '';
 				showMsgAguardo('Aguarde, buscando dados do procurador...');
 				controlaOperacaoProcuradores('TB');
+                
+                // Validar se o nome pode ser alterada
+                buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);  
 			} 
 		});		
 

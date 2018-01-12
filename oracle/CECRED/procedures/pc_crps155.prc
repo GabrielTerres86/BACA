@@ -144,8 +144,7 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
 
   -- Informações da poupança programada
   cursor cr_craprpp(pr_cdcooper in craptab.cdcooper%type) is
-    select /*+ index(craprpp craprpp##craprpp2)*/
-           craprpp.rowid,
+    select craprpp.rowid,
            craprpp.cdsitrpp,
            decode(craprpp.cdsitrpp,
                   1, 'ATIVO',
@@ -170,30 +169,13 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
       from craprpp,
            crapass,
            crapage
-     where crapage.cdcooper(+) = crapass.cdcooper
-       AND crapage.cdagenci(+) = crapass.cdagenci
-       AND crapass.cdcooper    = craprpp.cdcooper
-       AND crapass.nrdconta    = craprpp.nrdconta       
-       and craprpp.cdcooper    = pr_cdcooper
+     where crapage.cdcooper = crapass.cdcooper
+       AND crapage.cdagenci = crapass.cdagenci
+       AND crapass.cdcooper = craprpp.cdcooper
+       AND crapass.nrdconta = craprpp.nrdconta       
+       and craprpp.cdcooper = pr_cdcooper
        --Inclusão de filtro por agência para tratar o paralelismo
        and crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
-
-  -- Informações do associado
-  cursor cr_crapass(pr_cdcooper in craptab.cdcooper%TYPE) is
-    select crapage.cdagenci,
-           crapass.nrdconta,
-           decode(crapass.nrramemp,0,null,crapass.nrramemp) nrramemp,
-           crapass.nmprimtl,
-           crapass.cdsitdct,
-           crapass.cdtipcta,
-           crapage.nmresage
-      from crapass
-         , crapage
-     where crapage.cdcooper(+) = crapass.cdcooper
-       AND crapage.cdagenci(+) = crapass.cdagenci
-       AND crapass.cdcooper = pr_cdcooper
-       --Inclusão de filtro por agência para tratar o paralelismo
-       AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci); 
 
   -- Buscar as taxas a serem aplicadas
   cursor cr_craptrd (pr_dtiniper in craprpp.dtiniper%type,
@@ -400,7 +382,7 @@ begin
        vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
        RAISE vr_exc_saida;
     END IF;
-
+    
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
@@ -563,7 +545,7 @@ begin
       if vr_dscritic is not null or vr_cdcritic is not null then
         raise vr_exc_saida;
       end if;
-
+      
       -- Verifica o saldo e a situação da poupança programada
       if (vr_vlsdrdpp = 0 and (rw_craprpp.cdsitrpp = 3 or rw_craprpp.cdsitrpp = 4 or rw_craprpp.cdsitrpp = 5)) or
          vr_vlsdrdpp < 0 then

@@ -251,6 +251,7 @@ PROCEDURE busca_inf_produtos:
         
     RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    
     
+/* Chamado 826663 - buscar valor do cheque descontado
     RUN busca_borderos IN h-b1wgen0009 (INPUT par_cdcooper,
                                         INPUT par_nrdconta,
                                         INPUT par_dtmvtolt,
@@ -261,6 +262,26 @@ PROCEDURE busca_inf_produtos:
     
     FOR EACH tt-bordero_chq NO-LOCK:
       ASSIGN tt-inf-produto.vlcompcr = tt-inf-produto.vlcompcr + tt-bordero_chq.vlcompcr.
+    END.
+*/
+
+    RUN busca_dados_dscchq IN h-b1wgen0009 (INPUT par_cdcooper,
+                                            INPUT par_cdagenci,
+                                            INPUT par_nrdcaixa,
+                                            INPUT par_cdoperad,
+                                            INPUT par_dtmvtolt,
+                                            INPUT par_nrdconta,
+                                            INPUT par_idseqttl,
+                                            INPUT par_idorigem,
+                                            INPUT par_nmdatela,
+                                            INPUT FALSE, /* LOG*/
+                                           OUTPUT TABLE tt-erro, 
+                                           OUTPUT TABLE tt-desconto_cheques).
+    
+    DELETE PROCEDURE h-b1wgen0009.
+            
+    FOR FIRST tt-desconto_cheques NO-LOCK:
+      ASSIGN tt-inf-produto.vlcompcr = tt-inf-produto.vlcompcr + tt-desconto_cheques.vldscchq.
     END.
             
     FOR EACH crawcrd FIELDS(vllimcrd)
@@ -537,7 +558,7 @@ PROCEDURE busca_inf_produtos:
 	IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
 									crapcrm.nrdconta  = par_nrdconta AND
 									crapcrm.cdsitcar  = 2            AND
-									crapcrm.dtvalcar >= par_dtmvtolt 
+									crapcrm.dtvalcar  >= par_dtmvtolt 
 									NO-LOCK)
 	THEN DO:
 		ASSIGN tt-inf-produto.flgcrmag = 1.		

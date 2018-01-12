@@ -708,3 +708,52 @@ function retornaImpedimentos(){
 
 	acessaRotina('IMPEDIMENTOS DESLIGAMENTO', 'Impedimentos', 'impedimentos_desligamento');
 }
+
+// Rotina generica para buscar nome da pessoa e validar se poderá ser alterado
+function buscaNomePessoa_gen(nrcpfcgc,nmdcampo, nmdoform){
+
+    var nrdocnpj = nrcpfcgc;
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando nome da pessoa ...';
+
+    showMsgAguardo(mensagem);    
+
+    nrdocnpj = normalizaNumero(nrdocnpj);
+    
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (nrdocnpj == "" || nrdocnpj == "0" ){   
+        $('#'+nmdcampo,'#'+nmdoform ).habilitaCampo();     
+        hideMsgAguardo();
+        return false;
+    }
+    
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/busca_nome_pessoa.php',
+        data: {
+            nrdocnpj: nrdocnpj,
+            nmdcampo: nmdcampo,
+            nmdoform: nmdoform,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
+}
