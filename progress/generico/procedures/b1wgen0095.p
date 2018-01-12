@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 09/10/2017
+    Data    : Junho/2011                         Ultima Atualizacao: 12/01/2018
 
     Dados referentes ao programa:
 
@@ -79,6 +79,9 @@
               
                09/10/2017 - Alterar a ordem da gravacao da variavel aux_flagprov dentro 
                             procedure inclui-contra (Lucas Ranghetti #744217)
+
+               12/01/2018 - Não permitir inserir contra-ordem para cheques já compensados 
+                            (Everton #819803)
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -1915,6 +1918,14 @@ PROCEDURE inclui-contra:
                                 ASSIGN aux_cdcritic = 108.
                                 LEAVE Critica.
                             END.
+
+                        IF  crapfdc.incheque = 5    OR
+                            crapfdc.incheque = 6    OR
+							crapfdc.incheque = 7  THEN  
+                            DO:
+                                ASSIGN aux_cdcritic = 318.
+                                LEAVE Critica.
+                            END.
                     LEAVE Contador.
                 END.
                 
@@ -2095,7 +2106,7 @@ PROCEDURE inclui-contra:
                            tt-dctror-atl.nrctachq = tt-cheques.nrctachq
                            tt-dctror-atl.nrcheque = tt-cheques.nrcheque.
                 END.
-            
+
             
             /* ---------- Grava LOG dos cheques */
             IF  tt-cheques.dscritic = "" THEN
