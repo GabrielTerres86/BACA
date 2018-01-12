@@ -9834,7 +9834,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                                                 ';100;'|| --cdbccxlt
                                                                 vr_nrdolote);
                                                                 
-/*
             BEGIN
                    
               --Inserir registro de débito
@@ -9859,7 +9858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                  ,pr_nrdconta
                                  ,vr_nrdocmto
                                  ,vr_nrseqdig
-                                 ,pr_vldcotas); --rw_crapcot.vldcotas);
+                                 ,rw_crapcot.vldcotas);
                                            
             EXCEPTION
               WHEN OTHERS THEN
@@ -9874,13 +9873,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                     VALUES (pr_cdcooper
                                            ,pr_nrdconta      
                                            ,3 --Sobras Cotas
-                                           ,pr_vldcotas); --rw_crapcot.vldcotas);
+                                           ,rw_crapcot.vldcotas);
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir 3.1-TBCOTAS_DEVOLUCAO. ' ||SQLERRM;
                 RAISE vr_exc_saida;
             END; 
-*/
        
           END IF;
           
