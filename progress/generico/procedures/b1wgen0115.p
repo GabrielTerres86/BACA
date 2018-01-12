@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0115.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Setembro/2011                     Ultima atualizacao: 19/04/2017
+    Data    : Setembro/2011                     Ultima atualizacao: 23/06/2017
 
     Objetivo  : Tranformacao BO tela ADITIV
 
@@ -151,6 +151,10 @@
                             
                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                             PRJ339 - CRM (Odirlei-AMcom)              
+
+               23/06/2017 - Nao permitir alterar a data do debito para o produto 
+                            Pos-Fixado. (Jaison/James - PRJ298)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -1072,11 +1076,13 @@ PROCEDURE Valida_Dados:
 
                     WHEN 1 THEN
                         DO:
+                            /* Se for PP ou Pos-Fixado, exibe critica */
                             IF  CAN-FIND(FIRST crapepr WHERE
                                                crapepr.cdcooper = par_cdcooper AND
                                                crapepr.nrdconta = par_nrdconta AND
                                                crapepr.nrctremp = par_nrctremp AND
-                                               crapepr.tpemprst = 1) THEN
+                                              (crapepr.tpemprst = 1            OR
+                                               crapepr.tpemprst = 2)) THEN
                                 DO:
                                     ASSIGN aux_dscritic = "Operacao invalida para " +
                                                            "esse tipo de contrato.".

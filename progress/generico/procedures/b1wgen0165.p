@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0165.p
     Autor   : Renersson Ricardo Agostini (GATI)
-    Data    : Julho/2013                          Ultima alteracao: 23/11/2015
+    Data    : Julho/2013                          Ultima alteracao: 04/08/2017
 
     Objetivo  : Consultar contratos de empréstimos de cooperado.
     
@@ -30,8 +30,10 @@
                
                23/11/2015 - Removido message que estava no fonte posto no ajuste
                             anterior, conforme solicitado no chamado 361573 (Kelvin)
-                
-                            
+
+               04/08/2017 - Nao permitir acessar tipo de emprestimo do Pos-Fixado. 
+                            (Jaison/James - PRJ298)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -243,9 +245,10 @@ PROCEDURE Busca_emprestimo.
     IF CAN-FIND(FIRST crapepr WHERE crapepr.cdcooper = par_cdcooper AND
                                     crapepr.nrdconta = par_nrdconta AND
                                     crapepr.nrctremp = par_nrctremp AND
-                                    crapepr.tpemprst = 1 /* novo */ ) THEN
+                                   (crapepr.tpemprst = 1 /* PP */   OR
+                                    crapepr.tpemprst = 2 /* POS */)) THEN
     DO:
-        ASSIGN aux_dscritic = "Operacao nao permitida para o produto Price Pre Fixado.".
+        ASSIGN aux_dscritic = "Operacao nao permitida para o emprestimo informado.".
 
         CREATE tt-erro.
         ASSIGN tt-erro.cdcritic = 0

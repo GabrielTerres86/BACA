@@ -23,7 +23,7 @@
 
    Programa: b1wgen0003.p
    Autora  : Junior.
-   Data    : 20/10/2005                     Ultima atualizacao: 28/06/2016 
+   Data    : 20/10/2005                     Ultima atualizacao: 09/08/2017
    
 
    Dados referentes ao programa:
@@ -177,27 +177,27 @@
                              
                26/11/2015 - Ajustando a consulta dos lancto futuros para mostrar
                             os lacto de folha de pagamento (Andre Santos - SUPERO)
-
+                                        
                27/01/2016 - Remover lançamentos de salário com valor zerado dos 
                             lancamentos futuros na consulta-lancamento-periodo
                             (Marcos-Supero)      
                             
                28/01/2016 - Correcao na busca dos lancamentos de credito de Folha
                             de pagamento devido a duplicidade nos registros em 
-                            query ma formada (Marcos-Supero)   
-
+                            query ma formada (Marcos-Supero)  
+                                        
                26/02/2016 - Mostrar titulos vencidos na lautom (craptdb)
 			                (Tiago/Rodrigo melhoria 116). 
                22/02/2016 - Incluir procedure consulta-lancto-car, fazer a procedure 
                             consulta-lancamento chamar a consulta-lancto-car 
                             Projeto melhoria 157 (Lucas Ranghetti #330322)
-                                        
+                                       
                24/02/2016 - Alterada a origem da informação da quantidade de dias de Float, que 
 							antes estava na tabela CRAPCCO para a tabela CRAPCEB.
                             Alterado para buscar o campo qtdfloat da tabela crapcco 
                             para a tabela crapceb. Projeto 213 - Reciprocidade (Lombardi)
 			   
-			   23/03/2016 - Adicionado origem 4(TAA) para armazenar a variavel
+               23/03/2016 - Adicionado origem 4(TAA) para armazenar a variavel
                             aux_dtddlslf na procedure consulta-lancamento (Lucas Ranghetti #411852)
 
                27/04/2016 - Incluir campo genrecid na consulta-lancto-car(Lucas Ranghetti/Fabricio)
@@ -208,6 +208,8 @@
 
 			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
 			                (Marcos-Supero #477843)
+
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
          05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
                       Transacao Pendente (Rafael Monteiro - Mouts)
@@ -347,21 +349,21 @@ PROCEDURE consulta-lancamento.
     DEF OUTPUT       PARAM TABLE FOR  tt-lancamento_futuro.
 
     RUN consulta-lancto-car(INPUT p-cdcooper,
-                                     INPUT p-cod-agencia,
-                                     INPUT p-nro-caixa,
-                                     INPUT p-cod-operador,
-                                     INPUT p-nro-conta,
-                                     INPUT p-origem,
-                                     INPUT p-idseqttl,
-                                     INPUT p-nmdatela,
-                                     INPUT p-flgerlog,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT p-cod-operador,
+                            INPUT p-nro-conta,
+                            INPUT p-origem,
+                            INPUT p-idseqttl,
+                            INPUT p-nmdatela,
+                            INPUT p-flgerlog,
                             INPUT ?,  /* DTINIPER */
                             INPUT ?,  /* DTFIMPER */
                             INPUT "", /* INDEBCRE */
-                                     OUTPUT TABLE tt-totais-futuros, 
-                                     OUTPUT TABLE tt-erro,
-                                     OUTPUT TABLE tt-lancamento_futuro).
-
+                           OUTPUT TABLE tt-totais-futuros, 
+                           OUTPUT TABLE tt-erro,
+                           OUTPUT TABLE tt-lancamento_futuro).     
+                          
      IF  RETURN-VALUE <> "OK" THEN
          RETURN "NOK".
          
@@ -568,8 +570,8 @@ PROCEDURE consulta-lancto-car.
            END.    
            
            SET-SIZE(ponteiro_xml) = 0.    
-END.
-
+        END.        
+    
     DELETE OBJECT xDoc. 
     DELETE OBJECT xRoot. 
     DELETE OBJECT xRoot2. 
@@ -1114,12 +1116,12 @@ PROCEDURE consulta-lancamento-periodo.
        ,EACH craphis WHERE craphis.cdcooper = crapofp.cdcooper
                    AND (
                         (    crapemp.idtpempr = 'C'
-						 AND craphis.cdhistor = crapofp.cdhsdbcp
+                         AND craphis.cdhistor = crapofp.cdhsdbcp
                         )
-                    OR (    crapemp.idtpempr = 'O'
-						AND craphis.cdhistor = crapofp.cdhisdeb
+                     OR (    crapemp.idtpempr = 'O'
+                         AND craphis.cdhistor = crapofp.cdhisdeb
                        )
-					  )
+                       )
                    NO-LOCK BREAK BY craplfp.cdorigem:
         
         /* Acumulamos o valor de cada lancamento */
@@ -1604,8 +1606,8 @@ PROCEDURE consulta-lancamento-periodo.
         IF   par_indebcre = "C"    THEN
              NEXT.
 
-        /* Emprestimo novo */
-        IF tt-dados-epr.tpemprst = 1 THEN
+        IF tt-dados-epr.tpemprst = 1 OR   /* PP */
+           tt-dados-epr.tpemprst = 2 THEN /* POS */
            DO:
                /* Valor da parcela vencida */
                IF tt-dados-epr.vlprvenc > 0 THEN
@@ -1661,7 +1663,7 @@ PROCEDURE consulta-lancamento-periodo.
 
                   END. /* END IF tt-dados-epr.vlpraven > 0 */
               
-           END. /* END IF tt-dados-epr.tpemprst = 1 */
+           END. /* END IF tt-dados-epr.tpemprst = 1 ou 2 */
         ELSE
            DO:
               /**  Magui quando a pessoa estava em atraso nao mostrava tudo */
@@ -2448,8 +2450,8 @@ PROCEDURE consulta-lancamento-periodo.
 		               AND crapcco.cddbanco = 085 NO-LOCK
        ,EACH crapceb WHERE crapceb.cdcooper = crapcco.cdcooper
 		               AND crapceb.nrdconta = p-nro-conta 
-                       AND crapceb.nrconven = crapcco.nrconven NO-LOCK
-                        BY crapceb.qtdfloat DESC:
+                      AND crapceb.nrconven = crapcco.nrconven NO-LOCK
+                       BY crapceb.qtdfloat DESC:
 		  
         aux_qtdfloat = crapceb.qtdfloat.
         LEAVE.

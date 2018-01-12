@@ -4,7 +4,7 @@
     Historicos - 92  (LANEMP)                                                 
     Autenticacao  - PG
     
-    Ultima atualizacao: 05/08/2014
+    Ultima atualizacao: 30/01/2017
     
     Alteracoes:
                 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -32,6 +32,10 @@
                              obtem-dados-emprestimos em BO 0002.(Jorge)
                              
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+                30/01/2017 - Nao permitir pagamento para o produto Pos-Fixado.
+                             (Jaison/James - PRJ298)
+
 ----------------------------------------------------------------------------*/
  
 {dbo/bo-erro1.i}
@@ -408,7 +412,8 @@ PROCEDURE valida-conta-contrato:
                     RETURN "NOK".
                 END.
             ELSE
-                IF crapepr.tpemprst = 1 THEN
+                IF crapepr.tpemprst = 1 OR 
+				   crapepr.tpemprst = 2 THEN
                    DO:
                        ASSIGN i-cod-erro  = 946 /* Novo emprestimo não permite */
                               c-desc-erro = " ".           

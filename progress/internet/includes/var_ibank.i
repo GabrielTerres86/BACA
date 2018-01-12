@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 12/05/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 21/08/2017
 
    Dados referentes ao programa:
 
@@ -143,6 +143,9 @@
                            
 			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                            
+              21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
+                           xml_operacao14b. (Jaison/James - PRJ298)
+
               11/09/2017 - Adicionado campos para consulta de agendamento de GPS
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
                            
@@ -241,7 +244,9 @@ DEF TEMP-TABLE xml_operacao14b                                          NO-UNDO
     FIELD dscabfim AS CHAR
     FIELD vldebito AS CHAR
     FIELD vlcredit AS CHAR
-    FIELD cdorigem AS CHAR.   
+    FIELD cdorigem AS CHAR
+    FIELD qtdiacal AS CHAR
+    FIELD vlrdtaxa AS CHAR.
   
 DEF TEMP-TABLE xml_operacao21                                           NO-UNDO
     FIELD dscabini AS CHAR 
