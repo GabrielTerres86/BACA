@@ -3172,6 +3172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            and c.tpctrlim = 1            
            and c.insitlim = 3            
            and c.nrctrlim <> 0
+		   and o.cdcooper = c.cdcooper
 		   and o.cdoperad = c.cdoperad
         union
         select t.cdcooper
@@ -3232,6 +3233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            and x.tpctrlim = 1
            and x.nrctrlim <> 0
            and x.insitlim = 2
+		   and o.cdcooper = x.cdcooper
            and o.cdoperad = x.cdoperad) x
         order
            by dtfimvig desc, dhalteracao desc;
