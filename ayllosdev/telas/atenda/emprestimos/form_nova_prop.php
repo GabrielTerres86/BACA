@@ -95,7 +95,7 @@
 			maxDate: "+1Y",
 			beforeShowDay: isAvailable,
 			showOn: "button",
-			buttonImage: UrlSite + "imagens/geral/btn_calendario.gif",
+			buttonImage: UrlSite + "imagens/geral/btn_calendario.gif", 
 			buttonImageOnly: true,
 			buttonText: "Calendario"
 		});
@@ -204,7 +204,10 @@
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
 		<input type=hidden name="idfiniof" id="idfiniof">
-
+		<input type=hidden name="vliofepr" id="vliofepr">
+		<input type=hidden name="vlrtarif" id="vlrtarif">
+		<input type=hidden name="vlrtotal" id="vlrtotal">
+		
 		<label for="percetop">CET(%a.a.):</label>
 		<input name="percetop" id="percetop" type="text" value="" />
 		
