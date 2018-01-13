@@ -866,10 +866,10 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                                     INPUT aux_cdageban,
                                                     INPUT aux_nrctatrf,
                                                     INPUT aux_intipdif,
-                                                    INPUT aux_intipcta,
+                                                    INPUT-OUTPUT aux_intipcta,
                                                     INPUT aux_insitcta,
-                                                    INPUT aux_inpessoa,
-                                                    INPUT aux_nrcpfcgc,
+                                                    INPUT-OUTPUT aux_inpessoa,
+                                                    INPUT-OUTPUT aux_nrcpfcgc,
                                                     INPUT aux_flvldinc,
                                                     INPUT "", /* Validacao de Registro */
                                                     INPUT-OUTPUT aux_nmtitula,

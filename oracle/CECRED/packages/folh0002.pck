@@ -49,7 +49,14 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
             ,idtppagt   VARCHAR2(32767)
             ,idsitapr   crappfp.idsitapr%TYPE
             ,envcompr   NUMBER(3)
-            ,nrseqpag   crappfp.nrseqpag%TYPE);
+            ,nrseqpag   crappfp.nrseqpag%TYPE
+            ,dthrdebi   VARCHAR2(32767)
+            ,dthrcred   VARCHAR2(32767)
+            ,dthrtari   VARCHAR2(32767)            
+            ,idsitdeb   NUMBER(1)
+            ,idsitcre   NUMBER(1)
+            ,idsitpgt   NUMBER(1)
+            ,dstpapgt   VARCHAR2(32767));
 
    /* Pl-Table que ira armazenar os dados de pagamento enviados p/ aprovacao */
    TYPE typ_reg_pgto IS
@@ -5673,9 +5680,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                       ,pfp.flsitdeb
                                       ,pfp.flsitcre
                                       ,pfp.dsobscre     
-               ,NVL(to_char(pfp.dthordeb,'dd/mm/rr hh24:mi'),to_char(pfp.dtdebito,'dd/mm/rr')) dthordeb
+               ,NVL(to_char(pfp.dthordeb,'dd/mm/RRRR hh24:mi'),to_char(pfp.dtdebito,'dd/mm/RRRR')) dthordeb
                ,DECODE(pfp.flsitdeb,0,NVL(TRIM(pfp.dsobsdeb),'Pagamento aguardando data do débito.'),'Débito efetuado com sucesso') dsobservdeb
-               ,NVL(to_char(pfp.dthorcre,'dd/mm/rr hh24:mi'),to_char(pfp.dtcredit,'dd/mm/rr')) dthorcre
+               ,NVL(to_char(pfp.dthorcre,'dd/mm/RRRR hh24:mi'),to_char(pfp.dtcredit,'dd/mm/RRRR')) dthorcre
                                       ,DECODE(pfp.flsitcre,0,nvl(TRIM(pfp.dsobscre),'Pagamento aguardando data do crédito.'),DECODE((SELECT COUNT(1)
                                                                        FROM craplfp lfp
                                                                       WHERE lfp.cdcooper = pfp.cdcooper
@@ -5815,15 +5822,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).indrowid := rw_registros.dsrowid;
           vr_tab_pagamento(vr_idx_pagto).dtmvtolt := rw_registros.dtmvtolt;
           vr_tab_pagamento(vr_idx_pagto).dssitpgt := rw_registros.dssitpgt;
+          vr_tab_pagamento(vr_idx_pagto).idsitpgt := rw_registros.idsitapr;
           vr_tab_pagamento(vr_idx_pagto).qtlctpag := rw_registros.qtlctpag;
           vr_tab_pagamento(vr_idx_pagto).vllctpag := rw_registros.vllctpag;
           vr_tab_pagamento(vr_idx_pagto).vltarifa := rw_registros.vltarifa;
           vr_tab_pagamento(vr_idx_pagto).dtdebito := rw_registros.dtdebito;
           vr_tab_pagamento(vr_idx_pagto).imgdebto := '';
           vr_tab_pagamento(vr_idx_pagto).hintdebt := '';
+          vr_tab_pagamento(vr_idx_pagto).idsitdeb := 1;
           vr_tab_pagamento(vr_idx_pagto).dtcredit := rw_registros.dtcredit;
           vr_tab_pagamento(vr_idx_pagto).imgcredt := '';
           vr_tab_pagamento(vr_idx_pagto).hintcred := '';
+          vr_tab_pagamento(vr_idx_pagto).idsitcre := 1;
           -- Linha Oculta
           vr_tab_pagamento(vr_idx_pagto).dthorage := rw_registros.dthoragen;
           vr_tab_pagamento(vr_idx_pagto).dsdetapr := rw_registros.dsdetapr;
@@ -5831,10 +5841,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthordeb := '';
           vr_tab_pagamento(vr_idx_pagto).dthorcre := '';
           vr_tab_pagamento(vr_idx_pagto).dthortar := '';
+          vr_tab_pagamento(vr_idx_pagto).dthrdebi := '';          
+          vr_tab_pagamento(vr_idx_pagto).dthrcred := '';                    
+          vr_tab_pagamento(vr_idx_pagto).dthrtari := '';          
           vr_tab_pagamento(vr_idx_pagto).dscomprv := '';
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
           vr_tab_pagamento(vr_idx_pagto).idtppagt := rw_registros.idtppagt;
-          vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;
+          vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
+          vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;          
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
           
           vr_idx_pagto := vr_idx_pagto + 1;
@@ -5842,25 +5856,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
         --Aprovados
         ELSE
           --Adicionado linha em branco para gerar separação na grid
-          IF vr_tab_pagamento.COUNT()> 0 AND vr_flgprime = 0 AND vr_flgpende = 1 THEN
-          -- Popula a tabela
-          vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
-          vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
-          vr_idx_pagto := vr_idx_pagto + 1;
+          /*IF vr_tab_pagamento.COUNT()> 0 AND vr_flgprime = 0 AND vr_flgpende = 1 THEN
+            -- Popula a tabela
+            vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idsitpgt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idsitdeb := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idsitcre := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dstpapgt := NULL;
+            vr_idx_pagto := vr_idx_pagto + 1;
             vr_flgprime := 1;
-      END IF;
+          END IF; */
 
           -- Se passou do limite do envio de comprovante
           IF rw_registros.qtsubtra > vr_qtdiaenv THEN
@@ -5901,21 +5919,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           IF rw_registros.flsitdeb = 0 AND rw_registros.dsobsdeb IS NULL THEN
              vr_tab_pagamento(vr_idx_pagto).imgdebto := 'agendamento.png';
              vr_tab_pagamento(vr_idx_pagto).hintdebt := 'Aguardando data de débito...';
+             vr_tab_pagamento(vr_idx_pagto).idsitdeb := 2;
           ELSIF rw_registros.flsitdeb = 0 AND rw_registros.dsobsdeb IS NOT NULL THEN
              vr_tab_pagamento(vr_idx_pagto).imgdebto := 'sit_er.png';
              vr_tab_pagamento(vr_idx_pagto).hintdebt := 'Houve erro no processo de débito!';
+             vr_tab_pagamento(vr_idx_pagto).idsitdeb := 3;
           ELSIF rw_registros.flsitdeb = 1 THEN
              vr_tab_pagamento(vr_idx_pagto).imgdebto := 'sit_ok.png';
              vr_tab_pagamento(vr_idx_pagto).hintdebt := 'Débito efetuado com sucesso';
+             vr_tab_pagamento(vr_idx_pagto).idsitdeb := 4;
           END IF;
 
           -- Validacao de campo de debito
           IF rw_registros.flsitcre = 0 AND rw_registros.dsobscre IS NULL THEN
              vr_tab_pagamento(vr_idx_pagto).imgcredt := 'agendamento.png';
              vr_tab_pagamento(vr_idx_pagto).hintcred := 'Aguardando data de crédito...';
+             vr_tab_pagamento(vr_idx_pagto).idsitcre := 2;
           ELSIF rw_registros.flsitcre = 1 AND rw_registros.dsobscre IS NOT NULL THEN
              vr_tab_pagamento(vr_idx_pagto).imgcredt := 'sit_er.png';
              vr_tab_pagamento(vr_idx_pagto).hintcred := 'Houve erro no processo de crédito!';
+             vr_tab_pagamento(vr_idx_pagto).idsitcre := 3;
           ELSE
              -- Verifica registros com problema no debito ou credito
              OPEN cr_valida_apr(rw_registros.cdcooper
@@ -5926,9 +5949,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 IF cr_valida_apr%FOUND THEN
                    vr_tab_pagamento(vr_idx_pagto).imgcredt := 'sit_al.png';
                    vr_tab_pagamento(vr_idx_pagto).hintcred := 'Crédito efetuado com alertas!';
+                   vr_tab_pagamento(vr_idx_pagto).idsitcre := 5;
                 ELSE
                    vr_tab_pagamento(vr_idx_pagto).imgcredt := 'sit_ok.png';
                    vr_tab_pagamento(vr_idx_pagto).hintcred := 'Crédito efetuado com sucesso!';
+                   vr_tab_pagamento(vr_idx_pagto).idsitcre := 4;
                 END IF;
              CLOSE cr_valida_apr;
           END IF;
@@ -5959,23 +5984,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).vltarifa := rw_registros.vltarifa;
           vr_tab_pagamento(vr_idx_pagto).dtdebito := rw_registros.dtdebito;
           vr_tab_pagamento(vr_idx_pagto).dtcredit := rw_registros.dtcredit;
+          CASE
+            WHEN rw_registros.dssitpgt = 'Creditado'     THEN vr_tab_pagamento(vr_idx_pagto).idsitpgt := 4;            
+            WHEN rw_registros.dssitpgt = 'Cred. Parcial' THEN vr_tab_pagamento(vr_idx_pagto).idsitpgt := 5;            
+            WHEN rw_registros.dssitpgt = 'Debitado'      THEN vr_tab_pagamento(vr_idx_pagto).idsitpgt := 6;
+            ELSE vr_tab_pagamento(vr_idx_pagto).idsitpgt := 7;            
+          END CASE;
           -- Linha Oculta
           vr_tab_pagamento(vr_idx_pagto).dthorage := rw_registros.dthoragen;
           vr_tab_pagamento(vr_idx_pagto).dsdetapr := rw_registros.dsdetapr;
           vr_tab_pagamento(vr_idx_pagto).dsdetest := rw_registros.dsdetest;
           vr_tab_pagamento(vr_idx_pagto).dthordeb := rw_registros.dthordeb ||'  '||rw_registros.dsobservdeb;
           vr_tab_pagamento(vr_idx_pagto).dthorcre := rw_registros.dthorcre ||'  '||rw_registros.dsobservcre;
-          vr_tab_pagamento(vr_idx_pagto).dthortar := rw_registros.dthortar ||'  '||rw_registros.dsobservtar;
+          vr_tab_pagamento(vr_idx_pagto).dthortar := rw_registros.dthortar ||'  '||rw_registros.dsobservtar;                   
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
           vr_tab_pagamento(vr_idx_pagto).idtppagt := rw_registros.idtppagt;
+          vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
+          vr_tab_pagamento(vr_idx_pagto).dthrtari := rw_registros.dthortar;
+          
+          CASE 
+            WHEN NVL(rw_registros.dthordeb,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := ''; 
+            WHEN LENGTH(rw_registros.dthordeb) = 16 THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb;
+            ELSE vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb || ' 00:00';
+          END CASE;
+          
+          CASE 
+            WHEN NVL(rw_registros.dthorcre,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := '';
+            WHEN LENGTH(rw_registros.dthorcre) = 16 THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre;
+            ELSE vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre || ' 00:00';
+          END CASE;                    
 
           -- Proximo registro
           vr_idx_pagto := vr_idx_pagto + 1;
          
         END IF;          
                                
-         vr_qtregist := rw_registros.qtregist;
+        vr_qtregist := rw_registros.qtregist;
          
       END LOOP;
 
@@ -6025,6 +6070,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<qtregist>' || vr_qtregist || '</qtregist>'
                                                    || '<dtcrefmt>'||TO_CHAR(vr_tab_pagamento(vr_idx_pagto).dtcredit,'DD/MM/YYYY') ||'</dtcrefmt>'
                                                    || '<nrseqpag>'||vr_tab_pagamento(vr_idx_pagto).nrseqpag ||'</nrseqpag>'
+                                                   
+                                                   || '<dthrdebi>'||vr_tab_pagamento(vr_idx_pagto).dthrdebi ||'</dthrdebi>'
+                                                   || '<dthrcred>'||vr_tab_pagamento(vr_idx_pagto).dthrcred ||'</dthrcred>'
+                                                   || '<dthrtari>'||vr_tab_pagamento(vr_idx_pagto).dthrtari ||'</dthrtari>'
+                                                   || '<idsitdeb>'||vr_tab_pagamento(vr_idx_pagto).idsitdeb ||'</idsitdeb>'
+                                                   || '<idsitcre>'||vr_tab_pagamento(vr_idx_pagto).idsitcre ||'</idsitcre>'
+                                                   || '<idsitpgt>'||vr_tab_pagamento(vr_idx_pagto).idsitpgt ||'</idsitpgt>'
+                                                   || '<dstpapgt>'||vr_tab_pagamento(vr_idx_pagto).dstpapgt ||'</dstpapgt>'
                                                    || '</pagamentos>');
          vr_idx_pagto := vr_tab_pagamento.NEXT(vr_idx_pagto); -- Proximo registro
       END LOOP;

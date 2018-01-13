@@ -1635,6 +1635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                                       '<cdagechq>' || vr_tab_cheque_custodia(vr_index_cheque).cdagechq || '</cdagechq>' ||
                                       '<nrctachq>' || vr_tab_cheque_custodia(vr_index_cheque).nrctachq || '</nrctachq>' ||
                                       '<cdcmpchq>' || vr_tab_cheque_custodia(vr_index_cheque).cdcmpchq || '</cdcmpchq>' ||
+                                      '<dsdocmc7>' || vr_tab_cheque_custodia(vr_index_cheque).dsdocmc7 || '</dsdocmc7>' ||
                                    '</emitente'|| vr_index_cheque || '>';
             END IF;
           END IF;

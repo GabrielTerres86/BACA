@@ -10102,7 +10102,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                             INPUT par_insitcta,
                                             INPUT par_inpessoa,
                                             INPUT DEC(par_nrcpfcgc),
-                                            INPUT INT(pr_flvldinc),
+                                            INPUT INT(par_flvldinc),
                                             INPUT INT(par_rowidcti),
                                             INPUT par_nmtitula,
                                            OUTPUT "",

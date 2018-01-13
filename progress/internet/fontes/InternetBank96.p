@@ -28,6 +28,7 @@ DEF INPUT PARAM par_nrdcaixa AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_cdoperad LIKE crapope.cdoperad                     NO-UNDO.
 DEF INPUT PARAM par_nmdatela AS CHAR                                   NO-UNDO.
 DEF INPUT PARAM par_idorigem AS INT                                    NO-UNDO.
+DEF INPUT PARAM par_tpvalida AS INTE                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -48,7 +49,7 @@ RUN STORED-PROCEDURE pc_horario_limite
                              INPUT par_cdoperad,
                              INPUT par_nmdatela,
                              INPUT par_idorigem,
-                             INPUT 1, /*Valida horario limite*/
+                             INPUT par_tpvalida,
                              OUTPUT 0,
                              OUTPUT 0,
                              OUTPUT 0,

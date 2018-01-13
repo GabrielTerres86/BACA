@@ -1754,7 +1754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       pc_escreve_xml('--------------------------------------------------------------------------------',20);
     END IF;
 
-  END pc_impressao_darf_das;
+  END pc_impressao_darf_das;   
   
   -- Rotina para impressão de FGTS/DAE
   PROCEDURE pc_impressao_fgts_dae(pr_xmldata  IN typ_xmldata
@@ -2294,14 +2294,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF vr_cratpro(vr_ind).cdtippro IN (2,6,7) THEN
           vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##3, '#'));
           vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2, vr_cratpro(vr_ind).dsinform##3, '#'));
-        -- DARF/DAS
-        ELSIF vr_cratpro(vr_ind).cdtippro IN (16,17,18,19) THEN
-          vr_tpcaptur := TO_NUMBER(TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##3, '#')), ':')));
-    				
-          IF vr_tpcaptur = 1 THEN 
-            vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(7, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
-                  vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(8, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
-          END IF;
+		-- DARF/DAS
+		ELSIF vr_cratpro(vr_ind).cdtippro IN (16,17,18,19) THEN
+			vr_tpcaptur := TO_NUMBER(TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##3, '#')), ':')));
+				
+			IF vr_tpcaptur = 1 THEN 
+				vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(7, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
+            	vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(8, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
+			END IF;
         -- FGTS
         ELSIF vr_cratpro(vr_ind).cdtippro = 24 THEN
           vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(2, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
@@ -2680,7 +2680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              (Adriano).             
                              
                  09/03/2017 - Ajuste para incluir informações referentes a comprovante
-                              de pagamento em debito automatico (Aline).
+                              de pagamento em debito automatico (Aline).                      
                  09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.                      
     ..............................................................................*/ 
     -- CURSORES
@@ -2847,7 +2847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		rw_xmldata.dtrecarga := to_date(fn_extract('/Root/Dados/dtrecarga/text()'),'dd/mm/rrrr');		
 		rw_xmldata.hrrecarga := fn_extract('/Root/Dados/hrrecarga/text()');		
 		rw_xmldata.dtdebito := to_date(fn_extract('/Root/Dados/dtdebito/text()'),'dd/mm/rrrr');		
-		rw_xmldata.nsuopera := fn_extract('/Root/Dados/nsuopera/text()');			
+		rw_xmldata.nsuopera := fn_extract('/Root/Dados/nsuopera/text()');						
     --FGTS/DAE
     rw_xmldata.cdconven := fn_extract('/Root/Dados/cdconven/text()');
     rw_xmldata.dtvalida := to_date(fn_extract('/Root/Dados/dtvalida/text()'),'dd/mm/rrrr');
@@ -2985,8 +2985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       pc_impressao_darf_das(pr_xmldata  => rw_xmldata
                            ,pr_nmrescop => rw_crapcop.nmrescop
                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
-                           ,pr_cdagectl => rw_crapcop.cdagectl);
-                           
+                           ,pr_cdagectl => rw_crapcop.cdagectl);      
+													 
     ELSIF rw_xmldata.cdtippro IN (24,23) THEN --FGTS/DAE
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_FGTSDAE';
@@ -3847,7 +3847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
     -- Verifica se o registro eh novo ou uma atualizacao
     -- no dados cadastrais de favorecido
-    IF pr_rowidcti IS NULL THEN
+    IF pr_rowidcti IS NULL OR pr_rowidcti = 0 THEN
       vr_flsitreg := TRUE;  -- Novo Registro
     ELSE
       vr_flsitreg := FALSE; -- Atualizacao Registro
@@ -3925,6 +3925,93 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- nao devera utiliza-lo nesta validacao      
       vr_cdispbif := NULL;
     END IF;
+    
+    -- Validaçao para conta da cooperativa
+    -- Validação é realizada antes do controle de conta já cadastrada para capturar os dados da conta
+    -- Os dados serão apresentados junto a mensagem de alerta de conta já cadastrada. 
+    IF pr_intipdif = 1 THEN
+              
+      IF pr_nrdconta = TO_NUMBER(pr_nrctatrf) AND 
+         pr_cdageban = rw_crapcop.cdagectl   THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Conta invalida.';
+        pr_nmdcampo := 'nrctatrf';
+        RAISE vr_exc_saida;
+      END IF;
+
+      OPEN cr_crapcop_2(pr_cdagectl => pr_cdageban);
+             
+      FETCH cr_crapcop_2 INTO rw_crapcop_2;
+
+      IF cr_crapcop_2%NOTFOUND THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Registro de cooperativa nao encontrado.';
+        pr_nmdcampo := 'nmrescop';
+        CLOSE cr_crapcop_2;
+        RAISE vr_exc_saida;
+      END IF;
+
+      CLOSE cr_crapcop_2;
+
+      IF rw_crapcop_2.cdcooper = 3 THEN -- CECRED
+        vr_cdcritic := 0;
+        vr_dscritic := 'Cooperativa CECRED nao permitida para transferencias.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Consulta registro de associado
+      OPEN cr_crapass(pr_cdcooper => rw_crapcop_2.cdcooper
+                     ,pr_nrdconta => TO_NUMBER(pr_nrctatrf));
+
+      FETCH cr_crapass INTO rw_crapass;
+               
+      IF cr_crapass%NOTFOUND THEN
+        pr_nmdcampo := 'nrctatrf';
+        vr_cdcritic := 9;
+        vr_dscritic := '';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      CLOSE cr_crapass;
+
+      -- Verifica se cooperado e demitido
+      IF rw_crapass.dtdemiss IS NOT NULL THEN
+        vr_cdcritic := 75;
+        pr_nmdcampo := 'nrctatrf';
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Verifica tipo de pessoa
+      IF rw_crapass.inpessoa = 1 THEN
+        
+        pr_inpessoa := 1;
+        pr_intipcta := 1;
+                  
+        OPEN cr_crapttl(pr_cdcooper => rw_crapcop_2.cdcooper
+                       ,pr_nrdconta => pr_nrctatrf
+                       ,pr_idseqttl => 1);
+
+        FETCH cr_crapttl INTO rw_crapttl;        
+        
+        IF cr_crapttl%FOUND THEN
+          pr_nmtitula := rw_crapttl.nmextttl;
+          pr_nrcpfcgc := rw_crapttl.nrcpfcgc;
+          pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfcgc,1);
+        ELSE
+          pr_nmtitula := rw_crapass.nmprimtl;
+          pr_nrcpfcgc := rw_crapass.nrcpfcgc;
+          pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,1);
+        END IF;
+        
+        CLOSE cr_crapttl;
+      ELSE
+        pr_inpessoa := 2;
+        pr_intipcta := 1;
+        pr_nmtitula := rw_crapass.nmprimtl;
+        pr_nrcpfcgc := rw_crapass.nrcpfcgc;  
+        pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,2);  
+      END IF;                                 
+    END IF;
 
     OPEN cr_crapcti_3(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -3938,21 +4025,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     -- Se for um novo registro
     IF cr_crapcti_3%FOUND AND
        pr_flvldinc = 1    AND
-       vr_flsitreg   THEN
-
+       vr_flsitreg        THEN
       vr_cdcritic := 979;  
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_nmdcampo := 'nrctatrf';
       CLOSE cr_crapcti_3;
       RAISE vr_exc_saida;
-
     END IF;
 
     CLOSE cr_crapcti_3;
 
     -- Validaçao para conta de outras IFs
     IF pr_intipdif <> 1 THEN
-      
       IF pr_cddbanco = 85 THEN
         vr_dscritic := 0;
         vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema CECRED.';
@@ -4062,7 +4146,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       END IF;
 
       IF pr_inpessoa = 1 THEN 
-        
         -- Valida CPF enviado
         GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
                               ,pr_stsnrcal => vr_stsnrcal);   --Situacao
@@ -4073,9 +4156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         pr_nmdcampo := 'nrcpfcgc';
         RAISE vr_exc_saida;
       END IF;
-
       ELSE
-        
         -- Valida CPF/CNPJ enviado
         GENE0005.pc_valida_cnpj(pr_nrcalcul => pr_nrcpfcgc   --Numero a ser verificado
                                ,pr_stsnrcal => vr_stsnrcal);   --Situacao
@@ -4086,115 +4167,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         pr_nmdcampo := 'nrcpfcgc';
         RAISE vr_exc_saida;
       END IF;
-
-      END IF;
-      
-    ELSE -- Validaçao para conta da cooperativa
-              
-      IF pr_nrdconta = TO_NUMBER(pr_nrctatrf) AND 
-         pr_cdageban = rw_crapcop.cdagectl   THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Conta invalida.';
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
-      END IF;
-
-      OPEN cr_crapcop_2(pr_cdagectl => pr_cdageban);
-             
-      FETCH cr_crapcop_2 INTO rw_crapcop_2;
-
-      IF cr_crapcop_2%NOTFOUND THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de cooperativa nao encontrado.';
-        pr_nmdcampo := 'nmrescop';
-        CLOSE cr_crapcop_2;
-        RAISE vr_exc_saida;
-      END IF;
-
-      CLOSE cr_crapcop_2;
-
-      IF rw_crapcop_2.cdcooper = 3 THEN -- CECRED
-        vr_cdcritic := 0;
-        vr_dscritic := 'Cooperativa CECRED nao permitida para transferencias.';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Consulta registro de associado
-      OPEN cr_crapass(pr_cdcooper => rw_crapcop_2.cdcooper
-                     ,pr_nrdconta => TO_NUMBER(pr_nrctatrf));
-
-      FETCH cr_crapass INTO rw_crapass;
-               
-      IF cr_crapass%NOTFOUND THEN
-        pr_nmdcampo := 'nrctatrf';
-        vr_cdcritic := 9;
-        vr_dscritic := '';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      CLOSE cr_crapass;
-
-      -- Verifica se cooperado e demitido
-      IF rw_crapass.dtdemiss IS NOT NULL THEN
-        vr_cdcritic := 75;
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
-      END IF;
-  
-      -- Verifica tipo de pessoa
-      IF rw_crapass.inpessoa = 1 THEN
-        
-        pr_inpessoa := 1;
-        pr_intipcta := 1;
-                  
-        OPEN cr_crapttl(pr_cdcooper => rw_crapcop_2.cdcooper
-                       ,pr_nrdconta => pr_nrctatrf
-                       ,pr_idseqttl => 1);
-
-        FETCH cr_crapttl INTO rw_crapttl;        
-        
-        IF cr_crapttl%FOUND THEN
-          pr_nmtitula := rw_crapttl.nmextttl;
-          pr_nrcpfcgc := rw_crapttl.nrcpfcgc;
-          pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfcgc,1);
-        ELSE
-          pr_nmtitula := rw_crapass.nmprimtl;
-          pr_nrcpfcgc := rw_crapass.nrcpfcgc;
-          pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,1);
-        END IF;
-        
-        CLOSE cr_crapttl;
-      ELSE
-        pr_inpessoa := 2;
-        pr_intipcta := 1;
-        pr_nmtitula := rw_crapass.nmprimtl;
-        pr_nrcpfcgc := rw_crapass.nrcpfcgc;  
-        pr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,2);  
       END IF;                                 
-
-    END IF; -- ELSE Validaçao para conta da cooperativa
-
-    -- Verifica se já existe conta na tabela
-    OPEN cr_crapcti_3(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_cddbanco => pr_cddbanco
-                     ,pr_cdageban => pr_cdageban
-                     ,pr_cdispbif => pr_cdispbif
-                     ,pr_nrctatrf => pr_nrctatrf);
-
-    FETCH cr_crapcti_3 INTO rw_crapcti_3;
-
-    -- Se for um novo registro
-    IF cr_crapcti_3%FOUND AND
-       pr_flvldinc = 1  AND
-       vr_flsitreg     THEN
-      CLOSE cr_crapcti_3; 
-      vr_dscritic := 'Conta de transferencia ja cadastrada.';
-      pr_nmdcampo := 'nrctatrf';
-      RAISE vr_exc_saida;
     END IF;
-
-    CLOSE cr_crapcti_3;
 
     IF pr_insitcta < 1  OR
        pr_insitcta > 3  THEN

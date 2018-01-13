@@ -273,8 +273,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
@@ -1829,8 +1832,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
     /* .........................................................................
@@ -2502,27 +2508,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       ELSIF pr_idorigem = 3 THEN
         
-        GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper
-                                       ,pr_nmarqpdf => vr_dsdireto ||'/'|| pr_nmarqpdf
-                                       ,pr_des_erro => vr_dscritic);
-        -- Testar se houve erro
-        IF vr_dscritic IS NOT NULL THEN
-          vr_cdcritic := 0;
-          -- Gerar excecao
-          RAISE vr_exc_erro;
-        END IF;
+        IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
+          GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper
+                                         ,pr_nmarqpdf => vr_dsdireto ||'/'|| pr_nmarqpdf
+                                         ,pr_des_erro => vr_dscritic);
+          -- Testar se houve erro
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic := 0;
+            -- Gerar excecao
+            RAISE vr_exc_erro;
+          END IF;
 
-        -- Remove o arquivo XML fisico de envio
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => 'rm '||vr_dsdireto || '/' || vr_nmarquiv||' 2> /dev/null'
-                              ,pr_typ_saida   => vr_des_reto
-                              ,pr_des_saida   => vr_dscritic);
-        -- Se ocorreu erro dar RAISE
-        IF vr_des_reto = 'ERR' THEN
-          vr_cdcritic := 0;
-          RAISE vr_exc_erro;
+          -- Remove o arquivo XML fisico de envio
+          GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                ,pr_des_comando => 'rm '||vr_dsdireto || '/' || vr_nmarquiv||' 2> /dev/null'
+                                ,pr_typ_saida   => vr_des_reto
+                                ,pr_des_saida   => vr_dscritic);
+          -- Se ocorreu erro dar RAISE
+          IF vr_des_reto = 'ERR' THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+        ELSE
+          gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                             ,pr_dsdirecp => vr_dsdireto||'/'
+                                             ,pr_nmarqucp => pr_nmarqpdf
+                                             ,pr_flgcopia => 0
+                                             ,pr_dssrvarq => pr_dssrvarq
+                                             ,pr_dsdirarq => pr_dsdirarq
+                                             ,pr_des_erro => vr_dscritic);
+                                             
+          IF TRIM(vr_dscritic) <> '' THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
         END IF;
-
       END IF; -- pr_idorigem
 
     END IF; -- pr_idimpres = 7
@@ -2641,6 +2661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       -- Variaveis gerais
       vr_nmarqpdf VARCHAR2(1000);
+      vr_dssrvarq VARCHAR2(200);
+      vr_dsdirarq VARCHAR2(200);
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -2687,7 +2709,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
                                              pr_flgrestr => pr_flgrestr,
-                                             pr_nmarqpdf => vr_nmarqpdf,
+                                             pr_iddspscp => 0,
+                                             pr_nmarqpdf => vr_nmarqpdf,  
+                                             pr_dssrvarq => vr_dssrvarq,
+                                             pr_dsdirarq => vr_dsdirarq,                                           
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
         -- Se for titulo
@@ -2708,7 +2733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_dsiduser => pr_dsiduser,
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
-                                             pr_nmarqpdf => vr_nmarqpdf,
+                                             pr_nmarqpdf => vr_nmarqpdf,                                             
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
         ELSE
