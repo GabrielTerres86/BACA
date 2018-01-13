@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,nrdiacar INTEGER
     ,qttolatr crapepr.qttolatr%TYPE
 	,dsratpro VARCHAR2(30)
-    ,dsratatu VARCHAR2(30)););
+    ,dsratatu VARCHAR2(30));
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -3960,6 +3960,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        pr_vlprvenc := pr_vlpreapg;
 
       -- Price TR
       ELSIF rw_crapepr.tpemprst = 0 THEN

@@ -45,17 +45,17 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="vlemprst" id="vlemprst" type="text" value="" />
             <br />
 
-            <label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
-            <input name="cdlcremp" id="cdlcremp" type="text" value="" />
-            <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-            <input name="dslcremp" id="dslcremp" type="text" value="" />
-            <br />
-
             <label for="cdfinemp"><? echo utf8ToHtml('Finalidade:') ?></label>
             <input name="cdfinemp" id="cdfinemp" type="text" value="" />
             <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
             <input name="dsfinemp" id="dsfinemp" type="text" value="" />
             <input name="tpfinali" id="tpfinali" type="hidden" value="" />
+			<br />
+
+            <label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
+            <input name="cdlcremp" id="cdlcremp" type="text" value="" />
+            <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+            <input name="dslcremp" id="dslcremp" type="text" value="" />
             <br />
             
             <label for="cdmodali">Modalidade:</label>

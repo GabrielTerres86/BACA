@@ -160,19 +160,19 @@
 		<select name="tpemprst" id="tpemprst">
 		</select>
 		
-		<label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
-		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
+		<label for="cdfinemp">Finalidade:</label>
+		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dslcremp" id="dslcremp" type="text" value="" />
+		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
 		<br />		
 				
 		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
 		<input name="vlemprst" id="vlemprst" type="text" value="" />
 		
-		<label for="cdfinemp">Finalidade:</label>
-		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
+		<label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
+		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
+		<input name="dslcremp" id="dslcremp" type="text" value="" />
 		<br />
 		
 		<label for="vlpreemp"><? echo utf8ToHtml('Vl. da Prest.:') ?></label>

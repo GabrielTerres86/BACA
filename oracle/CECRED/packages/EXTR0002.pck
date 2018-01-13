@@ -13127,7 +13127,7 @@ END pc_consulta_ir_pj_trim;
           vr_multatra := '0';
         END IF;
         --Juros de Mora
-        vr_txinmens := trim(to_char(rw_craplcr.perjurmo,'fm990d00')||'%');
+        vr_txinmens := trim(to_char(rw_craplcr.perjurmo + rw_crapepr.txmensal,'fm990d00')||'%');
         
         --Se deve imprimir
         IF pr_flgimpri THEN

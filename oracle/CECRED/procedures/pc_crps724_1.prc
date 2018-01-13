@@ -440,6 +440,7 @@ BEGIN
                                               ,pr_vlpagmta => rw_epr_pep.vlpagmta
                                               ,pr_perjurmo => vr_tab_craplcr(rw_epr_pep.cdlcremp).perjurmo
                                               ,pr_percmult => vr_percmult
+                                              ,pr_txmensal => rw_epr_pep.txmensal
                                               ,pr_cdcritic => vr_cdcritic
                                               ,pr_dscritic => vr_dscritic);
         -- Se houve erro

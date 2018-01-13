@@ -190,7 +190,6 @@ BEGIN
     vr_vljurcor          NUMBER;
     vr_vlmtapar          NUMBER;
     vr_vlmrapar          NUMBER;
-    vr_vltotmra          NUMBER;
     vr_dtvencto          DATE;
     vr_percmult          NUMBER(25,2);
     vr_cdhistor          craphis.cdhistor%TYPE;
@@ -276,7 +275,6 @@ BEGIN
       vr_vljuremu := 0;
       vr_vljurcor := 0;
       vr_vlmrapar := 0;
-      vr_vltotmra := 0;
       vr_diarefju := rw_crapepr.diarefju;
       vr_mesrefju := rw_crapepr.mesrefju;
       vr_anorefju := rw_crapepr.anorefju;
@@ -507,6 +505,7 @@ BEGIN
                                                ,pr_perjurmo => vr_tab_craplcr(rw_crapepr.cdlcremp).perjurmo
                                                ,pr_vlpagmta => rw_crappep.vlpagmta
                                                ,pr_percmult => vr_percmult
+                                               ,pr_txmensal => rw_crapepr.txmensal
                                                ,pr_qttolatr => rw_crapepr.qttolatr
                                                ,pr_vlmrapar => vr_vlmrapar
                                                ,pr_vlmtapar => vr_vlmtapar
@@ -516,9 +515,6 @@ BEGIN
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF;
-          
-          -- Soma o total de juros de mora
-          vr_vltotmra := vr_vltotmra + vr_vlmrapar;
           
           -- Efetua o Lancamento de Juros de Mora do Contrato de Emprestimo
           IF NVL(vr_vlmrapar, 0) > 0 THEN
