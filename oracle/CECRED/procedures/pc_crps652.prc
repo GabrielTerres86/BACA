@@ -582,7 +582,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND crapepr.nrctremp = pr_nrctremp
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
-            AND craphis.cdhistor in (1070, 1060, 1071, 1072, 2362, 2364, 2370, 2372)
+            AND craphis.cdhistor in (1070, 1060, 1071, 1072)
          GROUP BY craplcm.cdhistor,craphis.dshistor
          UNION
          SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 

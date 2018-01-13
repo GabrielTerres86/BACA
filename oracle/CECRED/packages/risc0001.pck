@@ -1771,7 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
-            ELSE -- tipo de emprestimo
+          ELSIF rw_crapepr.tpemprst = 1 THEN -- tipo de emprestimo
 
             vr_rel1731_2_pre   := vr_rel1731_2_pre   + vr_vlpreatr;
             vr_rel1731_2_v_pre := vr_rel1731_2_v_pre + vr_vldivida;
@@ -2133,6 +2133,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldespes(33) := vr_rel1760_pre;
     vr_vldevedo(34) := vr_rel1761_v_pre;
     vr_vldespes(34) := vr_rel1761_pre;
+    
+    -- Produto Pos-Fixado
+    vr_vldespes(28) := vr_rel1721_pos_fixado;
+    vr_vldespes(29) := vr_rel1723_pos_fixado;
+    vr_vldespes(30) := vr_rel1731_1_pos_fixado;
+    vr_vldespes(31) := vr_rel1731_2_pos_fixado;
     
     -- Buscar o próximo dia útil
     vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper

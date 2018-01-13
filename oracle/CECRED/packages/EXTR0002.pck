@@ -3125,7 +3125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1619; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1620; /* Aval */
+                 vr_cdhistor := 1620; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1078; /* Devedor */
             END CASE;
@@ -3152,7 +3152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  WHEN rw_craplem.cdhistor = 1045 THEN
                  vr_cdhistor := 1540; /* Aval */
                  WHEN rw_craplem.cdhistor = 1057 THEN
-                 vr_cdhistor := 1618; /* Aval */
+                 vr_cdhistor := 1618; /* Aval */                 
             ELSE     
                  vr_cdhistor := 1076; /* Devedor */
             END CASE;
@@ -13133,7 +13133,7 @@ END pc_consulta_ir_pj_trim;
           vr_multatra := '0';
         END IF;
         --Juros de Mora
-        vr_txinmens := trim(to_char(rw_craplcr.perjurmo,'fm990d00')||'%');
+        vr_txinmens := trim(to_char(rw_craplcr.perjurmo + rw_crapepr.txmensal,'fm990d00')||'%');
         
         --Se deve imprimir
         IF pr_flgimpri THEN

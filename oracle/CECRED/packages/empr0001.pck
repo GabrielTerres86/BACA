@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,dtcarenc crawepr.dtcarenc%TYPE
     ,nrdiacar INTEGER
     ,qttolatr crapepr.qttolatr%TYPE
-    ,dsratpro VARCHAR2(30)
+	,dsratpro VARCHAR2(30)
     ,dsratatu VARCHAR2(30)
 	,vliofcpl crapepr.vliofcpl%TYPE);
 
@@ -3758,7 +3758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
                    12/03/2014 - Alterada a chamada para da  pc_busca_pgto_parcelas
                                  para pc_busca_pgto_parcelas_prefix (Odirlei-AMcom)
-    
+
                    26/07/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
     ............................................................................. */
@@ -3966,6 +3966,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+
+        pr_vlprvenc := pr_vlpreapg;
 
       -- Price TR
       ELSIF rw_crapepr.tpemprst = 0 THEN
@@ -4615,7 +4617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,cdorigem
               ,qtimpctr
 			  ,vliofcpl
-		      ,qttolatr
+              ,qttolatr
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -4648,7 +4650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,progress_recid
               ,qtpromis
               ,percetop
-			  ,DECODE(tpemprst,0,(txdiaria * 100),txdiaria) txdiaria
+              ,DECODE(tpemprst,0,(txdiaria * 100),txdiaria) txdiaria
               ,tpatuidx
               ,idcarenc
               ,dtcarenc
@@ -5314,13 +5316,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).liquidia := vr_liquidia;
           pr_tab_dados_epr(vr_indadepr).qtimpctr := rw_crapepr.qtimpctr;	
           pr_tab_dados_epr(vr_indadepr).portabil := TRIM(vr_portabilidade);
-          
+
           pr_tab_dados_epr(vr_indadepr).tpatuidx := rw_crawepr.tpatuidx;
           pr_tab_dados_epr(vr_indadepr).idcarenc := rw_crawepr.idcarenc;
           pr_tab_dados_epr(vr_indadepr).dtcarenc := rw_crawepr.dtcarenc;
           pr_tab_dados_epr(vr_indadepr).nrdiacar := rw_crawepr.dtdpagto - rw_crapepr.dtmvtolt;
           pr_tab_dados_epr(vr_indadepr).qttolatr := rw_crapepr.qttolatr;
-          
+
           pr_tab_dados_epr(vr_indadepr).vlttmupr := nvl(rw_crapepr.vlttmupr
                                                        ,0);
           pr_tab_dados_epr(vr_indadepr).vlttjmpr := nvl(rw_crapepr.vlttjmpr
@@ -5329,7 +5331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                        ,0);
           pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
                                                        ,0);
-        
+
           pr_tab_dados_epr(vr_indadepr).vliofcpl := nvl(rw_crapepr.vliofcpl, 0);
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
@@ -6085,12 +6087,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
-						'<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
+                        '<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
                         '<idcarenc>' || vr_tab_dados_epr(vr_index).idcarenc || '</idcarenc>' ||
                         '<dtcarenc>' || to_char(vr_tab_dados_epr(vr_index).dtcarenc,'DD/MM/RRRR') || '</dtcarenc>' ||
                         '<nrdiacar>' || vr_tab_dados_epr(vr_index).nrdiacar || '</nrdiacar>' ||
                         '<qttolatr>' || vr_tab_dados_epr(vr_index).qttolatr || '</qttolatr>' ||
-                        '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
+						'<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
                       '</inf>' );
 
@@ -6326,7 +6328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_vlsdeved := vr_vlsdeved;
         pr_qtprecal := vr_qtprecal_lem;
 
-        -- Pre-fixada
+      -- Pre-fixada
       ELSIF rw_crapepr.tpemprst = 1 THEN
       
         /* Busca dos pagamentos das parcelas de empréstimo prefixados*/
