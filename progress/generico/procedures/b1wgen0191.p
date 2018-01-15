@@ -645,6 +645,9 @@ PROCEDURE Imprime_Dados_Proposta:
          SKIP(1)
          WITH SIDE-LABELS WIDTH 137 FRAME f_scr_cab.
 
+    FORM "CRITICA NA CONSULTA AUTOMATIZADA" 
+         WITH SIDE-LABELS WIDTH 137 FRAME f_erro_bir_cab.
+    	 
     FORM 
          tt-erros-bir.dscritic     NO-LABEL                 FORMAT "x(130)"
          WITH SIDE-LABELS NO-BOX WIDTH 137 FRAME f_erro_bir.
@@ -917,6 +920,13 @@ PROCEDURE Imprime_Dados_Proposta:
 
                  /* Exibe os erros do biro */
                  FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+                   
+                   IF FIRST(tt-erros-bir.dscritic) THEN
+                     DO:
+                         DISPLAY STREAM str_1 
+                         WITH FRAME f_erro_bir_cab.
+                     END.
+                   
                    DISPLAY STREAM str_1 tt-erros-bir.dscritic
                                         WITH FRAME f_erro_bir.
 
@@ -927,6 +937,7 @@ PROCEDURE Imprime_Dados_Proposta:
                  END.
 
                  LEAVE Imprime_Proposta.
+
              END.
 
         RUN Busca_Situacao (INPUT aux_nrconbir,
@@ -958,6 +969,12 @@ PROCEDURE Imprime_Dados_Proposta:
 
                  /* Exibe os erros do biro */
                  FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+                   IF FIRST(tt-erros-bir.dscritic) THEN
+                     DO:
+                         DISPLAY STREAM str_1 
+                         WITH FRAME f_erro_bir_cab.
+                     END.
+                     
                    DISPLAY STREAM str_1 tt-erros-bir.dscritic
                                         WITH FRAME f_erro_bir.
 
@@ -1009,6 +1026,11 @@ PROCEDURE Imprime_Dados_Proposta:
 
        /* Exibe os erros do biro */
        FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+         IF FIRST(tt-erros-bir.dscritic) THEN
+           DO:
+               DISPLAY STREAM str_1 
+               WITH FRAME f_erro_bir_cab.
+           END.
          DISPLAY STREAM str_1 tt-erros-bir.dscritic
                               WITH FRAME f_erro_bir.
 

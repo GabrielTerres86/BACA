@@ -928,7 +928,7 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                           'Operador ' || vr_cdoperad || ' alterou contingencia do biro '||
                           rw_crapcbr.dsbircon||' da data '||to_char(rw_crapcbr.dtinicon,'dd/mm/yyyy')|| 
                           ' para a data de '||pr_dtinicon;
-
+                          
             -- gera o log de alteracao
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
@@ -948,17 +948,17 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             BEGIN
               -- Atualizacao de registro de contingencia de biros
               UPDATE crapcbr SET
-                crapcbr.dtinicon = to_date(pr_dtinicon,'dd/mm/yyyy')
-              WHERE crapcbr.cdcooper = pr_cdcooper
-                AND crapcbr.cdbircon = pr_cdbircon;
+                     crapcbr.dtinicon = to_date(pr_dtinicon,'dd/mm/yyyy')
+               WHERE crapcbr.cdcooper = pr_cdcooper
+                 AND crapcbr.cdbircon = pr_cdbircon;
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
-              -- Descricao do erro na insercao de registros
-              vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
-              RAISE vr_exc_saida;
+                -- Descricao do erro na insercao de registros
+                vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
+                RAISE vr_exc_saida;
             END;
 
           WHEN 'C' THEN -- Consulta
@@ -997,7 +997,7 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                            ,pr_flg_enviar => 'S'
                                            ,pr_des_erro => vr_des_erro
                                            ,pr_dscritic => vr_dscritic);
-
+                                                                                    
             -- Efetua a exclusao do cadastro de contingencia de biros
             BEGIN
               DELETE crapcbr 
@@ -1035,7 +1035,7 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                       ,pr_ind_tipo_log => 1 -- Processo normal
                                       ,pr_nmarqlog     => 'CONAUT' 
                                       ,pr_des_log      => vr_des_log);
-
+                                         
             -- Insere na inconsistencia
             GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
                                            ,pr_iddgrupo => 4 -- Consulta Automatizada
@@ -5747,6 +5747,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     -- Variaveis de erro
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
+    vr_dscritic_aux VARCHAR2(4000); --> descricao do erro
     vr_dscritic_padrao VARCHAR2(400); --> descricao do erro padrao para nao exibir erros tecnicos para o usuario
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_des_erro   VARCHAR2(10);
@@ -6941,10 +6942,6 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
         END;        
       END IF;
       
-      -- Devolvemos código e critica encontradas das variaveis locais
-      pr_cdcritic := NVL(vr_cdcritic,0);
-      pr_dscritic := nvl(vr_dscritic_padrao, vr_dscritic);
-
       IF vr_nrconbir > 0 THEN
         -- Insere na inconsistencia
         GENE0005.pc_gera_inconsistencia(pr_cdcooper => 3 -- CECRED
@@ -6955,11 +6952,15 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                                     || ' Documento: '  || pr_nrdocmto
                                                     || ' Protocolo do biro: ' || vr_nrprotoc
                                                     || ' Consulta no biro: '  || vr_nrconbir
-                                       ,pr_dsincons => pr_dscritic
+                                       ,pr_dsincons => vr_dscritic
                                        ,pr_flg_enviar => 'S'
                                        ,pr_des_erro => vr_des_erro
-                                       ,pr_dscritic => vr_dscritic);
+                                       ,pr_dscritic => vr_dscritic_aux);
       END IF;                                       
+
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := nvl(vr_dscritic_padrao, vr_dscritic);                                      
 
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
