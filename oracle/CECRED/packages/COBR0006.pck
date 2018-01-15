@@ -5013,7 +5013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 11/01/2018
 
        Dados referentes ao programa:
 
@@ -5039,6 +5039,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    07/06/2017 - Inicializar pr_rec_cobranca.flserasa = 1 na validação
                                 da informação de negativação. (SD#686881 - AJFink)
 
+                   11/01/2018 - Ajustar para executar RAISE apenas se ocorreu erro nas validações da
+                                pc_valida_exec_instrucao e o boleto tenha sido rejeitado, caso contrário
+                                o processo deve continuar. (Douglas 828517)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5193,10 +5196,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_cdocorre      => 26                       --> Codigo da Ocorrencia
                             ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
                             ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
+          RAISE vr_exc_fim;
         END IF;
-      END IF;
-      
-      RAISE vr_exc_fim;
+      END IF; 
     END IF;
   
     -- 17.3P Valida Tipo de Emissao do Boleto
