@@ -15185,6 +15185,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END IF;
       
   EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      --pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na EMPR0001.pc_calcula_iof_epr --> ' || SQLERRM;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-06-06T15:37:10 -->
+<!-- 2018-01-12T21:06:08 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_23" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
 	<property name="ireport.y" value="6265"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100_23"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl100"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -144,6 +144,9 @@
 	</field>
 	<field name="amigavel" class="java.lang.String">
 		<fieldDescription><![CDATA[amigavel]]></fieldDescription>
+	</field>
+	<field name="nmconjug" class="java.lang.String">
+		<fieldDescription><![CDATA[nmconjug]]></fieldDescription>
 	</field>
 	<background>
 		<band height="850" splitType="Stretch">
@@ -711,7 +714,7 @@
 					<textElement markup="html">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".15.</b> Periodicidade do Pagamento da Carência"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".15.</b> Periodicidade do Pagamento dos Encargos"]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;#,##0.00-">
 					<reportElement x="178" y="27" width="132" height="11" uuid="53b7b938-ff27-4992-aac4-92930012eabb">
@@ -734,7 +737,7 @@
 					<textElement markup="html">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".16.</b> Vencimento da Primeira Carência"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<b>" + (3 + $F{ind_add_item}) + ".16.</b> Vencimento da Primeira Parcela dos Encargos"]]></textFieldExpression>
 				</textField>
 				<textField>
 					<reportElement x="320" y="27" width="140" height="11" uuid="9d5ae98e-f257-4490-8e0f-6feac75fdeca">
@@ -943,7 +946,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros deverão ser pagos mensalmente pelo <b>Emitente/Cooperado</b>, vencendo-se a primeira carência antes do pagamento da primeira parcela."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros deverão ser pagos de forma " +  $F{dtpagcar}.toLowerCase()  + " pelo <b>Emitente/Cooperado</b>, vencendo-se a primeira carência antes do pagamento da primeira parcela."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="115" width="466" height="11" uuid="726ffc38-c056-495b-8de5-dcfe906d9e41">
@@ -1814,7 +1817,7 @@
 				<textFieldExpression><![CDATA["<b><u>3" + (3 + $F{ind_add_item}) + ". Declaração de Leitura</u></b> – O <b>Emitente/Cooperado(a)</b>" + ($F{ind_add_item} > 0 ? ", <b>Terceiro(s) Garantidor(es)</b> e o(s) <b>Interveniente(s) Fiduciante(s) Garantidor(es)</b>" : "") + ", ao assinar as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="60">
+		<band height="120">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<line>
 				<reportElement positionType="Float" x="7" y="33" width="218" height="1" uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af"/>
@@ -1854,6 +1857,38 @@
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nminterven}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement positionType="Float" x="7" y="91" width="218" height="1" uuid="3ff2c58b-c4db-4385-80ee-2fd8a1cdd462">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmconjug}.length()>0
+
+]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<staticText>
+				<reportElement positionType="Float" x="7" y="93" width="218" height="11" uuid="0704c760-6272-4d6c-a1c5-8d44e666b8f6">
+					<printWhenExpression><![CDATA[$F{nmconjug}.length()>0
+
+]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Cônjuge]]></text>
+			</staticText>
+			<textField>
+				<reportElement positionType="Float" x="7" y="105" width="218" height="11" uuid="cdada2e6-cd07-4119-9304-bdbb3382bce7">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{nmconjug}.length()>0
+
+]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmconjug}]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="70" splitType="Prevent">
