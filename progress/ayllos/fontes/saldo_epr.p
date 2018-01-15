@@ -115,7 +115,7 @@ DEF         VAR aux_vlmrapar LIKE crappep.vlmrapar                     NO-UNDO.
 DEF         VAR aux_vlmtapar LIKE crappep.vlmtapar                     NO-UNDO.
 DEF         VAR aux_vlprvenc AS DECI                                   NO-UNDO.
 DEF         VAR aux_vlpraven AS DECI                                   NO-UNDO.
-
+DEF         VAR aux_vlpreapg AS DECI                                   NO-UNDO.
 DEF         VAR h-b1wgen0084a AS HANDLE                                NO-UNDO.
   
   
