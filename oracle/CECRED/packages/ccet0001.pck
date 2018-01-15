@@ -1391,7 +1391,7 @@ create or replace package body cecred.CCET0001 is
       vr_vljurrem NUMBER := 0;                -- Valor de juros remunerados
       vr_txjurrem NUMBER := 0;                -- Taxa de juros remunerados
       vr_dsdprazo VARCHAR2(20);               -- Prazo do contrato
-      
+      vr_vltaxa_iof_principal NUMBER(25,8);
       vr_dscooper VARCHAR2(70);               -- Descrição da cooperativa
             
       -- Variavel exceção
@@ -1553,6 +1553,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
+                                   ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                    ,pr_dscritic   => vr_dscritic);                                   
       vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       -- VERIFICA SE OCORREU UMA CRITICA
@@ -2319,6 +2320,7 @@ create or replace package body cecred.CCET0001 is
       vr_txjurrem NUMBER := 0;                -- Taxa de juros remunerados                                                                                 
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_qtdparce NUMBER := 0;                -- Quantidade de parcelas
+      vr_vltaxa_iof_principal NUMBER(25,8);
       
       vr_vliofpri NUMBER;
       vr_vliofadi NUMBER;
@@ -2413,6 +2415,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
                                    ,pr_vliofadi   => vr_vliofadi   --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl   --> Retorno do valor do IOF complementar
+                                   ,Pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                    ,pr_dscritic   => vr_dscritic);                                   
       vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       
