@@ -1769,6 +1769,7 @@ PROCEDURE grava-dados:
                                     INPUT "A",  /* Anterior */
                                     OUTPUT aux_dtmvtolt). 
                                     
+                /* Entrar somente se for o ultimo dia util do ano */
                 IF  aux_dtiniatr = aux_dtmvtolt THEN
                     DO:                
                         RUN valida_dia_util(INPUT par_cdcooper,
@@ -2206,17 +2207,39 @@ PROCEDURE grava-dados:
                         END.
                 END.
 
+                ASSIGN aux_dtmvtolt = par_dtmvtolt.
+                
+                IF  aux_cdhistor = 1019 THEN
+                    DO: 
+                        RUN valida_dia_util(INPUT par_cdcooper,
+                                            INPUT par_dtmvtolt,
+                                            INPUT TRUE, /* Ultimo dia do ano */
+                                            INPUT "A",  /* Anterior */
+                                            OUTPUT aux_dtmvtolt). 
+                                    
+                        /* Entrar somente se for o ultimo dia util do ano */
+                        IF  par_dtmvtolt = aux_dtmvtolt THEN
+                            DO:                
+                                RUN valida_dia_util(INPUT par_cdcooper,
+                                                    INPUT par_dtmvtolt,
+                                                    INPUT TRUE, /* primeiro dia util do ano*/
+                                                    INPUT "P",  /* Proximo */
+                                                    OUTPUT aux_dtmvtolt).     
+                                
+                            END.
+                    END.    
+
                 IF  par_cddopcao = "R" THEN
                     DO:  
                         IF  crapatr.dtfimatr <> ? THEN
                             ASSIGN crapatr.dtfimatr = ?.
                     
-                        ASSIGN crapatr.dtiniatr = par_dtmvtolt.
+                        ASSIGN crapatr.dtiniatr = aux_dtmvtolt.
                     END.
                 ELSE
                 IF  par_cddopcao = "E" THEN
                     DO:
-                        IF  crapatr.dtiniatr = par_dtmvtolt THEN
+                        IF  crapatr.dtiniatr = aux_dtmvtolt THEN
                             DO: 
                                 ASSIGN aux_dscritic = "Esta alteracao podera" +
                                                       " ser efetuada no proximo dia util.".
@@ -2225,7 +2248,7 @@ PROCEDURE grava-dados:
                             
                          /* Permitir a exclusao do debito somente no proximo dia util apos 
                             o cancelamento */
-                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
+                         IF  crapatr.dtfimatr = aux_dtmvtolt THEN
                              DO:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
@@ -2245,7 +2268,7 @@ PROCEDURE grava-dados:
                         IF  crapatr.dtfimatr = ? AND 
                             par_idorigem <> 4    THEN /* TAA */
                             DO:
-                                ASSIGN crapatr.dtfimatr = par_dtmvtolt.
+                                ASSIGN crapatr.dtfimatr = aux_dtmvtolt.
                                 CREATE tt-autori-atl.
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
@@ -3330,9 +3353,10 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-                                
+                    
+            /* Entrar somente se for o ultimo dia util do ano */
             IF  par_dtinisus = aux_dtmvtolt THEN
-                DO:                
+                DO:                                    
                     RUN valida_dia_util(INPUT par_cdcooper,
                                         INPUT par_dtinisus,
                                         INPUT TRUE, /* primeiro dia util do ano*/
@@ -3347,7 +3371,8 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-                                
+            
+            /* Entrar somente se for o ultimo dia util do ano */                    
             IF  par_dtfimsus = aux_dtmvtolt THEN
                 DO:                
                     RUN valida_dia_util(INPUT par_cdcooper,
