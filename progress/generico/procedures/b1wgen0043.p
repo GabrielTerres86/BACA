@@ -280,6 +280,49 @@ DEF VAR par_dsdevice AS CHAR                                         NO-UNDO.
 DEF VAR par_dtconnec AS CHAR                                         NO-UNDO.
 DEF VAR par_numipusr AS CHAR                                         NO-UNDO.
 
+/*Variaveis para gravar informacoes utilizadas no rating*/
+DEF VAR rat_dtadmiss AS DATE                                         NO-UNDO.
+DEF VAR rat_qtmaxatr AS INTE                                         NO-UNDO.
+DEF VAR rat_flgreneg AS INTE                                         NO-UNDO.
+DEF VAR rat_dtadmemp AS DATE                                         NO-UNDO.
+DEF VAR rat_cdnatocp AS INTE                                         NO-UNDO.
+DEF VAR rat_qtresext AS INTE                                         NO-UNDO.
+DEF VAR rat_vlnegext AS DECI                                         NO-UNDO.
+DEF VAR rat_flgresre AS INTE                                         NO-UNDO.
+DEF VAR rat_qtadidep AS INTE                                         NO-UNDO.
+DEF VAR rat_qtchqesp AS INTE                                         NO-UNDO.
+DEF VAR rat_qtdevalo AS INTE                                         NO-UNDO.
+DEF VAR rat_qtdevald AS INTE                                         NO-UNDO.
+DEF VAR rat_cdsitres AS INTE                                         NO-UNDO.
+DEF VAR rat_vlpreatv AS DECI                                         NO-UNDO.
+DEF VAR rat_vlsalari AS DECI                                         NO-UNDO.
+DEF VAR rat_vlrendim AS DECI                                         NO-UNDO.
+DEF VAR rat_vlsalcje AS DECI                                         NO-UNDO.
+DEF VAR rat_vlendivi AS DECI                                         NO-UNDO.
+DEF VAR rat_vlbemtit AS DECI                                         NO-UNDO.
+DEF VAR rat_flgcjeco AS INTE                                         NO-UNDO.
+DEF VAR rat_vlbemcje AS DECI                                         NO-UNDO.
+DEF VAR rat_vlsldeve AS DECI                                         NO-UNDO.
+DEF VAR rat_vlopeatu AS DECI                                         NO-UNDO.
+DEF VAR rat_vlslcota AS DECI                                         NO-UNDO.
+DEF VAR rat_cdquaope AS INTE                                         NO-UNDO.
+DEF VAR rat_cdtpoper AS INTE                                         NO-UNDO.
+DEF VAR rat_cdlincre AS INTE                                         NO-UNDO.
+DEF VAR rat_cdmodali AS CHAR                                         NO-UNDO.
+DEF VAR rat_cdsubmod AS CHAR                                         NO-UNDO.
+DEF VAR rat_cdgarope AS INTE                                         NO-UNDO.
+DEF VAR rat_cdliqgar AS INTE                                         NO-UNDO.
+DEF VAR rat_qtpreope AS INTE                                         NO-UNDO.
+DEF VAR rat_dtfunemp AS DATE                                         NO-UNDO.
+DEF VAR rat_cdseteco AS INTE                                         NO-UNDO.
+DEF VAR rat_dtprisoc AS DATE                                         NO-UNDO.
+DEF VAR rat_prfatcli AS DECI                                         NO-UNDO.
+DEF VAR rat_vlmedfat AS DECI                                         NO-UNDO.
+DEF VAR rat_vlbemavt AS DECI                                         NO-UNDO.
+DEF VAR rat_vlbemsoc AS DECI                                         NO-UNDO.
+DEF VAR rat_vlparope AS DECI                                         NO-UNDO.
+DEF VAR rat_cdperemp AS INTE                                         NO-UNDO.
+DEF VAR rat_dstpoper AS CHAR                                         NO-UNDO.
                                
 /******************************************************************************
                             PROCEDURES EXTERNAS
@@ -1518,11 +1561,84 @@ PROCEDURE calcula-rating:
                            crapnrc.vlutlrat = aux_vlutiliz /* Valor utilizado */
                            crapnrc.nrnotatl = tt-impressao-risco-tl.vlrtotal
                            crapnrc.inrisctl = tt-impressao-risco-tl.dsdrisco.
-                    VALIDATE crapnrc.       
-                                                
+                    VALIDATE crapnrc.
+                    
+                    /* NOVO TRECHO */
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   RUN STORED-PROCEDURE pc_grava_his_crapnrc2
+                   aux_handproc = PROC-HANDLE NO-ERROR 
+                       ( INPUT par_cdcooper                   /* pr_cdcooper --> Codigo da cooperativa */
+                        ,INPUT par_nrdconta                   /* pr_nrdconta --> Numero da conta */
+                        ,INPUT par_nrctrato                   /* pr_nrctrrat --> Numero do contrato */
+                        ,INPUT par_tpctrato                   /* pr_tpctrrat --> Tipo do contrato */
+                        ,INPUT tt-impressao-risco.dsdrisco    /* pr_indrisco --> Indicador de risco */
+                        ,INPUT par_dtmvtolt                   /* pr_dtmvtolt --> */
+                        ,INPUT par_cdoperad                   /* pr_cdoperad --> */
+                        ,INPUT tt-impressao-risco.vlrtotal    /* pr_nrnotrat --> */
+                        ,INPUT aux_vlutiliz                   /* pr_vlutlrat --> */
+                        ,INPUT tt-impressao-risco-tl.vlrtotal /* pr_nrnotatl --> */
+                        ,INPUT tt-impressao-risco-tl.dsdrisco /* pr_inrisctl --> */
+                        ,INPUT rat_dtadmiss                   /* pr_dtadmiss --> */
+                        ,INPUT rat_qtmaxatr                   /* pr_qtmaxatr --> */
+                        ,INPUT rat_flgreneg                   /* pr_flgreneg --> */
+                        ,INPUT rat_dtadmemp                   /* pr_dtadmemp --> */
+                        ,INPUT rat_cdnatocp                   /* pr_cdnatocp --> */
+                        ,INPUT rat_qtresext                   /* pr_qtresext --> */
+                        ,INPUT rat_vlnegext                   /* pr_vlnegext --> */
+                        ,INPUT rat_flgresre                   /* pr_flgresre --> */
+                        ,INPUT rat_qtadidep                   /* pr_qtadidep --> */
+                        ,INPUT rat_qtchqesp                   /* pr_qtchqesp --> */
+                        ,INPUT rat_qtdevalo                   /* pr_qtdevalo --> */
+                        ,INPUT rat_qtdevald                   /* pr_qtdevald --> */
+                        ,INPUT rat_cdsitres                   /* pr_cdsitres --> */
+                        ,INPUT rat_vlpreatv                   /* pr_vlpreatv --> */
+                        ,INPUT rat_vlsalari                   /* pr_vlsalari --> */
+                        ,INPUT rat_vlrendim                   /* pr_vlrendim --> */
+                        ,INPUT rat_vlsalcje                   /* pr_vlsalcje --> */
+                        ,INPUT rat_vlendivi                   /* pr_vlendivi --> */
+                        ,INPUT rat_vlbemtit                   /* pr_vlbemtit --> */
+                        ,INPUT rat_flgcjeco                   /* pr_flgcjeco --> */
+                        ,INPUT rat_vlbemcje                   /* pr_vlbemcje --> */
+                        ,INPUT rat_vlsldeve                   /* pr_vlsldeve --> */
+                        ,INPUT rat_vlopeatu                   /* pr_vlopeatu --> */
+                        ,INPUT rat_vlslcota                   /* pr_vlslcota --> */
+                        ,INPUT rat_cdquaope                   /* pr_cdquaope --> */
+                        ,INPUT rat_cdtpoper                   /* pr_cdtpoper --> */
+                        ,INPUT rat_cdlincre                   /* pr_cdlincre --> */
+                        ,INPUT rat_cdmodali                   /* pr_cdmodali --> */
+                        ,INPUT rat_cdsubmod                   /* pr_cdsubmod --> */
+                        ,INPUT rat_cdgarope                   /* pr_cdgarope --> */
+                        ,INPUT rat_cdliqgar                   /* pr_cdliqgar --> */
+                        ,INPUT rat_qtpreope                   /* pr_qtpreope --> */
+                        ,INPUT rat_dtfunemp                   /* pr_dtfunemp --> */
+                        ,INPUT rat_cdseteco                   /* pr_cdseteco --> */
+                        ,INPUT rat_dtprisoc                   /* pr_dtprisoc --> */
+                        ,INPUT rat_prfatcli                   /* pr_prfatcli --> */
+                        ,INPUT rat_vlmedfat                   /* pr_vlmedfat --> */
+                        ,INPUT rat_vlbemavt                   /* pr_vlbemavt --> */
+                        ,INPUT rat_vlbemsoc                   /* pr_vlbemsoc --> */
+                        ,INPUT rat_vlparope                   /* pr_vlparope --> */
+                        ,INPUT rat_cdperemp                   /* pr_dstpoper --> */
+                        ,INPUT rat_dstpoper                   /* pr_dtadmiss --> */
+                        ,OUTPUT 0                             /* pr_cdcritic --> Codigo da critica).     */
+                        ,OUTPUT "" ).                         /* pr_dscritic --> Descriçao da critica    */
+
+                   /* Fechar o procedimento para buscarmos o resultado */ 
+                   CLOSE STORED-PROC pc_grava_his_crapnrc2
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                   ASSIGN aux_cdcritic = pc_grava_his_crapnrc2.pr_cdcritic
+                     WHEN pc_grava_his_crapnrc2.pr_cdcritic <> ?
+                          aux_dscritic = pc_grava_his_crapnrc2.pr_dscritic
+                     WHEN pc_grava_his_crapnrc2.pr_dscritic <> ?.
+
+                   IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+                     RETURN "NOK".
+
+                   /* FIM NOVO TRECHO */
                 END. /* Fim da TRANSACTION */
-                        
-            
+
                 /* Verifica se tem que efetivar */
                 RUN verifica_efetivacao (INPUT par_cdcooper,
                                          INPUT 0,
@@ -1560,7 +1676,6 @@ PROCEDURE calcula-rating:
                                               OUTPUT TABLE tt-ratings). 
 
                      END. /* Fim efetivacao */
-
             END.  /* Fim Criacao */
        ELSE
          DO TRANSACTION:
@@ -1577,15 +1692,91 @@ PROCEDURE calcula-rating:
                aux_dscritic = "Risco do cooperado nao encontrado.".
        LEAVE.
              END.
+
 		   IF aux_flghisto THEN
 		     DO:
-			   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-				/* Efetuar a chamada a rotina Oracle */ 
-				RUN STORED-PROCEDURE pc_grava_his_crapnrc
-				 aux_handproc = PROC-HANDLE NO-ERROR 
-							 ( INPUT par_cdcooper                   /* pr_cdcooper --> Codigo da cooperativa */
-							  ,INPUT par_nrdconta                   /* pr_nrdconta --> Numero da conta */
-							  ,INPUT par_nrctrato                   /* pr_nrctrrat --> Numero do contrato */
+           /* NOVO TRECHO */
+           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+           RUN STORED-PROCEDURE pc_grava_his_crapnrc2
+				   aux_handproc = PROC-HANDLE NO-ERROR 
+					  	 ( INPUT par_cdcooper                   /* pr_cdcooper --> Codigo da cooperativa */
+					 		  ,INPUT par_nrdconta                   /* pr_nrdconta --> Numero da conta */
+						 	  ,INPUT par_nrctrato                   /* pr_nrctrrat --> Numero do contrato */
+							  ,INPUT par_tpctrato                   /* pr_tpctrrat --> Tipo do contrato */
+							  ,INPUT tt-impressao-risco.dsdrisco    /* pr_indrisco --> Indicador de risco */
+							  ,INPUT par_dtmvtolt                   /* pr_dtmvtolt --> */
+							  ,INPUT par_cdoperad                   /* pr_cdoperad --> */
+							  ,INPUT tt-impressao-risco.vlrtotal    /* pr_nrnotrat --> */
+							  ,INPUT aux_vlutiliz                   /* pr_vlutlrat --> */
+							  ,INPUT tt-impressao-risco-tl.vlrtotal /* pr_nrnotatl --> */
+							  ,INPUT tt-impressao-risco-tl.dsdrisco /* pr_inrisctl --> */
+                ,INPUT rat_dtadmiss                   /* pr_dtadmiss --> */
+                ,INPUT rat_qtmaxatr                   /* pr_qtmaxatr --> */
+                ,INPUT rat_flgreneg                   /* pr_flgreneg --> */
+                ,INPUT rat_dtadmemp                   /* pr_dtadmemp --> */
+                ,INPUT rat_cdnatocp                   /* pr_cdnatocp --> */
+                ,INPUT rat_qtresext                   /* pr_qtresext --> */
+                ,INPUT rat_vlnegext                   /* pr_vlnegext --> */
+                ,INPUT rat_flgresre                   /* pr_flgresre --> */
+                ,INPUT rat_qtadidep                   /* pr_qtadidep --> */
+                ,INPUT rat_qtchqesp                   /* pr_qtchqesp --> */
+                ,INPUT rat_qtdevalo                   /* pr_qtdevalo --> */
+                ,INPUT rat_qtdevald                   /* pr_qtdevald --> */
+                ,INPUT rat_cdsitres                   /* pr_cdsitres --> */
+                ,INPUT rat_vlpreatv                   /* pr_vlpreatv --> */
+                ,INPUT rat_vlsalari                   /* pr_vlsalari --> */
+                ,INPUT rat_vlrendim                   /* pr_vlrendim --> */
+                ,INPUT rat_vlsalcje                   /* pr_vlsalcje --> */
+                ,INPUT rat_vlendivi                   /* pr_vlendivi --> */
+                ,INPUT rat_vlbemtit                   /* pr_vlbemtit --> */
+                ,INPUT rat_flgcjeco                   /* pr_flgcjeco --> */
+                ,INPUT rat_vlbemcje                   /* pr_vlbemcje --> */
+                ,INPUT rat_vlsldeve                   /* pr_vlsldeve --> */
+                ,INPUT rat_vlopeatu                   /* pr_vlopeatu --> */
+                ,INPUT rat_vlslcota                   /* pr_vlslcota --> */
+                ,INPUT rat_cdquaope                   /* pr_cdquaope --> */
+                ,INPUT rat_cdtpoper                   /* pr_cdtpoper --> */
+                ,INPUT rat_cdlincre                   /* pr_cdlincre --> */
+                ,INPUT rat_cdmodali                   /* pr_cdmodali --> */
+                ,INPUT rat_cdsubmod                   /* pr_cdsubmod --> */
+                ,INPUT rat_cdgarope                   /* pr_cdgarope --> */
+                ,INPUT rat_cdliqgar                   /* pr_cdliqgar --> */
+                ,INPUT rat_qtpreope                   /* pr_qtpreope --> */
+                ,INPUT rat_dtfunemp                   /* pr_dtfunemp --> */
+                ,INPUT rat_cdseteco                   /* pr_cdseteco --> */
+                ,INPUT rat_dtprisoc                   /* pr_dtprisoc --> */
+                ,INPUT rat_prfatcli                   /* pr_prfatcli --> */
+                ,INPUT rat_vlmedfat                   /* pr_vlmedfat --> */
+                ,INPUT rat_vlbemavt                   /* pr_vlbemavt --> */
+                ,INPUT rat_vlbemsoc                   /* pr_vlbemsoc --> */
+                ,INPUT rat_vlparope                   /* pr_vlparope --> */
+                ,INPUT rat_cdperemp                   /* pr_dstpoper --> */
+                ,INPUT rat_dstpoper                   /* pr_dtadmiss --> */
+							  ,OUTPUT 0                             /* pr_cdcritic --> Codigo da critica).     */
+							  ,OUTPUT "" ).                         /* pr_dscritic --> Descriçao da critica    */
+
+				   /* Fechar o procedimento para buscarmos o resultado */ 
+				   CLOSE STORED-PROC pc_grava_his_crapnrc2
+					 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+           ASSIGN aux_cdcritic = pc_grava_his_crapnrc2.pr_cdcritic
+						 WHEN pc_grava_his_crapnrc2.pr_cdcritic <> ?
+					        aux_dscritic = pc_grava_his_crapnrc2.pr_dscritic
+						 WHEN pc_grava_his_crapnrc2.pr_dscritic <> ?.
+
+           IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+				     RETURN "NOK".
+
+           /* FIM NOVO TRECHO */
+         
+			     /*{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+				   /* Efetuar a chamada a rotina Oracle */ 
+				   RUN STORED-PROCEDURE pc_grava_his_crapnrc
+				   aux_handproc = PROC-HANDLE NO-ERROR 
+					  	 ( INPUT par_cdcooper                   /* pr_cdcooper --> Codigo da cooperativa */
+					 		  ,INPUT par_nrdconta                   /* pr_nrdconta --> Numero da conta */
+						 	  ,INPUT par_nrctrato                   /* pr_nrctrrat --> Numero do contrato */
 							  ,INPUT par_tpctrato                   /* pr_tpctrrat --> Tipo do contrato */
 							  ,INPUT tt-impressao-risco.dsdrisco    /* pr_indrisco --> Indicador de risco */
 							  ,INPUT par_dtmvtolt                   /* pr_dtmvtolt --> */
@@ -1596,25 +1787,27 @@ PROCEDURE calcula-rating:
 							  ,INPUT tt-impressao-risco-tl.dsdrisco /* pr_inrisctl --> */
 							  ,OUTPUT 0                             /* pr_cdcritic --> Codigo da critica).     */
 							  ,OUTPUT "" ).                         /* pr_dscritic --> Descriçao da critica    */
-				/* Fechar o procedimento para buscarmos o resultado */ 
-				CLOSE STORED-PROC pc_grava_his_crapnrc
-					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-				{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-				ASSIGN aux_cdcritic = pc_grava_his_crapnrc.pr_cdcritic
-										 WHEN pc_grava_his_crapnrc.pr_cdcritic <> ?
-					   aux_dscritic = pc_grava_his_crapnrc.pr_dscritic
-										 WHEN pc_grava_his_crapnrc.pr_dscritic <> ?.
-				IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-				  RETURN "NOK".
-		     END.
-         END.
-       LEAVE.
+				   /* Fechar o procedimento para buscarmos o resultado */ 
+				   CLOSE STORED-PROC pc_grava_his_crapnrc
+					 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+				   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
+           ASSIGN aux_cdcritic = pc_grava_his_crapnrc.pr_cdcritic
+						 WHEN pc_grava_his_crapnrc.pr_cdcritic <> ?
+					        aux_dscritic = pc_grava_his_crapnrc.pr_dscritic
+						 WHEN pc_grava_his_crapnrc.pr_dscritic <> ?.
+
+           IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+				     RETURN "NOK".*/
+		     END.
+
+       END.
+       LEAVE.
     END. /* Fim do DO WHILE TRUE para tratamento de criticas */
-               
+
     IF   aux_cdcritic <> 0    OR 
          aux_dscritic <> ""   THEN
-         DO:  
+         DO:
              FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
              IF   NOT AVAIL tt-erro THEN
@@ -1641,10 +1834,8 @@ PROCEDURE calcula-rating:
                   UNDO, RETURN "NOK".
 
              RETURN "NOK".
-         
          END.
 
-    
     IF   par_flgerlog   THEN                                
          RUN proc_gerar_log (INPUT par_cdcooper,
                              INPUT par_cdoperad,
@@ -1657,9 +1848,7 @@ PROCEDURE calcula-rating:
                              INPUT par_nrdconta,
                              OUTPUT aux_nrdrowid).
     RETURN "OK".
-
 END PROCEDURE.
-
 
 /***************************************************************************
  Validacao dos campos que envolvem <F7> do rating na proposta de emprestimo,
@@ -4723,7 +4912,9 @@ PROCEDURE calcula_rating_fisica:
                           ELSE
                                3. 
 
-    ASSIGN aux_dsvalite = STRING(round(aux_anodcoop,2)) + " anos".
+    ASSIGN aux_dsvalite = STRING(round(aux_anodcoop,2)) + " anos"
+           rat_dtadmiss = crapass.dtadmiss.
+
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4779,7 +4970,9 @@ PROCEDURE calcula_rating_fisica:
                        ASSIGN aux_nrseqite = 3.
          END.
 
-    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso".
+    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso"
+           rat_qtmaxatr = aux_qtdiaatr.
+    
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4820,7 +5013,10 @@ PROCEDURE calcula_rating_fisica:
                                         3.
          END.
     
-    ASSIGN aux_dsvalite = STRING(round(aux_anodexpe,2)) + " anos de experiencia".
+    ASSIGN aux_dsvalite = STRING(round(aux_anodexpe,2)) + " anos de experiencia"
+           rat_dtadmemp = crapttl.dtadmemp
+           rat_cdnatocp = crapttl.cdnatopc.
+
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -4910,18 +5106,20 @@ PROCEDURE calcula_rating_fisica:
      
     IF AVAIL crapenc THEN
        DO:
-    CASE crapenc.incasprp:
-    
-        WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
-        WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
-        WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
-        WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
+          ASSIGN rat_cdsitres = crapenc.incasprp.
+
+          CASE crapenc.incasprp:
+              WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
+              WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
+              WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
+              WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
               WHEN 0           THEN   aux_nrseqite = 4.    /*  Alugado */
 
-    END CASE. 
+          END CASE. 
        END.
     ELSE
-       ASSIGN aux_nrseqite = 4. /* Alugado */
+       ASSIGN aux_nrseqite = 4
+              rat_cdsitres = 0. /* Alugado */
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -4985,14 +5183,21 @@ PROCEDURE calcula_rating_fisica:
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".
 
+    ASSIGN rat_vlpreatv = aux_vltotpre
+           rat_vlparope = aux_vlpresta
+           rat_vlsalari = crapttl.vlsalari
+           rat_vlrendim = crapttl.vldrendi[1] + crapttl.vldrendi[2] + crapttl.vldrendi[3] 
+                        + crapttl.vldrendi[4] + crapttl.vldrendi[5] + crapttl.vldrendi[6].
+
     /* Pegar salario do Conjuge */
     FIND crapcje WHERE crapcje.cdcooper = par_cdcooper   AND
                        crapcje.nrdconta = par_nrdconta   AND
                        crapcje.idseqttl = 1 
                        NO-LOCK NO-ERROR.
 
-    IF    AVAIL crapcje   THEN
-          ASSIGN aux_vlsalari = crapcje.vlsalari.
+    IF   AVAIL crapcje   THEN
+       ASSIGN aux_vlsalari = crapcje.vlsalari
+              rat_vlsalcje = crapcje.vlsalari.
 
     IF  (crapttl.vlsalari + 
          crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
@@ -5118,10 +5323,16 @@ PROCEDURE calcula_rating_fisica:
 
     IF   par_tpctrato = 90  THEN /* Emprestimo / Financiamento */
          DO:
+             IF AVAIL crawepr THEN
+               ASSIGN rat_vlopeatu = crawepr.vlemprst.
+             ELSE
+               ASSIGN rat_vlopeatu = crapprp.vlctrbnd.
+
              IF   NOT CAN-FIND(crapepr WHERE 
                                crapepr.cdcooper = par_cdcooper   AND
                                crapepr.nrdconta = par_nrdconta   AND
                                crapepr.nrctremp = par_nrctrato   NO-LOCK)  THEN
+
                  IF  AVAIL crawepr THEN
                      ASSIGN aux_vlendivi = crawepr.vlemprst.
                  ELSE
@@ -5138,6 +5349,8 @@ PROCEDURE calcula_rating_fisica:
          DO:
              IF   par_tpctrato = 1    THEN /* Ch. Especial */
                   DO:
+                      ASSIGN rat_vlopeatu = craplim.vllimite.
+                      
                       IF   craplim.insitlim <> 2  THEN /* Diferente de ativo */
                            ASSIGN aux_vlendivi = craplim.vllimite.
                   END.   
@@ -5152,6 +5365,9 @@ PROCEDURE calcula_rating_fisica:
     DO:
         ASSIGN aux_vlendivi = 0.
     END.
+    
+    ASSIGN rat_vlendivi = aux_vlendivi
+           rat_vlsldeve = aux_vlendivi.
 
     IF  (crapttl.vlsalari + 
          crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
@@ -5235,6 +5451,7 @@ PROCEDURE calcula_rating_fisica:
     IF  par_tpctrato = 0  THEN
         ASSIGN aux_vlendivi = 0.
 
+    ASSIGN rat_vlslcota = crapcot.vldcotas.
   
     IF crapcot.vldcotas > 0 OR 
 	    (aux_vlendivi = 0 AND crapcot.vldcotas = 0) THEN
@@ -5287,24 +5504,48 @@ PROCEDURE calcula_rating_fisica:
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */ 
          DO:
              IF  AVAIL crawepr THEN
+               DO:
+                 ASSIGN rat_cdquaope = crawepr.idquapro
+                        rat_cdlincre = crawepr.cdlcremp
+                        rat_cdmodali = craplcr.cdmodali
+                        rat_cdsubmod = craplcr.cdsubmod
+                        rat_dstpoper = craplcr.dsoperac.
+                 
                  RUN natureza_operacao (INPUT par_tpctrato,
                                         INPUT crawepr.idquapro,
                                         INPUT craplcr.dsoperac,
                                         OUTPUT aux_nrseqite).
+               END.
              ELSE /* BNDES */
+               DO:
+                 ASSIGN rat_cdquaope = 1
+                        rat_cdlincre = 0
+                        rat_cdmodali = ""
+                        rat_cdsubmod = ""
+                        rat_dstpoper = "FINANCIAMENTO".
+
                  RUN natureza_operacao (INPUT par_tpctrato,
                                         INPUT 1, /* Normal */
                                         INPUT "FINANCIAMENTO",
                                         OUTPUT aux_nrseqite).
-
+               END.
          END.                       
     ELSE                        /* Cheque especial / Descontos */
          DO:
-             RUN natureza_operacao (INPUT par_tpctrato,
-                                    INPUT 0,
-                                    INPUT "",
-                                    OUTPUT aux_nrseqite).
+           ASSIGN rat_cdquaope = 0
+                  rat_cdlincre = 0
+                  rat_cdmodali = ""
+                  rat_cdsubmod = ""
+                  rat_dstpoper = IF par_tpctrato = 1 THEN "Limite de Credito" 
+                                                     ELSE "Limite de Desconto".
+
+           RUN natureza_operacao (INPUT par_tpctrato,
+                                  INPUT 0,
+                                  INPUT "",
+                                  OUTPUT aux_nrseqite).
          END.
+
+    ASSIGN rat_cdtpoper = par_tpctrato.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5325,12 +5566,15 @@ PROCEDURE calcula_rating_fisica:
 
     IF   par_tpctrato = 90   THEN /* Emprestimo / Financiamento */
          DO:
-             aux_nrseqite = crapprp.nrgarope.   
+             ASSIGN aux_nrseqite = crapprp.nrgarope
+                    rat_flgcjeco = IF crapprp.flgdocje = YES THEN 1 ELSE 0.
          END.
     ELSE                         /* Cheque especial / Desconto */   
          DO:
              aux_nrseqite = craplim.nrgarope.
          END.
+
+    ASSIGN rat_cdgarope = aux_nrseqite.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5357,6 +5601,8 @@ PROCEDURE calcula_rating_fisica:
          DO:
              ASSIGN aux_nrseqite = craplim.nrliquid.
          END.
+    
+    ASSIGN rat_cdliqgar = aux_nrseqite.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5374,17 +5620,20 @@ PROCEDURE calcula_rating_fisica:
     /********************************************************************
      Item 2_4 - Prazo da operacao.
     ********************************************************************/
-                                  
+
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */
          DO:
              IF  AVAIL crawepr THEN
-                 aux_qtdiapra = crawepr.qtpreemp * 30. /* Sempre vezes 30 */
+                 ASSIGN aux_qtdiapra = crawepr.qtpreemp * 30 /* Sempre vezes 30 */
+                        rat_qtpreope = crawepr.qtpreemp.
              ELSE /* BNDES */
-                 aux_qtdiapra = crapprp.qtparbnd * 30. /* Sempre vezes 30 */
+                 ASSIGN aux_qtdiapra = crapprp.qtparbnd * 30 /* Sempre vezes 30 */
+                        rat_qtpreope = crapprp.qtparbnd.
          END.
-    ELSE                          /* Cheque especial / Desconto */  
+    ELSE                          /* Cheque especial / Desconto */
          DO:
-             aux_qtdiapra = craplim.qtdiavig.   
+             ASSIGN aux_qtdiapra = craplim.qtdiavig
+                    rat_qtpreope = craplim.qtdiavig / 30.
          END.
 
     ASSIGN aux_nrseqite = IF   aux_qtdiapra <= 720   THEN
@@ -5530,7 +5779,9 @@ PROCEDURE calcula_rating_juridica:
                           ELSE
                                4.
 
-    ASSIGN aux_dsvalite = STRING(round(aux_nranoope,2)) + " anos de operacao".
+    ASSIGN aux_dsvalite = STRING(round(aux_nranoope,2)) + " anos de operacao"
+           rat_dtfunemp = crapjur.dtiniatv.
+
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5650,7 +5901,9 @@ PROCEDURE calcula_rating_juridica:
                           ELSE 
                                5.
 
-    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso".
+    ASSIGN aux_dsvalite = STRING(aux_qtdiaatr) + " dias de atraso"
+           rat_qtmaxatr = aux_qtdiaatr.
+    
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5678,6 +5931,8 @@ PROCEDURE calcula_rating_juridica:
        WHEN   4   THEN   ASSIGN   aux_nrseqite = 1. /* Servicos */
     
     END CASE.
+    
+    ASSIGN rat_cdseteco = crapjur.cdseteco.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5707,7 +5962,8 @@ PROCEDURE calcula_rating_juridica:
         IF   crapavt.dtadmsoc = ?  THEN
              NEXT.
 
-        ASSIGN aux_dtadmsoc = crapavt.dtadmsoc.
+        ASSIGN aux_dtadmsoc = crapavt.dtadmsoc
+               rat_dtprisoc = crapavt.dtadmsoc.
 
     END.
 
@@ -5775,7 +6031,9 @@ PROCEDURE calcula_rating_juridica:
                           ELSE 
                                1.
 
-    ASSIGN aux_dsvalite = STRING(crapjfn.perfatcl) + "% faturamento unico cliente".
+    ASSIGN aux_dsvalite = STRING(crapjfn.perfatcl) + "% faturamento unico cliente"
+           rat_prfatcli = crapjfn.perfatcl.
+    
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -5829,6 +6087,11 @@ PROCEDURE calcula_rating_juridica:
 
     IF   par_tpctrato = 90  THEN /* Emprestimo / Financiamento */
          DO:
+             IF AVAIL crawepr THEN
+               ASSIGN rat_vlopeatu = crawepr.vlemprst.
+             ELSE /*BNDES*/
+               ASSIGN rat_vlopeatu = crapprp.vlctrbnd.
+                            
              IF   NOT CAN-FIND(crapepr WHERE
                                crapepr.cdcooper = par_cdcooper   AND
                                crapepr.nrdconta = par_nrdconta   AND
@@ -5849,6 +6112,8 @@ PROCEDURE calcula_rating_juridica:
          DO:
              IF   par_tpctrato = 1    THEN /* Cheque especial */
                   DO:
+                      ASSIGN rat_vlopeatu = craplim.vllimite.
+
                       IF   craplim.insitlim <> 2   THEN
                            aux_vlendivi = craplim.vllimite.                      
                   END.
@@ -5861,6 +6126,9 @@ PROCEDURE calcula_rating_juridica:
          END.   
     ELSE
         ASSIGN aux_vlendivi = 0.
+    
+    ASSIGN rat_vlendivi = aux_vlendivi
+           rat_vlsldeve = aux_vlendivi.
     
     RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT SET h-b1wgen9999.
 
@@ -5894,6 +6162,8 @@ PROCEDURE calcula_rating_juridica:
         ASSIGN aux_dsvalite = " ".
         ASSIGN aux_nrseqite = 4.
       END.
+    
+    ASSIGN rat_vlmedfat = aux_vlmedfat.
     
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5997,6 +6267,9 @@ PROCEDURE calcula_rating_juridica:
                                INPUT  par_inproces,
                                OUTPUT aux_vltotpre). 
 
+    ASSIGN rat_vlpreatv = aux_vltotpre
+           rat_vlparope = aux_vlpresta.
+
     IF aux_vlmedfat > 0 THEN
        DO:
     /* Divide pelo faturamento medio */
@@ -6058,6 +6331,8 @@ PROCEDURE calcula_rating_juridica:
                   END.                 
          END.
 
+    ASSIGN rat_cdperemp = aux_nrseqite.
+
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -6085,7 +6360,12 @@ PROCEDURE calcula_rating_juridica:
          DO:
              /* Renegociacao / Composicao de divida*/
              IF  AVAIL crawepr THEN DO:
-
+                 ASSIGN rat_cdquaope = crawepr.idquapro
+                        rat_cdlincre = crawepr.cdlcremp
+                        rat_cdmodali = craplcr.cdmodali
+                        rat_cdsubmod = craplcr.cdsubmod
+                        rat_dstpoper = craplcr.dsoperac.
+                 
                  IF   crawepr.idquapro > 2 THEN 
                       ASSIGN aux_nrseqite = 6.
                  ELSE
@@ -6093,25 +6373,36 @@ PROCEDURE calcula_rating_juridica:
     
                          WHEN "CAPITAL DE GIRO ATE 30 DIAS"
                               THEN aux_nrseqite = 1.
-                         WHEN "FINANCIAMENTO"    
+                         WHEN "FINANCIAMENTO"
                               THEN aux_nrseqite = 2.
-                         WHEN "CAPITAL DE GIRO ACIMA 30 DIAS" 
+                         WHEN "CAPITAL DE GIRO ACIMA 30 DIAS"
                               THEN aux_nrseqite = 3.
-                         WHEN "EMPRESTIMO" 
+                         WHEN "EMPRESTIMO"
                               THEN aux_nrseqite = 4.
-    
                      END CASE.
              END.
              ELSE
                  IF  NOT AVAIL craplcr THEN
-                     aux_nrseqite = 2.
+                   ASSIGN aux_nrseqite = 2
+                          rat_cdquaope = 1
+                          rat_cdlincre = 0
+                          rat_cdmodali = ""
+                          rat_cdsubmod = ""
+                          rat_dstpoper = "FINANCIAMENTO".
          END.
     ELSE                         /* Limites / Descontos */
          DO:
+             ASSIGN rat_cdquaope = 0
+                    rat_cdlincre = 0
+                    rat_cdmodali = ""
+                    rat_cdsubmod = "".
+
              IF   craplim.tpctrlim = 1   THEN /* Limite */
-                  ASSIGN aux_nrseqite = 5.
-             ELSE
-                  ASSIGN aux_nrseqite = 2.   /* Descontos*/
+                  ASSIGN aux_nrseqite = 5
+                         rat_dstpoper = "Limite de Credito".
+             ELSE /* Descontos*/
+                  ASSIGN aux_nrseqite = 2
+                         rat_dstpoper = "Limite de Desconto".
          END.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
@@ -6134,12 +6425,15 @@ PROCEDURE calcula_rating_juridica:
 
     IF   par_tpctrato = 90   THEN    /* Emprestimo / Financiamento   */
          DO:                  
-             ASSIGN aux_nrseqite = crapprp.nrgarope.
+             ASSIGN aux_nrseqite = crapprp.nrgarope
+                    rat_flgcjeco = IF crapprp.flgdocje = YES THEN 1 ELSE 0.
          END.
     ELSE                            /* Descontos / Limite rotativo */
          DO:
              ASSIGN aux_nrseqite = craplim.nrgarope.         
-         END.       
+         END.
+
+    ASSIGN rat_cdgarope = aux_nrseqite.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -6167,6 +6461,8 @@ PROCEDURE calcula_rating_juridica:
              ASSIGN aux_nrseqite = craplim.nrliquid.
          END.
 
+    ASSIGN rat_cdliqgar = aux_nrseqite.
+
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
                            INPUT  par_tpctrato,
@@ -6188,13 +6484,16 @@ PROCEDURE calcula_rating_juridica:
     IF   par_tpctrato = 90   THEN /* Emprestimo / Financiamento */
          DO:
              IF  AVAIL crawepr THEN
-                 aux_qtdiapra = crawepr.qtpreemp * 30.  /* Sempre vezes 30 */
+               ASSIGN aux_qtdiapra = crawepr.qtpreemp * 30  /* Sempre vezes 30 */
+                      rat_qtpreope = crawepr.qtpreemp.
              ELSE /* BNDES */
-                 aux_qtdiapra = crapprp.qtparbnd * 30.  /* Sempre vezes 30 */
+               ASSIGN aux_qtdiapra = crapprp.qtparbnd * 30  /* Sempre vezes 30 */
+                      rat_qtpreope = crapprp.qtparbnd.
          END.
     ELSE 
          DO:
-             aux_qtdiapra = craplim.qtdiavig.
+           ASSIGN aux_qtdiapra = craplim.qtdiavig
+                  rat_qtpreope = craplim.qtdiavig / 30.
          END.
 
     ASSIGN aux_nrseqite = IF   aux_qtdiapra <= 360   THEN
@@ -7553,7 +7852,10 @@ PROCEDURE historico_cooperado:
          END.
 
     /* Data do inicio do estouro a partir de um ano atras */
-    ASSIGN aux_dtiniest = ADD-INTERVAL(par_dtmvtolt, - 1,"YEARS").
+    ASSIGN aux_dtiniest = ADD-INTERVAL(par_dtmvtolt, - 1,"YEARS")
+           rat_qtchqesp = 0
+           rat_qtdevalo = 0
+           rat_qtdevald = 0.
 
     FOR EACH tt-estouros WHERE tt-estouros.dtiniest >= aux_dtiniest    AND
                                tt-estouros.cdhisest  = "Estouro"       NO-LOCK:
@@ -7564,6 +7866,17 @@ PROCEDURE historico_cooperado:
                      
     END.
 
+    FOR EACH tt-estouros WHERE tt-estouros.dtiniest >= aux_dtiniest     AND
+                               tt-estouros.cdhisest  = "Devolucao Chq." NO-LOCK,
+           FIRST crapali WHERE crapali.dsalinea = tt-estouros.dsobserv
+                           AND CAN-DO("11,12",STRING(crapali.cdalinea)) NO-LOCK:
+
+      IF crapali.cdalinea = 11 THEN
+        rat_qtdevalo = rat_qtdevalo + 1.
+      ELSE
+        rat_qtdevald = rat_qtdevald + 1.
+    END.
+
     FOR EACH crapsda WHERE crapsda.cdcooper  = par_cdcooper   AND
                            crapsda.nrdconta  = par_nrdconta   AND
                            crapsda.dtmvtolt >= aux_dtiniest   NO-LOCK:
@@ -7571,7 +7884,8 @@ PROCEDURE historico_cooperado:
         IF   crapsda.vlsddisp < 0  AND
              crapsda.vlsddisp >= (crapsda.vllimcre * -1)  THEN
              DO:
-                 ASSIGN aux_qtdiaat2 = aux_qtdiaat2 + 1.
+                 ASSIGN aux_qtdiaat2 = aux_qtdiaat2 + 1
+                        rat_qtchqesp = rat_qtchqesp + 1.
              END.
         ELSE
              DO:    
@@ -7619,7 +7933,9 @@ PROCEDURE historico_cooperado:
                            crapneg.cdobserv = 12) NO-LOCK) THEN
             ASSIGN par_nrseqite = 4.
     END.     
-    ASSIGN aux_dsvalite = STRING(aux_qtestour) + " est., " + STRING(aux_qtdiaatr) + " dias atr., " + STRING(aux_qtdiasav) + " dias ch. esp.".
+    
+    ASSIGN aux_dsvalite = STRING(aux_qtestour) + " est., " + STRING(aux_qtdiaatr) + " dias atr., " + STRING(aux_qtdiasav) + " dias ch. esp."
+           rat_qtadidep = aux_qtestour.
     
     RETURN "OK".
 
