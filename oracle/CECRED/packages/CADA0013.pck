@@ -2063,9 +2063,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0013 IS
       END LOOP;
     END IF;
 
-    gene0002.pc_XML_para_arquivo(pr_XML => vr_xml,
-    pr_caminho => '/microsh/cecred/andrino', pr_arquivo => 'teste.xml', pr_des_erro =>  vr_des_erro);
-
     --> Enviar requisição SOAP
     SOAP0002.pc_envia_requisicao (pr_cdservic  => 1 --> ListaDominioInternoService --> Chamve do Serviço requisitado
                                  ,pr_cdmetodo  => vr_cdmetodo                      --> Chave do Método requisitado
