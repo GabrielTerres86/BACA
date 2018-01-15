@@ -6006,15 +6006,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                      ,pr_nrctrato => pr_nrctrato);
       FETCH cr_crapepr
        INTO rw_crapepr1;
+      IF vr_fcrawepr THEN
+        rat_vlopeatu := rw_crawepr4.vlemprst;
+      ELSE -- BNDES
+        rat_vlopeatu := rw_crapprp3.vlctrbnd;
+      END IF;
       -- Se não localizou
       IF cr_crapepr%NOTFOUND THEN
         -- Se há a proposta
         IF vr_fcrawepr THEN
           vr_vlendivi := rw_crawepr4.vlemprst;
-          rat_vlopeatu := rw_crawepr4.vlemprst;
         ELSE -- BNDES
           vr_vlendivi := rw_crapprp3.vlctrbnd;
-          rat_vlopeatu := rw_crapprp3.vlctrbnd;
         END IF;
       END IF;
       CLOSE cr_crapepr;
@@ -8449,14 +8452,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                      ,pr_nrdconta => pr_nrdconta
                      ,pr_nrctrato => pr_nrctrato);
       FETCH cr_crapepr INTO rw_crapepr2;
+      IF vr_fcrawepr THEN
+        rat_vlopeatu := rw_crawepr8.vlemprst;
+      ELSE
+        rat_vlopeatu := rw_crapprp6.vlctrbnd;
+      END IF;
       -- se não localizou
       IF cr_crapepr%NOTFOUND THEN
         IF vr_fcrawepr THEN
           vr_vlendivi := rw_crawepr8.vlemprst;
-          rat_vlopeatu := rw_crawepr8.vlemprst;
         ELSE
           vr_vlendivi := rw_crapprp6.vlctrbnd;
-          rat_vlopeatu := rw_crapprp6.vlctrbnd;
         END IF;
       END IF;
       CLOSE cr_crapepr;
