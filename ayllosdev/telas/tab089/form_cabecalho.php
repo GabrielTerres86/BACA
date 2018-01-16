@@ -13,7 +13,6 @@
         <option value="C">C - Consultar Par&acirc;metros Op. Taxas Pr&eacute;-fixadas</option>                
         <option value="A">A - Alterar Par&acirc;metros Op. Taxas Pr&eacute;-fixadas</option>           
     </select>    
-    
     <a href="#" class="botao" id="btnOK" name="btnOK" onClick="controlaOperacao();
                 return false;" style = "text-align:right;">OK</a>
 
