@@ -7325,10 +7325,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            AND craplem.nrdconta = pr_nrdconta
            AND craplem.nrctremp = pr_nrctremp
            AND craplem.cdhistor NOT IN (
-                   2365,2363 -- Multa
-                  ,2367,2369 -- Multa Aval
-                  ,2371,2373 -- Juros de Mora
-                  ,2375,2377 -- Juros de Mora Aval
+                   2365,2363,2349,2348 -- Multa
+                  ,2367,2369           -- Multa Aval
+                  ,2371,2373,2347,2346 -- Juros de Mora
+                  ,2375,2377           -- Juros de Mora Aval
                );
 
       -- Variaveis gerais

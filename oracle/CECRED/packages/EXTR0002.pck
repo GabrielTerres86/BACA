@@ -13200,7 +13200,7 @@ END pc_consulta_ir_pj_trim;
         --limpar tabela memoria
         vr_tab_linha_parcela.DELETE;
         --Verificar Quantidade de Parcelas para gerar linhas 
-        vr_contalin:= TRUNC(vr_tab_parcela_epr.COUNT / 2);
+        vr_contalin:= ROUND(vr_tab_parcela_epr.COUNT / 2);
         --Se for numero impar de parcelas aumenta em 1
         IF MOD(rw_crapepr.qtpreemp,2) <> 0 THEN
           vr_contalin:= vr_contalin+1;
