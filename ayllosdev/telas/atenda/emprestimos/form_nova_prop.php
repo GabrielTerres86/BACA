@@ -184,14 +184,16 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
-		
+
 		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+		<? if($glbvars["cddepart"] == 7){ /* DEPARTAMENTO DE CONTROLE */ ?>		
 		<input type="hidden" name="teste" id="teste">
 		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
 		<input name="idquaprc" id="idquaprc" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
 		<br />		
+		<?  }	?>
 		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
