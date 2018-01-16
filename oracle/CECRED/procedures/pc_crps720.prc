@@ -174,9 +174,9 @@ BEGIN
       -- caso tenhamos excedido a quantidade de JOBS em execucao
       GENE0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                   ,pr_qtdproce => vr_qtdjobs
-                                  ,pr_des_erro => pr_dscritic);
+                                  ,pr_des_erro => vr_dscritic);
       -- Se houve erro
-      IF pr_dscritic IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
 
@@ -186,11 +186,27 @@ BEGIN
     -- ate que todos os Jobs tenha finalizado seu processamento
     GENE0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                 ,pr_qtdproce => 0
-                                ,pr_des_erro => pr_dscritic);
+                                ,pr_des_erro => vr_dscritic);
     -- Se houve erro
-    IF pr_dscritic IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
+    
+    --> Validar conclusao do processo do controle do processo
+    gene0001.pc_valid_batch_controle ( pr_cdcooper   => pr_cdcooper
+                                      ,pr_cdprogra   => vr_cdprogra 
+                                      ,pr_dtmvtolt   => rw_crapdat.dtmvtolt 
+                                      ,pr_nrexecucao => 1
+                                      ,pr_cdcritic   => vr_cdcritic  
+                                      ,pr_dscritic   => vr_dscritic);   
+    
+
+    -- Se houve erro
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
 
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper

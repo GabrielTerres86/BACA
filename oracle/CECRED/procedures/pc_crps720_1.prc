@@ -213,6 +213,25 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+    -- Incializar controle
+    IF nvl(pr_cdrestart,0) = 0 THEN
+      -- Grava agencia no controle do batch
+      GENE0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper
+                                      ,pr_cdprogra    => vr_cdprogra
+                                      ,pr_dtmvtolt    => pr_dtmvtolt
+                                      ,pr_tpagrupador => 1 -- PA
+                                      ,pr_cdagrupador => pr_cdagenci
+                                      ,pr_cdrestart   => 0
+                                      ,pr_nrexecucao  => 1
+                                      ,pr_idcontrole  => vr_idcontrole
+                                      ,pr_cdcritic    => vr_cdcritic
+                                      ,pr_dscritic    => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
+
     -- Inicializa
     vr_qtdconta := 0;
 

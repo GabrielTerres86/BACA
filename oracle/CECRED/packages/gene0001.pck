@@ -400,6 +400,16 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE);              -- Descricao da critica
 
+  
+  --> Validar conclusao do processo do controle do batch
+  PROCEDURE pc_valid_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+  
+  
   -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
   -- Chamado 665812
   TYPE typ_reg_crapcri IS
@@ -3064,6 +3074,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     END;
 
   END pc_grava_batch_controle;
+
+  
+  --> Validar conclusao do processo do controle do batch
+  PROCEDURE pc_valid_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+    /*..............................................................................
+
+       Programa: pc_valid_batch_controle
+       Autor   : Odirlei Busana - AMcom
+       Data    : Janeiro/2018                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Validar conclusao do processo do controle do batch
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    ---->> CURSORES <<----    
+    --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
+    CURSOR cr_tbbtch ( pr_cdcooper tbgen_batch_controle.cdcooper%TYPE, 
+                       pr_cdprogra tbgen_batch_controle.cdprogra%TYPE, 
+                       pr_dtmvtolt tbgen_batch_controle.dtmvtolt%TYPE, 
+                       pr_nrexecuc tbgen_batch_controle.nrexecucao%TYPE)IS
+      SELECT 1
+        FROM tbgen_batch_controle ctr
+       WHERE ctr.cdcooper = pr_cdcooper
+         AND ctr.cdprogra = pr_cdprogra
+         AND ctr.dtmvtolt = pr_dtmvtolt
+         AND ctr.nrexecucao = pr_nrexecuc
+         AND ctr.insituacao = 1 ;  
+    rw_tbbtch cr_tbbtch%ROWTYPE;
+    --->> VARIAVEIS <<---
+    vr_exec_erro EXCEPTION;
+    vr_dscritic  VARCHAR2(3000);
+    vr_cdcritic  NUMBER;
+    
+  BEGIN
+    
+    --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
+    OPEN cr_tbbtch ( pr_cdcooper => pr_cdcooper,
+                     pr_cdprogra => pr_cdprogra,
+                     pr_dtmvtolt => pr_dtmvtolt,
+                     pr_nrexecuc => pr_nrexecucao);
+    FETCH cr_tbbtch INTO rw_tbbtch;
+    IF cr_tbbtch%FOUND THEN 
+      CLOSE cr_tbbtch;
+      
+      vr_dscritic := 'Rotina paralela '||pr_cdprogra||' terminou com ERRO.';
+      RAISE vr_exec_erro;
+    ELSE
+      CLOSE cr_tbbtch;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exec_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na rotina GENE0001.pc_valid_batch_controle: ' || SQLERRM;
+  END pc_valid_batch_controle;
+
 
   /* Finaliza o controle do batch por agencia ou convenio */
   PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle

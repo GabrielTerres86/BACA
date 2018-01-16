@@ -258,8 +258,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
                 ,dsanomod  VARCHAR2(40)
                 ,dscorbem  VARCHAR2(150)
                 ,avaliacao crapbpr.vlmerbem%TYPE
-                ,proprietario   VARCHAR2(200)
-                ,dados_pessoais VARCHAR2(200)
+                ,proprietario   VARCHAR2(2000)
+                ,dados_pessoais VARCHAR2(2000)
                 ,endereco       VARCHAR2(300)
                 ,conjuge        VARCHAR2(300)
                 ,dscatbem  crapbpr.dscatbem%TYPE
@@ -361,6 +361,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 			                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 						    	(Adriano - P339).
 
+                   15/01/2018 - Ajustes para exibir inf. do proprietario conforme solicitação do juridico.
+                                PRJ298-FGTS(Odirlei-AMcom)
+
     ............................................................................. */
 
 
@@ -437,7 +440,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 
     -- busca nome do avalista
     CURSOR cr_crapavt IS
-       SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
+       SELECT crapavt.nmdavali nmdavali,
+              (CASE 
+                 WHEN crapavt.inpessoa = 0 AND length(crapavt.nrcpfcgc) <= 11 THEN 1
+                 WHEN crapavt.inpessoa = 0 AND length(crapavt.nrcpfcgc)  > 11 THEN 2
+                 ELSE crapavt.inpessoa
+               END) inpessoa,
               CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
                   DECODE(NVL(crapavt.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
@@ -455,7 +463,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
               ', da cidade de '||crapavt.nmcidade||'/'||crapavt.cdufresd||', CEP '||gene0002.fn_mask_cep(crapavt.nrcepend) dsendere,
               DECODE(TRIM(crapavt.nmconjug),NULL,NULL,'Cônjuge: '||crapavt.nmconjug) ||
               DECODE(NVL(crapavt.nrcpfcjg,0),0,'',' CPF n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcjg,1))||
-              DECODE(crapavt.tpdoccjg,'CI',' RG n.º '|| crapavt.nrdoccjg,'')  nrnmconjug
+              DECODE(crapavt.tpdoccjg,'CI',' RG n.º '|| crapavt.nrdoccjg,'')  nrnmconjug,
+              nvl(trim(gnetcvl.rsestcvl),trim(gnetcvl_2.rsestcvl)) rsestcvl,
+              decode(nvl(crapavt.cdnacion,0),0,crapttl.cdnacion,crapavt.cdnacion) cdnacion,
+              NVL(TRIM(crapavt.dsproftl),crapttl.dsproftl) dsproftl,
+              NVL(TRIM(crapavt.nrdocava),crapttl.nrdocttl) nrdocptl,
+              crapavt.dsendres##1,
+              crapavt.dsendres##2,
+              crapavt.nrcepend,
+              crapavt.nmcidade,
+              crapavt.cdufresd,
+              crapavt.nrendere,
+              crapavt.nrcpfcgc,
+              crapavt.cdcooper,
+              crapass.nrdconta nrdctato
       FROM  gnetcvl,
             gnetcvl gnetcvl_2,
             crapttl,
@@ -475,6 +496,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
       AND   crapttl.idseqttl (+) = 1;
     rw_crapavt cr_crapavt%ROWTYPE;
 
+    -- Cursor sobre o endereco do associado
+    CURSOR cr_crapenc( pr_cdcooper crapenc.cdcooper%TYPE,
+                       pr_nrdconta crapenc.nrdconta%TYPE,
+                       pr_inpessoa crapass.inpessoa%TYPE) IS
+      SELECT crapenc.dsendere,
+             crapenc.nrendere,
+             crapenc.nmbairro,
+             crapenc.nmcidade,
+             crapenc.cdufende,
+             crapenc.nrcepend
+        FROM crapenc
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND idseqttl = 1
+         AND tpendass = CASE
+                        WHEN pr_inpessoa = 1 THEN
+                          10 --Residencial
+                        ELSE
+                          9 -- Comercial
+                        END;
+    rw_crapenc cr_crapenc%ROWTYPE;--armazena informacoes do cursor cr_crapenc
+    
     --> Identificar tipo de emprestimo
     CURSOR cr_crapepr IS
       SELECT epr.tpemprst,
@@ -487,6 +530,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
          AND epr.nrdconta = pr_nrdconta
          AND epr.nrctremp = pr_nrctremp; 
     rw_crapepr cr_crapepr%ROWTYPE;    
+
+    
+    vr_dsqualif  VARCHAR2(2000);
+    vr_dsendere  VARCHAR2(1000);
+    vr_dsnacion  crapnac.dsnacion%TYPE;         
+      
 
   BEGIN
     
@@ -502,7 +551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     IF cr_crapass%FOUND THEN -- verifica se encontrou
       CLOSE cr_crapass;
       IF rw_crapepr.tpemprst = 2 THEN
-        pr_nmdavali   := 'Nome Proprietário: '||rw_crapass.nmprimtl;
+        pr_nmdavali   := 'Nome Proprietário: '||rw_crapass.nmprimtl ||' - Emitente/Cooperado.';
       ELSE
         pr_nmdavali   := 'Nome Proprietário (interveniente garantidor): '||rw_crapass.nmprimtl;
       END IF;
@@ -535,7 +584,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
           END IF;
         END IF;
         vr_flginterv  := 'S';
-        pr_nmdavali   := rw_crapavt.nmdavali;
+
+        IF rw_crapepr.tpemprst = 2 THEN
+          vr_dsqualif := NULL;
+        
+          --> montar desc endereço
+          IF TRIM(rw_crapavt.dsendres##1) IS NOT NULL THEN
+            vr_dsendere := rw_crapavt.dsendres##1 || ', '
+                           || 'n° '|| rw_crapavt.nrendere || ', bairro ' || rw_crapavt.dsendres##2 || ', '
+                           || 'da cidade de ' || rw_crapavt.nmcidade || '/' || rw_crapavt.cdufresd || ', '
+                           || 'CEP ' || gene0002.fn_mask_cep(rw_crapavt.nrcepend);
+          ELSIF nvl(rw_crapavt.nrdctato,0) <> 0 THEN 
+            -- Busca os dados do endereco residencial do associado
+            rw_crapenc := null;
+            OPEN  cr_crapenc( pr_cdcooper => rw_crapavt.cdcooper,
+                              pr_nrdconta => rw_crapavt.nrdctato,
+                              pr_inpessoa => rw_crapavt.inpessoa);
+            FETCH cr_crapenc INTO rw_crapenc;                
+            CLOSE cr_crapenc;
+                
+            IF TRIM(rw_crapenc.dsendere) IS NOT NULL THEN
+              vr_dsendere := rw_crapenc.dsendere || ', '
+                          || 'n° '|| rw_crapenc.nrendere || ', bairro ' || rw_crapenc.nmbairro || ', '
+                          || 'da cidade de ' || rw_crapenc.nmcidade || '/' || rw_crapenc.cdufende || ', '
+                          || 'CEP ' || gene0002.fn_mask_cep(rw_crapenc.nrcepend);
+            END IF;              
+          END IF;  
+          
+          -- Verifica se o documento eh um CPF ou CNPJ
+          IF rw_crapavt.inpessoa = 1 THEN              
+
+            -- Busca a Nacionalidade
+            vr_dsnacion := NULL;
+            vr_dsnacion := cada0014.fn_desc_nacionalidade(pr_cdnacion => rw_crapavt.cdnacion,
+                                                          pr_dscritic => vr_dscritic);
+
+            -- monta descricao para o relatorio com os dados do emitente
+            vr_dsqualif := (CASE WHEN TRIM(vr_dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(vr_dsnacion) || ', ' ELSE '' END)
+                        || (CASE WHEN TRIM(rw_crapavt.dsproftl) IS NOT NULL THEN LOWER(rw_crapavt.dsproftl) || ', ' ELSE '' END)
+                        || (CASE WHEN TRIM(rw_crapavt.rsestcvl) IS NOT NULL THEN LOWER(rw_crapavt.rsestcvl) || ', ' ELSE '' END)
+                        || 'inscrito(a) no CPF sob n° ' || gene0002.fn_mask_cpf_cnpj(rw_crapavt.nrcpfcgc, rw_crapavt.inpessoa) || ', '
+                        || 'portador(a) do RG n° ' || rw_crapavt.nrdocptl;
+                          
+            IF TRIM(vr_dsendere) IS NOT NULL THEN
+              vr_dsqualif := vr_dsqualif || ', residente e domiciliado(a) na '|| vr_dsendere;              
+            END IF;
+              
+            IF nvl(rw_crapavt.nrdctato,0) <> 0 THEN 
+              vr_dsqualif := vr_dsqualif || ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(rw_crapavt.nrdctato));
+            END IF;
+                  
+          ELSE
+            -- monta descricao para o relatorio com os dados do emitente
+            vr_dsqualif := ', inscrita no CNPJ sob n° '|| gene0002.fn_mask_cpf_cnpj(rw_crapavt.nrcpfcgc, rw_crapavt.inpessoa);
+              
+            IF TRIM(vr_dsendere) IS NOT NULL THEN
+              vr_dsqualif := vr_dsqualif || ', com sede na '|| vr_dsendere;              
+            END IF;
+              
+            IF nvl(rw_crapavt.nrdctato,0) <> 0 THEN 
+              vr_dsqualif := vr_dsqualif || ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(rw_crapavt.nrdctato));
+            END IF;
+          END IF;
+          
+          
+        
+          pr_nmdavali   := 'Nome Proprietário: '||rw_crapavt.nmdavali ||'('||vr_dsqualif||'), na condição de interveniente garantidor.';
+        ELSE
+          pr_nmdavali   := 'Nome Proprietário (interveniente garantidor): '||rw_crapavt.nmdavali;
+        END IF;
+                
         pr_dados_pess := rw_crapavt.dados_pessoais;
         pr_dsendere   := rw_crapavt.dsendere;
         pr_nrnmconjug := rw_crapavt.nrnmconjug;
@@ -547,7 +665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
         IF cr_crapass%FOUND THEN
           CLOSE cr_crapass;
           IF rw_crapepr.tpemprst = 2 THEN
-            pr_nmdavali   := 'Nome Proprietário: '||rw_crapass.nmprimtl;
+            pr_nmdavali   := 'Nome Proprietário: '||rw_crapass.nmprimtl ||' - Emitente/Cooperado.';
           ELSE
             pr_nmdavali   := 'Nome Proprietário (interveniente garantidor): '||rw_crapass.nmprimtl;
           END IF;
@@ -806,8 +924,8 @@ BEGIN
       AND     crapbpr.flgalien = 1
       ORDER BY crapbpr.progress_recid;
 
-  vr_proprietario   VARCHAR2(120);
-  vr_dados_pessoais VARCHAR2(110);
+  vr_proprietario   VARCHAR2(2000);
+  vr_dados_pessoais VARCHAR2(2000);
   vr_endereco       VARCHAR2(200);
   vr_conjuge        VARCHAR2(200);
   vr_flg_inter      VARCHAR2(5);    --> flag verificar de interveniente esta habilitado
@@ -1961,7 +2079,7 @@ BEGIN
 
         -- monta descricao para o relatorio com os dados do emitente
         vr_emitente := rw_crawepr.nmprimtl || ', ' 
-                    || (CASE WHEN TRIM(rw_crapnac.dsnacion) IS NOT NULL THEN LOWER(rw_crapnac.dsnacion) || ', ' ELSE '' END)
+                    || (CASE WHEN TRIM(rw_crapnac.dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(rw_crapnac.dsnacion) || ', ' ELSE '' END)
                     || (CASE WHEN TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN LOWER(rw_gnetcvl.dsproftl) || ', ' ELSE '' END)
                     || (CASE WHEN TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN LOWER(rw_gnetcvl.rsestcvl) || ', ' ELSE '' END)
                     || 'inscrito(a) no CPF sob n° ' || gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa) || ', '
@@ -2022,7 +2140,7 @@ BEGIN
           -- monta descricao para o relatorio com os dados do emitente
           vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
                                             || vr_tab_aval(vr_ind_aval).nmdavali || ', ' 
-                                            || (CASE WHEN TRIM(vr_tab_aval(vr_ind_aval).dsnacion) IS NOT NULL THEN LOWER(vr_tab_aval(vr_ind_aval).dsnacion) || ', ' ELSE '' END)
+                                            || (CASE WHEN TRIM(vr_tab_aval(vr_ind_aval).dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(vr_tab_aval(vr_ind_aval).dsnacion) || ', ' ELSE '' END)
                                             || (CASE WHEN nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 AND TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN LOWER(rw_gnetcvl.dsproftl) || ', ' ELSE '' END)
                                             || (CASE WHEN nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 AND TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN LOWER(rw_gnetcvl.rsestcvl) || ', ' ELSE '' END)
                                             || 'inscrito no CPF/CNPJ n° ' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa) || ', '
@@ -2154,8 +2272,9 @@ BEGIN
                                   '  <dsbem>'          || 'Descrição do bem: ' || vr_tab_bens(vr_des_chave).dscatbem || ' '                 ||
                                                            vr_tab_bens(vr_des_chave).dsbem                           || '</dsbem>'          ||
                                   '  <proprietario>'   || vr_tab_bens(vr_des_chave).proprietario                     || '</proprietario>'   ||
-                                  '  <dados_pessoais>' || vr_tab_bens(vr_des_chave).dados_pessoais                   || '</dados_pessoais>' ||
-                                  '  <endereco>'       || vr_tab_bens(vr_des_chave).endereco                         || '</endereco>'       ||
+                                 --> Estas informações estao concatenadas no campo proprietario para ficar no padrão passado pelo juridico
+                                 -->  '  <dados_pessoais>' || vr_tab_bens(vr_des_chave).dados_pessoais                   || '</dados_pessoais>' ||
+                                 -->  '  <endereco>'       || vr_tab_bens(vr_des_chave).endereco                         || '</endereco>'       ||
                                   '  <conjuge>'        || vr_tab_bens(vr_des_chave).conjuge                          || '</conjuge>'        ||
                                   '  <avaliacao>'      || 'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00') || '</avaliacao>' ||
                                   '</bem>');
