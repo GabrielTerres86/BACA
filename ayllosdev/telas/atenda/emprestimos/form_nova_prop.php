@@ -2,11 +2,11 @@
 <? 
 /*!
  * FONTE        : form_nova_prop.php
- * CRIAÃ‡ÃƒO      : Gabriel Capoia (DB1)
- * DATA CRIAÃ‡ÃƒO : 01/04/2011 
- * OBJETIVO     : FormulÃ¡rio da rotina Emprestimos da tela ATENDA
+ * CRIAÇÃO      : Gabriel Capoia (DB1)
+ * DATA CRIAÇÃO : 01/04/2011 
+ * OBJETIVO     : Formulário da rotina Empréstimos da tela ATENDA
  * --------------
- * ALTERAÃ‡Ã•ES   : 
+ * ALTERAÇÕES   : 
  * --------------
  * 000: [08/08/2011] Adicionado campo para tipo de emprÃ©stimo - Marcelo L. Pereira (GATI)
  * 001: [20/09/2011] CorreÃ§Ãµes de acentuaÃ§Ã£o - Marcelo L. Pereira (GATI)
@@ -22,6 +22,7 @@
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data Ãºlt. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
  * 012: [26/06/2017] Ajuste para rotina ser chamada atravÃ©s da tela ATENDA > Produtos (P364).
  * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 014: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
  ?> 
 
