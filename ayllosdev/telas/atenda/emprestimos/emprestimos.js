@@ -1879,6 +1879,8 @@ function controlaLayout(operacao) {
         cQtParc.addClass('rotulo').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
         cQualiParc.addClass('rotulo').css('width', '35px');
         cDsQualiParc.addClass('').css('width', '108');
+        cQualiParcC.addClass('rotulo').css('width', '35px');
+        cDsQualiParcC.addClass('').css('width', '108');
         cDebitar.addClass('rotulo').css('width', '90px');
         cPercCET.addClass('rotulo moeda').css('width', '50px');
         cTipoEmpr.addClass('rotulo').css('width', '90px');
@@ -1908,6 +1910,7 @@ function controlaLayout(operacao) {
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
+        rQualiParcC.addClass('').css('width', '250px');
         rPercCET.addClass('').css('width', '265px');
         rDtPgmento.addClass('rotulo').css('width', '265px');
         rDtUltPag.addClass('rotulo').css('width', '265px');
@@ -1956,6 +1959,7 @@ function controlaLayout(operacao) {
             cNivelRic.desabilitaCampo();
             cRiscoCalc.desabilitaCampo();
             cQualiParc.desabilitaCampo();
+            cQualiParcC.desabilitaCampo();
             cLiquidacoes.attr('disabled', true);
             cVlPrest.desabilitaCampo();
             cDtlibera.desabilitaCampo();
@@ -2033,6 +2037,7 @@ function controlaLayout(operacao) {
             cVlEmpr.desabilitaCampo();
             cVlPrest.desabilitaCampo();
             cQualiParc.desabilitaCampo();
+            cQualiParcC.desabilitaCampo();
             cLiquidacoes.attr('disabled', true);
             cDtlibera.desabilitaCampo();
             cDtUltPag.desabilitaCampo();
