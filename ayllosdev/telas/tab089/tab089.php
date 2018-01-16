@@ -3,7 +3,7 @@
  * FONTE        : tab089.php
  * CRIAÇÃO      : Diego Simas/Reginaldo Silva/Letícia Terres - AMcom
  * DATA CRIAÇÃO : 12/01/2018
- * OBJETIVO     : Mostrar tela TAB089 TESTE
+ * OBJETIVO     : Mostrar tela TAB089
  */
 
 session_start();
