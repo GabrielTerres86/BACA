@@ -30,6 +30,7 @@
  * 020: [30/11/2016] P341-AutomatizaÃ§Ã£o BACENJUD - Remover o envio da descriÃ§Ã£o do departamento, pois nÃ£o utiliza na BO (Renato Darosci - Supero)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 023: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
 ?>
 
@@ -110,6 +111,8 @@
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '' ;
 	$flgimppr = (isset($_POST['flgimppr'])) ? $_POST['flgimppr'] : '' ;
 	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : '' ;
+	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
+	$idquaprc = (isset($_POST['idquaprc'])) ? $_POST['idquaprc'] : '' ;
 	$flgpagto = (isset($_POST['flgpagto'])) ? $_POST['flgpagto'] : '' ;
 	$nrctaav2 = (isset($_POST['nrctaav2'])) ? $_POST['nrctaav2'] : '' ;
 	$dtcnsspc = (isset($_POST['dtcnsspc'])) ? $_POST['dtcnsspc'] : '' ;
@@ -413,6 +416,8 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
+	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
+	$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
 	$xml .= '		<dtcnsspc>'.$dtcnsspc.'</dtcnsspc>';
