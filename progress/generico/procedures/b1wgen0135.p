@@ -1,4 +1,4 @@
-ï»¿/*.............................................................................
+/*.............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0135.p
     Autor(a): Fabricio
@@ -9,8 +9,8 @@
     Objetivo  : BO com regras de negocio refente a tela TRAESP.
                 
   
-    Alteracoes: 13/11/2013 - Nova forma de chamar as agÃªncias, de PAC agora 
-                             a escrita serÃ¡ PA (Guilherme Gielow) 
+    Alteracoes: 13/11/2013 - Nova forma de chamar as ag?ncias, de PAC agora 
+                             a escrita será PA (Guilherme Gielow) 
                              
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
@@ -71,7 +71,7 @@ PROCEDURE consulta-transacoes-especie:
         
         ASSIGN par_contador = par_contador + 1.
         
-        /* controles da paginaÃ§Ã£o */
+        /* controles da paginaç?o */
         IF (par_contador < par_nriniseq) OR
            (par_contador > (par_nriniseq + par_nrregist)) THEN
             NEXT.
@@ -202,7 +202,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 DO:
                     ASSIGN par_contador = par_contador + 1.
         
-                    /* controles da paginaÃ§Ã£o */
+                    /* controles da paginaç?o */
                     IF (par_contador < par_nriniseq) OR
                        (par_contador > (par_nriniseq + par_nrregist)) THEN
                         NEXT.
@@ -293,7 +293,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 DO:
                     ASSIGN par_contador = par_contador + 1.
         
-                    /* controles da paginaÃ§Ã£o */
+                    /* controles da paginaç?o */
                     IF (par_contador < par_nriniseq) OR
                        (par_contador > (par_nriniseq + par_nrregist)) THEN
                         NEXT.
@@ -339,7 +339,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                         ,OUTPUT 0          /* pr_vlcredito_diario_pj --> Retorno da operacao     */
                         ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
                         ,OUTPUT 0
-                        ,OUTPUT "" ).      /* pr_dscritic --> DescriÃ§ao da critica    */
+                        ,OUTPUT "" ).      /* pr_dscritic --> Descriçao da critica    */
           
           /* Fechar o procedimento para buscarmos o resultado */ 
           CLOSE STORED-PROC pc_consultar_parmon_pld_car
@@ -356,7 +356,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                craplft.cdagenci = par_cdagenci AND
                craplft.cdbccxlt = 11 AND
                craplft.nrdolote = 15000 + crapbcx.nrdcaixa AND
-               craplft.tppagmto = 1 AND /*** Pagamento em espÃ©cie ***/
+               craplft.tppagmto = 1 AND /*** Pagamento em espécie ***/
                craplft.vllanmto >= aux_vllimite NO-LOCK
                BY craplft.dtmvtolt:
 
@@ -373,7 +373,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                  DO:
                   ASSIGN par_contador = par_contador + 1.
 
-                  /* controles da paginaÃ§Äƒo */
+                  /* controles da paginaçao */
                   IF (par_contador < par_nriniseq) OR
                      (par_contador > (par_nriniseq + par_nrregist)) THEN
                      NEXT.
@@ -424,7 +424,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                 DO:
                   ASSIGN par_contador = par_contador + 1.
 
-                  /* controles da paginaÃ§Äƒo */
+                  /* controles da paginaçao */
                   IF (par_contador < par_nriniseq) OR
                      (par_contador > (par_nriniseq + par_nrregist)) THEN
                       NEXT.
@@ -475,7 +475,7 @@ PROCEDURE consulta-transacoes-sem-documento:
 
             ASSIGN par_contador = par_contador + 1.
         
-            /* controles da paginaÃ§Ã£o */
+            /* controles da paginaç?o */
             IF (par_contador < par_nriniseq) OR
                (par_contador > (par_nriniseq + par_nrregist)) THEN
                 NEXT.
@@ -1295,7 +1295,7 @@ PROCEDURE consulta-dados-fechamento:
                         ,INPUT crapcme.tpoperac /* pr_tpoperac --> tipo da operacao */
                         /* --------- OUT --------- */
                         ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
-                        ,OUTPUT ""          /* pr_dscritic --> DescriÃ§ao da critica    */
+                        ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
                         ,OUTPUT 0 ).        /* pr_vloperac --> Retorno da operacao     */
           
           /* Fechar o procedimento para buscarmos o resultado */ 

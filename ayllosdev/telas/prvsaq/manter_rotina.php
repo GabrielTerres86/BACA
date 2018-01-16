@@ -408,7 +408,9 @@
 			echo 'showConfirmacao("Aten&ccedil;&atilde;o, deseja imprimir o protocolo?","Confirma&ccedil;&atilde;o - Ayllos","imprimirProtocolo()","showError(\'inform\',\'Provis&atilde;o de Saque inserido com sucesso!\',\'Alerta - Ayllos\',\'estadoInicial();hideMsgAguardo();\');","sim.gif","nao.gif");';
 		}else{
 			$msg = $xmlObj->Erro->Registro->dscritic;
-			if($codError == 244){
+			if($codError == 13){
+				echo "showError('error','".$msg."','Alerta - Ayllos','$(\'#dtSaqPagto\',\'#frmInclusao\').focus();');";	
+			}else if($codError == 244){
 				echo "showError('error','".$msg."','Alerta - Ayllos','$(\'#nrCheque\',\'#frmInclusao\').focus();');";	
 			}else if($codError == 564){
 				echo "showError('error','".$msg."','Alerta - Ayllos','$(\'#nrContCheq\',\'#frmInclusao\').focus();');";	
@@ -446,7 +448,9 @@
 			echo "$('#nrCpfCnpj','#frmInclusao').val('');";		
 			echo "$('#nmSolic','#frmInclusao').val('');";
 			echo "$('#indPessoa','#frmInclusao').val('');";
-			if($msg == 'Titular nao encontrado.'){				
+			 if($codError == 564){
+				echo "showError('error','".$msg."','Alerta - Ayllos','$(\'#nrContTit\',\'#frmInclusao\').focus();');";	
+			}else if($msg == 'Titular nao encontrado.'){				
 				echo "showError('error','".$msg."','Alerta - Ayllos','$(\'#nrTit\',\'#frmInclusao\').focus()');";
 			}else{				
 				echo "showError('error','".$msg."','Alerta - Ayllos','');";

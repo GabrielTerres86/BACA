@@ -1634,7 +1634,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
             vr_lim_qtdiasprov := vr_lim_qtdiasprov + 1;
           END IF;
           --pr_ind_grava, caso for 1 indica que o operador tem poderes para cadastrar a provisão mesmo qeu ela não respeite a regra dos dias uteis.            
-          IF(pr_ind_grava = 0 AND (vr_tot + pr_vlSaqPagto) > vr_lim)THEN       
+          IF(pr_ind_grava = 0 AND (vr_tot + pr_vlSaqPagto) >= vr_lim)THEN       
               vr_dhlim := empr0008.fn_retorna_data_util(pr_cdcooper =>vr_cdcooper , pr_dtiniper =>rw_crapdat.dtmvtolt , pr_qtdialib =>vr_lim_qtdiasprov);
               IF(vr_dhsaque < vr_dhlim)THEN
                -- Montar mensagem de critica

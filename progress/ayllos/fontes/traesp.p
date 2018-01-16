@@ -1,4 +1,4 @@
-ï»¿/* ............................................................................
+/* ............................................................................
 
    Programa: fontes/traesp.p
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -26,8 +26,8 @@
                
                20/09/2006 - Modificado help dos campos (Elton).
                
-               04/05/2010 - Ajustado programa para as movimentaÃ§Ãµes em
-                            espÃ©cie criadas na rotina 20 (a partir da
+               04/05/2010 - Ajustado programa para as movimentaç?es em
+                            espécie criadas na rotina 20 (a partir da
                             craptvl). (Fernando)  
 
                24/06/2010 - Nao estava imprimindo doctos outros dias (Magui).
@@ -47,8 +47,8 @@
                18/07/2012 - Adicionado campo tel_nrdconta quando opcao "I" e 
                             tipo 0 .   (Jorge)
                
-               15/08/2013 - Nova forma de chamar as agÃªncias, de PAC agora 
-                            a escrita serÃ¡ PA (AndrÃ© EuzÃ©bio - Supero).
+               15/08/2013 - Nova forma de chamar as ag?ncias, de PAC agora 
+                            a escrita será PA (André Euzébio - Supero).
                             
                12/11/2013 - Adequacao da regra de negocio a b1wgen0135.p
                             (conversao tela web). (Fabricio)
@@ -216,7 +216,7 @@ FORM "Pa   Lote  Conta/dv Titular/Valor(R$)              Docmto/Data "
 FORM aux_nmprimtl LABEL "Cooperado"     FORMAT "x(15)"
      aux_dtmvtolt AT 46 LABEL "Dt Mvto"
      SKIP
-     aux_flinfdst LABEL "InformaÃ§Å‘es foram prestadas"
+     aux_flinfdst LABEL "Informaçoes foram prestadas"
      aux_nrcpfcgc AT 45 LABEL "CPF/CNPJ" FORMAT "x(18)"
      aux_recursos LABEL "Origem"
      aux_dstrecur LABEL "Destino"       FORMAT "x(35)"
