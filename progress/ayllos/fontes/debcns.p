@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 23/10/2017
+   Data    : Julho/2013                        Ultima atualizacao: 15/01/2018
 
    Dados referentes ao programa:
 
@@ -35,6 +35,8 @@
                 
    23/10/2017 - Ajustar relatorio e tambem para chamar a rotina efetua-debito-consorcio
                 como 3 "Ultima execucao" (Lucas Ranghetti #739738)
+                
+   15/01/2018 - Adicionar flgativo na busca da crapcop (Lucas Ranghetti #822845)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -292,7 +294,8 @@ ASSIGN glb_cddopcao    = "C"
 /* Alimenta SELECTION-LIST de COOPERATIVAS */
 IF  glb_cdcooper = 3 THEN
     DO:
-        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK 
+        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 AND
+                               crapcop.flgativo = TRUE NO-LOCK 
                                BY crapcop.cdcooper:
 
             IF  aux_contador = 0 THEN
@@ -373,7 +376,8 @@ DO  WHILE TRUE:
 
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND 
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi NO-LOCK:
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE NO-LOCK:
 
                 RUN obtem-consorcio.
     
@@ -425,7 +429,8 @@ DO  WHILE TRUE:
             /*** PROCESSA COOPERATIVAS ***/
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi NO-LOCK:
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE NO-LOCK:
                    
                 IF  TIME > crapcop.hrlimsic THEN
                     DO:
@@ -556,7 +561,8 @@ DO  WHILE TRUE:
 
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND 
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi 
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE
                                    NO-LOCK:
 
                 ASSIGN aux_nmarquiv = "crrl663_" + STRING(TIME) + ".lst"
