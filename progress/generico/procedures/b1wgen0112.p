@@ -4363,18 +4363,21 @@ PROCEDURE extrato_pos_fixado:
         CREATE tt-extrato_epr_aux.
 
         BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
+
+        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
         
-        ASSIGN aux_dtmvtoan = 
-               DYNAMIC-FUNCTION("fn_dia_util_anterior" IN h-b1wgen0003,
-                                 INPUT par_cdcooper,
-                                 INPUT tt-extrato_epr.dtmvtolt,
-                                 INPUT 1).
-                                 
-        FIND FIRST craptxi WHERE craptxi.dtiniper = aux_dtmvtoan NO-LOCK NO-ERROR.
-
-        IF AVAIL craptxi THEN
-           ASSIGN tt-extrato_epr_aux.vlrdtaxa = craptxi.vlrdtaxa.
-
+        /* Lancamento de Juros de Correcao */
+        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
+           DO:
+                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
+                                                   crappep.nrdconta = par_nrdconta            AND
+                                                   crappep.nrctremp = par_nrctremp            AND
+                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
+                                                   NO-LOCK:
+                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
+                END.
+           END.
+           
         IF FIRST (tt-extrato_epr.dtmvtolt) THEN
            DO:
                /* Saldo Inicial */

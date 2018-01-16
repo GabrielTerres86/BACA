@@ -1751,8 +1751,7 @@ PROCEDURE obtem-extrato-emprestimo:
         ASSIGN aux_vllantmo = craplem.vllanmto.
 
         /* Se lancamento de pagamento*/
-        IF   CAN-DO("1044,1039,1057,1045",STRING(craplem.cdhistor))  OR    /* PP */
-             CAN-DO("2330,2331,2335,2336",STRING(craplem.cdhistor))  THEN  /* POS */
+        IF   CAN-DO("1044,1039,1057,1045",STRING(craplem.cdhistor)) THEN 
              DO:
         
                  IF   NOT aux_flgpripa[craplem.nrparepr]   THEN
@@ -1762,11 +1761,6 @@ PROCEDURE obtem-extrato-emprestimo:
                                /* Pagamento de avalista - Juros de Mora */
                                WHEN 1045 THEN ASSIGN aux_cdhistor = 1619.
                                WHEN 1057 THEN ASSIGN aux_cdhistor = 1620.
-                               /* Pos-Fixado */
-                               WHEN 2330 THEN ASSIGN aux_cdhistor = 2371. /* Devedor */
-                               WHEN 2331 THEN ASSIGN aux_cdhistor = 2373. /* Devedor */
-                               WHEN 2335 THEN ASSIGN aux_cdhistor = 2375. /* Aval */
-                               WHEN 2336 THEN ASSIGN aux_cdhistor = 2377. /* Aval */
                                /* Default */
                                OTHERWISE aux_cdhistor = 1078.
                           END CASE.
@@ -1794,12 +1788,7 @@ PROCEDURE obtem-extrato-emprestimo:
                                WHEN 1044 THEN ASSIGN aux_cdhistor = 1047.
                                /* Pagamento de avalista - Multa */
                                WHEN 1045 THEN ASSIGN aux_cdhistor = 1540.
-                               WHEN 1057 THEN ASSIGN aux_cdhistor = 1618.
-                               /* Pos-Fixado */
-                               WHEN 2330 THEN ASSIGN aux_cdhistor = 2363. /* Devedor */
-                               WHEN 2331 THEN ASSIGN aux_cdhistor = 2365. /* Devedor */
-                               WHEN 2335 THEN ASSIGN aux_cdhistor = 2367. /* Aval */
-                               WHEN 2336 THEN ASSIGN aux_cdhistor = 2369. /* Aval */
+                               WHEN 1057 THEN ASSIGN aux_cdhistor = 1618.                               
                                /* Default */
                                OTHERWISE aux_cdhistor = 1076.
                           END CASE.
