@@ -184,12 +184,14 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
-
-		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Oper. Controle:') ?></label>
+		
+		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+		<input type="hidden" name="teste" id="teste">
+		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
 		<input name="idquaprc" id="idquaprc" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
-		<br />
+		<br />		
 		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
@@ -208,7 +210,8 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data LiberaÃ§Ã£o:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
-		 <input type="hidden" name="idfiniof" id="idfiniof">
+
+		<input type="hidden" name="idfiniof" id="idfiniof">
         <!--<label for="idfiniof">Financiar IOF e Tarifa:</label>
         <select name="idfiniof" id="idfiniof">
             <option value="1" selected="selected">Sim</option>
@@ -222,9 +225,8 @@
         <label for="vliofepr">IOF:</label>
         <input name="vliofepr" id="vliofepr" type="text" value=""/>-->
 		<input type="hidden" name="vliofepr" id="vliofepr">
-
-                <label for="dtultpag">Data &uacute;lt. pagto:</label>
-                <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
+        <label for="dtultpag">Data &uacute;lt. pagto:</label>
+        <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
         <!--<label for="vlrtarif">Tarifa:</label>
