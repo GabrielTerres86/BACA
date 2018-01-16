@@ -50,6 +50,7 @@
 { sistema/generico/includes/b1wgen0185tt.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/b1wgen0002tt.i }
 
 DEF STREAM str_1.
