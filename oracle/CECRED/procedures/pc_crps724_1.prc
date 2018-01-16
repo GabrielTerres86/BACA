@@ -217,6 +217,11 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+    -- Incializar controle
+    IF nvl(pr_cdrestart,0) = 0 THEN
+      pc_grava_dados(pr_cdrestart => 0);
+    END IF;  
+
     -- Limpar tabela de memoria
     vr_tab_craplcr.DELETE;
     vr_tab_controle_lcto_juros.DELETE;
@@ -619,9 +624,9 @@ BEGIN
     -- Encerrar o job do processamento paralelo dessa agencia
     GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                 ,pr_idprogra => pr_cdagenci
-                                ,pr_des_erro => pr_dscritic);
+                                ,pr_des_erro => vr_dscritic);
     -- Se houve erro
-    IF pr_dscritic IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
     

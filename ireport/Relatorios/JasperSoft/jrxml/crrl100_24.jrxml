@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-01-12T19:35:37 -->
+<!-- 2018-01-15T14:12:12 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_24" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
@@ -940,7 +940,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros deverão ser pagos de forma " +  $F{dtpagcar}.toLowerCase()  + " pelo <b>Emitente/Cooperado</b>, vencendo-se a primeira carência antes do pagamento da primeira parcela."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>5. Carência e periodicidade</u></b> – A <b>Credora/Cooperativa</b> poderá, a seu critério, conceder ao <b>Emitente/Cooperado</b> prazo de carência para o pagamento da primeira parcela do empréstimo. O prazo de carência é fixado no item " + (3 + $F{ind_add_item}) + ".15 e " + (3 + $F{ind_add_item}) + ".16 das Condições Específicas desta Cédula. Durante o prazo de carência, ou seja, sem pagamento do valor principal (valor da parcela), quando pactuado, os juros/encargos deverão ser pagos mensalmente/bimestralmente/trimestralmente/semestralmente ou anualmente pelo Emitente/Cooperado, vencendo-se o primeiro encargo antes do pagamento da primeira parcela."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="115" width="466" height="11" uuid="726ffc38-c056-495b-8de5-dcfe906d9e41">

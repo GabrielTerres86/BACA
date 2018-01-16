@@ -1783,7 +1783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             END IF;
 
           --> Pos fixado
-          ELSIF rw_crapepr.tpemprst = 3 THEN
+          ELSIF rw_crapepr.tpemprst = 2 THEN
 
             vr_vldespes_pf_pos   := vr_vldespes_pf_pos   + vr_vlpreatr;
             vr_vldevedo_pf_v_pos := vr_vldevedo_pf_v_pos + vr_vldivida;

@@ -661,7 +661,7 @@
 						  	               
 			  26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.
 						   (Gil - MOUTS)
-             
+
               31/01/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
 			  20/02/2017 - Ajuste para validaçao de Capital de Giro na procedure valida-dados-gerais. 
@@ -719,7 +719,7 @@
 
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
-
+              
               06/10/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts)
 
@@ -1755,8 +1755,7 @@ PROCEDURE obtem-extrato-emprestimo:
         ASSIGN aux_vllantmo = craplem.vllanmto.
 
         /* Se lancamento de pagamento*/
-        IF   CAN-DO("1044,1039,1057,1045",STRING(craplem.cdhistor))  OR    /* PP */
-             CAN-DO("2330,2331,2335,2336",STRING(craplem.cdhistor))  THEN  /* POS */
+        IF   CAN-DO("1044,1039,1057,1045",STRING(craplem.cdhistor)) THEN 
              DO:
         
                  IF   NOT aux_flgpripa[craplem.nrparepr]   THEN
@@ -1766,11 +1765,6 @@ PROCEDURE obtem-extrato-emprestimo:
                                /* Pagamento de avalista - Juros de Mora */
                                WHEN 1045 THEN ASSIGN aux_cdhistor = 1619.
                                WHEN 1057 THEN ASSIGN aux_cdhistor = 1620.
-                               /* Pos-Fixado */
-                               WHEN 2330 THEN ASSIGN aux_cdhistor = 2371. /* Devedor */
-                               WHEN 2331 THEN ASSIGN aux_cdhistor = 2373. /* Devedor */
-                               WHEN 2335 THEN ASSIGN aux_cdhistor = 2375. /* Aval */
-                               WHEN 2336 THEN ASSIGN aux_cdhistor = 2377. /* Aval */
                                /* Default */
                                OTHERWISE aux_cdhistor = 1078.
                           END CASE.
@@ -1799,11 +1793,6 @@ PROCEDURE obtem-extrato-emprestimo:
                                /* Pagamento de avalista - Multa */
                                WHEN 1045 THEN ASSIGN aux_cdhistor = 1540.
                                WHEN 1057 THEN ASSIGN aux_cdhistor = 1618.
-                               /* Pos-Fixado */
-                               WHEN 2330 THEN ASSIGN aux_cdhistor = 2363. /* Devedor */
-                               WHEN 2331 THEN ASSIGN aux_cdhistor = 2365. /* Devedor */
-                               WHEN 2335 THEN ASSIGN aux_cdhistor = 2367. /* Aval */
-                               WHEN 2336 THEN ASSIGN aux_cdhistor = 2369. /* Aval */
                                /* Default */
                                OTHERWISE aux_cdhistor = 1076.
                           END CASE.
@@ -3408,7 +3397,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_qtdias_carencia AS INTE                    NO-UNDO.
 
     DEF   VAR        aux_vlpreemp AS DECIMAL                        NO-UNDO.
-		
+
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
@@ -12781,36 +12770,36 @@ PROCEDURE recalcular_emprestimo:
     
        IF   crawepr.tpemprst = 1   THEN
             DO:
-       IF NOT VALID-HANDLE(h-b1wgen0084) THEN
-          RUN sistema/generico/procedures/b1wgen0084.p 
-              PERSISTENT SET h-b1wgen0084.
+                IF NOT VALID-HANDLE(h-b1wgen0084) THEN
+                   RUN sistema/generico/procedures/b1wgen0084.p 
+                       PERSISTENT SET h-b1wgen0084.
 
-       RUN grava_parcelas_proposta IN h-b1wgen0084(INPUT par_cdcooper,
-                                                   INPUT par_cdagenci,
-                                                   INPUT par_nrdcaixa,
-                                                   INPUT par_cdoperad,
-                                                   INPUT par_nmdatela,
-                                                   INPUT par_idorigem,
-                                                   INPUT par_nrdconta,
-                                                   INPUT par_idseqttl,
-                                                   INPUT par_dtmvtolt,
-                                                   INPUT TRUE,
-                                                   INPUT crawepr.nrctremp,
-                                                   INPUT crawepr.cdlcremp,
-                                                   INPUT crawepr.vlemprst,
-                                                   INPUT crawepr.qtpreemp,
-                                                   INPUT crawepr.dtlibera,
-                                                   INPUT crawepr.dtdpagto,
-                                                   OUTPUT TABLE tt-erro).
+                RUN grava_parcelas_proposta IN h-b1wgen0084(INPUT par_cdcooper,
+                                                            INPUT par_cdagenci,
+                                                            INPUT par_nrdcaixa,
+                                                            INPUT par_cdoperad,
+                                                            INPUT par_nmdatela,
+                                                            INPUT par_idorigem,
+                                                            INPUT par_nrdconta,
+                                                            INPUT par_idseqttl,
+                                                            INPUT par_dtmvtolt,
+                                                            INPUT TRUE,
+                                                            INPUT crawepr.nrctremp,
+                                                            INPUT crawepr.cdlcremp,
+                                                            INPUT crawepr.vlemprst,
+                                                            INPUT crawepr.qtpreemp,
+                                                            INPUT crawepr.dtlibera,
+                                                            INPUT crawepr.dtdpagto,
+                                                            OUTPUT TABLE tt-erro).
 
-       IF VALID-HANDLE(h-b1wgen0084) THEN
-          DELETE OBJECT h-b1wgen0084.
-    
-       IF RETURN-VALUE <> "OK" THEN
-          DO:
-              IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
-                 ASSIGN aux_dscritic = "Ocorreram erros durante a gravacao das " +
-                                       "parcelas da proposta.".
+                IF VALID-HANDLE(h-b1wgen0084) THEN
+                   DELETE OBJECT h-b1wgen0084.
+            
+                IF RETURN-VALUE <> "OK" THEN
+                   DO:
+                       IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+                          ASSIGN aux_dscritic = "Ocorreram erros durante a gravacao das " +
+                                                "parcelas da proposta.".
 
                        UNDO RECALCULAR, LEAVE RECALCULAR.
                    END.
@@ -12843,7 +12832,7 @@ PROCEDURE recalcular_emprestimo:
 
                 IF   aux_cdcritic <> 0    OR
                      aux_dscritic <> ""   THEN
-              UNDO RECALCULAR, LEAVE RECALCULAR.
+                     UNDO RECALCULAR, LEAVE RECALCULAR.
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -12885,7 +12874,7 @@ PROCEDURE recalcular_emprestimo:
                 /* Atualizar o buffer na tabela crawepr */
                 ASSIGN crawepr.vlpreemp = pc_grava_parcel_pos_fixado.pr_vlpreemp.
 
-          END.
+            END.
 
        /* Calclar o cet automaticamente */
        RUN calcula_cet_novo(INPUT par_cdcooper,
@@ -13595,10 +13584,10 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                
                                 
                                
-                             END.
-                             END.
+                               END.
                       END. 
                  END.  
+              END.     
 
         LEAVE.
 
@@ -13606,57 +13595,57 @@ PROCEDURE atualiza_dados_avalista_proposta:
 
                                 /* Soh devemos interromper a proposta na Esteira */
                                 IF aux_interrup THEN
-    DO:
-      
-      FIND FIRST crapope  
-       WHERE crapope.cdcooper = par_cdcooper             
-         AND crapope.cdoperad = par_cdoperad
-             NO-LOCK NO-ERROR.
-      
-      RUN sistema/generico/procedures/b1wgen0195.p
-                       PERSISTENT SET h-b1wgen0195.
-               
+                                DO:
+                                  
+                                  FIND FIRST crapope  
+                                   WHERE crapope.cdcooper = par_cdcooper             
+                                     AND crapope.cdoperad = par_cdoperad
+                                         NO-LOCK NO-ERROR.
+                                  
+                                  RUN sistema/generico/procedures/b1wgen0195.p
+                                                   PERSISTENT SET h-b1wgen0195.
+                                           
                                   /* Enviar Interrupção na Esteira */
-      RUN Enviar_proposta_esteira IN h-b1wgen0195        
-                        ( INPUT par_cdcooper,
-                          INPUT crapope.cdpactra,
-                          INPUT par_nrdcaixa,
-                          INPUT par_nmdatela,
-                          INPUT par_cdoperad,
-                          INPUT par_idorigem,
-                          INPUT par_nrdconta,
-                          INPUT par_dtmvtolt,
-                          INPUT par_dtmvtolt,
-                          INPUT par_nrctremp, /* nrctremp */
-                          INPUT 0,            /* nrctremp_novo */
-                          INPUT "",           /* dsiduser */
-                          INPUT 0,            /* flreiflx */
+                                  RUN Enviar_proposta_esteira IN h-b1wgen0195        
+                                                    ( INPUT par_cdcooper,
+                                                      INPUT crapope.cdpactra,
+                                                      INPUT par_nrdcaixa,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_cdoperad,
+                                                      INPUT par_idorigem,
+                                                      INPUT par_nrdconta,
+                                                      INPUT par_dtmvtolt,
+                                                      INPUT par_dtmvtolt,
+                                                      INPUT par_nrctremp, /* nrctremp */
+                                                      INPUT 0,            /* nrctremp_novo */
+                                                      INPUT "",           /* dsiduser */
+                                                      INPUT 0,            /* flreiflx */
                                                       INPUT "P",          /* tpenvest */
-                         OUTPUT aux_dsmensag,
-                         OUTPUT aux_cdcritic, 
-                         OUTPUT aux_dscritic).
-      
-      DELETE OBJECT h-b1wgen0195.
-       
-      /* Ignorar erro de "%Proposta nao encontrada" */ 
+                                                     OUTPUT aux_dsmensag,
+                                                     OUTPUT aux_cdcritic, 
+                                                     OUTPUT aux_dscritic).
+                                  
+                                  DELETE OBJECT h-b1wgen0195.
+                                   
+                                  /* Ignorar erro de "%Proposta nao encontrada" */ 
       IF RETURN-VALUE = "NOK" AND
           NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" AND
           NOT lower(aux_dscritic) MATCHES "*proposta nao permite interromper o fluxo*" AND
           NOT lower(aux_dscritic) MATCHES "*produto cdc nao integrado*" THEN
-          DO:
-              IF aux_cdcritic = 0 AND 
-                 aux_dscritic = "" THEN
-              DO:
-                ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
-                                      "proposta para Analise de Credito.".
-              END.
-          END.
-      ELSE
-          DO:
-              ASSIGN aux_cdcritic = 0
-                     aux_dscritic = "".
-          END.
-    END.
+                                      DO:
+                                          IF aux_cdcritic = 0 AND 
+                                             aux_dscritic = "" THEN
+                                          DO:
+                                            ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
+                                                                  "proposta para Analise de Credito.".
+                             END.
+                      END. 
+                                  ELSE
+                                      DO:
+                                          ASSIGN aux_cdcritic = 0
+                                                 aux_dscritic = "".
+                 END.  
+                                 END.
     
     IF   aux_cdcritic <> 0    OR
          aux_dscritic <> ""   THEN
