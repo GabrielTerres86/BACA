@@ -104,6 +104,10 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 
                24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
 			                Heitor (Mouts) - Melhoria 440
+
+               19/12/2017 - Desconsiderar do valor pendente o que foi debitado no mes
+                            Demetrius (Mouts) - Chamado 813105
+							 
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -727,7 +731,7 @@ BEGIN
          set crappla.dtdpagto = vr_dtdpagto,
              crappla.indpagto = vr_indpagto,
              crappla.vlpenden = decode(vr_flgrejei,
-                                       1, crappla.vlprepla,
+                                       1, greatest(crappla.vlprepla - crappla.vlpagmes,0),
                                        0),
              crappla.flgatupl = vr_indatupl
        where crappla.rowid = rw_crappla.rowid;
