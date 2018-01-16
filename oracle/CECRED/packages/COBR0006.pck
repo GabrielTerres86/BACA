@@ -220,6 +220,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                dsdoccop  crapcob.dsdoccop%TYPE,
                vltitulo  crapcob.vltitulo%TYPE,
                vldescto  crapcob.vldescto%TYPE,
+               cdmensag  crapcob.cdmensag%TYPE,
                dtvencto  crapcob.dtvencto%TYPE,
                cdcartei  crapcob.cdcartei%TYPE,
                cddespec  crapcob.cddespec%TYPE,
@@ -1140,6 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Valores
     pr_rec_cobranca.vltitulo := 0;
     pr_rec_cobranca.vldescto := 0;
+    pr_rec_cobranca.tpdescto := 0;
     pr_rec_cobranca.vlabatim := 0;
     pr_rec_cobranca.tpdmulta := 3; /* Isento */
     pr_rec_cobranca.vldmulta := 0;
@@ -1251,7 +1253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017 
+       Data    : Dezembro/2015.                   Ultima atualizacao: 15/01/2018
 
        Dados referentes ao programa:
 
@@ -1260,6 +1262,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+                                
+                   15/01/2018 - Ajustar para gravar o tipo de desconto no campo cdmensag (tipo de desconto)
+                                (Douglas - Chamado 831413)                                
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1333,6 +1338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).dsdoccop := pr_rec_cobranca.dsdoccop;
     pr_tab_crapcob(vr_index).vltitulo := pr_rec_cobranca.vltitulo;
     pr_tab_crapcob(vr_index).vldescto := pr_rec_cobranca.vldescto;
+    pr_tab_crapcob(vr_index).cdmensag := pr_rec_cobranca.tpdescto;
     pr_tab_crapcob(vr_index).dtvencto := pr_rec_cobranca.dtvencto;
     pr_tab_crapcob(vr_index).cdcartei := pr_rec_cobranca.cdcartei;
     pr_tab_crapcob(vr_index).cddespec := pr_rec_cobranca.cddespec;
@@ -1991,7 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 21/08/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 15/01/2018
 
        Dados referentes ao programa:
 
@@ -2015,6 +2021,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                
                   21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
+                  15/01/2018 - Gravar o cdmensag (tipo de desconto) que foi carregado
+                               (Douglas - Chamado 831413)                                
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2141,6 +2149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 dsdoccop,
                 vltitulo,
                 vldescto,
+                cdmensag,
                 dtvencto,
                 cdcartei,
                 cddespec,
@@ -2204,6 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).dsdoccop,
                 pr_tab_crapcob(vr_idx_cob).vltitulo,
                 pr_tab_crapcob(vr_idx_cob).vldescto,
+                pr_tab_crapcob(vr_idx_cob).cdmensag,
                 pr_tab_crapcob(vr_idx_cob).dtvencto,
                 pr_tab_crapcob(vr_idx_cob).cdcartei,
                 pr_tab_crapcob(vr_idx_cob).cddespec,
@@ -5201,7 +5211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
           RAISE vr_exc_fim;
         END IF;
-      END IF;
+      END IF; 
     END IF;
   
     -- 17.3P Valida Tipo de Emissao do Boleto
@@ -8000,7 +8010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 22/12/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 15/01/2018
 
        Dados referentes ao programa:
 
@@ -8034,6 +8044,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    22/12/2017 - Validar se o CPF/CNPJ do pagador é o mesmo do titular da conta
                                 e rejeitar com o motivo '46' (Douglas - Chamado 819777)
+
+                   15/01/2018 - Ajustar para quando o cooperado informar o valor de desconto
+                                o cdmensag seja gravado com 1 (Vencimento até o desconto)
+                                (Douglas - Chamado 831413)
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -8611,6 +8625,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
+    
+    -- Verificar se existe desconto
+    IF pr_rec_cobranca.vldescto > 0 THEN
+      -- Conceder desconto até o vencimento
+      pr_rec_cobranca.tpdescto := 1;
+    END IF;
+    
     
     -- 37.7 Valor de Abatimento
     pr_rec_cobranca.vlabatim := pr_tab_linhas('VLABATIM').numero;
