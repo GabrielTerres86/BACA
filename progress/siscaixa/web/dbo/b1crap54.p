@@ -54,13 +54,13 @@
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
                             
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
                             
           07/12/2017 - Melhoria 458 criada proc consulta-provisao e valida-permissao-provisao
                        Antonio R. Jr(mouts)
-
+                            
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ............................................................................ */
@@ -1107,8 +1107,8 @@ PROCEDURE atualiza-cheque-avulso:
                       INPUT aux_cdcritic,
                       INPUT aux_dscritic,
                       INPUT YES).
-         RETURN "NOK".            
-      END.     
+        RETURN "NOK".
+      END.
 
     RETURN "OK".
 END PROCEDURE.
@@ -1245,7 +1245,7 @@ PROCEDURE valida-permissao-provisao:
                                     " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                                     "/log/provisao_especie.log").
       END.
-    RETURN "OK".
+      RETURN "OK".         
 END PROCEDURE.
 
 /* b1crap54.p */

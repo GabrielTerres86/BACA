@@ -1,4 +1,4 @@
-﻿/*...........................................................................
+/*...........................................................................
 
     Programa: sistema/generico/procedures/b1wgen0104.p
     Autor   : Guilherme/Gabriel
@@ -8,8 +8,8 @@
    
     Objetivo  : BO referente as tela CMEDEP/CMESAQ.
                  
-    Alteracoes: 22/02/2012 - Alterações para informar conta/dv na tela CMESAQ 
-                             (quando tipo 0) e, dessa forma, não permitir 
+    Alteracoes: 22/02/2012 - Altera�?es para informar conta/dv na tela CMESAQ 
+                             (quando tipo 0) e, dessa forma, n?o permitir 
                              encontrar registros duplicados. (Lucas)
                              
                 19/07/2012 - Ajustes para telas cmesaq, cmedep e traesp quando
@@ -553,7 +553,7 @@ PROCEDURE busca_dados_assoc:
 
     IF par_tpdocmto <> 4 THEN
        DO:
-         /* Procura Prim.ttl. da Conta para exibiçăo */
+         /* Procura Prim.ttl. da Conta para exibi�ao */
          IF par_nrdconta <> 0 THEN
            DO:
          RELEASE crapass.

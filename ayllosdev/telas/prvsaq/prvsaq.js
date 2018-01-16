@@ -711,7 +711,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
                 }
             }
 
-            if (!vlSaqPagto) {
+            if (!vlSaqPagto || vlSaqPagto == '0,00') {
                 showError("error", "Valor Saque deve ser informado.", "Alerta - Ayllos", "$('#vlSaqPagto','#frmInclusao').focus();");
                 return false;
             }
@@ -745,7 +745,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
                 }
             }
 
-            if (!nrCpfSacPag) {
+            if (!nrCpfSacPag || parseInt(nrCpfSacPag.replace('.', '').replace('.', '').replace('.', '').replace('.', '').replace('-', '')) == 0) {
                 showError("error", "CPF do sacador deve ser informado.", "Alerta - Ayllos", "$('#nrCpfSacPag','#frmInclusao').focus();");
                 return false;
             }

@@ -16,22 +16,22 @@
    
                19/09/2011 - Incluidas as opcoes P e T (Henrique).
    
-               10/09/2013 - Nova forma de chamar as agencias, de PAC agora 
+               10/09/2013 - Nova forma de chamar as ag?ncias, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
                             
                03/12/2013 - Inclusao de VALIDATE crapfld (Carlos)
 
                17/12/2014 - Remover filtro crapass.cdagenci na carrega-creditos
-                            quando pesquisar da crapcld. A informaçao da agencia 
+                            quando pesquisar da crapcld. A informaç?o da ag?ncia 
                             deve ser carregado com a o valor que está na 
                             crapcld.cdagenci (Douglas - Chamado 143945)
 
-               26/05/2015 - Adicionar na opçao "P" o campo de controle que filtra
+               26/05/2015 - Adicionar na opç?o "P" o campo de controle que filtra
                             se a listagem deve apresentar os fechamentos
                             diários ou mensais (Douglas - Chamado 282637)
               
-               22/07/2015 - Ajustar o format do campo e a geraçao do arquivo para
-                            gerar com extensao ".csv" (Douglas - Chamado 310866)   
+               22/07/2015 - Ajustar o format do campo e a geraç?o do arquivo para
+                            gerar com extens?o ".csv" (Douglas - Chamado 310866)  
                
                05/12/2017 - Melhoria 458 ajuste para pegar parametros da tabela 
                             tbcc_monitoramento_parametos - Antonio R. Jr(Mouts)
@@ -386,7 +386,7 @@ FORM SKIP
      tel_tpoperac LABEL "Operacao"                                         AT 14
      tel_cdcooper LABEL "Cooperativa" 
      WITH ROW 5 COLUMN 2 NO-BOX SIDE-LABELS OVERLAY FRAME f_cddopcao.
-
+	 
 /* ................................. EVENTOS ................................. */
 
 DEF BUFFER b-crapfld1 FOR crapfld.
@@ -1140,7 +1140,7 @@ PROCEDURE carrega_atividade:
                                           WITH FRAME f_atividade_retorno.
 
                         DOWN STREAM str_1 WITH FRAME f_atividade_retorno.
-
+                        
                         /* dsdjusti */
                         ASSIGN aux_textocom = tt-atividade.dsdjusti.
                         ASSIGN aux_textodis = SUBSTRING(aux_textocom,1,60).
@@ -1155,8 +1155,8 @@ PROCEDURE carrega_atividade:
                           
                           DISP STREAM str_1 aux_textodis WITH FRAME f_atividade_justifi.
                           DOWN STREAM str_1 WITH FRAME f_atividade_justifi.
-                    END.
-
+                        END.
+                        
                         /* dsobserv */
                         ASSIGN aux_textocom = tt-atividade.dsobserv.
                         ASSIGN aux_textodis = SUBSTRING(aux_textocom,1,60).
@@ -1348,7 +1348,7 @@ PROCEDURE carrega_pesquisa:
                                           WITH FRAME f_pesquisa_retorno.
     
                         DOWN STREAM str_1 WITH FRAME f_pesquisa_retorno.
-    
+                        
                         ASSIGN aux_textocom = tt-pesquisa.dsdjusti.
                         ASSIGN aux_textodis = SUBSTRING(aux_textocom,1,60).
                         ASSIGN aux_textocom = SUBSTRING(aux_textocom,61).
@@ -1471,6 +1471,7 @@ PROCEDURE carrega-creditos:
                         ,OUTPUT 0          /* pr_vllimite --> Retorno da operacao     */
                         ,OUTPUT 0          /* pr_vlcredito_diario_pf --> Retorno da operacao     */
                         ,OUTPUT 0          /* pr_vlcredito_diario_pj --> Retorno da operacao     */
+                        ,OUTPUT 0          /* pr_vlmonitoracao_pagamento --> Retorno da operacao     */
                         ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
                         ,OUTPUT "" ).      /* pr_dscritic --> Descriçao da critica    */
           
