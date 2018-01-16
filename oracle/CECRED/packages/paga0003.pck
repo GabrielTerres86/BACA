@@ -3957,10 +3957,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
     vr_dstransa VARCHAR2(100) := '';
     vr_vllanmto NUMBER(20,5);
+    vr_tpdaguia VARCHAR2(100) := '';    
   BEGIN
 
     vr_vllanmto := pr_vllanmto;
-
+    vr_tpdaguia := '<tpdaguia>' || TO_CHAR(pr_tpoperac) || '</tpdaguia>';
+    
     INET0001.pc_verifica_operacao_prog(pr_cdcooper => pr_cdcooper 
                                       ,pr_cdagenci => pr_cdagenci 
                                       ,pr_nrdcaixa => pr_nrdcaixa 
@@ -3975,7 +3977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                       ,pr_nrctatrf => pr_nrctatrf 
                                       ,pr_cdtiptra => pr_cdtiptra 
                                       ,pr_cdoperad => pr_cdoperad 
-                                      ,pr_tpoperac => pr_tpoperac 
+                                      ,pr_tpoperac => 10 
                                       ,pr_flgvalid => pr_flgvalid 
                                       ,pr_dsorigem => pr_dsorigem 
                                       ,pr_nrcpfope => pr_nrcpfope 
@@ -3995,6 +3997,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		IF INSTR(vr_tab_limite, '<?xml') > 0 THEN 
 			vr_tab_limite := SUBSTR(vr_tab_limite,(INSTR(vr_tab_limite, '>') + 1));
 	  END IF;
+    
+    IF INSTR(vr_tab_limite, '</limite>') > 0 THEN
+      vr_tab_limite := REPLACE(vr_tab_limite,'</limite></raiz>',vr_tpdaguia||'</limite></raiz>');
+    END IF;
     
     pr_xml_operacao187 := vr_tab_limite;
     pr_dsretorn := 'OK';
