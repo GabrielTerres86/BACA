@@ -184,6 +184,12 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
+
+		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Oper. Controle:') ?></label>
+		<input name="idquaprc" id="idquaprc" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
+		<br />
 		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
