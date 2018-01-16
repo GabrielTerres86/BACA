@@ -215,11 +215,13 @@
 			   10/10/2017 - Alteracoes melhoria 407 (Mauricio - Mouts)
 
 			   06/11/2017 - Alteração no tratamento da mensagem LTR0005R2 (Mauricio - Mouts)
-			   
+
+                           11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica
+                            (Belli - Envolti - Chamado 786752)
 
 			   19/12/2017 - Efetuado alteracao para validar corretamente o tipo de pessoa e conta (Jonata - MOUTS).
 
-			   #######################################################
+             #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -513,9 +515,9 @@ IF  aux_flestcri > 0  THEN
 
 /* recebe os parametros de sessao (criterio de separacao) ***/
 ASSIGN aux_idparale = INT(ENTRY(1,SESSION:PARAMETER))
-       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER))
-       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).
-	   
+       aux_idprogra = INT(ENTRY(2,SESSION:PARAMETER)) 
+       aux_nmarquiv = ENTRY(3,SESSION:PARAMETER).     
+
 /* Cooperativa - CECRED */
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
@@ -526,7 +528,7 @@ IF   NOT AVAILABLE crapcop THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  +
                            glb_dscritic + " >> log/proc_batch.log").
-		 RUN finaliza_paralelo.
+         RUN finaliza_paralelo.
          QUIT.
      END. 
 
@@ -664,7 +666,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_vlsldliq      = 0
            aux_CNPJNLiqdant  = ""
 		   aux_Hist          = "".
-		   
+                              
     EMPTY TEMP-TABLE tt-situacao-if.   
 
     RUN importa_xml.
@@ -782,7 +784,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-		     IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
 			    DO:
 					/* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -821,29 +823,31 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 		 
     /* Antecipaçao de Recebíveis - LTR - Mauricio */
     IF  CAN-DO("LTR0005R2",aux_CodMsg) THEN
-        DO:
+         DO:
          
-			 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-							   " - " + glb_cdprogra + "' --> '"  +
-							   glb_dscritic + " >> log/proc_batch.log"). 
-			
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-				
+		 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + glb_cdprogra + "' --> '"  +
+                           glb_dscritic + " >> log/proc_batch.log"). 
+
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
             /* Efetuar a chamada a rotina Oracle */
             RUN STORED-PROCEDURE pc_insere_msg_domicilio
                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)  /* Valor Lancamento */
                                                       ,INPUT aux_Hist         /* CPNJ Credenciador */
                                                       ,OUTPUT ?).             /* Retorno do Erro */
 
-					/* Fechar o procedimento para buscarmos o resultado */
+            /* Fechar o procedimento para buscarmos o resultado */ 
             CLOSE STORED-PROC pc_insere_msg_domicilio
-							aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
-					RUN salva_arquivo.
-					RUN deleta_objetos.
-					NEXT.
-				END.
-	 /* VR Boleto */
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+            RUN salva_arquivo.
+            RUN deleta_objetos.
+            NEXT.
+         END.
+         
+        
+    /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
              
@@ -1170,6 +1174,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                               INPUT 1, /* aux_idorigem = 1 AYLLOS */
                                               INPUT tt-descontar.nrdconta,
                                               INPUT 1,  
+                                              INPUT aux_dtintegr, /* alteração de autor desconhecido, incluido por Belli via Merge */
                                               INPUT TABLE  tt-titulos,
                                              OUTPUT TABLE tt-erro-bo).
 
@@ -1881,7 +1886,7 @@ PROCEDURE deleta_objetos.
     IF  VALID-HANDLE (hNameTag)  THEN
         DELETE OBJECT hNameTag.
     
-	IF  VALID-HANDLE (hSubNode2)  THEN
+    IF  VALID-HANDLE (hSubNode2)  THEN
         DELETE OBJECT hSubNode2.
     
     IF  VALID-HANDLE (hSubNode)  THEN
@@ -1889,8 +1894,8 @@ PROCEDURE deleta_objetos.
     
     IF  VALID-HANDLE (hNode)  THEN
         DELETE OBJECT hNode.
-
-		IF  VALID-HANDLE (hRoot)  THEN
+    
+    IF  VALID-HANDLE (hRoot)  THEN
         DELETE OBJECT hRoot.
 
     IF  VALID-HANDLE (hDoc)  THEN
@@ -1900,7 +1905,7 @@ END PROCEDURE.
 
 
 PROCEDURE importa_xml.
-
+     
    DEF VAR aux_setlinha AS CHAR                                     NO-UNDO.
    DEF VAR aux_setlinh2 AS CHAR                                     NO-UNDO.
 
@@ -2091,7 +2096,9 @@ PROCEDURE importa_xml.
                                           INPUT glb_cdprogra,   /* Programa/job */
                                           INPUT 3,              /* Execucao via BATCH */
                                           INPUT 0,              /* Criticidade BAIXA */ 
-                                          INPUT 1).             /* Processo executado com sucesso */
+                                          INPUT 1,              /* Processo executado com sucesso */
+                                          INPUT 0               /* Codigo da mensagem ou critica - 11/12/2017 - Chamado 786752 */
+                                         ).
                                                                    
                     CLOSE STORED-PROC pc_gera_log_batch
                           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -6108,7 +6115,9 @@ PROCEDURE grava_mensagem_ted.
                             INPUT glb_cdprogra,   /* Programa/job */
                             INPUT 3,              /* Execucao via BATCH */
                             INPUT 0,              /* Criticidade BAIXA */ 
-                            INPUT 1).             /* Processo executado com sucesso */
+                            INPUT 1,              /* Processo executado com sucesso */                                                        
+                            INPUT aux_cderro      /* Codigo da mensagem ou critica - 11/12/2017 - Chamado 786752 */
+                           ).
                                                      
         CLOSE STORED-PROC pc_gera_log_batch
             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -6222,7 +6231,9 @@ PROCEDURE grava_ted_rejeitada.
                             INPUT glb_cdprogra,   /* Programa/job */
                             INPUT 3,              /* Execucao via BATCH */
                             INPUT 0,              /* Criticidade BAIXA */ 
-                            INPUT 1).             /* Processo executado com sucesso */
+                            INPUT 1,              /* Processo executado com sucesso */
+                            INPUT aux_cderro      /* Codigo da mensagem ou critica - 11/12/2017 - Chamado 786752 */
+                           ).
                                                      
         CLOSE STORED-PROC pc_gera_log_batch
             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.

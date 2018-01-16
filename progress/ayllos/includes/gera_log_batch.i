@@ -4,7 +4,7 @@
    Sistema : CECRED
    Sigla   : CRED
    Autor   : Carlos Henrique
-   Data    : Maio/2017.                     Ultima atualizacao: 03/05/2017
+   Data    : Maio/2017.                     Ultima atualizacao: 11/12/2017
 
    Dados referentes ao programa:
 
@@ -12,6 +12,9 @@
    Objetivo  : Executar a rotina de log no proc_batch desenvolvida em oracle.
 
    Alteracoes:
+   
+   11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica (Origem crapcri.cdcritic)
+                (Belli - Envolti - Chamado 786752)
 ............................................................................. */
 
 PROCEDURE gera_log_batch_prog:
@@ -32,7 +35,8 @@ PROCEDURE gera_log_batch_prog:
          input glb_cdprogra, /* cdprograma */
          input 1,      /* tpexecucao 0-Outro/ 1-Batch/ 2-Job/ 3-Online */
          input 1,      /* cdcriticidade 0-Baixa/1-Media/2-Alta/3-Critica */
-         input 0       /* flgsucesso 0/1 */
+         input 0,      /* flgsucesso 0/1 */
+		 input 0       /* Codigo da mensagem ou critica (Origem crapcri.cdcritic) - 11/12/2017 - Chamado 786752 */
          ).
     CLOSE STORED-PROCEDURE pc_gera_log_batch WHERE PROC-HANDLE = aux_handproc.
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }    

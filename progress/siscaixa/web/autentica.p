@@ -22,6 +22,9 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 						 
 			16/11/2017 - Ajuste feito para adptar a rotina na impressao da rotina 97. (SD 788441 - Kelvin).
 						
+            11/12/2017 - Inclusão do parametro par_cdmensagem - Codigo da mensagem ou critica (Origem crapcri.cdcritic)
+                         (Belli - Envolti - Chamado 786752)
+						
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -254,9 +257,9 @@ PROCEDURE process-web-request :
    
    IF get-value("v_rotina") = "crap097" THEN 
       DO:
-   {&OUT}
-    '<div align="center">' SKIP
-     '<center>' SKIP
+		{&OUT}
+           '<div align="center">' SKIP
+            '<center>' SKIP
              '<table width=90% cellspacing = 0 cellpadding = 0>' SKIP
               '<tr>' SKIP
                '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
@@ -290,41 +293,41 @@ PROCEDURE process-web-request :
 	     {&OUT}
 			'<div align="center">' SKIP
 			 '<center>' SKIP
-      '<table width=70% cellspacing = 0 cellpadding = 0>' SKIP
-       '<tr>' SKIP
-        '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
-        '  <td width="101%" valign="middle" align="center">' SKIP
-         '  <div align="center">' SKIP
-          '  <center>' SKIP
-           '  <table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>' SKIP
-            '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
-            '  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
-            '  <tr>' SKIP
-             '    <td width="20%" align="right" class="linhaform" nowrap>&nbsp;Seqüência:</td>' SKIP
-             '    <td width="30%" align="left" class="linhaform"><input type="text" name="v_seq" size="15" class="input" value="' get-value("v_pseq") '" disabled></td>' SKIP
-            ' </tr>' SKIP
-            '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
-            /*'<tr>'
-             '<td align="center" class="linhaform" colspan=2>'
-              '<input type="submit" value="Autenticar" name="autentica" class="button">&nbsp;'
-              '<input type="submit" value="Retornar" name="retorna" class="button"></td>'
-            '</tr>'*/
-            '<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>' SKIP 
-           '</table>'
-          '</center>'
-         '</div>'
-        '</td>'
-       '</tr>' 
-      '</table>'
-     '</center>'
-    '</div>' SKIP.
+			  '<table width=70% cellspacing = 0 cellpadding = 0>' SKIP
+			   '<tr>' SKIP
+				'<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
+				'  <td width="101%" valign="middle" align="center">' SKIP
+				 '  <div align="center">' SKIP
+				  '  <center>' SKIP
+				   '  <table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>' SKIP
+					'  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
+					'  <tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
+					'  <tr>' SKIP
+					 '    <td width="20%" align="right" class="linhaform" nowrap>&nbsp;Seqüência:</td>' SKIP
+					 '    <td width="30%" align="left" class="linhaform"><input type="text" name="v_seq" size="15" class="input" value="' get-value("v_pseq") '" disabled></td>' SKIP
+					' </tr>' SKIP
+					'<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>'
+					/*'<tr>'
+					 '<td align="center" class="linhaform" colspan=2>'
+					  '<input type="submit" value="Autenticar" name="autentica" class="button">&nbsp;'
+					  '<input type="submit" value="Retornar" name="retorna" class="button"></td>'
+					'</tr>'*/
+					'<tr><td align="right" class="linhaform"></td><td>&nbsp;</td></tr>' SKIP 
+				   '</table>'
+				  '</center>'
+				 '</div>'
+				'</td>'
+			   '</tr>' 
+			  '</table>'
+			 '</center>'
+			'</div>' SKIP.
 			  END.	 
- {&OUT}
-   "</form>":U SKIP
-   '<OBJECT  classid="clsid:7F8735B1-EC41-4134-9083-E059B3F56262" codebase="edimpbmp20ci.ocx#version=2,1,3,1" width=0 height=0 align=CENTER hspace=0 vspace=0 id=bematech>'
-   '</OBJECT>' 
-   "</BODY>":U SKIP
-   "</HTML>":U SKIP.
+		 {&OUT}
+		   "</form>":U SKIP
+		   '<OBJECT  classid="clsid:7F8735B1-EC41-4134-9083-E059B3F56262" codebase="edimpbmp20ci.ocx#version=2,1,3,1" width=0 height=0 align=CENTER hspace=0 vspace=0 id=bematech>'
+		   '</OBJECT>' 
+		   "</BODY>":U SKIP
+		   "</HTML>":U SKIP.
 
  IF REQUEST_METHOD = "POST":U THEN DO:
          
@@ -338,17 +341,19 @@ PROCEDURE process-web-request :
 			RUN STORED-PROCEDURE pc_gera_log_batch 
 					aux_handproc = PROC-HANDLE NO-ERROR 
 					 (INPUT crapcop.cdcooper,   /* Cooperativa */  
-					  INPUT 2,               /* Nivel criticidade do log "Erro tratato" */ 			 
+					  INPUT 1,               /* Nivel criticidade do log "Erro tratato" */ 			 
 					  INPUT trim(get-value("v_plit")),   /* Descriçao do log em si */ 
 					  INPUT "rot097",       /* Nome para gravaçao de log  */ 
 					  INPUT "N",            /* Flag S/N para criar um arquivo novo */  
 					  INPUT "N",            /* Flag S/N  para informaR [PL/SQL] */ 
 					  INPUT ?,              /* Diretorio onde será gerado o log */ 
-					  INPUT "F",            /* Tipo do log  */ 
+					  INPUT "O",            /* Tipo do log  */ 
 					  INPUT 'b1crap00.p',   /* Programa/job */ 
 					  INPUT 3,              /* Execucao via BATCH */ 
 					  INPUT 0,              /* Criticidade BAIXA */  
-					  INPUT 1).             /* Processo executado com sucesso */ 
+					  INPUT 1,              /* Processo executado com sucesso */ 
+		              INPUT 0               /* Codigo da mensagem ou critica - 11/12/2017 - Chamado 786752 */
+				      ).
 																			   
 			CLOSE STORED-PROC pc_gera_log_batch 
 				 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -357,105 +362,105 @@ PROCEDURE process-web-request :
 		END.
 	 ELSE
 	    DO:
-     /*Para a rotina 85 - Realiza a impressao da Comprovacao de Vida*/
-     IF get-value("v_plit") = "crap085" THEN
-        DO:
-            FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper AND         
-                               craptab.nmsistem = "CRED"           AND         
-                               craptab.tptabela = "GENERI"         AND         
-                               craptab.cdempres = INT(v_caixa)     AND         
-                               craptab.cdacesso = v_operador       AND
-                               craptab.tpregist = INT(v_pac)
-                               NO-LOCK NO-ERROR.
-
-            IF AVAIL craptab THEN
-               {&OUT} '<script> bematech.ImpAjust("LPT1", "' craptab.dstextab '" ,48,1,2,0,0,0,0)                   </script>'.
-        END.
-     ELSE
-        IF  get-value("v_plit") = " " THEN 
-            DO:  /* Somente para DOC/TED */
-                FIND crapaut  WHERE
-                     crapaut.cdcooper = crapdat.cdcooper AND 
-                     crapaut.dtmvtolt = crapdat.dtmvtolt AND 
-                     crapaut.cdagenci = INT(v_pac)       AND 
-                     crapaut.nrdcaixa = INT(v_caixa)     AND 
-                     crapaut.nrsequen = INT(get-value("v_pseq")) 
-                     NO-ERROR.
-               
-                IF  AVAIL crapaut THEN 
-                    {&OUT} '<script> bematech.ImpAjust("LPT1", "' crapaut.dslitera '" ,48,1,2,0,0,0,0)                   </script>'.
-        
-           END.
-        ELSE 
-           DO:
-              CASE get-value("v_prec"):
-        
-                  WHEN "YES" THEN 
-                      DO: /* Recibo */ 
-                          {&OUT} '<script> bematech.ImpAjust("LPT1","' get-value("v_plit") '",48,1,2,0,0,0,0)                   </script>'.
-                      END.
-                  WHEN "NO" THEN 
-                      DO: /* Autenticação */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(get-value("v_plit")) '",2,1,0,0,0,0)                   </script>'. 
-                      END.
-                  WHEN "NO2" THEN 
-                      DO: /* Autenticação c/ Conta */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1,48))'",2,1,0,0,0,0) </script>'. 
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(substring(get-value("v_plit"),49,48)) '",2,1,0,0,0,0) </script>'. 
-                      END.
-                  WHEN "NO3" THEN 
-                      DO: /* Parte 1 Autenticação de DARFs */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1, 48)) '",2,1,0,0,0,0)   </script>'. 
-
-                          {&OUT}
-                           '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                             "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO4" + "&vias=" + "'STRING(INTE(get-value("vias")) + 1)'"  + 
-                             "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                           </script>'.
-
-                      END.
-                  WHEN "NO4" THEN 
-                      DO: /* Parte 2 Autenticação de DARFs */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"), 49)) '",2,1,0,0,0,0) </script>'.
-
-                          IF  INTE(get-value("vias")) >= 4 THEN
-                              DO:
-                                 {&OUT}
-                                 '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                                   "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO3"  + "&aut=" + "ok"  + 
-                                   "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                                 </script>'.
-                              END.
-
-                          {&OUT}
-                           '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                             "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO3" + "&vias=" + "'STRING(INTE(get-value("vias")) + 1)'"  + 
-                             "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                           </script>'.
-                          
-                      END.
-                  WHEN "GPS1" THEN 
-                      DO: /* Parte 1 Autenticação de GPS */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1, 48)) '",2,1,0,0,0,0)   </script>'.
-                          {&OUT}
-                          '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                          "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS2" + 
-                          "&v_psetcook=" + "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                          </script>'.
-                      END.
-                  WHEN "GPS2" THEN 
-                      DO: /* Parte 2 Autenticação de GPS */
-                          {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"), 48)) '",2,1,0,0,0,0) </script>'.
-                          {&OUT}
-                          '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
-                          "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS1" + "&aut=" + "ok"  + 
-                          "&v_psetcook=" + "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                          </script>'.
-                      END.
-        
-              END CASE.
-        
-           END.
+			/*Para a rotina 85 - Realiza a impressao da Comprovacao de Vida*/
+		   IF get-value("v_plit") = "crap085" THEN
+		   	  DO:
+		         FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper AND         
+		   		  				    craptab.nmsistem = "CRED"           AND         
+		   						    craptab.tptabela = "GENERI"         AND         
+		   						    craptab.cdempres = INT(v_caixa)     AND         
+		   						    craptab.cdacesso = v_operador       AND
+		   						    craptab.tpregist = INT(v_pac)
+		   						    NO-LOCK NO-ERROR.
+           
+		   		 IF AVAIL craptab THEN
+		   		    {&OUT} '<script> bematech.ImpAjust("LPT1", "' craptab.dstextab '" ,48,1,2,0,0,0,0)                   </script>'.           
+		   	  END.
+		   ELSE
+		   	  IF  get-value("v_plit") = " " THEN 
+		   		 DO:  /* Somente para DOC/TED */
+		   			FIND crapaut  WHERE
+		   				 crapaut.cdcooper = crapdat.cdcooper AND 
+		   				 crapaut.dtmvtolt = crapdat.dtmvtolt AND 
+		   				 crapaut.cdagenci = INT(v_pac)       AND 
+		   				 crapaut.nrdcaixa = INT(v_caixa)     AND 
+		   				 crapaut.nrsequen = INT(get-value("v_pseq")) 
+		   				 NO-ERROR.
+		   		   
+		   			IF  AVAIL crapaut THEN 
+		   				{&OUT} '<script> bematech.ImpAjust("LPT1", "' crapaut.dslitera '" ,48,1,2,0,0,0,0)                   </script>'.
+		   	
+		   	     END.
+		   	  ELSE 
+		   	     DO:
+		   		    CASE get-value("v_prec"):
+		   	
+		   			  WHEN "YES" THEN 
+		   				  DO: /* Recibo */ 
+		   					  {&OUT} '<script> bematech.ImpAjust("LPT1","' get-value("v_plit") '",48,1,2,0,0,0,0)                   </script>'.
+		   				  END.
+		   			  WHEN "NO" THEN 
+		   				  DO: /* Autenticação */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(get-value("v_plit")) '",2,1,0,0,0,0)                   </script>'. 
+		   				  END.
+		   			  WHEN "NO2" THEN 
+		   				  DO: /* Autenticação c/ Conta */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1,48))'",2,1,0,0,0,0) </script>'. 
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(substring(get-value("v_plit"),49,48)) '",2,1,0,0,0,0) </script>'. 
+		   				  END.
+		   			  WHEN "NO3" THEN 
+		   				  DO: /* Parte 1 Autenticação de DARFs */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1, 48)) '",2,1,0,0,0,0)   </script>'. 
+           
+		   					  {&OUT}
+		   					   '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
+		   						 "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO4" + "&vias=" + "'STRING(INTE(get-value("vias")) + 1)'"  + 
+		   						 "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+		   					   </script>'.
+           
+		   				  END.
+		   			  WHEN "NO4" THEN 
+		   				  DO: /* Parte 2 Autenticação de DARFs */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"), 49)) '",2,1,0,0,0,0) </script>'.
+           
+		   					  IF  INTE(get-value("vias")) >= 4 THEN
+		   						  DO:
+		   							 {&OUT}
+		   							 '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
+		   							   "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO3"  + "&aut=" + "ok"  + 
+		   							   "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+		   							 </script>'.
+		   						  END.
+           
+		   					  {&OUT}
+		   					   '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
+		   						 "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "NO3" + "&vias=" + "'STRING(INTE(get-value("vias")) + 1)'"  + 
+		   						 "&v_psetcook=" +         "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+		   					   </script>'.
+		   					  
+		   				  END.
+		   			  WHEN "GPS1" THEN 
+		   				  DO: /* Parte 1 Autenticação de GPS */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"),1, 48)) '",2,1,0,0,0,0)   </script>'.
+		   					  {&OUT}
+		   					  '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
+		   					  "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS2" + 
+		   					  "&v_psetcook=" + "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+		   					  </script>'.
+		   				  END.
+		   			  WHEN "GPS2" THEN 
+		   				  DO: /* Parte 2 Autenticação de GPS */
+		   					  {&OUT} '<script> bematech.Imprimir("LPT1","' trim(SUBSTRING(get-value("v_plit"), 48)) '",2,1,0,0,0,0) </script>'.
+		   					  {&OUT}
+		   					  '<script>window.open("autentica.html?v_plit=" + "' get-value("v_plit") '" + 
+		   					  "&v_pseq=" + "' get-value("v_pseq") '" + "&v_prec=" + "GPS1" + "&aut=" + "ok"  + 
+		   					  "&v_psetcook=" + "YES","_self","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+		   					  </script>'.
+		   				  END.
+		   	
+		   		    END CASE.
+		   	
+		   	     END.
 		 END.
 
  END.
