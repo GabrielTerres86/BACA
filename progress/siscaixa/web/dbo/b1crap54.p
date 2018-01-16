@@ -32,9 +32,9 @@
                
                19/01/2011 - Alterar nrsencar para dssencar (Guilherme).
                
-               04/06/2013 - Alterado funç?o lista-saldo-conta para retorno de saldo (Jean Michel).
+               04/06/2013 - Alterado funcao lista-saldo-conta para retorno de saldo (Jean Michel).
                
-               23/10/2013 - Incluída validaç?o do nível do operador na 
+               23/10/2013 - Incluida validacao do nivel do operador na 
                             procedure 'valida-permissao-saldo-conta' (Diego).
                
                28/05/2014 - Retirada validacao do nivel de operador na 
@@ -49,7 +49,7 @@
                02/02/2016 - Incluido verificacao da flag "flsaqpre" para isentar 
                             taxas de saque presencial.(Lombardi #393807).
                             
-               23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
+               23/02/2016 - Tratamentos para utilizacao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
@@ -972,8 +972,8 @@ PROCEDURE atualiza-cheque-avulso:
     
     RUN STORED-PROCEDURE pc_verifica_tarifa_operacao
         aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT crapcop.cdcooper, /* Código da Cooperativa */
-                                 INPUT p-cod-operador,   /* Código do Operador */
+                                (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
+                                 INPUT p-cod-operador,   /* Codigo do Operador */
                                  INPUT 1,                /* Codigo Agencia */
                                  INPUT 100,              /* Codigo banco caixa */
                                  INPUT crapdat.dtmvtolt, /* Data de Movimento */
@@ -982,11 +982,11 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT p-nro-conta,      /* Numero da Conta */
                                  INPUT 1,                /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                  INPUT 0,                /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
-                                   INPUT 0,                /* Quantidade de registros da operaç?o (Custódia, contra-ordem, folhas de cheque) */
-                                  OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operaç?o */
-                                  OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-N?o isenta,1-Isenta */
-                                OUTPUT 0,                /* Código da crítica */
-                                OUTPUT "").              /* Descriç?o da crítica */
+                                   INPUT 0,                /* Quantidade de registros da operacao (Custodia, contra-ordem, folhas de cheque) */
+                                  OUTPUT 0,                /* Quantidade de registros a cobrar tarifa na operacao */
+                                  OUTPUT 0,                /* Flag indica se ira isentar tarifa:0-Nao isenta,1-Isenta */
+                                OUTPUT 0,                /* Codigo da critica */
+                                OUTPUT "").              /* Descricao da critica */
     
     CLOSE STORED-PROC pc_verifica_tarifa_operacao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -1024,7 +1024,7 @@ PROCEDURE atualiza-cheque-avulso:
      END.                          
     /*FIM VERIFICACAO TARIFAS DE SAQUE*/
     END. 
-	/* GERAÇAO DE LOG */
+	/* GERACAO DE LOG */
     IF (p-opcao = "R" )   THEN
         ASSIGN aux_cdhistor = 22
                aux_idtipcar = 0
@@ -1038,7 +1038,7 @@ PROCEDURE atualiza-cheque-avulso:
     
     RUN STORED-PROCEDURE pc_gera_log_ope_cartao
         aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT crapcop.cdcooper, /* Código da Cooperativa */
+                                (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
                                  INPUT p-nro-conta,      /* Numero da Conta */ 
                                  INPUT 1,                /* Saque */
                                  INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */ 
@@ -1047,16 +1047,16 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT aux_cdhistor,
                                  INPUT STRING(aux_nrcartao),
                                  INPUT p-valor,
-                                 INPUT p-cod-operador,   /* Código do Operador */
+                                 INPUT p-cod-operador,   /* Codigo do Operador */
                                  INPUT 0,
                                  INPUT 0,
                                  INPUT p-cod-agencia,
                                  INPUT 0,
                                  INPUT "",
                                  INPUT 0,
-                                OUTPUT "").              /* Descriç?o da crítica */
+                                OUTPUT "").              /* Descricao da critica */
 
-    /* Código da crítica */    
+    /* Codigo da critica */    
     CLOSE STORED-PROC pc_gera_log_ope_cartao
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
@@ -1147,8 +1147,8 @@ PROCEDURE consulta-provisao:
          p-solicita = "TRUE".
          
          ASSIGN i-cod-erro = 0
-         c-desc-erro = "Atenç?o! Provis?o para saque n?o realizada.
-        Saque n?o autorizado." .
+         c-desc-erro = "Atencao! Provisao para saque nao realizada.
+        Saque nao autorizado." .
        
         RUN cria-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
