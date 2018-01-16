@@ -2064,10 +2064,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         AND    crapatr.nrdconta = pr_nrdconta 
         AND    crapatr.cdhistor = pr_cdhistor 
         AND    crapatr.cdrefere = pr_cdrefere
-        AND    crapatr.tpautori <> 0 
-        AND    crapcon.cdcooper = crapatr.cdcooper 
-        AND    crapcon.cdsegmto = crapatr.cdsegmto 
-        AND    crapcon.cdempcon = crapatr.cdempcon 
+        --AND    crapatr.tpautori <> 0 
+        AND    crapcon.cdcooper(+) = crapatr.cdcooper 
+        AND    crapcon.cdsegmto(+) = crapatr.cdsegmto 
+        AND    crapcon.cdempcon(+) = crapatr.cdempcon 
         AND    craplau.cdcooper = crapatr.cdcooper 
         AND    craplau.nrdconta = crapatr.nrdconta 
         AND    craplau.cdhistor = crapatr.cdhistor 
