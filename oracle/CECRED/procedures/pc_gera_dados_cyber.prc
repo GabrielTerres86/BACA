@@ -7,13 +7,19 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : 
-  Data    : 2017.                                     Ultima atualizacao: 14/11/2017
+  Data    : 2017.                                     Ultima atualizacao: 16/01/2018
   Dados referentes ao programa:
     Frequencia: Diaria. Seg-sex, 08h
     Programa Chamador: JBCYB_GERA_DADOS_CYBER
 
   Alteracoes: 14/11/2017 - Log de trace da exception others e retorno de crítica para
                            o programa chamador (Carlos)
+
+              16/01/2018 - Quando chegar reagendamento não retornar mensagem de erro.
+                           A solução definitiva será em novo chamado e a GENE0004 pode retonar
+                           alem do codigo da mensagem um indicador de tipo de mensagem para não dar erro.
+                           (Envolti - Belli - Chamado 831545)
+                           
   .............................................................................. */  
 
   DECLARE
@@ -34,7 +40,7 @@ BEGIN
     vr_nomdojob    VARCHAR2(40) := 'JBCYB_GERA_DADOS_CYBER';
     vr_flgerlog    BOOLEAN := FALSE;
     vr_dthoje      DATE := TRUNC(SYSDATE);
-
+          
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -99,10 +105,12 @@ BEGIN
         END IF;
       
       ELSE
-        vr_cdcritic := 0;
-        vr_dscritic := vr_dserro;
-
-        RAISE vr_exc_erro;  
+        -- Não retornar o erro - Chamado 831545 - 16/01/2018
+        IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN
+          vr_cdcritic := 0;
+          vr_dscritic := vr_dserro;
+          RAISE vr_exc_erro;  
+        END IF;
       END IF;
 
     END IF; 
@@ -132,7 +140,7 @@ BEGIN
 
       ROLLBACK;
         
-    WHEN OTHERS THEN
+    WHEN OTHERS THEN     
       cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper, 
                                    pr_compleme => vr_dscritic);
 
