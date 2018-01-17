@@ -40,6 +40,7 @@
  * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestaÃ§Ãµes pois nao carrega dados corretamente(SD531549)
  * 031: [03/04/2017] - Jean             (MOutÂ´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
+ * 032: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
  
 ?>
@@ -329,6 +330,8 @@
 			arrayProposta['dslcremp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dslcremp')); ?>';
 			arrayProposta['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsfinemp')); ?>';
 			arrayProposta['idquapro'] = '<? echo getByTagName($proposta,'idquapro'); ?>';
+			// [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+			arrayProposta['idquaprc'] = '<? echo getByTagName($proposta,'idquaprc'); ?>';
 			arrayProposta['dsquapro'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsquapro')); ?>';
 			arrayProposta['percetop'] = '<? echo getByTagName($proposta,'percetop'); ?>';
 			arrayProposta['dtmvtolt'] = '<? echo getByTagName($proposta,'dtmvtolt'); ?>';
