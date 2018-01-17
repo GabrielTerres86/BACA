@@ -1,5 +1,3 @@
-//SIMAS
-
 <?php
 
 /*
@@ -24,7 +22,7 @@ require_once('../../../../class/xmlfile.php');
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Portabilidade</td>
+								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Qualificação - Controle</td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
@@ -43,16 +41,23 @@ require_once('../../../../class/xmlfile.php');
 	                                        <input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	
 	                                        <fieldset>
-		                                        <legend><? echo utf8ToHtml('Alterar Qualificação da Operação') ?></legend>
-                                                <label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
-                                                <input name="idquaprc" id="idquaprc" type="text" value="" />
+		                                        <legend><? echo utf8ToHtml('Alterar Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o') ?></legend>
+                                                
+                                                <label for="idquapro" style="width:180px">Qualifica&ccedil;&atilde;o Op.:</label>
+                                                <input name="idquapro" id="idquapro" style="width:30px" type="text" value="" />
                                                 <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-                                                <input name="dsquaprc" id="dsquaprc" type="text" value="" />
+                                                <input name="dsquaprc" id="dsquaprc" style="width:90px" type="text" value="" />
+                                                <br/>
+                                                
+                                                <label for="idquaprc" style="width:180px">Qualifica&ccedil;&atilde;o Op. Contr.:</label>
+                                                <input name="idquaprc" id="idquaprc" style="width:30px" type="text" value="" />
+                                                <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+                                                <input name="dsquaprc" id="dsquaprc" style="width:90px" type="text" value="" />
                                                 <br/>
                                             </fieldset>
                                             <div id="divBotoes">
-                                                <a href="#" class="botao" id="btAlterar" onClick="controlaOperacao('PORTAB_APRV');">Alterar</a>
-                                                <a href="#" class="botao" id="btCancelar" onClick="controlaOperacao('PORTAB_EXTR');">Cancelar</a>                                                
+                                                <a href="#" class="botao" style="width:58px;" id="btAlterar" onClick="controlaOperacao('PORTAB_APRV');">Alterar</a>
+                                                <a href="#" class="botao" style="width:65px;" id="btCancelar" onClick="controlaOperacao('PORTAB_EXTR');">Cancelar</a>                                                
                                             </div>
 										</form>
 									</div>
