@@ -51,7 +51,7 @@
 			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					 (Adriano - P339).
  * 042: [11/10/2017] Liberacao da melhoria 442 (Heitor - Mouts)
-
+ * 043: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -710,8 +710,8 @@ function controlaLayout(operacao) {
 		var rCet     	 = $('label[for="percetop"]','#'+nomeForm );
 		var rDiasUteis   = $('#duteis','#'+nomeForm );
 		var r_Linha2     = $('label[for="nivcalcu"],label[for="flgimpnp"],label[for="dtdpagto"],label[for="vlpreemp"]','#'+nomeForm );
-		var cCodigo		 = $('#cdfinemp,#idquapro,#cdlcremp','#'+nomeForm);
-		var cDescricao   = $('#dsfinemp,#dsquapro,#dslcremp','#'+nomeForm);
+		var cCodigo		 = $('#cdfinemp,#idquapro,#idquaprc,#cdlcremp','#'+nomeForm);
+		var cDescricao   = $('#dsfinemp,#dsquapro,#dsquaprc,#dslcremp','#'+nomeForm);
 
 		var rNivelRic    = $('label[for="nivrisco"]','#'+nomeForm);
 		var rRiscoCalc   = $('label[for="nivcalcu"]','#'+nomeForm);
@@ -724,6 +724,10 @@ function controlaLayout(operacao) {
 		var rQtParc      = $('label[for="qtpreemp"]','#'+nomeForm);
 		var rQualiParc   = $('label[for="idquapro"]','#'+nomeForm);
 		var rDsQualiParc = $('label[for="dsquapro"]','#'+nomeForm);
+		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
+		var rQualiParcC = $('label[for="idquaprc"]', '#' + nomeForm);
+		var rDsQualiParcC = $('label[for="dsquaprc"]', '#' + nomeForm);
+
 		var rDebitar     = $('label[for="flgpagto"]','#'+nomeForm);
 		var rPercCET	 = $('label[for="percetop"]','#'+nomeForm);
 		var rLiberar 	 = $('label[for="qtdialib"]','#'+nomeForm);
@@ -744,6 +748,9 @@ function controlaLayout(operacao) {
 		var cQtParc      = $('#qtpreemp','#'+nomeForm);
 		var cQualiParc   = $('#idquapro','#'+nomeForm);
 		var cDsQualiParc = $('#dsquapro','#'+nomeForm);
+		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
+		var cQualiParcC = $('#idquaprc', '#' + nomeForm);
+		var cDsQualiParcC = $('#dsquaprc', '#' + nomeForm);
 		var cDebitar     = $('#flgpagto','#'+nomeForm);
 		var cPercCET	 = $('#percetop','#'+nomeForm);
 		var cTipoEmpr 	 = $('#tpemprst','#'+nomeForm);
@@ -771,6 +778,9 @@ function controlaLayout(operacao) {
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
         cQualiParc.addClass('rotulo').css('width','32px');
         cDsQualiParc.addClass('').css('width','108');
+		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
+		cQualiParcC.addClass('rotulo').css('width', '32px');
+		cDsQualiParcC.addClass('').css('width', '108');		
         cDebitar.addClass('rotulo').css('width','90px');
         cPercCET.addClass('porcento').css('width','45px');
         cTipoEmpr.addClass('rotulo').css('width','90px');
@@ -796,6 +806,7 @@ function controlaLayout(operacao) {
 		rLnCred.addClass('').css('width','82px');
 		rFinali.addClass('').css('width','82px');
 		rQualiParc.addClass('').css('width','82px');
+		rQualiParcC.addClass('').css('width', '250px');
 		rPercCET.addClass('').css('width','177px');
 		rDtPgmento.addClass('rotulo').css('width','305px');
 		rNtPromis.addClass('rotulo').css('width','305px');
@@ -1740,6 +1751,8 @@ function atualizaTela(){
 		$('#cdfinemp','#frmNovaProp').val( arrayProposta['cdfinemp'] );
 		$('#qtpreemp','#frmNovaProp').val( arrayProposta['qtpreemp'] );
 		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );
+		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
+		$('#idquaprc', '#frmNovaProp').val(arrayProposta['idquaprc']);
 		$('#flgpagto','#frmNovaProp').val( arrayProposta['flgpagto'] );
 		$('#percetop','#frmNovaProp').val( arrayProposta['percetop'] );
 		$('#qtdialib','#frmNovaProp').val( arrayProposta['qtdialib'] );
