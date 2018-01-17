@@ -443,6 +443,13 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                 ,pr_qtprecal   IN OUT crapepr.qtprecal%TYPE --> Parcelas calculadas
                                 ,pr_des_reto   OUT VARCHAR --> Retorno OK / NOK
                                 ,pr_tab_erro   OUT gene0001.typ_tab_erro); --> Tabela com poss¿ves erros
+								
+  FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
+                                   ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
+                                   ,pr_nrctremp IN crappep.nrctremp%TYPE --> Numero do Contrato de empréstimo
+                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do Movimento Atual
+                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) --> Data do Movimento Anterior
+                                   RETURN INTEGER;
 
   /* Rotina de calculo de dias do ultimo pagamento de emprestimos em atraso*/
   PROCEDURE pc_calc_dias_atraso(pr_cdcooper   IN crapepr.cdcooper%TYPE --> Codigo da cooperativa
