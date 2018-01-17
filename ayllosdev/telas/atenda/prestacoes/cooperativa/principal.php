@@ -330,7 +330,6 @@
 			arrayProposta['dslcremp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dslcremp')); ?>';
 			arrayProposta['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsfinemp')); ?>';
 			arrayProposta['idquapro'] = '<? echo getByTagName($proposta,'idquapro'); ?>';
-			// [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
 			arrayProposta['idquaprc'] = '<? echo getByTagName($proposta,'idquaprc'); ?>';
 			arrayProposta['dsquapro'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsquapro')); ?>';
 			arrayProposta['percetop'] = '<? echo getByTagName($proposta,'percetop'); ?>';
