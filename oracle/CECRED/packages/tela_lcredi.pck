@@ -63,16 +63,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LCREDI is
                                     ,pr_flgdisap IN craplcr.flgdisap%type --> Dispensar aprovação
                                     ,pr_flgcobmu IN craplcr.flgcobmu%type --> Cobrar multa
                                     ,pr_flgsegpr IN craplcr.flgsegpr%type --> Seguro prestamista
-                                    ,pr_cdhistor IN craplcr.cdhistor%type --> Código do histórico 
+                                    ,pr_cdhistor IN craplcr.cdhistor%type --> Código do histórico  
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
                                     ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
-                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica   
-                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica  
-                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML 
-                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro    
-                                    ,pr_des_erro OUT VARCHAR2);           --> Descrição do erro                   
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG  
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica    
+                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica    
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML    
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro      
+                                    ,pr_des_erro OUT VARCHAR2);           --> Descrição do erro 
                                                                               
   PROCEDURE pc_blq_lib_lcredi(pr_cdlcremp IN craplcr.cdlcremp%TYPE --> Código da linha de crédito
                              ,pr_cddopcao IN VARCHAR2              --> Código da opção
