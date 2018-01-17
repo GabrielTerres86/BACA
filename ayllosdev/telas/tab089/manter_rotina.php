@@ -1,5 +1,7 @@
 <?php
 
+ini_set('display_errors', '1');
+
 /* !
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Diego Simas/Guilherme Boettcher - AMcom
@@ -13,7 +15,7 @@ require_once('../../includes/config.php');
 require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
-require_once('../../xmlRequestHandler.php');
+require_once('../../class/xmlRequestHandler.php');
 
 isPostMethod();
 
@@ -44,21 +46,13 @@ if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cd
 }
 
 if ($cdopcao == 'C') {
-    /*$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-
-    $xmlResult = mensageria($xml, "TELA_TAB089", "TAB089_CONSULTAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);*/
     $xmlRequest = new XMLRequestHandler(
-        'TELA_TAB089', 
-        'TAB089_CONSULTAR', 
-        ['cdcooper' => $glbvars["cdcooper"]]
+        'TELA_TAB089',
+        'TAB089_CONSULTAR',
+        array('cdcooper' => $glbvars["cdcooper"])
     );
 } else {
-    /*$xml = "<Root>";
+    $xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <prtlmult>".$prtlmult."</prtlmult>";
     $xml .= "   <prestorn>".$prestorn."</prestorn>";
@@ -84,14 +78,15 @@ if ($cdopcao == 'C') {
     $xml .= "</Root>";
 
     $xmlResult = mensageria($xml,"TELA_TAB089", "TAB089_ALTERAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);*/
+    $xmlObj = getObjectXML($xmlResult);
+
     $xmlRequest = new XMLRequestHandler(
         'TELA_TAB089',
         'TAB089_ALTERAR',
-        [
+        array(
             'prtlmult' => $prtlmult, 
-            'prestorn' => $prestorn,
-            'prpropos' => $prpropos,
+            'prestorn' => $prestorn, 
+            'prpropos' => $prpropos, 
             'vlempres' => str_replace(',','.', $vlempres),
             'pzmaxepr' => $pzmaxepr,
             'vlmaxest' => str_replace(',','.', $vlmaxest),
@@ -105,25 +100,24 @@ if ($cdopcao == 'C') {
             'qtdibaut' => $qtdibaut,
             'qtdibapl' => $qtdibapl,
             'qtdibsem' => $qtdibsem
-        ]
+        )
     );
 }
 
-//if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 if ($xmlRequest->hasError()) {
-    $msgErro = $xmlRequest->getByTagLevel([0, 0, 4]); //$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    $msgErro = $xmlRequest->getByTagLevel(array(0, 0, 4));
 
     if ($msgErro == "") {
-        $msgErro = $xmlRequest->getError(); //$xmlObj->roottag->tags[0]->cdata;
+        $msgErro = $xmlRequest->getError(); 
     }
 
-    $nmdcampo = $xmlRequest->getTagAttribute('NMDCAMPO', 0); //$xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
+    $nmdcampo = $xmlRequest->getTagAttribute('NMDCAMPO', 0); 
     exibeErroNew($msgErro,$nmdcampo);
 
     exit();
 }
 
-$registros = $xmlRequest->getTagObjectByLevel(0)->tags; //$xmlObj->roottag->tags[0]->tags;
+$registros = $xmlRequest->getTagObjectByLevel(0)->tags;
 
 if ($cdopcao == 'C') {
     foreach ($registros as $r) {
