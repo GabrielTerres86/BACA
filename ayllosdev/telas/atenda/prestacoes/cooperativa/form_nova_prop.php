@@ -11,6 +11,7 @@
  * 002: [08/04/2014] Alterado fluxo do botao Continuar. (Jorge)
  * 003: [17/06/2014] Trocado posicao dos campos "Linha Credito" por "Finalidade". (Reinert)
  * 004: [11/10/2017] Liberacao melhoria 442 (Heitor - Mouts)
+ * 005: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */	
  ?>
 
@@ -65,6 +66,13 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsquapro" id="dsquapro" type="text" value="" />
 		<br />
+
+		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
+		<input name="idquaprc" id="idquaprc" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
+		<br/>		
 		
 		<label for="qtpreemp">Qtd. de Parc.:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />		
