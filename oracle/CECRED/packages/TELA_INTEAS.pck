@@ -156,6 +156,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                buscando dados de 2016.
                                Nas proximas alteracoes, remover essas funcoes para evitar deixar lixo no codigo.
                                
+                  15/01/2018 - Melhorar o registro do log para situacoes de erro na geracao do arquivo de cadastro.
+                               Ajustar estouro dos campos de endereco no arquivo de cadastro, para procuradores
+                               e representantes (Anderson SD 832274).
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -549,7 +553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND (avt.nrcpfcgc > 0 OR
               avt.nrdctato > 0);
     
-  -----------> VAIAVEIS <-----------        
+  -----------> VARIAVEIS <-----------        
 
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
@@ -569,6 +573,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     vr_idsitcnt      VARCHAR2(1);
     vr_flpriass      BOOLEAN;
+    vr_logcompl      VARCHAR2(5000);
+    
+    ---------> VARIAVEIS AUXILIARES PARA ENDERECAMENTO <---------
+    vr_aux_endereco  VARCHAR2(1000);
+    vr_aux_nrendere  INTEGER;
+    vr_aux_complend  VARCHAR2(1000);
+    vr_aux_nrcepend  INTEGER;
+    vr_aux_nmbairro  VARCHAR2(1000);
+    vr_aux_nmcidade  VARCHAR2(1000);
+    vr_aux_cdufende  VARCHAR2(100);
+    vr_aux_tplograd  VARCHAR2(100);
   -----------> TEMPTABLES <----------- 
     -- Temptable para controlar se ja processou o cpf/cnpj       
     TYPE typ_tab_nrcpfcnpj IS TABLE OF NUMBER
@@ -939,7 +954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     END IF;
     
-     
+    vr_logcompl := 'Início Geração do Arquivo de Cadastro dos Cooperados';    
     --> Buscar os CPFs/CNPJs a serem enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
@@ -954,6 +969,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         CONTINUE;
       END IF;
     
+      /* Armazena a ultima conta do processamento para caso apresente algum erro, sabermos qual a conta / cpf */
+      vr_logcompl := 'Gerando associado, Cooper: ' || rw_crapass_nrcpfcgc.cdcooper || ', Conta: ' || rw_crapass_nrcpfcgc.nrdconta || ', CPF/CNPJ: ' || rw_crapass_nrcpfcgc.nrcpfcgc;
+          
       -- loop para garantir que todas as pessoas sejam enviadas para o arquivo.
       -- Visto que os dados principais do associado devem ser os da conta mais atualizada
       -- caso exista mais de uma conta, assim o loop força que primeiro seja enviado a conta mais atualizada
@@ -1003,7 +1021,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         -- Verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
-          continue;
+          
+          -- Mesma condicao de fora do IF, para nao ficar em loop infinito em caso de critica na pc_trata_conta.
+          IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
+            EXIT;
+          ELSE
+            continue;  
+          END IF;
+          
         END IF;
         
         -- Sair do loop qnd processar a mesma conta entre os dois cursores
@@ -1014,7 +1039,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       END LOOP;    
     END LOOP; -- Fim  Loop cr_crapass_nrcpfcgc
     
-
+    pc_gera_log_easyway(pr_nmarqlog,'Inicio da leitura dos Procuradores e Representantes, arquivo: '||vr_nmarqimp); 
+    vr_logcompl := 'Inicio da leitura dos Procuradores e Representantes';
+    
     --> Buscar os Procuradores e Responsáveis dos cooperados enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
@@ -1028,6 +1055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                              pr_dtfimger => pr_dtfimger)) THEN
           CONTINUE;
         END IF;
+        
+        /* Armazena a ultima conta do processamento para caso apresente algum erro, sabermos qual a conta / cpf */
+        vr_logcompl := 'Gerando procurador, Cooper: ' || rw_crapass_nrcpfcgc.cdcooper || ', Conta: ' || rw_crapass_nrcpfcgc.nrdconta || ', CPF/CNPJ: ' || rw_crapass_nrcpfcgc.nrcpfcgc;
         
         --->>> TERCEIROS DOS ASSOCIADOS (PROCURADORES E SOCIOS) <<<---
         IF rw_crapass_nrcpfcgc.inpessoa = 1 THEN
@@ -1074,15 +1104,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                  ', endereço não encontrado';
                   RAISE vr_exc_erro;
                 END IF;
-                rw_crapcrl.dsendres := rw_crapenc.endereco;
-                rw_crapcrl.nrendere := rw_crapenc.nrendere;
-                rw_crapcrl.complend := rw_crapenc.complend;
-                rw_crapcrl.nrcepend := rw_crapenc.nrcepend;
-                rw_crapcrl.nmbairro := rw_crapenc.nmbairro;
-                rw_crapcrl.nmcidade := rw_crapenc.nmcidade;
-                rw_crapcrl.cdufresd := rw_crapenc.cdufende;
-                rw_crapcrl.tplograd := rw_crapenc.tp_lograd;
+                vr_aux_endereco := rw_crapenc.endereco;
+                vr_aux_nrendere := rw_crapenc.nrendere;
+                vr_aux_complend := rw_crapenc.complend;
+                vr_aux_nrcepend := rw_crapenc.nrcepend;
+                vr_aux_nmbairro := rw_crapenc.nmbairro;
+                vr_aux_nmcidade := rw_crapenc.nmcidade;
+                vr_aux_cdufende := rw_crapenc.cdufende;
+                vr_aux_tplograd := rw_crapenc.tp_lograd;
                 CLOSE cr_crapenc;
+              ELSE
+                vr_aux_endereco := rw_crapcrl.dsendres;
+                vr_aux_nrendere := rw_crapcrl.nrendere;
+                vr_aux_complend := rw_crapcrl.complend;
+                vr_aux_nrcepend := rw_crapcrl.nrcepend;
+                vr_aux_nmbairro := rw_crapcrl.nmbairro;
+                vr_aux_nmcidade := rw_crapcrl.nmcidade;
+                vr_aux_cdufende := rw_crapcrl.cdufresd;
+                vr_aux_tplograd := rw_crapcrl.tplograd;
               END IF;
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
@@ -1093,14 +1132,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapcrl.nmdavali,    
                               pr_dtnasctl  => rw_crapcrl.dtnascto,  
-                              pr_endereco  => rw_crapcrl.dsendres,  
-                              pr_nrendere  => rw_crapcrl.nrendere,  
-                              pr_complend  => rw_crapcrl.complend,  
-                              pr_nrcepend  => rw_crapcrl.nrcepend,  
-                              pr_nmbairro  => rw_crapcrl.nmbairro,  
-                              pr_nmcidade  => rw_crapcrl.nmcidade,  
-                              pr_cdufende  => rw_crapcrl.cdufresd,    
-                              pr_tplograd  => rw_crapcrl.tplograd,  
+                              pr_endereco  => vr_aux_endereco,
+                              pr_nrendere  => vr_aux_nrendere,
+                              pr_complend  => vr_aux_complend,
+                              pr_nrcepend  => vr_aux_nrcepend,
+                              pr_nmbairro  => vr_aux_nmbairro,
+                              pr_nmcidade  => vr_aux_nmcidade,
+                              pr_cdufende  => vr_aux_cdufende,
+                              pr_tplograd  => vr_aux_tplograd,
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1159,15 +1198,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                  ', endereço não encontrado';
                   RAISE vr_exc_erro;
                 END IF;
-                rw_crapavt.dsendres := rw_crapenc.endereco;
-                rw_crapavt.nrendere := rw_crapenc.nrendere;
-                rw_crapavt.complend := rw_crapenc.complend;
-                rw_crapavt.nrcepend := rw_crapenc.nrcepend;
-                rw_crapavt.nmbairro := rw_crapenc.nmbairro;
-                rw_crapavt.nmcidade := rw_crapenc.nmcidade;
-                rw_crapavt.cdufresd := rw_crapenc.cdufende;
-                rw_crapavt.tplograd := rw_crapenc.tp_lograd;
+                vr_aux_endereco := rw_crapenc.endereco;
+                vr_aux_nrendere := rw_crapenc.nrendere;
+                vr_aux_complend := rw_crapenc.complend;
+                vr_aux_nrcepend := rw_crapenc.nrcepend;
+                vr_aux_nmbairro := rw_crapenc.nmbairro;
+                vr_aux_nmcidade := rw_crapenc.nmcidade;
+                vr_aux_cdufende := rw_crapenc.cdufende;
+                vr_aux_tplograd := rw_crapenc.tp_lograd;
                 CLOSE cr_crapenc;
+              ELSE
+                vr_aux_endereco := rw_crapavt.dsendres;
+                vr_aux_nrendere := rw_crapavt.nrendere;
+                vr_aux_complend := rw_crapavt.complend;
+                vr_aux_nrcepend := rw_crapavt.nrcepend;
+                vr_aux_nmbairro := rw_crapavt.nmbairro;
+                vr_aux_nmcidade := rw_crapavt.nmcidade;
+                vr_aux_cdufende := rw_crapavt.cdufresd;
+                vr_aux_tplograd := rw_crapavt.tplograd;
               END IF;
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
@@ -1178,14 +1226,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapavt.nmdavali,    
                               pr_dtnasctl  => rw_crapavt.dtnascto,  
-                              pr_endereco  => rw_crapavt.dsendres,
-                              pr_nrendere  => rw_crapavt.nrendere,  
-                              pr_complend  => rw_crapavt.complend,  
-                              pr_nrcepend  => rw_crapavt.nrcepend,  
-                              pr_nmbairro  => rw_crapavt.nmbairro,  
-                              pr_nmcidade  => rw_crapavt.nmcidade,  
-                              pr_cdufende  => rw_crapavt.cdufresd,    
-                              pr_tplograd  => rw_crapavt.tplograd,  
+                              pr_endereco  => vr_aux_endereco,
+                              pr_nrendere  => vr_aux_nrendere,  
+                              pr_complend  => vr_aux_complend,  
+                              pr_nrcepend  => vr_aux_nrcepend,
+                              pr_nmbairro  => vr_aux_nmbairro,  
+                              pr_nmcidade  => vr_aux_nmcidade,
+                              pr_cdufende  => vr_aux_cdufende,
+                              pr_tplograd  => vr_aux_tplograd,
                               pr_dtmvtolt  => rw_crapavt.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1201,6 +1249,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
           END LOOP;
         END IF;
     END LOOP;
+    
+    vr_logcompl := 'Fim do processamento dos registros do arquivo';
     
     IF vr_texto_completo IS NOT NULL THEN
       pc_escreve_clob('',TRUE);
@@ -1251,8 +1301,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
-    WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel gerar arquivo de cadstro dos cooperados: '||SQLERRM;
+      IF(TRIM(vr_nmarqimp) IS NOT NULL) THEN        
+        pc_gera_log_easyway(pr_nmarqlog, 'Não foi possivel gerar arquivo de cadastro dos cooperados: '|| pr_dscritic);
+        pc_gera_log_easyway(pr_nmarqlog, 'Ultimo processo:' || vr_logcompl);
+      END IF;
+      
+    WHEN OTHERS THEN      
+      IF(TRIM(vr_nmarqimp) IS NOT NULL) THEN
+        pc_gera_log_easyway(pr_nmarqlog, 'Não foi possivel gerar arquivo de cadastro dos cooperados: '|| pr_dscritic);
+        pc_gera_log_easyway(pr_nmarqlog, 'Ultimo processo:' || vr_logcompl);
+      END IF;
+      pr_dscritic := 'Não foi possivel gerar arquivo de cadastro dos cooperados: '||SQLERRM;
       --pc_gera_log( pr_dscritic);
   END pc_gera_arq_cadastro_ass;
   
