@@ -15,6 +15,7 @@
 								caracteres especiais que geravam erro no retorno do Ajax. 
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
+ *                             (Mateus Z - Mouts) 
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -56,11 +57,11 @@
 		<input name="nmresemp" id="nmresemp" type="text" value="<?php echo getByTagName($comercial,'nmresemp') ?>" />
 		<br />
 		
+		<label for="nrcpfemp">C.N.P.J.:</label>
+		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa()" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
+		
 		<label for="nmextemp">Nome Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<?php echo getByTagName($comercial,'nmextemp') ?>" />		
-		
-		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
 		<br />
 		 				
 		<label for="dsproftl"><?php echo utf8ToHtml('Cargo:') ?></label>
@@ -132,9 +133,6 @@
 		<input name="complcom" id="complcom" type="text" value="<?php echo getByTagName($comercial,'complcom') ?>" />
 		<br />
 		
-		<label for="cxpotct1"><?php echo utf8ToHtml('Cx.Postal:') ?></label>
-		<input name="cxpotct1" id="cxpotct1" type="text" value="<?php echo getByTagName($comercial,'cxpotct1') ?>" />		
-		
 		<label for="bairoct1"><?php echo utf8ToHtml('Bairro:') ?></label>
 		<input name="bairoct1" id="bairoct1" type="text" value="<?php echo getByTagName($comercial,'bairoct1') ?>" />								
 		<br />	
@@ -162,7 +160,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
+    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
 	</script>	
 	<br style="class:both" />	
 		
