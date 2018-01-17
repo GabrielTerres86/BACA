@@ -38,12 +38,23 @@ require_once('../../../../class/xmlfile.php');
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px 2px 8px;">
 									<div id="divConteudoOpcao">
 
-                                        <div id="divBotoes">
-                                            <a href="#" class="botao" id="btPortAprovar" onClick="controlaOperacao('PORTAB_APRV');">Aprovar Portabilidade</a>
-                                            <a href="#" class="botao" id="btPortExtrato" onClick="controlaOperacao('PORTAB_EXTR');">Imprimir Extrato</a>
-                                            <a href="#" class="botao" id="btndossie" onClick="dossieDigdoc(6);return false;">Dossi&ecirc; DigiDOC</a>
-                                        </div>
-										
+                                        <form name="frmNovaProp" id="frmNovaProp" class="formulario condensado">	
+
+	                                        <input id="nrctremp" name="nrctremp" type="hidden" value="" />
+	
+	                                        <fieldset>
+		                                        <legend><? echo utf8ToHtml('Alterar Qualificação da Operação') ?></legend>
+                                                <label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
+                                                <input name="idquaprc" id="idquaprc" type="text" value="" />
+                                                <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+                                                <input name="dsquaprc" id="dsquaprc" type="text" value="" />
+                                                <br/>
+                                            </fieldset>
+                                            <div id="divBotoes">
+                                                <a href="#" class="botao" id="btAlterar" onClick="controlaOperacao('PORTAB_APRV');">Alterar</a>
+                                                <a href="#" class="botao" id="btCancelar" onClick="controlaOperacao('PORTAB_EXTR');">Cancelar</a>                                                
+                                            </div>
+										</form>
 									</div>
 								</td>
 							</tr>
