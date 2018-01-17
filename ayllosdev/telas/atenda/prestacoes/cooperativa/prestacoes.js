@@ -533,7 +533,7 @@ function controlaOperacao(operacao) {
 function controlaLayout(operacao) {
 
 	altura  = '230px';
-	largura = '740px';
+	largura = '870px';
 
 	// Operação consultando
 	if ( in_array(operacao,['']) ) {
