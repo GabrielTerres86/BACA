@@ -191,7 +191,7 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA']) ) {
+	if (in_array(operacao, ['TC', 'IMP', 'C_PAG_PREST', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA']) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -414,6 +414,10 @@ function controlaOperacao(operacao) {
 			break;
 		case 'PORTAB_CRED' :
 			mostraDivPortabilidade(operacao);
+			return false;
+			break;
+		case 'ALT_QUALIFICA':
+			mostraDivQualificaControle(operacao);
 			return false;
 			break;
 		case 'PORTAB_APRV' :
@@ -2386,6 +2390,40 @@ function mostraDivPortabilidade( operacao ) {
             bloqueiaFundo($('#divUsoGenerico'));
         }
     });
+
+	return false;
+}
+
+function mostraDivQualificaControle(operacao) {
+
+	showMsgAguardo('Aguarde, abrindo qualificação...');
+
+	limpaDivGenerica();
+
+	exibeRotina($('#divUsoGenerico'));
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/controleQualificacao.php',
+		data: {
+			operacao: operacao,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			$('#divUsoGenerico').html(response);
+			layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo($('#divUsoGenerico'));
+		}
+	});
 
 	return false;
 }
