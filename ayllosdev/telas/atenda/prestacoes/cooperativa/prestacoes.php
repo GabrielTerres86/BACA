@@ -38,10 +38,6 @@
 	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));
 	$flgQuaCon    = (in_array('X', $glbvars['opcoesTela']));
 
-	exibirErro('error','flgAcesso - '.$flgAcesso.' | flgAlterar - '. $flgAlterar .
-					   ' | flgExcluir - '.$flgExcluir.
-					   ' | flgIncluir - '.$flgIncluir, '','');	
-	
 	if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de '.$nmrotina.'.','Alerta - Ayllos','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
