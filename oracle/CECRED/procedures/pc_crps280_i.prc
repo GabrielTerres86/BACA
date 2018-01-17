@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 05/09/2017
+     Data    : Fevereiro/2006                  Ultima atualizacao: 16/01/2018
 
      Dados referentes ao programa:
 
@@ -338,12 +338,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               Radar e Matera (Jonatas-Supero)   
 
                  23/03/2017 - Ajustes PRJ343 - Cessao de credito.
-                              (Odirlei-AMcom)
-
+                              (Odirlei-AMcom)   
+							  
                  23/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
                               (Rafael Faria - Supero)
+                              
+                 16/01/2018 - Somente chamar a rotina de atualizacao dos dados financeiros para o Cyber
+                              caso a cooperativa conectada seja uma singular. (Chamado 831629) - (Fabricio)
+                              
   ............................................................................. */
 
    DECLARE
@@ -2478,7 +2482,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                        WHEN 2 THEN vr_tpemprst := 'POS';
                        ELSE        vr_tpemprst := '-';
                      END CASE;
-
+                     
                      -- Para empréstimo pré-fixado ou Pos-Fixado
                      IF rw_crapepr.tpemprst IN (1,2) THEN
                         -- Número prestações recebe qtde decorrida - parcelas calculadas
@@ -3471,6 +3475,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                        vr_flgconsg := 0;
                      END IF;
 
+                     -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
+                     IF pr_cdcooper <> 3 THEN
                      -- Atualiza dados do emprestimo para o CYBER
                      cybe0001.pc_atualiza_dados_financeiro(pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
                                                           ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
@@ -3510,6 +3516,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      IF pr_dscritic IS NOT NULL  THEN
                         RAISE vr_exc_erro;
                      END IF;
+                     END IF;
                  
                   END IF; -- IF vr_indice IS NOT NULL THEN
 
@@ -3523,6 +3530,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_flgrpeco := 0;
                   END IF;
 
+                  -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
+                  IF pr_cdcooper <> 3 THEN
                   -- Atualizar os contratos em cobranca do CYBER
                   cybe0001.pc_atualiza_dados_financeiro (pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
                                                         ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
@@ -3562,6 +3571,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   IF pr_dscritic IS NOT NULL  THEN
                      RAISE vr_exc_erro;
                   END IF;                
+               END IF;
                END IF;
 
                -- Enviar a linha arquivo arquivo 354.txt
