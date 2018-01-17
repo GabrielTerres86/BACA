@@ -22,6 +22,7 @@
  *
  *				  21/07/2016 - Removi o session_start desnecessario, removi a funcao utf8tohtml
  *							   desnecessaria, corrigi o uso da variavel $opcoesTela. SD 479874 (Carlos R.)
+ *                17/01/2018 - Inclusão do botão "Alterar Qualificação" ( Diego Simas - AMcom )
  * --------------------------------------------------------------------------------------------------
  */
  
@@ -123,6 +124,9 @@
 	<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>
 	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetivação</a>
     <a href="#" class="botao" id="btPortabilidade" onClick="controlaOperacao('PORTAB_CRED');">Portabilidade</a>
+	<? //if($glbvars["cddepart"] == 7 || $flgQuaCon == 'X' {  ?>
+	<a href="#" class="botao" id="btAltQualif" 	   onClick="controlaOperacao('ALT_QUALIFICA');">Alterar Qualificação</a>
+	<? //} ?>
 </div>
 
 <script type="text/javascript">
