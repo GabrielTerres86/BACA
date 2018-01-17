@@ -35,7 +35,12 @@
 	$flgAcesso    = (in_array('@', $glbvars['opcoesTela']));
 	$flgAlterar   = (in_array('A', $glbvars['opcoesTela']));
 	$flgExcluir   = (in_array('E', $glbvars['opcoesTela']));
-	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));	
+	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));
+	$flgQuaCon    = (in_array('X', $glbvars['opcoesTela']));
+
+	exibirErro('error','flgAcesso - '.$flgAcesso.' | flgAlterar - '. $flgAlterar .
+					   ' | flgExcluir - '.$flgExcluir.
+					   ' | flgIncluir - '.$flgIncluir, '','');	
 	
 	if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de '.$nmrotina.'.','Alerta - Ayllos','');
 ?>
