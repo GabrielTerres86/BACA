@@ -208,7 +208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
                                ,pr_des_erro   OUT VARCHAR2) IS      --> Erros do processo
     /* .............................................................................
 
-        Programa: pc_consultar_controle
+        Programa: pc_alterar_controle.
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel/AMcom
