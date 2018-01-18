@@ -182,10 +182,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
-
+              
                22/11/2017 - Adicionado regra para não debitar títulos vencidos no primeiro dia util do ano e
                             que venceram no dia útil anterior. (Rafael)
-              
+
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -892,8 +892,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                        pr_dtmvtolt => rw_craptdb.dtvencto) > rw_crapdat.dtmvtoan THEN
           CONTINUE;
-        END IF; 					  
-
+        END IF; 
+        
         -- #################################################################################################
         --   REGRA PARA NÃO DEBITAR TÍTULOS VENCIDOS NO PRIMEIRO DIA UTIL DO ANO E QUE VENCERAM NO
         --   DIA UTIL ANTERIOR.

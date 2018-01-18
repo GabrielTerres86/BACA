@@ -497,9 +497,9 @@
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
-                            de novo limite. (Chamado 768648) - (Fabricio) 
+                            de novo limite. (Chamado 768648) - (Fabricio)
 
-               16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
+			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 
                20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
                             (Diogo - MoutS)
@@ -888,7 +888,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_pertengp AS LOG                                      NO-UNDO.
     DEF VAR aux_dsdrisco AS CHAR                                     NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                     NO-UNDO.
-    DEF VAR aux_flgimune AS INT                                      NO-UNDO.
+    DEF VAR aux_flgimune AS LOGICAL                                  NO-UNDO.
     DEF VAR aux_flsnhcoo AS LOGICAL INIT "N"                         NO-UNDO.
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
@@ -1091,8 +1091,8 @@ PROCEDURE efetua_liber_anali_bordero:
                                    OUTPUT TABLE tt-iof).
 
 
+
                        
-                               
     IF VALID-HANDLE(h-b1wgen9999) THEN
        DELETE OBJECT h-b1wgen9999.
     
@@ -2183,7 +2183,6 @@ PROCEDURE efetua_liber_anali_bordero:
 
                 /* Projeto 410 - Novo IOF */
                 ASSIGN aux_qtdiaiof = crabtdb.dtvencto - par_dtmvtolt.
-                
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 RUN STORED-PROCEDURE pc_calcula_valor_iof_prg
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                      /* Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante) */
@@ -2204,19 +2203,17 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,OUTPUT ""                    /* Valor da taxa de IOF principal */
                                                     ,OUTPUT 0                     /* Flag imunidade */         
                                                     ,OUTPUT "").                  /* Critica */
-         
+
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC pc_calcula_valor_iof_prg
                 
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                
                 /* Se retornou erro */
                 ASSIGN aux_dscritic = ""
                        aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                 IF aux_dscritic <> "" THEN
                   UNDO LIBERACAO, LEAVE.
-                  
                 /* Soma IOF principal */
                 IF pc_calcula_valor_iof_prg.pr_vliofpri <> ? THEN
                   DO:
@@ -2533,12 +2530,11 @@ PROCEDURE efetua_liber_anali_bordero:
                             craplot.qtinfoln = craplot.qtinfoln + 1
                             craplot.qtcompln = craplot.qtcompln + 1
                             craplot.nrseqdig = craplot.nrseqdig + 1.
-                       
-                     VALIDATE craplot.
-                     VALIDATE craplcm.
-                   END.
 
-                  
+
+                   VALIDATE craplot.
+                   VALIDATE craplcm.
+
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -13728,10 +13724,25 @@ PROCEDURE efetua_baixa_titulo:
                     
                 END. /* Final da baixa por vencimento */
                 
+            FIND crapbdt WHERE crapbdt.cdcooper = craptdb.cdcooper AND
+                               crapbdt.nrborder = craptdb.nrborder
+                               NO-LOCK NO-ERROR.
 
+            IF  NOT AVAIL crapbdt  THEN
+                DO:
+                    ASSIGN aux_dscritic = "Bordero nao encontrado."
+                           aux_cdcritic = 0.
                     
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1, /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
 
+                    UNDO BAIXA, RETURN "NOK".
 
+                END.
             
             /**** ABATIMENTO DE JUROS ****/
             ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
@@ -17307,6 +17318,5 @@ PROCEDURE valida_titulos_bordero:
 END PROCEDURE.
 
 /* .......................................................................... */
-
 
 

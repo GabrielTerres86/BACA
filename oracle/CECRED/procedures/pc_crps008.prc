@@ -2232,9 +2232,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                
                --Atualizar valor do iof no mes na tabela de saldo
                IF vr_flgimune = 0 THEN
-                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
+               rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
                ELSE
-                 rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0);
+                  rw_crapsld.vliofmes:= Nvl(rw_crapsld.vliofmes,0);
                END IF;
              END IF;
              

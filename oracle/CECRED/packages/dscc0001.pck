@@ -1971,7 +1971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_qtdiaprz        INTEGER;
     vr_vltaxa_iof_principal NUMBER(25,8);
 
-
+    
     vr_lstarifa VARCHAR2(100);
     vr_cdhistor craphis.cdhistor%TYPE;
     vr_cdhisest craphis.cdhistor%TYPE;
@@ -2007,7 +2007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_natjurid NUMBER := 0;
     vr_tpregtrb NUMBER := 0;
     vr_vltotoperacao NUMBER := 0;
-
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -2360,7 +2360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           -- IOF
           vr_qtdiaiof := vr_tab_chq_bordero(idx).dtlibera - vr_dtlibiof;
 
-
+                     
                      
 
 
@@ -2379,8 +2379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                        ,pr_vliofadi   => vr_vliofadi                        --> Retorno do valor do IOF adicional
                                        ,pr_vliofcpl   => vr_vliofcpl                        --> Retorno do valor do IOF complementar
                                        ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                       ,pr_dscritic   => vr_dscritic);                                   
-      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+                                       ,pr_dscritic   => vr_dscritic);
+          vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -2422,7 +2422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                       vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
                 END IF;
             END IF;
-          END IF;
+        END IF;
       END LOOP;
             END IF;
           END IF;
@@ -7368,7 +7368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_dsdmensg         VARCHAR2(300);
   vr_rowid_log        ROWID;
   vr_vltaxa_iof_principal NUMBER(25,8);
-
+  
   -- IOF
   vr_qtdiaiof         NUMBER;   
   --vr_periofop         NUMBER;
@@ -7379,7 +7379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_vltotiofcpl      NUMBER;
   vr_idlancto         NUMBER;
   vr_vltotoperacao    NUMBER := 0;
-
+  
   vr_vliofpri NUMBER;
   vr_vliofadi NUMBER;
   vr_vliofcpl NUMBER;
@@ -7840,8 +7840,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vliofadi   => vr_vliofadi           --> Retorno do valor do IOF adicional
                                    ,pr_vliofcpl   => vr_vliofcpl           --> Retorno do valor do IOF complementar
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                   ,pr_dscritic   => vr_dscritic);                                   
-      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+                                   ,pr_dscritic   => vr_dscritic);
+        vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
       vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
       vr_vltotiofcpl := NVL(vr_vltotiofcpl,0) + NVL(vr_vliofcpl,0);
@@ -7984,7 +7984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
-
+				
 				BEGIN
 					-- Atualizar lançamento automático de custodia
 					UPDATE craplau lau
@@ -8226,7 +8226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			END;
 		END IF;
 		
-												 
+
 
 		
 		
@@ -8338,7 +8338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                           ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                           ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
                           ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
-                          ,pr_dscritic      => vr_dscritic);
+                            ,pr_dscritic      => vr_dscritic);
         EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica

@@ -266,7 +266,6 @@ PROCEDURE valores_entrada:
 
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "flgemail" THEN aux_flgemail = LOGICAL(tt-param.valorCampo).
-            
 
         END CASE.
         

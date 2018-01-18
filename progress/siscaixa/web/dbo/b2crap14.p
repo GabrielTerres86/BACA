@@ -2553,7 +2553,6 @@ PROCEDURE gera-titulos-iptu.
                                             INPUT aux_idorigem,
                                             INPUT p-nrdconta,
                                             INPUT 1,  
-                                            INPUT crapdat.dtmvtocd,
                                             INPUT TABLE tt-titulos,
                                            OUTPUT TABLE tt-erro ).
                       

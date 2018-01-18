@@ -273,7 +273,7 @@
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
                         PRJ300 - Desconto de cheque(Odirlei-AMcom)         
-
+						
            12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 			 		    (Adriano - P339).  
@@ -286,8 +286,8 @@
 		       29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
            
            04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
-                        de novo limite. (Chamado 768648) - (Fabricio)		 
-
+                        de novo limite. (Chamado 768648) - (Fabricio)
+					                
            20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
                             (Diogo - MoutS)
 					                
@@ -549,9 +549,9 @@ PROCEDURE busca_dados_dscchq:
             DELETE PROCEDURE h-b1wgen0001.
             RETURN "NOK".
             
-        END.        
-        DELETE PROCEDURE h-b1wgen0001.
-    END.
+        END.
+                DELETE PROCEDURE h-b1wgen0001.
+            END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
                              craplim.nrdconta = par_nrdconta   AND
@@ -692,7 +692,7 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
-        
+
     RUN sistema/generico/procedures/b1wgen0001.p
         PERSISTENT SET h-b1wgen0001.
 
@@ -2440,8 +2440,8 @@ PROCEDURE efetua_inclusao_limite:
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic      = 0
-               aux_dscritic     = ""
+        ASSIGN aux_cdcritic  = 0
+               aux_dscritic  = ""
                aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
                aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
                aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
@@ -10335,7 +10335,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-                END.
+				    END.
     
             DELETE crapcdb.                   
                            
@@ -10444,7 +10444,7 @@ PROCEDURE efetua_exclusao_bordero:
                                 INPUT "Operador",
                                 INPUT "",
                                 INPUT par_cdoperad).
-    
+                                
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                 INPUT "Quantidade de cheques",
                                 INPUT "",
@@ -10610,8 +10610,8 @@ PROCEDURE efetua_liber_anali_bordero:
           END.
 
        ASSIGN aux_inpessoa = crapass.inpessoa.
-       
-       
+
+
        /* Busca dados da pessoa jurídica */
        FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND
                           crapjur.nrdconta = par_nrdconta 
@@ -12040,7 +12040,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 END.
 
           END.
-          
+ 
        /* Liberacao dos titulos */
         ASSIGN aux_vltotoperac = 0.
         FOR EACH crabcdb WHERE crabcdb.cdcooper = par_cdcooper       AND
@@ -12060,7 +12060,7 @@ PROCEDURE efetua_liber_anali_bordero:
               aux_vltotiofadi = 0
               aux_vltotiofcpl = 0
               aux_vltotoperac = 0.
-     
+
        FOR EACH crabcdb WHERE crabcdb.cdcooper = par_cdcooper       AND
                               crabcdb.nrborder = crapbdc.nrborder   AND
                               crabcdb.nrdconta = crapbdc.nrdconta   
@@ -12210,7 +12210,7 @@ PROCEDURE efetua_liber_anali_bordero:
               
              /* Projeto 410 - Novo IOF */
              ASSIGN aux_qtdiaiof = crapcdb.dtlibera - par_dtmvtolt.
-              
+
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
               RUN STORED-PROCEDURE pc_calcula_valor_iof_prg
               aux_handproc = PROC-HANDLE NO-ERROR (INPUT 3                      /* Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante) */
@@ -12260,12 +12260,12 @@ PROCEDURE efetua_liber_anali_bordero:
               IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
-                  END.
+           END.
 
            END. /* IF par_cddopcao = "L"  THEN */
 
        END.  /*  Fim do FOR EACH crapcdb  */
-       
+
        ASSIGN aux_vltotiof = aux_vltotiofpri + aux_vltotiofadi.
 
 
@@ -12323,76 +12323,76 @@ PROCEDURE efetua_liber_anali_bordero:
                        DO:
                           
                           IF aux_flgimune <= 0 THEN 
-                            DO:                      
-                              DO aux_contador = 1 TO 10:
+                       DO:
+                          DO aux_contador = 1 TO 10:
 
-                                 FIND craplot WHERE craplot.cdcooper = par_cdcooper   AND
-                                                    craplot.dtmvtolt = par_dtmvtolt   AND
-                                                    craplot.cdagenci = 1              AND
-                                                    craplot.cdbccxlt = 100            AND
-                                                    craplot.nrdolote = 19000 + aux_cdpactra
-                                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                                
-                                 IF NOT AVAILABLE craplot   THEN
-                                    DO:
-                                       IF LOCKED craplot   THEN
-                                          DO:
-                                             ASSIGN aux_dscritic = "Registro de "  +
-                                                                   "lote para IOF" +
-                                                                   " esta em uso." +
-                                                                   " Tente "       +
-                                                                   "novamente.".
-                                             PAUSE 1 NO-MESSAGE.
-                                             NEXT.
-
-                                          END.
-                                       ELSE
-                                          DO:
-                                             CREATE craplot.
-                                             ASSIGN craplot.dtmvtolt = par_dtmvtolt
-                                                    craplot.cdagenci = 1
-                                                    craplot.cdbccxlt = 100
-                                                    craplot.nrdolote = 19000 + aux_cdpactra
-                                                    craplot.tplotmov = 1
-                                                    craplot.cdcooper = par_cdcooper.
-                                          END.
-                                    END.
-
-                                 ASSIGN aux_dscritic = "".
-                                 LEAVE.
-                                 
-                              END.  /*  Fim do DO .. TO  */
-
-                              IF aux_dscritic <> ""   THEN
-                                 DO:
-                                     ASSIGN aux_cdcritic = 0.
-                              
-                                     UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
-                                 END.                                               
-
-                              CREATE craplcm.
-                              ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                     craplcm.cdagenci = craplot.cdagenci
-                                     craplcm.cdbccxlt = craplot.cdbccxlt
-                                     craplcm.nrdolote = craplot.nrdolote
-                                     craplcm.nrdconta = crapbdc.nrdconta
-                                     craplcm.nrdctabb = crapbdc.nrdconta
-                                     craplcm.nrdctitg = STRING(crapbdc.nrdconta,"99999999")
-                                     craplcm.nrdocmto = crapbdc.nrborder
-                                     craplcm.cdhistor = 324
-                                     craplcm.nrseqdig = craplot.nrseqdig + 1
-                                     craplcm.cdpesqbb = STRING(aux_vlborder,"999,999,999.99")
-                                     craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ),2) 
-                                     craplcm.cdcooper = par_cdcooper
-                                     craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                                     craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
-                                     craplot.qtinfoln = craplot.qtinfoln + 1
-                                     craplot.qtcompln = craplot.qtcompln + 1
-                                     craplot.nrseqdig = craplot.nrseqdig + 1.
-
-                              VALIDATE craplot.
-                              VALIDATE craplcm.
+                             FIND craplot WHERE craplot.cdcooper = par_cdcooper   AND
+                                                craplot.dtmvtolt = par_dtmvtolt   AND
+                                                craplot.cdagenci = 1              AND
+                                                craplot.cdbccxlt = 100            AND
+                                                craplot.nrdolote = 19000 + aux_cdpactra
+                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                             
+                             IF NOT AVAILABLE craplot   THEN
+                                DO:
+                                   IF LOCKED craplot   THEN
+                                      DO:
+                                         ASSIGN aux_dscritic = "Registro de "  +
+                                                               "lote para IOF" +
+                                                               " esta em uso." +
+                                                               " Tente "       +
+                                                               "novamente.".
+                                         PAUSE 1 NO-MESSAGE.
+                                         NEXT.
+
+                                      END.
+                                   ELSE
+                                      DO:
+                                         CREATE craplot.
+                                         ASSIGN craplot.dtmvtolt = par_dtmvtolt
+                                                craplot.cdagenci = 1
+                                                craplot.cdbccxlt = 100
+                                                craplot.nrdolote = 19000 + aux_cdpactra
+                                                craplot.tplotmov = 1
+                                                craplot.cdcooper = par_cdcooper.
+                                      END.
+                                END.
+
+                             ASSIGN aux_dscritic = "".
+                             LEAVE.
+                             
+                          END.  /*  Fim do DO .. TO  */
+
+                          IF aux_dscritic <> ""   THEN
+                             DO:
+                                 ASSIGN aux_cdcritic = 0.
+                          
+                                 UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
+                             END.                                               
+
+                          CREATE craplcm.
+                          ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+                                 craplcm.cdagenci = craplot.cdagenci
+                                 craplcm.cdbccxlt = craplot.cdbccxlt
+                                 craplcm.nrdolote = craplot.nrdolote
+                                 craplcm.nrdconta = crapbdc.nrdconta
+                                 craplcm.nrdctabb = crapbdc.nrdconta
+                                 craplcm.nrdctitg = STRING(crapbdc.nrdconta,"99999999")
+                                 craplcm.nrdocmto = crapbdc.nrborder
+                                 craplcm.cdhistor = 324
+                                 craplcm.nrseqdig = craplot.nrseqdig + 1
+                                 craplcm.cdpesqbb = STRING(aux_vlborder,"999,999,999.99")
+                                 craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ),2) 
+                                 craplcm.cdcooper = par_cdcooper
+                                 craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
+                                 craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+                                 craplot.qtinfoln = craplot.qtinfoln + 1
+                                 craplot.qtcompln = craplot.qtcompln + 1
+                                 craplot.nrseqdig = craplot.nrseqdig + 1.
+
+                          VALIDATE craplot.
+                          VALIDATE craplcm.
+
                             END.
                             
                           
