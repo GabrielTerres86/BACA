@@ -888,7 +888,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_pertengp AS LOG                                      NO-UNDO.
     DEF VAR aux_dsdrisco AS CHAR                                     NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                     NO-UNDO.
-    DEF VAR aux_flgimune AS LOGICAL                                  NO-UNDO.
+    DEF VAR aux_flgimune AS INT                                      NO-UNDO.
     DEF VAR aux_flsnhcoo AS LOGICAL INIT "N"                         NO-UNDO.
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
@@ -2183,6 +2183,7 @@ PROCEDURE efetua_liber_anali_bordero:
 
                 /* Projeto 410 - Novo IOF */
                 ASSIGN aux_qtdiaiof = crabtdb.dtvencto - par_dtmvtolt.
+                
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 RUN STORED-PROCEDURE pc_calcula_valor_iof_prg
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                      /* Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante) */
@@ -2201,19 +2202,20 @@ PROCEDURE efetua_liber_anali_bordero:
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF adicional */
                                                     ,OUTPUT 0                     /* Retorno do valor do IOF complementar */
                                                     ,OUTPUT ""                    /* Valor da taxa de IOF principal */
-                                                    ,OUTPUT 0                     /* Flag imunidade */         
-                                                    ,OUTPUT "").                  /* Critica */
-
+                                                    ,OUTPUT ""                    /* Critica */
+                                                    ,OUTPUT 0).                   /* Flag imunidade */        
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC pc_calcula_valor_iof_prg
                 
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
                 /* Se retornou erro */
                 ASSIGN aux_dscritic = ""
                        aux_dscritic = pc_calcula_valor_iof_prg.pr_dscritic WHEN pc_calcula_valor_iof_prg.pr_dscritic <> ?.
                 IF aux_dscritic <> "" THEN
                   UNDO LIBERACAO, LEAVE.
+                  
                 /* Soma IOF principal */
                 IF pc_calcula_valor_iof_prg.pr_vliofpri <> ? THEN
                   DO:
@@ -2534,6 +2536,8 @@ PROCEDURE efetua_liber_anali_bordero:
 
                    VALIDATE craplot.
                    VALIDATE craplcm.
+                   END.
+
 
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
@@ -13461,9 +13465,8 @@ PROCEDURE efetua_baixa_titulo:
                                                                ,OUTPUT 0                  /* IOF Adicinal  */
                                                                ,OUTPUT 0                  /* IOF Complemenar */
                                                                ,OUTPUT ""                 /* Taxa de IOF principal */
-                                                               ,OUTPUT 0                   /* Flag imunidade */
-                                                               ,OUTPUT "").                 /* Descrição da crítica */
-
+                                                               ,OUTPUT ""                 /* Descrição da crítica */
+                                                               ,OUTPUT 0).
                            /* Fechar o procedimento para buscarmos o resultado */ 
                            CLOSE STORED-PROC pc_calcula_valor_iof_prg
                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 

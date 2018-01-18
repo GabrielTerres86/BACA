@@ -1174,7 +1174,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                               INPUT 1, /* aux_idorigem = 1 AYLLOS */
                                               INPUT tt-descontar.nrdconta,
                                               INPUT 1,  
-                                              INPUT aux_dtintegr, /* alteração de autor desconhecido, incluido por Belli via Merge */
+                                              INPUT aux_dtintegr,
                                               INPUT TABLE  tt-titulos,
                                              OUTPUT TABLE tt-erro-bo).
 

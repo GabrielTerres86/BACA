@@ -146,6 +146,7 @@ DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgemail AS LOGI                                           NO-UNDO.
+DEF VAR aux_dtintegr AS DATE                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0030tt.i }
     
@@ -266,6 +267,8 @@ PROCEDURE valores_entrada:
 
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "flgemail" THEN aux_flgemail = LOGICAL(tt-param.valorCampo).
+            WHEN "dtintegr" THEN aux_dtintegr = DATE(tt-param.valorCampo).
+            
 
         END CASE.
         

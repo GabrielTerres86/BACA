@@ -57,6 +57,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                     ,pr_vliofadi             OUT NUMBER                --> Retorno do valor do IOF adicional
                                     ,pr_vliofcpl             OUT NUMBER                --> Retorno do valor do IOF complementar
                                     ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
+                                    ,pr_flgimune             OUT PLS_INTEGER           --> Possui imunidade tributária (1 - Sim / 0 - Não)
                                     ,pr_dscritic             OUT crapcri.dscritic%TYPE);
                                                                   
   PROCEDURE pc_calcula_valor_iof_inclusao(pr_tpproduto            IN  PLS_INTEGER --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
