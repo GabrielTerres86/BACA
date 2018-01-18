@@ -302,18 +302,19 @@ BEGIN
     END IF;
     -- define como primeira execucao
     
-
-      /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
-    if PR_CDAGENCI = 0
-    and   rw_crapdat.inproces >= 2 then
-       -- gera log para futuros rastreios
+	-- gera log para futuros rastreios
         pc_log_programa(PR_DSTIPLOG           => 'O',
                         PR_CDPROGRAMA         => 'CRPS750',
                         pr_cdcooper           => pr_cdcooper,
                         pr_tpexecucao         => 2,
                         pr_tpocorrencia       => 4,
-                        pr_dsmensagem         => 'Antes PC_CRPS750_1 - fase 1.',
-                        PR_IDPRGLOG           => vr_idprglog);                           
+                        pr_dsmensagem         => 'Antes PC_CRPS750_1 - fase 1. AGENCIA - '||PR_CDAGENCI||' - INPROCES - '||rw_crapdat.inproces,
+                        PR_IDPRGLOG           => vr_idprglog); 
+
+      /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
+    if PR_CDAGENCI = 0
+    and   rw_crapdat.inproces >= 2 then
+                                 
       
        --
        PC_CRPS750_1( pr_faseprocesso => 1

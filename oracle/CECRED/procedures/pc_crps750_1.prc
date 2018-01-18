@@ -27,9 +27,12 @@ BEGIN
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
   
               19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
-              
+
               07/08/2017 - Correção da execução do relatório 135, que não estava sendo
                            gerado na execução em paralelo.
+
+              07/11/2017 - Ajuste realizado para gravacao do arquivo referente ao relatorio 135 por agencia.
+                           Everton (Mouts) - Chamado 773664
 
     ............................................................................. */
 
@@ -198,7 +201,7 @@ BEGIN
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
-      
+
     vr_idprglog   NUMBER;
       
       -- Erro em chamadas da pc_gera_erro
@@ -677,10 +680,10 @@ BEGIN
               vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
               vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
            END IF;
-           --
-         END IF;
-     --
          --
+         --
+		 END IF;
+
          IF pr_cdcooper = 3 then
          -- gera log para futuros rastreios
           pc_log_programa(PR_DSTIPLOG           => 'O',
@@ -695,8 +698,7 @@ BEGIN
                                                    ' Saldo Dev:'||to_char(vr_vlsdeved),
                           PR_IDPRGLOG           => vr_idprglog);
                            
-         END IF;   
-         --
+         END IF;  
          --
          -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
@@ -2231,7 +2233,7 @@ BEGIN
                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
                                            ,pr_dsxml     => vr_clobarq                           --> Arquivo XML de dados
                                            ,pr_cdrelato  => '135'                                --> Código do relatório
-                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135.txt' --> Arquivo final com o path
+                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135_'||to_char(pr_cdagenci,'fm000')||'.txt' --> Arquivo final com o path
                                            ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                            ,pr_dspathcop => vr_dspathcopia                       --> Copiar para o diretório
                                            ,pr_fldoscop  => 'S'                                  --> Copia convertendo para DOS
