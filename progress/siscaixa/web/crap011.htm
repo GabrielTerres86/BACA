@@ -1,7 +1,7 @@
 <!--
 Programa: siscaixa/web/crap011.htm
 Sistema : CAIXA ON-LINE                                       
-                                             Ultima atualizacao: 27/12/2017
+                                             Ultima atualizacao: 08/01/2018
    
 Dados referentes ao programa:
 
@@ -29,6 +29,8 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 
             27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
                         (Jonata - MOUTS SD 812703/810959 )
+						
+			08/01/2018 - Alteracao para permitir estorno apenas para a opcao Acertos via caixa - Jonata MOUTS.
 ------------------------------------------------------------------------------->
 
 <html>
@@ -168,6 +170,32 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
               }
            } 
         }
+               
+		
+		function controlaEstorno(){
+          
+			for (var i=0;i< document.form1.v_tpoperacao.length;i++) {
+            
+              
+			    if (document.form1.v_tpoperacao[i].checked) {				 
+                   
+					 if(document.form1.v_tpoperacao[i].value == "1"){				 
+					 
+						 redir_login('crap010.w');						 					 
+						 
+					 }else{
+					 
+						return false;
+					 
+                }
+					 
+              }
+				  
+           } 
+            
+
+        }
+               
                
     </script>
 
@@ -324,7 +352,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
                                             <input type="hidden" name="ok" value="">
                                         </td>
                                     </tr>
-                <tr>
+                                    <tr>
                                         <td width="34%" align="right" class="linhaform"></td>
                                         <td width="67%">&nbsp;</td>
 											<td width="20%"></td>
@@ -332,7 +360,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
                                 </table>
                             </center>
                         </div>
-          </td>
+                    </td>
                 </tr>
             </table>
 </center>
@@ -341,7 +369,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
  <table width="100%">
        <tr>
           <td align="right" class="linhaform">
-          <input type="button" value="Estorno" name="estorno" id="estorno" class="button" onClick="JavaScript:redir_login('crap010.w')">
+          <input type="button" value="Estorno" name="estorno" id="estorno" class="button" onClick="controlaEstorno()">
           <input type="button" value="Consulta" name="consul" class="button" onClick="location='crap009.p'"></td>
        </tr>
  </table>
