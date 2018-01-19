@@ -3,11 +3,16 @@
  * CRIAÇÃO      : Diego Simas/Reginaldo Silva/Letícia Terres - AMcom
  * DATA CRIAÇÃO : 12/01/2018
  * OBJETIVO     : Biblioteca de funções da tela TAB089
+ * ---------------
+ * ALTERAÇÕES
+ * ---------------
  */
 
 // Variáveis Globais 
 var operacao = '';
+
 var frmCab = 'frmCab';
+
 var cTodosCabecalho = '';
 var cTodosFiltro = '';
 
@@ -20,6 +25,7 @@ $(document).ready(function() {
 
 // Controles
 function estadoInicial() {
+    // Variáveis Globais
     operacao = '';
 
     hideMsgAguardo();
@@ -76,12 +82,18 @@ function controlaLayout() {
 
 function formataCabecalho() {
     // Cabeçalho
-    $('label[for="cddopcao"]', '#frmCab')
-        .css('width', '42px');
+    rCddopcao = $('label[for="cddopcao"]', '#frmCab');
+    rInpessoa = $('label[for="inpessoa"]', '#frmCab');
 
-    $('#cddopcao', '#frmCab')
-        .css({'width': '350px'});
-  
+    rCddopcao.css('width', '42px');
+    rInpessoa.css('width', '100px');
+
+    cCddopcao = $('#cddopcao', '#frmCab');
+    cInpessoa = $('#inpessoa', '#frmCab');
+
+    cCddopcao.css({'width': '350px'});
+    cInpessoa.css({'width': '80px'});
+
     btnCab = $('#btOK', '#frmCab');
 
     cTodosCabecalho.habilitaCampo();
@@ -90,71 +102,176 @@ function formataCabecalho() {
 }
 
 function formataCampos() {
-	$('.labelPri', '#frmTab089')
-        .css('width', '480px');
+	$('.labelPri', '#frmTab089').css('width', '480px');
      
-	$('#tituloO', '#frmTab089')
-        .css('width', '390px');
-	$('#tituloC', '#frmTab089')
-        .css('width', '160px');
+	$('#tituloO', '#frmTab089').css('width', '390px');
+	$('#tituloC', '#frmTab089').css('width', '160px');
+
+    cPrtlmult = $('#prtlmult', '#frmTab089');    
+    cPrestorn = $('#prestorn', '#frmTab089'); 
+    cPrpropos = $('#prpropos', '#frmTab089');  
+    cPzmaxepr = $('#pzmaxepr', '#frmTab089'); 
+    cQtdpaimo = $('#qtdpaimo', '#frmTab089');    
+    cQtdpaaut = $('#qtdpaaut', '#frmTab089');    
+    cQtdpaava = $('#qtdpaava', '#frmTab089');    
+    cQtdpaapl = $('#qtdpaapl', '#frmTab089');    
+    cQtdpasem = $('#qtdpasem', '#frmTab089');    
+    cQtdibaut = $('#qtdibaut', '#frmTab089'); 
+    cQtdibapl = $('#qtdibapl', '#frmTab089'); 
+    cQtdibsem = $('#qtdibsem', '#frmTab089'); 
+    cVlempres = $('#vlempres', '#frmTab089'); 
+    cVlmaxest = $('#vlmaxest', '#frmTab089'); 
+    cVltolemp = $('#vltolemp', '#frmTab089'); 
+    cPcaltpar = $('#pcaltpar', '#frmTab089'); 
 
     //Máscara para quantidade de dias
-    $('#prtlmult, #prestorn, #pzmaxepr, #qtdpaimo, #qtdpaaut, #qtdpaava, ' +
-        '#qtdpaapl, #qtdpasem, #qtdibaut, #qtdibapl, #qtdibsem', '#frmTab089')
-        .addClass('int_40px_3d');
-    $('.int_40px_3d')
-        .css('width', '40px')
-        .setMask('INTEGER', 'zzz', '', '');
+    cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
+    cPrestorn.css('width', '40px').setMask('INTEGER','zzz','','');
+    cPzmaxepr.css('width', '40px').setMask('INTEGER','zzzz','','');
+    cQtdpaimo.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdpaaut.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdpaava.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdpaapl.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdpasem.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdibaut.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdibapl.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
     //Máscara para porcentagem
-    $('#pcaltpar', '#frmTab089')
-        .css('width', '50px')
-        .setMask('DECIMAL','zzz,zz','','');
+    cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
+    cPcaltpar.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
     //Máscara para moedas (Valor Monetário)
-    $('#vlempres, #vlmaxest, #vltolemp', '#frmTab089')
-        .addClass('moeda')
-        .css('width', '100px')
-        .setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '');        
+    cVlempres.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
+    cVlmaxest.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
+    cVltolemp.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '');     
     
     cTodosFiltro.habilitaCampo();
 
     return false;
 }
 
-function bindKeyPress(elemToWatch, elemToFocus)
-{
-    elemToWatch.unbind('keypress').bind('keypress', function (e) {
+function controlaFoco() {
+    $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            elemToFocus.focus();
+            $('#btnOK', '#frmCab').focus();
             return false;
         }
-    });   
-}
-
-function controlaFoco() {
-    $('#btnOK', '#frmCab').unbind('keypress').bind('keypress', function (e) {
+    });
+   
+    $('#btnOK', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             controlaOperacao();
             return false;
         }
     });
 
-    bindKeyPress($('#cddopcao', '#frmCab'), $('#btnOK', '#frmCab'));
-    bindKeyPress($('#prtlmult', '#frmTab089'), $('#prestorn', '#frmTab089'));
-    bindKeyPress($('#prestorn', '#frmTab089'), $('#prpropos', '#frmTab089'));
-    bindKeyPress($('#prpropos', '#frmTab089'), $('#vlempres', '#frmTab089'));
-    bindKeyPress($('#vlempres', '#frmTab089'), $('#pzmaxepr', '#frmTab089'));
-    bindKeyPress($('#pzmaxepr', '#frmTab089'), $('#vlmaxest', '#frmTab089'));
-    bindKeyPress($('#vlmaxest', '#frmTab089'), $('#pcaltpar', '#frmTab089'));
-    bindKeyPress($('#pcaltpar', '#frmTab089'), $('#vltolemp', '#frmTab089'));
-    bindKeyPress($('#vltolemp', '#frmTab089'), $('#qtdpaimo', '#frmTab089'));
-    bindKeyPress($('#qtdpaimo', '#frmTab089'), $('#qtdpaaut', '#frmTab089'));
-    bindKeyPress($('#qtdpaaut', '#frmTab089'), $('#qtdpaava', '#frmTab089'));
-    bindKeyPress($('#qtdpaava', '#frmTab089'), $('#qtdpaapl', '#frmTab089'));
-    bindKeyPress($('#qtdpaapl', '#frmTab089'), $('#qtdpasem', '#frmTab089'));
-    bindKeyPress($('#qtdpasem', '#frmTab089'), $('#qtdibaut', '#frmTab089'));
-    bindKeyPress($('#qtdibaut', '#frmTab089'), $('#qtdibapl', '#frmTab089'));
-    bindKeyPress($('#qtdibapl', '#frmTab089'), $('#qtdibsem', '#frmTab089'));
-    bindKeyPress($('#qtdibsem', '#frmTab089'), $('#btContinuar', '#divBotoes'));
+    $('#prtlmult', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            $('#prestorn', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#prestorn', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#prpropos', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#prpropos', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#vlempres', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#vlempres', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pzmaxepr', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#pzmaxepr', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#vlmaxest', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+
+    $('#vlmaxest', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pcaltpar', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#pcaltpar', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#vltolemp', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#vltolemp', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpaimo', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+
+    $('#qtdpaimo', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpaaut', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#qtdpaaut', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpaava', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#qtdpaava', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpaapl', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#qtdpaapl', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpasem', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#qtdpasem', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdibaut', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#qtdibaut', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            $('#qtdibapl', '#frmTab089').focus();
+            return false;
+        }
+    });
+        
+    $('#qtdibapl', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdibsem', '#frmTab089').focus();
+            return false;
+        }
+    });
 }
 
 function controlaOperacao() {
@@ -165,38 +282,95 @@ function controlaOperacao() {
     formataCampos();
     
     // Desabilita campo opção
+    cTodosCabecalho = $('input[type="text"],select', '#frmCab');
     cTodosCabecalho.desabilitaCampo();
 
-    cddopcao = ($('#cddopcao', '#frmCab').val() == 'C') ? 'C' : 'AC';
-    manterRotina(cddopcao);
+    // Apenas quando for alteração
+    if ($('#cddopcao', '#frmCab').val() == 'C') {
+        manterRotina('C');
+    } else {
+        manterRotina('AC');
+    }
              
     return false;
 }
 
 function manterRotina(cddopcao) {
     hideMsgAguardo();
-    showMsgAguardo('Aguarde, efetuando solicita&ccedil;&atilde;o...');
+	
+    var cPrtlmult = normalizaNumero($('#prtlmult', '#frmTab089').val());	
+	var cPrestorn = normalizaNumero($('#prestorn', '#frmTab089').val());
+    var cPrpropos = $('#prpropos'  ,'#frmTab089').val();
+	var cPzmaxepr = normalizaNumero($('#pzmaxepr', '#frmTab089').val());
+    var cQtdpaimo = normalizaNumero($('#qtdpaimo', '#frmTab089').val());
+    var cQtdpaaut = normalizaNumero($('#qtdpaaut', '#frmTab089').val());
+    var cQtdpaava = normalizaNumero($('#qtdpaava', '#frmTab089').val());
+    var cQtdpaapl = normalizaNumero($('#qtdpaapl', '#frmTab089').val());
+    var cQtdpasem = normalizaNumero($('#qtdpasem', '#frmTab089').val());
+    var cQtdibaut = normalizaNumero($('#qtdibaut', '#frmTab089').val());
+    var cQtdibapl = normalizaNumero($('#qtdibapl', '#frmTab089').val());
+    var cQtdibsem = normalizaNumero($('#qtdibsem', '#frmTab089').val());
+    var cVlempres = normalizaNumero($('#vlempres', '#frmTab089').val());
+    var cVlmaxest = normalizaNumero($('#vlmaxest', '#frmTab089').val());
+    var cVltolemp = normalizaNumero($('#vltolemp', '#frmTab089').val());
+    var cPcaltpar = normalizaNumero($('#pcaltpar', '#frmTab089').val());
+
+    var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
+    showMsgAguardo(mensagem);
 
     $.ajax({
         type: 'POST',
         async: true,
         url: UrlSite + 'telas/tab089/manter_rotina.php',
-        data: montaObjPostData(cddopcao),
+        data: {
+            cddopcao  : cddopcao,
+            prtlmult : cPrtlmult,
+            prestorn : cPrestorn,
+            prpropos : cPrpropos,
+            pzmaxepr : cPzmaxepr,
+            qtdpaimo : cQtdpaimo,
+            qtdpaaut : cQtdpaaut,
+            qtdpaava : cQtdpaava,
+            qtdpaapl : cQtdpaapl,
+            qtdpasem : cQtdpasem,
+            qtdibaut : cQtdibaut,
+            qtdibapl : cQtdibapl,
+            qtdibsem : cQtdibsem,
+            vlempres : cVlempres,
+            vlmaxest : cVlmaxest,
+            vltolemp : cVltolemp,
+            pcaltpar : cPcaltpar,
+            redirect: 'script_ajax'
+        },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
-        success: function(response) {            
-            try {
-                eval(response);
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    eval(response);
 
-                if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-                    liberaCampos();
+                    if (cddopcao == 'C') {
+                        liberaCampos();
+                        hideMsgAguardo();
+                    }
+                    else if (cddopcao == 'AC') { // Alteração e Consulta
+                        liberaCampos();
+                        hideMsgAguardo();
+                    }
+                } catch (error) {
                     hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
-            } catch (error) {
-                hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+            } else {
+                try {
+                    eval(response);
+
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
             }
         }
     });
@@ -208,24 +382,25 @@ function liberaCampos() {
     $('#frmTab089').show();
     $('#divBotoes').show();
 
-    toggleEdicao($('#cddopcao', '#frmCab').val() == 'A');
+    cTodosFiltro.desabilitaCampo();
+
+    if ($('#cddopcao', '#frmCab').val() == 'A') {
+        cTodosFiltro.habilitaCampo();
+    }
 
     $('#prtlmult', '#frmTab089').focus();
+
+    if ($('#cddopcao', '#frmCab').val() == 'C') {
+        $("#btContinuar", "#divBotoes").hide();
+    } else {
+        $("#btContinuar", "#divBotoes").show();
+    }
 
     return false;
 }
 
-function toggleEdicao(active)
-{
-    if (active) {
-        cTodosFiltro.habilitaCampo();
-        $("#btContinuar", "#divBotoes").show();
-
-        return false;
-    } 
-
-    cTodosFiltro.desabilitaCampo();
-    $("#btContinuar", "#divBotoes").hide();
+function alteracaoMensagem() {
+    hideMsgAguardo();
 
     return false;
 }
@@ -243,30 +418,17 @@ function validarCampos() {
 }
 
 function executar() {
-    manterRotina($('#cddopcao', '#frmCab').val());
+    var operacao = $('#cddopcao', '#frmCab').val();
+    manterRotina(operacao);
+
+    return false;
+} 
+
+function desbloqueia() {
+    cTodosCabecalho.habilitaCampo();
+    $('#frmTab089').hide();
+    $('#divBotoes').hide();
 
     return false;
 }
 
-function montaObjPostData(cddopcao) {
-    return {
-        cddopcao: cddopcao,
-        prtlmult: normalizaNumero($('#prtlmult', '#frmTab089').val()),
-        prestorn: normalizaNumero($('#prestorn', '#frmTab089').val()),
-        prpropos: $('#prpropos', '#frmTab089').val(),
-        pzmaxepr: normalizaNumero($('#pzmaxepr', '#frmTab089').val()),
-        qtdpaimo: normalizaNumero($('#qtdpaimo', '#frmTab089').val()),
-        qtdpaaut: normalizaNumero($('#qtdpaaut', '#frmTab089').val()),
-        qtdpaava: normalizaNumero($('#qtdpaava', '#frmTab089').val()),
-        qtdpaapl: normalizaNumero($('#qtdpaapl', '#frmTab089').val()),
-        qtdpasem: normalizaNumero($('#qtdpasem', '#frmTab089').val()),
-        qtdibaut: normalizaNumero($('#qtdibaut', '#frmTab089').val()),
-        qtdibapl: normalizaNumero($('#qtdibapl', '#frmTab089').val()),
-        qtdibsem: normalizaNumero($('#qtdibsem', '#frmTab089').val()),
-        vlempres: normalizaNumero($('#vlempres', '#frmTab089').val()),
-        vlmaxest: normalizaNumero($('#vlmaxest', '#frmTab089').val()),
-        vltolemp: normalizaNumero($('#vltolemp', '#frmTab089').val()),
-        pcaltpar: normalizaNumero($('#pcaltpar', '#frmTab089').val()),
-        redirect: 'script_ajax'
-    };
-}
