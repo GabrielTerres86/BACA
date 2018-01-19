@@ -342,6 +342,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 							  
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
                               (Rafael Faria - Supero)
+
+                 19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito 
+		                      Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+							  (Daniel Junior - AMcom)
   ............................................................................. */
 
    DECLARE
@@ -3095,7 +3099,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          END IF;
 
          -- Somente em caso de chamada pelo crps280
-         IF pr_cdprogra = 'CRPS280' THEN
+         
+		 --IF pr_cdprogra = 'CRPS280' THEN
+		 -- Regra (IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
          
             -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na 
             -- condição, vamos verificar o nível de risco "A".
@@ -3191,7 +3198,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  END IF; --> Sem estou de conta
                END IF; --> Nivel <> A               
             END IF; --> Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-         END IF; --> Somente para crps280
+         --END IF; --> Somente para crps280
+		 -- Regra (END IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+
 
          -- Alimentar varíaveis para detalhamento dos riscos atual e anterior
          vr_dtdrisco := NULL;
