@@ -23,7 +23,7 @@
 
 	<fieldset>
 		<legend><? echo utf8ToHtml('Digite a Senha') ?></legend>
-		<label for="operauto">Coordenador:</label>
+		<label for="operauto">Autorizador:</label>
 		<input name="operauto" id="operauto" type="text" />
 		
 		<br />

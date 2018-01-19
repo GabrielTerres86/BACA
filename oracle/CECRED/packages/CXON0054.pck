@@ -187,7 +187,7 @@ create or replace package body cecred.CXON0054 is
          ROLLBACK; -- Desfazer a operacao
          pr_retorno  := 'NOK';
          pr_cdcritic := 0;
-         pr_dscritic := 'Erro na rotina CXON0000.pc_autentica_cheque: '||SQLERRM;        
+         pr_dscritic := 'Erro na rotina CXON0054.pc_atualiza_operacao_especie: '||SQLERRM;        
 
          -- Se ocorreu algum erro interno
          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -265,7 +265,7 @@ create or replace package body cecred.CXON0054 is
          ROLLBACK; -- Desfazer a operacao
          pr_retorno  := 'NOK';
          pr_cdcritic := 0;
-         pr_dscritic := 'Erro na rotina CXON0000.pc_autentica_cheque: '||SQLERRM;        
+         pr_dscritic := 'Erro na rotina CXON0054.pc_busca_limite_pagto_especie: '||SQLERRM;        
 
          -- Se ocorreu algum erro interno
          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN

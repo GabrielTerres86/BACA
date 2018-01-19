@@ -103,7 +103,7 @@ PROCEDURE pc_busca_limite_operacao(
       ROLLBACK;
     WHEN OTHERS THEN      
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela TRAESP: ' || SQLERRM;
+      pr_dscritic := 'Erro na rotina TELA_TRAESP.pc_busca_limite_operacao: ' || SQLERRM;
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       ROLLBACK;

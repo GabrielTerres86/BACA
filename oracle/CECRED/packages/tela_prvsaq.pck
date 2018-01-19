@@ -118,6 +118,11 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
 
 PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE);
 
+-- Calcula os dias uteis de acordo com o periodo passado como parametro                                  
+   FUNCTION fn_retorna_data_util(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa
+                                ,pr_dtiniper IN DATE                      --> Data de Inicio do Periodo
+                                ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
+
 END tela_prvsaq;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
@@ -293,7 +298,6 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                              pr_cdoperad => vr_cdoperad,
                              pr_dscritic => vr_dscritic);
                              
-    --vr_dscritic := '';vr_cdoperad:=1;vr_cdcooper:=1;
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       -- Levanta exceção
@@ -439,7 +443,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                           from crapcop c
                           LEFT JOIN crapage a
                             ON a.cdcooper = c.cdcooper
-                           and (/*a.cdagenci = 23 or*/ a.cdagenci = rw_prv_saq.cdagenci_saque)
+                           and (a.cdagenci = rw_prv_saq.cdagenci_saque)
                           LEFT JOIN tbcc_monitoramento_parametro m
                             ON m.cdcooper = a.cdcooper
                          where c.cdcooper = pr_cdcooper) unpivot(valor FOR email in(EMAILCOP,
@@ -741,7 +745,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_idorigem => vr_idorigem,
                                pr_cdoperad => vr_cdoperad,
                                pr_dscritic => vr_dscritic);
-   --vr_dscritic:='';vr_cdoperad:=1;vr_cdcooper:=1;
+
       -- Se retornou alguma crítica                  
       
       IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -1376,7 +1380,6 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                                pr_dscritic => vr_dscritic);
    
       -- Se retornou alguma crítica
-      --vr_dscritic := '';      vr_cdcooper := 1;      vr_cdoperad := 1;
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
         RAISE vr_exc_saida;
@@ -1641,10 +1644,10 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                vr_cdcritic := 0;
                IF(vr_idorigem = 5)THEN
                  vr_pedesenha :=1;
-                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';             
+                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';             
                ELSE
                  vr_pedesenha :=0;
-                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17.';
+                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17.';
                END IF;
                -- volta para o programa chamador
                RAISE vr_exc_pedesenha;            
@@ -1740,20 +1743,20 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
         select listagg(valor, ';') within group(order by valor) INTO vr_emails
           from (select distinct valor
                   from (select c.cdcooper cdcooper,
-                               c.dsdemail emailcop,
+                               c.dsemlcof emailcop,
                                a.dsdemail emailage,
                                m.dsdemail emailmon
                           from crapcop c
                           LEFT JOIN crapage a
                             ON a.cdcooper = c.cdcooper
-                           and (/*a.cdagenci = 23 or*/ a.cdagenci = pr_nrpa)
+                           and (a.cdagenci = pr_nrpa)
                           LEFT JOIN tbcc_monitoramento_parametro m
                             ON m.cdcooper = a.cdcooper
                          where c.cdcooper = vr_cdcooper) unpivot(valor FOR email in(EMAILCOP,
                                                                           EMAILAGE,
                                                                           EMAILMON)));
                     
-       IF((vr_tot + pr_vlSaqPagto) > vr_provisao_email)THEN
+       IF((vr_tot + pr_vlSaqPagto) >= vr_provisao_email)THEN
           
           vr_corpoemail := '<b>Cooperativa:</b> '|| vr_cdcooper || '
                             <br>
@@ -2033,7 +2036,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
                                pr_idorigem => vr_idorigem,
                                pr_cdoperad => vr_cdoperad,
                                pr_dscritic => vr_dscritic);
-   --vr_dscritic:='';vr_cdoperad:=1;vr_cdcooper:=1;
+
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
@@ -2116,16 +2119,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
                              pr_posicao  => 0,
                              pr_tag_nova => 'inf',
                              pr_tag_cont => NULL,
-                             pr_des_erro => vr_dscritic);
-          
-      /*gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
-                             pr_tag_nova => 'vlcredito_diario_pf',
-                             pr_tag_cont => to_char(rw_tbcc_monit_param.vlcredito_diario_pf,
-                                                    'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
-                             pr_des_erro => vr_dscritic); */                                                                 
+                             pr_des_erro => vr_dscritic);                                                                      
                             
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -2434,16 +2428,7 @@ PROCEDURE pc_dados_tela_pvrsaq(pr_cdcooper        IN tbcc_provisao_especie.cdcoo
                                pr_tag_nova => 'nmextttl',
                                pr_tag_cont => rw_crapttl.nmextttl,
                                pr_des_erro => vr_dscritic);
-      END IF; 
-         
-      /*gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
-                             pr_tag_nova => 'vlcredito_diario_pf',
-                             pr_tag_cont => to_char(rw_tbcc_monit_param.vlcredito_diario_pf,
-                                                    'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
-                             pr_des_erro => vr_dscritic); */                                                                 
+      END IF;                                                                      
                             
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -2583,6 +2568,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
          AND TRUNC(p.dhprevisao_operacao)<= pr_dtmvtolt 
          AND p.nrdconta = pr_nrdconta 
          AND p.insit_provisao = 1
+         AND ((pr_cm7_cheque IS NULL AND p.incheque = 0) OR (pr_cm7_cheque IS NOT NULL AND p.incheque = 1))
          AND (pr_cm7_cheque IS NULL OR p.cdbanchq = SUBSTR(pr_cm7_cheque,2,3))
          AND (pr_cm7_cheque IS NULL OR p.cdagechq = SUBSTR(pr_cm7_cheque,5,4))
          AND (pr_cm7_cheque IS NULL OR p.nrctachq = SUBSTR(pr_cm7_cheque,23,10))
@@ -2734,7 +2720,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
       ROLLBACK;
     WHEN OTHERS THEN      
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela TRAESP: ' || SQLERRM;
+      pr_dscritic := 'Erro na rotina TELA_PRVSAQ.pc_busca_operacao_especie: ' || SQLERRM;
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       ROLLBACK;
@@ -2868,7 +2854,7 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
                                pr_idorigem => vr_idorigem,
                                pr_cdoperad => vr_cdoperad,
                                pr_dscritic => vr_dscritic);
-  -- vr_dscritic:='';vr_cdoperad:=1;vr_cdcooper:=1;
+                               
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
@@ -2936,7 +2922,6 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
       vr_des_xml := NULL;
       dbms_lob.createtemporary(vr_des_xml, TRUE);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);    
-      --vr_txtcompl := NULL;          
       
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>' ||
                      '<dados>'||
@@ -3263,8 +3248,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
     rw_monitor cr_monitor%ROWTYPE;
     
      -- Cursos busca provisao
-    CURSOR cr_prv_saq(pr_cdcooper     IN tbcc_provisao_especie.cdcooper%TYPE                      
-                      ,pr_qtdias_canc IN tbcc_monitoramento_parametro.qtdias_provisao_cancelamento%TYPE
+    CURSOR cr_prv_saq(pr_cdcooper     IN tbcc_provisao_especie.cdcooper%TYPE                                           
                       ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE) IS
     SELECT prv.cdcooper,
            prv.dhprevisao_operacao,
@@ -3273,8 +3257,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
            prv.vlsaque
     FROM tbcc_provisao_especie prv
     WHERE prv.cdcooper = pr_cdcooper
-          --AND pr_dtmvtolt > (prv.dhprevisao_operacao + pr_qtdias_canc)
-          AND pr_dtmvtolt > empr0008.fn_retorna_data_util(pr_cdcooper =>pr_cdcooper , pr_dtiniper =>prv.dhprevisao_operacao , pr_qtdialib =>pr_qtdias_canc)
+          AND TRUNC(prv.dhprevisao_operacao) <= pr_dtmvtolt
           AND prv.insit_provisao = 1;
     rw_prv_saq cr_prv_saq%ROWTYPE;
     
@@ -3290,7 +3273,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
   BEGIN
     
     CECRED.pc_log_programa(pr_dstiplog => 'I'
-                         , pr_cdprograma => 'JBTBCC_CANCELA_PROVISAO'                                
+                         , pr_cdprograma => 'JBCC_CANCELA_PROVISAO'                                
                          , pr_idprglog => vr_idprglog);                            
   
     --Busca todos os operadores ativos
@@ -3318,8 +3301,7 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
           BEGIN 
             
             FOR rw_prv_saq IN cr_prv_saq(pr_cdcooper    => rw_crapcop.cdcooper,
-                                         pr_qtdias_canc => rw_monitor.qtdias_provisao_cancelamento,
-                                         pr_dtmvtolt    => rw_crapdat.dtmvtolt) LOOP
+                                         pr_dtmvtolt    => fn_retorna_data_util(pr_cdcooper => rw_crapcop.cdcooper, pr_dtiniper => rw_crapdat.dtmvtolt , pr_qtdialib => rw_monitor.qtdias_provisao_cancelamento * -1)) LOOP
                                                                                   
               UPDATE tbcc_provisao_especie prv
                SET prv.insit_provisao = 3
@@ -3330,13 +3312,13 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
                
               -- Log de sucesso.
               CECRED.pc_log_programa(pr_dstiplog => 'O'
-                                     ,pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                                     ,pr_cdprograma => 'JBCC_CANCELA_PROVISAO' 
                                      ,pr_cdcooper => rw_prv_saq.cdcooper
                                      ,pr_tpexecucao => 0
                                      ,pr_tpocorrencia => 4 
                                      ,pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                       'Provisão cancelada com sucesso na rotina pc_job_cancela_provisao. Cooperativa: ' ||
-                                                       rw_prv_saq.cdcooper || 'Conta: ' || rw_prv_saq.nrdconta || ' Valor: ' || rw_prv_saq.vlsaque
+                                                       ' - Provisão cancelada com sucesso na rotina pc_job_cancela_provisao. Cooperativa: ' ||
+                                                       rw_prv_saq.cdcooper || ' Conta: ' || rw_prv_saq.nrdconta || ' Valor: ' || rw_prv_saq.vlsaque
                                    , pr_idprglog => vr_idprglog); 
             END LOOP;                                                                                                            
            
@@ -3354,10 +3336,10 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
   EXCEPTION
     WHEN vr_exc_error THEN
       
-      pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - TELA_PRVSAQ --> Erro ao atualzar a tabela tbcc_provisao_especie na rotina pc_job_cancela_provisao. Detalhes: ' || SQLERRM;
+      pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - TELA_PRVSAQ --> Erro ao atualizar a tabela tbcc_provisao_especie na rotina pc_job_cancela_provisao. Detalhes: ' || SQLERRM;
 
       CECRED.pc_log_programa(pr_dstiplog => 'O'
-                           , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                           , pr_cdprograma => 'JBCC_CANCELA_PROVISAO' 
                            , pr_cdcooper => 0
                            , pr_tpexecucao => 0
                            , pr_tpocorrencia => 2
@@ -3373,6 +3355,77 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
           
       ROLLBACK;
   END pc_job_cancela_provisao;
+  
+  FUNCTION fn_retorna_data_util(pr_cdcooper IN crapcop.cdcooper%TYPE        --> Cooperativa
+                               ,pr_dtiniper IN DATE                        --> Data de Inicio do Periodo
+                               ,pr_qtdialib IN PLS_INTEGER) RETURN DATE IS --> Quantidade de dias para acrescentar
+	BEGIN											 
+	  /* .............................................................................
+
+      Programa: pc_retorna_data_util
+      Sistema : CECRED
+      Sigla   : EMPR
+      Autor   : Antonio R. Jr (mouts)
+      Data    : Janeiro/18.                    Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina para calcular proxima ou anterior data util a partir do numero de dias uteis informado
+
+      Observacao: Para data anterior passar parametro PR_QTDIALIB negativo.
+
+      Alteracoes: 
+    ..............................................................................*/
+
+		DECLARE
+      -- Buscar informacoes dos feriados
+      CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE,
+                        pr_dtferiad IN crapfer.dtferiad%TYPE) IS
+        SELECT 1
+          FROM crapfer
+         WHERE cdcooper = pr_cdcooper
+           AND dtferiad = pr_dtferiad;
+
+      vr_flgferia NUMBER;
+      vr_qtdialib NUMBER;
+              
+      vr_nrdialib PLS_INTEGER := 0;
+      vr_datadper DATE;    
+    BEGIN
+      vr_datadper := pr_dtiniper;
+      vr_qtdialib := ABS(pr_qtdialib);    
+      
+      WHILE vr_nrdialib < vr_qtdialib LOOP
+        IF(pr_qtdialib < 0)THEN
+          vr_datadper := vr_datadper - 1;
+        ELSE
+          vr_datadper := vr_datadper + 1;
+        END IF;        
+        -- Condicao para verificar se eh Final de Semana
+        IF (TO_CHAR(vr_datadper,'d') NOT IN(1,7)) THEN
+          -- Condicao para verificar se eh Feriado
+          OPEN cr_crapfer(pr_cdcooper => pr_cdcooper,
+                          pr_dtferiad => vr_datadper);
+          FETCH cr_crapfer INTO vr_flgferia;
+          -- Se nao tiver cr_crapfer
+          IF cr_crapfer%NOTFOUND THEN
+            vr_nrdialib := vr_nrdialib + 1;
+          END IF;
+
+          CLOSE cr_crapfer;
+          
+        END IF;        
+      
+      END LOOP;
+
+
+      RETURN vr_datadper;
+                            
+		END;
+
+  END fn_retorna_data_util;
 
 END tela_prvsaq;
 /

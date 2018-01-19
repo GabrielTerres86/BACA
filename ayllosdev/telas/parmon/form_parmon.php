@@ -317,7 +317,7 @@
 
             <tr>
               <td>
-                <label for="vllimitepagamento" class="lbAjuste">Somat&oacute;ria de pagamentos em esp&eacute;cie::</label>
+                <label for="vllimitepagamento" class="lbAjuste">Somat&oacute;ria de pagamentos em esp&eacute;cie:</label>
                 <input type="text" id="vllimitepagamento" name="vllimitepagamento" value=""
                 <? echo $vlprovpagtoespecie ?>" />
 						

@@ -21,7 +21,7 @@
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");
 	
-	$titulo = 'PARA CONTINUAR, PEÇA LIBERAÇÃO AO COORDENADOR';
+	$titulo = 'PARA CONTINUAR, PEÇA LIBERAÇÃO AO AUTORIZADOR';
 	
 ?>
 

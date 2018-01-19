@@ -772,7 +772,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
                 }
             }
             //insere verificado			
-            showConfirmacao("078 - Deseja confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('I!')", "", "sim.gif", "nao.gif");
+            showConfirmacao("Deseja confirmar a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('I!')", "", "sim.gif", "nao.gif");
         }
     }
 
@@ -881,7 +881,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
                     return false;
                 }
 
-                showConfirmacao("Deseja confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('A!')", "btnVoltar()", "sim.gif", "nao.gif");
+                showConfirmacao("Deseja confirmar a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('A!')", "btnVoltar()", "sim.gif", "nao.gif");
                 return false;
             }
         }
@@ -921,7 +921,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
             //realizar pergunta
             var arrExc = recuperaLinhasSelecionadas('tabConsulta');
             if (arrExc.length > 0) {
-                showConfirmacao("Deseja confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('E!')", "", "sim.gif", "nao.gif");
+                showConfirmacao("Deseja confirmar a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "manter_rotina('E!')", "", "sim.gif", "nao.gif");
                 return false;
             }
         } else {
