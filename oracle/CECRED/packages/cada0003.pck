@@ -3867,10 +3867,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Cursor para verificar se existe aplicacao
       CURSOR cr_aplicacao IS
         SELECT 1
-          FROM crapaar 
+          FROM craprda 
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND cdsitaar <> 3;
+           AND insaqtot = 0;
        rw_aplicacao cr_aplicacao%ROWTYPE;
 
       -- Cursor para verificar se existe limite de titulos/cheque ativo
