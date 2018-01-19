@@ -404,6 +404,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.mesrefju
               ,crapepr.anorefju
               ,crapepr.txjuremp                                       
+              ,crawepr.dtlibera                                       
           FROM crapepr
           JOIN crawepr
             ON crawepr.cdcooper = crapepr.cdcooper
@@ -978,7 +979,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       BEGIN
         dbms_lob.writeappend(vr_clobxml,length(pr_desdados),pr_desdados);
       END;
-
+      
       -- Funcao para calcular o Juros 60 do produto PP
       FUNCTION fn_calculas_juros_60d(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                     ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
@@ -987,6 +988,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                     ,pr_mesrefju IN crapepr.mesrefju%TYPE
                                     ,pr_anorefju IN crapepr.anorefju%TYPE
                                     ,pr_txjuremp IN crapepr.txjuremp%TYPE
+                                    ,pr_dtlibera IN crawepr.dtlibera%TYPE
                                     ,pr_vlsdeved IN crapepr.vlsdeved%TYPE) RETURN NUMBER IS
         vr_qtdiajur	 INTEGER;
     		vr_diavtolt  INTEGER;
@@ -999,10 +1001,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
     		vr_vljurmes  crapepr.vljurmes%TYPE;
         vr_ehmensal  BOOLEAN := FALSE;
       BEGIN
-        --Setar Dia/mes ano
+        --Dia/Mes/Ano Referencia
+        IF pr_diarefju <> 0 AND pr_mesrefju <> 0 AND pr_anorefju <> 0 THEN
+          --Setar Dia/mes?ano
         vr_diavtolt := pr_diarefju;
         vr_mesvtolt := pr_mesrefju;
         vr_anovtolt := pr_anorefju;        
+        ELSE
+          --Setar dia/mes/ano
+          vr_diavtolt := to_number(to_char(pr_dtlibera, 'DD'));
+          vr_mesvtolt := to_number(to_char(pr_dtlibera, 'MM'));
+          vr_anovtolt := to_number(to_char(pr_dtlibera, 'YYYY'));
+        END IF;     
       
         --Retornar Dia/mes/ano de referencia
         vr_diarefju := to_number(to_char(pr_dtmvtolt, 'DD'));
@@ -2530,20 +2540,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         END IF;
         
         -- Calculo dos Juros em atraso a mais de 60 dias        
-        vr_totjur60 := 0;
+        vr_totjur60 := 0;        
         -- Calcular somente na mensal
         IF vr_qtdiaatr >= 60  THEN  -- Calcular o valor dos juros a mais de 60 dias
-            OPEN cr_craplem_60 (pr_qtdiaatr => vr_qtdiaatr);
-            FETCH cr_craplem_60 INTO vr_totjur60;
-            CLOSE cr_craplem_60;
+          OPEN cr_craplem_60 (pr_qtdiaatr => vr_qtdiaatr);
+          FETCH cr_craplem_60 INTO vr_totjur60;
+          CLOSE cr_craplem_60;
           
-          -- Se o mês corrente é o mesmo do próximo dia util
-          IF trunc(pr_rw_crapdat.dtmvtolt,'mm') = trunc(pr_rw_crapdat.dtmvtopr,'mm') THEN
-            vr_vlsdeved_atual := nvl(pr_rw_crapepr.vlsdevat,0);
-          ELSE
-            vr_vlsdeved_atual := pr_rw_crapepr.vlsdeved;
-          END IF;        
-          
+          -- Diario
+          IF to_char(pr_rw_crapdat.dtmvtolt,'mm') = to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
           -- Obter valor de juros a mais de 60 dias
           vr_totjur60 := nvl(vr_totjur60,0) + nvl(fn_calculas_juros_60d(pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
                                                                        ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
@@ -2552,8 +2557,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                                        ,pr_mesrefju => pr_rw_crapepr.mesrefju
                                                                        ,pr_anorefju => pr_rw_crapepr.anorefju
                                                                        ,pr_txjuremp => pr_rw_crapepr.txjuremp
-                                                                       ,pr_vlsdeved => vr_vlsdeved_atual),0);            
-          END IF; 
+                                                                         ,pr_dtlibera => pr_rw_crapepr.dtlibera
+                                                                         ,pr_vlsdeved => nvl(pr_rw_crapepr.vlsdevat,0)),0);
+          END IF;
+                                                                         
+        END IF;
         --END IF;
         -- Montar a data prevista do ultimo vencimento com base na data do 
         -- primeiro pagamento * qtde de parcelas do empréstimo
