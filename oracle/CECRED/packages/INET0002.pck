@@ -2382,6 +2382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																												,pr_nrdconta => pr_nrdconta 
 																												,pr_idseqttl => 0 -- Todos Titulares 
 																												,pr_nrctraar => rw_tbcapt_trans_pend.nrdocto_agendamento 
+                                                        ,pr_cdsitaar => 0
 																												,pr_cdcritic => vr_cdcritic 
 																												,pr_dscritic => vr_dscritic
 																												,pr_tab_agen => vr_tab_agen);                      
@@ -7164,6 +7165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                           ,pr_nrdconta => pr_nrdconta 
                                                           ,pr_idseqttl => 0 -- Todos Titulares 
                                                           ,pr_nrctraar => rw_tbcapt_trans_pend.nrdocto_agendamento 
+                                                          ,pr_cdsitaar => 0
                                                           ,pr_cdcritic => vr_cdcritic 
                                                           ,pr_dscritic => vr_dscritic
                                                           ,pr_tab_agen => vr_tab_agen);                                                         

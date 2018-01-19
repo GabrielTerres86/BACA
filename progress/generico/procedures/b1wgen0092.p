@@ -3919,6 +3919,8 @@ PROCEDURE busca_lancamentos:
 
     DEF OUTPUT PARAM TABLE FOR tt-lancamentos.
     
+    DEF VAR aux_dsprotoc LIKE crappro.dsprotoc NO-UNDO.
+    
     /* busca os lancamentos agendados (PENDENTES e BLOQUEADOS) */
     FOR EACH craplau WHERE craplau.cdcooper = par_cdcooper      AND
                            craplau.nrdconta = par_nrdconta      AND
@@ -3942,7 +3944,9 @@ PROCEDURE busca_lancamentos:
                             crapatr.nrdconta = craplau.nrdconta AND
                             crapatr.cdhistor = craplau.cdhistor AND
                             crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
-                            
+                     
+        ASSIGN aux_dsprotoc = "".
+        
         IF  crapatr.cdhistor <> 1019 THEN
             FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                             gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -3961,6 +3965,25 @@ PROCEDURE busca_lancamentos:
             NOT AVAIL crapscn  THEN
             NEXT.
             
+        IF  craplau.flgblqdb  THEN /* Carregar comprovante do bloqueio */
+            DO:
+                FOR EACH crappro FIELDS (dsinform dsprotoc)
+                                  WHERE crappro.cdcooper  = craplau.cdcooper AND
+                                        crappro.nrdconta  = craplau.nrdconta AND
+                                        crappro.cdtippro  = 11               AND
+                                        crappro.dtmvtolt >= craplau.dtmvtolt AND
+                                        crappro.nrdocmto  = craplau.nrdocmto NO-LOCK
+                                        BY crappro.dttransa DESC BY crappro.hrautent:
+                                        
+                    IF  crappro.dsinform[1] = "Bloqueio de Debito - Inclusao"  THEN
+                        DO:
+                            ASSIGN aux_dsprotoc = crappro.dsprotoc.
+                            LEAVE. /* Carregar somente o ultimo comprovante de bloqueio */
+                        END.
+                        
+                END.
+            END.
+            
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
@@ -3973,7 +3996,7 @@ PROCEDURE busca_lancamentos:
                                          ELSE 
                                             "PENDENTE"
                tt-lancamentos.insituac = IF craplau.flgblqdb THEN 2 ELSE 1
-               tt-lancamentos.dsprotoc = "".
+               tt-lancamentos.dsprotoc = aux_dsprotoc.
     END.
 
     /* Ira consultar registros de Debito Facil somente se for a opcao de consulta */
@@ -3988,7 +4011,9 @@ PROCEDURE busca_lancamentos:
                                     crapatr.nrdconta = craplcm.nrdconta AND
                                     crapatr.cdhistor = craplcm.cdhistor AND
                                     crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
-                                    
+                              
+                ASSIGN aux_dsprotoc = "".
+                
                 IF  crapatr.cdhistor <> 1019 THEN
                     FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                                              gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -4014,6 +4039,9 @@ PROCEDURE busca_lancamentos:
                                         crappro.dtmvtolt = craplcm.dtmvtolt AND
                                         crappro.nrdocmto = craplcm.nrdocmto AND
                                         crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
+                                        
+                IF  AVAIL crappro  THEN
+                    ASSIGN aux_dsprotoc = crappro.dsprotoc.
         
                 CREATE tt-lancamentos.
                 ASSIGN tt-lancamentos.dtmvtolt = craplcm.dtmvtolt
@@ -4024,7 +4052,7 @@ PROCEDURE busca_lancamentos:
                        tt-lancamentos.cdhistor = craplcm.cdhistor
                        tt-lancamentos.situacao = "EFETIVADO"
                        tt-lancamentos.insituac = 3
-                       tt-lancamentos.dsprotoc = IF AVAIL crappro THEN crappro.dsprotoc ELSE "".
+                       tt-lancamentos.dsprotoc = aux_dsprotoc.
             END.
         END. 
 

@@ -1199,6 +1199,7 @@ PROCEDURE consulta-agendamento:
                                      INPUT aux_idseqttl,
                                      INPUT aux_nraplica,
                                      INPUT aux_flgtipar,
+                                     INPUT 6,
                                      INPUT aux_cdprogra,
                                      INPUT aux_idorigem,
                                     OUTPUT TABLE tt-erro,

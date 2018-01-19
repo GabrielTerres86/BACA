@@ -234,7 +234,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
           ,nrmesaar crapaar.nrmesaar%TYPE
           ,qtdiacar crapaar.qtdiacar%TYPE
           ,qtmesaar crapaar.qtmesaar%TYPE
-          ,vlparaar crapaar.vlparaar%TYPE);
+          ,vlparaar crapaar.vlparaar%TYPE
+          ,incancel NUMBER
+          ,dssitaar VARCHAR2(100)
+          ,dstipaar VARCHAR2(100));
 
   TYPE typ_tab_agen IS
     TABLE OF typ_reg_agen
@@ -317,7 +320,15 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
           ,cddbanco craplau.cddbanco%TYPE
           ,cdageban craplau.cdageban%TYPE
           ,cdempres craplau.cdempres%TYPE
-          ,flgblqdb craplau.flgblqdb%TYPE);
+          ,flgblqdb craplau.flgblqdb%TYPE
+          ,dssitlau VARCHAR2(100)
+          ,flgtipar crapaar.flgtipar%TYPE
+          ,dstipaar VARCHAR2(100)
+          ,vlsolaar NUMBER
+          ,flgtipin crapaar.flgtipin%TYPE
+          ,dstipinv VARCHAR2(100)
+          ,qtdiacar crapaar.qtdiacar%TYPE
+          ,dsprotoc crappro.dsprotoc%TYPE);
           
   TYPE typ_tab_agen_det IS 
     TABLE OF typ_reg_agen_det
@@ -794,6 +805,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                    ,pr_nrdconta IN crapaar.nrdconta%TYPE      --> Numero conta
                                    ,pr_idseqttl IN crapaar.idseqttl%TYPE      --> Seq titular
                                    ,pr_nrctraar IN crapaar.nrctraar%TYPE      --> Numero agendamento
+                                   ,pr_cdsitaar IN crapaar.cdsitaar%TYPE      --> Situacao
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo de Critica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descricao de Critica
                                    ,pr_tab_agen OUT APLI0002.typ_tab_agen);   --> Tabela com dados de agendamentos
@@ -804,6 +816,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                     ,pr_nrdconta IN  crapaar.nrdconta%TYPE --> Numero conta
                                     ,pr_idseqttl IN  crapaar.idseqttl%TYPE --> Seq titular
                                     ,pr_nrctraar IN  crapaar.nrctraar%TYPE --> Numero agendamento
+                                    ,pr_cdsitaar IN  crapaar.cdsitaar%TYPE --> Situacao
                                     ,pr_clobxmlc OUT CLOB                  --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
@@ -6053,20 +6066,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
               vr_dsinfor1:= 'Aplicacao Pos'; 
               
-            vr_dsinfor2:= vr_nmextttl ||'#' ||
-                          'Conta/dv: ' ||vr_nrdconta ||' - '||
-                          rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-                          ' - '|| rw_crapcop.nmrescop;
-            vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
-                          'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
-                          'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
-                          'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
-                          'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
-                          'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
-                          'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
-                          UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
+              vr_dsinfor2:= vr_nmextttl ||'#' ||
+                            'Conta/dv: ' ||vr_nrdconta ||' - '||
+                            rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+                            ' - '|| rw_crapcop.nmrescop;
+              vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
+                            'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
+                            'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
+                            'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
+                            'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
+                            'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
+                            'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
+                            UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
               
             END IF;            
 
@@ -16994,6 +17007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                    ,pr_nrdconta IN crapaar.nrdconta%TYPE      --> Numero conta
                                    ,pr_idseqttl IN crapaar.idseqttl%TYPE      --> Seq titular
                                    ,pr_nrctraar IN crapaar.nrctraar%TYPE      --> Numero agendamento
+                                   ,pr_cdsitaar IN crapaar.cdsitaar%TYPE      --> Situacao
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo de Critica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descricao de Critica
                                    ,pr_tab_agen OUT APLI0002.typ_tab_agen) IS --> Tabela com dados de agendamentos
@@ -17039,19 +17053,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_nrdolote craplot.nrdolote%TYPE;
       vr_cdhistor craplot.cdhistor%TYPE;
       vr_dtmvtopg craplau.dtmvtopg%TYPE;
+      
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Selecionar dados dos agendamentos
       CURSOR cr_crapaar(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Código da Cooperativa
                        ,pr_nrdconta IN crapaar.nrdconta%TYPE     --> Numero de conta
-                       ,pr_idseqttl IN crapaar.idseqttl%TYPE) IS --> Seq titular
+                       ,pr_idseqttl IN crapaar.idseqttl%TYPE     --> Seq titular
+                       ,pr_cdsitaar IN crapaar.cdsitaar%TYPE) IS --> Situacao 
 
-        SELECT *
+        SELECT aar.*
+              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Vencido','') dssitaar
+              ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar
           FROM crapaar aar
          WHERE aar.cdcooper = pr_cdcooper
            AND aar.nrdconta = pr_nrdconta
            AND ((aar.idseqttl = pr_idseqttl AND pr_idseqttl <> 0) OR 
                 (pr_idseqttl = 0))
-           AND aar.cdsitaar <> 3;
+           AND ((pr_cdsitaar = 0) OR                       -- Retornar todas situações
+                (pr_cdsitaar = 6 AND aar.cdsitaar <> 3) OR -- Desprezar cancelados
+                (aar.cdsitaar = pr_cdsitaar));             -- Retornar situação específica
+                
+      rw_crapaar cr_crapaar%ROWTYPE;          
 
       -- Selecionar dados dos agendamentos
       CURSOR cr_crapaar2(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Código da Cooperativa
@@ -17059,7 +17082,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                         ,pr_idseqttl IN crapaar.idseqttl%TYPE     --> Seq titular
                         ,pr_nrctraar IN crapaar.nrctraar%TYPE) IS --> Numero agendamento
 
-        SELECT *
+        SELECT aar.*
+              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Vencido','') dssitaar
+              ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar        
           FROM crapaar aar
          WHERE aar.cdcooper = pr_cdcooper
            AND aar.nrdconta = pr_nrdconta
@@ -17067,7 +17092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            AND ((aar.idseqttl = pr_idseqttl AND pr_idseqttl <> 0) OR
                 (pr_idseqttl = 0));
 
-        rw_crapaar cr_crapaar%ROWTYPE;
+      rw_crapaar2 cr_crapaar2%ROWTYPE;
 
       -- Busca os lancamentos automaticos
       CURSOR cr_craplau(pr_cdcooper craplau.cdcooper%TYPE,
@@ -17086,11 +17111,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
        ORDER BY craplau.dtmvtopg ASC;
     BEGIN
 
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);        
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN          
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+          
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          
+        -- Gera exceção
+        RAISE vr_exc_saida;          
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;          
+      END IF;
+      
       IF pr_nrctraar = 0 THEN --> Pegar registros apenas filtrando por data e titular
 
         OPEN cr_crapaar(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                        ,pr_nrdconta => pr_nrdconta   --> Numero de conta
-                       ,pr_idseqttl => pr_idseqttl); --> Seq titular
+                       ,pr_idseqttl => pr_idseqttl   --> Seq titular
+                       ,pr_cdsitaar => pr_cdsitaar); --> Situação
 
 
         LOOP
@@ -17151,6 +17196,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar.qtdiacar;
           vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar.qtmesaar;
           vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar.vlparaar;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
+          vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
           
         END LOOP;
 
@@ -17165,13 +17213,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
 
         LOOP
-          FETCH cr_crapaar2 INTO rw_crapaar;
+          FETCH cr_crapaar2 INTO rw_crapaar2;
 
           EXIT WHEN cr_crapaar2%NOTFOUND;
 
 
           IF pr_flgtipar < 2 AND 
-             pr_flgtipar <> rw_crapaar.flgtipar THEN
+             pr_flgtipar <> rw_crapaar2.flgtipar THEN
           
              CONTINUE;
              
@@ -17179,7 +17227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           
           /* se tipo for aplicacao(flgtipar=0) ou resgate(flgtipar=1)
            pegar o nro lote e o historico correspondente*/
-          IF rw_crapaar.flgtipar = 0 THEN
+          IF rw_crapaar2.flgtipar = 0 THEN
             vr_nrdolote := 32001;  /*lote agendamento aplicacao*/
             vr_cdhistor := 527;    /*historico DB APL RDCPOS*/
           ELSE /*tratamentos referentes a agendamentos de resgate*/
@@ -17187,7 +17235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             vr_cdhistor := 530;    /*historico CR APL RDCPOS*/
           END IF;
           /*montar chave necessaria para encontrar os lancamentos automaticos do agendamento*/
-          vr_nrdocsrc := TO_CHAR(vr_nrdolote,'fm00000') || TO_CHAR(rw_crapaar.nrdocmto,'fm0000000000') || '%';
+          vr_nrdocsrc := TO_CHAR(vr_nrdolote,'fm00000') || TO_CHAR(rw_crapaar2.nrdocmto,'fm0000000000') || '%';
           vr_dtmvtopg := '';
           OPEN cr_craplau(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
@@ -17200,29 +17248,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_ind_agen := vr_tab_agen.COUNT() + 1;
 
           -- Criar um registro no vetor 
-          vr_tab_agen(vr_ind_agen).cdageass := rw_crapaar.cdageass;
-          vr_tab_agen(vr_ind_agen).cdagenci := rw_crapaar.cdagenci; 
-          vr_tab_agen(vr_ind_agen).cdcooper := rw_crapaar.cdcooper;
-          vr_tab_agen(vr_ind_agen).cdoperad := rw_crapaar.cdoperad;
-          vr_tab_agen(vr_ind_agen).cdsitaar := rw_crapaar.cdsitaar;
-          vr_tab_agen(vr_ind_agen).dtcancel := rw_crapaar.dtcancel;
-          vr_tab_agen(vr_ind_agen).dtcarenc := rw_crapaar.dtcarenc;
-          vr_tab_agen(vr_ind_agen).dtdiaaar := rw_crapaar.dtdiaaar;
+          vr_tab_agen(vr_ind_agen).cdageass := rw_crapaar2.cdageass;
+          vr_tab_agen(vr_ind_agen).cdagenci := rw_crapaar2.cdagenci; 
+          vr_tab_agen(vr_ind_agen).cdcooper := rw_crapaar2.cdcooper;
+          vr_tab_agen(vr_ind_agen).cdoperad := rw_crapaar2.cdoperad;
+          vr_tab_agen(vr_ind_agen).cdsitaar := rw_crapaar2.cdsitaar;
+          vr_tab_agen(vr_ind_agen).dtcancel := rw_crapaar2.dtcancel;
+          vr_tab_agen(vr_ind_agen).dtcarenc := rw_crapaar2.dtcarenc;
+          vr_tab_agen(vr_ind_agen).dtdiaaar := rw_crapaar2.dtdiaaar;
           vr_tab_agen(vr_ind_agen).dtiniaar := vr_dtmvtopg;
-          vr_tab_agen(vr_ind_agen).dtvencto := rw_crapaar.dtvencto;
-          vr_tab_agen(vr_ind_agen).flgctain := rw_crapaar.flgctain;
-          vr_tab_agen(vr_ind_agen).flgresin := rw_crapaar.flgresin;
-          vr_tab_agen(vr_ind_agen).flgtipar := rw_crapaar.flgtipar;
-          vr_tab_agen(vr_ind_agen).flgtipin := rw_crapaar.flgtipin;
-          vr_tab_agen(vr_ind_agen).hrtransa := rw_crapaar.hrtransa;
-          vr_tab_agen(vr_ind_agen).idseqttl := rw_crapaar.idseqttl;
-          vr_tab_agen(vr_ind_agen).nrctraar := rw_crapaar.nrctraar;
-          vr_tab_agen(vr_ind_agen).nrdconta := rw_crapaar.nrdconta;
-          vr_tab_agen(vr_ind_agen).nrdocmto := rw_crapaar.nrdocmto;
-          vr_tab_agen(vr_ind_agen).nrmesaar := rw_crapaar.nrmesaar;
-          vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar.qtdiacar;
-          vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar.qtmesaar;
-          vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar.vlparaar;
+          vr_tab_agen(vr_ind_agen).dtvencto := rw_crapaar2.dtvencto;
+          vr_tab_agen(vr_ind_agen).flgctain := rw_crapaar2.flgctain;
+          vr_tab_agen(vr_ind_agen).flgresin := rw_crapaar2.flgresin;
+          vr_tab_agen(vr_ind_agen).flgtipar := rw_crapaar2.flgtipar;
+          vr_tab_agen(vr_ind_agen).flgtipin := rw_crapaar2.flgtipin;
+          vr_tab_agen(vr_ind_agen).hrtransa := rw_crapaar2.hrtransa;
+          vr_tab_agen(vr_ind_agen).idseqttl := rw_crapaar2.idseqttl;
+          vr_tab_agen(vr_ind_agen).nrctraar := rw_crapaar2.nrctraar;
+          vr_tab_agen(vr_ind_agen).nrdconta := rw_crapaar2.nrdconta;
+          vr_tab_agen(vr_ind_agen).nrdocmto := rw_crapaar2.nrdocmto;
+          vr_tab_agen(vr_ind_agen).nrmesaar := rw_crapaar2.nrmesaar;
+          vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar2.qtdiacar;
+          vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar2.qtmesaar;
+          vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar2.vlparaar;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar2.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar2.dssitaar;
+          vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar2.dstipaar;
           
         END LOOP;
 
@@ -17253,6 +17304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                     ,pr_nrdconta IN  crapaar.nrdconta%TYPE --> Numero conta
                                     ,pr_idseqttl IN  crapaar.idseqttl%TYPE --> Seq titular
                                     ,pr_nrctraar IN  crapaar.nrctraar%TYPE --> Numero agendamento
+                                    ,pr_cdsitaar IN  crapaar.cdsitaar%TYPE --> Situacao
                                     ,pr_clobxmlc OUT CLOB                  --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -17304,6 +17356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_nrdconta => pr_nrdconta   -- Numero conta
                              ,pr_idseqttl => pr_idseqttl   -- Seq titular
                              ,pr_nrctraar => pr_nrctraar   -- Numero agendamento
+                             ,pr_cdsitaar => pr_cdsitaar   -- Situacao
                              ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                              ,pr_dscritic => vr_dscritic   -- Descricao da Critica
                              ,pr_tab_agen => vr_tab_agen); -- Tabela com registros de Carencia do produto    
@@ -17351,6 +17404,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   ||   '<qtdiacar>'||vr_tab_agen(vr_contador).qtdiacar||'</qtdiacar>'
                                                   ||   '<qtmesaar>'||vr_tab_agen(vr_contador).qtmesaar||'</qtmesaar>'
                                                   ||   '<vlparaar>'||vr_tab_agen(vr_contador).vlparaar||'</vlparaar>'
+                                                  ||   '<incancel>'||vr_tab_agen(vr_contador).incancel||'</incancel>'
+                                                  ||   '<dssitaar>'||vr_tab_agen(vr_contador).dssitaar||'</dssitaar>'
+                                                  ||   '<dstipaar>'||vr_tab_agen(vr_contador).dstipaar||'</dstipaar>'
                                                   || '</agendamento>');
       END LOOP;
        
@@ -17431,6 +17487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                       ,pr_nrdconta => pr_nrdconta   -- Numero conta
                                       ,pr_idseqttl => pr_idseqttl   -- Seq titular
                                       ,pr_nrctraar => pr_nrctraar   -- Numero agendamento
+                                      ,pr_cdsitaar => 6             -- Situação
                                       ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                       ,pr_dscritic => vr_dscritic   -- Descricao da Critica
                                       ,pr_tab_agen => vr_tab_agen); -- Tabela com registros de Carencia do produto
@@ -19840,6 +19897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       -- Variaveis locais                                                                                                                                                
       vr_nrdocsrc VARCHAR2(30);
       vr_ind PLS_INTEGER;
+      vr_vlsolaar NUMBER;
       
       -- Busca os lancamentos automaticos
       CURSOR cr_craplau(pr_cdcooper craplau.cdcooper%TYPE,
@@ -19857,6 +19915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           ,nrseqlan, tpdvalor
           ,vllanaut, cdcooper
           ,nrdocmto, ROWID
+          ,DECODE(insitlau,1,'Pendente',2,'Efetivado',3,'Cancelado',4,'Não Efetivado','') dssitlau
           FROM craplau
          WHERE  craplau.cdcooper = pr_cdcooper
            AND  craplau.nrdconta = pr_nrdconta
@@ -19866,9 +19925,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
       rw_craplau cr_craplau%ROWTYPE;
 
+      CURSOR cr_crapaar(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Código da Cooperativa
+                       ,pr_nrdconta IN crapaar.nrdconta%TYPE     --> Numero de conta
+                       ,pr_nrdocmto IN crapaar.nrdocmto%TYPE) IS --> Numero documento
+
+        SELECT aar.flgtipar
+              ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar
+              ,aar.flgtipin
+              ,DECODE(aar.flgtipin,0,'Único',1,'Recorrente','') dstipinv
+              ,aar.qtdiacar
+              ,aar.qtmesaar
+              ,aar.vlparaar
+          FROM crapaar aar
+         WHERE aar.cdcooper = pr_cdcooper
+           AND aar.nrdconta = pr_nrdconta
+           AND aar.nrdocmto = pr_nrdocmto;           
+
+      rw_crapaar cr_crapaar%ROWTYPE;
+        
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
+      
+      OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta,
+                      pr_nrdocmto => pr_nrdocmto);
+      FETCH cr_crapaar INTO rw_crapaar;
+       
+      IF cr_crapaar%NOTFOUND THEN        
+        -- Fecha o cursor
+        CLOSE cr_crapaar;
+            
+        -- Monta critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Agendamento nao encontrado.';
+            
+        -- Gera exceção
+        RAISE vr_exc_saida;
+      END IF;
+          
+      -- Fecha o cursor
+      CLOSE cr_crapaar;
+      
+      vr_vlsolaar := rw_crapaar.qtmesaar * rw_crapaar.vlparaar;
   
       -- Busca todos os lancamentos automaticos de agendamentos
       FOR rw_craplau IN cr_craplau(pr_cdcooper => pr_cdcooper
@@ -19895,6 +19994,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         pr_tab_agen_det(vr_ind).vllanaut := rw_craplau.vllanaut;
         pr_tab_agen_det(vr_ind).cdcooper := rw_craplau.cdcooper;
         pr_tab_agen_det(vr_ind).nrdocmto := rw_craplau.nrdocmto;
+        pr_tab_agen_det(vr_ind).flgtipar := rw_crapaar.flgtipar;
+        pr_tab_agen_det(vr_ind).dstipaar := rw_crapaar.dstipaar;
+        pr_tab_agen_det(vr_ind).flgtipin := rw_crapaar.flgtipin;
+        pr_tab_agen_det(vr_ind).dstipinv := rw_crapaar.dstipinv;
+        pr_tab_agen_det(vr_ind).qtdiacar := rw_crapaar.qtdiacar;
+        pr_tab_agen_det(vr_ind).dssitlau := rw_craplau.dssitlau; 
+        pr_tab_agen_det(vr_ind).vlsolaar := vr_vlsolaar;
+        pr_tab_agen_det(vr_ind).dsprotoc := ''; -- Atualmente não é possível capturar o protocolo gerado na efetivação
                           
       END LOOP;
  
@@ -20006,6 +20113,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   ||   '<vllanaut>'||vr_tab_agen_det(vr_contador).vllanaut||'</vllanaut>'
                                                   ||   '<cdcooper>'||vr_tab_agen_det(vr_contador).cdcooper||'</cdcooper>'
                                                   ||   '<nrdocmto>'||vr_tab_agen_det(vr_contador).nrdocmto||'</nrdocmto>'
+                                                  ||   '<flgtipar>'||vr_tab_agen_det(vr_contador).flgtipar||'</flgtipar>'
+                                                  ||   '<dstipaar>'||vr_tab_agen_det(vr_contador).dstipaar||'</dstipaar>'
+                                                  ||   '<flgtipin>'||vr_tab_agen_det(vr_contador).flgtipin||'</flgtipin>'
+                                                  ||   '<dstipinv>'||vr_tab_agen_det(vr_contador).dstipinv||'</dstipinv>'
+                                                  ||   '<qtdiacar>'||vr_tab_agen_det(vr_contador).qtdiacar||'</qtdiacar>'
+                                                  ||   '<dssitlau>'||vr_tab_agen_det(vr_contador).dssitlau||'</dssitlau>' 
+                                                  ||   '<vlsolaar>'||vr_tab_agen_det(vr_contador).vlsolaar||'</vlsolaar>'
+                                                  ||   '<dsprotoc>'||vr_tab_agen_det(vr_contador).dsprotoc||'</dsprotoc>'                                                  
                                                   || '</agendamento>');
       END LOOP;
        

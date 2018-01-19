@@ -37,6 +37,7 @@ DEF INPUT PARAM par_flgtipar AS   INTEGER                              NO-UNDO.
 DEF INPUT PARAM par_nrdconta LIKE crapaar.nrdconta                     NO-UNDO.
 DEF INPUT PARAM par_idseqttl LIKE crapaar.idseqttl                     NO-UNDO.
 DEF INPUT PARAM par_nrctraar LIKE crapaar.nrctraar                     NO-UNDO.
+DEF INPUT PARAM par_cdsitaar LIKE crapaar.cdsitaar                     NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS LONGCHAR                              NO-UNDO.
 
@@ -64,6 +65,7 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                                                  INPUT 0, /*seq titular*/
                                                  INPUT par_nrctraar, /*cod agendamento*/
                                                  INPUT par_flgtipar, /*tipo agendamento*/
+                                                 INPUT par_cdsitaar, /*situacao*/
                                                  INPUT "InternetBank", /*cdprogra*/
                                                  INPUT 3, /*origem*/ 
                                                  OUTPUT TABLE tt-erro,
@@ -93,9 +95,9 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
 
       FOR EACH tt-agendamento NO-LOCK:
 
-          CREATE xml_operacao.
+         CREATE xml_operacao.
 
-          ASSIGN xml_operacao.dslinxml = "<AGENDAMENTO>" + 
+         ASSIGN xml_operacao.dslinxml = "<AGENDAMENTO>" + 
                "<cdcooper>"  + STRING( tt-agendamento.cdcooper) + "</cdcooper>" +
                "<cdageass>"  + STRING( tt-agendamento.cdageass) + "</cdageass>" +
                "<cdagenci>"  + STRING( tt-agendamento.cdagenci) + "</cdagenci>" +
@@ -115,33 +117,36 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                "<qtmesaar>"  + STRING( tt-agendamento.qtmesaar) + "</qtmesaar>" +
                "<vlparaar>"  + TRIM(STRING(tt-agendamento.vlparaar,"zzz,zzz,zz9.99-")) + "</vlparaar>".
 
-               IF tt-agendamento.dtcancel <> ? THEN
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcancel>" + STRING(tt-agendamento.dtcancel, "99/99/9999") + "</dtcancel>".
-               ELSE
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcancel></dtcancel>".
+         IF tt-agendamento.dtcancel <> ? THEN
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcancel>" + STRING(tt-agendamento.dtcancel, "99/99/9999") + "</dtcancel>".
+         ELSE
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcancel></dtcancel>".
 
-               IF tt-agendamento.dtcarenc <> ? THEN
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcarenc>" + STRING(tt-agendamento.dtcarenc, "99/99/9999") + "</dtcarenc>".
-               ELSE
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcarenc></dtcarenc>".
+         IF tt-agendamento.dtcarenc <> ? THEN
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcarenc>" + STRING(tt-agendamento.dtcarenc, "99/99/9999") + "</dtcarenc>".
+         ELSE
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtcarenc></dtcarenc>".
 
-               IF tt-agendamento.dtiniaar <> ? THEN
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtiniaar>" + STRING(tt-agendamento.dtiniaar, "99/99/9999") + "</dtiniaar>".
-               ELSE
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtiniaar></dtiniaar>".
+         IF tt-agendamento.dtiniaar <> ? THEN
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtiniaar>" + STRING(tt-agendamento.dtiniaar, "99/99/9999") + "</dtiniaar>".
+         ELSE
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtiniaar></dtiniaar>".
 
-               IF tt-agendamento.dtvencto <> ? THEN
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtvencto>" + STRING(tt-agendamento.dtvencto, "99/99/9999") + "</dtvencto>".
-               ELSE
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtvencto></dtvencto>".
+         IF tt-agendamento.dtvencto <> ? THEN
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtvencto>" + STRING(tt-agendamento.dtvencto, "99/99/9999") + "</dtvencto>".
+         ELSE
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtvencto></dtvencto>".
 
-               IF tt-agendamento.dtmvtolt <> ? THEN
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtmvtolt>" + STRING(tt-agendamento.dtmvtolt, "99/99/9999") + "</dtmvtolt>".
-               ELSE
-                  ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtmvtolt></dtmvtolt>".
-         
-
-          ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "</AGENDAMENTO>". 
+         IF tt-agendamento.dtmvtolt <> ? THEN
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtmvtolt>" + STRING(tt-agendamento.dtmvtolt, "99/99/9999") + "</dtmvtolt>".
+         ELSE
+            ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtmvtolt></dtmvtolt>".
+            
+         ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + 
+                                        "<incancel>" + STRING(tt-agendamento.incancel) + "</incancel>" +
+                                        "<dssitaar>" + tt-agendamento.dssitaar + "</dssitaar>" +
+                                        "<dstipaar>" + tt-agendamento.dstipaar + "</dstipaar>" +
+                                        "</AGENDAMENTO>". 
 
       END.
 

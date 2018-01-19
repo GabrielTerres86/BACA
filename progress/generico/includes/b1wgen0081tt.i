@@ -144,8 +144,10 @@ DEF TEMP-TABLE tt-agendamento NO-UNDO
     FIELD qtdiacar LIKE crapaar.qtdiacar
     FIELD qtmesaar LIKE crapaar.qtmesaar
     FIELD vlparaar LIKE crapaar.vlparaar
-    FIELD dtdiaaar LIKE crapaar.dtdiaaar.
-
+    FIELD dtdiaaar LIKE crapaar.dtdiaaar
+    FIELD incancel AS INTE
+    FIELD dssitaar AS CHAR
+    FIELD dstipaar AS CHAR.
 
 DEF TEMP-TABLE tt-agen-det NO-UNDO
     FIELD cdcooper LIKE craplau.cdcooper
@@ -163,7 +165,15 @@ DEF TEMP-TABLE tt-agen-det NO-UNDO
     FIELD nrseqlan LIKE craplau.nrseqlan
     FIELD tpdvalor LIKE craplau.tpdvalor
     FIELD vllanaut LIKE craplau.vllanaut
-    FIELD nrdocmto AS   CHAR.
+    FIELD nrdocmto AS   CHAR
+    FIELD flgtipar AS   INTE
+    FIELD dstipaar AS   CHAR
+    FIELD flgtipin AS   INTE
+    FIELD dstipinv AS   CHAR
+    FIELD qtdiacar LIKE crapaar.qtdiacar
+    FIELD dssitlau AS   CHAR
+    FIELD vlsolaar AS   DECI
+    FIELD dsprotoc LIKE crappro.dsprotoc.
 
 /****************************************************************************/
 

@@ -1032,6 +1032,7 @@ DEF VAR aux_cpfopelg LIKE crapopi.nrcpfope                             NO-UNDO.
 DEF VAR aux_nmrescop LIKE crapcop.nmrescop                             NO-UNDO.
 
 DEF VAR aux_cdtransa LIKE tbgen_trans_pend.cdtransacao_pendente        NO-UNDO.
+DEF VAR aux_cdsitaar LIKE crapaar.cdsitaar                             NO-UNDO.
 
 DEF VAR aux_nrcrcard AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvctini AS DATE                                           NO-UNDO.
@@ -1745,6 +1746,10 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for cadastro de debito automatico **/
                   CAN-DO("99",STRING(aux_operacao)) AND aux_flcadast = 1
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for pagamento de FGTS e DAE **/
+                  CAN-DO("199",STRING(aux_operacao)) AND aux_idefetiv = 1
                )
                )
            )
@@ -2337,6 +2342,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 197 THEN /* Detalhar Comprovante Recebido  */
                 RUN proc_operacao197.  
+        ELSE
+            IF  aux_operacao = 199 THEN /* Operar pagamento de tributos */
+                RUN proc_operacao199.                        
         ELSE
             IF  aux_operacao = 204 THEN /* Carregar os dados do upload do arquivo de pagamento */
                 RUN proc_operacao204.         
@@ -3025,6 +3033,7 @@ PROCEDURE proc_operacao14:
                xml_operacao14a.dsdlinha
                xml_operacao14a.cdfinali
                xml_operacao14a.dsfinali
+               xml_operacao14a.tpemprst
                xml_operacao14a.dscabfim.
                
     FOR EACH xml_operacao14b NO-LOCK: 
@@ -3040,6 +3049,8 @@ PROCEDURE proc_operacao14:
                xml_operacao14b.vldebito
                xml_operacao14b.vlcredit
                xml_operacao14b.cdorigem
+               xml_operacao14b.qtdiacal
+               xml_operacao14b.vlrdtaxa
                xml_operacao14b.dscabfim.
 
     END.
@@ -5537,15 +5548,17 @@ END PROCEDURE.
 PROCEDURE proc_operacao91:
     
     ASSIGN aux_flgtipar = INTE(GET-VALUE("flgtipar"))
-           aux_nrctraar = INTE(GET-VALUE("nrctraar")).
+           aux_nrctraar = INTE(GET-VALUE("nrctraar"))
+           aux_cdsitaar = INTE(GET-VALUE("cdsitaar")).
     
     RUN sistema/internet/fontes/InternetBank91.p (INPUT aux_cdcooper,
                                                   INPUT aux_flgtipar,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrctraar,
-                                                  OUTPUT aux_dsmsgerr,
-                                                  OUTPUT TABLE xml_operacao).
+                                                  INPUT aux_cdsitaar,
+                                                 OUTPUT aux_dsmsgerr,
+                                                 OUTPUT TABLE xml_operacao).
                                                  
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
@@ -8749,6 +8762,85 @@ PROCEDURE proc_operacao197:
       FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Operar pagamentos de Tributos (FGTS/DAE) */
+PROCEDURE proc_operacao199:
+
+    ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
+            aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
+            aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
+            aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
+            aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
+            aux_cdtribut = GET-VALUE("aux_cdtribut")
+            aux_vlrecbru = DECI(GET-VALUE("aux_vlrecbru"))
+            aux_vlpercen = DECI(GET-VALUE("aux_vlpercen"))
+            aux_vlprinci = DECI(GET-VALUE("aux_vlprinci"))
+            aux_vlrmulta = DECI(GET-VALUE("aux_vlrmulta"))
+            aux_vlrjuros = DECI(GET-VALUE("aux_vlrjuros"))
+            aux_vlrtotal = DECI(GET-VALUE("aux_vlrtotal"))
+            aux_dsexthis = GET-VALUE("aux_dsexthis")
+            aux_idagenda = INTE(GET-VALUE("aux_idagenda"))
+            aux_vlapagar = DECI(GET-VALUE("aux_vlapagar"))
+            aux_cdbarras = GET-VALUE("aux_cdbarras")
+            aux_lindigi1 = DECI(GET-VALUE("aux_lindigi1"))
+            aux_lindigi2 = DECI(GET-VALUE("aux_lindigi2"))
+            aux_lindigi3 = DECI(GET-VALUE("aux_lindigi3"))
+            aux_lindigi4 = DECI(GET-VALUE("aux_lindigi4"))            
+            aux_idefetiv = INTE(GET-VALUE("aux_idefetiv"))
+            aux_dsnomfon = GET-VALUE("aux_dsnomfon")
+            aux_tpleitor = INTE(GET-VALUE("aux_tpleitor"))
+            aux_versaldo = INTE(GET-VALUE("aux_versaldo"))
+            aux_tpdaguia = INTE(GET-VALUE("aux_tpdaguia"))
+            aux_dtmvtopg = IF  aux_idagenda = 1  THEN /** Pagto data corrente **/
+                              aux_dtmvtocd
+                          ELSE
+                              DATE(GET-VALUE("aux_dtmvtopg")).
+                              
+    RUN sistema/internet/fontes/InternetBank199.p (INPUT aux_cdcooper,                    
+                                                   INPUT aux_nrdconta,                    
+                                                   INPUT aux_idseqttl,                    
+                                                   INPUT aux_nrcpfope,      
+                                                   INPUT 3, /* internet */                
+                                                   INPUT aux_flmobile,                    
+                                                   INPUT aux_idefetiv,                    
+                                                   INPUT aux_tpdaguia,                    
+                                                   INPUT aux_tpcaptur,                    
+                                                   INPUT aux_lindigi1,                    
+                                                   INPUT aux_lindigi2,                    
+                                                   INPUT aux_lindigi3,                    
+                                                   INPUT aux_lindigi4,                    
+                                                   INPUT aux_cdbarras,                    
+                                                   INPUT aux_dsexthis,                    
+                                                   INPUT aux_vlrtotal,                    
+                                                   INPUT aux_dtapurac,                    
+                                                   INPUT aux_nrcpfdrf,                    
+                                                   INPUT aux_cdtribut,                    
+                                                   INPUT aux_dtmvtopg,                    
+                                                   INPUT aux_dtvencto,                    
+                                                   INPUT aux_idagenda,                    
+                                                   INPUT aux_vlapagar,                    
+                                                   INPUT aux_versaldo,                    
+                                                   INPUT aux_tpleitor,                    
+                                                   INPUT aux_nrrefere,                    
+                                                  OUTPUT aux_dsmsgerr,                                                   
+                                                  OUTPUT TABLE xml_operacao).
+                                                  
+                                                   
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
+            RETURN.
+        END.
+
+    FOR EACH xml_operacao NO-LOCK:
+    
+        {&out} xml_operacao.dslinxml.
+        
+    END.
+    
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
