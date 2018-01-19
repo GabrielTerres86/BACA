@@ -1906,7 +1906,7 @@ function controlaLayout(operacao) {
         rProposta.css('width', '265px'); 
         rImgCalen.css('margin-top', '-5px');
 
-        rRiscoCalc.addClass('').css('width', '137px');
+        rRiscoCalc.addClass('').css('width', '140px');
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');

@@ -128,7 +128,7 @@
 		$permissao = in_array('X', $glbvars['opcoesTela']);
 		if($glbvars["cddepart"] == 7 || $permissao == true) {  
 	?>
-			<a href="#" class="botao" id="btAltQualif" 	   onClick="controlaOperacao('ALT_QUALIFICA');">Alterar Qualificação</a>
+			<a href="#" class="botao" id="btAltQualif" onClick="controlaOperacao('CON_QUALIFICA');">Alterar Qualificação</a>
 	<? 	
 		} 
 	?>

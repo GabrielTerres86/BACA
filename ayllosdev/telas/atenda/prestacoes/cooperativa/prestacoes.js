@@ -57,6 +57,7 @@
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
 $.getScript(UrlSite + "includes/rating/rating.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
+
 //campo que valida existencia de portabilidade no contrato
 var possuiPortabilidade = 'N';
 
@@ -110,7 +111,6 @@ var arrayDadosPortabilidade = new Array();
 var valorTotAPagar, valorAtual , valorTotAtual;
 
 var nrctremp1, qtdregis1, nrdconta1, lstdtvcto1, lstdtpgto1, lstparepr1, lstvlrpag1;
-
 // FunÃ§Ã£o para acessar opÃ§Ãµes da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
 	
@@ -191,7 +191,7 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if (in_array(operacao, ['TC', 'IMP', 'C_PAG_PREST', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA']) ) {
+	if (in_array(operacao, ['TC', 'IMP', 'C_PAG_PREST', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA', 'CON_QUALIFICA'] ) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -416,10 +416,11 @@ function controlaOperacao(operacao) {
 			mostraDivPortabilidade(operacao);
 			return false;
 			break;
-		case 'ALT_QUALIFICA':
-			mostraDivQualificaControle(operacao);
+		case 'CON_QUALIFICA':
+		case 'ALT_QUALIFICA':		
+			mostraDivQualificaControle(operacao);			
 			return false;
-			break;
+			break;		
 		case 'PORTAB_APRV' :
 			if ( nrctremp == '' ) { return false; }
 			mostraDivPortabilidadeAprovar(operacao);
@@ -703,7 +704,7 @@ function controlaLayout(operacao) {
 	} else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V']) ) {
 
 		nomeForm = 'frmNovaProp';
-		altura   = '300px';
+		altura   = '340px';
 		largura  = '440px';
 
 		inconfir = 1;
@@ -728,8 +729,7 @@ function controlaLayout(operacao) {
 		var rQtParc      = $('label[for="qtpreemp"]','#'+nomeForm);
 		var rQualiParc   = $('label[for="idquapro"]','#'+nomeForm);
 		var rDsQualiParc = $('label[for="dsquapro"]','#'+nomeForm);
-		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
-		var rQualiParcC = $('label[for="idquaprc"]', '#' + nomeForm);
+		var rQualiParcC  = $('label[for="idquaprc"]', '#' + nomeForm);
 		var rDsQualiParcC = $('label[for="dsquaprc"]', '#' + nomeForm);
 
 		var rDebitar     = $('label[for="flgpagto"]','#'+nomeForm);
@@ -751,9 +751,8 @@ function controlaLayout(operacao) {
 		var cDsFinali    = $('#dsfinemp','#'+nomeForm);
 		var cQtParc      = $('#qtpreemp','#'+nomeForm);
 		var cQualiParc   = $('#idquapro','#'+nomeForm);
-		var cDsQualiParc = $('#dsquapro','#'+nomeForm);
-		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
-		var cQualiParcC = $('#idquaprc', '#' + nomeForm);
+		var cDsQualiParc = $('#dsquapro','#'+nomeForm);		
+		var cQualiParcC  = $('#idquaprc', '#' + nomeForm);
 		var cDsQualiParcC = $('#dsquaprc', '#' + nomeForm);
 		var cDebitar     = $('#flgpagto','#'+nomeForm);
 		var cPercCET	 = $('#percetop','#'+nomeForm);
@@ -781,8 +780,7 @@ function controlaLayout(operacao) {
         cDsFinali.css('width','108px');
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
         cQualiParc.addClass('rotulo').css('width','32px');
-        cDsQualiParc.addClass('').css('width','108');
-		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
+        cDsQualiParc.addClass('').css('width','108');		
 		cQualiParcC.addClass('rotulo').css('width', '32px');
 		cDsQualiParcC.addClass('').css('width', '108');		
         cDebitar.addClass('rotulo').css('width','90px');
@@ -1379,7 +1377,7 @@ function controlaLayout(operacao) {
 		cTodos_1.desabilitaCampo();
 		cTodos_2.desabilitaCampo();
 		cTodos_3.desabilitaCampo();
-
+	
 	}else if (in_array(operacao,['C_PAG_PREST'])){
 
 		nomeForm = 'frmVlParc';
@@ -1643,6 +1641,15 @@ function controlaLayout(operacao) {
 	return false;
 }
 
+/**
+* Função para recarregar as informações dos contratos aprovados (Empréstimos)
+* 
+*/
+function voltarAgendamentoDetalhes() {
+	showMsgAguardo("Aguarde, carregando os contratos do associado ...");
+	recarregaAgendamento();
+}
+
 //FunÃ§Ã£o para controle de navegaÃ§Ã£o
 function controlaFoco() {
     $('#divConteudoOpcao').each(function () {
@@ -1754,9 +1761,8 @@ function atualizaTela(){
 		$('#vlpreemp','#frmNovaProp').val( arrayProposta['vlpreemp'] );
 		$('#cdfinemp','#frmNovaProp').val( arrayProposta['cdfinemp'] );
 		$('#qtpreemp','#frmNovaProp').val( arrayProposta['qtpreemp'] );
-		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );
-		// Inclusão do campo de controle [Qualif. Oper. Controle] (Diego Simas - AMcom)
-		$('#idquaprc', '#frmNovaProp').val(arrayProposta['idquaprc']);
+		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );		
+		$('#idquaprc','#frmNovaProp').val( arrayProposta['idquaprc'] );
 		$('#flgpagto','#frmNovaProp').val( arrayProposta['flgpagto'] );
 		$('#percetop','#frmNovaProp').val( arrayProposta['percetop'] );
 		$('#qtdialib','#frmNovaProp').val( arrayProposta['qtdialib'] );
@@ -1769,14 +1775,15 @@ function atualizaTela(){
 		$('#tpemprst','#frmNovaProp').val( arrayProposta['tpemprst'] );
 		$('#dslcremp','#frmNovaProp').val( arrayProposta['dslcremp'] );
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
+		$('#dsquaprc','#frmNovaProp').val( arrayProposta['dsquaprc'] );
 		$('#dsratpro','#frmNovaProp').val( arrayProposta['dsratpro'] );
-		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );
+		$('#dsratatu','#frmNovaProp').val( arrayProposta['dsratatu'] );		
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])){
 
 		$('#dsobscmt','#frmComiteAprov').html( arrayProposta['dsobscmt'] );
 		$('#dsobserv','#frmComiteAprov').html( arrayProposta['dsobserv'] );
-
+	
 	} else if (in_array(operacao,['C_DADOS_PROP_PJ'])){
 
 		$('#vlmedfat','#frmDadosPropPj').val( arrayRendimento['vlmedfat'] );
@@ -2396,11 +2403,14 @@ function mostraDivPortabilidade( operacao ) {
 
 function mostraDivQualificaControle(operacao) {
 
-	showMsgAguardo('Aguarde, abrindo qualificação...');
+	showMsgAguardo('Aguarde, abrindo qualifica&ccedil;&atilde;o...');
 
 	limpaDivGenerica();
 
-	exibeRotina($('#divUsoGenerico'));
+	exibeRotina($('#divUsoGenerico'));	
+
+	var idquaprc = $('#idquaprc').val();	
+	var idquapro = $('#idquapro').val();	
 
 	// Executa script de confirmação através de ajax
 	$.ajax({
@@ -2411,17 +2421,20 @@ function mostraDivQualificaControle(operacao) {
 			operacao: operacao,
 			nrdconta: nrdconta,
 			nrctremp: nrctremp,
+			idquaprc: idquaprc,	
+			idquapro: idquapro,	
 			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
 			showError('error', 'NÃ£o foi possÃ­vel concluir a requisiÃ§Ã£o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function (response) {
+		success: function (response) {		
 			$('#divUsoGenerico').html(response);
 			layoutPadrao();
 			hideMsgAguardo();
 			bloqueiaFundo($('#divUsoGenerico'));
+            $('#idquaprc', '#frmControleQual').focus(); 												
 		}
 	});
 
@@ -2962,6 +2975,26 @@ function desconto (parcela) {
 
 	controlaOperacao("C_DESCONTO");
 
+}
+
+function atribuiDescControle (idQuaPrc) {
+	switch(idQuaPrc){		
+		case 1:
+			return "Operação Normal";
+			break;
+		case 2:
+			return "Renovação Crédito";
+			break;
+		case 3:
+			return "Renegociação Crédito";
+			break;
+		case 4:
+			return "Composição Dívida";
+			break;
+		default:
+			return "Operação Inexistente";
+			break;
+	}
 }
 
 
