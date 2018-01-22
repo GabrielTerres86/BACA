@@ -51,7 +51,10 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
                             
                03/02/2014 - Incluido campos de PNMPO e ajustado LABEL de alguns
-                            campos no relatorio 207. (Reinert)                            
+                            campos no relatorio 207. (Reinert)          
+			   
+			   16/01/2018 - Correcao projeto 410 - inclusao dos históricos 2321 e 2323
+			                para listar no relatório (Jean / Mout´s).                  
                
 ..............................................................................*/
 
@@ -152,7 +155,7 @@ FORM
     fis_vleprren FORMAT "zzz,zzz,zz9.99"
     SKIP
     "(-) Nao Incidencia/Outros ="               AT 16
-    fis_isnoutro FORMAT "zzz,zzz,zz9.99"
+    fis_isnoutro FORMAT "zzz,zzz,zz9.99
     SKIP
     "Base ="                                    AT 37
     fis_vleprbas FORMAT "zzz,zzz,zz9.99"
@@ -301,7 +304,7 @@ RUN fontes/iniprg.p.
 
 IF  glb_cdcritic > 0  THEN
     RETURN.
-
+  
 FIND crabcop WHERE crabcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
 IF  NOT AVAILABLE crabcop  THEN
@@ -389,6 +392,8 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                        craplcm.cdhistor  = 324          OR
 					   craplcm.cdhistor  = 2318        OR
 					   craplcm.cdhistor  = 2320        OR
+					   craplcm.cdhistor  = 2321         OR
+					   craplcm.cdhistor  = 2323         OR
                        craplcm.cdhistor  = 688)         NO-LOCK
                        USE-INDEX craplcm4:
 
@@ -429,7 +434,8 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
             END.
     ELSE
     IF  craplcm.cdhistor = 323  
-	or  craplcm.cdhistor = 2322 THEN /** Conta Corrente **/
+	or  craplcm.cdhistor = 2322
+	or  craplcm.cdhistor = 2323 THEN /** Conta Corrente **/
         DO:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vlctabas = fis_vlctabas + DECI(craplcm.cdpesqbb)
@@ -444,15 +450,18 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
         DO:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vlchqbas = fis_vlchqbas + DECI(craplcm.cdpesqbb)
-                       fis_vlchqiof = fis_vlchqiof + craplcm.vllanmto.
+                        fis_vlchqiof = fis_vlchqiof + craplcm.vllanmto.
             ELSE           
                 ASSIGN jur_vlchqbas = jur_vlchqbas + DECI(craplcm.cdpesqbb)
-                       jur_vlchqiof = jur_vlchqiof + craplcm.vllanmto.    
+                        jur_vlchqiof = jur_vlchqiof + craplcm.vllanmto.    
         END.
     ELSE
     IF  craplcm.cdhistor = 688  
-    or  craplcm.cdhistor = 2320	THEN /** Desconto de Titulos **/
-        DO:
+    or  craplcm.cdhistor = 2320	
+	or  craplcm.cdhistor = 2321 THEN /** Desconto de Titulos **/
+		DO:
+		    if craplcm.cdhistor <> 2321 then 
+			do:
             IF  crapass.inpessoa = 1  THEN
                 ASSIGN fis_vltitbas = fis_vltitbas + 
                                       DEC(SUBSTRING(craplcm.cdpesqbb,
@@ -463,6 +472,24 @@ FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper AND
                                       DEC(SUBSTRING(craplcm.cdpesqbb,
                                           R-INDEX(craplcm.cdpesqbb," ")))
                        jur_vltitiof = jur_vltitiof + craplcm.vllanmto.
+		    end.
+			
+			if craplcm.cdhistor = 2321 then
+			do:
+			   find first craptdb where craptdb.cdcooper = craplcm.cdcooper and
+			                               craptdb.nrdconta = craplcm.nrdconta and
+										   craptdb.insittit = 3                  and
+										   craptdb.nrdocmto = dec(craplcm.cdpesqbb) and
+										   craptdb.dtdebito = craplcm.dtmvtolt.
+               if avail craptdb then										   
+			                          
+			       if crapass.inpessoa = 1 then
+				       assign fis_vltitbas = fis_vltitbas + craptdb.vlliquid
+					           fis_vltitiof = fis_vltitiof + craplcm.vllanmto.
+			       else
+				       assign jur_vltitbas = jur_vltitbas + craptdb.vlliquid 
+					           jur_vltitiof = jur_vltitiof + craplcm.vllanmto.			     
+			end.
         END.
                                                                               
 END. /** Fim do FOR EACH craplcm **/
@@ -581,10 +608,10 @@ DISPLAY STREAM str_1 fis_vleprcon
                   VALIDATE gnarrec.
                END.
            ASSIGN gnarrec.dtfimapu = glb_dtmvtolt 
-                  gnarrec.dtrecolh = aux_dtrecolh 
-                  gnarrec.vlrecolh = jur_vltotiof
-                  gnarrec.vlapagar = jur_vltotiof
-                  gnarrec.inapagar = YES.
+                   gnarrec.dtrecolh = aux_dtrecolh 
+                   gnarrec.vlrecolh = jur_vltotiof
+                   gnarrec.vlapagar = jur_vltotiof
+                   gnarrec.inapagar = YES.
            
            /* Limite minimo fixado de R$ 10 para recolhimento do periodo */
            IF gnarrec.vlapagar < 10 THEN
@@ -595,8 +622,8 @@ DISPLAY STREAM str_1 fis_vleprcon
         DO:
             /* Quando CECRED, exibir resumo no relatorio */
             ASSIGN aux_xprimpj = 0
-                   aux_xprimpf = 0
-                   aux_inpessoa = 1.
+                    aux_xprimpf = 0
+                    aux_inpessoa = 1.
             RUN imposto.
             aux_inpessoa = 2.
             RUN imposto.
@@ -606,8 +633,8 @@ DISPLAY STREAM str_1 fis_vleprcon
 OUTPUT STREAM str_1 CLOSE.
 
 ASSIGN glb_nrcopias = 1
-       glb_nmformul = "80col"
-       glb_nmarqimp = aux_nmarqrel.
+        glb_nmformul = "80col"
+        glb_nmarqimp = aux_nmarqrel.
                    
 RUN fontes/imprim.p.
 
