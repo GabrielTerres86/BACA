@@ -45,7 +45,7 @@
 
 		if($idquaprc > 4){
 			echo "<script>";
-			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
+			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\',5000)));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
 			echo "</script>";
 		}else{
 			$xml  = "";
@@ -75,62 +75,63 @@
 
 ?>
 
-<table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">
-	<tr>
-		<td align="center">		
-			<table border="0" cellpadding="0" cellspacing="0" width="400">
-				<tr>
-					<td>
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Qualificação - Controle</td>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
-								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
-							</tr>
-						</table>     
-					</td> 
-				</tr>    
-				<tr>
-					<td class="tdConteudoTela" align="center">	
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px 2px 8px;">
-									<div id="divConteudoOpcao">
+	<table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">
+		<tr>
+			<td align="center">		
+				<table border="0" cellpadding="0" cellspacing="0" width="400">
+					<tr>
+						<td>
+							<table width="100%" border="0" cellspacing="0" cellpadding="0">
+								<tr>
+									<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
+									<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Qualificação - Controle</td>
+									<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+									<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+								</tr>
+							</table>     
+						</td> 
+					</tr>    
+					<tr>
+						<td class="tdConteudoTela" align="center">	
+							<table width="100%" border="0" cellspacing="0" cellpadding="0">
+								<tr>
+									<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px 2px 8px;">
+										<div id="divConteudoOpcao">
 
-                                        <form name="frmControleQual" id="frmControleQual" class="formulario condensado">	
+											<form name="frmControleQual" id="frmControleQual" class="formulario condensado">	
 
-	                                        <input id="nrctremp" name="nrctremp" type="hidden" value="" />
-	
-	                                        <fieldset>
-		                                        <legend><? echo utf8ToHtml('Alterar Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o') ?></legend>
-                                                
-                                                <label for="idquapro" style="width:180px">Qualifica&ccedil;&atilde;o Op.:</label>
-                                                <input name="idquapro" id="idquapro" style="width:30px" type="text" value="<?=$idquapro?>" readonly="true" />
-                                                <input name="dsquapro" id="dsquapro" style="width:140px" type="text" value="<?=$dsquapro?>" readonly="true" />
-                                                <br/>
-                                                
-                                                <label for="idquaprc" style="width:180px">Qualifica&ccedil;&atilde;o Op. Contr.:</label>
-                                                <input name="idquaprc" id="idquaprc" style="width:30px" type="text" value="<?=$idquaprc?>" maxlength="1" />
-                                                <a id="lupaControle"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-                                                <input name="dsquaprc" id="dsquaprc" style="width:120px" type="text" value="<?=$dsquaprc?>" readonly="true"/>
-                                                <br/>
-                                            </fieldset>
-                                            <div id="divBotoes">
-                                                <a href="#" class="botao" style="width:58px;" id="btAlterar" onClick="controlaOperacao('ALT_QUALIFICA');">Alterar</a>
-                                                <a href="#" class="botao" style="width:65px;" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>                                                
-                                            </div>
-										</form>
-									</div>
-								</td>
-							</tr>
-						</table>			    
-					</td> 
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
+												<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+		
+												<fieldset>
+													<legend><? echo utf8ToHtml('Alterar Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o') ?></legend>
+													
+													<label for="idquapro" style="width:180px">Qualifica&ccedil;&atilde;o Op.:</label>
+													<input name="idquapro" id="idquapro" style="width:30px" type="text" value="<?=$idquapro?>" readonly="true" />
+													<input name="dsquapro" id="dsquapro" style="width:140px" type="text" value="<?=$dsquapro?>" readonly="true" />
+													<br/>
+													
+													<label for="idquaprc" style="width:180px">Qualifica&ccedil;&atilde;o Op. Contr.:</label>
+													<input name="idquaprc" id="idquaprc" style="width:30px" type="text" value="<?=$idquaprc?>" maxlength="1" />
+													<a id="lupaControle" name="lupaControle"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+													<input name="dsquaprc" id="dsquaprc" style="width:120px" type="text" value="<?=$dsquaprc?>" readonly="true"/>
+													<br/>
+												</fieldset>
+												<div id="divBotoes">
+													<a href="#" class="botao" style="width:58px;" id="btAlterar" onClick="controlaOperacao('ALT_QUALIFICA');">Alterar</a>
+													<a href="#" class="botao" style="width:65px;" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>                                                
+												</div>
+											</form>
+										</div>
+									</td>
+								</tr>
+							</table>			    
+						</td> 
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
 
 <script type="text/javascript">
 	// Esconde mensagem de aguardo
@@ -151,20 +152,22 @@
 
 	var controleMascara = $('#idquaprc','#frmControleQual');
 	controleMascara.setMask('INTEGER','9','.','');
-	$("#lupaControle").attr('disabled', 'false');
 	
-	$("#lupaControle").bind('click', function () {
-		nomeForm = 'frmControleQual';
-		bo = 'zoom0001';
-        procedure = 'BUSCAQUAOPEC';
-        titulo = 'Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o';
-        filtrosDesc = 'flgstfin|1;nriniseq|1;nrregist|30';
-        buscaDescricao(bo, procedure, titulo, 'idquaprc', 'dsquaprc', filtrosDesc, nomeForm);
+	var lupa = $('#lupaControle', '#frmControleQual');	
+	lupa.css('cursor', 'pointer');
+	lupa.css('display', 'block');	
 
-        if (nomeForm != 'frmSimulacao') {
-            carregaDadosPropostaFinalidade();
-		}        
-		
+	$("#lupaControle").bind('click', function () {	
+		pck = 'zoom0001';
+        acao = 'BUSCAQUAOPEC';
+		titulo = 'Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o';
+		qtReg = '4';		
+		filtros = 'C&oacutedigo;idquaprc;30px;N;0|Quali. Oper.;dsquaprc;200px;N;';
+		colunas = 'C&oacutedigo;idquaprc;15%;left|Descri&ccedil&atildeo;dsquaprc;85%;left';			
+		mostraPesquisa(pck, acao, titulo, qtReg, filtros, colunas);	
+		var telaPrincipal = $('#divPesquisa');	
+		telaPrincipal.css('zIndex', 4000);		
+		return false;
 	});
 
 	function obtemDescricaoQualificacao(idQuaOpe){
@@ -177,13 +180,13 @@
 				var dsquaprc = "Renovação Crédito";
 				break;
 			case '3':
-				var dsquaprc = "Reneg. Crédito";
+				var dsquaprc = "Renegociação Crédito";
 				break;
 			case '4':
 				var dsquaprc = "Composição Dívida";				
 				break;
 			default:
-				var dsquaprc = "Oper. Inexistente";				
+				var dsquaprc = "Operação Inexistente";				
 				break;
 		}
 		return dsquaprc;
@@ -203,13 +206,13 @@
 				$dsquaprc = "Renovação Crédito";
 				break;
 			case 3:
-				$dsquaprc = "Reneg. Crédito";
+				$dsquaprc = "Renegociação Crédito";
 				break;
 			case 4:
 				$dsquaprc = "Composição Dívida";				
 				break;
 			default:
-				$dsquaprc = "Oper. Inexistente";				;
+				$dsquaprc = "Operação Inexistente";				;
 				break;
 		}
 		return $dsquaprc;
