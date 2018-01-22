@@ -668,7 +668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : James Prust Junior
-     Data    : Janeiro/16.                    Ultima atualizacao: 30/05/2016
+     Data    : Janeiro/16.                    Ultima atualizacao: 21/01/2018
 
      Dados referentes ao programa:
 
@@ -686,6 +686,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                               
                  16/06/2016 - Ajustes para não estourar variavel dsobscmt.             
                               PRJ207 - Esteira (Odirlei-AMcom)
+
+                 21/01/2018 - Chamado 732952 - Melhorar a mensagem para ficar
+				              mais claro a Ibratan quando a proposta esta em 
+							  situacao que nao permite atualizacao (Andrei-MOUTs)
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -792,7 +796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         IF rw_crawepr.insitest NOT IN (1,2) THEN
           pr_status      := 202;
           pr_cdcritic    := 971;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta nao foi enviada para a esteira de credito.';
+          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
           RAISE vr_exc_saida;
         END IF;
       END IF; --> Fim IF pr_insitapr <> 99 THEN
