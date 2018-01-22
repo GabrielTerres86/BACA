@@ -3801,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 05/01/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 22/01/2018
   
   Dados referentes ao programa:
   
@@ -3875,6 +3875,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            alguma transação (Tiago/Adriano).
                            
               05/01/2018 - Corrigdo acentuação na frase de critica agendamento e pagamento (Tiago #818723)
+              
+              22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
+                           transação alem da sua alçada enviar para aprovação do preposto (Tiago/Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4842,7 +4845,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       IF  pr_idagenda = 1 THEN
-        
+        IF (pr_nrcpfope <> 0 AND pr_assin_conjunta <> 1) OR 
+           (pr_nrcpfope = 0) THEN
           --Limpar tabela saldo e erro
           vr_tab_saldo.DELETE;
           vr_tab_erro.DELETE;
@@ -4898,7 +4902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               RAISE vr_exc_erro;
             END IF;
           END IF;      
-      
+        END IF;
         /* Nao validar saldo para operadores na internet */
         IF pr_nrcpfope = 0 THEN
          
