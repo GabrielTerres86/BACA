@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 14/12/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 22/01/2018
 
    Dados referentes ao programa:
 
@@ -720,7 +720,10 @@
 			               Alterar Somente Avalista (Marcos-Supero)
               
 			  14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
-			  
+
+              22/01/2018 - Inclusao de trava para testes em producao do produto Pos-Fixado. 
+                           (Jaison/James - PRJ298)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3587,6 +3590,13 @@ PROCEDURE valida-dados-gerais:
             END.
         ELSE IF par_tpemprst = 2 THEN
             DO:
+                /* Trava para testes em producao */
+                IF par_cdcooper <> 1 OR par_nrdconta <> 6820743 THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Produto nao liberado.".
+                      LEAVE.
+                   END.
+
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 /* Efetuar a chamada a rotina Oracle  */
