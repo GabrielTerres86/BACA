@@ -828,25 +828,27 @@ function formataTabelaSegmento(){
 	var tabela      = $('#tableSegmento', divRegistro );
 						
 	divRegistro.css('height','300px');
-	divRegistro.css('width','600px');
+	divRegistro.css('width','650px');
 					
 	var ordemInicial = new Array();
 
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '35px';
-	arrayLargura[1] = '120px';
-	arrayLargura[2] = '35px';
-	arrayLargura[3] = '150px';
-	arrayLargura[4] = '80px';
+	arrayLargura[0] = '70px';
+	arrayLargura[1] = '35px';
+	arrayLargura[2] = '120px';
+	arrayLargura[3] = '35px';
+	arrayLargura[4] = '150px';
+	arrayLargura[5] = '75px';
 						
 	var arrayAlinha = new Array();
-	arrayAlinha[0] = 'right';
-	arrayAlinha[1] = 'left';
-	arrayAlinha[2] = 'right';
-	arrayAlinha[3] = 'left';
-	arrayAlinha[4] = 'right';
+	arrayAlinha[0] = 'left';
+	arrayAlinha[1] = 'right';
+	arrayAlinha[2] = 'left';
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'left';
 	arrayAlinha[5] = 'right';
+	arrayAlinha[6] = 'right';
 							
 	tabela.formataTabela(ordemInicial,arrayLargura,arrayAlinha,'');
 	
@@ -888,7 +890,6 @@ function manterSubsegmento(cddopcao){
 	}else if(cddopcao == "E"){
 		cdsubsegmento = glb_cdsubsegmento;
 	}
-	
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -913,7 +914,7 @@ function manterSubsegmento(cddopcao){
 			return false;
 		}				
 	});	
-	
+
 }
 
 function selecionaSubsegmento(cdsubsegmento){

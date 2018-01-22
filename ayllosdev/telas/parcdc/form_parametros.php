@@ -50,6 +50,7 @@
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "  <cddopcao>C</cddopcao>";
+	$xml .= "  <tpproduto></tpproduto>";
 	$xml .= "  <cdsegmento>0</cdsegmento>";
 	$xml .= "  <dssegmento></dssegmento>";
 	$xml .= " </Dados>";
@@ -131,11 +132,12 @@
 											<fieldset>
 												<legend align="center">Lista de Segmentos</legend>
 													<div class="divRegistros" id="divSegmentos">		
-														<table class="tituloRegistros" id="tableSegmento">
+														<table class="tituloRegistros" id="tableSegmento" style="table-layout: fixed;">
 															<thead>
 																<tr>
-																	<th><?php echo utf8ToHtml('C&oacute;digo'); ?></th>
-																	<th><?php echo utf8ToHtml('Segmento'); ?></th>
+																	<th>Produto</th>
+																	<th>C&oacute;digo</th>
+																	<th>Segmento</th>
 																</tr>
 															</thead>
 															<tbody>		
@@ -143,7 +145,9 @@
 																	if(count($segmentos) > 0){
 																	  foreach($segmentos as $segmento){
 																?>
-																			<tr  onclick="detalheSubsegmento(<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>);" value="<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>">
+																			<tr  onclick="detalheSubsegmento(<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>);">
+																				<input type="hidden" id="cdsegmento" value="<?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?>"/>
+																				<td><?php echo getByTagName($segmento->tags, 'DSPRODUTO'); ?></td>
 																				<td><?php echo getByTagName($segmento->tags, 'CDSEGMENTO'); ?></td>
 																				<td><?php echo getByTagName($segmento->tags, 'DSSEGMENTO'); ?></td>
 																			</tr>

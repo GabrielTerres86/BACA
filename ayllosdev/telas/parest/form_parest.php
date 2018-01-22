@@ -62,6 +62,12 @@
 
           <label for="qtmeschq">Dev. Cheques:</label>
           <input type="text" id="qtmeschq" name="qtmeschq">
+		  
+          <label for="qtmeschqal11">Dev. Cheques al. 11:</label>
+          <input type="text" id="qtmeschqal11" name="qtmeschqal11">
+		  
+          <label for="qtmeschqal12">Dev. Cheques al. 12:</label>
+          <input type="text" id="qtmeschqal12" name="qtmeschqal12">
         
           <br style="clear:both" />	
         

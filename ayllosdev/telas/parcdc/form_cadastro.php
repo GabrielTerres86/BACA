@@ -108,6 +108,12 @@
 																				
 										<?php if($tpcadast == "0"){ ?>
 											<div id="divAbaSegmento" name="divAbaSegmento" class="clsAbas">
+												<label for="tpproduto" style="width: 70px;" >Produto:</label>
+												<select class="Campo" name="tpproduto" id="tpproduto" style="width: 160px;">
+													<option value="0" selected >CDC Diversos</option>
+													<option value="1">CDC Ve&iacute;culos</option>
+												</select>
+												<br><br>
 												<label for="cdsegmento" style="width: 70px;" >C&oacute;digo:</label>
 												<input type="text" class="Campo inteiro" name="cdsegmento" id="cdsegmento" maxlength="10" <?php echo($cddopcao != "I") ? " readonly " : ""?> style="width: 50px;" value="<?php echo getByTagName($segmento, 'CDSEGMENTO'); ?>" />
 												<br><br>												
@@ -158,7 +164,7 @@
 						</table>
 						<br />
 						<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico')); bloqueiaFundo($('#divRotina')); return false;">Voltar</a>
-						<a href="#" class="botao" id="btVoltar" onClick="salvaDados(<?php echo $tpcadast; ?>,'<?php echo $cddopcao; ?>',0,0); return false;">Concluir</a>
+						<a href="#" class="botao" id="btConcluir" onClick="salvaDados(<?php echo $tpcadast; ?>,'<?php echo $cddopcao; ?>',0,0); return false;">Concluir</a>
 					</td>        
 				</tr>   
 			</table>				

@@ -238,7 +238,7 @@ function formataTabelaSegmento() {
 	var metodoTabela = '';
 	var divRegistro = $('div.divRegistros', '#divAba1');
 	var tabela = $('#tableSegmento', divRegistro);
-	var linha = $('#tableSegmento table > tbody > tr', divRegistro);
+	//var linha = $('#tableSegmento table > tbody > tr', divRegistro);
 
 	$('#tableSegmento').css({ 'margin-top': '5px' });
 	divRegistro.css({ 'height': '160px', 'width': '750px', 'padding-bottom': '2px' });
@@ -248,10 +248,12 @@ function formataTabelaSegmento() {
 	var arrayLargura = new Array();
 	var arrayAlinha = new Array();
 	
-	arrayLargura[0] = '75px';
+	arrayLargura[0] = '80px';
+	arrayLargura[1] = '75px';
 					
-	arrayAlinha[0] = 'center';
-	arrayAlinha[1] = 'left';
+	arrayAlinha[0] = 'left';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'left';
 	
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 	
@@ -296,20 +298,20 @@ function rotinaSegmento(cddopcao){
 	if(cddopcao == "I"){
 		manterRotinaSegmento(cddopcao);
 	}else{
-		$('#tableSegmento > tbody > tr', 'div.divRegistros').each(function() {
-				if ($(this).hasClass('corSelecao')) {
-					if($(this).val() == "" || $(this).val() == undefined || $(this).val() == null){
-						showError('error', 'Selecione um segmento!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);');
-						return false;
-					}else{
-						glbCdsegmento = $(this).val();
-						if(cddopcao == "A"){
-							manterRotinaSegmento(cddopcao,$(this).val());
-						}else if(cddopcao == "E"){
-							showConfirmacao('Deseja excluir o segmento?','Confirma&ccedil;&atilde;o - Ayllos','salvaDados(0,"E",'+$(this).val()+',0);','bloqueiaFundo(divRotina);','sim.gif','nao.gif');
-						}
+		$('table.tituloRegistros > tbody > tr', '#divSegmentos').each(function() {
+			if ($(this).hasClass('corSelecao')) {
+				if($('#cdsegmento',$(this)).val() == "" || $('#cdsegmento',$(this)).val() == undefined || $('#cdsegmento',$(this)).val() == null){
+					showError('error', 'Selecione um segmento!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);');
+					return false;
+				}else{
+					glbCdsegmento = $('#cdsegmento',$(this)).val();
+					if(cddopcao == "A"){
+						manterRotinaSegmento(cddopcao,$('#cdsegmento',$(this)).val());
+					}else if(cddopcao == "E"){
+						showConfirmacao('Deseja excluir o segmento?','Confirma&ccedil;&atilde;o - Ayllos','salvaDados(0,"E",'+$('#cdsegmento',$(this)).val()+',0);','bloqueiaFundo(divRotina);','sim.gif','nao.gif');
 					}
 				}
+			}
 		});
 	}
 }
@@ -495,6 +497,7 @@ function salvaDados(tpcadast,cddopcao,cdsegmento,cdsubsegmento){
 		data: {		
 			tpcadast: tpcadast,
 			cddopcao: cddopcao,
+			tpproduto: $('#tpproduto','#frmCadastro').val(),
 			cdsegmento: cdsegmento,
 			dssegmento: $('#dssegmento','#frmCadastro').val(),
 			cdsubsegmento: cdsubsegmento,

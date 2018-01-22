@@ -95,7 +95,7 @@
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina)" />
 		<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('CA')" />
         <input type="image" id="btFiliais" src="<? echo $UrlImagens; ?>botoes/filiais.png"  onClick="controlaOperacao('FILIAIS')" />
-		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(4);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(4);return false;" type="image" src="<? echo $UrlImagens; ?>botoes/dossie.gif">
 	<? } else if ( $operacao == 'CA' ){ ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="controlaOperacao('AC')" />		
 		<input type="image" id="btSalvar"  src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="controlaOperacao('ALTERAR')" />

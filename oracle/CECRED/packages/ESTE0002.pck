@@ -998,6 +998,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_vlmedfat NUMBER;
 			vr_qtmesest crapprm.dsvlrprm%TYPE;
 			vr_qtmeschq crapprm.dsvlrprm%TYPE;	
+			vr_qtmeschqal11 crapprm.dsvlrprm%TYPE;	
+			vr_qtmeschqal12 crapprm.dsvlrprm%TYPE;							
 			vr_qthisemp crapprm.dsvlrprm%TYPE;	
 			vr_qqdiacheq NUMBER;    
       vr_tab_estouros risc0001.typ_tab_estouros;
@@ -1422,7 +1424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
       -- Buscar ultimas ocorrências de Cheques Devolvidos
-      CURSOR cr_crapneg_cheq(pr_qtmeschq IN INTEGER) IS
+      CURSOR cr_crapneg_cheq(pr_qtmeschq     IN INTEGER
+			                      ,pr_qtmeschqal11 IN INTEGER
+														,pr_qtmeschqal12 IN INTEGER) IS
         SELECT dtiniest
               ,vlestour
               ,cdobserv
@@ -1431,7 +1435,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
          WHERE crapneg.cdcooper = pr_cdcooper
            AND crapneg.cdhisest = 1 /* Dev Cheques */
            AND crapneg.nrdconta = pr_nrdconta
-           AND crapneg.dtiniest BETWEEN add_months(TRUNC(rw_crapdat.dtmvtolt),-pr_qtmeschq)
+           AND crapneg.dtiniest BETWEEN add_months(TRUNC(rw_crapdat.dtmvtolt),
+					                                         -DECODE(crapneg.cdobserv
+																									        ,11,pr_qtmeschqal11
+																									        ,12,pr_qtmeschqal12
+																													,pr_qtmeschq))
                                                    AND TRUNC(rw_crapdat.dtmvtolt)					 
          ORDER BY crapneg.dtiniest DESC;
     
@@ -3309,9 +3317,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
 			-- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
 			vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');		
+			vr_qtmeschqal11 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');
+			vr_qtmeschqal12 := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CH_AL11');			
 		
       -- Efetuar laço para trazer todos os registros 
-      FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq) LOOP
+      FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq
+				                              ,vr_qtmeschqal11
+																			,vr_qtmeschqal12) LOOP
       
         -- Criar objeto para a operação e enviar suas informações 
         vr_obj_generic3 := json();

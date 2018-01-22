@@ -16,8 +16,9 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 	
-	$tpcadast       = (isset($_POST['tpcadast'])       && $_POST['tpcadast'] != null) 			? $_POST['tpcadast'] 			 : '0';
+	$tpcadast       = (isset($_POST['tpcadast'])       && $_POST['tpcadast'] != null) 		? $_POST['tpcadast'] 	   : '0';
 	$cddopcao       = (isset($_POST['cddopcao'])       && $_POST['cddopcao'] != null)       ? $_POST['cddopcao']       : 'C';
+	$tpproduto      = (isset($_POST['tpproduto'])      && $_POST['tpproduto'] != null)      ? $_POST['tpproduto']      : '0';
 	$cdsegmento     = (isset($_POST['cdsegmento'])     && $_POST['cdsegmento'] != null)     ? $_POST['cdsegmento']     : '0';
 	$dssegmento     = (isset($_POST['dssegmento'])     && $_POST['dssegmento'] != null)     ? $_POST['dssegmento']     : '';
 	$cdsubsegmento  = (isset($_POST['cdsubsegmento'])  && $_POST['cdsubsegmento'] != null)  ? $_POST['cdsubsegmento']  : '0';
@@ -34,6 +35,7 @@
 		$xml  = "<Root>";
 		$xml .= " <Dados>";
 		$xml .= "  <cddopcao>".$cddopcao."</cddopcao>";
+		$xml .= "  <tpproduto>".$tpproduto."</tpproduto>";
 		$xml .= "  <cdsegmento>".$cdsegmento."</cdsegmento>";
 		$xml .= "  <dssegmento>".utf8_decode($dssegmento)."</dssegmento>";
 		$xml .= " </Dados>";

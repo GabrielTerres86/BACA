@@ -46,6 +46,6 @@
 		if ($msgErro == "") {
 				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',"bloqueiaFundo(divRotina)",false);
+		exibirErro('error',utf8_encode(str_replace("\"", "",$msgErro)),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	}
 ?>

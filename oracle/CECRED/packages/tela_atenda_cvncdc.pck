@@ -2666,6 +2666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
               ,sub.dssubsegmento
               ,sub.nrmax_parcela
               ,TRIM(TO_CHAR(sub.vlmax_financ,'FM999G900D00')) AS vlmax_financ
+							,decode(seg.tpproduto, 0, 'CDC Diversos', 1, 'CDC Veículos') dsproduto
           FROM tbepr_cdc_lojista_subseg loj
               ,tbepr_cdc_subsegmento sub
               ,tbepr_cdc_segmento seg
@@ -2698,6 +2699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'dssubsegmento', pr_tag_cont => rw_subsegmento.dssubsegmento, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'nrmax_parcela', pr_tag_cont => rw_subsegmento.nrmax_parcela, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'vlmax_financ ', pr_tag_cont => rw_subsegmento.vlmax_financ , pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'subsegmento', pr_posicao  => vr_contador, pr_tag_nova => 'dsproduto', pr_tag_cont => rw_subsegmento.dsproduto, pr_des_erro => vr_dscritic);				
         vr_contador := vr_contador + 1;
         
       END LOOP;
