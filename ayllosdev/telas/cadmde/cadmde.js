@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da tela CADMDE
  * --------------
  * ALTERAÇÕES   : 27/12/2017 - Ajustes para não permitir informar acentuação. PRJ2339 - CRM(Odirlei-AMcom)
+ *                22/01/2018 - Retirada obrigatoriedade de infomar Pessoa Física ou Jurídica na alteração
  * --------------
  */
 
@@ -437,12 +438,6 @@ function alteraMotivo(){
 		hideMsgAguardo();
 		showError('error','Informe o motivo de desligamento.','Alerta - Ayllos',"unblockBackground(); $('#dsmotivo','#frmCadmde').focus();");
 		return false;
-	}
-	// Se não selecionou PF e PJ
-	if (flgpessf == 0 && flgpessj == 0){
-		hideMsgAguardo();
-		showError('error','Informe o tipo de pessoa.','Alerta - Ayllos',"unblockBackground(); $('#flgpessf','#frmCadmde').focus();");
-		return false;		
 	}
 	
 	$.ajax({        
