@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : David
-     Data    : Maio/2007                       Ultima atualizacao: 20/03/2017
+     Data    : Maio/2007                       Ultima atualizacao: 16/01/2018
 
      Dados referentes ao programa:
 
@@ -145,7 +145,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                               TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
                             
                  20/03/2017 - Remover linhas de reversão das contas de resultado e incluir
-                              lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)                            
+                              lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)
+
+                 13/11/2017 - Ao buscar na tabela craptab o acesso MXRENDIPOS, a validacao correta deveria ser
+                              is null ao inves de is not null como estava antes. Como estava, nao considerava o parametro
+                              de data de inicio da aplicacao da regra de poupanca, ocasionando provisoes incorretas.
+                              Heitor (Mouts) - Chamado 781104
+
+                 16/01/2018 - Alteração procedimento INSERT/UPDATE na tabela CRAPBND
+                              Melhorias sustentação
+                              As chamadas das rotinas GENE0002.pc_clob_para_arquivo e GENE0001.pc_OScommand
+                              estavam retornando erros na variável vr_dscritic e desviando para a exception
+                              vr_exc_erro, porém, esta exception só trata o parâmetro pr_dscritic -> Ajuste
+                              (Ana - Envolti - Chamado 822997)
 
   ..............................................................................*/
 
@@ -644,9 +656,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       vr_nrctades           NUMBER;         -- Número da conta de destino para o arquivo
       vr_dsmensag           VARCHAR2(100);  -- Mensagem de cabeçalho do arquivo  
       vr_dsmsgarq           VARCHAR2(120);  -- Mensagem de cabeçalho do arquivo completa
-      vr_dsprefix  CONSTANT VARCHAR2(15) := 'REVERSAO '; -- Prefixo para cabeçalho do arquivo
+      vr_dsprefix           CONSTANT VARCHAR2(15) := 'REVERSAO '; -- Prefixo para cabeçalho do arquivo
       vr_dtmvtolt           DATE;           -- Auxiliar para tratamento de datas
       vr_dslinarq           VARCHAR2(200);  -- Linha que será escrita no arquivo
+      vr_cdcritic           NUMBER;
       vr_dscritic           VARCHAR2(2000); -- controle de erros
       vr_typ_saida          VARCHAR2(2000); -- controle de erros de scripts unix
       vr_vllinarq           NUMBER;
@@ -656,12 +669,57 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       vr_dircon VARCHAR2(200);
       vr_arqcon VARCHAR2(200);
 
-      -------- SubRotinas para reaproveitamento de código --------------
+        -------- SubRotinas para reaproveitamento de código --------------
+        --> Controla log proc_batch, atualizando parâmetros conforme tipo de ocorrência
+        PROCEDURE pc_gera_log(pr_cdcooper      IN crapcop.cdcooper%TYPE,
+                            pr_dstiplog      IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                            pr_dscritic      IN VARCHAR2 DEFAULT NULL,
+                            pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0,
+                            pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0,
+                            pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2) IS
+
+        -----------------------------------------------------------------------------------------------------------
+        --
+        --  Programa : pc_gera_log
+        --  Sistema  : Rotina para gravar logs em tabelas
+        --  Sigla    : CRED
+        --  Autor    : Ana Lúcia E. Volles - Envolti
+        --  Data     : Janeiro/2018          Ultima atualizacao: 16/01/2018
+        --  Chamado  : 822997
+        --
+        -- Dados referentes ao programa:
+        -- Frequencia: Rotina executada em qualquer frequencia.
+        -- Objetivo  : Controla gravação de log em tabelas.
+        --
+        -- Alteracoes:  
+        --             
+        ------------------------------------------------------------------------------------------------------------   
+      BEGIN     
+        --> Controlar geração de log de execução dos jobs
+        --Como executa na cadeira, utiliza pc_gera_log_batch
+        btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                      
+                                  ,pr_ind_tipo_log  => pr_ind_tipo_log
+                                  ,pr_nmarqlog      => 'proc_batch.log'                 
+                                  ,pr_dstiplog      => NVL(pr_dstiplog,'E')             
+                                  ,pr_cdprograma    => vr_cdprogra                      
+                                  ,pr_tpexecucao    => 1 -- batch                       
+                                  ,pr_cdcriticidade => pr_cdcriticidade                      
+                                  ,pr_cdmensagem    => pr_cdmensagem                      
+                                  ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                      || vr_cdprogra || ' --> '|| pr_dscritic);
+      EXCEPTION  
+        WHEN OTHERS THEN  
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+      END pc_gera_log;
+      --
 
       -- Subrotina para escrever texto na variável CLOB do XML
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
                                pr_fimarq    IN BOOLEAN default false) IS
       BEGIN
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS480.pc_escreve_xml' ,pr_action => NULL);
+
         --Verificar se ja atingiu o tamanho do buffer, ou se é o final do xml
         IF length(vr_Bufdes_xml) + length(pr_des_dados) > 31000 OR pr_fimarq THEN
           --Escrever no arquivo XML
@@ -715,6 +773,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         /*** ate 360 dias e depois listadas as aplicacoes com vencto    ***/
         /*** maior que 360 dias                                         ***/
         /*** ---------------------------------------------------------- ***/
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS480.pc_cria_reg_detalhe' ,pr_action => NULL);
+
         IF pr_tpaplrdc = 1 -- RDCPRE
         OR (pr_tpaplrdc = 2 AND pr_dtvencto - rw_crapdat.dtmvtolt <= 360) THEN -- RDC Pos com menos de 1 ano
           vr_indvecto := 1; -- Não venceu ainda
@@ -786,6 +847,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                                         pr_cdagenci in number) IS
         
       BEGIN
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_set_modulo(pr_module => 'PC_CRPS480.pc_inicia_totalizadores' ,pr_action => NULL);
         
         IF NOT vr_val_his_tipo_pessoa.exists(pr_cdhistor) THEN
           vr_val_his_tipo_pessoa(pr_cdhistor)(1) := 0; -- Pessoa Fisica
@@ -805,6 +868,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                                                        
       END pc_inicia_totalizadores;
 
+    ---------------------------------------
+    -- Inicio Bloco Principal pc_crps480
+    ---------------------------------------
     BEGIN
 
       -- Código do programa
@@ -863,10 +929,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       BEGIN
         DELETE tbfin_fluxo_contas_sysphera 
          WHERE cdcooper = pr_cdcooper
-           AND cdconta = 25;
+           AND cdconta  = 25;
       EXCEPTION
         WHEN OTHERS THEN
-        vr_dscritic := 'Problema ao limpar tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+          pr_cdcritic := 1037;
+          pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic)||' tbfin_fluxo_contas_sysphera '||
+                        'com cdcooper:'||pr_cdcooper||
+                        ', cdconta: 25'||
+                        '. '||sqlerrm;
+
+           --Inclusão na tabela de erros Oracle - Chamado 822997
+           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
         RAISE vr_exc_erro;
       END;
 
@@ -933,10 +1006,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao converter informações de restart para number. Conteúdo vr_dsrestar: '||vr_dsrestar||'.';
+            pr_cdcritic := 1120;
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' vr_dsrestar: '||vr_dsrestar||'. '||sqlerrm;
             RAISE vr_exc_erro;
         END;
-
       END IF;
 
       -- Data de fim e inicio da utilizacao da taxa de poupanca.
@@ -950,7 +1023,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                      ,pr_tpregist => 1);
                                                
       -- Se não encontrar
-      IF TRIM(vr_dstextab) IS NOT NULL THEN
+      IF TRIM(vr_dstextab) IS NULL THEN
         -- Utilizar datas padrão
         vr_dtinitax := to_date('01/01/9999','dd/mm/yyyy');
         vr_dtfimtax := to_date('01/01/9999','dd/mm/yyyy');
@@ -1034,7 +1107,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         EXCEPTION
           WHEN OTHERS THEN
             -- Gerar erro e fazer rollback
-            pr_dscritic := 'Erro ao inserir capas de lotes (craplot). Detalhes: '||sqlerrm;
+            pr_cdcritic := 1034;
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' craplot: '||
+                          'cdcooper:'  ||pr_cdcooper||
+                          ', dtmvtolt:'||rw_crapdat.dtmvtolt||
+                          ', cdagenci:1, cdbccxlt:100, nrdolote:8480'||
+                          ', tplotmov:9, vlinfodb:0, vlcompdb:0'||
+                          ', qtinfoln:0, qtcompln:0, vlinfocr:0, vlcompcr:0'||
+                          '. '||sqlerrm;
             RAISE vr_exc_erro;
         END;
       ELSE
@@ -1068,7 +1148,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_fisjur(1)(rw_crapdtc.tpaplica).qtaplati := 0;
         vr_tab_fisjur(2)(rw_crapdtc.tpaplica).qtaplati := 0;
       END LOOP;
-      
+
       -- Busca das aplicações RDC pré e pós
       FOR rw_craprda IN cr_craprda LOOP
      
@@ -1118,6 +1198,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                                ,pr_dtfimper => rw_craprda.dtfimper
                                ,pr_qtdiauti => rw_craprda.qtdiauti
                                ,pr_txaplica => rw_craplap.txaplica);
+
+            -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+            GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
             -- Ignorar o restante do processo
             RAISE vr_exc_next;
           END IF;
@@ -1164,7 +1247,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
               ELSE
                 -- Por algum motivo retornou erro mais a tabela veio vazia
-                pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada APLI0001.pc_provisao_rdc_pre';
+                pr_cdcritic := 9998;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' APLI0001.pc_provisao_rdc_pre.';
               END IF;
               -- Incluir na mensagem de erro a conta e aplicação
               pr_dscritic := pr_dscritic || ' - Conta: ' || gene0002.fn_mask_conta(rw_craprda.nrdconta)
@@ -1205,7 +1289,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
               ELSE
                 -- Por algum motivo retornou erro mais a tabela veio vazia
-                pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada APLI0001.pc_provisao_rdc_pos[1]';
+                pr_cdcritic := 9998;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' APLI0001.pc_provisao_rdc_pos[1].';
               END IF;
               -- Incluir na mensagem de erro a conta e aplicação
               pr_dscritic := pr_dscritic || ' - Conta: ' || gene0002.fn_mask_conta(rw_craprda.nrdconta)
@@ -1243,8 +1328,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                 pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
               ELSE
-                -- Por algum motivo retornou erro mais a tabela veio vazia
-                pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada APLI0001.pc_provisao_rdc_pos[2]';
+                pr_cdcritic := 9998;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' APLI0001.pc_provisao_rdc_pos[2].';
               END IF;
               -- Incluir na mensagem de erro a conta e aplicação
               pr_dscritic := pr_dscritic || ' - Conta: ' || gene0002.fn_mask_conta(rw_craprda.nrdconta)
@@ -1276,32 +1361,52 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                     -- Fechar o cursor
                     CLOSE cr_craprej;
                     -- Tenta atualizar as informações
-                    vr_dsopera := 'Atualizar';
-                    UPDATE craprej
-                       SET nrseqdig = NVL(nrseqdig,0) + 1
-                     WHERE rowid = vr_craprej_rowid;
+                    BEGIN
+                      UPDATE craprej
+                         SET nrseqdig = NVL(nrseqdig,0) + 1
+                       WHERE rowid = vr_craprej_rowid;
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        pr_cdcritic := 1035;
+                        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic)||' craprej: '||
+                                      'nrseqdig + 1'||
+                                      ' com rowid:'||vr_craprej_rowid||
+                                      '. '||sqlerrm;
+
+                         --Inclusão na tabela de erros Oracle - Chamado 822997
+                         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                         RAISE vr_exc_undo;
+                    END;
                   ELSE
                     -- Fechar o cursor
                     CLOSE cr_craprej;
-                    -- Não encontrou nada para atualizar, então inserimos
-                    vr_dsopera := 'Inserir';
-                    INSERT INTO craprej
-                               (cdcooper
-                               ,cdpesqbb
-                               ,tpintegr
-                               ,nrdconta
-                               ,nrseqdig)
-                         VALUES(pr_cdcooper   --> Cooperativa conectada
-                               ,vr_cdprogra   --> Programa atual
-                               ,2             --> Provisoes - RDCPOS
-                               ,rw_craprda.nrdconta
-                               ,1);
+                    BEGIN
+                      -- Não encontrou nada para atualizar, então inserimos
+                      INSERT INTO craprej
+                                 (cdcooper
+                                 ,cdpesqbb
+                                 ,tpintegr
+                                 ,nrdconta
+                                 ,nrseqdig)
+                           VALUES(pr_cdcooper   --> Cooperativa conectada
+                                 ,vr_cdprogra   --> Programa atual
+                                 ,2             --> Provisoes - RDCPOS
+                                 ,rw_craprda.nrdconta
+                                 ,1);
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        pr_cdcritic := 1034;
+                        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' craprej: '||
+                                      'cdcooper:'||pr_cdcooper||
+                                      ', cdpesqbb:'||vr_cdprogra||
+                                      ', tpintegr:2, nrdconta:'||rw_craprda.nrdconta||
+                                      ', nrseqdig:1, nraplica:'||rw_craprda.nraplica||
+                                      '. '||sqlerrm;
+                       --Inclusão na tabela de erros Oracle - Chamado 822997
+                       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                       RAISE vr_exc_undo;
+                    END;
                   END IF;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    pr_dscritic := 'Erro ao '||vr_dsopera||' as informações na tabela CRAPREJ - Conta:'
-                                || rw_craprda.nrdconta ||' Aplic:'||rw_craprda.nraplica||'. Detalhes: '||sqlerrm;
-                  RAISE vr_exc_undo;
                 END;
               END IF;
             END IF;
@@ -1348,7 +1453,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
               ELSE
                 -- Por algum motivo retornou erro mais a tabela veio vazia
-                pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada APLI0001.pc_gera_craplap_rdc';
+                pr_cdcritic := 9998;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' APLI0001.pc_gera_craplap_rdc.';
               END IF;
               -- Incluir na mensagem de erro a conta e aplicação
               pr_dscritic := pr_dscritic || ' - Conta: ' || gene0002.fn_mask_conta(rw_craprda.nrdconta)
@@ -1417,45 +1523,76 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           EXCEPTION
             WHEN OTHERS THEN
               -- Gerar erro e fazer rollback
-              pr_dscritic := 'Erro ao atualizar a aplicação RDCA - Conta:'||rw_craprda.nrdconta
-                          ||' Aplic:'||rw_craprda.nraplica||'. Detalhes: '||sqlerrm;
+              pr_cdcritic := 1035;
+              pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic)||' craprda: '||
+                            'vlslfmea:'||ROUND(vr_vlsldrdc,2)  ||', dtsdfmea:'||rw_craprda.dtsdfmes||
+                            ', vlsdextr:'||rw_craprda.vlsdextr ||', dtsdfmes:'||rw_craprda.dtsdfmes||
+                            ', dtatslmx:'||rw_craprda.dtatslmx ||', vlsltxmx:'||rw_craprda.vlsltxmx||
+                            ', dtatslmm:'||rw_craprda.dtatslmm ||', vlsltxmm:'||rw_craprda.vlsltxmm||
+                            ', vlslfmes:'||ROUND(vr_vlsldrdc,2)||', dtcalcul:'||rw_crapdat.dtmvtopr||
+                            ' com cdcooper:'||pr_cdcooper      ||', nrdconta:'||rw_craprda.nrdconta||
+                            ', nraplica:'||rw_craprda.nraplica ||
+                            '. '||sqlerrm;
+
+              --Inclusão na tabela de erros Oracle - Chamado 822997
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
               RAISE vr_exc_undo;
           END;
           -- Somente quando a execução partir da Cecred
           IF pr_cdcooper = 3 THEN
             -- Inserir Informacoes para o BNDES das aplicacoes de nossas filiadas na CECRED
-            DECLARE
-              vr_dsopera VARCHAR2(30);
             BEGIN
-              -- Tenta atualizar as informações
-              vr_dsopera := 'Atualizar';
-              UPDATE crapbnd
-                 SET vlaplprv = NVL(vlaplprv,0) + ROUND(vr_vlsldrdc,2) -- Saldo final do mês
-
-               WHERE cdcooper = pr_cdcooper         --> Cooperativa conectada
-                 AND dtmvtolt = rw_crapdat.dtmvtolt --> Data atual
-                 AND nrdconta = rw_craprda.nrdconta;
-              -- Se não conseguiu atualizar nenhum registro
-              IF SQL%ROWCOUNT = 0 THEN
-                -- Não encontrou nada para atualizar, então inserimos
-                vr_dsopera := 'Inserir';
-                INSERT INTO crapbnd
-                           (cdcooper
-                           ,dtmvtolt
-                           ,nrdconta
-                           ,vlaplprv)
-                     VALUES(pr_cdcooper            --> Cooperativa conectada
-                           ,rw_crapdat.dtmvtolt    --> Data atual
-                           ,rw_craprda.nrdconta    --> Conta da aplicação
-                           ,ROUND(vr_vlsldrdc,2)); --> Saldo final do mês
-              END IF;
+              --Chamado 822997 - inversão ordem comandos INSERT/UPDATE
+              --Atualizar informacoes tabela bndes
+              INSERT INTO crapbnd
+                         (cdcooper
+                         ,dtmvtolt
+                         ,nrdconta
+                         ,vlaplprv)
+                   VALUES(pr_cdcooper            --> Cooperativa conectada
+                         ,rw_crapdat.dtmvtolt    --> Data atual
+                         ,rw_craprda.nrdconta    --> Conta da aplicação
+                         ,ROUND(vr_vlsldrdc,2)); --> Saldo final do mês
             EXCEPTION
+              WHEN DUP_VAL_ON_INDEX THEN
+                BEGIN
+                  UPDATE crapbnd
+                     SET vlaplprv = NVL(vlaplprv,0) + ROUND(vr_vlsldrdc,2) -- Saldo final do mês
+                   WHERE cdcooper = pr_cdcooper         --> Cooperativa conectada
+                     AND dtmvtolt = rw_crapdat.dtmvtolt --> Data atual
+                     AND nrdconta = rw_craprda.nrdconta;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    --Montar mensagem de erro
+                    pr_cdcritic := 1035;
+                    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapbnd: '||
+                                  'vlaplprv: vlaplprv + '||ROUND(vr_vlsldrdc,2)||
+                                  ' com cdcooper: '      ||pr_cdcooper||
+                                  ', dtmvtolt:'          ||rw_crapdat.dtmvtolt||
+                                  ', nrdconta:'          ||rw_craprda.nrdconta||
+                                  '. '||sqlerrm;
+                     --Inclusão na tabela de erros Oracle - Chamado 822997
+                     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                    --Levantar Excecao
+                    RAISE vr_exc_undo;
+                END;
               WHEN OTHERS THEN
-                pr_dscritic := 'Erro ao '||vr_dsopera||' as informações na tabela CRAPBDN - Conta:'
-                            || rw_craprda.nrdconta ||' Aplic:'||rw_craprda.nraplica||'. Detalhes: '||sqlerrm;
-              RAISE vr_exc_undo;
+                --Montar mensagem de erro
+                pr_cdcritic := 1034;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapbnd: '||
+                              'cdcooper:'||pr_cdcooper||
+                              ', dtmvtolt:'||rw_crapdat.dtmvtolt||
+                              ', nrdconta:'||rw_craprda.nrdconta||
+                              ', vlaplprv:'||ROUND(vr_vlsldrdc,2)||
+                              '. '||sqlerrm;
+               --Inclusão na tabela de erros Oracle - Chamado 822997
+               CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+               --Levantar Excecao
+               RAISE vr_exc_undo;
             END;
           END IF;
+
           -- Prazo em dias é a diferença entre a data de vencimento - data atual da aplicação
           vr_prazodia := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
           -- Guardar o tipo de prazo cfme a diferença de dias
@@ -1516,6 +1653,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                              ,pr_dtfimper => rw_craprda.dtfimper
                              ,pr_qtdiauti => rw_craprda.qtdiauti
                              ,pr_txaplica => rw_craplap.txaplica);
+            -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+            GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
           -- Somente se a flag de restart estiver ativa
           IF pr_flgresta = 1 THEN
             -- Salvar informacoes no banco de dados a cada
@@ -1566,8 +1705,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
               EXCEPTION
                 WHEN OTHERS THEN
                   -- Gerar erro e fazer rollback
-                  pr_dscritic := 'Erro ao atualizar a tabela de Restart (CRAPRES) - Conta:'||rw_craprda.nrdconta
-                              ||' Aplic:'||rw_craprda.nraplica||'. Detalhes: '||sqlerrm;
+                  pr_cdcritic := 1035;
+                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapres: '||
+                                'nrdconta:'  ||rw_craprda.nrdconta||
+                                ', dsrestar:'||vr_dsrestar||
+                                ' com rowid:'||rw_crapres.rowid||
+                                '. '||sqlerrm;
+                  --Inclusão na tabela de erros Oracle - Chamado 822997
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                   RAISE vr_exc_undo;
               END;
               -- Finalmente efetua commit
@@ -1584,6 +1729,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           WHEN vr_exc_undo THEN
             -- Desfazer transacoes desde o ultimo commit
             ROLLBACK;
+
             -- Gerar um raise para gerar o log e sair do processo
             RAISE vr_exc_erro;
         END;
@@ -1610,11 +1756,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         EXIT WHEN vr_des_chave_bndes IS NULL;
         -- Para cada registro, irá atualizar a tabela crapprb - Prazos de retornos
         -- de produtor para levamento de informações do BNDES
-        DECLARE
-          vr_dsopera VARCHAR2(30);
         BEGIN
           -- Tenta atualizar as informações
-          vr_dsopera := 'Atualizar';
           UPDATE crapprb
              SET vlretorn = NVL(vlretorn,0) + vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica
            WHERE cdcooper = pr_cdcooper         --> Cooperativa conectada
@@ -1624,25 +1767,50 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
              AND cdorigem = vr_tab_cta_bndes(vr_des_chave_bndes).tpaplica;
           -- Se não conseguiu atualizar nenhum registro
           IF SQL%ROWCOUNT = 0 THEN
-            -- Não encontrou nada para atualizar, então inserimos
-            vr_dsopera := 'Inserir';
-            INSERT INTO crapprb
-                       (cdcooper
-                       ,dtmvtolt
-                       ,nrdconta
-                       ,cdorigem
-                       ,cddprazo
-                       ,vlretorn)
-                 VALUES(pr_cdcooper            --> Cooperativa conectada
-                       ,rw_crapdat.dtmvtolt    --> Data atual
-                       ,vr_tab_cta_bndes(vr_des_chave_bndes).nrdconta
-                       ,vr_tab_cta_bndes(vr_des_chave_bndes).tpaplica
-                       ,0
-                       ,vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica);
+            BEGIN
+              -- Não encontrou nada para atualizar, então inserimos
+              INSERT INTO crapprb
+                         (cdcooper
+                         ,dtmvtolt
+                         ,nrdconta
+                         ,cdorigem
+                         ,cddprazo
+                         ,vlretorn)
+                   VALUES(pr_cdcooper            --> Cooperativa conectada
+                         ,rw_crapdat.dtmvtolt    --> Data atual
+                         ,vr_tab_cta_bndes(vr_des_chave_bndes).nrdconta
+                         ,vr_tab_cta_bndes(vr_des_chave_bndes).tpaplica
+                         ,0
+                         ,vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica);
+            EXCEPTION
+              WHEN OTHERS THEN
+                pr_cdcritic := 1034;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapprb: '||
+                              'cdcooper:'||pr_cdcooper||
+                              ', dtmvtolt:'||rw_crapdat.dtmvtolt||
+                              ', nrdconta:'||vr_tab_cta_bndes(vr_des_chave_bndes).nrdconta||
+                              ', cdorigem:'||vr_tab_cta_bndes(vr_des_chave_bndes).tpaplica||
+                              ', cddprazo:0'||
+                              ', vlretorn:'||vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica||
+                              '. '||sqlerrm;
+                --Inclusão na tabela de erros Oracle - Chamado 822997
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                RAISE vr_exc_erro;
+            END;
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao '||vr_dsopera||' as informações na tabela CRAPPRB. Detalhes: '||sqlerrm;
+            pr_cdcritic := 1035;
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapprb: '||
+                          'vlretorn: vlretorn + '||vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica||
+                          ' com cdcooper:'       ||pr_cdcooper||
+                          ', dtmvtolt:'          ||rw_crapdat.dtmvtolt||
+                          ', cddprazo:0'         ||
+                          ', nrdconta:'          ||vr_tab_cta_bndes(vr_des_chave_bndes).nrdconta||
+                          ', cdorigem:'          ||vr_tab_cta_bndes(vr_des_chave_bndes).tpaplica||
+                          '. '||sqlerrm;
+            --Inclusão na tabela de erros Oracle - Chamado 822997
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             RAISE vr_exc_erro;
         END;
         -- Buscar o próximo registro
@@ -1686,6 +1854,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                              ,pr_dtfimper => rw_craplap.dtfimper
                              ,pr_qtdiauti => rw_craplap.qtdiauti
                              ,pr_txaplica => rw_craplap.txaplica);
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         /*** ---------------------------------------------------------- ***/
         /*** Se for uma aplicacao RDCPOS deve-se verificar quantos dias ***/
@@ -1943,6 +2113,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           pc_inicia_totalizadores(pr_cdhistor => rw_craplap.cdhistor,
                                   pr_cdagenci => vr_tab_crapass(rw_craplap.nrdconta).cdagenci);
         
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
 
           vr_val_his_tipo_pessoa(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := 
             vr_val_his_tipo_pessoa(rw_craplap.cdhistor)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) + rw_craplap.vllanmto; 
@@ -1972,6 +2144,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
         -- Montar a tag do tipo de aplicação atual
         pc_escreve_xml('<tipoAplica id="'||vr_num_chave_resumo||'" desTpApli="'||vr_tab_resumo(vr_num_chave_resumo).dsaplica||'">');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Para RDC pré
         IF vr_tab_resumo(vr_num_chave_resumo).tpaplrdc = 1 THEN
           -- Efetuar busca na craprej com vr_cdempres = 7 /* RDCPRE */
@@ -1994,6 +2168,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         
         -- Criar tags agrupadora de totais
         pc_escreve_xml('<totais>');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Enviar cada informações de totais como um nó
         -- para que o relatório possa se dinâmico
         pc_cria_node_total(pr_des_total => 'QUANTIDADE DE TITULOS ATIVOS:'
@@ -2032,6 +2208,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                           ,pr_des_valor => TO_CHAR(NVL(vr_tab_resumo(vr_num_chave_resumo).vlsqsren,0)   ,'fm999g999g999g990d00mi')
                           ,pr_des_vlfis => TO_CHAR(NVL(vr_tab_fisjur(1)(vr_num_chave_resumo).vlsqsren,0),'fm999g999g999g990d00mi')
                           ,pr_des_vljur => TO_CHAR(NVL(vr_tab_fisjur(2)(vr_num_chave_resumo).vlsqsren,0),'fm999g999g999g990d00mi'));
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         
         
         FOR ind IN vr_tab_fisjur.first..vr_tab_fisjur.last LOOP
@@ -2045,15 +2223,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                             ,pr_des_valor => TO_CHAR(NVL(vr_tab_resumo(vr_num_chave_resumo).vlsqcren,0)   ,'fm999g999g999g990d00mi')
                             ,pr_des_vlfis => TO_CHAR(NVL(vr_tab_fisjur(1)(vr_num_chave_resumo).vlsqcren,0),'fm999g999g999g990d00mi')
                             ,pr_des_vljur => TO_CHAR(NVL(vr_tab_fisjur(2)(vr_num_chave_resumo).vlsqcren,0),'fm999g999g999g990d00mi'));
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         pc_cria_node_total(pr_des_total => 'IMPOSTO DE RENDA RETIDO NA FONTE:'
                           ,pr_des_valor => TO_CHAR(NVL(vr_tab_resumo(vr_num_chave_resumo).vlrtirrf,0)   ,'fm999g999g999g990d00mi')
                           ,pr_des_vlfis => TO_CHAR(NVL(vr_tab_fisjur(1)(vr_num_chave_resumo).vlrtirrf,0),'fm999g999g999g990d00mi')
                           ,pr_des_vljur => TO_CHAR(NVL(vr_tab_fisjur(2)(vr_num_chave_resumo).vlrtirrf,0),'fm999g999g999g990d00mi'));
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Fechar tags de totais
         pc_escreve_xml('</totais>');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Iniciar Tag de períodos
         pc_escreve_xml('<periodos>');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Reinicializar totalizadores
         vr_tot_vlacumul := 0;
         -- Buscar todos os períodos do vetor de períodos
@@ -2081,6 +2267,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                          ||'  <vllctoac>'||to_char(NVL(vr_tot_vlacumul,0),'fm999g999g999g990d00')||'</vllctoac>'        --> VALOR ACUMULADO
                          ||'  <qtaplica>'||to_char(NVL(vr_tab_craprej(vr_num_chave_craprej).nrseqdig,0),'fm999g990')||'</qtaplica>'        --> QTD.RDC
                          ||'</periodo>');
+            -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+            GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
 
             -- Somente RDC Pos
             IF vr_tab_resumo(vr_num_chave_resumo).tpaplrdc = 2 THEN
@@ -2105,7 +2293,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                              ,SYSDATE);
               EXCEPTION
                 WHEN OTHERS THEN
-                vr_dscritic := 'Problema ao incluir tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+                  pr_cdcritic := 1034;
+                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' tbfin_fluxo_contas_sysphera: '||
+                                'cdcooper:'     ||pr_cdcooper||
+                                ', dtmvtolt:'   ||rw_crapdat.dtmvtolt||
+                                ', cdconta:25, nrseqconta:0'||
+                                ', cdprazo:'    ||vr_vet_periodo(vr_per)||
+                                ', vlacumulado:'||vr_tab_craprej(vr_num_chave_craprej).vllanmto||
+                                ', cdoperador:1, datalteracao:'||SYSDATE||
+                                '. '||sqlerrm;
                 RAISE vr_exc_erro;
               END;
             END IF;
@@ -2118,6 +2314,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                          ||'  <vllctoac>'||to_char(0,'fm0d00')||'</vllctoac>'                   --> VALOR ACUMULADO
                          ||'  <qtaplica>'||to_char(0,'fm0')||'</qtaplica>'                      --> QTD.RDC
                          ||'</periodo>');
+            -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+            GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
           END IF;
           -- Para cooperativas <> Cecred com valor de lançamento
           IF vr_tab_craprej.EXISTS(vr_num_chave_craprej) AND pr_cdcooper <> 3 AND NVL(vr_tab_craprej(vr_num_chave_craprej).vllanmto,0) > 0 THEN
@@ -2146,23 +2344,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 -- enviar log ao batch e não parar o processo, pois segundo o Guilherme Strube
                 -- no Progress não estava sendo tratado provavelmente pq nunca gerava erro, já
                 -- que é feita apenas uma execução por dia
-                BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 1 -- Processo normal
-                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra || ' --> Chave duplicada ao inserir na CRAPPRB '
-                                                           || '(Cdcooper = 3, Dtmvtolt = '||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||', Nrdconta = '||gene0002.fn_mask_conta(rw_crapcop.nrctactl)
-                                                           || ', Cdorigem = '||vr_cdempres||', Cddprazo = '||vr_cddprazo||', Vlretorn = '||vr_tab_craprej(vr_num_chave_craprej).vllanmto||').');
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapprb[1]: '||
+                              'cdcooper: 3, dtmvtolt:'||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||
+                              ', nrdconta:'||rw_crapcop.nrctactl||
+                              ', cdorigem:'||vr_cdempres||
+                              ', cddprazo:'||vr_cddprazo||
+                              ', vlretorn:'||vr_tab_craprej(vr_num_chave_craprej).vllanmto||
+                              '. '||sqlerrm;
+
+                --Grava tabela de log - Ch 822997
+                pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 0,
+                            pr_cdmensagem    => nvl(vr_cdcritic,0),
+                            pr_ind_tipo_log  => 1);
+
               WHEN OTHERS THEN
-                pr_dscritic := 'Erro ao inserir as informações na tabela CRAPPRB. Detalhes: '||sqlerrm;
+                pr_cdcritic := 1034;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' crapprb[2]: '||
+                              'cdcooper: 3, dtmvtolt:'||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||
+                              ', nrdconta:'||rw_crapcop.nrctactl||
+                              ', cdorigem:'||vr_cdempres||
+                              ', cddprazo:'||vr_cddprazo||
+                              ', vlretorn:'||vr_tab_craprej(vr_num_chave_craprej).vllanmto||
+                              '. '||sqlerrm;
+
                 RAISE vr_exc_erro;
             END;
           END IF;
         END LOOP;
         -- Fechar a tag de períodos
         pc_escreve_xml('</periodos>');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Somente para Pós
         IF vr_tab_resumo(vr_num_chave_resumo).tpaplrdc = 2 THEN
           -- Abrir tag resumos
           pc_escreve_xml('<resumo_cecred>');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
           -- Buscar o primeiro indice da tabela resumo-cecred
           vr_num_chave_resumo_cecred := vr_tab_resumo_cecred.FIRST;
           -- Buscar as informações do Resumo-Cecred
@@ -2179,14 +2401,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                          ||'  <vlajuprv>'||to_char(NVL(vr_tab_resumo_cecred(vr_num_chave_resumo_cecred).vlajuprv,0),'fm999g999g999g990d00')||'</vlajuprv>' --> TOTAL PROVISAO
                          ||'  <vlsldmed>'||to_char(NVL(vr_tab_resumo_cecred(vr_num_chave_resumo_cecred).vlsldmed,0),'fm999g999g999g990d00')||'</vlsldmed>' --> SALDO MÉDIO RDCPOS
                          ||'</resumo>');
+            -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+            GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
             -- Buscar o próximo indice
             vr_num_chave_resumo_cecred := vr_tab_resumo_cecred.NEXT(vr_num_chave_resumo_cecred);
           END LOOP;
           -- Fechar tag de resumos
           pc_escreve_xml('</resumo_cecred>');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         -- Fechar as tags abertas
         pc_escreve_xml('</tipoAplica></raiz>',true);
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
 
         -- Ao terminar de ler os registros, iremos gravar o XML para arquivo totalizador--
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
@@ -2707,14 +2935,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsxmldad_arq
                                      ,pr_caminho  => vr_nom_direto
                                      ,pr_arquivo  => vr_nmarqrdc
-                                     ,pr_des_erro => vr_dscritic);
+                                     ,pr_des_erro => pr_dscritic);
     
         --Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_dsxmldad_arq);
         dbms_lob.freetemporary(vr_dsxmldad_arq); 
     
         -- Testa
-        IF vr_dscritic IS NOT NULL THEN
+        IF pr_dscritic IS NOT NULL THEN
           -- Gerar exceção
           RAISE vr_exc_erro;
         END IF; 
@@ -2734,7 +2962,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
                              ,pr_des_comando => vr_dscomand
                              ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
+                             ,pr_des_saida   => pr_dscritic);
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_erro;
         END IF;
@@ -2759,6 +2987,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           vr_Bufdes_xml := null;
           -- Inicilizar as informações do XML
           pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
           -- Para RDC pré
           IF vr_tab_detalhe(vr_des_chave_det).tpaplrdc = 1 THEN
             -- Efetuar busca na craprej com vr_cdempres = 7 /* RDCPRE */
@@ -2780,6 +3010,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           END IF;
           -- Montar a tag do tipo de aplicação atual
           pc_escreve_xml('<tipoAplica id="'||vr_tab_detalhe(vr_des_chave_det).tpaplica||'" desTpApli="'||vr_tab_detalhe(vr_des_chave_det).dsaplica||'"><aplicacoes>');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         -- Se for o primeiro ou mudou a agência ou tipo de vencimento
         IF vr_des_chave_det = vr_tab_detalhe.FIRST
@@ -2790,6 +3022,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           pc_escreve_xml('<agencia cdageass="'||vr_tab_detalhe(vr_des_chave_det).cdagenci||'" '
                        ||         'nmresage="'||vr_tab_detalhe(vr_des_chave_det).nmresage||'" '
                        ||         'indvecto="'||vr_tab_detalhe(vr_des_chave_det).indvecto||'">');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         -- Enviar o registro de detalhe ao XML
         pc_escreve_xml('<aplica>'
@@ -2805,6 +3039,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                      ||'  <dssitapl>'||vr_tab_detalhe(vr_des_chave_det).dssitapl||'</dssitapl>'
                      ||'  <qtdiauti>'||vr_tab_detalhe(vr_des_chave_det).qtdiauti||'</qtdiauti>'
                      ||'</aplica>');
+        -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         -- Se for o ultimo ou irá mudar a agência ou tipo de vencimento no próximo
         IF vr_des_chave_det = vr_tab_detalhe.LAST
         OR vr_tab_detalhe(vr_des_chave_det).cdagenci <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).cdagenci
@@ -2812,13 +3048,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
 		    OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).tpaplica THEN
           -- fechar nó de agência / tipo vcto
           pc_escreve_xml('</agencia>');
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
         END IF;
         -- Se for o ultimo registro do vetor ou do tipo de aplicação
         IF vr_des_chave_det = vr_tab_detalhe.LAST OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).tpaplica THEN
           -- Fechar as tags abertas
           pc_escreve_xml('</aplicacoes></tipoAplica></raiz>',TRUE);
+          -- Inclui nome do modulo logado - 16/01/2018 - Ch 822997
+          GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS480' ,pr_action => null);
           -- Ao terminar de ler os registros, iremos gravar o XML para arquivo totalizador--
-
           gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
                                      ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
@@ -2855,7 +3094,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       EXCEPTION
         WHEN OTHERS THEN
           -- Gerar erro e fazer rollback
-          pr_dscritic := 'Erro ao eliminar as informações de controle (CRAPREJ). Detalhes: '||sqlerrm;
+          pr_cdcritic := 1037;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' craprej '||
+                        'com cdcooper:'||pr_cdcooper||
+                        ', cdpesqbb:'||vr_cdprogra||
+                        '. '||sqlerrm;
+
+          --Inclusão na tabela de erros Oracle - Chamado 822997
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
           RAISE vr_exc_erro;
       END;
       -- Processo OK, devemos chamar a fimprg
@@ -2873,12 +3120,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           -- Buscar a descrição
           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
         END IF;
+
+        --Grava tabela de log - Ch 822997
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
+
+        --Inclusão na tabela de erros Oracle - Chamado 822997
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
+        --Grava tabela de log - Ch 822997
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 3);
+
         -- Efetuar rollback
         ROLLBACK;
     END;
