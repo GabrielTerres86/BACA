@@ -2,7 +2,7 @@
 
 /*
  * FONTE        : controleQualificacao.php
- * CRIÇÃO       : Diego Simas (AMcom)
+ * CRIAÇÃO       : Diego Simas (AMcom)
  * DATA CRIAÇÃO : 17/01/2018
  * OBJETIVO     : Mostra a tela com parâmetros para controle da Qualificação da Operação
  */	
@@ -40,9 +40,14 @@
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
 		}			
-		
-	}else{		
-		if(!$idquaprc > 4){
+
+	}else{				
+
+		if($idquaprc > 4){
+			echo "<script>";
+			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
+			echo "</script>";
+		}else{
 			$xml  = "";
 			$xml .= "<Root>";
 			$xml .= "  <Dados>";
@@ -62,11 +67,7 @@
 			echo "<script>";
 			echo "showError('inform','Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o alterada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
 			echo "</script>";
-		}else{
-			echo "<script>";
-			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
-			echo "</script>";
-		}		
+		}				
 	}
 
 		$dsquapro = obtemDescricaoQualificacao($idquapro);
@@ -111,7 +112,7 @@
                                                 
                                                 <label for="idquaprc" style="width:180px">Qualifica&ccedil;&atilde;o Op. Contr.:</label>
                                                 <input name="idquaprc" id="idquaprc" style="width:30px" type="text" value="<?=$idquaprc?>" maxlength="1" />
-                                                <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+                                                <a id="lupaControle"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
                                                 <input name="dsquaprc" id="dsquaprc" style="width:120px" type="text" value="<?=$dsquaprc?>" readonly="true"/>
                                                 <br/>
                                             </fieldset>
@@ -141,7 +142,6 @@
 	// Evento onKeyDown no campo idquaprc	
 	$("#idquaprc", "#frmControleQual").unbind('keydown').bind('keydown', function(e) {			
 		// Se Ã© a tecla ENTER, 
-		console.log('teste');
 		if (( e.keyCode == 13 ) || (e.keyCode == 9)){
 			var vIdQuaPrc = $("#idquaprc", "#frmControleQual").val();
 			$("#dsquaprc", "#frmControleQual").val(obtemDescricaoQualificacao(vIdQuaPrc));
@@ -151,7 +151,21 @@
 
 	var controleMascara = $('#idquaprc','#frmControleQual');
 	controleMascara.setMask('INTEGER','9','.','');
+	$("#lupaControle").attr('disabled', 'false');
 	
+	$("#lupaControle").bind('click', function () {
+		nomeForm = 'frmControleQual';
+		bo = 'zoom0001';
+        procedure = 'BUSCAQUAOPEC';
+        titulo = 'Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o';
+        filtrosDesc = 'flgstfin|1;nriniseq|1;nrregist|30';
+        buscaDescricao(bo, procedure, titulo, 'idquaprc', 'dsquaprc', filtrosDesc, nomeForm);
+
+        if (nomeForm != 'frmSimulacao') {
+            carregaDadosPropostaFinalidade();
+		}        
+		
+	});
 
 	function obtemDescricaoQualificacao(idQuaOpe){
 		var dsquaprc = "";
