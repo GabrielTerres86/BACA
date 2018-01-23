@@ -459,7 +459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
       -- CAMPOS
       -- Busca os dados
-      OPEN cr_consulta_dados_risco(vr_cdcooper, vr_cpf_cnpj);
+      OPEN cr_consulta_dados_risco(pr_cdcooper, pr_cpf_cnpj);
      FETCH cr_consulta_dados_risco
       INTO rw_consulta_dados_risco;
      CLOSE cr_consulta_dados_risco;
@@ -598,7 +598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
-  END pc_consultar_dados_risco;  
+  END pc_busca_dados_risco;  
 
 END TELA_ATENDA_OCORRENCIAS;
 /
