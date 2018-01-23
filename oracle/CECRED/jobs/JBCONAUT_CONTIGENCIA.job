@@ -1,0 +1,57 @@
+/*   Criação do Job para notificar area de processo em contigencia - PRJ298 - POS
+      
+*/
+
+DECLARE
+  vr_dsplsql  VARCHAR2(1500);
+  vr_jobname  VARCHAR2(50);
+  vr_dscritic VARCHAR2(1000);
+BEGIN
+  
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_iso_currency = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_length_semantics = ''BYTE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_nchar_conv_excp = ''FALSE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_sort = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_territory = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+   
+
+
+  vr_dsplsql := 'declare '||
+                'vr_dscritic varchar2(4000); '||
+                'BEGIN SSPC0001.pc_job_conaut_contigencia; END;';
+                   
+  -- Montar o prefixo do código do programa para o jobname
+  vr_jobname := 'cecred.JBCONAUT_CONTIGENCIA';
+  -- Faz a chamada ao programa paralelo atraves de JOB
+  gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/         --> Código da cooperativa
+                        ,pr_cdprogra  => 'JBCONAUT_CONTIGENCIA'--> Código do programa
+                        ,pr_dsplsql   => vr_dsplsql           --> Bloco PLSQL a executar
+                        ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 08:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')                 --> Executar nesta hora
+                                         -- configurar para rodar diariamente a cada um minuto
+                        ,pr_interva   => 'Freq=minutely;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=8,9,10,11,12,13,14,15,16,17;BySecond=0;Interval=5'                                         
+                        ,pr_jobname   => vr_jobname           --> Nome randomico criado
+                        ,pr_des_erro  => vr_dscritic);
+  -- Testar saida com erro
+  IF vr_dscritic IS NOT NULL THEN
+    -- Levantar exceçao
+    RAISE_application_error(-20200,'Erro: '||vr_dscritic);
+  END IF;
+  
+  dbms_scheduler.set_attribute(name      => vr_jobname,
+                               attribute => 'comments', 
+                               value     => 'Rodar programa SSPC0001.pc_job_conaut_contigencia - Responsavel em gerar '||
+                                            'alerta notificando aera responsavel de processo em contigencia, '||
+                                            'rotina rodará de 5 em 5 minutos durante horario comercial.(8h às 18h)');
+  
+
+END;
