@@ -111,8 +111,6 @@
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '' ;
 	$flgimppr = (isset($_POST['flgimppr'])) ? $_POST['flgimppr'] : '' ;
 	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : '' ;
-	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
-	$idquaprc = (isset($_POST['idquaprc'])) ? $_POST['idquaprc'] : '' ;
 	$flgpagto = (isset($_POST['flgpagto'])) ? $_POST['flgpagto'] : '' ;
 	$nrctaav2 = (isset($_POST['nrctaav2'])) ? $_POST['nrctaav2'] : '' ;
 	$dtcnsspc = (isset($_POST['dtcnsspc'])) ? $_POST['dtcnsspc'] : '' ;
@@ -416,8 +414,6 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
-	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
-	$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
 	$xml .= '		<dtcnsspc>'.$dtcnsspc.'</dtcnsspc>';
