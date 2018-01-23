@@ -78,6 +78,9 @@
 							
 			   05/06/2017 - Substituindo emails do seguro, conforme
 						    solicitado no chamado 683083. (Kelvin)
+							
+			   23/01/2017 - Adicionada nova coluna de premio do seguro,
+							conforme solicitado no chamado 829811. (Kelvin)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -99,9 +102,12 @@ DEF        VAR rel_dsempres     AS CHAR    FORMAT "x(40)"            NO-UNDO.
 DEF        VAR aux_dtiniref     AS DATE FORMAT "99/99/9999"          NO-UNDO.
 DEF        VAR aux_dtfimref     AS DATE FORMAT "99/99/9999"          NO-UNDO.
 
-DEF        VAR tot_qtsegnov     AS INTEGER  FORMAT "zzz,zz9"         NO-UNDO.
-DEF        VAR tot_qtsegcan     AS INTEGER  FORMAT "zzz,zz9"         NO-UNDO.
-DEF        VAR tot_qtsegalt     AS INTEGER  FORMAT "zzz,zz9"         NO-UNDO.
+DEF        VAR tot_qtsegnov     AS INTEGER  FORMAT "zzz,zzz,zz9"         NO-UNDO.
+DEF        VAR tot_qtsegcan     AS INTEGER  FORMAT "zzz,zzz,zz9"         NO-UNDO.
+DEF        VAR tot_qtsegalt     AS INTEGER  FORMAT "zzz,zzz,zz9"         NO-UNDO.
+DEF        VAR tot_qtprenov     AS DECIMAL  FORMAT "zzz,zzz,zz9.99"  NO-UNDO.
+DEF        VAR tot_qtprecan     AS DECIMAL  FORMAT "zzz,zzz,zz9.99"  NO-UNDO.
+DEF        VAR tot_qtprealt     AS DECIMAL  FORMAT "zzz,zzz,z99.99"  NO-UNDO.
 
 DEF        VAR aux_regexist     AS LOGICAL                           NO-UNDO.
 
@@ -130,15 +136,21 @@ FORM "SEGUROS ALTERADOS:"
  
 FORM SKIP(1)
      tot_qtsegnov  AT 9 LABEL "QUANTIDADE DE SEGUROS CONTRATADOS"
+	 tot_qtprenov  AT 11 LABEL "VALOR TOTAL PREMIOS CONTRATADOS"
+	 SKIP(1)
      WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totnov.
 
 FORM SKIP(1)
      tot_qtsegcan  AT 10 LABEL "QUANTIDADE DE SEGUROS CANCELADOS"
-     WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totcan.
+	 tot_qtprecan  AT 12 LABEL "VALOR TOTAL PREMIOS CANCELADOS"
+     SKIP(1)
+	 WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totcan.
 
 FORM SKIP(1)
      tot_qtsegalt  AT 11 LABEL "QUANTIDADE DE SEGUROS ALTERADOS"
-     WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totalt.
+	 tot_qtprealt  AT 13 LABEL "VALOR TOTAL PREMIOS ALTERADOS"
+     SKIP(1)
+	 WITH NO-BOX SIDE-LABELS WIDTH 132 FRAME f_totalt.
 
 FORM crapass.cdagenci  LABEL "PA" 
      crapseg.nrdconta  LABEL "CONTA/DV"
@@ -147,25 +159,28 @@ FORM crapass.cdagenci  LABEL "PA"
      crapass.nmprimtl  LABEL "TITULAR"         FORMAT "x(38)"
      crapseg.tpplaseg  LABEL "PLANO"
      aux_nmoperad      LABEL "OPERADOR"
+	 crapseg.vlpreseg  LABEL "PREMIO"
      WITH DOWN NO-BOX NO-ATTR-SPACE NO-LABEL WIDTH 132 FRAME f_novos.
 
 FORM crapass.cdagenci  LABEL "PA"
      crapseg.nrdconta  LABEL "CONTA/DV"
      crapseg.nrctrseg  LABEL "PROPOSTA"
-     crapseg.dtcancel  LABEL "DATA CANCELAM."
-     crapass.nmprimtl  LABEL "TITULAR"         FORMAT "x(30)"
+     crapseg.dtcancel  LABEL "DATA CANC."
+     crapass.nmprimtl  LABEL "TITULAR"          FORMAT "x(25)"
      crapseg.tpplaseg  LABEL "PLANO"
-     aux_nmoperad      LABEL "OPERADOR"
-     aux_nmopecnl      LABEL "OPERADOR CANCEL." 
+     aux_nmoperad      LABEL "OPERADOR"		  	FORMAT "x(20)" 
+     aux_nmopecnl      LABEL "OPERADOR CANCEL." FORMAT "x(20)"
+	 crapseg.vlpreseg  LABEL "PREMIO"
      WITH DOWN NO-BOX NO-ATTR-SPACE NO-LABEL WIDTH 132 FRAME f_cancel.
 
 FORM crapass.cdagenci  LABEL "PA"
      crapseg.nrdconta  LABEL "CONTA/DV"
      crapseg.nrctrseg  LABEL "PROPOSTA"
      crapseg.dtultalt  LABEL "DATA ALTERACAO"
-     crapass.nmprimtl  LABEL "TITULAR"         FORMAT "x(39)"
+     crapass.nmprimtl  LABEL "TITULAR"         FORMAT "x(38)"
      crapseg.tpplaseg  LABEL "PLANO"
      aux_nmoperad      LABEL "OPERADOR"
+	 crapseg.vlpreseg  LABEL "PREMIO"
      WITH DOWN NO-BOX NO-ATTR-SPACE NO-LABEL WIDTH 132 FRAME f_alter.
 
 glb_cdprogra = "crps269".
@@ -222,17 +237,17 @@ FOR EACH crapseg WHERE crapseg.cdcooper  = glb_cdcooper  AND
     
     DISPLAY STREAM str_1 crapass.cdagenci crapseg.nrdconta crapseg.nrctrseg 
                          crapseg.dtmvtolt crapass.nmprimtl crapseg.tpplaseg
-                         aux_nmoperad WITH FRAME f_novos.
+                         aux_nmoperad crapseg.vlpreseg WITH FRAME f_novos.
     
     DOWN STREAM str_1 WITH FRAME f_novos.
     
-    tot_qtsegnov = tot_qtsegnov + 1.
-    
+    ASSIGN tot_qtsegnov = tot_qtsegnov + 1
+		   tot_qtprenov = tot_qtprenov + crapseg.vlpreseg.    
 END. /* FOR EACH crapseg */
 
 IF   tot_qtsegnov > 0 THEN
      DO:
-         DISPLAY STREAM str_1 tot_qtsegnov WITH FRAME f_totnov.
+         DISPLAY STREAM str_1 tot_qtsegnov tot_qtprenov WITH FRAME f_totnov.
 
          PAGE STREAM str_1.
      END.
@@ -283,17 +298,19 @@ FOR EACH crapseg WHERE crapseg.cdcooper  = glb_cdcooper   AND
     
     DISPLAY STREAM str_1 crapass.cdagenci crapseg.nrdconta crapseg.nrctrseg
                          crapseg.dtcancel crapass.nmprimtl crapseg.tpplaseg
-                         aux_nmoperad aux_nmopecnl WITH FRAME f_cancel.
+                         aux_nmoperad aux_nmopecnl crapseg.vlpreseg WITH FRAME f_cancel.
     
     DOWN STREAM str_1 WITH FRAME f_cancel.
     
-    tot_qtsegcan = tot_qtsegcan + 1.
+    ASSIGN tot_qtsegcan = tot_qtsegcan + 1
+		   tot_qtprecan = tot_qtprecan + crapseg.vlpreseg.
+	
     
 END. /* FOR EACH crapseg */
 
 IF   tot_qtsegcan > 0 THEN
      DO:
-         DISPLAY STREAM str_1 tot_qtsegcan WITH FRAME f_totcan.
+         DISPLAY STREAM str_1 tot_qtsegcan tot_qtprecan WITH FRAME f_totcan.
          PAGE STREAM str_1.
      END.
      
@@ -334,16 +351,17 @@ FOR EACH crapseg WHERE crapseg.cdcooper  = glb_cdcooper   AND
     
     DISPLAY STREAM str_1 crapass.cdagenci crapseg.nrdconta crapseg.nrctrseg 
                          crapseg.dtultalt crapass.nmprimtl crapseg.tpplaseg
-                         aux_nmoperad WITH FRAME f_alter.
+                         aux_nmoperad crapseg.vlpreseg WITH FRAME f_alter.
     
     DOWN STREAM str_1 WITH FRAME f_alter.
     
-    tot_qtsegalt = tot_qtsegalt + 1.
+    ASSIGN tot_qtsegalt = tot_qtsegalt + 1
+		   tot_qtprealt = tot_qtprealt + crapseg.vlpreseg.
     
 END. /* FOR EACH crapseg */
 
 IF   tot_qtsegalt > 0 THEN
-     DISPLAY STREAM str_1 tot_qtsegalt WITH FRAME f_totalt.
+     DISPLAY STREAM str_1 tot_qtsegalt tot_qtprealt WITH FRAME f_totalt.
 
 OUTPUT STREAM str_1 CLOSE.
 
