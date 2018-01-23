@@ -688,34 +688,6 @@ function controlaLayout( nomeForm ){
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
-
-        $('input, select', '#' + nomeForm).desabilitaCampo();
-        cDtrefere.habilitaCampo();
-
-    } else if ( nomeForm == 'frmExtCash' ) {
-
-		// campos
-		cDtrefere = $('#dtrefere', '#'+nomeForm);
-		cVlsddisp = $('#vlsddisp', '#'+nomeForm);
-		cVlsdbloq = $('#vlsdbloq', '#'+nomeForm);
-		cVlsdblpr = $('#vlsdblpr', '#'+nomeForm);
-		cVlsdblfp = $('#vlsdblfp', '#'+nomeForm);
-		cVlsdchsl = $('#vlsdchsl', '#'+nomeForm);
-		cVlsdindi = $('#vlsdindi', '#'+nomeForm);
-		cVlstotal = $('#vlstotal', '#'+nomeForm);
-		cVllimcre = $('#vllimcre', '#'+nomeForm);
-		cVlblqjud = $('#vlblqjud', '#'+nomeForm);
-		
-		cDtrefere.css({'width':'75px'});
-		cVlsddisp.css({'width':'75px','text-align':'right'});
-		cVlsdbloq.css({'width':'75px','text-align':'right'});
-		cVlsdblpr.css({'width':'75px','text-align':'right'});
-		cVlsdblfp.css({'width':'75px','text-align':'right'});
-		cVlsdchsl.css({'width':'75px','text-align':'right'});
-		cVlsdindi.css({'width':'75px','text-align':'right'});
-		cVlstotal.css({'width':'75px','text-align':'right'});
-		cVllimcre.css({'width':'75px','text-align':'right'});
-		cVlblqjud.css({'width':'75px','text-align':'right'});
 		
 		$('input, select', '#'+nomeForm).desabilitaCampo();
 		cDtrefere.habilitaCampo();
