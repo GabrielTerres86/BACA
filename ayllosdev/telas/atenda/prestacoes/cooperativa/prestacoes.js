@@ -2991,6 +2991,9 @@ function atribuiDescControle (idQuaPrc) {
 		case 4:
 			return "Composição Dívida";
 			break;
+		case 5:
+			return "Cessão de Cartão";
+			break;
 		default:
 			return "Operação Inexistente";
 			break;

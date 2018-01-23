@@ -896,6 +896,9 @@
 			case 4:
 				$dsquaprc = "Composição Dívida";				
 				break;
+			case 5:
+				$dsquaprc = "Cessão de Cartão";				
+				break;
 			default:
 				$dsquaprc = "Operação Inexistente";				;
 				break;

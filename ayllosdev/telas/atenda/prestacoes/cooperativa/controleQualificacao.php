@@ -43,7 +43,7 @@
 
 	}else{				
 
-		if($idquaprc > 4){
+		if($idquaprc > 5){
 			echo "<script>";
 			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\',5000)));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
 			echo "</script>";
@@ -185,6 +185,9 @@
 			case '4':
 				var dsquaprc = "Composição Dívida";				
 				break;
+			case '5':
+				var dsquaprc = "Cessão de Cartão";				
+				break;			
 			default:
 				var dsquaprc = "Operação Inexistente";				
 				break;
@@ -210,6 +213,9 @@
 				break;
 			case 4:
 				$dsquaprc = "Composição Dívida";				
+				break;
+			case 5:
+				$dsquaprc = "Cessão de Cartão";				
 				break;
 			default:
 				$dsquaprc = "Operação Inexistente";				;
