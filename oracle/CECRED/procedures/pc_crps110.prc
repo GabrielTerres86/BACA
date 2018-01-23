@@ -1354,7 +1354,7 @@ BEGIN
      end if;
 
      
-
+     --Se for o programa principal - executado no batch
      if pr_idparale = 0 then
        --Executar procedure geração relatorio crrl090 totalizador
        pc_imprime_crrl090_total (pr_des_erro => vr_des_erro);
@@ -1387,7 +1387,7 @@ BEGIN
                                                           
         end if;    
         
-        if vr_inproces > 2 then 
+        if vr_inproces > 2 and vr_qtdjobs > 0 then 
           --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
           pc_log_programa(pr_dstiplog   => 'F',    
                           pr_cdprograma => vr_cdprogra,           
@@ -1399,6 +1399,8 @@ BEGIN
 
         --Salvar informacoes no banco de dados
         commit;
+     
+     --Se for job chamado pelo programa do batch   
      else
        -- Atualiza finalização do batch na tabela de controle 
        gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
