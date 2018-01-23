@@ -117,8 +117,7 @@
  * 094: [23/10/2017] Bloquear temporariamente a opcao de Simulacao de emprestimo (function validaSimulacao). (Chamado 780355) - (Fabricio)
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] NÃ£o permitir acesso a opÃ§Ã£o de incluir quando conta demitida (Jonata - RKAM P364).
- * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
- * 099: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)   
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -1406,8 +1405,6 @@ function manterRotina(operacao) {
     var flgimpnp = (typeof arrayProposta['flgimpnp'] == 'undefined') ? '' : arrayProposta['flgimpnp'];
     var percetop = (typeof arrayProposta['percetop'] == 'undefined') ? '' : arrayProposta['percetop'];
     var idquapro = (typeof arrayProposta['idquapro'] == 'undefined') ? '' : arrayProposta['idquapro'];
-    // Inclusão de novo campo Qualif. Oper. Controle
-    var idquaprc = (typeof arrayProposta['idquaprc'] == 'undefined') ? '' : arrayProposta['idquaprc'];
     var dtdpagto = (typeof arrayProposta['dtdpagto'] == 'undefined') ? '' : arrayProposta['dtdpagto'];
     var qtpromia = (typeof arrayProposta['qtpromis'] == 'undefined') ? '' : arrayProposta['qtpromis'];
     var flgpagto = (typeof arrayProposta['flgpagto'] == 'undefined') ? '' : arrayProposta['flgpagto'];
@@ -1580,8 +1577,6 @@ function manterRotina(operacao) {
             qtpreemp: qtpreemp, dsnivris: dsnivris, cdlcremp: cdlcremp,
             cdfinemp: cdfinemp, qtdialib: qtdialib, flgimppr: flgimppr,
             flgimpnp: flgimpnp, percetop: percetop, idquapro: idquapro,
-            //Inclusão novo campo Qualif. Oper. Controle 
-            idquaprc: idquaprc, 
             dtdpagto: dtdpagto, qtpromis: qtpromia, flgpagto: flgpagto,
             dsctrliq: dsctrliq, nrctaava: nrctaava, nrctaav2: nrctaav2,
             nrgarope: nrgarope, nrperger: nrperger, dtcnsspc: dtcnsspc,
@@ -1806,8 +1801,8 @@ function controlaLayout(operacao) {
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
         var rDiasUteis = $('#duteis', '#' + nomeForm);
         var r_Linha2 = $('label[for="nivcalcu"],label[for="flgimpnp"],label[for="dtdpagto"],label[for="vlpreemp"]', '#' + nomeForm);
-        var cCodigo = $('#cdfinemp,#idquapro,#idquaprc,#cdlcremp', '#' + nomeForm);
-        var cDescricao = $('#dslcremp,#dsquapro,#dsquaprc,#dsfinemp', '#' + nomeForm);
+        var cCodigo = $('#cdfinemp,#idquapro,#cdlcremp', '#' + nomeForm);
+        var cDescricao = $('#dslcremp,#dsquapro,#dsfinemp', '#' + nomeForm);
 
         var rNivelRic = $('label[for="nivrisco"]', '#' + nomeForm);
         var rRiscoCalc = $('label[for="nivcalcu"]', '#' + nomeForm);
@@ -1820,9 +1815,6 @@ function controlaLayout(operacao) {
         var rQtParc = $('label[for="qtpreemp"]', '#' + nomeForm);
         var rQualiParc = $('label[for="idquapro"]', '#' + nomeForm);
         var rDsQualiParc = $('label[for="dsquapro"]', '#' + nomeForm);
-        // Inclusão do campo (Qualif. Oper. Controle)
-        var rQualiParcC = $('label[for="idquaprc"]', '#' + nomeForm);
-        var rDsQualiParcC = $('label[for="dsquaprc"]', '#' + nomeForm);        
         var rDebitar = $('label[for="flgpagto"]', '#' + nomeForm);
         var rLiberar = $('label[for="qtdialib"]', '#' + nomeForm);
         var rDtLiberar = $('label[for="dtlibera"]', '#' + nomeForm);
@@ -1848,9 +1840,7 @@ function controlaLayout(operacao) {
         var cQtParc = $('#qtpreemp', '#' + nomeForm);
         var cQualiParc = $('#idquapro', '#' + nomeForm);
         var cDsQualiParc = $('#dsquapro', '#' + nomeForm);
-        var cQualiParcC = $('#idquaprc', '#' + nomeForm);
-        var cDsQualiParcC = $('#dsquaprc', '#' + nomeForm);
-
+        
         var cDebitar = $('#flgpagto', '#' + nomeForm);
         var cTipoEmpr = $('#tpemprst', '#' + nomeForm);
         var cVliofepr = $('#vliofepr', '#' + nomeForm);
@@ -1879,8 +1869,6 @@ function controlaLayout(operacao) {
         cQtParc.addClass('rotulo').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
         cQualiParc.addClass('rotulo').css('width', '35px');
         cDsQualiParc.addClass('').css('width', '108');
-        cQualiParcC.addClass('rotulo').css('width', '35px');
-        cDsQualiParcC.addClass('').css('width', '108');
         cDebitar.addClass('rotulo').css('width', '90px');
         cPercCET.addClass('rotulo moeda').css('width', '50px');
         cTipoEmpr.addClass('rotulo').css('width', '90px');
@@ -1910,7 +1898,6 @@ function controlaLayout(operacao) {
         rLnCred.addClass('').css('width', '82px');
         rFinali.addClass('').css('width', '82px');
         rQualiParc.addClass('').css('width', '82px');
-        rQualiParcC.addClass('').css('width', '250px');
         rPercCET.addClass('').css('width', '265px');
         rDtPgmento.addClass('rotulo').css('width', '265px');
         rDtUltPag.addClass('rotulo').css('width', '265px');
@@ -1959,7 +1946,6 @@ function controlaLayout(operacao) {
             cNivelRic.desabilitaCampo();
             cRiscoCalc.desabilitaCampo();
             cQualiParc.desabilitaCampo();
-            cQualiParcC.desabilitaCampo();
             cLiquidacoes.attr('disabled', true);
             cVlPrest.desabilitaCampo();
             cDtlibera.desabilitaCampo();
@@ -2037,7 +2023,6 @@ function controlaLayout(operacao) {
             cVlEmpr.desabilitaCampo();
             cVlPrest.desabilitaCampo();
             cQualiParc.desabilitaCampo();
-            cQualiParcC.desabilitaCampo();
             cLiquidacoes.attr('disabled', true);
             cDtlibera.desabilitaCampo();
             cDtUltPag.desabilitaCampo();
@@ -3730,8 +3715,6 @@ function copiaProposta(novaOp) {
     arrayProposta['cdfinemp'] = $('#cdfinemp', '#frmNovaProp').val();
     arrayProposta['qtpreemp'] = $('#qtpreemp', '#frmNovaProp').val();
     arrayProposta['idquapro'] = $('#idquapro', '#frmNovaProp').val();
-    // Inclusão campo (Qualif. Oper. Controle)
-    arrayProposta['idquaprc'] = $('#idquaprc', '#frmNovaProp').val();
     arrayProposta['flgpagto'] = $('#flgpagto', '#frmNovaProp').val();
     arrayProposta['percetop'] = $('#percetop', '#frmNovaProp').val();
     arrayProposta['qtdialib'] = $('#qtdialib', '#frmNovaProp').val();
@@ -3782,8 +3765,6 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['cdfinemp'] = $('#cdfinemp', '#frmNovaProp').val();
         arrayProposta['qtpreemp'] = $('#qtpreemp', '#frmNovaProp').val();
         arrayProposta['idquapro'] = $('#idquapro', '#frmNovaProp').val();
-        //Inclusão novo campo (Qualif. Oper. Controle)
-        arrayProposta['idquaprc'] = $('#idquaprc', '#frmNovaProp').val();
         arrayProposta['flgpagto'] = $('#flgpagto', '#frmNovaProp').val();
         arrayProposta['percetop'] = $('#percetop', '#frmNovaProp').val();
         arrayProposta['qtdialib'] = $('#qtdialib', '#frmNovaProp').val();
@@ -3975,8 +3956,6 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['cdfinemp'] = $('#cdfinemp', '#frmNovaProp').val();
         arrayProposta['qtpreemp'] = $('#qtpreemp', '#frmNovaProp').val();
         arrayProposta['idquapro'] = $('#idquapro', '#frmNovaProp').val();
-        //Inclusão novo campo (Qualif. Oper. Controle)
-        arrayProposta['idquaprc'] = $('#idquaprc', '#frmNovaProp').val();
         arrayProposta['flgpagto'] = $('#flgpagto', '#frmNovaProp').val();
         arrayProposta['percetop'] = $('#percetop', '#frmNovaProp').val();
         arrayProposta['qtdialib'] = $('#qtdialib', '#frmNovaProp').val();
@@ -4067,8 +4046,6 @@ function atualizaTela() {
         $('#qtpreemp', '#frmNovaProp').val(arrayProposta['qtpreemp']);
         $('#idquapro', '#frmNovaProp').val(arrayProposta['idquapro']);
         $('#dsquapro', '#frmNovaProp').val(arrayProposta['dsquapro']);
-        $('#idquaprc', '#frmNovaProp').val(arrayProposta['idquaprc']);
-        $('#dsquaprc', '#frmNovaProp').val(arrayProposta['dsquaprc']);
         $('#flgpagto', '#frmNovaProp').val(arrayProposta['flgpagto']);
         $('#percetop', '#frmNovaProp').val(arrayProposta['percetop']);
         $('#qtdialib', '#frmNovaProp').val(arrayProposta['qtdialib']);
@@ -7723,9 +7700,7 @@ function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
 		qualificaOperacao();
 	} else {
 		$('#idquapro', '#' + nomeForm).val(1);
-		$('#dsquapro', '#' + nomeForm).val('Operacao normal');
-        $('#idquaprc', '#' + nomeForm).val(1);
-        $('#dsquaprc', '#' + nomeForm).val('Operacao normal');
+		$('#dsquapro', '#' + nomeForm).val('Operacao normal');        
 	}
 
 	limpaDivGenerica();
