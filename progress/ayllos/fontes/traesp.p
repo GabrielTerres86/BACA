@@ -343,6 +343,8 @@ DO:
                      RETURN.
                
                   END.
+			   
+			   EMPTY TEMP-TABLE tt-reg-crapcme.
 
                IF aux_confirma = "S" THEN
                   DO:
@@ -389,7 +391,7 @@ DO:
                                                              INPUT glb_cdoperad,
                                                              INPUT 0,
                                                              INPUT TRUE,
-                                                             INPUT "",
+                                                             INPUT tel_dsdjusti,
                                                              INPUT TABLE tt-reg-crapcme,
                                                             OUTPUT TABLE tt-erro).
 
