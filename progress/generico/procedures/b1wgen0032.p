@@ -1035,6 +1035,9 @@ PROCEDURE obtem-permissao-solicitacao:
                     ASSIGN aux_cdcritic = 0
                            aux_dscritic = "".
                            
+                    IF crapass.cdsitdct = 7 THEN
+                      ASSIGN aux_dscritic = "Associado em processo de demissao!".
+                    ELSE
                     IF  CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl))  THEN
                         ASSIGN aux_cdcritic = 695.
                     ELSE
@@ -1044,7 +1047,7 @@ PROCEDURE obtem-permissao-solicitacao:
                     IF  crapass.dtdemiss <> ?  THEN
                         ASSIGN aux_cdcritic = 75.
                 
-                    IF  aux_cdcritic > 0  THEN
+                    IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                         DO:
                             RUN gera_erro (INPUT par_cdcooper,
                                            INPUT par_cdagenci,

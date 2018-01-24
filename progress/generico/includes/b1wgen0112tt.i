@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0112tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 20/04/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 21/08/2017
   
     Dados referentes ao programa:
   
@@ -34,7 +34,10 @@
 				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
-                             
+
+                21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
+                             tt-extrato_epr_aux. (Jaison/James - PRJ298)
+
 .............................................................................
 .............................................................................*/
 
@@ -131,7 +134,9 @@ DEF TEMP-TABLE tt-extrato_epr_aux
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
     FIELD cdorigem LIKE craplem.cdorigem
-    FIELD cdhistor LIKE craplem.cdhistor.
+    FIELD cdhistor LIKE craplem.cdhistor
+    FIELD qtdiacal LIKE craplem.qtdiacal
+    FIELD vlrdtaxa LIKE craplem.txjurepr.
 
 DEF TEMP-TABLE tt-demonstrativo NO-UNDO
     FIELD nraplica LIKE craprda.nraplica

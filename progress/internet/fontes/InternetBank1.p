@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 18/09/2017
+   Data    : Marco/2007                        Ultima atualizacao: 13/12/2017
 
    Dados referentes ao programa:
 
@@ -132,6 +132,10 @@
 
                18/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil.
                             (Jaison/Elton - M459)
+
+               13/12/2017 - Chamado 781211 - Ajustes para busca de id de existencia  
+			                de demostrativo INSS tambem se existe registro na crapdbi
+							(Andrei-MOUTs)			   
 
 ..............................................................................*/
 
@@ -1128,6 +1132,9 @@ IF  par_indlogin <> 0  THEN
             END.
     END.
 
+/* Somente para PF*/ 
+IF  crapass.inpessoa = 1  THEN
+DO: 
 /* Verifica se cooperado eh beneficiario do INSS */
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -1135,7 +1142,10 @@ RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
                    aux_ponteiro = PROC-HANDLE
                    ("SELECT DISTINCT 1 FROM tbinss_dcb dcb " +
                                       "WHERE dcb.cdcooper = " + STRING(par_cdcooper) +
-                                      "  AND dcb.nrdconta = " + STRING(par_nrdconta)).
+										  "  AND dcb.nrdconta = " + STRING(par_nrdconta) + 
+						" UNION " +
+						"SELECT DISTINCT 1 FROM crapdbi dbi " +
+										  "WHERE dbi.nrcpfcgc = " + STRING(crapttl.nrcpfcgc) ).
 
 FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
    ASSIGN aux_flgbinss = INT(proc-text).
@@ -1145,6 +1155,8 @@ CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
    WHERE PROC-HANDLE = aux_ponteiro.
 
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+	
+END.
 
 
 /* verificacao para banner prova de vida

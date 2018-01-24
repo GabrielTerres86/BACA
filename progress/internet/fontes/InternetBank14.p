@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2008.                      Ultima atualizacao: 16/11/2015   
+   Data    : Marco/2008.                      Ultima atualizacao: 21/08/2017
 
    Dados referentes ao programa:
 
@@ -29,7 +29,9 @@
                             caracters (Kelvin - 233714) 
                             
                16/11/2015 - Incluso campo cdorigem na montagem do xml_operacao14b.
-                            (Daniel)           
+                            (Daniel)
+
+               21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -164,7 +166,7 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                                                    OUTPUT TABLE tt-extrato_epr).                                              
                  DELETE PROCEDURE h-b1wgen0002.             
              END.
-        ELSE
+        ELSE IF   tt-dados-epr.tpemprst = 1   THEN
              DO:
                  RUN sistema/generico/procedures/b1wgen0112.p
                      PERSISTENT SET h-b1wgen0112.
@@ -188,6 +190,29 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                                               INPUT 2, /* Detalhado */
                                               INPUT "",
                                               INPUT FALSE, /* Nao imprime*/
+                                             OUTPUT TABLE tt-erro,
+                                             OUTPUT TABLE tt-extrato_epr_aux).
+           
+                 DELETE PROCEDURE h-b1wgen0112.
+             END.
+        ELSE IF   tt-dados-epr.tpemprst = 2   THEN
+             DO:
+                 RUN sistema/generico/procedures/b1wgen0112.p
+                     PERSISTENT SET h-b1wgen0112.
+
+                 RUN extrato_pos_fixado IN h-b1wgen0112 ( 
+                                              INPUT par_cdcooper,
+                                              INPUT 90,
+                                              INPUT 900,
+                                              INPUT "996",
+                                              INPUT "INTERNETBANK",
+                                              INPUT 3,
+                                              INPUT par_nrdconta,
+                                              INPUT par_idseqttl,
+                                              INPUT par_nrctremp,
+                                              INPUT TRUE,
+                                              INPUT par_dtiniper,
+                                              INPUT par_dtfimper,
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-extrato_epr_aux).
            
@@ -235,7 +260,7 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                             xml_operacao14b.dscabfim = "</EXTRATO>".                                         
                  END.
              END.
-        ELSE
+        ELSE IF   tt-dados-epr.tpemprst = 1   THEN
              DO:
                  FOR EACH tt-extrato_epr_aux WHERE 
                           tt-extrato_epr_aux.flglista = TRUE NO-LOCK 
@@ -306,6 +331,52 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
                             END.
                             
                             xml_operacao14b.cdorigem = "<cdorigem>" + aux_dsorigem + "</cdorigem>". 
+
+                            xml_operacao14b.dscabfim = "</EXTRATO>".      
+
+                 END.            
+             END.
+        ELSE IF   tt-dados-epr.tpemprst = 2   THEN
+             DO:
+                 FOR EACH tt-extrato_epr_aux WHERE 
+                          tt-extrato_epr_aux.flglista = TRUE NO-LOCK 
+                          BY tt-extrato_epr_aux.dtmvtolt
+                             BY tt-extrato_epr_aux.nrparepr
+                                BY tt-extrato_epr_aux.dsextrat:
+                        
+                     CREATE xml_operacao14b.
+                     ASSIGN xml_operacao14b.dscabini = "<EXTRATO>"
+                            xml_operacao14b.dtmvtolt = "<dtmvtolt>" +
+                             STRING(tt-extrato_epr_aux.dtmvtolt,"99/99/9999") +
+                                                        "</dtmvtolt>"
+
+                            xml_operacao14b.dshistor = "<dsextrat>" +
+                                        tt-extrato_epr_aux.dsextrat +
+                                                       "</dsextrat>"
+
+                            xml_operacao14b.nrparepr = "<nrparepr>" +
+                                    STRING(tt-extrato_epr_aux.nrparepr) +
+                                                       "</nrparepr>"
+
+                            xml_operacao14b.vldebito = "<vldebito>" +
+                             STRING(tt-extrato_epr_aux.vldebito,"zzz,zzz,zz9.99") +
+                                                       "</vldebito>"
+
+                            xml_operacao14b.vlcredit = "<vlcredit>" +
+                             STRING(tt-extrato_epr_aux.vlcredit,"zzz,zzz,zz9.99") +
+                                                       "</vlcredit>"
+
+                            xml_operacao14b.vldsaldo = "<vlsaldo>" +
+                             STRING(tt-extrato_epr_aux.vlsaldo,"zzz,zzz,zz9.99") +
+                                                       "</vlsaldo>"
+
+                            xml_operacao14b.qtdiacal = "<qtdiacal>" +
+                             STRING(tt-extrato_epr_aux.qtdiacal) +
+                                                       "</qtdiacal>"
+
+                            xml_operacao14b.vlrdtaxa = "<vlrdtaxa>" +
+                             STRING(tt-extrato_epr_aux.vlrdtaxa,"zzz,zzz,zz9.99") +
+                                                       "%</vlrdtaxa>". 
 
                             xml_operacao14b.dscabfim = "</EXTRATO>".      
 

@@ -7,6 +7,7 @@
  * ALTERACAO    : 08/07/2015 - Adicionado validacao de campos referente a dias da tela de tarifas. (Jorge/Elton) - Emergencial
  *                18/05/2016 - Adicionado o campo dtlimdeb. (Jaison/Marcos)
  *				  20/07/2016 - Corrigi os erros de utilizacao de variaveis nao declaradas. SD 471925 (Carlos R.)	
+ *                04/12/2017 - Alterar armazenamento da variavel flgdgfib dos valores "true" e "false" para "yes" e "no" (Lucas Ranghetti #802339)
  *
  */
 
@@ -122,9 +123,9 @@
     essa validacao */
     $dtultufp = "?";
     if ($old_flgpgtib <> $flgpgtib) {
-        $flgdgfib = true;   // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
+        $flgdgfib = yes;   // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     } else {
-        $flgdgfib = false;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
+        $flgdgfib = no;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     }
 
     $auxIndescsg = $indescsg=="2"?"yes":"no";

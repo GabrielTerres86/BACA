@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 02/05/2017
+   Data    : Junho/2007                     Ultima atualizacao: 06/10/2017
 
    Dados referentes ao programa:
 
@@ -124,7 +124,12 @@
 
               01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
 
+              04/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 			  25/04/2017 - Tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+
+              21/09/2017 - Projeto 410 - Incluir campo Indicador de 
+                            financiamento do IOF (Diogo - Mouts)
 
 ..............................................................................*/
 
@@ -367,6 +372,13 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inobriga AS CHAR                                           NO-UNDO.
+DEF VAR aux_idfiniof AS INTE                                           NO-UNDO.
+DEF VAR aux_vliofepr LIKE crapepr.vliofepr                             NO-UNDO.
+DEF VAR aux_vlrtarif AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
+
+DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
+DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
@@ -595,6 +607,14 @@ PROCEDURE valores_entrada:
             WHEN "uflicenc" THEN aux_uflicenc = tt-param.valorCampo.      
             WHEN "dstipbem" THEN aux_dstipbem = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
+
+            WHEN "idfiniof" THEN aux_idfiniof = INTE(tt-param.valorCampo).
+            WHEN "vliofepr" THEN aux_vliofepr = DECI(tt-param.valorCampo).
+            WHEN "vlrtarif" THEN aux_vlrtarif = DECI(tt-param.valorCampo).
+            WHEN "vlrtotal" THEN aux_vlrtotal = DECI(tt-param.valorCampo).
+
+            WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
+            WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
 
         END CASE.
     
@@ -1121,6 +1141,8 @@ PROCEDURE valida-dados-gerais:
                             INPUT aux_inconfi2,
                             INPUT aux_nrcpfope,
                             INPUT aux_cdmodali,
+                            INPUT aux_idcarenc,
+                            INPUT aux_dtcarenc,
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-msg-confirma,
                             OUTPUT TABLE tt-ge-epr,
@@ -1511,6 +1533,8 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_dsctrliq,
                                 INPUT aux_nrctaava,
                                 INPUT aux_nrctaav2,
+                                INPUT aux_idcarenc,
+                                INPUT aux_dtcarenc,
                                 INPUT aux_nrgarope,
                                 INPUT aux_nrperger,
                                 INPUT aux_dtcnsspc,

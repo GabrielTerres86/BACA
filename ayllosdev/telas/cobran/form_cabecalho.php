@@ -7,7 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 28/04/2016 - Inclusao opcao S. PRJ318 - Nova Plataforma de cobrança (Odirlei-AMcom)
  *
- *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -15,6 +15,8 @@
 
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 
 	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
 	<select id="cddopcao" name="cddopcao" onchange="document.getElementById('btnOk1').click();">

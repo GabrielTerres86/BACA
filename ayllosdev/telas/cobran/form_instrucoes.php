@@ -19,7 +19,7 @@
 
 <?php 
 $esta_protestado  =  (( $flgdprot == "yes" || $flgdprot == "YES" ) && ( $qtdiaprt > 0 )) ? 1 : 0;
-$esta_negativado  = ((( $flserasa == "yes" || $flserasa == "YES" ) && ( $qtdianeg > 0 )) || ($inserasa > 0)) ? 1 : 0;
+$esta_negativado  = ((( $flserasa == "yes" || $flserasa == "YES" ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
 
 foreach( $registro as $r ) {
     // Por padrão vamos criar a opção da instrução em tela

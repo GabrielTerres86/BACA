@@ -247,6 +247,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER         --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_rowidcob        OUT ROWID         --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER       --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER       --Numero Convenio Boleto
@@ -300,6 +301,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_recidcob        OUT NUMBER            --RECID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -624,6 +626,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 
   --              13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
   --                          (Tiago/Elton #691470)
+  --
+  --              07/12/2017 - Melhoria 458, adicionado campo v_tppagmto na procedure pc_gera_titulos_iptu_prog
+  --                           e na procedure pc_gera_titulos_iptu - Antonio R. Jr (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1631,6 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_rowidcob        OUT ROWID             --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -2259,6 +2265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.nrterfin
           ,craptit.tpcptdoc
           ,craptit.cdctrlcs
+          ,craptit.tppagmto
           ,craptit.nrdident
           ,craptit.nrispbds
           ,craptit.inpessoa
@@ -2295,6 +2302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,pr_nrterfin                       -- nrterfin
           ,pr_tpcptdoc                       -- tpcptdoc
           ,nvl(pr_cdctrlcs,' ')              -- cdctrlcs
+          ,pr_tppagmto                       -- tppagmto
           ,nvl(vr_nridetit,0)                -- nrdident
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
@@ -3569,6 +3577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_recidcob        OUT NUMBER            --RECID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -3670,6 +3679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                        , pr_vloutcre => pr_vloutcre
                        , pr_tpcptdoc => pr_tpcptdoc
                        , pr_cdctrlcs => pr_cdctrlcs
+                       , pr_tppagmto => pr_tppagmto
                        , pr_rowidcob => vr_rowidcob
                        , pr_indpagto => pr_indpagto
                        , pr_nrcnvbol => pr_nrcnvbol

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Maio/2013                       Ultima atualizacao: 05/09/2016
+   Data    : Maio/2013                       Ultima atualizacao: 07/12/2017
 
    Dados referentes ao programa:
 
@@ -45,6 +45,9 @@
                05/09/2016 - Incluir validacao de cpf/cnpj aqui nesta rotina e nao mais na 
                             pcrap06.p como fazia antes (Lucas Ranghetti #503544)
                                  
+               07/12/2017 - Tratar verifica-digito-num-referencia-darf para validar o 
+                            digito verificador corretamente quando passar pela segunda 
+                            validacao (Lucas Ranghetti #805724)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -837,6 +840,12 @@ PROCEDURE verifica-digito-num-referencia-darf:
 
     ASSIGN aux_resto   = aux_calculo MODULO 11
            aux_digito   = 11 - aux_resto.
+
+    IF  aux_resto = 1  THEN
+        ASSIGN aux_digito = 0.
+
+    IF  aux_resto = 0  THEN
+        ASSIGN aux_digito = 1.
 
     /* Valida o primeiro Digito */
     IF (INTEGER(SUBSTRING(par_cdrefere,LENGTH(STRING(par_cdrefere)) - 1,1)) <> aux_digito) THEN

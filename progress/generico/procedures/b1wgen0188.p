@@ -90,7 +90,9 @@
                 01/08/2016 - Agora podem existir mais de uma carga ativa em caso de cargas manuais. Portanto
                              agora é preciso passar nrdconta na procedure "busca_carga_ativa" para buscar a 
                              carga ativa mais atual. Projeto 299/3 Pre aprovado fase 3 (Lombardi).
-                
+
+                10/05/2017 - Passagem dos campos de carencia. (Jaison/James - PRJ298)
+
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
                 13/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
@@ -1666,7 +1668,9 @@ PROCEDURE calcula_iof:
                                                  INPUT par_vlemprst,
                                                  INPUT par_dtvencto,
                                                  INPUT par_dtmvtolt,
-												 INPUT 1,    /* par_tpemprst */
+                                                 INPUT 1, /* pr_tpemprst */
+                                                 INPUT ?, /* pr_dtcarenc */
+                                                 INPUT 0, /* pr_qtdias_carencia */
                                                 OUTPUT 0,
                                                 OUTPUT "").
            

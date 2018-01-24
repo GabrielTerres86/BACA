@@ -10,12 +10,14 @@
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *
  *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)	
+ *	 
+ *                27/10/2017 - Ajustes tela CADCTA. PRJ339-CRM (Odirlei-AMcom)
  *
  */
  
 ?>
 
-<div class="divRegistros">
+<div class="divRegistros divRegistrosPoderes">
 		<table>
 			<thead>
 				<tr>
@@ -79,6 +81,10 @@
 			if($nmrotina == "Representante/Procurador"){?>
 				<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif"    onClick="controlaOperacaoProc('CT');" />
 		<?php
+			}else if ($nmrotina == "PROCURADORES" && $nmdatela == 'CADCTA') {
+		?>
+                <input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif"    onClick="controlaOperacaoProcuradores('TC');" />
+        <?php
 			}else{
 		?>
 				<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="acessaOpcaoAbaDados(6,2,'@');return false;" />

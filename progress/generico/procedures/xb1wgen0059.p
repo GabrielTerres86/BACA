@@ -66,6 +66,9 @@
 
 				23/03/2017 - Adicionado tratamento na procedure Busca-Agencia. (PRJ321 - Reinert)
 
+                29/03/2017 - Criacao do novo parametro aux_tpprodut na busca_linhas_credito.
+                             (Jaison/James - PRJ298)
+
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
 .............................................................................*/
 
@@ -200,6 +203,7 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdrelacionamento AS INTE                                   NO-UNDO.
 DEF VAR aux_dsrelacionamento AS CHAR                                   NO-UNDO.
+DEF VAR aux_tpprodut AS INTE INIT ?                                    NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -356,6 +360,7 @@ PROCEDURE valores_entrada:
             WHEN "nmprimtl" THEN aux_nmprimtl = tt-param.valorCampo.            
             WHEN "cdrelacionamento" THEN aux_cdrelacionamento = INTE(tt-param.valorCampo).
             WHEN "dsrelacionamento" THEN aux_dsrelacionamento = tt-param.valorCampo.
+            WHEN "tpprodut" THEN aux_tpprodut = INT(tt-param.valorCampo).
                 
         END CASE.
 
@@ -1717,6 +1722,7 @@ PROCEDURE busca_linhas_credito:
                       INPUT aux_nrregist, 
                       INPUT aux_nriniseq, 
                       INPUT aux_cdmodali,
+                      INPUT aux_tpprodut,
                      OUTPUT aux_qtregist, 
                      OUTPUT TABLE tt-craplcr ).
 

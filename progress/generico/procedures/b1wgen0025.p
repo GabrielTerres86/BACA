@@ -338,9 +338,12 @@
                              não consultar transferência de conta (Carlos)
 
 			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-              
+                             crapass, crapttl, crapjur (Adriano - P339).
+                30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
+				                     Prova de vida nao aparecendo na AV - Andrei - Mouts							
+
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                 26/12/2017 - #820634 Aumentado o limite de saque noturno, 
                              de R$300 para R$500 (Carlos)
 
@@ -2954,7 +2957,7 @@ PROCEDURE efetua_saque:
                                  INPUT IF AVAIL crapcrm THEN 1 ELSE 2,
                                  INPUT par_hrtransa,     /* Nrd Documento */               
                                  INPUT aux_cdhisdeb,     /* SAQUE CARTAO */
-                                 INPUT par_nrcartao,
+                                 INPUT STRING(par_nrcartao),
                                  INPUT par_vldsaque,
                                  INPUT "1",                /* Código do Operador */
                                  INPUT 0,
@@ -4682,21 +4685,6 @@ PROCEDURE verifica_prova_vida_inss:
 
     IF  VALID-HANDLE(h_b1wgen0091)  THEN
         DO:
-            /* para a ALTOVALE, os beneficios das contas migradas NAO FORAM MIGRADOS,
-               entao busca na VIACREDI */
-            IF  par_cdcooper = 16  THEN
-                DO:
-                    /* Verifica se a conta foi migrada da VIACREDI */
-                    FIND craptco WHERE craptco.cdcopant = 1                 AND
-                                       craptco.nrctaant = par_nrdconta      AND
-                                       craptco.tpctatrf = 1 /* C/C */       AND
-                                       craptco.flgativo = YES
-                                       NO-LOCK NO-ERROR.
-
-                    /* troca a cooperativa */
-                    IF  AVAIL craptco  THEN
-                        par_cdcooper = 1.
-                END.
 
             /* varre todos os beneficios em busca de algum que precise comprovar vida */
             FOR EACH crapcbi WHERE crapcbi.cdcooper = par_cdcooper  AND

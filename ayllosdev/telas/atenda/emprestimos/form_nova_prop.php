@@ -22,6 +22,7 @@
  * 011: [26/06/2015] Criei a funcionalidade de atualizacao da "Data últ. pagto" a partir do numero de parcelas com base na "Data pagto" (Carlos R.)
  * 012: [26/06/2017] Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 012: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  */
  ?> 
 
@@ -202,37 +203,44 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">
 		<br />
-		 <input type="hidden" name="idfiniof" id="idfiniof">
-        <!--<label for="idfiniof">Financiar IOF e Tarifa:</label>
-        <select name="idfiniof" id="idfiniof">
-            <option value="1" selected="selected">Sim</option>
-            <option value="0">N&atilde;o</option>
-        </select>-->
+		<input type=hidden name="idfiniof" id="idfiniof">
+		<input type=hidden name="vliofepr" id="vliofepr">
+		<input type=hidden name="vlrtarif" id="vlrtarif">
+		<input type=hidden name="vlrtotal" id="vlrtotal">
+		
+		<label for="percetop">CET(%a.a.):</label>
+		<input name="percetop" id="percetop" type="text" value="" />
+		
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
+		<br />
 		
-		        
-		<!--<br />
-        <label for="vliofepr">IOF:</label>
-        <input name="vliofepr" id="vliofepr" type="text" value=""/>-->
-		<input type="hidden" name="vliofepr" id="vliofepr">
-
                 <label for="dtultpag">Data &uacute;lt. pagto:</label>
                 <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
 		<br />
 		
-        <!--<label for="vlrtarif">Tarifa:</label>
-        <input name="vlrtarif" id="vlrtarif" type="text" value=""/>-->
-		<input type="hidden" name="vlrtarif" id="vlrtarif">
-
-		<label for="percetop">CET(%a.a.):</label>
-		<input name="percetop" id="percetop" type="text" value="" />
-		<br />
+		<div id="linCarencia">
+			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+			<select name="idcarenc" id="idcarenc">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlCarenc as $reg) {
+                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                }
+            ?>
+			</select>
 		
-		<!--<label for="vlrtotal">Valor Total:</label>
-        <input name="vlrtotal" id="vlrtotal" type="text" value=""/>-->
-		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
-
+			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
+		</div>
+		
 		<label for="flgimppr">Proposta:</label>
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>

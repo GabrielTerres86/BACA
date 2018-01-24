@@ -448,11 +448,12 @@
 							com data de vencimento e valor atualizados tanto nos campos
 							quanto no codigo de barras. (SD784234 - AJFink)
 							
-
                03/11/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
                             do periodo de emissao ("1 - Em Aberto") (Carlos)
 
-               
+               07/12/2017 - Carregar o valor dos campos dtvctori, dtvencto, dtmvtatu e flgvenci
+                            (Douglas - Chamado 805008)
+
                20/12/2017 - Ajuste na consulta-bloqueto: validacao do preenchimento 
                             do periodo, sem essa validacao esta sendo feito um loop
                             entre duas datas vazias, com isso o loop nao para de 
@@ -914,8 +915,7 @@ PROCEDURE consulta-boleto-2via.
 			
     IF AVAIL(tt-consulta-blt) THEN
     DO:
-        ASSIGN tt-consulta-blt.dtvencto            = IF aux_critdata = YES THEN aux_dtvencut ELSE crapcob.dtvencto 
-               tt-consulta-blt.vltitulo            = aux_vltituut
+        ASSIGN tt-consulta-blt.vltitulo            = aux_vltituut
                tt-consulta-blt.vlmormul            = aux_vlmormut
                tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
                tt-consulta-blt.nmprimtl 	         = aux_nmdobnfc.
@@ -942,9 +942,16 @@ PROCEDURE consulta-boleto-2via.
 				   tt-consulta-blt.vldocmto = crapcob.vltitulo
                    /* Valor de desconto calculado */
                    tt-consulta-blt.vldescto = aux_vldescut 
-				   tt-consulta-blt.dtvctori = aux_dtvencut
 				   tt-consulta-blt.flgaceit = "N"
-               tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
+               tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N")
+
+               /* Carregar as datas do boleto que esta sendo consultado */
+               tt-consulta-blt.dtvctori = crapcob.dtvctori
+               tt-consulta-blt.dtvencto = crapcob.dtvencto
+               /* Data de Movimento atualizada */ 
+               tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+               /* Identificar se o boleto esta vencido */
+               tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
 
 			VALIDATE tt-consulta-blt.
 	   END.
@@ -1317,7 +1324,16 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
 										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc
-                                        tt-consulta-blt.vldescto            = aux_vldescut.
+                                            tt-consulta-blt.vldescto            = aux_vldescut
+
+                                            /* Carregar as datas do boleto que esta sendo consultado */
+                                            tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtvencto = crapcob.dtvencto
+                                            /* Data de Movimento atualizada */ 
+                                            tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+                                            /* Identificar se o boleto esta vencido */
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                            
                                  END.
                                           
                              END.
@@ -1545,7 +1561,16 @@ PROCEDURE consulta-bloqueto.
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                     tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
                                     tt-consulta-blt.nmprimtl            = aux_nmdobnfc
-                                    tt-consulta-blt.vldescto            = aux_vldescut.
+                                            tt-consulta-blt.vldescto            = aux_vldescut
+                                              
+                                            /* Carregar as datas do boleto que esta sendo consultado */
+                                            tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtvencto = crapcob.dtvencto
+                                            /* Data de Movimento atualizada */ 
+                                            tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+                                            /* Identificar se o boleto esta vencido */
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                 
                                  END.
                              END.    
 
@@ -1772,7 +1797,16 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
                                         tt-consulta-blt.nmprimtl 			= aux_nmdobnfc
-                                        tt-consulta-blt.vldescto            = aux_vldescut.
+                                                      tt-consulta-blt.vldescto            = aux_vldescut
+                                              
+                                                      /* Carregar as datas do boleto que esta sendo consultado */
+                                                      tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                                      tt-consulta-blt.dtvencto = crapcob.dtvencto
+                                                      /* Data de Movimento atualizada */ 
+                                                      tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+                                                      /* Identificar se o boleto esta vencido */
+                                                      tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+
                                 END.
                                 END.
                              END.
@@ -2002,7 +2036,15 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
                                         tt-consulta-blt.nmprimtl 		    = aux_nmdobnfc
-                                        tt-consulta-blt.vldescto            = aux_vldescut.
+                                                tt-consulta-blt.vldescto            = aux_vldescut
+
+                                                /* Carregar as datas do boleto que esta sendo consultado */
+                                                tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                                tt-consulta-blt.dtvencto = crapcob.dtvencto
+                                                /* Data de Movimento atualizada */ 
+                                                tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+                                                /* Identificar se o boleto esta vencido */
+                                                tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
                                  
                                 END.
                                 END.
@@ -2163,9 +2205,9 @@ PROCEDURE consulta-bloqueto.
                             ASSIGN i-cod-erro = 0 
                                    c-dsc-erro = "Data Inicial nao informada"
                                    par_nmdcampo = "inidtmvt".
-                    
+           
                             {sistema/generico/includes/b1wgen0001.i}
-                    
+
                             RETURN "NOK".
                         END.
 
@@ -2450,7 +2492,16 @@ PROCEDURE consulta-bloqueto.
                                       tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                       tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
 									                    tt-consulta-blt.nmprimtl 			      = aux_nmdobnfc
-                                      tt-consulta-blt.vldescto            = aux_vldescut.
+                                            tt-consulta-blt.vldescto            = aux_vldescut
+
+                                            /* Carregar as datas do boleto que esta sendo consultado */
+                                            tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtvencto = crapcob.dtvencto
+                                            /* Data de Movimento atualizada */ 
+                                            tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
+                                            /* Identificar se o boleto esta vencido */
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                
                                 END.
                             END.
 
@@ -2539,14 +2590,14 @@ PROCEDURE consulta-bloqueto.
                             ASSIGN i-cod-erro = 0 
                                    c-dsc-erro = "Data Inicial nao informada"
                                    par_nmdcampo = "inidtmvt".
-           
+
                             {sistema/generico/includes/b1wgen0001.i}
 
                             RETURN "NOK".
                         END.
 
                     IF  p-fim-emissao = ? THEN 
-                        DO:
+                    DO:
                             ASSIGN i-cod-erro = 0 
                                    c-dsc-erro = "Data Final nao informada"
                                    par_nmdcampo = "inidtmvt".
@@ -2557,7 +2608,7 @@ PROCEDURE consulta-bloqueto.
                         END.
 
                     IF  p-ini-emissao > p-fim-emissao THEN
-                    DO:
+                        DO:
                             ASSIGN i-cod-erro = 0 
                                    c-dsc-erro = "Data inicial maior que data final"
                                    par_nmdcampo = "fimdtmvt".

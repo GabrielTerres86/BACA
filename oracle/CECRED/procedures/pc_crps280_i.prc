@@ -340,6 +340,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  23/03/2017 - Ajustes PRJ343 - Cessao de credito.
                               (Odirlei-AMcom)   
 							  
+                 23/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
                               (Rafael Faria - Supero)
                               
@@ -2432,8 +2434,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                         vr_tab_dados_epr(vr_indice).dtdpagto := rw_crapepr.dtvencto_original;
                      END IF;
 
-                     -- Para empréstimo pré-fixado
-                     IF rw_crapepr.tpemprst = 1 THEN
+                     -- Para empréstimo pré-fixado ou Pos-Fixado
+                     IF rw_crapepr.tpemprst IN (1,2) THEN
                         -- Utilizaremos o valor da tabela
                         vr_qtdiaatr := rw_crapris.qtdiaatr;
                      ELSE
@@ -2474,18 +2476,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      vr_cdusolcr := rw_craplcr.cdusolcr;
                      vr_dsorgrec := rw_craplcr.dsorgrec;
 
-                     IF rw_crapepr.tpemprst = 0 THEN
-                       vr_tpemprst := 'TR';
-                     ELSE 
-                       IF rw_crapepr.tpemprst = 1 THEN
-                          vr_tpemprst := 'PP';
-                       ELSE
-                          vr_tpemprst := '-';
-                       END IF;
-                     END IF;
+                     CASE rw_crapepr.tpemprst
+                       WHEN 0 THEN vr_tpemprst := 'TR';
+                       WHEN 1 THEN vr_tpemprst := 'PP';
+                       WHEN 2 THEN vr_tpemprst := 'POS';
+                       ELSE        vr_tpemprst := '-';
+                     END CASE;
                      
-                     -- Para empréstimo pré-fixado
-                     IF rw_crapepr.tpemprst = 1 THEN
+                     -- Para empréstimo pré-fixado ou Pos-Fixado
+                     IF rw_crapepr.tpemprst IN (1,2) THEN
                         -- Número prestações recebe qtde decorrida - parcelas calculadas
                         vr_nroprest := rw_crapepr.qtmesdec - nvl(rw_crapepr.qtpcalat,0);
 
@@ -3475,48 +3474,48 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                      ELSE
                        vr_flgconsg := 0;
                      END IF;
-                     
+
                      -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
                      IF pr_cdcooper <> 3 THEN
-                       -- Atualiza dados do emprestimo para o CYBER
-                       cybe0001.pc_atualiza_dados_financeiro(pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
-                                                            ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
-                                                            ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp -- Numero do contrato
-                                                            ,pr_cdorigem => vr_cdorigem                                   -- Origem cyber
-                                                            ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                            ,pr_vlsdeved => vr_tab_dados_epr(vr_indice).vlsdevat          -- Saldo devedor
-                                                            ,pr_vlpreapg => vr_tab_dados_epr(vr_indice).vlpapgat          -- Valor a regularizar
-                                                            ,pr_qtprepag => vr_tab_dados_epr(vr_indice).qtpcalat          -- Prestacoes Pagas
-                                                            ,pr_txmensal => vr_tab_dados_epr(vr_indice).txmensal          -- Taxa mensal
-                                                            ,pr_txdiaria => vr_tab_dados_epr(vr_indice).txjuremp          -- Taxa diaria
-                                                            ,pr_vlprepag => vr_tab_dados_epr(vr_indice).vlppagat          -- Vlr. Prest. Pagas
-                                                            ,pr_qtmesdec => vr_tab_dados_epr(vr_indice).qtmdecat          -- Qtd. meses decorridos
-                                                            ,pr_dtdpagto => vr_tab_dados_epr(vr_indice).dtdpagto          -- Data de pagamento
-                                                            ,pr_cdlcremp => vr_tab_dados_epr(vr_indice).cdlcremp          -- Codigo da linha de credito
-                                                            ,pr_cdfinemp => vr_tab_dados_epr(vr_indice).cdfinemp          -- Codigo da finalidade.
-                                                            ,pr_dtefetiv => vr_tab_dados_epr(vr_indice).dtmvtolt          -- Data da efetivacao do emprestimo.
-                                                            ,pr_vlemprst => vr_tab_dados_epr(vr_indice).vlemprst          -- Valor emprestado.
-                                                            ,pr_qtpreemp => vr_tab_dados_epr(vr_indice).qtpreemp          -- Quantidade de prestacoes.
-                                                            ,pr_flgfolha => vr_tab_dados_epr(vr_indice).flgpagto          -- O pagamento e por Folha
-                                                            ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
-                                                            ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
-                                                            ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
-                                                            ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
-                                                            ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
-                                                            ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
-                                                            ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
-                                                            ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
-                                                            ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
-                                                            ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtdiaatr -- Dias de atraso
-                                                            ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
-                                                            ,pr_flgpreju => vr_tab_dados_epr(vr_indice).inprejuz          -- Esta em prejuizo.
-                                                            ,pr_flgconsg => vr_flgconsg                                   --Indicador de valor consignado.
-                                                            ,pr_flgresid => vr_flgresid                                   -- Flag de residuo
-                                                            ,pr_dscritic => pr_dscritic);
+                     -- Atualiza dados do emprestimo para o CYBER
+                     cybe0001.pc_atualiza_dados_financeiro(pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
+                                                          ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
+                                                          ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp -- Numero do contrato
+                                                          ,pr_cdorigem => vr_cdorigem                                   -- Origem cyber
+                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
+                                                          ,pr_vlsdeved => vr_tab_dados_epr(vr_indice).vlsdevat          -- Saldo devedor
+                                                          ,pr_vlpreapg => vr_tab_dados_epr(vr_indice).vlpapgat          -- Valor a regularizar
+                                                          ,pr_qtprepag => vr_tab_dados_epr(vr_indice).qtpcalat          -- Prestacoes Pagas
+                                                          ,pr_txmensal => vr_tab_dados_epr(vr_indice).txmensal          -- Taxa mensal
+                                                          ,pr_txdiaria => vr_tab_dados_epr(vr_indice).txjuremp          -- Taxa diaria
+                                                          ,pr_vlprepag => vr_tab_dados_epr(vr_indice).vlppagat          -- Vlr. Prest. Pagas
+                                                          ,pr_qtmesdec => vr_tab_dados_epr(vr_indice).qtmdecat          -- Qtd. meses decorridos
+                                                          ,pr_dtdpagto => vr_tab_dados_epr(vr_indice).dtdpagto          -- Data de pagamento
+                                                          ,pr_cdlcremp => vr_tab_dados_epr(vr_indice).cdlcremp          -- Codigo da linha de credito
+                                                          ,pr_cdfinemp => vr_tab_dados_epr(vr_indice).cdfinemp          -- Codigo da finalidade.
+                                                          ,pr_dtefetiv => vr_tab_dados_epr(vr_indice).dtmvtolt          -- Data da efetivacao do emprestimo.
+                                                          ,pr_vlemprst => vr_tab_dados_epr(vr_indice).vlemprst          -- Valor emprestado.
+                                                          ,pr_qtpreemp => vr_tab_dados_epr(vr_indice).qtpreemp          -- Quantidade de prestacoes.
+                                                          ,pr_flgfolha => vr_tab_dados_epr(vr_indice).flgpagto          -- O pagamento e por Folha
+                                                          ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
+                                                          ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
+                                                          ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
+                                                          ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
+                                                          ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
+                                                          ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
+                                                          ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
+                                                          ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
+                                                          ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
+                                                          ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtdiaatr -- Dias de atraso
+                                                          ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
+                                                          ,pr_flgpreju => vr_tab_dados_epr(vr_indice).inprejuz          -- Esta em prejuizo.
+                                                          ,pr_flgconsg => vr_flgconsg                                   --Indicador de valor consignado.
+                                                          ,pr_flgresid => vr_flgresid                                   -- Flag de residuo
+                                                          ,pr_dscritic => pr_dscritic);
 
-                       IF pr_dscritic IS NOT NULL  THEN
-                          RAISE vr_exc_erro;
-                       END IF;
+                     IF pr_dscritic IS NOT NULL  THEN
+                        RAISE vr_exc_erro;
+                     END IF;
                      END IF;
                  
                   END IF; -- IF vr_indice IS NOT NULL THEN
@@ -3530,49 +3529,49 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   ELSE
                      vr_flgrpeco := 0;
                   END IF;
-                  
+
                   -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
                   IF pr_cdcooper <> 3 THEN
-                    -- Atualizar os contratos em cobranca do CYBER
-                    cybe0001.pc_atualiza_dados_financeiro (pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
-                                                          ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
-                                                          ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp -- Numero do contrato
-                                                          ,pr_cdorigem => 1                                             -- Conta corrente
-                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                          ,pr_dtdpagto => pr_rw_crapdat.dtmvtolt                        -- Data de pagamento
-                                                          ,pr_dtefetiv => pr_rw_crapdat.dtmvtolt                        -- Data da efetivacao do emprestimo.
-                                                          ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
-                                                          ,pr_vlemprst => vr_vldivida                                   -- Valor emprestado.
-                                                          ,pr_vlsdeved => vr_vldivida                                   -- Saldo devedor
-                                                          ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
-                                                          ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
-                                                          ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
-                                                          ,pr_vlpreapg => vr_vldivida                                   -- Valor a regularizar
-                                                          ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
-                                                          ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
-                                                          ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
-                                                          ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
-                                                          ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
-                                                          ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
-                                                          ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtatraso -- Dias de atraso
-                                                          ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
-                                                          ,pr_flgresid => 0                                             -- Flag de residuo
-                                                          ,pr_qtprepag => 0                                             -- Prestacoes Pagas
-                                                          ,pr_txmensal => vr_txmensal                                   -- Taxa mensal
-                                                          ,pr_txdiaria => 0                                             -- Taxa diaria
-                                                          ,pr_vlprepag => 0                                             -- Vlr. Prest. Pagas
-                                                          ,pr_qtmesdec => 0                                             -- Qtd. meses decorridos
-                                                          ,pr_cdlcremp => 0                                             -- Codigo da linha de credito
-                                                          ,pr_cdfinemp => 0                                             -- Codigo da finalidade.
-                                                          ,pr_flgfolha => 0                                             -- O pagamento e por Folha
-                                                          ,pr_flgpreju => 0                                             -- Esta em prejuizo.
-                                                          ,pr_flgconsg => 0                                             --Indicador de valor consignado.
-                                                          ,pr_dscritic => pr_dscritic);
+                  -- Atualizar os contratos em cobranca do CYBER
+                  cybe0001.pc_atualiza_dados_financeiro (pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
+                                                        ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
+                                                        ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp -- Numero do contrato
+                                                        ,pr_cdorigem => 1                                             -- Conta corrente
+                                                        ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
+                                                        ,pr_dtdpagto => pr_rw_crapdat.dtmvtolt                        -- Data de pagamento
+                                                        ,pr_dtefetiv => pr_rw_crapdat.dtmvtolt                        -- Data da efetivacao do emprestimo.
+                                                        ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
+                                                        ,pr_vlemprst => vr_vldivida                                   -- Valor emprestado.
+                                                        ,pr_vlsdeved => vr_vldivida                                   -- Saldo devedor
+                                                        ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
+                                                        ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
+                                                        ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
+                                                        ,pr_vlpreapg => vr_vldivida                                   -- Valor a regularizar
+                                                        ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
+                                                        ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
+                                                        ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
+                                                        ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
+                                                        ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
+                                                        ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
+                                                        ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtatraso -- Dias de atraso
+                                                        ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
+                                                        ,pr_flgresid => 0                                             -- Flag de residuo
+                                                        ,pr_qtprepag => 0                                             -- Prestacoes Pagas
+                                                        ,pr_txmensal => vr_txmensal                                   -- Taxa mensal
+                                                        ,pr_txdiaria => 0                                             -- Taxa diaria
+                                                        ,pr_vlprepag => 0                                             -- Vlr. Prest. Pagas
+                                                        ,pr_qtmesdec => 0                                             -- Qtd. meses decorridos
+                                                        ,pr_cdlcremp => 0                                             -- Codigo da linha de credito
+                                                        ,pr_cdfinemp => 0                                             -- Codigo da finalidade.
+                                                        ,pr_flgfolha => 0                                             -- O pagamento e por Folha
+                                                        ,pr_flgpreju => 0                                             -- Esta em prejuizo.
+                                                        ,pr_flgconsg => 0                                             --Indicador de valor consignado.
+                                                        ,pr_dscritic => pr_dscritic);
 
-                    IF pr_dscritic IS NOT NULL  THEN
-                       RAISE vr_exc_erro;
-                    END IF;
+                  IF pr_dscritic IS NOT NULL  THEN
+                     RAISE vr_exc_erro;
                   END IF;                
+               END IF;
                END IF;
 
                -- Enviar a linha arquivo arquivo 354.txt

@@ -20,6 +20,7 @@
  * 009: [26/06/2017] Jonata     (RKAM): Ajustes para inclusão da nova opção "G" (P364).
  * 010: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
  * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
+ * 012: [27/12/2017] Renato (Supero)  : Alterado para incluir os botões Desligar e Saque Parcial conforme tela CADMAT (M329)
  */ 
 
 	session_start();	
@@ -42,6 +43,9 @@
 	$flgNome		= (in_array('X', $glbvars['opcoesTela']));
 	$flgDesvincula	= (in_array('D', $glbvars['opcoesTela']));	
 	$flgCpfCnpj		= (in_array('J', $glbvars['opcoesTela']));	
+	$flgAcessoCRM   = 'N';
+	$flgDesligarCRM = 'N';
+	$flgSaldoPclCRM = 'N';
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
@@ -57,11 +61,10 @@
 		case 'CJ': $cddopcao = 'J'; break;
 		default  : $cddopcao = 'C'; break;
 	}
-
+	
 	// Se conta informada não for um número inteiro válido
 	if (!validaInteiro($nrdconta) && $operacao != 'CI') exibirErro('error','Conta/dv inválida.','Alerta - Matric','',false);
-	
-
+		
 		// Monta o xml de requisição
 		$xmlMatric  = '';
 		$xmlMatric .= '<Root>';
@@ -85,7 +88,7 @@
 		// Executa script para envio do XML e cria objeto para classe de tratamento de XML
 		$xmlResult 	= getDataXML($xmlMatric);
 		$xmlObjeto 	= getObjectXML($xmlResult);		
-
+		
 		// Se ocorrer um erro, mostra mensagem
 		if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 			$operacao = '';
@@ -295,6 +298,34 @@
 	include('form_fisico.php'); 
 	include('form_juridico.php');
 	
+	if ($cddopcao == 'C') {
+	    // Monta o xml de requisição
+		$xml   = "";
+		$xml  .= "<Root>";
+		$xml  .= "  <Dados>";
+		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml  .= "  </Dados>";
+		$xml  .= "</Root>";
+
+		// Executa script para envio do XML  -- Passa como agencia o cdpactra, pois a agencia está sempre com valor zero
+		$xmlResult = mensageria($xml, "MATRIC", "ACESSO_OPERADOR_CRM", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+
+		}
+
+		// Ler os flags do XML
+		$flgAcessoCRM   = $xmlObj->roottag->tags[0]->cdata;
+		$flgDesligarCRM = $xmlObj->roottag->tags[1]->cdata;
+		$flgSaldoPclCRM = $xmlObj->roottag->tags[2]->cdata;
+		
+	}
 ?>
 
 <div id="divBotoes" style="margin-bottom:10px">
@@ -316,7 +347,10 @@
 	<a href="#" class="opAltCpfCnpj botao" id="btVoltarAltCpfCnpj" onclick="controlaOperacao('JC'); return false;">Cancelar</a>
 	<a href="#" class="opAltCpfCnpj botao" id="btSalvarAltCpfCnpj" onclick="controlaOperacao('JV'); return false;">Concluir</a>
 	
-	<a href="#" class="opConsultar botao" id="btVoltarCns">Voltar</a>
+	<a href="#" class="opConsultar botao" id="btVoltarCns">Voltar</a>	  
+<!-- Utiliza classes diferentes para que o foco não se posicione no botão errado -->
+	<a href="#" class="opBtnCRM    botao" id="btDemissCRM"     onclick="verificaProdutosAtivosCRM();">Desligar</a>
+	<a href="#" class="opBtnCRM    botao" id="btSaqueCRM"      onclick="abrirRotinaSaqueParcialCRM();">Saque Parcial</a>
 	<a href="#" class="opAlterar botao" id="btDesligarAlt" onclick="verificaProdutosAtivos();return false;">Desligar</a>
 	
 	<? if (getByTagName($registro,'flgtermo') == '1'){?>
@@ -393,6 +427,9 @@
 	flgNome			= '<?php echo $flgNome; 		?>';
 	flgDesvincula	= '<?php echo $flgDesvincula;	?>';
     flgCpfCnpj      = '<?php echo $flgCpfCnpj;	    ?>';
+	flgAcessoCRM    = '<?php echo $flgAcessoCRM;    ?>';
+	flgDesligarCRM  = '<?php echo $flgDesligarCRM;  ?>';
+	flgSaldoPclCRM  = '<?php echo $flgSaldoPclCRM;  ?>';
 	
 	strMsg = '<?php echo $strMsg; ?>';
 	

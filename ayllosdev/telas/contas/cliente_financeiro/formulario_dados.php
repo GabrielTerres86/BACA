@@ -4,6 +4,8 @@
  * CRIAÇÃO      : Gabriel C. Santos (DB1)
  * DATA CRIAÇÃO : 04/03/2010 
  * OBJETIVO     : Forumlário de dados de Cônjuge
+ * --------------
+ * ALTERAÇÕES   : 29/11/2017  - Correcao no carregamento do campo cod.banco. SD 803263 Carlos Rafael Tanholi.
  */
 ?>
 
@@ -23,8 +25,8 @@
 	<input name="dtabtcct" id="dtabtcct" type="text" class="data" value="<? echo getByTagName($registros[0]->tags,'dtabtcct') ?>" />
 	<br />
 	
-	<label for="cddbanco" class="rotulo rotulo-80">C&oacute;d. Banco:</label>
-	<input name="cddbanco" id="cddbanco" type="text" class="codigo pesquisa" value="<? echo getByTagName($registros[0]->tags,'cddbanco') ?>"  />
+	<label for="cdbccxlt" class="rotulo rotulo-80">C&oacute;d. Banco:</label>
+	<input name="cdbccxlt" id="cdbccxlt" type="text" class="codigo pesquisa" value="<? echo getByTagName($registros[0]->tags,'cddbanco') ?>"  />
 	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 	<input name="nmdbanco" id="nmdbanco" type="text" class="descricao" value="<? echo getByTagName($registros[0]->tags,'nmdbanco') ?>" />
 	<br />

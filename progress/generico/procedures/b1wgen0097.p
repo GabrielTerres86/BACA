@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 25/06/2015
+    Data    : Maio/2011               Ultima Atualizacao: 09/05/2017
     
     Dados referentes ao programa:
     
@@ -102,6 +102,9 @@
 				07/04/2017 - Passar o tipo de emprestimo fixo como 1-PP na chamada da 
 				             rotina pc_calcula_iof_epr, pois todas as simulações são 
 							 empréstimos PP  ( Renato Darosci )
+
+                09/05/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
 				27/09/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts) e valor total da simulação
 ............................................................................*/
@@ -677,6 +680,7 @@ PROCEDURE grava_simulacao:
                                              tt-parcelas-epr.vlparepr
                                     ELSE 0, 
                              INPUT  par_dtlibera,
+                             INPUT  1, /* tpemprst */
                              OUTPUT var_vliofepr,
                              OUTPUT TABLE tt-erro).
 
@@ -1689,6 +1693,7 @@ PROCEDURE consulta_iof:
     DEF INPUT        PARAM par_cdlcremp AS INTEGER                  NO-UNDO.
     DEF INPUT        PARAM par_vlpreemp AS DECI                     NO-UNDO.
     DEF INPUT        PARAM par_dtlibera AS DATE                     NO-UNDO.
+    DEF INPUT        PARAM par_tpemprst AS INTE                     NO-UNDO.
     DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.        
     DEF OUTPUT       PARAM TABLE FOR tt-erro.
     
@@ -1716,7 +1721,9 @@ PROCEDURE consulta_iof:
                                           INPUT par_vlemprst,
                                           INPUT par_dtdpagto,
                                           INPUT par_dtlibera,
-										  INPUT 1, /* tpemprst -> 1-PP */
+                                          INPUT par_tpemprst,
+                                          INPUT ?, /* pr_dtcarenc */
+                                          INPUT 0, /* pr_qtdias_carencia */
                                          OUTPUT 0,
                                          OUTPUT "").
     

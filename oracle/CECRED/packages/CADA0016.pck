@@ -754,7 +754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  SET avt.nrcepend     = pr_endereco_new.nrcep,
                      avt.dsendres##1  = pr_endereco_new.nmlogradouro,
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
-                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,57),
+                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,47),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
                      avt.nmcidade     = nvl(vr_dscidade,' '),
                      avt.cdufresd     = nvl(vr_cdestado,' ')

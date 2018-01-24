@@ -46,7 +46,8 @@ begin
       pc_insere_historico('tprenova',nvl(:old.tprenova,' '),nvl(:new.tprenova,' '));
     end if;
 
-    if nvl(:old.vllimite,0) <> nvl(:new.vllimite,0) then
+    if  nvl(:old.vllimite,0) <> nvl(:new.vllimite,0)
+	and nvl(:new.insitlim,:old.insitlim) <> 1 then
       pc_insere_historico('vllimite',nvl(:old.vllimite,0),nvl(:new.vllimite,0));
     end if;
   end if;

@@ -392,7 +392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: 21/07/2017
+  --  Data     : ?????                         Ultima atualizacao: 03/10/2017
   --
   --  Dados referentes ao programa:
   --
@@ -401,6 +401,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --               21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
   --                            cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
+  --
+  --               03/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   --
   -- .............................................................................
 
@@ -617,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-      ELSIF rw_crapris_jur.tpemprst = 1 THEN  -- Pre-Fixado
+      ELSIF rw_crapris_jur.tpemprst IN (1,2) THEN  -- Pre-Fixado ou Pos-Fixado
         
         vr_fleprces := 0; 
         --> Verificar se é um emprestimo de cessao de credito
@@ -1092,6 +1094,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     vr_rel1721_v_pre     NUMBER := 0;
     vr_rel1731_1_v_pre   NUMBER := 0;
+
+    -->> POS <<--
+      --FIN 
+    vr_vldespes_pj_pos     NUMBER := 0;
+    vr_vldespes_pf_pos     NUMBER := 0;
+    vr_vldevedo_pf_v_pos   NUMBER := 0;
+    vr_vldevedo_pj_v_pos   NUMBER := 0;
+    vr_vlag1731_1_pos    typ_arr_decimal;
+    vr_vlag1731_2_pos    typ_arr_decimal;
+
+      --EMPR
+    --PF  
+    vr_rel1721_v_pos       NUMBER := 0;  
+    vr_rel1721_pos         NUMBER := 0;
+    --PJ
+    vr_rel1723_pos         NUMBER := 0;
+    vr_rel1723_v_pos       NUMBER := 0;    
+    vr_vlag1721_pos        typ_arr_decimal; --> PF
+    vr_vlag1723_pos        typ_arr_decimal; --> PJ
+    
 
     vr_relmicro_atr_pf   NUMBER := 0;
     vr_relmicro_pre_pf   NUMBER := 0;
@@ -1636,7 +1658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1721(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
-          ELSE
+          -- Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1721_pre   := vr_rel1721_pre   + vr_vlpreatr;
             vr_rel1721_v_pre := vr_rel1721_v_pre + vr_vldivida;
@@ -1647,6 +1670,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
+          -- PosFixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_rel1721_pos   := vr_rel1721_pos   + vr_vlpreatr;
+            vr_rel1721_v_pos := vr_rel1721_v_pos + vr_vldivida;
+
+            IF vr_vlag1721_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlag1721_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          
           END IF;
 
         ELSE -- Se pessoa Juridica
@@ -1662,7 +1698,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1723(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
 
-          ELSE
+          -- Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1723_pre   := vr_rel1723_pre + vr_vlpreatr;
             vr_rel1723_v_pre := vr_rel1723_v_pre + vr_vldivida;
@@ -1671,6 +1708,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlag1723_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+            
+          -- Pos Fixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_rel1723_pos   := vr_rel1723_pos + vr_vlpreatr;
+            vr_rel1723_v_pos := vr_rel1723_v_pos + vr_vldivida;
+
+            IF vr_vlag1723_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlag1723_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
             END IF;
           END IF;
         END IF;
@@ -1711,7 +1760,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
-          ELSE
+          --> Prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN
 
             vr_rel1731_1_pre   := vr_rel1731_1_pre   + vr_vlpreatr;
             vr_rel1731_1_v_pre := vr_rel1731_1_v_pre + vr_vldivida;
@@ -1732,6 +1782,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
+          --> Pos fixado
+          ELSIF rw_crapepr.tpemprst = 2 THEN
+
+            vr_vldespes_pf_pos   := vr_vldespes_pf_pos   + vr_vlpreatr;
+            vr_vldevedo_pf_v_pos := vr_vldevedo_pf_v_pos + vr_vldivida;
+
+            IF vr_vlag1731_1_pos.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlag1731_1_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
           END IF;
 
         ELSE  -- Pessoa Juridica
@@ -1768,8 +1829,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
 
             END IF;
-
-            ELSE -- tipo de emprestimo
+            --> prefixado
+          ELSIF rw_crapepr.tpemprst = 1 THEN -- tipo de emprestimo
 
             vr_rel1731_2_pre   := vr_rel1731_2_pre   + vr_vlpreatr;
             vr_rel1731_2_v_pre := vr_rel1731_2_v_pre + vr_vldivida;
@@ -1790,7 +1851,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
             END IF;
 
-          END IF;
+            --> PosFixado
+            ELSIF rw_crapepr.tpemprst = 2 THEN -- tipo de emprestimo
+
+              vr_vldespes_pj_pos   := vr_vldespes_pj_pos   + vr_vlpreatr;
+              vr_vldevedo_pj_v_pos := vr_vldevedo_pj_v_pos + vr_vldivida;
+
+              IF vr_vlag1731_2_pos.exists(rw_crapris.cdagenci) THEN
+                vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlag1731_2_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
+              ELSE
+                vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
+              END IF;
+            END IF;
           
           ELSE -- Se for operacao do BNDES
             CLOSE cr_crapebn;
@@ -2131,6 +2203,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldespes(33) := vr_rel1760_pre;
     vr_vldevedo(34) := vr_rel1761_v_pre;
     vr_vldespes(34) := vr_rel1761_pre;
+    
+    --Pos Fixado
+      --> EMPR
+    vr_vldevedo(35) := vr_rel1721_v_pos; --PF
+    vr_vldespes(35) := vr_rel1721_pos;   --PF
+    vr_vldevedo(36) := vr_rel1723_v_pos; --PJ
+    vr_vldespes(36) := vr_rel1723_pos;   --PJ
+      --> FIN
+    vr_vldevedo(37) := vr_vldevedo_pf_v_pos;
+    vr_vldespes(37) := vr_vldespes_pf_pos;
+    vr_vldevedo(38) := vr_vldevedo_pj_v_pos;
+    vr_vldespes(38) := vr_vldespes_pj_pos;
+
     
     -- Buscar o próximo dia útil
     vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
@@ -4214,6 +4299,252 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     END IF;
 
+
+    --->>>>> POS FIXADO <<<<<---
+    
+    -- AJUSTE PROVISAO FIN.PESSOAIS POS FIXADO
+    IF vr_vldespes(37) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(37);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5329,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5329,8447,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_1_pos.exists(vr_contador)
+        AND vr_vlag1731_1_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_1_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- AJUSTE PROVISAO FIN.EMPRESAS POS FIXADO
+    IF vr_vldespes(38) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(38);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5330,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO "';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5330,8448,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO FIN.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1731_2_pos.exists(vr_contador)
+        AND vr_vlag1731_2_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1731_2_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- Ajuste Provisao CL - Empresas e Entidades prefixado
+    -- AJUSTE PROVISAO EMPR.EMPRESAS POS FIXADO
+    IF vr_vldespes(36) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(36);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5332,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5332,8448,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.EMPRESAS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1723_pos.exists(vr_contador)
+        AND vr_vlag1723_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1723_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- Ajuste Provisao CL - Emprestimos Pessoais prefixado
+    -- AJUSTE PROVISAO EMPR.PESSOAIS POS FIXADO
+    IF vr_vldespes(35) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(35);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5331,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5331,8447,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) PROVISAO EMPR.PESSOAIS POS FIXADO"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1721_pos.exists(vr_contador)
+        AND vr_vlag1721_pos(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1721_pos(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+    --->>>>>> FIM POS FIXADO <<<<<---
 
     -- PROVISAO DE CESSAO CARTAO - PESSOA FISICA
     IF vr_vldespes(33) <> 0 THEN

@@ -2,7 +2,7 @@
 
   Programa: b1wgen0191.p
   Autor   : Jonata-RKAM
-  Data    : Agosto/2014                       Ultima Atualizacao: 07/07/2017
+  Data    : Agosto/2014                       Ultima Atualizacao: 19/12/2017
                                                                       
   Dados referentes ao programa:
   
@@ -31,6 +31,9 @@
                             fixo o nrseqdet = 1 pois quando a consulta foi efetuada
                             na Esteira o Titular nem sempre eh o primeiro a ser 
                             retornado (Marcos-Supero)
+
+               19/12/2017 - Apresentar erros nos Biros Externos. (Jaison/James - M464)
+
 ............................................................................ */  
 
 { sistema/generico/includes/var_internet.i } 
@@ -605,6 +608,22 @@ PROCEDURE Imprime_Dados_Proposta:
     DEF VAR h-b1wgen0024 AS HANDLE                                     NO-UNDO.
 
 
+    /* Variáveis utilizadas para receber clob da rotina no oracle */
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.
+    DEF VAR xField        AS HANDLE   NO-UNDO.
+    DEF VAR xText         AS HANDLE   NO-UNDO.
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO.
+    DEF VAR aux_cont2     AS INTEGER  NO-UNDO.
+    DEF VAR aux_cont3     AS INTEGER  NO-UNDO.
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO.
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
+
+
+    EMPTY TEMP-TABLE tt-erros-bir.
+
+
     FORM "Resumo das informacoes do" aux_dsconsul NO-LABEL  FORMAT "x(70)"     
          SKIP
          aux_dtconbir LABEL "Data da Consulta"              FORMAT "99/99/9999"
@@ -625,6 +644,13 @@ PROCEDURE Imprime_Dados_Proposta:
          aux_dsmodbir              NO-LABEL                 FORMAT "x(30)"
          SKIP(1)
          WITH SIDE-LABELS WIDTH 137 FRAME f_scr_cab.
+
+    FORM "CRITICA NA CONSULTA AUTOMATIZADA" 
+         WITH SIDE-LABELS WIDTH 137 FRAME f_erro_bir_cab.
+    	 
+    FORM 
+         tt-erros-bir.dscritic     NO-LABEL                 FORMAT "x(130)"
+         WITH SIDE-LABELS NO-BOX WIDTH 137 FRAME f_erro_bir.
 
     FORM "Anotacoes negativas      Quantidade           Valor"
          AT 01
@@ -729,7 +755,89 @@ PROCEDURE Imprime_Dados_Proposta:
                  ASSIGN aux_cdcritic = 651.
                  LEAVE Imprime_Proposta.
              END.
-     
+
+        /* Efetuar a chamada a rotina Oracle */
+        RUN STORED-PROCEDURE pc_lista_erros_biro_proposta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                            ,INPUT par_nrdconta
+                                            ,INPUT par_nrctrato
+                                            ,INPUT par_inprodut
+                                            ,OUTPUT ?     /* pr_clob_xml */
+                                            ,OUTPUT 0     /* pr_cdcritic */
+                                            ,OUTPUT "").  /* pr_dscritic */
+
+        /* Fechar o procedimento para buscarmos o resultado */
+        CLOSE STORED-PROC pc_lista_erros_biro_proposta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca possíveis erros */
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = pc_lista_erros_biro_proposta.pr_cdcritic
+                              WHEN pc_lista_erros_biro_proposta.pr_cdcritic <> ?
+               aux_dscritic = pc_lista_erros_biro_proposta.pr_dscritic
+                              WHEN pc_lista_erros_biro_proposta.pr_dscritic <> ?.
+
+        IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
+            DO:
+                LEAVE Imprime_Proposta.
+            END.
+        ELSE
+            DO:
+                /* Inicializando objetos para leitura do XML */
+                CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */
+                CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */
+                CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */
+                CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */
+                CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+
+                /* Buscar o XML na tabela de retorno da procedure Progress */
+                ASSIGN xml_req = pc_lista_erros_biro_proposta.pr_clob_xml.
+
+                /* Efetuar a leitura do XML*/
+                SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1.
+                PUT-STRING(ponteiro_xml,1) = xml_req.
+
+                xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE).
+                xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+                DO  aux_cont = 1 TO xRoot:NUM-CHILDREN:
+
+                    xRoot:GET-CHILD(xRoot2,aux_cont).
+
+                    IF xRoot2:SUBTYPE <> "ELEMENT"   THEN
+                       NEXT.
+
+                    DO  aux_cont2 = 1 TO xRoot2:NUM-CHILDREN:
+
+                      xRoot2:GET-CHILD(xField,aux_cont2).
+
+                      IF xField:SUBTYPE <> "ELEMENT" THEN
+                         NEXT.
+
+                      IF xField:NUM-CHILDREN = 0 THEN
+                         NEXT.
+
+                      xField:GET-CHILD(xText,1).
+                        
+                      CREATE tt-erros-bir.
+                      ASSIGN tt-erros-bir.dscritic = xText:NODE-VALUE WHEN xField:NAME = "erro".
+
+                    END.
+
+                END.
+
+                SET-SIZE(ponteiro_xml) = 0.
+
+                DELETE OBJECT xDoc.
+                DELETE OBJECT xRoot.
+                DELETE OBJECT xRoot2.
+                DELETE OBJECT xField.
+                DELETE OBJECT xText.
+            END.
+
         ASSIGN par_nmarquiv = "/usr/coop/" + crapcop.dsdircop + "/rl/" + 
                               "consultas-" + STRING(par_cdtipcon)      +
                               STRING(TIME) + ".ex".
@@ -807,8 +915,26 @@ PROCEDURE Imprime_Dados_Proposta:
                                       tt-central-risco.vlopescr
                                       tt-central-risco.vlrpreju
                                       WITH FRAME f_scr_cab.
-                   
+
                  ASSIGN aux_flgtrans = TRUE.
+
+                 /* Exibe os erros do biro */
+                 FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+                   
+                   IF FIRST(tt-erros-bir.dscritic) THEN
+                     DO:
+                         DISPLAY STREAM str_1 
+                         WITH FRAME f_erro_bir_cab.
+                     END.
+                   
+                   DISPLAY STREAM str_1 tt-erros-bir.dscritic
+                                        WITH FRAME f_erro_bir.
+
+                   DOWN WITH FRAME f_erro_bir.
+                   
+                   IF LAST(tt-erros-bir.dscritic) THEN
+                      DISPLAY STREAM str_1 SKIP WITH FRAME f_erro_bir.
+                 END.
 
                  LEAVE Imprime_Proposta.
 
@@ -840,6 +966,23 @@ PROCEDURE Imprime_Dados_Proposta:
                                       WITH FRAME f_scr_cab.
 
                  ASSIGN aux_flgtrans = TRUE.
+
+                 /* Exibe os erros do biro */
+                 FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+                   IF FIRST(tt-erros-bir.dscritic) THEN
+                     DO:
+                         DISPLAY STREAM str_1 
+                         WITH FRAME f_erro_bir_cab.
+                     END.
+                     
+                   DISPLAY STREAM str_1 tt-erros-bir.dscritic
+                                        WITH FRAME f_erro_bir.
+
+                   DOWN WITH FRAME f_erro_bir.
+                   
+                   IF LAST(tt-erros-bir.dscritic) THEN
+                      DISPLAY STREAM str_1 SKIP WITH FRAME f_erro_bir.
+                 END.
 
                  LEAVE Imprime_Proposta.
              END.
@@ -880,6 +1023,22 @@ PROCEDURE Imprime_Dados_Proposta:
                              tt-central-risco.vlrpreju
                              aux_dsmodbir
                              WITH FRAME f_scr_cab.
+
+       /* Exibe os erros do biro */
+       FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
+         IF FIRST(tt-erros-bir.dscritic) THEN
+           DO:
+               DISPLAY STREAM str_1 
+               WITH FRAME f_erro_bir_cab.
+           END.
+         DISPLAY STREAM str_1 tt-erros-bir.dscritic
+                              WITH FRAME f_erro_bir.
+
+         DOWN WITH FRAME f_erro_bir.
+         
+         IF LAST(tt-erros-bir.dscritic) THEN
+            DISPLAY STREAM str_1 SKIP WITH FRAME f_erro_bir.
+       END.
  
        IF    aux_cdbircon = 1   THEN /* Pessoa Fisica */
              DO: 

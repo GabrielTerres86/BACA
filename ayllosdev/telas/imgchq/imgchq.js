@@ -13,7 +13,7 @@
  *                15/03/2016 - Projeto 316 - Buscar "certificado" e novo botão para gerar zip para download
  *                           - Passado 'cdcooper' para cobra_tarifa.php. (Guilherme/SUPERO)
  *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
- *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -24,19 +24,19 @@ var rNmrescop, rTiporeme, rDtcompen, rCompechq, rBancochq, rAgencchq, rContachq,
 
 
 var lstCooperativas = new Array();
-var lstCmc7 = new Array();
+var lstCmc7         = new Array();
 var cdcooper;
 
 var nmrescop, tremessa, compechq, bancochq, agencchq, contachq, numerchq, datacomp;
 
 var bGerarPdf, bSalvarImgs;
 
-var imgchqF = false;
-var imgchqV = false;
+var imgchqF  = false;
+var imgchqV  = false;
 var flgerpdf = false;
 var flbaiarq = false;
 var selbaixa = '';
-var aux_cdagechq = '';
+var aux_cdagechq    = '';
 
 $(document).ready(function () {
 
@@ -166,6 +166,11 @@ function mostraCamposChq() {
             cAgencchq.css({ 'width': '100px' });
 
             cDtcompen.focus();
+
+            // Seta os valores caso tenha vindo do CRM
+            if ($("#crm_inacesso","#frmConsultaImagem").val() == 1) {
+                $("#contachq","#frmConsultaImagem").val($("#crm_nrdconta","#frmConsultaImagem").val());
+            }
         } else {
             $('#divDadosChq').css({ 'display': 'none' });
 
@@ -208,18 +213,18 @@ function buscaCooperativas() {
 }
 
 function buscaAgeCtl(flag) {
-
+    
     var cdcooper;
-
+    
     if (cooploga == "3") {
         aux_cdcooper = cNmrescop.val();
     } else {
         aux_cdcooper = cooploga;
     }
-
+    
     if (flag == 1) {
         //veio pela mudanca de Coop entao limpa
-        aux_cdagechq = '';
+        aux_cdagechq = '';        
     }
 
     if (aux_cdagechq == '') {
@@ -227,25 +232,25 @@ function buscaAgeCtl(flag) {
             type: 'POST',
             async: false,
             url: UrlSite + 'telas/imgchq/busca_agectl.php',
-            data: {
+                data: {
                 cdcooper: aux_cdcooper,
                 redirect: 'script_ajax'
-            },
+                },
             error: function (objAjax, responseError, objExcept) {
-                hideMsgAguardo();
+                    hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
-            },
+                },
             success: function (response) {
 
-                try {
-                    eval(response);
-                    return false;
+                    try {
+                        eval(response);
+                        return false;
                 } catch (error) {
-                    hideMsgAguardo();
+                        hideMsgAguardo();
                     showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                    }
                 }
-            }
-        });
+            });
     }
 
     cAgencchq.val(aux_cdagechq);
@@ -373,16 +378,16 @@ function consultaCheque() {
         return false;
     }
 
-
-    cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);
-
+    
+    cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);    
+    
     if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
         hideMsgAguardo();
         showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
         return false;
     }
 
-
+    
     if (tpremess == "N") {
         cdcmpchq = retiraCaracteres(cCompechq.val(), "0123456789", true);
         cdbanchq = retiraCaracteres(cBancochq.val(), "0123456789", true);

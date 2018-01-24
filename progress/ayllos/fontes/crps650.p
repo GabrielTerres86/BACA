@@ -4,7 +4,7 @@
    Sistema : MITRA - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : JULHO/2013                      Ultima atualizacao: 17/04/2017
+   Data    : JULHO/2013                      Ultima atualizacao: 09/10/2017
    
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
 
 			   17/04/2017 - Adequacao da rotina para uma nova linha de
 							credito. Chamado 595673 (Andrey - MOUTS)
+
+               09/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
  .......................................................................... */
 
 CREATE WIDGET-POOL.
@@ -105,6 +108,10 @@ DEF VAR aux_diavecto  AS DATE   NO-UNDO.
 DEF VAR aux_dsnomeli  AS CHAR   NO-UNDO.
 DEF VAR aux_dsidendi  AS CHAR   NO-UNDO.
 DEF VAR aux_dstratam  AS CHAR   NO-UNDO.
+DEF VAR aux_identifi  AS CHAR   NO-UNDO.
+DEF VAR aux_dstiprod  AS CHAR   NO-UNDO.
+DEF VAR aux_dtultpre  AS DATE   NO-UNDO.
+DEF VAR aux_dtinterv  AS DATE   NO-UNDO.
 DEF VAR h-b1wgen0015  AS HANDLE NO-UNDO.
 
 DEF TEMP-TABLE tt-datas-parcelas  NO-UNDO
@@ -608,6 +615,8 @@ PROCEDURE carrega_dados:
 
     DEF VAR aux_vlrtotal AS INT                 NO-UNDO.
 
+    DEF QUERY q_crappep FOR crappep FIELDS(nrparepr).
+
     FOR EACH crapjur WHERE crapjur.cdcooper = glb_cdcooper AND
                            crapjur.nrdconta <> 820024      AND /* nao ler as contas da CECRED */
                            crapjur.nrdconta <> 850004        /* nao ler as contas da CECRED */
@@ -1015,11 +1024,27 @@ PROCEDURE carrega_dados:
                    crawepr.nrdconta = crapepr.nrdconta AND
                    crawepr.nrctremp = crapepr.nrctremp NO-LOCK NO-ERROR.
 
-        CREATE tt-dados-mitra.
-           ASSIGN tt-dados-mitra.identificacao = "EMP_"
-                                                + STRING(crapass.nrdconta) + "_"
-                                                + STRING(crapepr.nrctremp)
-                 
+        ASSIGN aux_dstiprod = "".
+
+        /* Se for Pos-Fixado */
+        IF crawepr.tpemprst = 2 THEN
+           DO:
+              IF crawepr.cddindex = 1 THEN
+                 aux_dstiprod = "CDI".
+              ELSE IF crawepr.cddindex = 2 THEN
+                 aux_dstiprod = "TR".
+
+              ASSIGN aux_dsnomeli = "EMPRESTIMO_" + aux_dstiprod + "360 - RF"
+                     aux_dsidendi = "POS".
+           END.
+
+        ASSIGN aux_identifi = "EMP"
+                            + aux_dstiprod + "_"
+                            + STRING(crapass.nrdconta) + "_"
+                            + STRING(crapepr.nrctremp).
+  
+           CREATE tt-dados-mitra.
+           ASSIGN tt-dados-mitra.identificacao = aux_identifi
                   tt-dados-mitra.carteira = "CECRED_PROPRIA"
                   tt-dados-mitra.data_entrada = STRING(crapepr.dtmvtolt,"99/99/9999")
                   tt-dados-mitra.quantidade = "1"
@@ -1032,67 +1057,148 @@ PROCEDURE carrega_dados:
 											 " "
                   tt-dados-mitra.contraparte = STRING(aux_nmconpar)
                   tt-dados-mitra.tipo_marcacao = "C"
-                  tt-dados-mitra.codigo = STRING(crapass.nrmatric) + "_"
-                                          + STRING(crapepr.nrctremp)
+                  tt-dados-mitra.codigo = IF crawepr.tpemprst = 2 THEN
+                                             STRING(crapass.nrdconta) + "_" + STRING(crapepr.nrctremp)
+                                          ELSE
+                                             STRING(crapass.nrmatric) + "_" + STRING(crapepr.nrctremp)
                   tt-dados-mitra.contrato = tt-dados-mitra.identificacao
                   tt-dados-mitra.estrategia_1 = aux_dsidendi
                   tt-dados-mitra.estrategia_3 = tt-dados-mitra.contraparte
                   tt-dados-mitra.financeiro_contabil_bruto = "0".
         
-       
-        aux_qtdparce = ROUND((crawepr.dtvencto - crawepr.dtaprova)/ 30,0) + crapepr.qtpreemp.
-        aux_qtcarenc = ROUND((crawepr.dtvencto - crawepr.dtaprova)/ 30,0).
-        aux_vlamorti = 1 / INTE(crapepr.qtpreemp).
-        aux_diavecto = crawepr.dtaprova + 30.
-        
-        /* Datas das Prestacoes */
-        RUN calcula_data_parcela  (crawepr.cdcooper, aux_diavecto, aux_qtdparce).
-           
-        DO aux_contador = 1 TO aux_qtdparce TRANSACTION:
-           
-          FIND tt-datas-parcelas WHERE tt-datas-parcelas.nrparepr = aux_contador
-                                       NO-LOCK NO-ERROR.
-           
-          RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
+        /* Se for Pos-Fixado */
+        IF crawepr.tpemprst = 2 THEN
+           DO:
+              OPEN QUERY q_crappep FOR EACH crappep NO-LOCK
+                                      WHERE crappep.cdcooper = crapepr.cdcooper
+                                        AND crappep.nrdconta = crapepr.nrdconta
+                                        AND crappep.nrctremp = crapepr.nrctremp.
 
-          RUN retorna-dia-util IN h-b1wgen0015  (INPUT crawepr.cdcooper,
-                                                  INPUT TRUE, /** Feriado  **/
-                                                  INPUT FALSE,  /** Anterior **/
-                                                  INPUT-OUTPUT tt-datas-parcelas.dtparepr). 
-                                                             
-     
-          DELETE PROCEDURE h-b1wgen0015.
+              REPEAT WHILE NOT QUERY-OFF-END("q_crappep"):
+                GET NEXT q_crappep.
+              END.
 
-          CREATE tt-dados-mitra. 
-           ASSIGN tt-dados-mitra.identificacao = "EMP_"
+              EMPTY TEMP-TABLE tt-datas-parcelas.
+
+              ASSIGN aux_contador = 0
+                     aux_qtdparce = NUM-RESULTS("q_crappep")
+                     aux_dtultpre = ADD-INTERVAL(crawepr.dtdpagto,crawepr.qtpreemp - 1,"months").
+
+              IF DAY(crapepr.dtmvtolt) > DAY(crawepr.dtdpagto) THEN
+                 ASSIGN aux_dtinterv = DATE("01/" + STRING(MONTH(crapepr.dtmvtolt)) + "/" + STRING(YEAR(crapepr.dtmvtolt)))
+                        aux_dtinterv = ADD-INTERVAL(aux_dtinterv,1,"months").
+              ELSE
+                 ASSIGN aux_dtinterv = crapepr.dtmvtolt.
+
+              ASSIGN aux_dtinterv = DATE(STRING(DAY(crawepr.dtdpagto)) + "/" + STRING(MONTH(aux_dtinterv)) + "/" + STRING(YEAR(aux_dtinterv))).
+
+              DO WHILE TRUE:
+
+                 CREATE tt-dados-mitra.
+                 ASSIGN aux_contador = aux_contador + 1
+                        tt-dados-mitra.identificacao = aux_identifi
+                        tt-dados-mitra.nome = aux_dsnomeli 
+                        tt-dados-mitra.inicio = STRING(crawepr.dtaprova,"99/99/9999")
+                        tt-dados-mitra.vencimento = STRING(aux_dtinterv,"99/99/9999")
+                        tt-dados-mitra.valor = STRING(crapepr.vlemprst)
+                        tt-dados-mitra.taxa = STRING(ROUND((EXP((crawepr.txmensal / 100) + 1, 12) - 1) * 100, 2))
+                        tt-dados-mitra.porc_index = "100"
+                        tt-dados-mitra.contraparte =  STRING(aux_nmconpar)
+                        tt-dados-mitra.contrato = tt-dados-mitra.identificacao
+                        tt-dados-mitra.parcela = STRING(aux_contador)
+                        tt-dados-mitra.amortizacao = STRING(ROUND(1 / aux_qtdparce, 2))
+                        tt-dados-mitra.tratamento = aux_dstratam
+                        tt-dados-mitra.estrategia_1 = aux_dsidendi
+                        tt-dados-mitra.estrategia_3 = tt-dados-mitra.contraparte
+                        tt-dados-mitra.financeiro_contabil_bruto = "0".
+
+                 IF NOT CAN-FIND(FIRST crappep WHERE crawepr.cdcooper = crapepr.cdcooper
+                                                 AND crappep.nrdconta = crapepr.nrdconta
+                                                 AND crappep.nrctremp = crapepr.nrctremp
+                                                 AND crappep.dtvencto = aux_dtinterv) THEN
+                    DO:
+                       CREATE tt-datas-parcelas.
+                       ASSIGN tt-datas-parcelas.nrparepr = 0
+                              tt-datas-parcelas.dtparepr = aux_dtinterv
+
+                              tt-dados-mitra.amortizacao = "0".
+                    END.
+
+                 ASSIGN aux_dtinterv = ADD-INTERVAL(aux_dtinterv,1,"months").
+
+                 IF aux_dtinterv > aux_dtultpre THEN
+                    LEAVE.
+
+              END. /* DO WHILE TRUE */
+
+              FOR EACH tt-datas-parcelas NO-LOCK:
+                 CREATE tt-dados-mitra.
+                 ASSIGN tt-dados-mitra.contrato = "EMP"
+                                                + aux_dstiprod + "_"
                                                 + STRING(crapass.nrdconta) + "_"
                                                 + STRING(crapepr.nrctremp)
-                  tt-dados-mitra.nome = aux_dsnomeli 
-                  tt-dados-mitra.inicio = STRING(crawepr.dtaprova,"99/99/9999")
-                  tt-dados-mitra.vencimento = STRING(tt-datas-parcelas.dtparepr,"99/99/9999")
-                  tt-dados-mitra.valor = STRING(crapepr.vlemprst)
-                  tt-dados-mitra.taxa = IF crapepr.cdlcremp = 5 THEN
-                                           "0,1"
-                                        ELSE IF crapepr.cdlcremp = 6 THEN
-                                             "8,73"
-                                        ELSE
-                                             " "
-                  tt-dados-mitra.porc_index = "100"
-                  tt-dados-mitra.contraparte =  STRING(aux_nmconpar)
-                  tt-dados-mitra.contrato = tt-dados-mitra.identificacao
-                  tt-dados-mitra.parcela = STRING(aux_contador)
-                  tt-dados-mitra.amortizacao = IF (aux_contador <= aux_qtcarenc) THEN
-                                                  "0"
-											   ELSE IF crapepr.cdlcremp = 6 THEN
-                                                  STRING(ROUND(aux_vlamorti, 9))
-											   ELSE
-                                                 STRING(aux_vlamorti)
-                  tt-dados-mitra.tratamento = aux_dstratam
-                  tt-dados-mitra.estrategia_1 = aux_dsidendi
-                  tt-dados-mitra.estrategia_3 = tt-dados-mitra.contraparte
-                  tt-dados-mitra.financeiro_contabil_bruto = "0".
+                        tt-dados-mitra.financeiro_contabil_bruto = "0"
+                        tt-dados-mitra.tipo_evento = "Incorporacao"
+                        tt-dados-mitra.data_incorporacao = STRING(tt-datas-parcelas.dtparepr,"99/99/9999")
+                        tt-dados-mitra.incorpora_juros = "Sim"
+                        tt-dados-mitra.incorpora_correcao = "Sim".
+              END.
 
-        END.
+           END.
+        ELSE
+           DO:
+              aux_qtdparce = ROUND((crawepr.dtvencto - crawepr.dtaprova)/ 30,0) + crapepr.qtpreemp.
+              aux_qtcarenc = ROUND((crawepr.dtvencto - crawepr.dtaprova)/ 30,0).
+              aux_vlamorti = 1 / INTE(crapepr.qtpreemp).
+              aux_diavecto = crawepr.dtaprova + 30.
+              
+              /* Datas das Prestacoes */
+              RUN calcula_data_parcela  (crawepr.cdcooper, aux_diavecto, aux_qtdparce).
+                 
+              DO aux_contador = 1 TO aux_qtdparce TRANSACTION:
+                 
+                FIND tt-datas-parcelas WHERE tt-datas-parcelas.nrparepr = aux_contador
+                                             NO-LOCK NO-ERROR.
+                 
+                RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
+
+                RUN retorna-dia-util IN h-b1wgen0015  (INPUT crawepr.cdcooper,
+                                                        INPUT TRUE, /** Feriado  **/
+                                                        INPUT FALSE,  /** Anterior **/
+                                                        INPUT-OUTPUT tt-datas-parcelas.dtparepr). 
+                                                                   
+             
+                DELETE PROCEDURE h-b1wgen0015.
+
+                CREATE tt-dados-mitra. 
+                 ASSIGN tt-dados-mitra.identificacao = aux_identifi
+                        tt-dados-mitra.nome = aux_dsnomeli 
+                        tt-dados-mitra.inicio = STRING(crawepr.dtaprova,"99/99/9999")
+                        tt-dados-mitra.vencimento = STRING(tt-datas-parcelas.dtparepr,"99/99/9999")
+                        tt-dados-mitra.valor = STRING(crapepr.vlemprst)
+                        tt-dados-mitra.taxa = IF crapepr.cdlcremp = 5 THEN
+                                                 "0,1"
+                                              ELSE IF crapepr.cdlcremp = 6 THEN
+                                                   "8,73"
+                                              ELSE
+                                                   " "
+                        tt-dados-mitra.porc_index = "100"
+                        tt-dados-mitra.contraparte =  STRING(aux_nmconpar)
+                        tt-dados-mitra.contrato = tt-dados-mitra.identificacao
+                        tt-dados-mitra.parcela = STRING(aux_contador)
+                        tt-dados-mitra.amortizacao = IF (aux_contador <= aux_qtcarenc) THEN
+                                                        "0"
+                               ELSE IF crapepr.cdlcremp = 6 THEN
+                                                        STRING(ROUND(aux_vlamorti, 9))
+                               ELSE
+                                                       STRING(aux_vlamorti)
+                        tt-dados-mitra.tratamento = aux_dstratam
+                        tt-dados-mitra.estrategia_1 = aux_dsidendi
+                        tt-dados-mitra.estrategia_3 = tt-dados-mitra.contraparte
+                        tt-dados-mitra.financeiro_contabil_bruto = "0".
+
+              END.
+           END.
     END.
 
 

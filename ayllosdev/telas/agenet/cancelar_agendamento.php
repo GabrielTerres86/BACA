@@ -44,6 +44,7 @@
 	$xmlCancelar .= "    <nrdconta>".$nrdconta."</nrdconta>";
 	$xmlCancelar .= "    <nrdocmto>".$nrdocmto."</nrdocmto>";
 	$xmlCancelar .= "    <dtmvtage>".$dtmvtolt."</dtmvtage>";
+	$xmlCancelar .= "    <nrcpfope>0</nrcpfope>";
 	$xmlCancelar .= " </Dados>";
 	$xmlCancelar .= "</Root>";
 		
@@ -60,7 +61,7 @@
 				
 	} 
 	
-	exibirErro('inform','Agendamento cancelado com suscesso.','Alerta - Ayllos','controlaVoltar();',false);		
+	exibirErro('inform','Agendamento cancelado com sucesso.','Alerta - Ayllos','controlaVoltar();',false);		
 		
 	function validaDados(){
 		

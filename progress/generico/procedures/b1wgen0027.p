@@ -21,7 +21,7 @@
 
     Programa  : b1wgen0027.p
     Autor     : Guilherme
-    Data      : Fevereiro/2008                Ultima Atualizacao: 19/06/2015
+    Data      : Fevereiro/2008                Ultima Atualizacao: 30/01/2017
     
     Dados referentes ao programa:
 
@@ -87,6 +87,10 @@
                 
                 19/06/2015 - Ajuste para alimentar o campo tt-ocorren.innivris
                              na procedure lista_ocorren. (James)             
+
+                30/01/2017 - Exibir mensagem de atrasado quando for produto Pos-Fixado.
+                             (Jaison/James - PRJ298)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -376,7 +380,8 @@ PROCEDURE lista_ocorren:
     FIND FIRST tt-dados-epr WHERE (tt-dados-epr.tpemprst = 0   AND
                                    tt-dados-epr.vlpreapg > 0)  OR
 
-                                  (tt-dados-epr.tpemprst = 1   AND
+                                 ((tt-dados-epr.tpemprst = 1   OR
+								   tt-dados-epr.tpemprst = 2)  AND
                                    tt-dados-epr.flgatras)      AND                              
 
                                    tt-dados-epr.inprejuz = 0  

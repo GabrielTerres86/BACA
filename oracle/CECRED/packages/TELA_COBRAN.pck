@@ -815,7 +815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
     Programa: pc_alterar_sit_conv          
     Sistema : Ayllos Web
     Autor   : Odirlei Busana - AMcom
-    Data    : Abril/2016                 Ultima atualizacao:
+    Data    : Abril/2016                 Ultima atualizacao: 08/12/2017
 
     Dados referentes ao programa:
 
@@ -823,7 +823,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
 
     Objetivo  : Rotina para alterar a situacao do convenio.
 
-    Alteracoes:
+    Alteracoes: 08/12/2017 - Inclusão de commit/rollback para finalizar a transação
+                             e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                             (SD#791193 - AJFink)
+
   ..............................................................................*/
     
     ------------> CURSORES <------------
@@ -1073,6 +1076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
                           ,pr_des_erro => vr_dscritic); 
     
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc('TELA_COBRAN_1');
   
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -1087,6 +1091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_COBRAN_2');
 
       -- Gerar informacoes do log
       GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -1111,6 +1116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('TELA_COBRAN_3');
   END pc_alterar_sit_conv;  
 
 END TELA_COBRAN;

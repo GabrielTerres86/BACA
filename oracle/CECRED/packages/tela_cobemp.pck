@@ -1341,6 +1341,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Observacao: -----
 
       Alteracoes: 01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
+
+                  09/08/2017 - Nao permitir geracao para produto Pos-Fixado. (Jaison/James - PRJ298)
       Alteracoes: 14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
     ..............................................................................*/
 			DECLARE
@@ -1558,6 +1560,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 						LOOP
               
+              -- Se for Pos-Fixado, vai para proximo
+              IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 2 THEN
+                -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
+                EXIT WHEN (vr_ind_cde = vr_tab_dados_epr.LAST OR vr_ind_cde = (pr_nriniseq + pr_nrregist) - 1);
+                vr_ind_cde := vr_tab_dados_epr.NEXT(vr_ind_cde);
+                CONTINUE;
+              END IF;
+
               vr_dstipcob := '';
               vr_vlsdeved := 0;
               vr_vlsdeved := (vr_tab_dados_epr(vr_ind_cde).vlsdeved + 
@@ -2070,7 +2080,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 			-- Tratamento de erros
 			vr_exc_saida EXCEPTION;
-			vr_tab_erro  gene0001.typ_tab_erro;
 
 			 -- Variaveis de log
 			vr_cdcooper INTEGER;

@@ -27,7 +27,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 17/04/2017
+   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2017
 
    Dados referentes ao programa:
 
@@ -96,19 +96,20 @@
                26/08/2015 - Alterado parametro pr_pesqbb da procedure 
                             lan-tarifa-online da b1wgen0153 (Jean Michel).
                             
-			   16/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
-                            PinPad Novo (Lucas Lunelli - [PROJ290])
+               16/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
+                             PinPad Novo (Lucas Lunelli - [PROJ290])
                             
                22/03/2016 - Ajuste na mensagem de alerta que identifica transferencias duplicadas
                             conforme solicitado no chamado 421403. (Kelvin)                            
                             
-  			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
-			                comprovantes, melhoria 112 (Tiago/Elton)              
+               26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
+                            comprovantes, melhoria 112 (Tiago/Elton)              
 
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur (Adriano - P339).
 
+               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -2208,7 +2209,7 @@ PROCEDURE realiza-transferencia:
                                  INPUT p-idtipcar,
                                  INPUT p-nro-docto,      /* Nrd Documento */               
                                  INPUT aux_cdhisdeb,     /* HIST Debito */
-                                 INPUT p-nrcartao,
+                                 INPUT STRING(p-nrcartao),
                                  INPUT p-valor,
                                  INPUT p-cod-operador,   /* Código do Operador */
                                  INPUT 0,

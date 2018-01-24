@@ -371,7 +371,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             que apresentaram critica no loop de processamento das linhas
                             do arquivo. (SD#726081-AJFink)
 
-
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
                             o nome do arquivo apos processamento, iremos gerar o arquivo
                             _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
@@ -381,7 +380,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             Títulos estavam sendo devolvidos com a crítica 63.
                             (SD#764044-AJFink)
                             
-               03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
+               08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                            (SD#791193 - AJFink)
+                           
+			   03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
                             periodo de convivencia será tratado por faixa de valores
                            (Douglas - Chamado 823963)
 
@@ -1872,8 +1874,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                         pr_cdacesso => 'FL_CRPS538_ABORTAR'),'S') = 'S' THEN
              RAISE vr_exc_saida;
            ELSE
-             RAISE vr_exc_final;
-           END IF;
+           RAISE vr_exc_final;
+         END IF;
 
          END IF;
          /*  Fim da verificacao se deve executar  */
@@ -6088,6 +6090,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
        --Salvar informacoes no banco de dados
        COMMIT;
+       npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_1');
 
        -- Controle para disparar parte desmembrada 1 - Chamado 714566 - 11/08/2017               
        -- tem arquivo para processar
@@ -6124,6 +6127,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_dscritic:= NULL;
          -- Efetuar commit pois gravaremos o que foi processado ate entao
          COMMIT;
+         npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_2');
 
        WHEN vr_exc_saida THEN
          -- Devolvemos codigo e critica encontradas
@@ -6131,6 +6135,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
          
          ROLLBACK;
+         npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_3');
        WHEN OTHERS THEN
          -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
@@ -6139,6 +6144,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_dscritic := sqlerrm;
          
          ROLLBACK;
+         npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_4');
      END;
    END PC_CRPS538;
 /

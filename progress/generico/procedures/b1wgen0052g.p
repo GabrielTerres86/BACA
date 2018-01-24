@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 05/10/2017
+    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
   
     Dados referentes ao programa:
   
@@ -149,8 +149,8 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
-
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
+				
 				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
@@ -158,12 +158,12 @@
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                             PRJ339 - CRM (Odirlei-AMcom)  	
+                             PRJ339 - CRM (Odirlei-AMcom)  
+                			
+				11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)			
 
-                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)	
-
-
+                             
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 
@@ -285,7 +285,7 @@ PROCEDURE Grava_Dados :
 
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	
+
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -716,24 +716,6 @@ PROCEDURE Grava_Dados :
     IF  par_cdcritic <> 0 OR par_dscritic <> "" THEN
         ASSIGN aux_returnvl = "NOK".
 
-		
-		
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-                        
-	RUN STORED-PROCEDURE pc_marca_replica_ayllos 
-		aux_handproc = PROC-HANDLE NO-ERROR
-						 (INPUT par_cdcooper,  
-						  INPUT par_nrdconta,	
-						  INPUT par_idseqttl,
-						 OUTPUT "").
-
-	CLOSE STORED-PROC pc_marca_replica_ayllos 
-		  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-	{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
-
-
-	
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Grava_Dados */
@@ -1032,7 +1014,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT par_cdoperad, 
                       INPUT par_dtmvtolt,
                       INPUT par_inhabmen,
-                      INPUT par_dthabmen,					  
+                      INPUT par_dthabmen,
                      OUTPUT par_cdcritic, 
                      OUTPUT par_dscritic ) NO-ERROR.
                 
@@ -1208,7 +1190,7 @@ PROCEDURE Altera PRIVATE :
               INPUT UPPER(par_complend),
               INPUT UPPER(par_nmbairro),
               INPUT UPPER(par_nmcidade),
-              INPUT UPPER(par_cdufende),			  
+              INPUT UPPER(par_cdufende),
               INPUT par_nrcxapst,
               INPUT par_idorigee,
              OUTPUT par_dscritic ) NO-ERROR.
@@ -3481,7 +3463,7 @@ PROCEDURE Atualiza_End PRIVATE:
               INPUT 0, /* Atualizados somente via tela CONTAS */ 
               INPUT 0,
               INPUT NO,
-              INPUT par_idorigee,	
+              INPUT par_idorigee,
              OUTPUT aux_msgalert,
              OUTPUT aux_tpatlcad,
              OUTPUT aux_msgatcad,
@@ -3509,7 +3491,7 @@ PROCEDURE Atualiza_End PRIVATE:
 
             UNDO Endereco, LEAVE Endereco.
         END.
-		
+
         ASSIGN aux_returnvl = "OK".
 
         LEAVE Endereco.
@@ -4371,6 +4353,13 @@ PROCEDURE Inclui PRIVATE :
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdbcochq = 85 NO-ERROR.  
 
+                       /* Para esta tela deve gravar essas informaçoes como padrao */
+                       IF par_nmdatela = 'CADMAT' THEN
+                       DO:
+                          ASSIGN crabass.cdsecext = 999 NO-ERROR.
+                       END.
+                       
+
                    IF  ERROR-STATUS:ERROR THEN 
                        DO:
                           ASSIGN par_dscritic = {&GET-MSG}.
@@ -4546,7 +4535,7 @@ PROCEDURE Inclui PRIVATE :
               INPUT UPPER(par_complend),
               INPUT UPPER(par_nmbairro),
               INPUT UPPER(par_nmcidade),
-              INPUT UPPER(par_cdufende),			  		
+              INPUT UPPER(par_cdufende),
               INPUT par_nrcxapst,
               INPUT par_idorigee,
              OUTPUT par_dscritic ) NO-ERROR.

@@ -54,6 +54,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                flceeexp  crapceb.flceeexp%TYPE,
                -- Dados da conta que esta processando o arquivo
                inpessoa  crapass.inpessoa%TYPE,
+               nrcpfcgc  crapass.nrcpfcgc%TYPE,
                flserasa  crapceb.flserasa%TYPE
                );
 
@@ -4544,7 +4545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 29/12/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 22/12/2017
 
        Dados referentes ao programa:
 
@@ -4555,8 +4556,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        
                    29/12/2016 - P340 - Ajustes para pagamentos divergentes (Ricardo Linhares)
 
-                   16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
+                   16/11/2017 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
 
+                   22/12/2017 - Carregar o CPF/CNPJ do titular da conta (Douglas - Chamado 819777)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4787,6 +4789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_header.flgregis := rw_crapcco.flgregis;
     pr_rec_header.flceeexp := rw_crapceb.flceeexp;
     pr_rec_header.inpessoa := rw_crapass.inpessoa;
+    pr_rec_header.nrcpfcgc := rw_crapass.nrcpfcgc;
     pr_rec_header.flserasa := rw_crapceb.flserasa;
     pr_rec_header.flgregon := rw_crapceb.flgregon;
     pr_rec_header.flgpgdiv := rw_crapceb.flgpgdiv;
@@ -5596,7 +5599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 08/11/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 22/12/2017
 
        Dados referentes ao programa:
 
@@ -5627,6 +5630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
                                 remove o caractere invalido chr(160) (Douglas - Chamado 778480)
+
+                   22/12/2017 - Validar se o CPF/CNPJ do pagador é o mesmo do titular da conta
+                                e rejeitar com o motivo '46' (Douglas - Chamado 819777)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5776,6 +5782,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;                             
     END IF;        
     
+    -- Validar se o CPF/CNPJ do pagador é o mesmo do Beneficiário
+    IF pr_rec_cobranca.nrinssac = pr_rec_header.nrcpfcgc THEN
+      -- Tipo/Numero de Inscricao do Sacado Invalidos
+      vr_rej_cdmotivo := '46';
+      RAISE vr_exc_reje;
+    END IF;                             
+
     -- 10.3Q Valida Nome do Sacado
     IF TRIM(pr_rec_cobranca.nmdsacad) IS NULL THEN
       -- Nome do Sacado Nao Informado
@@ -7676,14 +7689,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 22/12/2017
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquicvo Header do arquivo
 
-       Alteracoes: 
+       Alteracoes: 22/12/2017 - Carregar o CPF/CNPJ do titular da conta (Douglas - Chamado 819777)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -7945,6 +7958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_header.flgregis := rw_crapcco.flgregis;
     pr_rec_header.flceeexp := rw_crapceb.flceeexp;
     pr_rec_header.inpessoa := rw_crapass.inpessoa;
+    pr_rec_header.nrcpfcgc := rw_crapass.nrcpfcgc;
     
     --> 19.0 Sequencial Fixo "000001"
     IF pr_tab_linhas('NRSEQREG').numero <> 1 THEN
@@ -8027,6 +8041,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
                                 remove o caractere invalido chr(160) (Douglas - Chamado 778480)
+
+                   22/12/2017 - Validar se o CPF/CNPJ do pagador é o mesmo do titular da conta
+                                e rejeitar com o motivo '46' (Douglas - Chamado 819777)
 
                    15/01/2018 - Ajustar para quando o cooperado informar o valor de desconto
                                 o cdmensag seja gravado com 1 (Vencimento até o desconto)
@@ -8688,6 +8705,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;                             
     END IF;
     
+    -- Validar se o CPF/CNPJ do pagador é o mesmo do Beneficiário
+    IF pr_rec_cobranca.nrinssac = pr_rec_header.nrcpfcgc THEN
+      -- Tipo/Numero de Inscricao do Sacado Invalidos
+      vr_rej_cdmotivo := '46';
+      RAISE vr_exc_reje;
+    END IF;                             
 
     -- 40.7 Nome do Sacado
     IF TRIM(pr_rec_cobranca.nmdsacad) IS NULL THEN

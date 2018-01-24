@@ -1529,14 +1529,14 @@ create or replace package body cecred.CCET0001 is
           vr_cdhistor := 1447;
           vr_tpproduto := 3;
         END IF;           
-      END IF;
+        END IF;           
       OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_crapjur INTO rw_crapjur;
       IF cr_crapjur%FOUND THEN
          vr_natjurid := rw_crapjur.natjurid;
          vr_tpregtrb := rw_crapjur.tpregtrb;
-      END IF;
+        END IF;           
       CLOSE cr_crapjur;
       --Novo cálculo do IOF
       TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => vr_tpproduto --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
@@ -1773,7 +1773,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 23/12/2016
+  Data    : Julho/2014                        Ultima atualizacao: 26/04/2017
 
   Dados referentes ao programa:
 
@@ -1799,10 +1799,13 @@ create or replace package body cecred.CCET0001 is
               23/12/2016 - Ajuste para aumentar o tamanho do campo que recebe o nome da cooperativa
                            pois estava estourando o format
                            (Adriano - SD 582204).
+
+              26/04/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   ............................................................................. */
     DECLARE
     
-      vr_vlrprest NUMBER := 0;                -- Valor da prestacao
+      vr_vlpreemp NUMBER := 0;                -- Valor da parcela
+      vr_vljurcor NUMBER := 0;                -- Valor do juros de correcao
       vr_vlrdocet NUMBER := 0;                -- Valor do CET
       -- Variaveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1832,24 +1835,19 @@ create or replace package body cecred.CCET0001 is
       vr_vltarbem NUMBER := 0;                -- Valor tarifa bem
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
-      vr_qtdiavig INTEGER;
+
+      vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
       
       vr_dscooper VARCHAR2(70);               -- Descrição da cooperativa
       
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
       
-      vr_ind      VARCHAR2(100);
-      
       -- Variável de Controle de XML
       vr_des_xml      CLOB;
       vr_path_arquivo VARCHAR2(1000);
-      vr_dspathcop    VARCHAR2(4000);
 
-      vr_tab_erro GENE0001.typ_tab_erro; --> Tabela com erros
       -- Variaveis pdf
-      vr_nmarqpdf VARCHAR2(100) := '';
-      vr_nmauxpdf VARCHAR2(100) := '';
       vr_nmarqimp VARCHAR2(100) := '';
             
       vr_des_reto CHAR;
@@ -1871,6 +1869,27 @@ create or replace package body cecred.CCET0001 is
        WHERE lcr.cdcooper = pr_cdcooper
          AND lcr.cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
+
+      -- Busca os dados do emprestimo
+      CURSOR cr_dados(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+         SELECT crawepr.cdlcremp
+               ,crawepr.qtpreemp
+               ,crawepr.vlemprst
+               ,crawepr.dtdpagto
+               ,crawepr.dtcarenc
+               ,crapepr.dtmvtolt
+               ,crawepr.idcarenc
+           FROM crawepr
+      LEFT JOIN crapepr
+             ON crapepr.cdcooper = crawepr.cdcooper
+            AND crapepr.nrdconta = crawepr.nrdconta
+            AND crapepr.nrctremp = crawepr.nrctremp
+          WHERE crawepr.cdcooper = pr_cdcooper
+            AND crawepr.nrdconta = pr_nrdconta
+            AND crawepr.nrctremp = pr_nrctremp;
+      rw_dados cr_dados%ROWTYPE;
     
     -- CURSORES PARA UTILIZAR NA PACKAGE
     CURSOR cr_craplat(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1897,6 +1916,35 @@ create or replace package body cecred.CCET0001 is
           AND lat.nrdocmto = pr_nrctremp
           AND lat.cdhistor = pr_cdhistor;
       rw_craplat_bem cr_craplat_bem%ROWTYPE; 
+      
+      --> buscar valor da primeira parcela pos
+      CURSOR cr_crappep (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE
+                        ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT pep.vlparepr
+          FROM crappep pep,
+               crawepr epr
+         WHERE pep.cdcooper = epr.cdcooper
+           AND pep.nrdconta = epr.nrdconta
+           AND pep.nrctremp = epr.nrctremp
+           AND pep.cdcooper = pr_cdcooper
+           AND pep.nrdconta = pr_nrdconta
+           AND pep.nrctremp = pr_nrctremp
+           AND pep.dtvencto >= epr.dtdpagto
+           ORDER BY pep.dtvencto ASC;
+      rw_crappep cr_crappep%ROWTYPE;
+      
+      --> buscar valor da primeira parcela pos
+      CURSOR cr_crappep_vldivida 
+                        (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE
+                        ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT SUM(pep.vlparepr) vldivida
+          FROM crappep pep
+         WHERE pep.cdcooper = pr_cdcooper
+           AND pep.nrdconta = pr_nrdconta
+           AND pep.nrctremp = pr_nrctremp;
+      
       --Procedure que escreve linha no arquivo CLOB
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
       BEGIN
@@ -1918,11 +1966,50 @@ create or replace package body cecred.CCET0001 is
         vr_dscooper := TRIM(rw_crapcop.nmextcop) || ' - ' || TRIM(rw_crapcop.nmrescop);    
       END IF;
 
+      -- Valor da parcela
+      vr_vlpreemp := pr_vlpreemp;
+
       -- NOME DA OPERACAO
       IF pr_tpemprst = 0 THEN
         vr_nmoperac := 'PRICE TR';
       ELSIF pr_tpemprst = 1 THEN
-        vr_nmoperac := 'PRICE PRE-FIXADO';      
+        vr_nmoperac := 'PRICE PRE-FIXADO';
+      ELSIF pr_tpemprst = 2 THEN
+        vr_nmoperac := 'PRICE POS-FIXADO';
+
+        -- Busca os dados do emprestimo
+        OPEN cr_dados(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_dados INTO rw_dados;
+        CLOSE cr_dados;
+
+        -- Busca quantidade de dias da carencia
+        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
+                                           ,pr_qtddias    => vr_qtdias_carencia
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        --> buscar valor da primeira parcela pos
+        OPEN cr_crappep (pr_cdcooper => pr_cdcooper 
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_crappep INTO rw_crappep;
+        IF cr_crappep%NOTFOUND THEN 
+          CLOSE cr_crappep;
+          vr_dscritic := 'Parcela de emprestimo nao encontrada.';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crappep;
+          
+          vr_vlpreemp := rw_crappep.vlparepr;          
+        END IF;
+
+
       END IF;
    
       -- Data do vencimento do emprestimo        
@@ -1968,22 +2055,22 @@ create or replace package body cecred.CCET0001 is
 
       -- calcula IOF apenas para emprestimos que nao sao de portabilidade
       IF vr_des_reto = 'N' THEN      
-        -- Quantidade de dias de vigencia
-        vr_qtdiavig := add_months(pr_dtdpagto,pr_qtpreemp - 1) - pr_dtmvtolt;      
         -- Buscar iof
-        EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_dtmvtolt => pr_dtmvtolt
-                                   ,pr_inpessoa => pr_inpessoa
-                                   ,pr_cdlcremp => pr_cdlcremp
-                                   ,pr_qtpreemp => pr_qtpreemp
-                                   ,pr_vlpreemp => pr_vlpreemp
-                                   ,pr_vlemprst => pr_vlemprst
-                                   ,pr_dtdpagto => pr_dtdpagto
-                                   ,pr_dtlibera => pr_dtlibera
-                                   ,pr_tpemprst => pr_tpemprst
-                                   ,pr_valoriof => vr_vlrdoiof
-                                   ,pr_dscritic => vr_dscritic);
+        EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+                                   ,pr_nrdconta        => pr_nrdconta
+                                   ,pr_dtmvtolt        => pr_dtmvtolt
+                                   ,pr_inpessoa        => pr_inpessoa
+                                   ,pr_cdlcremp        => pr_cdlcremp
+                                   ,pr_qtpreemp        => pr_qtpreemp
+                                   ,pr_vlpreemp        => vr_vlpreemp
+                                   ,pr_vlemprst        => pr_vlemprst
+                                   ,pr_dtdpagto        => pr_dtdpagto
+                                   ,pr_dtlibera        => pr_dtlibera
+                                   ,pr_tpemprst        => pr_tpemprst
+                                   ,pr_dtcarenc        => rw_dados.dtcarenc
+                                   ,pr_qtdias_carencia => vr_qtdias_carencia
+                                   ,pr_valoriof        => vr_vlrdoiof
+                                   ,pr_dscritic        => vr_dscritic);
                                    
         -- VERIFICA SE OCORREU UMA CRITICA
         IF vr_dscritic IS NOT NULL THEN
@@ -2091,15 +2178,36 @@ create or replace package body cecred.CCET0001 is
       -- Taxa de juros da tarifa
       vr_txjurtar := (vr_vlrtarif * 100) / pr_vlemprst;
 
-      -- Valor total da divida
-      vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(pr_vlpreemp,0),2);
+      -- Para pos fixado exibir total da divida o valor do emprestimo
+      IF pr_tpemprst = 2 THEN
       
+        vr_vltotdiv := 0;
+        --> buscar Valor total da divida
+        OPEN cr_crappep_vldivida 
+                        (pr_cdcooper => pr_cdcooper 
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_crappep_vldivida INTO vr_vltotdiv;
+        IF cr_crappep_vldivida%NOTFOUND THEN 
+          CLOSE cr_crappep_vldivida;
+          vr_vltotdiv := 0;
+          vr_dscritic := 'Parcela de emprestimo nao encontrada.';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crappep_vldivida;          
+        END IF;  
+            
+      ELSE
+      
+      -- Valor total da divida
+      vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(vr_vlpreemp,0),2);
+      END IF;
       -- Porcentagem  do valor total
       vr_txjuremp := 100;
       
       -- Busca juros do cet
       CCET0001.pc_juros_cet(pr_nro_parcelas   => pr_qtpreemp
-                           ,pr_vlr_prestacao  => pr_vlpreemp
+                           ,pr_vlr_prestacao  => vr_vlpreemp
                            ,pr_vlr_financiado => vr_vlemprst
                            ,pr_data_contrato  => pr_dtlibera
                            ,pr_primeiro_vcto  => pr_dtdpagto
@@ -2149,7 +2257,7 @@ create or replace package body cecred.CCET0001 is
                      '<txjurlim>' || to_char(nvl(vr_txjurlim,0),'990D00') || '</txjurlim>' ||
                      '<dtmvtolt>' || to_char(pr_dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>'||
                      '<dsdprazo>' || to_char(trim(vr_dsdprazo)) || '</dsdprazo>' ||
-                     '<vlparemp>' || to_char(nvl(pr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
+                     '<vlparemp>' || to_char(nvl(vr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
                      '<vltotemp>' || to_char(nvl(vr_vltotdiv,0),'fm999G999G990D00') || '</vltotemp>' ||
                      '<dtpripag>' || to_char(pr_dtdpagto,'dd/mm/rrrr') || '</dtpripag>' ||
                      '<dscooper>' || vr_dscooper || '</dscooper>');
@@ -2330,7 +2438,7 @@ create or replace package body cecred.CCET0001 is
           vr_cdhistor := 1447;
           vr_tpproduto := 3;
         END IF;           
-      END IF;
+        END IF;           
       OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_crapjur INTO rw_crapjur;
@@ -2460,7 +2568,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas R.
-  Data    : Setembro/2014                        Ultima atualizacao: 07/11/2016
+  Data    : Setembro/2014                        Ultima atualizacao: 25/08/2017
 
   Dados referentes ao programa:
 
@@ -2472,8 +2580,12 @@ create or replace package body cecred.CCET0001 is
                            alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
                            (SD#551769 - AJFink)
 
+              25/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
   ............................................................................. */
     DECLARE
+      vr_vlpreemp NUMBER;                -- Valor da parcela
+      vr_vljurcor NUMBER;                -- Valor do juros de correcao
       vr_vlrdocet NUMBER;                -- Valor do CET
       -- Variaveis de erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2481,27 +2593,23 @@ create or replace package body cecred.CCET0001 is
       
       -- VARIAVEIS A ENVIAR PARA O XML
       vr_vlrdoiof NUMBER := 0;                -- IOF calculado
-      vr_txjuriof NUMBER := 0;                -- Taxa do IOF
       vr_vlrtarif NUMBER := 0;                -- Valor Tar. Cadastro
-      vr_txjurtar NUMBER := 0;                -- Taxa Tar. Cadastro         
       vr_txanocet NUMBER := 0;                -- taxa anual do cet
       vr_txmescet NUMBER := 0;                -- taxa mensal do cet
       vr_cdbattar VARCHAR2(15);               -- CODIGO DA TARIFA
-      vr_txadoiof NUMBER := 0;                -- Taxa do iof
       vr_vlemprst NUMBER := 0;                -- Valor do emprestim
       vr_tpctrato NUMBER := 0;                -- Tipo de contrato
       vr_cdhisbem NUMBER := 0;                -- Hostorico do bem
       vr_vltarbem NUMBER := 0;                -- Valor tarifa bem
       vr_cdhistor NUMBER := 0;                -- Historico
-      vr_qtdiavig NUMBER := 0;                -- Quantidade de Dias de Vigencia
       vr_data_contrato DATE;
       vr_cdusolcr NUMBER := 0;                -- Uso da Linha de Credito
       -- Variavel exceção
-      vr_exc_erro EXCEPTION;          
-      vr_ind      VARCHAR2(100);     
-      vr_tab_erro GENE0001.typ_tab_erro; --> Tabela com erros
+      vr_exc_erro EXCEPTION;
       -- Tipo da finalidade
       vr_tpfinali crapfin.tpfinali%TYPE := 0;
+      
+      vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
       
       --CURSORES
       CURSOR cr_craplcr IS
@@ -2548,7 +2656,24 @@ create or replace package body cecred.CCET0001 is
           FROM crapfin fin
          WHERE fin.cdcooper = pr_cdcooper
            AND fin.cdfinemp = pr_cdfinemp;            
-      rw_crapfin cr_crapfin%ROWTYPE;       
+      rw_crapfin cr_crapfin%ROWTYPE;
+
+      -- Busca os dados do emprestimo
+      CURSOR cr_dados(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+         SELECT crawepr.dtcarenc
+               ,crawepr.idcarenc
+               ,crapepr.dtmvtolt
+           FROM crawepr
+      LEFT JOIN crapepr
+             ON crapepr.cdcooper = crawepr.cdcooper
+            AND crapepr.nrdconta = crawepr.nrdconta
+            AND crapepr.nrctremp = crawepr.nrctremp
+          WHERE crawepr.cdcooper = pr_cdcooper
+            AND crawepr.nrdconta = pr_nrdconta
+            AND crawepr.nrctremp = pr_nrctremp;
+      rw_dados cr_dados%ROWTYPE;
       
     BEGIN   
       -- Buscar a tipo de contrato
@@ -2573,20 +2698,64 @@ create or replace package body cecred.CCET0001 is
           -- tipo da finalidade
           vr_tpfinali := rw_crapfin.tpfinali;
         END IF;
-    
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                 ,pr_inpessoa => pr_inpessoa
-                                 ,pr_cdlcremp => pr_cdlcremp
-                                 ,pr_qtpreemp => pr_qtpreemp
-                                 ,pr_vlpreemp => pr_vlpreemp
-                                 ,pr_vlemprst => pr_vlemprst
-                                 ,pr_dtdpagto => pr_dtdpagto
-                                 ,pr_dtlibera => pr_dtlibera
-                                 ,pr_tpemprst => pr_tpemprst
-                                 ,pr_valoriof => vr_vlrdoiof
-                                 ,pr_dscritic => vr_dscritic);
+
+      -- Valor da parcela
+      vr_vlpreemp := pr_vlpreemp;
+
+      -- Se for Pos-Fixado
+      IF pr_tpemprst = 2 THEN
+        -- Busca os dados do emprestimo
+        OPEN cr_dados(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_dados INTO rw_dados;
+        CLOSE cr_dados;
+
+        -- Busca quantidade de dias da carencia
+        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
+                                           ,pr_qtddias    => vr_qtdias_carencia
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Chama o calculo da parcela
+        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
+                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
+                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
+                                             ,pr_cdlcremp        => pr_cdlcremp
+                                             ,pr_dtcarenc        => rw_dados.dtcarenc
+                                             ,pr_dtdpagto        => pr_dtdpagto
+                                             ,pr_qtpreemp        => pr_qtpreemp
+                                             ,pr_vlemprst        => pr_vlemprst
+                                             ,pr_qtdias_carencia => vr_qtdias_carencia
+                                             ,pr_vlpreemp        => vr_vlpreemp
+                                             ,pr_vljurcor        => vr_vljurcor
+                                             ,pr_cdcritic        => vr_cdcritic
+                                             ,pr_dscritic        => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+
+      EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+                                 ,pr_nrdconta        => pr_nrdconta
+                                 ,pr_dtmvtolt        => pr_dtmvtolt
+                                 ,pr_inpessoa        => pr_inpessoa
+                                 ,pr_cdlcremp        => pr_cdlcremp
+                                 ,pr_qtpreemp        => pr_qtpreemp
+                                 ,pr_vlpreemp        => vr_vlpreemp
+                                 ,pr_vlemprst        => pr_vlemprst
+                                 ,pr_dtdpagto        => pr_dtdpagto
+                                 ,pr_dtlibera        => pr_dtlibera
+                                 ,pr_tpemprst        => pr_tpemprst
+                                 ,pr_dtcarenc        => rw_dados.dtcarenc
+                                 ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_valoriof        => vr_vlrdoiof
+                                 ,pr_dscritic        => vr_dscritic);
                                    
       -- VERIFICA SE OCORREU UMA CRITICA
       IF vr_dscritic IS NOT NULL THEN
@@ -2694,7 +2863,7 @@ create or replace package body cecred.CCET0001 is
         
       -- Busca juros do cet
       CCET0001.pc_juros_cet(pr_nro_parcelas   => pr_qtpreemp
-                           ,pr_vlr_prestacao  => pr_vlpreemp
+                           ,pr_vlr_prestacao  => vr_vlpreemp
                            ,pr_vlr_financiado => vr_vlemprst
                            ,pr_data_contrato  => vr_data_contrato
                            ,pr_primeiro_vcto  => pr_dtdpagto

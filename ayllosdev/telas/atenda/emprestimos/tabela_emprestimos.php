@@ -19,7 +19,8 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
- * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert) 
+ * 012: [30/03/2017] Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
+ * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
  */
 ?>
@@ -41,7 +42,18 @@
 				<th><? echo utf8ToHtml('Decisão');?></th></tr>
 		</thead>
 		<tbody>
-			<? foreach( $registros as $registro ) {  $tipo = (getByTagName($registro->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"   ?>
+			<? foreach( $registros as $registro ) {
+                switch (getByTagName($registro->tags,'tpemprst')) {
+                    case 0:
+                        $tipo = "Price TR";
+                        break;
+                    case 1:
+                        $tipo = "Price Pre-fixado";
+                        break;
+                    case 2:
+                        $tipo = "Pos-fixado";
+                        break;
+                } ?>
 				<tr><td><span><? echo dataParaTimestamp(getByTagName($registro->tags,'dtmvtolt')) ?></span>
 						<? echo getByTagName($registro->tags,'dtmvtolt') ?></td>
 					<td><span><? echo getByTagName($registro->tags,'nrctremp') ?></span>
@@ -84,11 +96,11 @@
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
 	
-	<?php if(!($sitaucaoDaContaCrm == '4' || 
+	<?php if(!(/* $sitaucaoDaContaCrm == '4' || */ 
 			   $sitaucaoDaContaCrm == '7' || 
 			   $sitaucaoDaContaCrm == '8'  )){?>
 
-			<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
 	
 	<?}?>
 	

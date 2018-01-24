@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 30/10/2017
+   Data    : Marco/2007                        Ultima atualizacao: 07/12/2017
 
    Dados referentes ao programa:
 
@@ -60,12 +60,14 @@
                             flag de boleto dda (flgcbdda) no xml de retorno
                             (P340 - Rafael)
 														
-			   05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
-							e tratamento para descontos, Prj. 340 (Jean Michel)
+               05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT
+                            e tratamento para descontos, Prj. 340 (Jean Michel)
 
-			   30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
+               30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
                             verifica-titulo-npc-cip (SD784234 - AJFink)
 
+               07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
+                            (Douglas - Chamado 805008)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -493,6 +495,8 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
 								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "<dtmvtatu>" + STRING(tt-consulta-blt.dtmvtatu,"99/99/9999") + "</dtmvtatu>" +
+                                   "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
                                    "</BOLETO>".       
   
 END.

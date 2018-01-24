@@ -33,8 +33,9 @@
  *
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
- * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
- * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
+ * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
+ * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 022: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
  */
 
 var callafterLimiteCred = '';
@@ -744,6 +745,7 @@ function formataPrincipal() {
     rDstprenv = $('label[for="dstprenv"]', '#frmDadosLimiteCredito');
     rQtrenova = $('label[for="qtrenova"]', '#frmDadosLimiteCredito');
     rDtrenova = $('label[for="dtrenova"]', '#frmDadosLimiteCredito');
+	rDtultmaj = $('label[for="dtultmaj"]', '#frmDadosLimiteCredito');
 
     rVllimite.addClass('rotulo').css({ 'width': '126px' });
     rDtmvtolt.addClass('rotulo-linha').css({ 'width': '110px' });
@@ -761,6 +763,7 @@ function formataPrincipal() {
     rDstprenv.addClass('rotulo').css({ 'width': '126px' });
     rQtrenova.addClass('rotulo-linha').css({ 'width': '83px' });
     rDtrenova.addClass('rotulo-linha').css({ 'width': '91px' });
+	rDtultmaj.addClass('rotulo-linha').css({ 'width': '80px' });
 
     // campos
     cVllimite = $('#vllimite', '#frmDadosLimiteCredito');
@@ -779,6 +782,7 @@ function formataPrincipal() {
     cDstprenv = $('#dstprenv', '#frmDadosLimiteCredito');
     cQtrenova = $('#qtrenova', '#frmDadosLimiteCredito');
     cDtrenova = $('#dtrenova', '#frmDadosLimiteCredito');
+	cDtultmaj = $('#dtultmaj', '#frmDadosLimiteCredito');
 
     cVllimite.css({ 'width': '220px' });
     cDtmvtolt.css({ 'width': '70px' });
@@ -796,6 +800,7 @@ function formataPrincipal() {
     cDstprenv.css({ 'width': '80px' });
     cQtrenova.css({ 'width': '70px' });
     cDtrenova.css({ 'width': '70px' });
+	cDtultmaj.css({ 'width': '70px' });
 
     // ie
     if ($.browser.msie) {

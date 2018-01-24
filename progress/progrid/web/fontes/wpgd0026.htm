@@ -16,6 +16,11 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 			
 			23/06/2016 - Retirada do envio do email e inclusão dos dos campos cdoperad e 
 						 cdcopope na seleção do local RF05 - (Vanessa K.)
+                         
+            03/02/2017 - Alterado label de coluna,Prj. 229-5 (Jean Michel)             
+            
+            04/12/2017 - Ajustado indice do campo local, para a busca pegar corretamente a agencia.
+                         (Odirlei-AMcom)
 -->
 
 <html>
@@ -61,7 +66,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
         NomeDoProgramaDeZoom = '/zoom/zoei04.w';
     </script>
     <form action="#." method="POST" name="form">
-        <div width="100%" border="0" cellpadding="1" cellspacing="1" align="center" style="float:right; margin-right:36px;">
+        <div width="100%" border="0" cellpadding="1" cellspacing="1" align="center" style="float:left; margin-right:36px;">
 			<input type="hidden" name="aux_dsendurl" value="">
 			<input type="hidden" name="aux_idevento" value="">
 			<input type="hidden" name="aux_cddopcao" value="">
@@ -185,7 +190,6 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                     <td height="10" colspan="3" class="linkMenuAdmin"></td>
                                                                 </tr>
                                                                 <tr>
-																	
                                                                     <td width="115" height="25" align="right" class="NomeCampo">Eixo:</td>
                                                                     <td width="300" height="25">
                                                                         <select style="width:380px" name="aux_cdeixtem" class="Campo" onchange="aguarde(); document.form.aux_nrseqtem.value='-1';
@@ -212,10 +216,21 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                 <!--<div id="SelPac">  -->
                                                                 <tr>
                                                                     <td width="115" height="25" align="right" class="NomeCampo">Evento:</td>
-                                                                    <td width="300" height="25"  colspan="7">
+                                                                    <td width="300" height="25" >
                                                                         <select style="width:380px" name="aux_cdevento_pa" class="Campo" id="aux_cdevento_pa" onchange="aguarde(); Recarrega();"></select>
                                                                     </td>
-                                                                    <td width="200" colspan="1"></td>
+                                                                    <td width="453" colspan="5">
+																																			<table border="0">
+																																				<tr>
+																																					<td width="400" height="25" align="right" class="NomeCampo">Programa:</td>
+																																					<td width="400" height="25">
+																																						<select style="width:380px" name="aux_nrseqpgm" id="aux_nrseqpgm" class="Campo" onchange="aguarde(); document.form.aux_cdevento_pa.value='-1';																																												 document.form.aux_nrcpfcgc.value='-1';
+																																												 document.form.aux_cdevento.value='-1'; Recarrega();
+																																													"></select>
+																																				</td>
+                                                                </tr>
+																																		</table>
+																																		</td>
                                                                 </tr>
                                                                 <!--</div>-->
                                                                 <tr>
@@ -281,32 +296,33 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                     <td height="27" align="left" valign="top">
                                                                         <!-- Fim das abas - Início dos dados do programa -->
                                                                         <div id="divInscrito" align="left">
-                                                                            <table width="1065" border="0" cellpadding="0" cellspacing="0">
-                                                                                <tr align="left">
-                                                                                    <td width="5" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
-                                                                                    <td id="tbevento_col21" width="295" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbevento_col1">Evento</td>
-                                                                                    <td id="separador1" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col20" width="80" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbevento_col1">PA</td>
-                                                                                    <td id="separador11" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col3" width="50" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Data</td>
-                                                                                    <td id="separador2" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col4" width="340" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Local</td>
-                                                                                    <td id="separador3" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col10" width="80" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Horário</td>
-                                                                                    <td id="separador10" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col5" width="65" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Max Partic.</td>
-                                                                                    <td id="separador4" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col7" width="45" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Pré-insc.</td>
-                                                                                    <td id="separador5" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbevento_col8" width="45" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Conf.</td>
-                                                                                    <td id="separador6" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15">
-                                                                                    <td id="tbevento_col9" width="60" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Status</td>
-                                                                                </tr>
-                                                                            </table>
                                                                             <div style="overflow: auto; height:400;">
-                                                                                <table width="1065" id="tbevento" border="0" cellpadding="0" cellspacing="0">
-                                                                                    <!-- INCLUI DADOS -->
-                                                                                </table>
+																																							<table width="98.5%" border="0" cellpadding="0" id="tbevento" name="tbevento" cellspacing="0" >
+																																								<thead>
+																																									<tr>
+                                                                                    <td width="5" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+																																											<td id="tbevento_col1" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Evento</td>
+																																											<td id="separador1" name="separador1" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >PA</td>
+																																											<td id="separador2" name="separador2" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col3" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Data</td>
+																																											<td id="separador3" name="separador3" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col4"  height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Local</td>
+																																											<td id="separador4" name="separador4" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col5"  height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Observação</td>
+																																											<td id="separador5" name="separador5" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col6"  height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Horário</td>
+																																											<td id="separador6" name="separador6" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col7" width="60" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Meta do PA</td>
+																																											<td id="separador7" name="separador7" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col8" width="50" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Pré-insc.</td>
+																																											<td id="separador8" name="separador8" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+																																											<td id="tbevento_col9" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Conf.</td>
+																																											<td id="separador9" name="separador9" width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"> <img src="/cecred/images/geral/div.gif" width="2" height="15">
+																																											<td id="tbevento_col10" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Status</td>
+                                                                                </tr>
+																																								</thead>	
+                                                                            </table>
                                                                             </div>
                                                                         </div>
                                                                         <div id="divConfirma" align="left">
@@ -323,7 +339,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                                                                                     <td width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
                                                                                     <td id="tbpac_col10" width="80" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Horário</td>
                                                                                     <td width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                                                                    <td id="tbpac_col5" width="65" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Max Partic.</td>
+                                                                                    <td id="tbpac_col5" width="65" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Meta do PA</td>
                                                                                     <td width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
                                                                                     <td id="tbpac_col7" width="45" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Pré-insc.</td>
                                                                                     <td width="2" height="26" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
@@ -371,10 +387,11 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
         window.status = "";
     }
 
-    if (document.form.pagina.value == "divInscrito")
+    if (document.form.pagina.value == "divInscrito"){
         mostraEventos();
-    else
+    }else{
         mostraPACsEve();
+		}
 
     function mostraEventos() {
 
@@ -382,7 +399,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 
         var cor = '#F7F7F7';
 
-        for (var i = document.all.tbevento.rows.length; i > 0; i--)
+        for (var i = document.all.tbevento.rows.length; i > 1; i--)
             // Apaga todas as linhas, menos a do cabeçalho
             document.all.tbevento.deleteRow(i - 1);
 
@@ -407,10 +424,10 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Evento
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 277;
-                cell.height = 10;
+                //cell.width = document.all.tbevento_col1.width;
+                cell.height = 26;
                 cell.align = 'left';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i; //document.all.tbevento.rows.length - 1;
 
                 // Se for PROGRID, escreve em forma de link
                 if (document.form.aux_idevento.value == "1" && mevento[i].tpevento != 10) {
@@ -443,8 +460,8 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // PA
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 85;
-                cell.height = 10;
+                //cell.width = document.all.tbevento_col2.width;
+                cell.height = 26;
                 cell.align = 'left';
                 cell.id = document.all.tbevento.rows.length - 1;
                 cell.innerHTML = mevento[i].nmresage;
@@ -452,7 +469,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador2.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -460,7 +477,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Data do Evento
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 50;
+                //cell.width = document.all.tbevento_col3.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = mevento[i].dtevento;
@@ -468,7 +485,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador3.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -476,10 +493,10 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Local
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 320;
+                //cell.width = document.all.tbevento_col4.width;
                 cell.height = 26;
                 cell.align = 'left';
-                cell.id = document.all.tbevento.rows.length - 1;
+                cell.id = i;//document.all.tbevento.rows.length - 1;
                 cell.title = mevento[i].enlocali;
 
                 // Assembléias não tem acesso a local
@@ -500,7 +517,23 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador4.width;
+                cell.height = 26;
+                cell.align = 'left';
+                cell.innerText = '';
+									
+                // Observacao
+                cell = row.insertCell();
+                cell.className = 'txtPequeno';
+                //cell.width = document.all.tbevento_col5.width;
+                cell.height = 26;
+                cell.align = 'left';
+                cell.innerHTML = '<a href="#" onclick="AdObs(\'' + mevento[i].nrdrowid + '\',' + document.form.aux_cdcopope.value + ',\'' + document.form.aux_cdoperad.value + '\');">OBS</a>';
+								
+                // Separador
+                cell = row.insertCell();
+                cell.className = 'txtNormal';
+                cell.width = document.all.separador5.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -508,7 +541,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Horário do Evento
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 80;
+                //cell.width = document.all.tbevento_col6.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = mevento[i].dshroeve;
@@ -516,15 +549,15 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador10.width;
+                cell.width = document.all.separador6.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
 
-                // Max Partic
+                // Meta do PA
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 65;
+                //cell.width = document.all.tbevento_col7.width;
                 cell.height = 26;
                 cell.align = 'center';
                 // Se for PROGRID, tem máximo de participantes
@@ -538,7 +571,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador7.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -546,7 +579,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Inscritos
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 45;
+                //cell.width = document.all.tbevento_col8.width;
                 cell.height = 26;
                 cell.align = 'center';
                 cell.id = document.all.tbevento.rows.length - 1;
@@ -561,7 +594,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador8.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -569,8 +602,8 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Confirmados
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 35;
-                cell.height = 10;
+                //cell.width = document.all.tbevento_col9.width;
+                cell.height = 26;
                 cell.align = 'center';
                 cell.id = document.all.tbevento.rows.length - 1;
                 if (mevento[i].tpevento != 10) {
@@ -585,7 +618,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Separador
                 cell = row.insertCell();
                 cell.className = 'txtNormal';
-                cell.width = document.all.separador1.width;
+                cell.width = document.all.separador9.width;
                 cell.height = 26;
                 cell.align = 'left';
                 cell.innerText = '';
@@ -593,7 +626,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 // Status
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
-                cell.width = 70;
+                //cell.width = document.all.tbevento_col10.width;
                 cell.height = 10;
                 cell.align = 'left';
                 cell.innerText = mevento[i].idstaeve;
@@ -915,7 +948,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
                 cell.align = 'left';
                 cell.innerText = '';
 
-                // Max Partic
+                // Meta do PA
                 cell = row.insertCell();
                 cell.className = 'txtPequeno';
                 cell.width = 65;
@@ -1240,6 +1273,16 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
         return true;
     }
 
+		function AdObs(nrdrowid,pr_cdcopope,pr_cdoperad) {
+
+			VarURL = document.form.aux_dsendurl.value + '/wpgd0026d.htm?LinkRowid=' + nrdrowid
+																								+ '&aux_cdcopope=' + pr_cdcopope
+																								+ '&aux_cdoperad=' + pr_cdoperad;
+																	
+			window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=150,top=10,left=10');
+			
+		}
+		
     $.datepicker.setDefaults($.datepicker.regional["pt-BR"]);
 
     var dataPadrao = new Date();

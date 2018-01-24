@@ -1,15 +1,17 @@
 <? 
 /*!
  * FONTE        : matric.php
- * CRIAÇÃO      : Rodolpho Telmo (DB1)
- * DATA CRIAÇÃO : 07/06/2010
+ * CRIAÃ‡ÃƒO      : Rodolpho Telmo (DB1)
+ * DATA CRIAÃ‡ÃƒO : 07/06/2010
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
- * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+ * ALTERAÃ‡Ã•ES   : Adicionado pesquisa CEP. ( Rodolpho/RogÃ©rius. (DB1) ).
 
-				  26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
+				  26/06/2017 - Ajustes para inclusÃ£o da nova opÃ§Ã£o "G" (Jonata - RKAM P364).
 
-				  14/11/2017 - Ajuste para inclusão da nova opção H (Jonata - RKAM P364).
+				  14/11/2017 - Ajuste para inclusÃ£o da nova opÃ§Ã£o H (Jonata - RKAM P364).
+
+				  04/01/2017 - Preparar a tela para receber a conta como parametro (Renato Darosci - P339)
  * --------------
  */
 ?>
@@ -24,6 +26,13 @@
 	
 	require_once("../../includes/carrega_permissoes.php");	
 
+	// Armazena variÃ¡veis vindas do CRM
+	$crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
+	$crm_nrdconta = isset($glbvars['CRM_NRDCONTA']) ? $glbvars['CRM_NRDCONTA'] : 0;
+	$crm_nrcpfcgc = isset($glbvars['CRM_NRCPFCGC']) ? $glbvars['CRM_NRCPFCGC'] : 0;
+	$crm_cdoperad = isset($glbvars['CRM_CDOPERAD']) ? $glbvars['CRM_CDOPERAD'] : '';
+	$crm_cdagenci = isset($glbvars['CRM_CDAGENCI']) ? $glbvars['CRM_CDAGENCI'] : 0;
+	
 ?>
 
 <html>
@@ -63,7 +72,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">MATRIC -  Matrícula de Sócio</td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('MATRIC -  MatrÃ­cula de SÃ³cio') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -130,3 +139,11 @@
 </table>
 </body>
 </html>
+<script>
+// Alimenta variÃ¡veis do CRM para o js
+var crm_inacesso = <?php echo $crm_inacesso; ?>;
+var crm_nrdconta = '<?php echo formataContaDVsimples($crm_nrdconta); ?>';
+var crm_nrcpfcgc = normalizaNumero('<?php echo $crm_nrcpfcgc; ?>');
+var crm_cdoperad = '<?php echo $crm_cdoperad; ?>';
+var crm_cdagenci = <?php echo $crm_cdagenci; ?>;
+</script>

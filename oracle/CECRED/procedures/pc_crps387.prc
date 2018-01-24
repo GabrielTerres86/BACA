@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 02/10/2017
+   Data    : Abril/2004                        Ultima atualizacao: 20/11/2017
 
    Dados referentes ao programa:
 
@@ -436,6 +436,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             Ajustar padrão de Exception Others
                             Inclui nome do modulo logado
                             ( Belli - Envolti - Chamados 708424 / 758608) 
+                            
+               20/11/2017 - Validar consistencia da referencia para a cecred, caso ocorra erro,
+                            vamos enviar e-mail para o convenios@cecred.coop.br (Lucas Ranghetti #790577)
 ............................................................................ */
 
     DECLARE
@@ -2972,6 +2975,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_flgrejei     := TRUE;                          
                       continue;    
                   ELSE
+                      vr_cdrefere := vr_dsrefere; -- Validar se referencia é valida
                     vr_cdrefere := 0;
                   END IF;  
                   END IF;  

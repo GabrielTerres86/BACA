@@ -10,6 +10,8 @@ Alterações: 12/06/2012 - Alterado busca na tabela gncoper para crapcop. Incluído
 
             02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. (Jaison/Anderson)
 
+            21/12/2016 - Ajustes para utilizar o agenda do ano corrente.(Odirlei-AMcom/Marcio-Mouts)
+
 -->
 <script language="SpeedScript">
 
@@ -66,8 +68,12 @@ ELSE
 
 	IF  aux_dtanoage = 0  THEN
 			DO:
+                    aux_dtanoage = INT(YEAR(TODAY)).
+            
 					FIND LAST gnpapgd WHERE gnpapgd.idevento = 1            AND
-																	gnpapgd.cdcooper = aux_cdcooper NO-LOCK NO-ERROR. 
+							  gnpapgd.cdcooper = aux_cdcooper     AND
+                              gnpapgd.dtanoage = aux_dtanoage
+                              NO-LOCK NO-ERROR. 
         
 					IF  NOT AVAILABLE gnpapgd  THEN
 							DO:

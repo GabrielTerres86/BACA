@@ -6,7 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 26/05/2014 - Adicionado parametro cddopcao para buscar as informacoes das aplicacoes (Douglas - Chamado 77209)
  *				  28/10/2014 - Inclusão do parametro idtipapl para novos produtos de captacao(Jean Michel).
- *				  
+ *				  11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -52,6 +52,11 @@ function estadoInicial() {
 	cCddopcao.val( cddopcao );
 	
 	removeOpacidade('divTela');
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+    }
 	
 	unblockBackground();
 	hideMsgAguardo();

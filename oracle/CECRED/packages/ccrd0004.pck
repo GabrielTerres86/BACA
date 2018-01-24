@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --  Sistema  : Rotinas referente ao processo de domicilio bancario
   --  Sigla    : CCRD
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : Setembro - 2015.                   Ultima atualizacao: 10/02/2017
+  --  Data     : Setembro - 2015.                   Ultima atualizacao: 29/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -33,6 +33,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --                    da execução; retirada a verificação de final de semana pois o job do mesmo
   --                    executa apenas de seg a sex; criação da rotina pc_efetua_processo_web, chamada
   --                    pela tela CONLDB (Carlos)
+  --
+  --       29/11/2017 - Ajustar o total de registro na pc_lista_arquivos que estava devolvendo o total de 
+  --                    registros que serão exibidos em tela (vr_contador) ao invés da quantidade de registros
+  --                    para o filtro informado em tela (vr_posreg) (Douglas - Chamado 803588)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina para o processamento do arquivo oriundo do Sicoob
@@ -205,7 +209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</servico>'||
-                                                   '<qtregist>'       ||vr_contador ||'</qtregist>'||
+                                                   '<qtregist>'       || vr_posreg ||'</qtregist>'||
                                                    '<tot_processados>'|| vr_qt_tot_processados ||'</tot_processados>'||
                                                    '<tot_pendentes>'  || vr_qt_tot_pendentes ||'</tot_pendentes>'||
                                                    '<tot_erros>'      || vr_qt_tot_erros ||'</tot_erros>'||

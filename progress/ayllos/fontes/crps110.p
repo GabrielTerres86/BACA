@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Janeiro/95                      Ultima Alteracao: 06/06/2013
+   Data    : Janeiro/95                      Ultima Alteracao: 18/01/2018
 
    Dados referentes ao programa:
 
@@ -58,6 +58,9 @@
 
                06/06/2013 - Migracao PROGRESS/ORACLE - Incluido chamada de
                             procedure (Andre Santos - SUPERO)
+
+			   18/01/2018 - Inclusao de parametros para tratamento de paralelismo.
+			                Projeto Ligeirinho. (Fabrício)
                             
 ............................................................................. */
 
@@ -86,6 +89,8 @@ ETIME(TRUE).
 RUN STORED-PROCEDURE pc_crps110 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
     INPUT INT(STRING(glb_flgresta,"1/0")),
+	INPUT 0,
+	INPUT 0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 

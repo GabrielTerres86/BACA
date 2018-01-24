@@ -22,11 +22,13 @@
  *
  *				  21/07/2016 - Removi o session_start desnecessario, removi a funcao utf8tohtml
  *							   desnecessaria, corrigi o uso da variavel $opcoesTela. SD 479874 (Carlos R.)
+ *
+ *                11/05/2017 - Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
  * --------------------------------------------------------------------------------------------------
  */
  
 	isPostMethod();	
-
+	
 ?>
 
 <div id="tabPrestacao">
@@ -46,7 +48,18 @@
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach( $registros as $banco ) { $tipo = (getByTagName($banco->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"  ?>
+				<?php foreach( $registros as $banco ) {
+                switch (getByTagName($banco->tags,'tpemprst')) {
+                    case 0:
+                        $tipo = "Price TR";
+                        break;
+                    case 1:
+                        $tipo = "Price Pre-fixado";
+                        break;
+                    case 2:
+                        $tipo = "Pos-fixado";
+                        break;
+                } ?>
 				<tr>
 				    <td><?php echo getByTagName($banco->tags,'cdlcremp') ?>
 						<input type="hidden" id="nrctremp" name="nrctremp" value="<?php echo getByTagName($banco->tags,'nrctremp') ?>" />
@@ -61,7 +74,9 @@
                         <input type="hidden" id="cdorigem" name="cdorigem" value="<?php echo getByTagName($banco->tags,'cdorigem') ?>" />
 						<input type="hidden" id="liquidia" name="liquidia" value="<?php echo getByTagName($banco->tags,'liquidia') ?>" />
 						<input type="hidden" id="vlemprst" name="vlemprst" value="<?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlemprst'))),2,",",".");?>" />
-						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />						
+						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />
+						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<?php echo getByTagName($banco->tags,'cdlcremp') ?>" />
+						<input type="hidden" id="qttolatr" name="qttolatr" value="<?php echo getByTagName($banco->tags,'qttolatr') ?>" />
 					</td>
 					<td><?php echo getByTagName($banco->tags,'cdfinemp') ?></td>
 					<td><?php echo formataNumericos("z.zzz.zzz.zzz",getByTagName($banco->tags,'nrctremp'),"."); ?></td>
