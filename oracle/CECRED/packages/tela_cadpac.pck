@@ -646,7 +646,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 
     Objetivo  : Rotina para buscar os dados do PA.
 
-    Alteracoes: -----
+    Alteracoes: 23/01/2018 - Adicionado nova permissao para o departamento CANAIS,
+                             conforme solicitado no chamado 825830. (Kelvin)
     ..............................................................................*/
     DECLARE
 
@@ -696,9 +697,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       -- Verifica se tem permissao de alteracao
       IF (pr_cdagenci = 90 OR pr_cdagenci = 91) AND
           pr_cddopcao <> 'C'                    AND
-          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI
-          rw_crapope.cddepart NOT IN (4,8,9,18,20) THEN
-          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD e COMPE.';
+          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI / 1-CANAIS
+          rw_crapope.cddepart NOT IN (4,8,9,18,20,1) THEN
+          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD, COMPE e CANAIS.';
           RAISE vr_exc_erro;
       END IF;
 
