@@ -239,6 +239,9 @@ BEGIN
                  18/10/2017 - Ajustar para não verificar mais os consorcios nesta rotina
                               e sim no crps663 (Lucas Ranghetti #739738) 
 
+                 16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
+							  (Mauricio - Mouts)
+
   ............................................................................................*/
   
   DECLARE
@@ -379,7 +382,8 @@ BEGIN
                                  ,'CAPTACAO'
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
-                                 ,'ADIOFJUROS') -- ORIGEM DA OPERACAO
+                                 ,'ADIOFJUROS'
+                                 ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor NOT IN( 1019,1230,1231,1232,1233,1234) --> 1019 será processado pelo crps642, consorcio no debcns
        ORDER BY lau.cdagenci
                ,lau.cdbccxlt
