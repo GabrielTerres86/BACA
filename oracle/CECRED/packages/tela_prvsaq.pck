@@ -437,7 +437,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
         select listagg(valor, ';') within group(order by valor) INTO vr_emails
           from (select distinct valor
                   from (select c.cdcooper cdcooper,
-                               c.dsdemail emailcop,
+                               c.dsemlcof emailcop,
                                a.dsdemail emailage,
                                m.dsdemail emailmon
                           from crapcop c
@@ -608,7 +608,8 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-      vr_aux      VARCHAR2(255);                     
+      vr_aux      VARCHAR2(255);
+      vr_dsprotocolo crappro.dsprotoc%TYPE;                     
       vr_nrregist NUMBER;
       vr_qtregist NUMBER;
       vr_aloc     NUMBER;
@@ -733,6 +734,8 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
     BEGIN    
       pr_des_erro := 'OK';
       
+      vr_dsprotocolo := UPPER(pr_dsprotocolo);
+      
       vr_nrregist := pr_nrregist;
       
       -- Extrai dados do xml
@@ -851,7 +854,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_idorigem       => vr_idorigem,                      
                                    pr_vlsaqpagto     => pr_vlsaqpagto,
                                    pr_nrcpfcnpj      => pr_nrcpfcnpj,                       
-                                   pr_dsprotocolo    => pr_dsprotocolo,
+                                   pr_dsprotocolo    => vr_dsprotocolo,
                                    pr_nriniseq       => pr_nriniseq,
                                    pr_nrregist       => pr_nrregist,
                                    pr_cdopcao        => pr_cdopcao) LOOP
@@ -1283,16 +1286,15 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       CURSOR cr_tbcc_provisao_especie(pr_cdcooper   IN tbcc_provisao_especie.cdcooper%TYPE,
                                       pr_nrCpfCnpj  IN tbcc_provisao_especie.nrcpfcgc%TYPE,
                                       pr_dtSaqPagto IN tbcc_provisao_especie.dhprevisao_operacao%TYPE,
-                                      pr_nrContTit  IN tbcc_provisao_especie.nrdconta%TYPE,
-                                      pr_vlSaqPagto IN tbcc_provisao_especie.vlsaque%TYPE) IS
+                                      pr_nrContTit  IN tbcc_provisao_especie.nrdconta%TYPE) IS
         SELECT m.cdcooper
-          FROM tbcc_provisao_especie m
-         WHERE m.cdcooper = pr_cdcooper AND
-               m.nrcpfcgc = pr_nrCpfCnpj AND
-               m.nrdconta = pr_nrContTit AND
-               m.vlsaque = pr_vlSaqPagto AND
-               TRUNC(m.dhprevisao_operacao) = TRUNC(pr_dtSaqPagto);
-      rw_tbcc_provisao_especie tbcc_provisao_especie%ROWTYPE;
+        FROM tbcc_provisao_especie m
+        WHERE m.cdcooper = pr_cdcooper  AND
+              m.nrcpfcgc = pr_nrCpfCnpj AND
+              m.nrdconta = pr_nrContTit AND
+              TRUNC(m.dhprevisao_operacao) = TRUNC(pr_dtSaqPagto)  AND
+              m.insit_provisao = 1;
+        rw_tbcc_provisao_especie cr_tbcc_provisao_especie%ROWTYPE;
       
        /* Busca cheque */
     CURSOR cr_cheque(pr_cdcooper     IN tbcc_provisao_especie.cdcooper%TYPE 
@@ -1654,6 +1656,27 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
              END IF;      
           END IF;                                      
       END IF;
+      
+      --BUSCA PROVISAO
+        OPEN cr_tbcc_provisao_especie(pr_cdcooper   => vr_cdcooper,
+                                      pr_nrCpfCnpj  => vr_nrcpfcgc,
+                                      pr_dtSaqPagto => vr_dhsaque,
+                                      pr_nrContTit  => pr_nrconttit);
+        FETCH cr_tbcc_provisao_especie INTO rw_tbcc_provisao_especie;
+      
+        -- Se nao encontrar
+        IF cr_tbcc_provisao_especie%FOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_tbcc_provisao_especie;
+        
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Provisao ja cadastrada.';
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
+        ELSE    
+          CLOSE cr_tbcc_provisao_especie;
+        END IF;
       
       gene0006.pc_gera_protocolo(pr_cdcooper => vr_cdcooper, 
                                  pr_dtmvtolt => vr_dtmvtolt, 
