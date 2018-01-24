@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 09/05/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 04/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -81,6 +81,15 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 09/05/2017 - Executei a limpeza da PLTABLE vr_tab_moedatx na pc_rendi_apl_pos_com_resgate, garantindo 
   --              assim o carregamento correto das taxa de moedas por data.(Carlos Rafael Tanholi - SD 631979)
+  --
+  -- 07/08/2017 - #715540 Tratamento em pc_saldo_rdc_pos, verificando o vetor de dias úteis para não repetir
+  --              a consulta; Correção do alias da tabela no hint index do cursor cr_craplap (Carlos)  
+  --
+  -- 03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
+  --              Influenciava o valor de resgate superior ao saldo.(Carlos Rafael Tanholi - SD 745032)
+  --
+  -- 04/12/2017 - Remoção do paralelismo nas queries envolvendo as tabelas craptrd e crapmfx nos processos
+  --              online - pc_saldo_rdc_pos (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -4413,8 +4422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                  07/04/2014 - Alterações referente ao novo indexador de poupanca
                               (Jean Michel).
-								 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
-															cr_crapmfx (Jean Michel).
+				 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
+							  cr_crapmfx (Jean Michel).
 
                  24/06/2014 - Retirada leitura da craptab e incluido data de
                               liberacao do projeto do novo indexador de
@@ -4459,11 +4468,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
       
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
-        SELECT /*+ Index (cp CRAPLAP##CRAPLAP5) */
+        SELECT /*+ Index (lap CRAPLAP##CRAPLAP5) */
                lap.txaplica
               ,lap.txaplmes
           FROM craplap lap
@@ -4628,29 +4637,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
       IF rw_crapdat.inproces > 1 THEN
-      -- Se o vetor de dias uteis ainda não possuir informacoes
-      IF vr_tab_qtdiaute.COUNT = 0 THEN
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT *
-                             FROM (SELECT craptrd.dtiniper
-                                         ,craptrd.qtdiaute
-                                         ,count(*) over (partition by craptrd.dtiniper
-                                                         order by craptrd.progress_recid) registro
-                                     FROM craptrd
-                                     WHERE craptrd.cdcooper = pr_cdcooper)
-                            WHERE registro = 1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
-      END IF;
+        -- Se o vetor de dias uteis ainda não possuir informacoes
+        IF vr_tab_qtdiaute.COUNT = 0 THEN
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT *
+                               FROM (SELECT craptrd.dtiniper
+                                           ,craptrd.qtdiaute
+                                           ,count(*) over (partition by craptrd.dtiniper
+                                                           order by craptrd.progress_recid) registro
+                                       FROM craptrd
+                                       WHERE craptrd.cdcooper = pr_cdcooper)
+                              WHERE registro = 1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+            END IF;
+          END LOOP;
+        END IF;
 
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper) LOOP
-          -- MOntar a chave do registro com o tipo + data
+          -- Montar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
           vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
@@ -4661,20 +4670,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           END IF;
         END LOOP;
       END IF;
-      ELSE
-        -- Buscar os dias uteis
-        FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                 ,craptrd.qtdiaute
-                                 ,count(*) over (partition by craptrd.dtiniper
-                                                     order by craptrd.progress_recid) registro
-                             FROM craptrd
-                            WHERE craptrd.cdcooper = pr_cdcooper
-                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-          IF rw_craptrd.registro = 1 THEN
-            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-          END IF;
-        END LOOP;
+      ELSE -- inproces <= 1
+        
+        -- Se o vetor de dias uteis ainda não possuir informacoes
+        IF vr_tab_qtdiaute.COUNT = 0 THEN
+          -- Buscar os dias uteis
+          FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                   ,craptrd.qtdiaute
+                                   ,count(*) over (partition by craptrd.dtiniper
+                                                       order by craptrd.progress_recid) registro
+                               FROM craptrd
+                              WHERE craptrd.cdcooper = pr_cdcooper
+                                AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+            IF rw_craptrd.registro = 1 THEN
+              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+              EXIT;
+            END IF;
+          END LOOP;
+        END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
@@ -6866,7 +6880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     --
     -- Programa: pc_saldo_rgt_rdc_pos - Antiga b1wgen0004.saldo_rgt_rdc_pos
     -- Autor   : ---
-    -- Data    : ---                        Ultima atualizacao: 05/08/2015
+    -- Data    : ---                        Ultima atualizacao: 03/10/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6890,6 +6904,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     --
     --             05/08/2015 - Ajuste no cursor ca craplap para melhoria de performace
     --                          SD 281898(Odirlei-AMcom)
+    --
+    --             03/10/2017 - Correcao na forma de arredondamento do campo vr_vlrgtsol na pc_saldo_rgt_rdc_pos. 
+    --                          Influenciava o valor de resgate superior ao saldo. (Carlos Rafael Tanholi - SD 745032)
     -- .......................................................................................
     BEGIN
       DECLARE
@@ -6898,7 +6915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_txaplrgt   NUMBER(20,8);
         vr_perirrgt   NUMBER(15,2);
         vr_vlrenmlt   NUMBER(20,8) := 0;
-        vr_vlrgtsol   craprda.vlsdrdca%type;
+        vr_vlrgtsol   NUMBER(18,4);
         vr_vlrnttmm   craplap.vlrendmm%type;
         vr_nrdias     NUMBER := 0;
         vr_exc_saida  EXCEPTION;
@@ -7285,7 +7302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
            -- Atribui valores as variaveis truncando ou arredondando os valores
            vr_vlrenrgt := trunc(vr_vlrgtsol * vr_txaplrgt, 8);
-           vr_vlrgtsol := fn_round(vr_vlrgtsol + vr_vlrenrgt, 2);
+           vr_vlrgtsol := vr_vlrgtsol + vr_vlrenrgt;
            vr_vlrenmlt := vr_vlrenmlt + vr_vlrenrgt;
 
            vr_dtiniper := vr_dtiniper + 1;
