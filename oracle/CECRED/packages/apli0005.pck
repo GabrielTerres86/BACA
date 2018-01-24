@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 13/11/2015
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 12/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -32,6 +32,13 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --                          para passagem do parâmetro pr_tipo_busca, para melhoria
   --                          de performance.
   --                          Chamado 291693 (Heitor - RKAM)
+  --
+  --             12/07/2017 - #706116 Melhoria na pc_lista_aplicacoes_web, utilizando pc_escreve_xml no 
+  --                          lugar de gene0007.pc_insere_tag pois a mesma fica lenta para xmls muito grandes (Carlos)
+  --
+  --             04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+  --                          com debito em Conta Investimento.
+  --                          Heitor (Mouts) - Chamado 821010.
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -1678,11 +1685,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -2449,9 +2456,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       -- Verifica se produto e pos-fixado e carencia igual a 0
       IF rw_crapcpc.idtippro = 2 AND pr_qtdiacar = 0 THEN
         vr_dscritic := 'Nao e permitido carencia igual a zero para produtos pos-fixado.';
-        RAISE vr_exc_saida;
+        RAISE vr_exc_saida; 
       END IF;
-      
+    
       IF rw_crapcpc.idacumul = 1 THEN
          
         -- Selecionar informacoes % IR para o calculo
@@ -2488,11 +2495,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         -- Carregar tabela de memoria de taxas
         -- Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           -- Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist) := rw_craptab.tpregist;
         END LOOP;
@@ -3576,11 +3583,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         --Carregar tabela de memoria de taxas
         --Selecionar os tipos de registro da tabela generica
         FOR rw_craptab IN cr_craptab_taxas(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'SOMAPLTAXA'
-                                    ,pr_dstextab => 'SIM') LOOP
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'SOMAPLTAXA'
+                                          ,pr_dstextab => 'SIM') LOOP
           --Atribuir valor para tabela memoria
           vr_tab_tpregist(rw_craptab.tpregist):= rw_craptab.tpregist;
         END LOOP;
@@ -4025,8 +4032,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,nrseqdig
                ,qtinfoln
                ,qtcompln
-               ,vlinfocr
-               ,vlcompcr)
+               ,vlinfodb
+               ,vlcompdb)
             VALUES(
               pr_cdcooper
              ,rw_crapdat.dtmvtolt
@@ -4069,8 +4076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               craplot.nrseqdig = rw_craplot.nrseqdig + 1,
               craplot.qtinfoln = rw_craplot.qtinfoln + 1,
               craplot.qtcompln = rw_craplot.qtcompln + 1,
-              craplot.vlinfocr = rw_craplot.vlinfocr + pr_vlaplica,
-              craplot.vlcompcr = rw_craplot.vlcompdb + pr_vlaplica
+              craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica,
+              craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
             WHERE
               craplot.rowid = rw_craplot.rowid
             RETURNING
@@ -6984,12 +6991,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
-      vr_auxconta INTEGER := 0;
       vr_saldo_rdca apli0001.typ_tab_saldo_rdca;
 
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+      vr_clobxmlc CLOB;
+ 
 	  BEGIN
 		  
       -- Recupera dados de log para consulta posterior
@@ -7049,7 +7059,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;                         
             
       -- Criar cabeçalho do XML
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+      dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+      dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Dados>');
 
       IF vr_saldo_rdca.COUNT() > 0 THEN
         -- Percorre todas as aplicações de captação da conta											 
@@ -7060,49 +7075,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
           END IF;
 
           -- Insere as tags dos campos da PLTABLE de aplicações
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0     , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);    
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtmvtolt', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dtmvtolt,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nraplica', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).nraplica), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'qtdiauti', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).qtdiauti), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dshistor', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dshistor), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vlaplica', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).vlaplica), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nrdocmto', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).nrdocmto), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtvencto', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dtvencto,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'indebcre', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).indebcre), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vllanmto', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).vllanmto), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'sldresga', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).sldresga), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cddresga', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).cddresga), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtresgat', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dtresgat,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dssitapl', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dssitapl), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'txaplmax', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).txaplmax,'fm9990D00000000','NLS_NUMERIC_CHARACTERS=,.'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'txaplmin', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).txaplmin,'fm9990D00000000','NLS_NUMERIC_CHARACTERS=,.'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdprodut', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).cdprodut), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'idtipapl', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtipapl),'A'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'qtdiaapl', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).qtdiaapl),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dsaplica', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsaplica),''), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdoperad', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).cdoperad),'1'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'tpaplrdc', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).tpaplrdc),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'qtdiacar', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).qtdiacar),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmprodut', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).nmprodut),' '), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'idtxfixa', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtxfixa),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'percirrf', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).percirrf),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vlsldrgt', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).vlsldrgt),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dsnomenc', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsnomenc),' '), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'idtippro', pr_tag_cont => NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtippro),'0'), pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtcarenc', pr_tag_cont => TO_CHAR(vr_saldo_rdca(vr_contador).dtcarenc,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
-
-          -- Incrementa contador p/ posicao no XML
-          vr_auxconta := vr_auxconta + 1;
+          gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                                 ,pr_texto_completo => vr_xml_temp 
+                                 ,pr_texto_novo     => 
+          '<inf>
+           <dtmvtolt>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtmvtolt,'dd/mm/RRRR') || '</dtmvtolt>
+           <nraplica>' || TO_CHAR(vr_saldo_rdca(vr_contador).nraplica) || '</nraplica>
+           <qtdiauti>' || TO_CHAR(vr_saldo_rdca(vr_contador).qtdiauti) || '</qtdiauti>
+           <dshistor>' || TO_CHAR(vr_saldo_rdca(vr_contador).dshistor) || '</dshistor>
+           <vlaplica>' || TO_CHAR(vr_saldo_rdca(vr_contador).vlaplica) || '</vlaplica>
+           <nrdocmto>' || TO_CHAR(vr_saldo_rdca(vr_contador).nrdocmto) || '</nrdocmto>
+           <dtvencto>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtvencto,'dd/mm/RRRR') || '</dtvencto>
+           <indebcre>' || TO_CHAR(vr_saldo_rdca(vr_contador).indebcre) || '</indebcre>
+           <vllanmto>' || TO_CHAR(vr_saldo_rdca(vr_contador).vllanmto) || '</vllanmto>
+           <sldresga>' || TO_CHAR(vr_saldo_rdca(vr_contador).sldresga) || '</sldresga>
+           <cddresga>' || TO_CHAR(vr_saldo_rdca(vr_contador).cddresga) || '</cddresga>
+           <dtresgat>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtresgat,'dd/mm/RRRR') || '</dtresgat>
+           <dssitapl>' || TO_CHAR(vr_saldo_rdca(vr_contador).dssitapl) || '</dssitapl>
+           <txaplmax>' || TO_CHAR(vr_saldo_rdca(vr_contador).txaplmax,'fm9990D00000000','NLS_NUMERIC_CHARACTERS=,.') || '</txaplmax>
+           <txaplmin>' || TO_CHAR(vr_saldo_rdca(vr_contador).txaplmin,'fm9990D00000000','NLS_NUMERIC_CHARACTERS=,.') || '</txaplmin>
+           <cdprodut>' || TO_CHAR(vr_saldo_rdca(vr_contador).cdprodut) || '</cdprodut>
+           <idtipapl>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtipapl),'A') || '</idtipapl>
+           <qtdiaapl>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).qtdiaapl),'0') || '</qtdiaapl>
+           <dsaplica>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsaplica),'')  || '</dsaplica>
+           <cdoperad>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).cdoperad),'1') || '</cdoperad>
+           <tpaplrdc>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).tpaplrdc),'0') || '</tpaplrdc>
+           <qtdiacar>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).qtdiacar),'0') || '</qtdiacar>
+           <nmprodut>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).nmprodut),' ') || '</nmprodut>
+           <idtxfixa>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtxfixa),'0') || '</idtxfixa>
+           <percirrf>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).percirrf),'0') || '</percirrf>
+           <vlsldrgt>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).vlsldrgt),'0') || '</vlsldrgt>
+           <dsnomenc>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).dsnomenc),' ') || '</dsnomenc>
+           <idtippro>' || NVL(TO_CHAR(vr_saldo_rdca(vr_contador).idtippro),'0') || '</idtippro>
+           <dtcarenc>' || TO_CHAR(vr_saldo_rdca(vr_contador).dtcarenc,'dd/mm/RRRR') || '</dtcarenc>
+           </inf>');
         END LOOP;
 
       END IF;
 
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                             ,pr_texto_completo => vr_xml_temp 
+                             ,pr_texto_novo     => '</Dados>' 
+                             ,pr_fecha_xml      => TRUE);
+
+      pr_retxml := XMLType.createXML(vr_clobxmlc);
+
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 				
-        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
-					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-				END IF;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
 			  pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -7114,6 +7136,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         ROLLBACK;
         
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception(vr_cdcooper, pr_nrdconta);
+      
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em APLI0005.pc_lista_aplicacoes_web: ' || SQLERRM;
 
