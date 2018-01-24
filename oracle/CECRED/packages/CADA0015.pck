@@ -1736,7 +1736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         IF pr_idpessoa IS NULL THEN
           vr_dscritic := 'Nao encontrado pessoa Conjuge';
           RAISE vr_exc_erro;
-      END IF;
+        END IF;
 
       END IF;
 
@@ -1858,7 +1858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END IF;
               
               rw_pessoa_fisica.tppessoa             := 1; -- Fisica
-              rw_pessoa_fisica.tpcadastro           := 1; -- Prospect
+              rw_pessoa_fisica.tpcadastro           := nvl(rw_pessoa_fisica.tpcadastro,1); -- Prospect
               rw_pessoa_fisica.cdoperad_altera      := pr_cdoperad;
               -- Cria a pessoa fisica
               cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fisica,
@@ -1900,7 +1900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               END IF;
               -- Atualiza com o ID pessoa que foi criado
               rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_juridica.idpessoa;
-          END IF;
+            END IF;
           END IF;
 
           -- Atualiza a tabela de renda
@@ -2089,9 +2089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
              nvl(rw_pessoa_cje.nrcpf,0) <> nvl(pr_crapcje.nrcpfcjg,0) THEN
             vr_dscritic := 'Cadastro Temporario, não atualizar.';
             RAISE vr_exc_saida;
-        END IF;
+          END IF;
 
-      END IF;
+        END IF;
 
 
       END IF;
@@ -2503,7 +2503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       -- Efetua a inclusao/alteracao de pessoa
       vr_pessoa_fis.nrcpf               := pr_crapavt.nrcpfcgc;
       vr_pessoa_fis.cdoperad_altera     := pr_cdoperad;
-      vr_pessoa_fis.tpcadastro          := 2; -- Basico
+      vr_pessoa_fis.tpcadastro          := nvl(vr_pessoa_fis.tpcadastro, 2); -- Basico
       vr_pessoa_fis.tppessoa            := 1; -- Fisica
       vr_pessoa_fis.nmpessoa            := pr_crapavt.nmdavali;
       vr_pessoa_fis.tpdocumento         := pr_crapavt.tpdocava;
@@ -2686,7 +2686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2711,7 +2711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2735,7 +2735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2759,7 +2759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2783,7 +2783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -2807,7 +2807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                                            ,pr_dscritic  => vr_dscritic);
               IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_erro;
-            END IF;
+              END IF;
             END IF;
             continue;
           END IF;
@@ -3275,7 +3275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         --> ou se nao tinha pessoa ainda cadastrada
         ELSE
           vr_flgcriar := TRUE;
-      END IF;
+        END IF;
 
       END IF;
 
@@ -3334,7 +3334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         --> ou se nao tinha pessoa ainda cadastrada
         ELSE
           vr_flgcriar := TRUE;
-      END IF;
+        END IF;
       END IF;
 
       --> Verificar se deve criar
@@ -4201,7 +4201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
         END IF;
         -- Atualiza com o ID pessoa que foi criado
         rw_pessoa_renda.idpessoa_fonte_renda := rw_pessoa_juridica.idpessoa;
-    END IF;
+      END IF;
     END IF;
 
     -- Popula os campos para inserir o registro
@@ -4922,6 +4922,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       pr_dscritic := 'Erro nao tratado na pc_crapass: '||SQLERRM;
   END pc_crapass;
 
+  -- Rotina para envio do CPF / CNPJ de um cooperado novo
+  PROCEDURE pc_envia_cooperado_crm(pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    vr_requisicao WRES0001.typ_http_request;
+    vr_resposta   WRES0001.typ_http_response;
+    vr_dscritic   crapcri.dscritic%TYPE;
+    vr_cdcritic   crapcri.cdcritic%TYPE;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+  BEGIN
+    -- Endereço Base 'http://apiaymaruhml.cecred.coop.br'
+    vr_requisicao.endereco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                        pr_cdacesso => 'AYMARU_CRM');
+
+    vr_requisicao.rota := '/CRM/api/Incremental'; -- Rota para a aplicação / serviço solicitado
+    vr_requisicao.verbo := CECRED.WRES0001.GET; -- Verbo HTTP (PUT/POST/GET/DELETE)
+
+    -- Parâmetros da URL, ex: "http://apiaymaruhml.cecred.coop.br/CRM/api/Incremental?SCpf=11870846389"
+    vr_parametros(1).chave := 'SCpf';
+    vr_parametros(1).valor := pr_nrcpfcgc;
+
+    vr_requisicao.parametros := vr_parametros;
+
+    vr_requisicao.timeout := 30; -- Timeout da Requisição HTTP
+    
+    WRES0001.pc_consumir_rest(pr_requisicao => vr_requisicao
+                             ,pr_resposta   => vr_resposta
+                             ,pr_dscritic   => vr_dscritic
+                             ,pr_cdcritic   => vr_cdcritic);
+                                  
+    /*
+    DBMS_OUTPUT.put_line('HTTP Status Code: ' ||   vr_resposta.status_code); -- HTTP Status Code (200 - OK; 400 Bad Request; 500 Internal Server Error)
+    DBMS_OUTPUT.put_line('HTTP Status Message: ' ||   vr_resposta.status_message);
+    DBMS_OUTPUT.put_line('Dscritic: ' ||   vr_dscritic);
+    */
+  EXCEPTION
+    WHEN OTHERS THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratado
+                                  ,pr_nmarqlog => 'CRM' 
+                                  ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
+                                     'Erro no envio do CPF / CNPJ '||pr_nrcpfcgc|| ' para o CRM: '||SQLERRM);
+  end;  
+
   -- Rotina para processar registros pendentes de atualização
   PROCEDURE pc_processa_pessoa_atlz( pr_cdcooper  IN INTEGER DEFAULT NULL, --> Codigo da coperativa quando processo de replic. online
                                      pr_nrdconta  IN INTEGER DEFAULT NULL, --> Nr. da conta quando processo de replic. online
@@ -5104,7 +5146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 		--> Buscar conta do cooperado
 		CURSOR cr_crapass( pr_cdcooper crapass.cdcooper%TYPE
 		                  ,pr_nrdconta crapass.nrdconta%TYPE) IS
-			SELECT *
+			SELECT ass.*
 			  FROM crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta;
@@ -5129,6 +5171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 		rw_crapjfn cr_crapjfn%ROWTYPE;
 
     ---------------> VARIAVEIS <-----------------
+
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
@@ -5501,6 +5544,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
+          -- Se for um cadastro novo, deve-se enviar para o CRM
+          IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
+            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+          END IF;
+
 				WHEN 'CRAPENC' THEN
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
@@ -5564,6 +5612,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_idpessoa => NULL                --> Identificador de pessoa
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
+
+          -- Se for um cadastro novo, deve-se enviar para o CRM
+          IF nvl(rw_pessoa_atlz.dschave,' ') = 'S' THEN
+            pc_envia_cooperado_crm(pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+          END IF;
 
 			  WHEN 'CRAPJUR' THEN
           -- Buscar conta PJ
