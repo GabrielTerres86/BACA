@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 22/11/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 24/01/2018
 
    Dados referentes ao programa:
 
@@ -93,6 +93,9 @@
                 22/11/2017 - Alteracao para não enviar os arquivos 2* para a ABBC, caso o dia atual 
                              nao for feriado e nao for o ultimo dia util do ano. (Rafael)                
 
+                24/01/2018 - Ajustar a variavel tot_vlrtotal para DECI, pois esta gerando erro 
+                             para a Viacredi devido ao grande volume de cheques, com isso o 
+                             relatorio crrl262 nao estava sendo gerado (Douglas - Chamado 832279)
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -624,7 +627,7 @@ PROCEDURE gera_arq:
     DEF VAR aux_cdagenci            AS  INT                         NO-UNDO.
     DEF VAR tot_qtarquiv            AS  INTE                        NO-UNDO.
     DEF VAR tot_totregis            AS  INTE                        NO-UNDO.
-    DEF VAR tot_vlrtotal            AS  INTE                        NO-UNDO.
+    DEF VAR tot_vlrtotal            AS  DECI                        NO-UNDO.
 
     /*tratamento para quando par_nmprgexe for DEVOLUCAO trocar para
       DEVOLU e preencher a variavel aux_tpdevolu com o tipo de devolucao*/
@@ -1359,7 +1362,7 @@ PROCEDURE arquivos_noturnos:
     DEF VAR aux_dsmsgerr            AS  CHAR                        NO-UNDO.
     DEF VAR tot_qtarquiv            AS  INTE                        NO-UNDO.
     DEF VAR tot_totregis            AS  INTE                        NO-UNDO.
-    DEF VAR tot_vlrtotal            AS  INTE                        NO-UNDO.
+    DEF VAR tot_vlrtotal            AS  DECI                        NO-UNDO.
 
     /* Instancia a BO */
     RUN sistema/generico/procedures/b1wgen0012.p 
