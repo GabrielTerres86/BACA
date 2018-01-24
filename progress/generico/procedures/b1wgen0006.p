@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0006.p                  
     Autora  : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 30/11/2017
+    Data    : 12/09/2005                      Ultima atualizacao: 07/06/2016
 
     Dados referentes ao programa:
 
@@ -127,9 +127,6 @@
 
 				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
-
-			    30/11/2017 - Implementei controle de lock sobre a tabela CRAPLOT na efetuar-resgate. 
-							 (SD 799728 - Carlos Rafael Tanholi)
 ..............................................................................*/
 
 
@@ -2295,13 +2292,6 @@ PROCEDURE efetuar-resgate:
 
         END. /** Fim do DO ... TO **/
 
-		/* TIRA O LOCK DA TABELA CRAPLOT */
-		IF  AVAIL craplot  THEN
-        DO:
-            FIND CURRENT craplot NO-LOCK NO-ERROR.
-            RELEASE craplot.
-        END.
-
         IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
             UNDO TRANS_POUP, LEAVE TRANS_POUP.
 
@@ -2329,6 +2319,7 @@ PROCEDURE efetuar-resgate:
         
         VALIDATE craplrg.
 
+        FIND CURRENT craplot NO-LOCK NO-ERROR.
         FIND CURRENT craplrg NO-LOCK NO-ERROR.
 
         ASSIGN aux_flgtrans = TRUE.
