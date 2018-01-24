@@ -21,7 +21,7 @@
 
     Programa  : b1wgen0027.p
     Autor     : Guilherme
-    Data      : Fevereiro/2008                Ultima Atualizacao: 19/06/2015
+    Data      : Fevereiro/2008                Ultima Atualizacao: 24/01/2018
     
     Dados referentes ao programa:
 
@@ -86,7 +86,10 @@
                              obtem-dados-emprestimos em BO 0002.(Jorge)
                 
                 19/06/2015 - Ajuste para alimentar o campo tt-ocorren.innivris
-                             na procedure lista_ocorren. (James)             
+                             na procedure lista_ocorren. (James)
+                             
+                24/01/2018 - Ajuste na extratos_emitidos_no_cash para mostrar apenas
+                             extratos com numero do terminal financeiro (Tiago #824708).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -1297,6 +1300,7 @@ PROCEDURE extratos_emitidos_no_cash:
                            crapext.dtreffim >= par_dtrefere            AND
                            crapext.nrdconta =  crapass.nrdconta        AND
                            crapext.tpextrat =  1 /* C/C */             AND
+                           crapext.nrterfin > 0                        AND
                           (crapext.insitext =  1    OR 
                            crapext.insitext =  5)                  NO-LOCK  
                            BY crapext.dtrefere:
