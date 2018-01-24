@@ -35,6 +35,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             12/07/2017 - #706116 Melhoria na pc_lista_aplicacoes_web, utilizando pc_escreve_xml no 
   --                          lugar de gene0007.pc_insere_tag pois a mesma fica lenta para xmls muito grandes (Carlos)
+  --
+  --             04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
+  --                          com debito em Conta Investimento.
+  --                          Heitor (Mouts) - Chamado 821010.
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -781,6 +785,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                    ,pr_des_erro OUT VARCHAR2);           -- Erros do processo
 END APLI0005;
 /
+
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
   -- Cursor genérico de parametrização
@@ -2431,7 +2436,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       
       -- Consulta dados de produtos
       OPEN cr_crapcpc(pr_cdprodut => pr_cdprodut);
-
       FETCH cr_crapcpc INTO rw_crapcpc;
         
       -- Verifica se encontrou produtos
@@ -4028,8 +4032,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                ,nrseqdig
                ,qtinfoln
                ,qtcompln
-               ,vlinfocr
-               ,vlcompcr)
+               ,vlinfodb
+               ,vlcompdb)
             VALUES(
               pr_cdcooper
              ,rw_crapdat.dtmvtolt
@@ -4072,8 +4076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               craplot.nrseqdig = rw_craplot.nrseqdig + 1,
               craplot.qtinfoln = rw_craplot.qtinfoln + 1,
               craplot.qtcompln = rw_craplot.qtcompln + 1,
-              craplot.vlinfocr = rw_craplot.vlinfocr + pr_vlaplica,
-              craplot.vlcompcr = rw_craplot.vlcompdb + pr_vlaplica
+              craplot.vlinfodb = rw_craplot.vlinfodb + pr_vlaplica,
+              craplot.vlcompdb = rw_craplot.vlcompdb + pr_vlaplica
             WHERE
               craplot.rowid = rw_craplot.rowid
             RETURNING
@@ -7119,7 +7123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
 		EXCEPTION
 			WHEN vr_exc_saida THEN
-
+				
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
 			  pr_cdcritic := vr_cdcritic;
