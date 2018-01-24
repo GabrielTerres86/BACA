@@ -35,6 +35,8 @@
  *                                               devido ao keycode nao diferenciar maiusculos e minusculos (Odirlei-AMcom SD378702)
  *
  * 011: 11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *
+ * 012: 16/01/2018 - Lucas Reinert			   : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * --------------
  *
  */
@@ -2089,7 +2091,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');
 
 
 

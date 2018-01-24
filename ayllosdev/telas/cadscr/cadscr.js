@@ -1,11 +1,13 @@
 /*!
- * FONTE        : cadscr.js						Último ajuste: 08/12/2015 
+ * FONTE        : cadscr.js						Último ajuste: 16/01/2018
  * CRIAÇÃO      : Jéssica - DB1
  * DATA CRIAÇÃO : 09/10/2015
  * OBJETIVO     : Biblioteca de funções da tela CADSCR
  * --------------
  * ALTERAÇÕES   : 08/12/2015 - Ajustes de homologação referente a conversão efetuada pela DB1
-							  (Adriano).
+ *							  (Adriano).
+ *
+ *			  	  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)						    
  * -----------------------------------------------------------------------
  */
  
@@ -1312,7 +1314,7 @@ function formataSenha(){
 	rNrdsenha.css({'width':'65px'});
 				
 	cOperador.css({'width':'90px'}).attr('maxlength','10');
-	cNrdsenha.css({'width':'90px'}).attr('maxlength','10');	
+	cNrdsenha.css({'width':'90px'}).attr('maxlength','30');	
 					
 	$('#operador','#divSenha').habilitaCampo();
 	$('#nrdsenha','#divSenha').habilitaCampo();

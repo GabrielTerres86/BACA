@@ -1,5 +1,5 @@
 /*!
- * FONTE        : blqjud.js                     Última alteração: 29/07/2016
+ * FONTE        : blqjud.js                     Última alteração: 16/01/2018
  * CRIAÇÃO      : Guilherme / SUPERO
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Biblioteca de funções da tela BLQJUD
@@ -22,6 +22,8 @@
                                (Adriano - SD 492902).
 
                   29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+				  
+				  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  * --------------
  */
  
@@ -1539,7 +1541,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});	
 

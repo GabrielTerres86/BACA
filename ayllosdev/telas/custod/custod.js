@@ -11,6 +11,7 @@
  * [30/09/2016] Odirlei Busana   (AMcom) : Inclusao relatorio de detalhamento de remessa custodia.
  * [16/12/2016] Lucas Reinert (CECRED)   : Alterações referentes ao projeto 300.
  * [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * [16/01/2018] Lucas Reinert (CECRED)	 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  */
 
 //Formulários e Tabela
@@ -2109,7 +2110,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 
     cOperador.addClass('campo').css({'width': '100px'}).attr('maxlength', '10').focus();
-    cSenha.addClass('campo').css({'width': '100px'}).attr('maxlength', '10');
+    cSenha.addClass('campo').css({'width': '100px'}).attr('maxlength', '30');
 
 
 

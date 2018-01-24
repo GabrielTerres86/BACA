@@ -56,9 +56,11 @@
  * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  * 032: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
  * 033: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
-
- * 034: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
- * 035: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
+ * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+ *                                             replicação dos dados da pessoa. (PRJ339).
+ * 035: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
+ * 036: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
+ * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  */
 
 // Definição de algumas variáveis globais 
@@ -2962,7 +2964,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 
     cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
-    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '30');
 
     $('#divConteudoRotina').css({ 'width': '400px', 'height': '120px' });
 

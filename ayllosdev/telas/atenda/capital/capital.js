@@ -1,7 +1,7 @@
 /**********************************************************************
   Fonte: capital.js                                                
   Autor: David													   
-  Data : Outubro/2007                 Ultima Alteracao: 14/11/2017
+  Data : Outubro/2007                 Ultima Alteracao: 16/01/2018
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Capital da tela      
               ATENDA                                               
@@ -33,6 +33,8 @@
               14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando
                            (Jonata - RKAM P364).
  					
+			  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)						   
+
 *************************************************************************/
 
 var callafterCapital = '';
@@ -836,7 +838,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 	
     cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
-    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '30');
 	
     $('#divConteudoSenha').css({ 'width': '400px', 'height': '120px' });
 
