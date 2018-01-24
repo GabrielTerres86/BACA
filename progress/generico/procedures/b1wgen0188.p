@@ -891,7 +891,9 @@ PROCEDURE grava_dados:
                                                INPUT par_dtmvtolt,
                                                INPUT 30,   /* par_inconfi2 */
                                                INPUT par_nrcpfope,
-											   INPUT "", /* cdmodali */
+                                               INPUT "", /* cdmodali */
+                                               INPUT ?,
+                                               INPUT ?,                                               
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,
@@ -1003,6 +1005,8 @@ PROCEDURE grava_dados:
                                                    INPUT "", /* par_dsctrliq */
                                                    INPUT 0,  /* par_nrctaava */
                                                    INPUT 0,  /* par_nrctaav2 */
+                                                   INPUT ?,
+                                                   INPUT ?,
                                                    /*-------Rating------ */
                                                    INPUT aux_nrgarope,
                                                    INPUT aux_nrperger,
