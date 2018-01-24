@@ -14,6 +14,7 @@
  * 
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 
+ *			  	  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  */
 
 // Definição de algumas variáveis globais
@@ -214,7 +215,7 @@ function formataSenhaCoord() {
 	cSenha		= $('#codsenha', '#frmSenhaCoord');
 
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');
 
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});
 

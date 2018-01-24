@@ -402,7 +402,7 @@ PROCEDURE efetua_login:
                              AND crapprm.nmsistem = "CRED"
                              AND crapprm.cdacesso = "LIBCRM"
                              NO-LOCK:
-          IF CAPS(crapprm.dsvlrprm) = "N" THEN
+          IF TRIM(crapprm.dsvlrprm) = "0" THEN
              DO:      
                 /* Se operador tiver acesso ao CRM */
                 IF  crapope.flgutcrm THEN

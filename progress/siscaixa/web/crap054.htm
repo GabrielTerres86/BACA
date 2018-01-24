@@ -3,7 +3,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 03/11/2016
+   Data    : Marco/2001                      Ultima atualizacao: 16/01/2018
 
   Alteracoes: 	03/07/2009 - Aumento do campo Operador (Diego).
   
@@ -30,6 +30,8 @@
                 03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
                              de navegação e ajustado a chamada do callBlass para callBLass 
                              pq nao funcionava (Tiago/Elton SD535217).
+							 
+				16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)			   							 
 ----------------------------------------------------------------------------------------------->
 
 <html>
@@ -750,7 +752,7 @@ $(document).ready(function () {
 			
 			<tr>
 			  <td class="linhaform" align="right" style="width:14%">Senha:</td>
-                          <td ><input class=input type="password" id="v_senha" name="v_senha" size="12" maxlength="10" ></td>
+                          <td ><input class=input type="password" id="v_senha" name="v_senha" size="12" maxlength="30" ></td>
 			</tr>
 			<tr>
 			  <td align="right" class="linhaform"></td>

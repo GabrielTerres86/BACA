@@ -3338,7 +3338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 		vr_dscomando VARCHAR2(1000);
 	  BEGIN
 			-- Montar comando UNIX
-			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /micros/cecred/andrino/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
+			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /usr/local/bin/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
 			-- Executar o comando UNIX
 			GENE0001.pc_Oscommand_Shell(pr_des_comando => vr_dscomando
 																 ,pr_flg_aguard => 'S'
