@@ -1911,21 +1911,20 @@ function controlaLayout(operacao) {
         cVlrtotal.addClass('rotulo moeda').css('width', '90px');
         rDtLiberar.css('width', '97px');
         rLiberar.css('width', '137px');
-        rProposta.css('width', '97px');
         rDtLiberar.css('width', '153px');
         rLiberar.css('width', '135px');
-        rProposta.css('width', '75px');
+        rProposta.css('width', '153px');
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '153px');
         rLnCred.addClass('').css('width', '95px');
         rFinali.addClass('').css('width', '95px');
         rQualiParc.addClass('').css('width', '95px');
-        rPercCET.addClass('').css('width', '75px');
-        rDtPgmento.addClass('rotulo-linha').css('width', '190px');
-        rDtUltPag.addClass('rotulo').css('width', '321px');
+        rPercCET.addClass('').css('width', '153px');
+        rDtPgmento.addClass('').css('width', '159px');
+        rDtUltPag.addClass('').css('width', '153px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
-        rNtPromis.addClass('rotulo-linha').css('width', '132px');
+        rNtPromis.addClass('rotulo-linha').css('width', '318px');
         rDiasUteis.addClass('rotulo-linha');
         rIdcarenc.addClass('rotulo').css('width', '75px');
         rDtcarenc.addClass('').css('width', '135px');
