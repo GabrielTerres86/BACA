@@ -6190,10 +6190,7 @@ function fechaSimulacoes(encerrarRotina) {
 
 function validaSimulacao() {
 
-	showError('error', 'Opção indisponível temporariamente!', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
-	return false;
-
-    showMsgAguardo('Aguarde, validando ...');
+	showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
