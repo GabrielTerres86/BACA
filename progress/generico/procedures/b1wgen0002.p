@@ -2728,6 +2728,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                      "Renovacao Credito".
                   WHEN 3 THEN ASSIGN tt-proposta-epr.dsquapro = "Reneg. Credito".
                   WHEN 4 THEN ASSIGN tt-proposta-epr.dsquapro = "Compos. Divida".
+				  WHEN 5 THEN ASSIGN tt-proposta-epr.dsquapro = "Cessao de Cartao".
                 END CASE.
 
                 DO i = 1 TO 10:
@@ -4173,7 +4174,7 @@ PROCEDURE proc_qualif_operacao:
 
 	/* ANTERIOR - 1 dia de atraso											*/
 	/* ALTERADO - De 5 a 60 dias de atraso - Renegociação de Crédito		*/ 
-    IF  aux_mai_atraso > 4 AND aux_mai_atra < 61 THEN
+    IF  aux_mai_atraso > 4 AND aux_mai_atraso < 61 THEN
         ASSIGN par_idquapro = 3               
                par_dsquapro = "Renegociacao de credito".
     ELSE

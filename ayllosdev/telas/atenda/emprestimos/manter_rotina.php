@@ -110,7 +110,7 @@
 	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : '' ;
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '' ;
 	$flgimppr = (isset($_POST['flgimppr'])) ? $_POST['flgimppr'] : '' ;
-	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : '' ;
+	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : '' ;	
 	$flgpagto = (isset($_POST['flgpagto'])) ? $_POST['flgpagto'] : '' ;
 	$nrctaav2 = (isset($_POST['nrctaav2'])) ? $_POST['nrctaav2'] : '' ;
 	$dtcnsspc = (isset($_POST['dtcnsspc'])) ? $_POST['dtcnsspc'] : '' ;
