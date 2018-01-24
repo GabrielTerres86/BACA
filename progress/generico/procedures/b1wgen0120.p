@@ -112,6 +112,9 @@
 				
                 26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
             				 Chamado 660322 - (Belli Envolti)
+
+				24/01/2018 - Aumentar o campo AUX_BLIDENTI de 40 para 59 posições, pois estava truncando a tag "Final do BL"
+				             SD 812596 - Marcelo Telles Coelho
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -2876,7 +2879,7 @@ PROCEDURE Gera_Fita_Caixa:
     FORM "Inicio do BL: " cratfit.blidenti SKIP(1)
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS DOWN WIDTH 128 FRAME f_inicio_bl.
     
-    FORM " Final do BL: " aux_blidenti FORMAT "x(40)"
+    FORM " Final do BL: " aux_blidenti FORMAT "x(59)"
          SKIP(1)
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS DOWN WIDTH 128 FRAME f_final_bl.
     
