@@ -2699,7 +2699,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.nrctremp = crawepr.nrctremp
                        tt-proposta-epr.vlpreemp = crawepr.vlpreemp
                        tt-proposta-epr.qtpreemp = crawepr.qtpreemp
-                       tt-proposta-epr.nivrisco = crawepr.dsnivris
+                       tt-proposta-epr.nivrisco = crawepr.dsnivori /* alterado para exibir o nível de risco original (que não se altera ao longo do tempo) */
                        tt-proposta-epr.nivcalcu = crawepr.dsnivcal
                        tt-proposta-epr.cdlcremp = crawepr.cdlcremp
                        tt-proposta-epr.cdfinemp = crawepr.cdfinemp
