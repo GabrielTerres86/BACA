@@ -6384,7 +6384,18 @@ PROCEDURE grava-proposta-completa:
         ASSIGN crawepr.cdorigem = par_idorigem
                crawepr.dtaltpro = par_dtmvtolt
                crawepr.qtpreemp = par_qtpreemp
-               crawepr.dsnivris = UPPER(par_dsnivris)
+               crawepr.dsnivris = IF crawepr.dsnivris = ? 
+			                      OR crawepr.dsnivris = ""
+			                      THEN 
+								     UPPER(par_dsnivris) 
+							      ELSE 
+								     crawepr.dsnivris
+               crawepr.dsnivori = IF crawepr.dsnivori = ? 
+			                      OR crawepr.dsnivori = ""
+			                      THEN 
+								     UPPER(par_dsnivris) 
+							      ELSE 
+								     crawepr.dsnivori
                crawepr.cdlcremp = par_cdlcremp
                crawepr.cdfinemp = par_cdfinemp
                crawepr.qtdialib = par_qtdialib
