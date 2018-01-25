@@ -28,10 +28,12 @@
               (Lucas Lunelli - Melhoria 83 [SD 279180])
 
   23/03/2017 - Adicionado recarga de celular nos comprovantes e 
-			   visualização de impressão. (PRJ321 - Reinert)
+                           visualização de impressão. (PRJ321 - Reinert)
 
   21/06/2017 - Ajustes PRJ340 - NPC(Odirlei AMcom).
-                             
+  
+  25/01/2018 - #824366 Inclusão da data de transferência na rotina
+               imprime_transferencia (Carlos)                             
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -68,7 +70,7 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD cdbcoctl AS INTE  /* Banco 085 */
        FIELD cdagectl AS INTE  /* Agencia da cooperativa */
        FIELD dsagectl AS CHAR
-	   FIELD nrtelefo AS CHAR  /* Nr telefone */
+           FIELD nrtelefo AS CHAR  /* Nr telefone */
        FIELD nmopetel AS CHAR  /* Nome operadora */
        FIELD dsnsuope AS CHAR /* NSU operadora */
        FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
@@ -139,8 +141,8 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
     ~{&OPEN-QUERY-b_comprovantes}
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 ~
-RECT-149 b_comprovantes Btn_F Btn_D Btn_H ed_lndigita 
+&Scoped-Define ENABLED-OBJECTS Btn_E IMAGE-37 IMAGE-40 Btn_F IMAGE-38 ~
+IMAGE-39 RECT-149 b_comprovantes Btn_D Btn_H ed_lndigita 
 &Scoped-Define DISPLAYED-OBJECTS ed_lndigita 
 
 /* Custom List Definitions                                              */
@@ -247,8 +249,8 @@ tt-comprovantes.dsinform  COLUMN-LABEL "Tipo"      FORMAT "x(20)"
 
 DEFINE FRAME f_comprovantes_lista
      Btn_E AT ROW 9.62 COL 142 WIDGET-ID 68
-     b_comprovantes AT ROW 6.29 COL 6 WIDGET-ID 200
      Btn_F AT ROW 14.67 COL 142 WIDGET-ID 220
+     b_comprovantes AT ROW 6.29 COL 6 WIDGET-ID 200
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.14 COL 94.4 WIDGET-ID 74
      ed_lndigita AT ROW 20.71 COL 3 COLON-ALIGNED NO-LABEL WIDGET-ID 216 NO-TAB-STOP 
@@ -716,8 +718,8 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_lndigita 
       WITH FRAME f_comprovantes_lista.
-  ENABLE Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 b_comprovantes 
-         Btn_F Btn_D Btn_H ed_lndigita 
+  ENABLE Btn_E IMAGE-37 IMAGE-40 Btn_F IMAGE-38 IMAGE-39 RECT-149 
+         b_comprovantes Btn_D Btn_H ed_lndigita 
       WITH FRAME f_comprovantes_lista.
   {&OPEN-BROWSERS-IN-QUERY-f_comprovantes_lista}
   VIEW w_cartao_agendamento_lista.
@@ -1101,8 +1103,13 @@ ASSIGN tmp_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
                                                              "         " +
                       "                                                "
         tmp_tximpres = tmp_tximpres +
-                       "          COMPROVANTE DE TRANSFERENCIA          "
+                       "          COMPROVANTE DE TRANSFERENCIA          " +
+                       "                                                "
         
+        tmp_tximpres = tmp_tximpres +
+                       "DATA: " + STRING(tt-comprovantes.dtmvtolt,"99/99/9999") + 
+                       "                                "
+
         tmp_tximpres = tmp_tximpres +
                        "                                                "   + 
                        "DE                                              "   +   
