@@ -314,6 +314,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlpreemp LIKE crawepr.vlpreemp
     FIELD qtpreemp LIKE crawepr.qtpreemp
     FIELD nivrisco LIKE crawepr.dsnivris
+	FIELD nivriori LIKE crawepr.dsnivori
     FIELD nivcalcu LIKE crawepr.dsnivcal
     FIELD cdlcremp LIKE crawepr.cdlcremp
     FIELD cdfinemp LIKE crawepr.cdfinemp
