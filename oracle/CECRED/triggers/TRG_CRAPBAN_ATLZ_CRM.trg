@@ -1,5 +1,7 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPBAN_ATLZ_CRM
-  AFTER INSERT OR UPDATE OR DELETE ON CRAPBAN
+  AFTER INSERT OR UPDATE OR DELETE 
+  OF cdbccxlt,nmextbcc,nmresbcc 
+  ON CRAPBAN
   FOR EACH ROW
   /* ..........................................................................
 
@@ -14,7 +16,9 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPBAN_ATLZ_CRM
       Frequencia: Sempre que for chamado
       Objetivo  : Trigger para enviar dados para o CRM
 
-     Alteração :
+     Alteração : 25/01/2017 - Ajustado para enviar dados somente se alterado nome ou codigo do banco.
+                 PRJ309-CRM(Odirlei-AMcom)
+     
 
   ............................................................................*/
 
@@ -33,6 +37,13 @@ DECLARE
   vr_tpoperac   INTEGER;
 
 BEGIN
+
+  --> Caso os dados estejam iguais, deve abortar
+  IF :new.cdbccxlt = :old.cdbccxlt AND 
+     :new.nmextbcc = :old.nmextbcc THEN
+    RETURN;       
+  END IF;    
+
 
   IF deleting THEN
     vr_tpoperac := 3; --> Exclusao
