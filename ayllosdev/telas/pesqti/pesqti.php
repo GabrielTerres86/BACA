@@ -3,40 +3,42 @@
 	/**************************************************************************
 	      Fonte: pesqti.php                                                
 	      Autor: Adriano                                                   
-	      Data : Agosto/2011                Última Alteração: 17/06/2015
+	      Data : Agosto/2011                Ãšltima Alteração 17/06/2015
 	                                                                  
 	      Objetivo  : Mostrar tela PESQTI                                  
 	                                                                  
-	      Alterações: 06/08/2012 - Listar Históricos, campo Vl.FOZ e       
-	                               implementação da Opção A (Lucas). 
+	      AlteraÃ§Ãµes: 06/08/2012 - Listar HistÃ³ricos, campo Vl.FOZ e       
+	                               implementaÃ§Ã£o da OpÃ§Ã£o A (Lucas). 
 					  
 					  17/12/2012 - Ajuste para layout padrao (Daniel).
 	                  												   
 					  26/12/2012 - Alterado para layout padrao (Gabriel).
 
-					  27/03/2013 - Alterações para tratar Convenios SICREDI (Lucas).
+					  27/03/2013 - AlteraÃ§Ãµes para tratar Convenios SICREDI (Lucas).
 					  
-					  15/08/2013 - Alteração da sigla PAC para PA (Carlos)
+					  15/08/2013 - AlteraÃ§Ã£o da sigla PAC para PA (Carlos)
 					  
 					  17/06/2015 - Ajuste decorrente a melhoria no layout da tela
  							      (Adriano).
+            
+            17/01/2018 - AlteraÃ§Ãµes para atender o PJ406
 	                                                                  
 	***************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
 	require_once("../../includes/controla_secao.php");
 	
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();
 	
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");	
 	
-	// Carrega permissões do operador
+	// Carrega permissÃµes do operador
 	include("../../includes/carrega_permissoes.php");	
 
 	setVarSession("opcoesTela",$opcoesTela);
@@ -107,18 +109,13 @@
 																		<tr>
 																			<td>
 																				<div id="divTela">
-																				
 																					<!-- INCLUDE DA TELA DE PESQUISA -->
-																					<? require_once("../../includes/pesquisa/pesquisa.php"); ?>																																							
-																				
+																					<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 																					<? include('form_cabecalho.php'); ?>
-																					
-																					<div id="divFiltro">
-																						<?include('form_filtro.php'); ?>
-																					</div>
-																					
+                                          <div id="divFiltro">
+                                            <? include('form_filtro.php'); ?>
+                                          </div>
 																					<div id="divConsulta"></div>
-																							
 																					<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;">
 																							
 																						<a href="#" class="botao" id="btVoltar">Voltar</a>
@@ -126,7 +123,6 @@
 																						<a href="#" class="botao" id="btAlterar">Alterar</a>
 																						
 																					</div>
-
 																					<div id="divRotina"></div>
 																					
 																				</div>																				

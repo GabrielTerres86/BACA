@@ -7,8 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 12/05/2016 - Adicionar o campo de linha digitavel (Douglas - Chamado 426870)
  *
- *				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
- *					  		   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+ *				        19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+ *					  		             pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+ *
+ *                18/01/2018 - Alterações referentes ao PJ406
  *
  * --------------
  */ 
@@ -48,7 +50,8 @@
 						<input type="hidden" id="flgpgdda" name="flgpgdda" value="<? echo getByTagName($result->tags,'flgpgdda') ?>" />								  
 						<input type="hidden" id="cdbandst" name="cdbandst" value="<? echo getByTagName($result->tags,'cdbandst')." - ".getByTagName($result->tags,'nmextbcc') ?>" />								  
 						<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo formataNumericos('zzzz.zzz-9',getByTagName($result->tags,'nrdconta'),'.-') ?>" />								  
-						<input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
+						<input type="hidden" id="nmresage" name="nmresage" value="<? echo getByTagName($result->tags,'nmresage') ?>" />
+            <input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
 						<input type="hidden" id="dslindig" name="dslindig" value="<? echo getByTagName($result->tags,'dslindig') ?>" />
 						<input type="hidden" id="nmextbcc" name="nmextbcc" value="<? echo getByTagName($result->tags,'nmextbcc') ?>" />								  															  						
 						<input type="hidden" id="dspactaa" name="dspactaa" value="<? echo getByTagName($result->tags,'dspactaa') ?>" />	
@@ -110,7 +113,6 @@
 </fieldset>
 
 <script type="text/javascript">
-
 	//Se for opcao de Alteração, exibe botão ALTERAR
 	if ('<?echo $cddopcao;?>' == 'A'){
 		$('#btAlterar','#divBotoes').css('display','inline');
@@ -120,7 +122,6 @@
 		$('#btAlterar','#divBotoes').css('display','none');
 		$('#btConsultar','#divBotoes').css('display','none');
 	}
-	
 	$('#btVoltar','#divBotoes').css('display','inline');
 	
 	if ($("#cdhiscxa","#frmFiltroPesqti").hasClass("campoErro")){
@@ -129,21 +130,19 @@
 		$('#btAlterar','#divBotoes').css('display','none');
 		
 	}
-	
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
 
-		obtemConsulta(<? echo ($nriniseq - $nrregist)?>,<?php echo $nrregist?>);
+		obtemConsulta(<? echo ($nriniseq - $nrregist);?>,<?php echo $nrregist;?>);
 
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
 		
-		obtemConsulta(<? echo ($nriniseq + $nrregist)?>,<?php echo $nrregist?>);
+		obtemConsulta(<? echo ($nriniseq + $nrregist);?>,<?php echo $nrregist;?>);
 		
 	});		
-	
 	$('#divPesquisaRodape','#divConsulta').formataRodapePesquisa();
-	
+
 	formataFormularios();
-	controlaLayout("1");		
+	controlaLayout("1");	
 			
 </script>

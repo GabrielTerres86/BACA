@@ -20,6 +20,8 @@
 				  
 				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+                 
+          18/01/2018 - Alterações referentes ao PJ406
 				  
  */	
 ?>
@@ -53,8 +55,12 @@
 		<input name="nrdconta" id="nrdconta" type="text" />
 	
 		<br/>
+		<label for="nmresage"><? echo utf8ToHtml('Ag. Arrecada.:') ?></label>
+		<input name="nmresage" id="nmresage" type="text" />
+    
+    <br/>
 		<label for="dscodbar"><? echo utf8ToHtml('Cod. de Barras:') ?></label>
-		<input name="dscodbar" id="dscodbar" type="text" />	
+		<input name="dscodbar" id="dscodbar" type="text" />
 		
 		<label for="insitfat"><? echo utf8ToHtml('Enviado:') ?></label>
 		<select name="insitfat" id="insitfat" class="campo">
