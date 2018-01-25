@@ -3489,6 +3489,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.txmensal = crawepr.txmensal
               crapepr.cdempres = aux_cdempres
               crapepr.nrcadast = crapass.nrcadast
+			  crapepr.idquaprc = crawepr.idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
