@@ -1,4 +1,4 @@
-/* .............................................................................
+glb_Senha,/* .............................................................................
 
    Programa: Fontes/landpvi.p
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -84,7 +84,7 @@
 
                20/10/1999 - Acerto na critica 93 (Deborah).
 
-               26/07/2000 - Tratar historicos de caixa e extra-caixa (Odair)
+               26/07/2000 - Tratar historicos de  e extra-caixa (Odair)
 
                24/10/2000 - Desmembrar a critica 95 conforme a situacao do
                             titular (Eduardo).
@@ -512,15 +512,28 @@
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
+/*Arquivo com variaveis utlizadas na BO b1wgen0104.p*/
 { sistema/generico/includes/b1wgen0104tt.i }
+
+/*Include para calculo de saldo devedor em emprestimos. Baseado na includes/lelem.i.*/
 { sistema/generico/includes/b1wgen0002tt.i }
 
+/*Arquivo com variaveis utlizadas nas BO's genericas da internet*/
 { sistema/generico/includes/var_internet.i }
+
+/*Include para geracao de log */
 { sistema/generico/includes/gera_log.i }
+
+/*Definicao de variaveis para tratamento de erro ao executar Store Procedure Oracle.*/
 { sistema/generico/includes/var_oracle.i }
 
+/*Criar as variaveis compartilhadas para o on_line e processo batch.*/
 { includes/var_online.i }
+
+/*Definicao das variaveis e forms da tela LANDPV.*/
 { includes/var_landpv.i }
+
+/*riar variaveis e forms para a tela CMEDEP.Que é a tela de controle de movimentacao em especie - depositos).*/
 { includes/var_cmedep.i "NEW" }
 
 
@@ -914,7 +927,6 @@ END PROCEDURE.
 
 
 /*  Le tabela com o valor dos cheques maiores  */
-
 FIND craptab WHERE craptab.cdcooper = glb_cdcooper  AND
                    craptab.nmsistem = "CRED"        AND
                    craptab.tptabela = "USUARI"      AND
@@ -2570,10 +2582,13 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                      UNDO, NEXT INICIO.
                  END.
 
-              /* Condicao para verifica se possui saldo disponivel */
+              /* Condicao para verificar o valor do saldo disponível */
               FIND FIRST tt-saldos NO-LOCK NO-ERROR.
+              /* Se a tabela temporaria de saldo trouxe algo  diferente de vazio*/
               IF AVAILABLE tt-saldos THEN
-                 DO:
+                 DO:  
+                     /* É atribuido ao saldo disponivel o valor da soma do saldo 
+                     disponivel  + saldo do cheque especial + o valor do limite de crédito*/
                      ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
                                            tt-saldos.vlsdchsl + 
                                            tt-saldos.vllimcre.
@@ -2581,23 +2596,42 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                  
                  IF aux_indebcre = "D" THEN
                     DO:
-                       /* Condicao para verifica se possui saldo disponivel */
-                       IF tel_vllanmto > aux_vlsddisp THEN
+                       /*Verifica a disponibilidade de saldo para pagamento da prestaçao do empréstimo*/
+                       /* Verifica se o valor de lançamento é maior que o saldo disponível (Saldo normal + valor do cheque especial + valor do limite de crédito) */
+                       IF tel_vllanmto >= aux_vlsddisp THEN
                           DO:
-                            
-                            RUN fontes/confirma.p
-                              (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
-                                      + ". Confirma estouro de conta? S/N",
-                               OUTPUT aux_confirma).
-                            
-                            IF aux_confirma <> "S" THEN
-                              UNDO, NEXT INICIO.
-                            
-                        END.
-                    END.                 
-              
-        END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
-      
+                            /*Verifica a existencia de saldo bloqueado.*/
+                           ASSIGN aux_vlsdbloq = tt-saldos.vlsdbloq.
+                           /*Verifica se o saldo bloqueado é maio que 0.*/
+                           IF  aux_vlsdbloq > 0 THEN
+                              /* Solicita a confirmaçao de utilizaçao do saldo bloqueado para o pagamento*/
+                              RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+                                INPUT 2, 
+                                OUTPUT aut_flgsenha,
+                                OUTPUT aut_cdoperad).
+                              
+                              IF <> aut_flgsenha THEN
+                                UNDO, NEXT INICIO.
+                              ELSE
+                                  /*Verrifica se o valor de lançamento é maior ou igual ao valor bloqueado*/
+                                  IF  aux_vlsdbloq <= tel_vllanmto THEN
+
+                                      /*Verifica o valor de alçada do operador.*/
+                                      /*ASSIGN aux_vlpagchq = crapope.vlpagchq.*/
+                                      
+                                      /*Verifica se o valor de alçada é suficiente para efetuar a transaçao*/
+                                      /*IF aux_vlpagchq >= (tel_vllanmto - aux_vlsdbloq) THEN */
+                              DO:
+                                /*Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
+                                RUN fontes/confirma.p
+                                  (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
+                                          + ". Confirma estouro de conta? S/N",
+                                          OUTPUT aux_confirma).
+                                IF aux_confirma <> "S" THEN
+                                  UNDO, NEXT INICIO.                                  
+                              END. 
+                          END.             
+                    END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
 
    DO TRANSACTION:
 
@@ -3176,7 +3210,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                                                               INPUT crapass.nrdconta,
                                                                                               INPUT crapfdc.nrdctabb,
                                                                                               INPUT tel_nrdocmto,
-                                                                                              INPUT crapcor.dtvalcor,
                                                                                               INPUT glb_dtmvtolt,
                                                                                               INPUT crapcor.cdhistor,
                                                                                               OUTPUT aux_cdalinea,
