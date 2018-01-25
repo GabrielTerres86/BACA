@@ -5,7 +5,8 @@
 Alteracoes: 15/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 
             26/06/2009 - Validar se o caixa existe conforme b1crap07 (Evandro).
-
+            
+            25/01/2018 - Removido campos de Supervisor e Senha. (PRJ339 - Reinert)
 ............................................................................. */
 
 
@@ -18,10 +19,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD vh_erro AS CHARACTER FORMAT "X(256)":U 
        FIELD v_agencia AS CHARACTER FORMAT "X(256)":U 
        FIELD v_caixa AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_cooperativa AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_nome AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_senha AS CHARACTER FORMAT "X(256)":U .
-
+       FIELD v_cooperativa AS CHARACTER FORMAT "X(256)":U .
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -82,8 +80,8 @@ DEFINE VARIABLE l-ok       AS LOGICAL    NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_erro ab_unmap.v_agencia ab_unmap.v_caixa ab_unmap.v_cooperativa ab_unmap.v_nome ab_unmap.v_senha 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_erro ab_unmap.v_agencia ab_unmap.v_caixa ab_unmap.v_cooperativa ab_unmap.v_nome ab_unmap.v_senha 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_erro ab_unmap.v_agencia ab_unmap.v_caixa ab_unmap.v_cooperativa
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_erro ab_unmap.v_agencia ab_unmap.v_caixa ab_unmap.v_cooperativa
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -117,14 +115,6 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-     ab_unmap.v_nome AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-     ab_unmap.v_senha AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -148,9 +138,7 @@ DEFINE FRAME Web-Frame
           FIELD vh_erro AS CHARACTER FORMAT "X(256)":U 
           FIELD v_agencia AS CHARACTER FORMAT "X(256)":U 
           FIELD v_caixa AS CHARACTER FORMAT "X(256)":U 
-          FIELD v_cooperativa AS CHARACTER FORMAT "X(256)":U 
-          FIELD v_nome AS CHARACTER FORMAT "X(256)":U 
-          FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_cooperativa AS CHARACTER FORMAT "X(256)":U  
       END-FIELDS.
    END-TABLES.
  */
@@ -193,10 +181,6 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_caixa IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_cooperativa IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR fill-in ab_unmap.v_nome IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR fill-in ab_unmap.v_senha IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -252,10 +236,6 @@ PROCEDURE htmOffsets :
     ("v_caixa":U,"ab_unmap.v_caixa":U,ab_unmap.v_caixa:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_cooperativa":U,"ab_unmap.v_cooperativa":U,ab_unmap.v_cooperativa:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_nome":U,"ab_unmap.v_nome":U,ab_unmap.v_nome:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -422,31 +402,17 @@ PROCEDURE process-web-request :
 							   ASSIGN l-ok = NO.
 						   END.
 						   ELSE   DO:
-							   
-							   RUN dbo/b1crap01.p PERSISTENT SET h-b1crap01.
-							   RUN valida-supervisor 
-								 IN h-b1crap01(INPUT crapcop.nmrescop,
-											   INPUT get-value("v_nome"),
-											   INPUT get-value("v_senha"),
-											   INPUT get-value("v_agencia"),
-											   INPUT get-value("v_caixa")).
-							   DELETE PROCEDURE h-b1crap01.
-							   IF  RETURN-VALUE = "NOK" THEN DO:
-								   ASSIGN l-ok = NO.
-							   END.
-							   ELSE DO:
-						  
-								   RUN SetCookie IN
-									web-utilities-hdl ("User_cx":U,
-													   get-value("v_caixa"),
-													   DATE("31/12/9999"), TIME, ?, ?, ?).   
-	  
-	  
-								   RUN SetCookie IN
-									web-utilities-hdl ("User_pac":U,
-													   get-value("v_agencia"), 
-													   DATE("31/12/9999"), TIME, ?, ?, ?).    
-							   END.
+                            
+                 RUN SetCookie IN
+                  web-utilities-hdl ("User_cx":U,
+                           get-value("v_caixa"),
+                           DATE("31/12/9999"), TIME, ?, ?, ?).   
+  
+  
+                 RUN SetCookie IN
+                  web-utilities-hdl ("User_pac":U,
+                           get-value("v_agencia"), 
+                           DATE("31/12/9999"), TIME, ?, ?, ?).    
 						   END.
 						END.
 					END.
@@ -504,9 +470,7 @@ PROCEDURE process-web-request :
 
     IF get-value("cancela") <> "" THEN
        ASSIGN ab_unmap.v_agencia     = ""
-              ab_unmap.v_caixa       = ""
-              ab_unmap.v_nome        = ""
-              ab_unmap.v_senha       = "".
+              ab_unmap.v_caixa       = "".
     ELSE
     IF INT(get-value("v_agencia")) <> 0 AND l-ok THEN
        {&out} "<script>location='crap001.p'</script>".
