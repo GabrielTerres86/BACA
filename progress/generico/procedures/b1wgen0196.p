@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 22/06/2017
+   Data    : 21/03/2017                        Ultima atualizacao: 24/01/2018
 
    Dados referentes ao programa:
 
@@ -12,6 +12,8 @@
 
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
+
+               24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
 
  ..............................................................................*/
 
@@ -295,6 +297,8 @@ PROCEDURE grava_dados:
                                              INPUT 30,   /* par_inconfi2 */
                                              INPUT 0,
                                              INPUT "", /* cdmodali */
+                                             INPUT ?, /* par_idcarenc */
+                                             INPUT ?, /* par_dtcarenc */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
@@ -512,6 +516,8 @@ PROCEDURE grava_dados:
                         INPUT "",           /* par_dsctrliq */
                         INPUT 0,            /* par_nrctaava */
                         INPUT 0,            /* par_nrctaav2 */
+                        INPUT ?,            /* par_idcarenc */
+                        INPUT ?,            /* par_dtcarenc */
                         /*-------Rating------ */
                         INPUT tt-dados-analise.nrgarope, /* par_nrgarope INTE */
                         INPUT tt-dados-analise.nrperger, /* par_nrperger INTE */

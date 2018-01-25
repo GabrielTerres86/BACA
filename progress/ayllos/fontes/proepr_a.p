@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 14/03/2016
+   Data    : Outubro/96.                     Ultima atualizacao: 24/01/2018
 
    Dados referentes ao programa:
 
@@ -410,7 +410,10 @@
 						 
             14/03/2016 - Incluir campo cdpactra na chamada da rotina 
 			             grava-proposta-completa. PRJ207 - Esteira 
-						 (Odirlei-AMcom)						                  
+						 (Odirlei-AMcom)
+
+            24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -901,6 +904,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                          INPUT aux_inconfi2,
                                          INPUT 0, /* nrcpfope */
 										 INPUT "", /* cdmodali */
+                                         INPUT ?, /* par_idcarenc */
+                                         INPUT ?, /* par_dtcarenc */
                                          OUTPUT TABLE tt-erro,
                                          OUTPUT TABLE tt-msg-confirma,
                                          OUTPUT TABLE tt-grupo,
@@ -2010,6 +2015,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT tt-proposta-epr.dsctrliq,
                                 INPUT aux_nrctaava,
                                 INPUT aux_nrctaav2,
+                                INPUT ?, /* par_idcarenc */
+                                INPUT ?, /* par_dtcarenc */
                                 /* Analise da proposta*/
                                 INPUT tt-dados-analise.nrgarope,
                                 INPUT tt-dados-analise.nrperger,
