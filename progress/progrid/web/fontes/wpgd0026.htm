@@ -652,7 +652,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
 		}
 		
         // linha de final da listagem se nao tiver 100 linhas
-        if (document.all.tbevento.rows.length != '150') {
+				if (document.all.tbevento.rows.length < '150') {
             row = tbevento.insertRow();
             if (cor == '#FFFFFF')
                 cor = '#F7F7F7';
@@ -667,7 +667,7 @@ Alteracoes: 09/12/2009 - Incluido parametro "dtanoage" na chamada do programa wp
             cell.width = '100%';
             cell.colSpan = 16;
             cell.innerText = 'Fim da listagem';
-			document.form.proximos.style.visibility = 'hidden';
+						document.form.proximos.style.visibility = 'hidden';
 			
 			
         }else{
