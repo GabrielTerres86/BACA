@@ -1566,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
           pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,11,13,15,16,17,18,19,20) THEN
+          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20) THEN
             pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
             pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           END IF;
@@ -2210,7 +2210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,6,9,11,13,15,20) THEN
+        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN

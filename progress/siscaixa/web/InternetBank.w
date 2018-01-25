@@ -8114,6 +8114,14 @@ END PROCEDURE.
 
 /* Cancelar integralizacao de cotas de capital */
 PROCEDURE proc_operacao177:
+
+    IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END.
     
     ASSIGN aux_nrdrowid = GET-VALUE("nrdrowid").    
                               
