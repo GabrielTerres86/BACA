@@ -67,8 +67,11 @@
 		if($tipo==1){
 			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
 		}
-		else{
+		elseif($tipo==2){
 			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","pedeSenhaCoordenador(2,\"verificaAbreTelaPagamentoAvalista()\",\"divRotina\")","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
+		}
+		else{
+			echo 'showConfirmacao("'.getByTagName($mensagem,'dsmensag').'","Confirma&ccedil;&atilde;o - Ayllos","pedeSenhaCoordenador(2,\"showConfirmacao(\'Saldo em conta insuficiente para pagamento da parcela. Confirma pagamento?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'verificaAbreTelaPagamentoAvalista()\',\'hideMsgAguardo();bloqueiaFundo(	divRotina);\',\'sim.gif\',\'nao.gif\')\",\"divRotina\")","hideMsgAguardo();bloqueiaFundo(	divRotina);","sim.gif","nao.gif");';
 		}
 	}else{	
 		echo 'confirmaPagamento();'; 
