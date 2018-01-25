@@ -146,7 +146,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
                             
-               21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)                                     
+               21/11/2017 - Adequar a cobranca de IOF para a nova legislacao. (James)    
+
+               19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)                                 
      ............................................................................. */
 
      DECLARE
@@ -1178,7 +1180,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
              --vlsddisp = valor do saldo disponivel
              --vllimcre = valor do limite de credito do associado
              vr_tot_vlsldant:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdchsl,0) +
-                               Nvl(rw_crapsld.ass_vllimcre,0);
+                               Nvl(rw_crapsld.vlsdbloq,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                               Nvl(rw_crapsld.vlsdblfp,0) + Nvl(rw_crapsld.ass_vllimcre,0);
 
              --Zerar Numero sequencial tabela
              vr_nrseqneg:= 0;
@@ -1829,8 +1832,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Salario liquido mes anterior recebe salario liquido
            rw_crapsld.vltsalan:= Nvl(rw_crapsld.vltsallq,0);
            --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
-           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + 
-                                 Nvl(rw_crapsld.vlsdchsl,0);
+           rw_crapsld.vlsdmesa:= Nvl(rw_crapsld.vlsddisp,0) + Nvl(rw_crapsld.vlsdbloq,0) +
+                                 Nvl(rw_crapsld.vlsdchsl,0) + Nvl(rw_crapsld.vlsdblpr,0) +
+                                 Nvl(rw_crapsld.vlsdblfp,0);
            --Data referencia extrato recebe o ultimo dia do mes
            rw_crapsld.dtrefext:= vr_dtultdia;         /* Para uso do sist. CASH  */
            --Referencia do saldo para extrato recebe a data referencia saldo anterior
