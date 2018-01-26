@@ -836,7 +836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_contador_riscoc,
                              pr_tag_nova => 'dtrisco_ultima_central',
-                             pr_tag_cont => rw_consulta_dados_riscoc.dtrisco_ultima_central,
+                             pr_tag_cont => to_char(rw_consulta_dados_riscoc.dtrisco_ultima_central,'DD/MM/YYYY'),
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
