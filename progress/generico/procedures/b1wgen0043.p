@@ -46,6 +46,7 @@
 |   gera_rating                          | RATI0001.pc_gera_rating             |
 |   obtem_emprestimo_risco               | RATI0002.pc_obtem_emprestimo_risco  |
 |   grava_rating                         | RATI0001.pc_grava_rating            |
+|   qualificacao-operacao
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -243,6 +244,10 @@
                            cessao da fatura de cartao de credito (Anderson).
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
+
+			  26/01/2018 - Criada funcao para posicionar o contrato para pegar a Qualificacao
+						   da Operacao (Controle).
+						   Migradra (Diego Simas - AMcom)
 .............................................................................*/
   
   
@@ -280,6 +285,27 @@ DEF VAR par_dsdevice AS CHAR                                         NO-UNDO.
 DEF VAR par_dtconnec AS CHAR                                         NO-UNDO.
 DEF VAR par_numipusr AS CHAR                                         NO-UNDO.
 
+
+/* FUNCTION PARA QUALIFICACAO DA OPERACAO ---- CRAPEPR ---------*/
+/****************************************************************
+ Traz a qualificacao da operacao quando alterada pelo controle
+*****************************************************************/
+FUNCTION verificaQualificacao RETURNS INTEGER
+        (INPUT par_cdcooper AS INTE,
+		 INPUT par_nrdconta AS INTE,
+         INPUT par_nrctremp AS INTE,
+         INPUT par_idquapro AS INTE,
+        ):                                                    
+
+     FOR FIRST crapepr FIEDLS(idquaprc) 
+   WHERE crapepr.cdcooper = par_cdcooper  AND
+         crapepr.nrdconta = par_nrdconta  AND
+         crapepr.nrctremp = par_nrctremp) NO-LOCK: END.
+   IF AVAIL crapepr THEN
+       return crapepr.idquaprc
+   else
+       return par_idquapro.	       
+END FUNCTION.
                                
 /******************************************************************************
                             PROCEDURES EXTERNAS
@@ -4643,6 +4669,7 @@ PROCEDURE calcula_rating_fisica:
     DEF VAR aux_dtmvtolt          AS DATE                            NO-UNDO.
 
     DEF VAR par_dsliquid          AS CHAR                            NO-UNDO.
+	DEF VAR aux_idqualif          AS INTE                            NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -5453,11 +5480,11 @@ PROCEDURE calcula_rating_juridica:
     DEF  VAR         aux_contador AS INTE                            NO-UNDO.
     DEF  VAR         aux_dtmvtolt AS DATE                            NO-UNDO.
 
-    DEF  VAR         par_dsliquid AS CHAR                            NO-UNDO.                         
-
+    DEF  VAR         par_dsliquid AS CHAR                            NO-UNDO. 
+	DEF  VAR         aux_idqualif AS INTE                            NO-UNDO.
 
     ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+           aux_dscritic = "".	
 
     /* Todas as criticas do calculo (juridica) esta aqui */
     RUN criticas_rating_jur (INPUT par_cdcooper,
@@ -6085,8 +6112,18 @@ PROCEDURE calcula_rating_juridica:
          DO:
              /* Renegociacao / Composicao de divida*/
              IF  AVAIL crawepr THEN DO:
-
-                 IF   crawepr.idquapro > 2 THEN 
+				
+				ASSIGN aux_idqualif = DYNAMIC-FUNCTION( "verificaQualificacao",
+                                            INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_nrctremp,
+                                            INPUT crawepr.idquapro). 
+				 
+                /* IF   crawepr.idquapro > 2 THEN  */
+				/* Alterado para quando o controle alterar 
+				   a qualificacao da operacao, pegar o do controle 
+				*/
+				 IF   aux_idqualif > 2 THEN
                       ASSIGN aux_nrseqite = 6.
                  ELSE
                      CASE craplcr.dsoperac:
@@ -7200,13 +7237,20 @@ PROCEDURE natureza_operacao:
 
     DEF OUTPUT PARAM par_nrseqite AS INTE                NO-UNDO.
 
-
+	ASSIGN aux_idqualif = DYNAMIC-FUNCTION( "verificaQualificacao",
+                                            INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_nrctremp,
+                                            INPUT par_idquapro). 
+	
     IF   par_tpctrato = 90   THEN  /* Emprestimo / Financiamento */ 
          DO:
-             IF   par_idquapro > 2   THEN  
-                  CASE par_idquapro:
-                                 /* Renegociacao / Composicao de divida */
-                      WHEN   3   OR   WHEN 4  THEN   par_nrseqite = 4.
+             /*IF   par_idquapro > 2   THEN						 */
+             /*     CASE par_idquapro:                           */
+			 IF   aux_idqualif > 2   THEN 
+			      CASE aux_idqualif: 
+                                 /* Renegociacao / Composicao de divida / Cessao de Cartao */
+                      WHEN   3   OR   WHEN 4   OR   WHEN 5 THEN   par_nrseqite = 4.
 
                   END CASE.
              ELSE
@@ -7902,6 +7946,7 @@ PROCEDURE qualificacao-operacao:
        WHEN 2   THEN   ASSIGN   par_dsquapro = "Renovacao de credito". 
        WHEN 3   THEN   ASSIGN   par_dsquapro = "Renegociacao de credito". 
        WHEN 4   THEN   ASSIGN   par_dsquapro = "Composicao da divida".
+	   WHEN 5   THEN   ASSIGN   par_dsquapro = "Cessao de Cartao".
 
     END CASE.
 
