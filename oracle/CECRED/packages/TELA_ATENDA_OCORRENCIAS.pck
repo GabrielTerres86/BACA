@@ -256,6 +256,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,9,'H') risco_agravado
            , r.dsnivcal risco_operacao
            , a.dsnivris risco_cpf
+           , decode(ris.innivris
+                   ,2,'A'
+                   ,3,'B'
+                   ,4,'C'
+                   ,5,'D'
+                   ,6,'E'
+                   ,7,'F'
+                   ,8,'G'
+                   ,9,'H') risco_final
            , ris.dtdrisco data_risco
            , ris.dtrefere-ris.dtdrisco dias_risco
         from crapass a
@@ -322,6 +331,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,9,'H') risco_agravado
            , r.dsnivcal risco_operacao
            , a.dsnivris risco_cpf
+           , decode(ris.innivris
+                   ,2,'A'
+                   ,3,'B'
+                   ,4,'C'
+                   ,5,'D'
+                   ,6,'E'
+                   ,7,'F'
+                   ,8,'G'
+                   ,9,'H') risco_final           
            , ris.dtdrisco data_risco
            , ris.dtrefere-ris.dtdrisco dias_risco
         from crapass a
@@ -538,6 +556,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_contador_risco,
+                             pr_tag_nova => 'risco_final',
+                             pr_tag_cont => rw_consulta_dados_risco.risco_final,
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador_risco,
                              pr_tag_nova => 'data_risco',
                              pr_tag_cont => to_char(rw_consulta_dados_risco.data_risco,'DD/MM/YYYY'),
                              pr_des_erro => vr_dscritic);
@@ -631,7 +656,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       CURSOR cr_consulta_dados_riscoc (pr_cdcooper IN NUMBER
                                               ,pr_cpf_cnpj IN NUMBER) IS
       select distinct /*'TIT' ID*/
-            decode(ris.innivris
+             ris.dtdrisco dtrisco_ultima_central
+           , decode(ris.innivris
                    ,2,'A'
                    ,3,'B'
                    ,4,'C'
@@ -676,7 +702,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          and agr.nrdconta(+) = ris.nrdconta
       union
       select distinct /*'GRU' ID*/
-            decode(ris.innivris
+             ris.dtdrisco dtrisco_ultima_central
+           , decode(ris.innivris
                    ,2,'A'
                    ,3,'B'
                    ,4,'C'
@@ -804,6 +831,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
     -- CAMPOS
     -- Busca os dados
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_contador_riscoc,
+                             pr_tag_nova => 'dtrisco_ultima_central',
+                             pr_tag_cont => rw_consulta_dados_riscoc.dtrisco_ultima_central,
+                             pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
