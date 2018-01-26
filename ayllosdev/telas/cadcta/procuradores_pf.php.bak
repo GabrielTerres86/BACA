@@ -1,0 +1,88 @@
+<?php
+/*!
+ * FONTE        : responsavel_legal.php
+ * CRIAÇÃO      : Andrey Formigari (Mouts)
+ * DATA CRIAÇÃO : Setembro/2017
+ * OBJETIVO     : Listar Responsaveis Legais na tela CADCTA
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
+ */
+
+session_start();	
+require_once("../../includes/config.php");
+require_once("../../includes/funcoes.php");		
+require_once("../../includes/controla_secao.php");
+require_once("../../class/xmlfile.php");	
+isPostMethod();
+
+$cddopcao = ( isset($_POST['cddopcao']) ) ? $_POST['cddopcao'] : 'C';
+
+// Guardo o número da conta e titular em variáveis
+$nrdconta = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
+$idseqttl = ( isset($_POST['idseqttl']) )   ? $_POST['idseqttl']   : 0;
+$nrcpfcgc = ( isset($_POST['nrcpfcgc']) )  ? $_POST['nrcpfcgc'] : 0;
+$nrdctato = ( isset($_POST['nrdctato']) )	 ?  $_POST['nrdctato'] : 0;
+$nrdrowid = ( isset($_POST['nrdrowid']) )  ?  $_POST['nrdrowid'] : 0;
+$operacao = ( isset($_POST['operacao']) ) ?  $_POST['operacao'] : 'CT';
+
+// Monta o xml de requisição
+$xml  = '';
+$xml .= '<Root>';
+$xml .= '	<Cabecalho>';
+$xml .= '		<Bo>b1wgen0058.p</Bo>';
+$xml .= '		<Proc>busca_dados</Proc>';
+$xml .= '	</Cabecalho>';
+$xml .= '	<Dados>';
+$xml .= '		<cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
+$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
+$xml .= '		<nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';	
+$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';	
+$xml .= '		<nrdctato>'.$nrdctato.'</nrdctato>';	
+$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';	
+$xml .= '	</Dados>';
+$xml .= '</Root>';		
+
+$xmlResult = getDataXML($xml);
+$xmlObjeto = getObjectXML($xmlResult);	
+$registros = $xmlObjeto->roottag->tags[0]->tags;
+?>
+
+<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+	<fieldset>
+		<legend>Procuradores</legend>
+		<div class="divRegistros">
+			<table>
+				<thead>
+					<tr><th>Conta/dv</th>
+						<th>Nome</th>
+						<th>C.P.F.</th>
+						<th>C.I.</th>
+						<th>Vig&ecirc;ncia</th>
+					</tr>			
+				</thead>
+				<tbody>
+					<?foreach($registros as $procuracao) {?>
+						<tr>
+							<!-- Analisar essa linha, chave primaria de procuradores(cdcooper,tpctrato,nrdconta,nrctremp,nrcpfcgc) -->
+							<td style="font-size:11px;"> <? echo getByTagName($procuracao->tags,'cddconta'); ?></td> <!-- Conta/dv -->
+								<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($procuracao->tags,'nrcpfcgc') ?>" /> 
+								<input type="hidden" id="nrdctato" name="nrdctato" value="<? echo getByTagName($procuracao->tags,'nrdctato') ?>" />
+								<input type="hidden" id="nrdrowid" name="nrdrowid" value="<? echo getByTagName($procuracao->tags,'nrdrowid') ?>" />
+							<td style="font-size:11px;"><? echo stringTabela(getByTagName($procuracao->tags,'nmdavali'),23,'maiuscula') ?></td> <!-- Nome     -->
+							<td style="font-size:11px;"><? echo getByTagName($procuracao->tags,'cdcpfcgc') ?></td> <!-- C.P.F.   -->
+							<td style="font-size:11px;"><? echo getByTagName($procuracao->tags,'nrdocava') ?></td> <!-- C.I.     -->
+							<td style="font-size:11px;"><? echo getByTagName($procuracao->tags,'dsvalida') ?></td> <!-- Vigência -->
+						</tr>				
+					<? } ?>			
+				</tbody>		
+			</table>
+		</div>
+	</fieldset>
+</form>
