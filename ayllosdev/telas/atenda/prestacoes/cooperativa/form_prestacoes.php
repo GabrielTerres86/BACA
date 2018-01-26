@@ -103,6 +103,9 @@
 		<input name="vlmrapar" id="vlmrapar" type="text" value="" />		
 		<br />
 
+		<label for="vliofcpl">IOF Atraso:</label>
+        <input name="vliofcpl" id="vliofcpl" type="text" value="" />
+
         <?php
             // Se for Pos-Fixado
             if ($tpemprst == 2) {
