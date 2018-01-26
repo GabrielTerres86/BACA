@@ -2,7 +2,7 @@
 
 /*   
 
-     Criação do Job JBCONV_BCB_CONTABIL para geração dos arquivos contabeis de convenio bancoob
+     Criação do Job JBCONV_BANCOOB_CONTABIL para geração dos arquivos contabeis de convenio bancoob
      PRJ406-FGTS
       
 */
@@ -37,10 +37,10 @@ BEGIN
                                 ' pr_dscritic => vr_dscritic ); END;';
                    
   -- Montar o prefixo do código do programa para o jobname
-  vr_jobname := 'cecred.JBCONV_BCB_CONTABIL';
+  vr_jobname := 'cecred.JBCONV_BANCOOB_CONTABIL';
   -- Faz a chamada ao programa paralelo atraves de JOB
   gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/         --> Código da cooperativa
-                        ,pr_cdprogra  => 'JBCONV_BCB_CONTABIL'--> Código do programa
+                        ,pr_cdprogra  => 'JBCONV_BANCOOB_CONTABIL'--> Código do programa
                         ,pr_dsplsql   => vr_dsplsql           --> Bloco PLSQL a executar
                         ,pr_dthrexe   => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 08:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')                 --> Executar nesta hora
                                          -- configurar para rodar diariamente a cada um minuto
