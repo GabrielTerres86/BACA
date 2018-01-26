@@ -80,6 +80,15 @@ class RestCDC extends RestServerJson{
      * @return boolean
      */
     private function processaRetornoErro($status, $mensagemDetalhe, $dscritic = '', $idacionamento = ''){		
+        // Grava o erro no arquivo TEXTO
+        $xml  = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <dsmessag>".$mensagemDetalhe."</dsmessag>";
+        $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
+        $xml .= "   <nmarqlog>integracaocdc</nmarqlog>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+        mensageria($xml, "WEBS0003", "GRAVA_REQUISICAO_ERRO", 0, 0, 0, 5, 0, "</Root>");
         // Retorna a mensagem de critica
         return $this->processaRetorno((string) $status,(string) $mensagemDetalhe,(string) $idacionamento, '', '0', (string) $dscritic);
     }
@@ -171,7 +180,7 @@ class RestCDC extends RestServerJson{
      */
     public function processaRequisicao(){
         try{
-            $this->setMetodoRequisitado(strtoupper($_SERVER["HTTP_METHOD"]));
+            $this->setMetodoRequisitado(strtoupper($_SERVER['REQUEST_METHOD']));
             
             // Valida os dados da requisicao
             if (!$this->validaRequisicao()){
@@ -185,7 +194,30 @@ class RestCDC extends RestServerJson{
             if (!$this->validaParametrosRecebidos($oDados)){
                 return false;            
             }
-						
+
+			// Monta retorno da proposta a partir do motor de crédito
+			$xml  = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "	<cdcooper>".$oDados->proponente->cooperativaAssociadoCodigo."</cdcooper>";
+			$xml .= "   <dsusuari>".$this->getUsuario()."</dsusuari>";
+			$xml .= "   <dsdsenha>".$this->getSenha()."</dsdsenha>";
+			$xml .= "   <cdcliente>1</cdcliente>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			$sXmlResult = mensageria($xml, "EMPR0012", "VALIDA_INTEGRACAO", 0, 0, 0, 5, 0, "</Root>");
+			$oRetorno  = simplexml_load_string($sXmlResult);
+			
+			// Vamos verificar se veio retorno de erro
+			if (isset($oRetorno->Erro->Registro->dscritic)){
+				$dscritic = $oRetorno->Erro->Registro->dscritic;
+				if (strpos($dscritic, 'Erro geral') !== false){
+					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+				}else{
+					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+				}
+				return false;
+			}
+			
             // Gravar acionamento do serviço
             $xml  = "<Root>";
             $xml .= " <Dados>";
@@ -195,9 +227,9 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdorigem>5</cdorigem>";			
 			$xml .= "	<nrctrprp>".$oDados->contratoNumero."</nrctrprp>";
 			$xml .= "	<nrdconta>".$oDados->proponente->contaAssociadoNumero.$oDados->proponente->contaAssociadoDV."</nrdconta>";
-			$xml .= "	<cdcliente>0</cdcliente>";
+			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
-			$xml .= "	<dsoperacao>INTEGRACAO CDC - INCLUSAO PROPOSTA</dsoperacao>";
+			$xml .= "	<dsoperacao>INTEGRACAO CDC - INCLUSAO AVALISTA</dsoperacao>";
 			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
@@ -217,7 +249,7 @@ class RestCDC extends RestServerJson{
             // Vamos verificar se veio retorno de erro
             if (isset($oRetorno->Erro->Registro->dscritic)){
 				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
+				if (strpos($dscritic, 'Erro geral') !== false){
 					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic);
 				}else{
 					$this->processaRetornoErro(400,$dscritic);
@@ -277,7 +309,7 @@ class RestCDC extends RestServerJson{
 			if (sizeof($xmlObjeto->roottag->tags) > 0){
 				if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 					$dscritic = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-					if (strpos($dscritic, 'Erro geral') >= 0){
+					if (strpos($dscritic, 'Erro geral') !== false){
 						$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
 					}else{
 						$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
@@ -301,7 +333,7 @@ class RestCDC extends RestServerJson{
 			// Vamos verificar se veio retorno de erro
 			if (isset($oRetorno->Erro->Registro->dscritic)){
 				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
+				if (strpos($dscritic, 'Erro geral') !== false){
 					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
 				}else{
 					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);

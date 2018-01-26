@@ -7,6 +7,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
 			INDEX BY PLS_INTEGER;            --  indexed by string
 
              
+  /* Verificar contas do cooperado a partir do CPF/CNPJ */
   PROCEDURE pc_consulta_cooperado(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                                  ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo de pessoa
                                  ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Nr. do CPF/CNPJ
@@ -16,7 +17,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                  ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                  ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
-																 
+									
+  /* Validar dados da inclusão da proposta */							 
 	PROCEDURE pc_valida_dados_proposta(pr_cdcoploj IN NUMBER     --> Código da cooperativa do lojista
 		                                ,pr_nrctaloj IN NUMBER     --> Nr. da conta do lojista
 																		,pr_cdcopass IN NUMBER     --> Código da cooperativa do associado
@@ -28,6 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
 																		,pr_cdcritic OUT crapcri.cdcritic%TYPE
 																		,pr_dscritic OUT crapcri.dscritic%TYPE);
 
+  /* Responsável pela montagem do retorna das propostas */
   PROCEDURE pc_monta_retorno_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
 		                                 ,pr_cdagenci IN crapage.cdagenci%TYPE  --> PA
 																		 ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
@@ -38,7 +41,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
 																		 ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
 																		 ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
 																		 ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK                            
-																		 
+
+  /* Validar inclusão do gravames */
 	PROCEDURE pc_valida_gravames(pr_cdcopass IN NUMBER                 --> Código da cooperativa do associado
 		                          ,pr_nrctaass IN NUMBER                 --> Nr. da conta do associado
 															,pr_nrctremp IN NUMBER                 --> Número do contrato de empréstimo
@@ -50,14 +54,40 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
 															,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
 															,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
 
-																		 
+	/* Rotina responsável por montar o retorno ao Autorizador */
+	PROCEDURE pc_monta_retorno_gravames(pr_cdcooper IN NUMBER                 --> Código da cooperativa
+																		 ,pr_dtretgrv IN DATE                   --> Data de registro do gravames
+																		 ,pr_nrseqlot IN NUMBER                 --> Número do lote do gravames
+																		 ,pr_dsjsongv OUT NOCOPY json                  --> Retorna o json para envio
+																		 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
+						
+  /* Enviar retorno do gravames */
+	PROCEDURE pc_envia_retorno_gravames(pr_cdcooper IN NUMBER                   --> Código da cooperativa
+		                                 ,pr_dtretgrv IN DATE                     --> Data de processamento do retorno
+																		 ,pr_nrseqlot IN NUMBER                   --> Número do lote de processamento
+																		 ,pr_cdcritic OUT PLS_INTEGER             --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2);              --> Descrição da crítica	
+	
+	/* Validar informações do serviço */
+	PROCEDURE pc_valida_dados_integracao(pr_cdcooper  IN NUMBER                 --> Código da cooperativa
+																			,pr_dsusuari  IN VARCHAR2               --> Usuário
+																			,pr_dsdsenha  IN VARCHAR2               --> Senha
+																			,pr_cdcliente IN PLS_INTEGER            --> Código do cliente
+																			,pr_xmllog    IN VARCHAR2               --> XML com informações de LOG
+																			,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
+																			,pr_retxml    IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+																			,pr_nmdcampo  OUT VARCHAR2              --> Nome do Campo
+																			,pr_des_erro  OUT VARCHAR2);            --> Saida OK/NOK
+													 
 END EMPR0012;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   ---------------------------------------------------------------------------
   --
   --  Programa : EMPR0012
-  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sistema  : Integração CDC x Autorizador
   --  Sigla    : CRED
   --  Autor    : Lucas Reinert
   --  Data     : Outubro - 2017                 Ultima atualizacao: 
@@ -73,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   FUNCTION fn_retorna_chassi_seq(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN VARCHAR2 IS --> Cooperativa
 	/* .............................................................................
 		Programa: fn_retorna_chassi_seq
-		Sistema : Conta-Corrente - Cooperativa de Credito
+		Sistema : Integração CDC x Autorizador
 		Sigla   : CRED
 		Autor   : Lucas Reinert
 		Data    : Novembro/2017                       Ultima atualizacao: 
@@ -107,7 +137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK
 	/* .............................................................................
 		Programa: pc_consulta_cooperado
-		Sistema : Conta-Corrente - Cooperativa de Credito
+		Sistema : Integração CDC x Autorizador
 		Sigla   : CRED
 		Autor   : Lucas Reinert
 		Data    : Outubro/2017                       Ultima atualizacao: 
@@ -148,9 +178,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 					AND ass.inpessoa = pr_inpessoa
 					AND ass.nrcpfcgc = pr_nrcpfcgc
 					AND ass.dtdemiss IS NULL 
-					AND ass.cdsitdct IN (1,6); -- situacao conta 
-	        /*AND (CASE WHEN ass.cdcooper = pr_cdcooper THEN cop.flintcdc = 1
-							 ELSE cop.tpcdccop = 1 AND cop.flintcdc = 1 END); -- RF88 */
+					AND ass.cdsitdct IN (1,6) -- situacao conta 
+	        AND ((ass.cdcooper = pr_cdcooper AND cop.flintcdc = 1)
+					 OR  (cop.tpcdccop = 1 AND cop.flintcdc = 1)); -- RF88
   BEGIN
 		-- Incluir nome do módulo logado
 		GENE0001.pc_informa_acesso(pr_module => 'EMPR0012'
@@ -238,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 																		,pr_dscritic OUT crapcri.dscritic%TYPE) IS
 	/* .............................................................................
 		Programa: pc_valida_dados_proposta
-		Sistema : Conta-Corrente - Cooperativa de Credito
+		Sistema : Integração CDC x Autorizador
 		Sigla   : CRED
 		Autor   : Lucas Reinert
 		Data    : Outubro/2017                       Ultima atualizacao: 
@@ -255,11 +285,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		vr_exc_erro EXCEPTION;
 		vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
-    vr_des_erro VARCHAR2(10000);
 		
 		-- Variáveis auxiliares
 		vr_qtdaciona NUMBER := 0;
-		vr_dsbensal  gene0002.typ_split;
 		vr_nrchassi  VARCHAR2(40);
 		vr_dsbensal_out  CLOB;
 		
@@ -512,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 																		 ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK
 	/* .............................................................................
 		Programa: pc_monta_retorno_proposta
-		Sistema : Conta-Corrente - Cooperativa de Credito
+		Sistema : Integração CDC x Autorizador
 		Sigla   : CRED
 		Autor   : Lucas Reinert
 		Data    : Novembro/2017                       Ultima atualizacao: 
@@ -602,7 +630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 															,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK
 	/* .............................................................................
 		Programa: pc_valida_gravames
-		Sistema : Conta-Corrente - Cooperativa de Credito
+		Sistema : Integração CDC x Autorizador
 		Sigla   : CRED
 		Autor   : Lucas Reinert
 		Data    : Dezembro/2017                       Ultima atualizacao: 
@@ -620,7 +648,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		vr_exc_erro EXCEPTION;
 		vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
-    vr_des_erro VARCHAR2(10000);
 		
 		-- Variáveis auxiliares
 		vr_bens           gene0002.typ_split;
@@ -628,8 +655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 		vr_val_bens       gene0002.typ_split;
 		vr_ind_bens       gene0002.typ_split;
 			
-		vr_tab_bens  typ_tab_bens;        -- Associative array variable
-		idx          VARCHAR2(200);
+		vr_tab_bens  typ_tab_bens;        -- Associative array variable=
 		
 		-- Verificar se contrato de emprestimo já foi aprovado
 		CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -762,17 +788,747 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 			 WHERE crapbpr.rowid = rw_crapbpr.rowid;
 		END LOOP;
 	
+	  -- Efetuar commit
+		COMMIT;
 	EXCEPTION
 		WHEN vr_exc_erro THEN		
 			-- Atribuir críticas
       pr_cdcritic := vr_cdcritic;
 			pr_dscritic := vr_dscritic;
+			
+			-- Efetuar rollback
+			ROLLBACK;
     WHEN OTHERS THEN      
       -- Erro
       pr_cdcritic := 0;
       pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
-			                                  
+			
+			-- Efetuar rollback
+			ROLLBACK;			                                  
   END pc_valida_gravames;
 	
+	/* Rotina responsável por montar o retorno ao Autorizador */
+	PROCEDURE pc_monta_retorno_gravames(pr_cdcooper IN NUMBER                 --> Código da cooperativa
+																		 ,pr_dtretgrv IN DATE                 --> Data de registro do gravames
+																		 ,pr_nrseqlot IN NUMBER                 --> Número do lote do gravames
+																		 ,pr_dsjsongv OUT NOCOPY json                  --> Retorna o json para envio
+																		 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+	/* .............................................................................
+		Programa: pc_monta_retorno_gravames
+		Sistema : Integração CDC x Autorizador
+		Sigla   : CRED
+		Autor   : Lucas Reinert
+		Data    : Janeiro/2017                       Ultima atualizacao: 
+	    
+		Dados referentes ao programa:
+	    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Montar JSON para retorno ao Autorizador com o processamento do Gravames.
+	    
+		Alteracoes: 
+	............................................................................. */
+	
+    -- Variáveis para tratamento de erros
+		vr_exc_erro EXCEPTION;
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+		
+		-- Declarar objetos Json necessários:
+		vr_obj_generico  json := json();
+		vr_obj_generic2  json := json();		
+		vr_lst_generico  json_list := json_list();
+		vr_lst_generic2  json_list := json_list();
+
+    -- Buscar registros de gravames 
+		CURSOR cr_crapgrv (pr_cdcooper IN crapgrv.cdcooper%TYPE
+		                  ,pr_dtretgrv IN crapgrv.dtretgrv%TYPE
+											,pr_nrseqlot IN crapgrv.nrseqlot%TYPE) IS
+			SELECT grv.nrctrpro
+			      ,grv.cdcooper
+						,grv.nrdconta
+			  FROM crapgrv grv
+			 WHERE grv.cdcooper = pr_cdcooper
+			   AND grv.dtretgrv = pr_dtretgrv
+				 AND grv.nrseqlot = pr_nrseqlot
+				 AND grv.tpctrpro = 90
+			 GROUP BY grv.cdcooper
+			         ,grv.nrdconta
+							 ,grv.nrctrpro;
+
+    -- Buscar bens do gravames 
+    CURSOR cr_crapbpr(pr_cdcooper IN crapbpr.cdcooper%TYPE
+		                 ,pr_nrdconta IN crapbpr.nrdconta%TYPE
+										 ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE) IS
+		  SELECT bpr.dschassi
+			      ,bpr.nrgravam
+			      ,bpr.dtatugrv
+            ,(CASE WHEN bpr.flcancel = 1 THEN 'Cancelamento' ELSE 
+              CASE WHEN bpr.flginclu = 1 THEN 'Inclusao' ELSE
+              CASE WHEN bpr.flgbaixa = 1 THEN 'Baixa' END END END) tpsolici
+						,decode(bpr.cdsitgrv
+						       ,0, 'Nao enviado'
+									 ,1, 'Em processamento'
+									 ,2, 'Alienacao'
+									 ,3, 'Processado com critica'
+									 ,4, 'Baixado'
+									 ,5, 'Cancelado', '') dssitgrv
+			  FROM crapbpr bpr
+			 WHERE bpr.cdcooper = pr_cdcooper
+				 AND bpr.nrdconta = pr_nrdconta
+				 AND bpr.nrctrpro = pr_nrctrpro
+				 AND bpr.tpctrpro = 90
+				 AND bpr.flgalien = 1
+         AND (bpr.dscatbem LIKE '%AUTOMOVEL%' OR
+              bpr.dscatbem LIKE '%MOTO%'      OR
+              bpr.dscatbem LIKE '%CAMINHAO%');
+				 				    
+	BEGIN
+		-- Inicializar json
+		vr_lst_generico := json_list();
+		
+	  -- Percorrer registros do gravames
+		FOR rw_crapgrv IN cr_crapgrv(pr_cdcooper => pr_cdcooper
+			                          ,pr_dtretgrv => pr_dtretgrv
+																,pr_nrseqlot => pr_nrseqlot) LOOP
+																
+      -- Para cada registro de Gravames, criar objeto com as respectivas informações 
+      vr_obj_generico := json();
+      vr_obj_generico.put('contratoNumero',             rw_crapgrv.nrctrpro);
+      vr_obj_generico.put('cooperativaAssociadoCodigo', rw_crapgrv.cdcooper);
+      vr_obj_generico.put('contaAssociadoNumero',       SUBSTR(to_char(rw_crapgrv.nrdconta), 0, LENGTH(to_char(rw_crapgrv.nrdconta)) - 1));
+      vr_obj_generico.put('contaAssociadoDV',           SUBSTR(to_char(rw_crapgrv.nrdconta), -1));
+
+      -- Inicializar lista de bens
+			vr_lst_generic2 := json_list();
+
+      -- Buscar bens do contrato
+      FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => rw_crapgrv.cdcooper
+				                          ,pr_nrdconta => rw_crapgrv.nrdconta
+																	,pr_nrctrpro => rw_crapgrv.nrctrpro) LOOP
+				-- Para cada registro de Bem, criar objeto com as respectivas informações 
+				vr_obj_generic2 := json();
+	      vr_obj_generic2.put('chassiNumero',        rw_crapbpr.dschassi);
+	      vr_obj_generic2.put('gravamesNumero',      rw_crapbpr.nrgravam);
+	      vr_obj_generic2.put('gravamesData',        rw_crapbpr.dtatugrv);
+	      vr_obj_generic2.put('tipoSolicitacao',     rw_crapbpr.tpsolici);
+	      vr_obj_generic2.put('retornoDescricao',    rw_crapbpr.dssitgrv);
+				
+				-- Adicionar Bem na lista
+        vr_lst_generic2.append(vr_obj_generic2.to_json_value());
+			
+			END LOOP;
+			
+			vr_obj_generico.put('bensAlienacao', vr_lst_generic2);
+			
+			-- Adicionar Bem na lista
+      vr_lst_generico.append(vr_obj_generico.to_json_value());
+	  END LOOP;
+		
+		vr_obj_generico := json();
+		vr_obj_generico.put('retornoGravames', vr_lst_generico);
+		
+		-- Repassar o json criado para o parâmetro
+    pr_dsjsongv := vr_obj_generico;		
+		
+	EXCEPTION
+		WHEN vr_exc_erro THEN		
+			-- Atribuir críticas
+      pr_cdcritic := vr_cdcritic;
+			pr_dscritic := vr_dscritic;
+			
+			-- Efetuar rollback
+			ROLLBACK;
+    WHEN OTHERS THEN      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+			
+			-- Efetuar rollback
+			ROLLBACK;			                                  		
+	END pc_monta_retorno_gravames;
+	
+	PROCEDURE pc_envia_retorno_gravames(pr_cdcooper IN NUMBER                   --> Código da cooperativa
+		                                 ,pr_dtretgrv IN DATE                     --> Data de processamento do retorno
+																		 ,pr_nrseqlot IN NUMBER                   --> Número do lote de processamento
+																		 ,pr_cdcritic OUT PLS_INTEGER             --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2) IS            --> Descrição da crítica
+	/* .............................................................................
+		Programa: pc_envia_retorno_gravames
+    Sistema : Integração CDC x Autorizador
+		Sigla   : CRED
+		Autor   : Lucas Reinert
+		Data    : Janeiro/2018                       Ultima atualizacao: 
+	    
+		Dados referentes ao programa:
+	    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Rotina responsável por enviar os dados de retorno de Gravames
+		            ao Autorizador.
+	    
+		Alteracoes: 
+	............................................................................. */
+	
+    -- Variáveis para tratamento de erros
+		vr_exc_erro EXCEPTION;
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+    
+		-- Variáveis de envio/resposta da ibratan
+    vr_request  json0001.typ_http_request;
+    vr_response json0001.typ_http_response;
+
+	  -- Variáveis auxiliares
+		vr_autori_cdc    VARCHAR2(500);
+    vr_dsdirlog      VARCHAR2(500);
+    vr_dsjsongv json := json();
+		vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE := 0;
+		
+		-- Buscar usuário e senha da Ibratan
+		CURSOR cr_cliente_cdc IS
+		  SELECT cli.idtoken
+			      ,cli.dstoken
+			 FROM tbgen_webservice_cliente cli
+			WHERE cli.cdcliente = 1;
+		rw_cliente_cdc cr_cliente_cdc%ROWTYPE;
+	
+	BEGIN
+		
+	  -- Buscar usuário e senha
+		OPEN cr_cliente_cdc;
+		FETCH cr_cliente_cdc INTO rw_cliente_cdc;
+	
+	  -- Se não encontrou 
+	  IF cr_cliente_cdc%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_cliente_cdc;
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Cliente não cadastrado';
+			-- Levantar execeção
+			RAISE vr_exc_erro;
+		END IF;
+
+		-- Fechar cursor
+		CLOSE cr_cliente_cdc;
+		
+		-- Montar retorno do processamento do gravames
+		pc_monta_retorno_gravames(pr_cdcooper => pr_cdcooper
+		                         ,pr_dtretgrv => pr_dtretgrv
+														 ,pr_nrseqlot => pr_nrseqlot
+														 ,pr_dsjsongv => vr_dsjsongv
+														 ,pr_cdcritic => vr_cdcritic
+														 ,pr_dscritic => vr_dscritic);
+	
+	  -- Codificar usuário e senha na Base64
+	  vr_autori_cdc := utl_encode.text_encode(rw_cliente_cdc.idtoken || ':' || rw_cliente_cdc.dstoken
+                                           ,'WE8ISO8859P1', UTL_ENCODE.BASE64);
+	
+    -- Atribuir valores necessarios para comunicacao
+    vr_request.service_uri := '';
+    vr_request.api_route   := '';
+    vr_request.method      := '';
+    vr_request.timeout     := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
+    
+    vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
+    vr_request.headers('Authorization') := vr_autori_cdc;
+    vr_request.content := vr_dsjsongv.to_char();
+    
+		-- Gravar acionamento
+		webs0003.pc_grava_acionamento(pr_cdcooper => pr_cdcooper
+		                             ,pr_cdagenci => 1
+																 ,pr_cdoperad => 'AUTOCDC'
+																 ,pr_cdorigem => 5
+																 ,pr_nrctrprp => 0
+																 ,pr_nrdconta => 0
+																 ,pr_cdcliente => 1
+																 ,pr_tpacionamento => 1
+																 ,pr_dsoperacao => 'INTEGRACAO CDC - RETORNO GRAVAMES'
+																 ,pr_dsuriservico => vr_request.service_uri
+																 ,pr_dsmetodo => vr_request.method
+																 ,pr_dtmvtolt => TRUNC(SYSDATE)
+																 ,pr_cdstatus_http => 200
+																 ,pr_dsconteudo_requisicao => vr_request.content
+																 ,pr_dsresposta_requisicao => ''
+																 ,pr_dsprotocolo => ''
+																 ,pr_flgreenvia => 0
+																 ,pr_nrreenvio => 0
+																 ,pr_tpconteudo => 1
+																 ,pr_tpproduto => 0
+																 ,pr_idacionamento => vr_idacionamento
+																 ,pr_dscritic => vr_dscritic);		
+
+    -- Em caso de crítica retornar erro
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+																 
+    --> Buscar diretorio do log
+    vr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C', 
+                                         pr_cdcooper => 3, 
+                                         pr_nmsubdir => '/log/webservices' ); 		
+		
+    -- Disparo do REQUEST
+    json0001.pc_executa_ws_json(pr_request           => vr_request
+                               ,pr_response          => vr_response
+                               ,pr_diretorio_log     => vr_dsdirlog
+                               ,pr_formato_nmarquivo => 'YYYYMMDDHH24MISSFF3".[api].[method]"'
+                               ,pr_dscritic          => vr_dscritic); 
+                               
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+ 
+		-- Atualizar tabela de acionamento após envio
+		WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => vr_response.status_code
+																		,pr_flgreenvia              => 0
+																		,pr_idacionamento           => vr_idacionamento
+																		,pr_dsresposta_requisicao   => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
+																																	 ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
+																																	 ',"Content":'||vr_response.content||'}'
+																		,pr_dscritic                => vr_dscritic);     
+
+    -- Em caso de crítica retornar erro
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+	EXCEPTION
+		WHEN vr_exc_erro THEN		
+			-- Atribuir críticas
+      pr_cdcritic := vr_cdcritic;
+			pr_dscritic := vr_dscritic;
+			
+			-- Enviar e-mail informando falha no envio
+			gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper
+			                          ,pr_cdprogra => 'EMPR0012'
+																,pr_des_destino => 'cdc@cecred.coop.br'
+																,pr_des_assunto => 'Falha ao enviar retorno de gravames'
+																,pr_des_corpo => 'A rotina falhou ao enviar retorno de gravames.' || CHR(13) ||
+																                 'Cooperativa: ' || pr_cdcooper || CHR(13) ||
+																								 'Data de retorno do gravames: ' || pr_dtretgrv || CHR(13) ||
+																                 'Nr. do lote: ' || pr_nrseqlot || CHR(13) ||
+																								 'Id. Acionamento: ' || vr_idacionamento || '.'
+																,pr_des_anexo => ''
+																,pr_des_erro => vr_dscritic);
+			
+			-- Se já foi gravado acionamento
+			IF vr_idacionamento > 0 THEN
+			  -- Atualizar tabela de acionamento após envio
+				WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => NULL
+																				,pr_flgreenvia              => 1
+																				,pr_idacionamento           => vr_idacionamento
+																				,pr_dsresposta_requisicao   => ''
+																				,pr_dscritic                => vr_dscritic);     
+
+			END IF;
+			
+			-- Commitar para gravar o acionamento
+			COMMIT;
+    WHEN OTHERS THEN      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+
+			-- Enviar e-mail informando falha no envio
+			gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper
+			                          ,pr_cdprogra => 'EMPR0012'
+																,pr_des_destino => 'cdc@cecred.coop.br'
+																,pr_des_assunto => 'Falha ao enviar retorno de gravames'
+																,pr_des_corpo => 'A rotina falhou ao enviar retorno de gravames' || CHR(13) ||
+																                 'Cooperativa: ' || pr_cdcooper || CHR(13) ||
+																								 'Data de retorno do gravames: ' || pr_dtretgrv || CHR(13) ||
+																                 'Nr. do lote: ' || pr_nrseqlot || CHR(13) ||
+																								 'Id. Acionamento: ' || vr_idacionamento || '.'
+																,pr_des_anexo => ''
+																,pr_des_erro => vr_dscritic);
+			
+			-- Se já foi gravado acionamento
+			IF vr_idacionamento > 0 THEN
+			  -- Atualizar tabela de acionamento após envio
+				WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => NULL
+																				,pr_flgreenvia              => 1
+																				,pr_idacionamento           => vr_idacionamento
+																				,pr_dsresposta_requisicao   => ''
+																				,pr_dscritic                => vr_dscritic);     
+
+			END IF;
+			
+			-- Commitar para gravar o acionamento
+			COMMIT;
+	END pc_envia_retorno_gravames;
+	
+	PROCEDURE pc_valida_dados_integracao(pr_cdcooper  IN NUMBER                 --> Código da cooperativa
+																			,pr_dsusuari  IN VARCHAR2               --> Usuário
+																			,pr_dsdsenha  IN VARCHAR2               --> Senha
+																			,pr_cdcliente IN PLS_INTEGER            --> Código do cliente
+																			,pr_xmllog    IN VARCHAR2               --> XML com informações de LOG
+																			,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+																			,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
+																			,pr_retxml    IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+																			,pr_nmdcampo  OUT VARCHAR2              --> Nome do Campo
+																			,pr_des_erro  OUT VARCHAR2) IS          --> Saida OK/NOK
+	/* .............................................................................
+		Programa: pc_valida_gravames
+    Sistema : Integração CDC x Autorizador
+		Sigla   : CRED
+		Autor   : Lucas Reinert
+		Data    : Janeiro/2018                       Ultima atualizacao: 
+	    
+		Dados referentes ao programa:
+	    
+		Frequencia: Sempre que for chamado
+		Objetivo  : Rotina responsável por validar os serviços de integração CDC.
+	    
+		Alteracoes: 
+	............................................................................. */
+	
+    -- Variáveis para tratamento de erros
+		vr_exc_erro EXCEPTION;
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+		
+		-- Buscar usuário e senha da Ibratan
+		CURSOR cr_cliente_cdc IS
+		  SELECT cli.idtoken
+			      ,cli.dstoken
+			 FROM tbgen_webservice_cliente cli
+			WHERE cli.cdcliente = pr_cdcliente;
+		rw_cliente_cdc cr_cliente_cdc%ROWTYPE;
+		
+	  -- Verificar indicador de integração CDC na cooperativa
+		CURSOR cr_crapcop_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+		  SELECT 1
+			  FROM crapcop cop
+			 WHERE cop.cdcooper = pr_cdcooper
+			   AND cop.flintcdc = 1;
+		rw_crapcop_cdc cr_crapcop_cdc%ROWTYPE;
+
+    -- Verificar se integração CDC está em contingencia
+    CURSOR cr_param_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+		  SELECT 1
+			  FROM tbepr_cdc_parametro par
+			 WHERE par.cdcooper = pr_cdcooper
+			   AND par.inintegra_cont = 1;
+		rw_param_cdc cr_param_cdc%ROWTYPE;
+		
+		rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+		
+	BEGIN
+		--Verificar se a data existe
+		OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		-- Se não encontrar
+		IF BTCH0001.cr_crapdat%NOTFOUND THEN
+			-- Montar mensagem de critica
+			vr_cdcritic:= 1;
+			CLOSE BTCH0001.cr_crapdat;
+			RAISE vr_exc_erro;
+		ELSE
+			-- Apenas fechar o cursor
+			CLOSE BTCH0001.cr_crapdat;
+		END IF;	
+		
+		-- Se está rodando o processo noturno
+		IF rw_crapdat.inproces > 1 THEN
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Sistema indisponível';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		
+	  -- Buscar usuário e senha
+		OPEN cr_cliente_cdc;
+		FETCH cr_cliente_cdc INTO rw_cliente_cdc;
+	
+	  -- Se não encontrou 
+	  IF cr_cliente_cdc%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_cliente_cdc;
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Cliente não cadastrado';
+			-- Levantar execeção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_cliente_cdc;
+		
+		-- Usuário diferente do parametrizado
+		IF pr_dsusuari <> rw_cliente_cdc.idtoken THEN
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Usuário ou senha inválidos';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		
+		-- Senha diferente do parametrizado
+		IF pr_dsdsenha <> rw_cliente_cdc.dstoken THEN
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Usuário ou senha inválidos';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+
+		-- Verificar indicador de integração CDC na cooperativa do lojista
+		OPEN cr_crapcop_cdc(pr_cdcooper);
+		FETCH cr_crapcop_cdc INTO rw_crapcop_cdc;
+				
+		-- Se não possui integração CDC
+		IF cr_crapcop_cdc%NOTFOUND THEN
+			-- Fechar cursor
+      CLOSE cr_crapcop_cdc;
+			-- Gerar crítica
+			vr_cdcritic    := 0;
+			vr_dscritic    := 'Cooperativa nao permite integracao CDC.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;			
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_crapcop_cdc;
+
+    OPEN cr_param_cdc(pr_cdcooper);
+		FETCH cr_param_cdc INTO rw_param_cdc;
+		
+		-- Cooperativa está com integração em contingencia
+		IF cr_param_cdc%FOUND THEN
+			-- Fechar cursor
+			CLOSE cr_param_cdc;
+			-- Gerar crítica
+			vr_cdcritic := 0;
+			vr_dscritic := 'Cooperativa em contingência.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+
+	EXCEPTION
+		WHEN vr_exc_erro THEN		
+			-- Atribuir críticas
+      pr_cdcritic := vr_cdcritic;
+			pr_dscritic := vr_dscritic;
+			
+			-- Efetuar rollback
+			ROLLBACK;
+    WHEN OTHERS THEN      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral do sistema ' || SQLERRM;
+			
+			-- Efetuar rollback
+			ROLLBACK;			                                  
+	END pc_valida_dados_integracao;
+	
+	  --> Rotina responsavel por reenviar os acionamentos com erro
+  PROCEDURE pc_reenvia_acionamento(pr_cdcritic OUT NUMBER
+                                  ,pr_dscritic OUT VARCHAR2) IS
+    /* ..........................................................................
+      Programa : pc_reenvia_acionamento
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Lucas Reinert
+      Data     : Janeiro/2018.                   Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Chamada pelo o JOB
+      Objetivo  : Reenviar os acionamentos que apresentaram erro
+          
+      Alteração : 
+    ..........................................................................*/
+
+    -- Variáveis para tratamento de erros
+		vr_exc_erro EXCEPTION;
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variáveis auxiliares
+		vr_autori_cdc    VARCHAR2(500);
+    vr_dsdirlog      VARCHAR2(500);
+
+		-- Variáveis de envio/resposta da ibratan
+    vr_request  json0001.typ_http_request;
+    vr_response json0001.typ_http_response;
+		
+    -- Buscar acionamentos
+	  CURSOR cr_acionamento IS
+      SELECT twa.idacionamento
+            ,twa.dsconteudo_requisicao
+            ,twa.dsuriservico
+            ,twa.dsmetodo
+            ,twa.nrreenvio
+            ,twa.cdcliente
+            ,twa.tpconteudo
+						,twa.cdcooper
+						,twa.dsoperacao
+        FROM tbgen_webservice_aciona twa
+       WHERE twa.flgreenvia=1;
+    rw_acionamento cr_acionamento%ROWTYPE;
+	
+    -- Buscar senha do cliente
+		CURSOR cr_cliente (pr_cdcliente IN tbgen_webservice_cliente.cdcliente%TYPE) is
+			SELECT twc.idtoken
+						,twc.dstoken
+				FROM tbgen_webservice_cliente twc
+			 WHERE twc.cdcliente=pr_cdcliente;
+		rw_cliente cr_cliente%ROWTYPE;
+		
+    BEGIN
+
+			--> Buscar diretorio do log
+			vr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C', 
+																					 pr_cdcooper => 3, 
+																					 pr_nmsubdir => '/log/webservices' ); 		
+
+      -- Percorrer os dados de acionamento
+      FOR rw_acionamento IN cr_acionamento LOOP
+
+        -- Buscar dados de usuário e senha para conexao webservice
+        OPEN cr_cliente (pr_cdcliente => rw_acionamento.cdcliente);
+        FETCH cr_cliente INTO rw_cliente;
+        
+				-- Se nao tiver cliente nao envia 
+				IF cr_cliente%NOTFOUND THEN
+					-- Marcar para nao reenviar mais
+					WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => NULL
+																					,pr_flgreenvia              => 0
+																					,pr_idacionamento           => rw_acionamento.idacionamento
+																					,pr_dsresposta_requisicao   => ''
+																					,pr_nrreenvio               => (rw_acionamento.nrreenvio + 1)
+																					,pr_dscritic                => vr_dscritic);
+																					
+					-- Enviar e-mail informando falha no envio
+					gene0003.pc_solicita_email(pr_cdcooper => rw_acionamento.cdcooper
+																		,pr_cdprogra => 'EMPR0012'
+																		,pr_des_destino => 'cdc@cecred.coop.br'
+																		,pr_des_assunto => 'Falha ao reenviar acionamento: ' || rw_acionamento.dsoperacao
+																		,pr_des_corpo => 'A rotina falhou ao reenviar acionamento.' || CHR(13) ||
+																										 'Cooperativa: ' || rw_acionamento.cdcooper || CHR(13) ||
+																										 'Id. Acionamento: ' || rw_acionamento.idacionamento || CHR(13) ||
+																										 'Erro: Cliente não cadastrado.'
+																		,pr_des_anexo => ''
+																		,pr_des_erro => vr_dscritic);
+          -- Pular para próximo registro
+					CONTINUE;
+				END IF;
+        CLOSE cr_cliente;
+
+        -- se for a 11 tentativa vamos enviar e-mail informando que esta com erro e então travar o reenvio
+	      IF rw_acionamento.nrreenvio > 10 THEN
+					-- Marcar para nao reenviar mais
+					WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => NULL
+																					,pr_flgreenvia              => 0
+																					,pr_idacionamento           => rw_acionamento.idacionamento
+																					,pr_dsresposta_requisicao   => ''
+																					,pr_nrreenvio               => (rw_acionamento.nrreenvio + 1)
+																					,pr_dscritic                => vr_dscritic);
+																					
+					-- Enviar e-mail informando falha no envio
+					gene0003.pc_solicita_email(pr_cdcooper => rw_acionamento.cdcooper
+																		,pr_cdprogra => 'EMPR0012'
+																		,pr_des_destino => 'cdc@cecred.coop.br'
+																		,pr_des_assunto => 'Falha ao reenviar acionamento: ' || rw_acionamento.dsoperacao
+																		,pr_des_corpo => 'A rotina falhou ao reenviar acionamento.' || CHR(13) ||
+																										 'Cooperativa: ' || rw_acionamento.cdcooper || CHR(13) ||
+																										 'Id. Acionamento: ' || rw_acionamento.idacionamento || CHR(13) ||
+																										 'Erro: Número de tentativas de reenvio excedida.'
+																		,pr_des_anexo => ''
+																		,pr_des_erro => vr_dscritic);
+          -- Pular para próximo registro
+					CONTINUE;
+	      END IF;
+
+				-- Codificar usuário e senha na Base64
+				vr_autori_cdc := utl_encode.text_encode(rw_cliente.idtoken || ':' || rw_cliente.dstoken
+																							 ,'WE8ISO8859P1', UTL_ENCODE.BASE64);
+			
+				-- Atribuir valores necessarios para comunicacao
+				vr_request.service_uri := '';
+				vr_request.api_route   := '';
+				vr_request.method      := '';
+				vr_request.timeout     := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
+		    
+				vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
+				vr_request.headers('Authorization') := vr_autori_cdc;
+				vr_request.content := rw_acionamento.dsconteudo_requisicao;
+								
+				-- Disparo do REQUEST
+				json0001.pc_executa_ws_json(pr_request           => vr_request
+																	 ,pr_response          => vr_response
+																	 ,pr_diretorio_log     => vr_dsdirlog
+																	 ,pr_formato_nmarquivo => 'YYYYMMDDHH24MISSFF3".[api].[method]"'
+																	 ,pr_dscritic          => vr_dscritic); 
+		                               
+				IF TRIM(vr_dscritic) IS NOT NULL THEN
+					RAISE vr_exc_erro;
+				END IF;			
+				
+				-- Atualiza tabela acionamento apos tentativa de reenvio
+        WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => vr_response.status_code
+                                        ,pr_flgreenvia              => 0
+                                        ,pr_idacionamento           => rw_acionamento.idacionamento
+                                        ,pr_dsresposta_requisicao   => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
+																																			 ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
+																																			 ',"Content":'||vr_response.content||'}'
+																				,pr_nrreenvio               => (rw_acionamento.nrreenvio + 1)
+                                        ,pr_dscritic                => vr_dscritic);     
+    
+		  END LOOP;
+			
+      -- Efetuar commit		
+      COMMIT;
+
+    EXCEPTION
+			WHEN vr_exc_erro THEN
+				-- Atribuir críticas aos parâmetros
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+				
+				-- Enviar e-mail informando falha no envio
+				gene0003.pc_solicita_email(pr_cdcooper => rw_acionamento.cdcooper
+																	,pr_cdprogra => 'EMPR0012'
+																	,pr_des_destino => 'cdc@cecred.coop.br'
+																	,pr_des_assunto => 'Falha ao reenviar acionamento: ' || rw_acionamento.dsoperacao
+																	,pr_des_corpo => 'A rotina falhou ao reenviar acionamento.' || CHR(13) ||
+																									 'Cooperativa: ' || rw_acionamento.cdcooper || CHR(13) ||
+																									 'Id. Acionamento: ' || rw_acionamento.idacionamento || CHR(13) ||
+																									 'Erro: ' || pr_dscritic || '.'
+																	,pr_des_anexo => ''
+																	,pr_des_erro => vr_dscritic);
+																	
+				-- Apenas para garantir atualização do registro de acionamento
+				IF rw_acionamento.idacionamento > 0 THEN
+					-- Atualizar tabela de acionamento após envio
+					WEBS0003.pc_atualiza_acionamento(pr_cdstatus_http           => NULL
+																					,pr_flgreenvia              => 1
+																					,pr_idacionamento           => rw_acionamento.idacionamento
+																					,pr_dsresposta_requisicao   => ''
+																				  ,pr_nrreenvio               => (rw_acionamento.nrreenvio + 1)																					
+																					,pr_dscritic                => vr_dscritic);     
+				END IF;
+				
+				-- Efetuar commit
+        COMMIT;				
+      WHEN OTHERS THEN
+				-- Atribuir críticas aos parâmetros				
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao efetuar reenvio de acionamentos: ' || SQLERRM;
+	
+				-- Enviar e-mail informando falha no envio
+				gene0003.pc_solicita_email(pr_cdcooper => 3
+																	,pr_cdprogra => 'EMPR0012'
+																	,pr_des_destino => 'cdc@cecred.coop.br'
+																	,pr_des_assunto => 'Falha ao reenviar acionamento. '
+																	,pr_des_corpo => 'A rotina falhou ao reenviar acionamento.' || CHR(13) ||
+																									 'Erro: ' || pr_dscritic || '.'
+																	,pr_des_anexo => ''
+																	,pr_des_erro => vr_dscritic);
+					
+				-- Efetuar commit
+        COMMIT;				
+  END pc_reenvia_acionamento;
+
 END EMPR0012;
 /

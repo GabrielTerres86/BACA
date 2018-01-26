@@ -6540,6 +6540,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
       vr_cdcritic PLS_INTEGER := 0; -- Variavel interna para erros
       vr_dscritic varchar2(4000) := ''; -- Variavel interna para erros
+			vr_dsplsql  VARCHAR2(4000);
+			vr_jobname  VARCHAR2(30);
+
     
       vr_nrseqreg PLS_INTEGER;           -- Sequenciador do registro na cooperativa
       vr_nmarqdir VARCHAR2(200);         -- Nome do diretorio
@@ -7237,6 +7240,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         
         END IF;
               
+				-- Montar o bloco PLSQL que sera executado,
+				-- ou seja, executaremos a geracao dos dados
+				-- para a agencia atual atraves de Job no banco
+				vr_dsplsql := 'DECLARE' || chr(13)
+									 || '  vr_cdcritic NUMBER;' || chr(13)
+									 || '  vr_dscritic VARCHAR2(4000);' || chr(13)
+									 || 'BEGIN' || chr(13)
+									 || '  GRVM0001.pc_envia_retorno_gravames('|| to_char(vr_cdcooper) ||
+		                                 ','|| to_char(pr_dtmvtolt) ||
+																		 ','|| to_char(vr_nrseqlot) ||
+																		 ',vr_cdcritic ,vr_dscritic);' || chr(13)
+									 || 'END;';
+
+				-- Montar o prefixo do codigo do programa para o jobname
+				vr_jobname := 'grv_proc_ret_' || to_char(vr_nrseqlot) || '$';
+
+				-- Faz a chamada ao programa paralelo atraves de JOB
+				GENE0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Codigo da cooperativa
+															,pr_cdprogra  => vr_cdprogra  --> Codigo do programa
+															,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+															,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+															,pr_interva   => NULL         --> Sem intervalo de execucao da fila, ou seja, apenas 1 vez
+															,pr_jobname   => vr_jobname   --> Nome randomico criado
+															,pr_des_erro  => vr_dscritic);
+				-- Se houve erro
+				IF trim(vr_dscritic) IS NOT NULL THEN
+					RAISE vr_exc_erro;
+				END IF;				
+				
         --Commit das alterações para cada arquivo
         COMMIT;
                   

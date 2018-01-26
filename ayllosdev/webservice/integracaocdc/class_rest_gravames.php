@@ -8,11 +8,13 @@ require_once('../class/class_rest_server_json.php');
 
 class RestCDC extends RestServerJson{
     
-    private $aParamsRequired;
+    private $aParamsRequiredI;
+    private $aParamsRequiredA;
+    private $aParamsRequiredE;
     
     public function __construct(){
 		// Parâmetros obrigatórios Inclusão
-        $this->aParamsRequired = array('contratoNumero',
+        $this->aParamsRequiredI = array('contratoNumero',
 									  'cooperativaAssociadoCodigo',
 									  'contaAssociadoNumero',
 									  'contaAssociadoDV',
@@ -23,10 +25,31 @@ class RestCDC extends RestServerJson{
 									  'valorMercadoBem',
 									  'anoModeloBem',
 									  'anoFabricaoBem');        										
+		// Parâmetros obrigatórios Alteração
+        $this->aParamsRequiredA = array('contratoNumero',
+									  'cooperativaAssociadoCodigo',
+									  'contaAssociadoNumero',
+									  'contaAssociadoDV',
+									  'chassiBem',
+									  'numeroPlaca',
+									  'UFPlaca',
+									  'categoriaBem',
+									  'anoFabricaoBem',
+									  'anoModeloBem',
+									  'identificacaoBem');        										
+		// Parâmetros obrigatórios Cancelamento
+        $this->aParamsRequiredE = array('contratoNumero',
+									  'cooperativaAssociadoCodigo',
+									  'contaAssociadoNumero',
+									  'contaAssociadoDV',
+									  'chassiBem',
+									  'identificacaoBem');        										
     }
     
     public function __destruct(){
-        unset($this->aParamsRequired);
+        unset($this->aParamsRequiredI);
+        unset($this->aParamsRequiredA);
+        unset($this->aParamsRequiredE);
     }
 	
     /**
@@ -86,6 +109,15 @@ class RestCDC extends RestServerJson{
      * @return boolean
      */
     private function processaRetornoErro($status, $mensagemDetalhe, $dscritic = '', $idacionamento = ''){		
+        // Grava o erro no arquivo TEXTO
+        $xml  = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <dsmessag>".$mensagemDetalhe."</dsmessag>";
+        $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
+        $xml .= "   <nmarqlog>integracaocdc</nmarqlog>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+        mensageria($xml, "WEBS0003", "GRAVA_REQUISICAO_ERRO", 0, 0, 0, 5, 0, "</Root>");
         // Retorna a mensagem de critica
         return $this->processaRetorno((string) $status,(string) $mensagemDetalhe,(string) $idacionamento, '', '0', (string) $dscritic);
     }
@@ -140,10 +172,22 @@ class RestCDC extends RestServerJson{
             return false;
         }
 		
+		switch (strtoupper($_SERVER['REQUEST_METHOD'])) {
+			case 'POST': // Inclusão
+				$params = $this->aParamsRequiredI;
+				break;
+			case 'PUT': // Alteração
+				$params = $this->aParamsRequiredA;
+				break;
+			case 'DELETE': // Cancelamento
+				$params = $this->aParamsRequiredE;
+				break;
+		}
+
 		$aKeys = $this->multiarray_keys($aDados);
 		
         // Verifica se todos os parametros foram recebidos
-        foreach ($this->aParamsRequired as $sPametro){
+        foreach ($params as $sPametro){
 			if (array_search($sPametro,$aKeys, true) === false){
                 $this->processaRetornoErro(400,'Parametro invalido.');
                 return false;
@@ -158,7 +202,7 @@ class RestCDC extends RestServerJson{
      */
     public function processaRequisicao(){
         try{
-            $this->setMetodoRequisitado(strtoupper($_SERVER["HTTP_METHOD"]));
+            $this->setMetodoRequisitado(strtoupper($_SERVER['REQUEST_METHOD']));
             
             // Valida os dados da requisicao
             if (!$this->validaRequisicao()){
@@ -173,15 +217,41 @@ class RestCDC extends RestServerJson{
                 return false;            
             }
 			
-			switch (strtoupper($_SERVER["HTTP_METHOD"])) {
+			// Monta retorno da proposta a partir do motor de crédito
+			$xml  = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "	<cdcooper>".$oDados->cooperativaAssociadoCodigo."</cdcooper>";
+			$xml .= "   <dsusuari>".$this->getUsuario()."</dsusuari>";
+			$xml .= "   <dsdsenha>".$this->getSenha()."</dsdsenha>";
+			$xml .= "   <cdcliente>1</cdcliente>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			$sXmlResult = mensageria($xml, "EMPR0012", "VALIDA_INTEGRACAO", 0, 0, 0, 5, 0, "</Root>");
+			$oRetorno  = simplexml_load_string($sXmlResult);
+			
+			// Vamos verificar se veio retorno de erro
+			if (isset($oRetorno->Erro->Registro->dscritic)){
+				$dscritic = $oRetorno->Erro->Registro->dscritic;
+				if (strpos($dscritic, 'Erro geral') !== false){
+					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+				}else{
+					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+				}
+				return false;
+			}
+			
+			switch (strtoupper($_SERVER['REQUEST_METHOD'])) {
 				case 'POST': // Inclusão
 					$cddopcao = 'I';
+					$dsoperacao = 'INTEGRACAO CDC - INCLUSAO GRAVAMES';
 					break;
 				case 'PUT': // Alteração
 					$cddopcao = 'A';
+					$dsoperacao = 'INTEGRACAO CDC - ALTERACAO GRAVAMES';
 					break;
 				case 'DELETE': // Cancelamento
 					$cddopcao = 'E';
+					$dsoperacao = 'INTEGRACAO CDC - CANCELAMENTO GRAVAMES';
 					break;
 			}
 			
@@ -194,9 +264,9 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdorigem>5</cdorigem>";			
 			$xml .= "	<nrctrprp>".$oDados->contratoNumero."</nrctrprp>";
 			$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
-			$xml .= "	<cdcliente>0</cdcliente>";
+			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
-			$xml .= "	<dsoperacao>INTEGRACAO CDC - INCLUSAO PROPOSTA</dsoperacao>";
+			$xml .= "	<dsoperacao>".$dsoperacao."</dsoperacao>";
 			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
@@ -216,7 +286,7 @@ class RestCDC extends RestServerJson{
             // Vamos verificar se veio retorno de erro
             if (isset($oRetorno->Erro->Registro->dscritic)){
 				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
+				if (strpos($dscritic, 'Erro geral') !== false){
 					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic);
 				}else{
 					$this->processaRetornoErro(400,$dscritic);
@@ -226,99 +296,135 @@ class RestCDC extends RestServerJson{
 			// Capturar o identificador de acionamento
 			$idacionamento = $oRetorno->idacionamento;
 			
-			$jbens = json_encode($oDados->bensAlienacao);
-			$abens = json_decode($jbens, true);
-			$sbens = '';
-			for ($i = 0; $i < sizeof($abens); $i++) {
-				$sbens = $sbens . implode("; " , $abens[$i]) . '#' . implode("; ", array_keys($abens[$i])) . '|';
-			}
-			// Monta retorno da proposta a partir do motor de crédito
-			$xml  = "<Root>";
-			$xml .= " <Dados>";
-			$xml .= "	<cdcopass>".$oDados->cooperativaAssociadoCodigo."</cdcopass>";
-			$xml .= "	<nrctaass>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrctaass>";
-			$xml .= "	<nrctremp>".$oDados->contratoNumero."</nrctremp>";
-			$xml .= "	<dsbensal>".$sbens."</dsbensal>";
-			$xml .= " </Dados>";
-			$xml .= "</Root>";
-			$sXmlResult = mensageria($xml, "EMPR0012", "VALIDA_GRAVAMES", 0, 0, 0, 5, 0, "</Root>");
-			$oRetorno  = simplexml_load_string($sXmlResult);
-			
-			// Vamos verificar se veio retorno de erro
-			if (isset($oRetorno->Erro->Registro->dscritic)){
-				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
-					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
-				}else{
-					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+			if ($cddopcao == 'I'){
+				$jbens = json_encode($oDados->bensAlienacao);
+				$abens = json_decode($jbens, true);
+				$sbens = '';
+				for ($i = 0; $i < sizeof($abens); $i++) {
+					$sbens = $sbens . implode("; " , $abens[$i]) . '#' . implode("; ", array_keys($abens[$i])) . '|';
 				}
-				return false;
-			}
-			
-			$xml  = '';
-			$xml .= '<Root>';
-			$xml .= '	<Cabecalho>';
-			$xml .= '		<Bo>b1wgen0171.p</Bo>';
-			$xml .= '		<Proc>registrar_gravames</Proc>';
-			$xml .= '	</Cabecalho>';
-			$xml .= '	<Dados>';
-			$xml .= '		<cdcooper>'.$oDados->cooperativaAssociadoCodigo.'</cdcooper>';
-			$xml .= '		<nrdconta>'.$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV.'</nrdconta>';			
-			$xml .= '		<nrctremp>'.$oDados->contratoNumero.'</nrctremp>';
-			$xml .= '		<dtmvtolt></dtmvtolt>';
-			$xml .= '		<cddopcao>E</cddopcao>';
-			$xml .= '	</Dados>';
-			$xml .= '</Root>';
-
-			$xmlResult = getDataXML($xml);
-			$xmlObjeto = getObjectXML($xmlResult);
-
-			// Vamos verificar se veio retorno de erro
-			if (sizeof($xmlObjeto->roottag->tags) > 0){
-				if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
-					$dscritic = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-					if (strpos($dscritic, 'Nao foi possivel concluir') >= 0){
+				// Monta retorno da proposta a partir do motor de crédito
+				$xml  = "<Root>";
+				$xml .= " <Dados>";
+				$xml .= "	<cdcopass>".$oDados->cooperativaAssociadoCodigo."</cdcopass>";
+				$xml .= "	<nrctaass>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrctaass>";
+				$xml .= "	<nrctremp>".$oDados->contratoNumero."</nrctremp>";
+				$xml .= "	<dsbensal>".$sbens."</dsbensal>";
+				$xml .= " </Dados>";
+				$xml .= "</Root>";
+				$sXmlResult = mensageria($xml, "EMPR0012", "VALIDA_GRAVAMES", 0, 0, 0, 5, 0, "</Root>");
+				$oRetorno  = simplexml_load_string($sXmlResult);
+				
+				// Vamos verificar se veio retorno de erro
+				if (isset($oRetorno->Erro->Registro->dscritic)){
+					$dscritic = $oRetorno->Erro->Registro->dscritic;
+					if (strpos($dscritic, 'Erro geral') !== false){
 						$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
 					}else{
 						$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
 					}
 					return false;
 				}
-			}
+				
+				$xml  = '';
+				$xml .= '<Root>';
+				$xml .= '	<Cabecalho>';
+				$xml .= '		<Bo>b1wgen0171.p</Bo>';
+				$xml .= '		<Proc>registrar_gravames</Proc>';
+				$xml .= '	</Cabecalho>';
+				$xml .= '	<Dados>';
+				$xml .= '		<cdcooper>'.$oDados->cooperativaAssociadoCodigo.'</cdcooper>';
+				$xml .= '		<nrdconta>'.$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV.'</nrdconta>';			
+				$xml .= '		<nrctrpro>'.$oDados->contratoNumero.'</nrctrpro>';
+				$xml .= '		<dtmvtolt></dtmvtolt>';
+				$xml .= '		<cddopcao>E</cddopcao>';
+				$xml .= '	</Dados>';
+				$xml .= '</Root>';
 
-			
-			// Capturar numero do contrato
-			$nrctremp = $xmlObjeto->roottag->tags[0]->attributes['NRCTREMP'];
-			// Monta retorno da proposta a partir do motor de crédito
-			$xml  = "<Root>";
-			$xml .= " <Dados>";
-			$xml .= "	<cdcooper>".$oDados->cooperativaAssociadoCodigo."</cdcooper>";
-			$xml .= "	<cdagenci>".$cdagenci."</cdagenci>";
-			$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
-			$xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
-			$xml .= " </Dados>";
-			$xml .= "</Root>";
-			$sXmlResult = mensageria($xml, "EMPR0012", "RETORNA_PROPOSTA", 0, 0, 0, 5, 0, "</Root>");
-			$oRetorno  = simplexml_load_string($sXmlResult);
-			
-			// Vamos verificar se veio retorno de erro
-			if (isset($oRetorno->Erro->Registro->dscritic)){
-				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
-					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
-				}else{
-					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+				$xmlResult = getDataXML($xml);
+				$xmlObjeto = getObjectXML($xmlResult);
+
+				// Vamos verificar se veio retorno de erro
+				if (sizeof($xmlObjeto->roottag->tags) > 0){
+					if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
+						$dscritic = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+						if (strpos($dscritic, 'Nao foi possivel concluir') !== false){
+							$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+						}else{
+							$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+						}
+						return false;
+					}
 				}
-				return false;
+			}elseif($cddopcao == 'A'){
+				
+				// Monta retorno da proposta a partir do motor de crédito
+				$xml  = "<Root>";
+				$xml .= " <Dados>";
+				$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
+				$xml .= "	<cddopcao>A</cddopcao>";
+				$xml .= "	<nrctrpro>".$oDados->contratoNumero."</nrctrpro>";
+				$xml .= "	<idseqbem>".$oDados->bensAlienacao->identificacaoBem."</idseqbem>";
+				$xml .= "	<dscatbem>".$oDados->bensAlienacao->categoriaBem."</dscatbem>";
+				$xml .= "	<dschassi>".$oDados->bensAlienacao->chassiBem."</dschassi>";
+				$xml .= "	<ufdplaca>".$oDados->bensAlienacao->UFPlaca."</ufdplaca>";
+				$xml .= "	<nrdplaca>".$oDados->bensAlienacao->numeroPlaca."</nrdplaca>";
+				$xml .= "	<nrrenava>".$oDados->bensAlienacao->numeroRenavam."</nrrenava>";
+				$xml .= "	<nranobem>".$oDados->bensAlienacao->anoFabricaoBem."</nranobem>";
+				$xml .= "	<nrmodbem>".$oDados->bensAlienacao->anoModeloBem."</nrmodbem>";
+				$xml .= "	<tpctrpro>90</tpctrpro>";
+				$xml .= "	<cdsitgrv></cdsitgrv>";
+				$xml .= "	<dsaltsit></dsaltsit>";
+				$xml .= " </Dados>";
+				$xml .= "</Root>";
+				$sXmlResult = mensageria($xml, "GRVM0001", "ALTERARGRAVAM", $oDados->cooperativaAssociadoCodigo, 0, 0, 5, 0, "</Root>");
+				$oRetorno  = simplexml_load_string($sXmlResult);
+				
+				// Vamos verificar se veio retorno de erro
+				if (isset($oRetorno->Erro->Registro->dscritic)){
+					$dscritic = $oRetorno->Erro->Registro->dscritic;
+					if (strpos($dscritic, 'Erro na pc_alterar_gravame') !== false){
+						$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+					}else{
+						$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+					}
+					return false;
+				}
+				
+			}elseif($cddopcao == 'E'){
+
+				// Monta retorno da proposta a partir do motor de crédito
+				$xml  = "<Root>";
+				$xml .= " <Dados>";
+				$xml .= "	<nrdconta>".$oDados->contaAssociadoNumero.$oDados->contaAssociadoDV."</nrdconta>";
+				$xml .= "	<cddopcao>A</cddopcao>";
+				$xml .= "	<nrctrpro>".$oDados->contratoNumero."</nrctrpro>";
+				$xml .= "	<idseqbem>".$oDados->bensAlienacao->identificacaoBem."</idseqbem>";
+				$xml .= "	<tpctrpro>90</tpctrpro>";
+				$xml .= "	<tpcancel>1</tpcancel>";
+				$xml .= " </Dados>";
+				$xml .= "</Root>";
+				$sXmlResult = mensageria($xml, "GRVM0001", "CANCELARGRAVAM", $oDados->cooperativaAssociadoCodigo, 0, 0, 5, 0, "</Root>");
+				$oRetorno  = simplexml_load_string($sXmlResult);
+				
+				// Vamos verificar se veio retorno de erro
+				if (isset($oRetorno->Erro->Registro->dscritic)){
+					$dscritic = $oRetorno->Erro->Registro->dscritic;
+					if (strpos($dscritic, 'Erro na pc_gravames_cancelar') !== false){
+						$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+					}else{
+						$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+					}
+					return false;
+				}
+			
 			}
-			// Repassar retorno do motor para variável
-			$dsjsonan = json_decode($oRetorno->Dados->dsjsonan, TRUE);
 			
             //Retorna a resposta para o servico
             $this->processaRetornoSucesso(200,
                                           'Solicitação de gravames realizada com sucesso!',
                                           $idacionamento,
-										  $dsjsonan,
+										  '',
                                           0,
                                           '');
 

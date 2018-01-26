@@ -76,6 +76,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0003 IS
 																   ,pr_flgreenvia            IN tbgen_webservice_aciona.flgreenvia%TYPE            --> Flag reenvio (0-Não, 1-Sim)																
                                    ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                    ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
+																	 ,pr_nrreenvio             IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT NULL --> Número de reenvios
                                    ,pr_dscritic              OUT VARCHAR2);                                        --> Desc. crítica
 																	 
 	--> Rotina responsavel por atualizar registro de log de acionamento
@@ -89,6 +90,17 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0003 IS
 																			 ,pr_retxml                IN OUT NOCOPY xmltype                                  --> Arquivo de retorno do XML
 																			 ,pr_nmdcampo              OUT VARCHAR2                                           --> Nome do Campo
 																			 ,pr_des_erro              OUT VARCHAR2);                                         --> Saida OK/NOK		
+																			 
+  --> Rotina responsável por gravar os erros em arquivo de log
+  PROCEDURE pc_grava_requisicao_erro(pr_dsrequis IN VARCHAR2              --> Requisicao de entrada em json 
+                                    ,pr_dsmessag IN VARCHAR2              --> Descricao da mensagem de erro
+																		,pr_nmarqlog IN VARCHAR2              --> Nome do arquivo de log
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo  																			 
 END WEBS0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
@@ -184,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
              pr_dhacionamento,
 						 pr_dsoperacao,
 						 pr_dsuriservico,
-						 to_char(pr_dtmvtolt, 'DD/MM/RRRR'),
+						 pr_dtmvtolt,
 						 pr_cdstatus_http,
 						 pr_dsconteudo_requisicao,
 						 pr_dsresposta_requisicao,
@@ -317,6 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 																   ,pr_flgreenvia            IN tbgen_webservice_aciona.flgreenvia%TYPE            --> Flag reenvio (0-Não, 1-Sim)																
                                    ,pr_idacionamento         IN tbgen_webservice_aciona.idacionamento%TYPE         --> Identificador do acionamento																
                                    ,pr_dsresposta_requisicao IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE --> Conteúdo resposta
+																	 ,pr_nrreenvio             IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT NULL --> Número de reenvios
                                    ,pr_dscritic              OUT VARCHAR2) IS                                      --> Desc. crítica
 		/* ..........................................................................
           
@@ -340,6 +353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 			   SET cdstatus_http         = pr_cdstatus_http
 				    ,flgreenvia            = pr_flgreenvia
 						,dsresposta_requisicao = replace(pr_dsresposta_requisicao, '&quot;', '"')
+						,nrreenvio             = nvl(pr_nrreenvio, nrreenvio)
 			 WHERE idacionamento = pr_idacionamento;
 		
 			--> Commit para garantir que guarde as informações do log de acionamento
@@ -416,6 +430,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 	END pc_atualiza_acionamento_web;
+
+  PROCEDURE pc_grava_requisicao_erro(pr_dsrequis IN VARCHAR2              --> Requisicao de entrada em json 
+                                    ,pr_dsmessag IN VARCHAR2              --> Descricao da mensagem de erro
+																		,pr_nmarqlog IN VARCHAR2              --> Nome do arquivo de log
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo  
+  BEGIN
+    /* .............................................................................
+     Programa: pc_grava_requisicao_erro
+     Sistema : Rotinas referentes ao WebService
+     Sigla   : WEBS
+     Autor   : Lucas Reinert
+     Data    : Abril/16.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Gravar mensagem de erro no LOG
+
+     Observacao: -----
+     
+     Alteracoes:      
+     ..............................................................................*/
+    DECLARE
+      vr_des_log        VARCHAR2(4000);      
+      vr_dsdirlog       VARCHAR2(100);
+			vr_dsrequicao     VARCHAR2(4000);
+    BEGIN
+			vr_dsrequicao := REPLACE(pr_dsrequis, '<![CDATA[', '');
+		  vr_dsrequicao := REPLACE(vr_dsrequicao, ']]>', '');
+      -- Diretorio do arquivo      
+      vr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                          ,pr_cdcooper => 3
+                                          ,pr_nmsubdir => 'log/webservices');      
+      -- Mensagem de LOG
+      vr_des_log  := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                     ' - ' || 
+                     'Requisicao: ' || vr_dsrequicao  || 
+                     ' - ' || 
+                     'Resposta: ' || pr_dsmessag;
+                     
+      -- Criacao do arquivo
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                ,pr_ind_tipo_log => 3
+                                ,pr_des_log      => DBMS_XMLGEN.CONVERT(vr_des_log, DBMS_XMLGEN.ENTITY_DECODE)
+                                ,pr_nmarqlog     => pr_nmarqlog || '-' || TO_CHAR(SYSDATE,'DD-MM-RRRR')
+                                ,pr_dsdirlog     => vr_dsdirlog);
+                                
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    END;                            
+      
+  END pc_grava_requisicao_erro;
+
 
 END WEBS0003;
 /

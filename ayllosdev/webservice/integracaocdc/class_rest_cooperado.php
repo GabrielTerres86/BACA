@@ -41,13 +41,18 @@ class RestCDC extends RestServerJson{
 									 $dscritic = ''){
 		// Transformar XML de contas em array
 		$jContas = json_encode($contas);
-		$aContas = json_decode($jContas,TRUE);										 
-		$contas  = is_array($aContas) ? (array_key_exists('conta', $aContas) ? $aContas['conta'] : '') : '';
+		$aContas = json_decode($jContas, true);
+		$contas = is_array($aContas) ? (array_key_exists('conta', $aContas) ? $aContas['conta'] : '') : '';
+		$islist = is_array($contas) && ( empty($contas) || array_keys($contas) === range(0,count($contas)-1) );
 		
         $aRetorno = array();
         $aRetorno['status']      = $status;
         $aRetorno['nrtransacao'] = $numeroTransacao;
-        $aRetorno['contas'] 	 = $contas;
+		if ($islist || !(is_array($aContas))){
+			$aRetorno['contas'] 	 = $contas;
+		}else{
+			$aRetorno['contas'][0] 	 = $contas;
+		}
         $aRetorno['cdcritic']    = $cdcritic;
         $aRetorno['dscritic']    = $dscritic;
         $aRetorno['msg_detalhe'] = $mensagemDetalhe;
@@ -78,7 +83,16 @@ class RestCDC extends RestServerJson{
      * @param String Mensagem de detalhe
      * @return boolean
      */
-    private function processaRetornoErro($status, $mensagemDetalhe, $dscritic = '', $idacionamento = ''){		
+    private function processaRetornoErro($status, $mensagemDetalhe, $dscritic = '', $idacionamento = ''){
+        // Grava o erro no arquivo TEXTO
+        $xml  = "<Root>";
+        $xml .= " <Dados>";
+		$xml .= "   <dsrequis><![CDATA[".((string) $_SERVER['REQUEST_URI'])."]]></dsrequis>";		
+        $xml .= "   <dsmessag>".$mensagemDetalhe."</dsmessag>";
+        $xml .= "   <nmarqlog>integracaocdc</nmarqlog>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+        mensageria($xml, "WEBS0003", "GRAVA_REQUISICAO_ERRO", 0, 0, 0, 5, 0, "</Root>");
         // Retorna a mensagem de critica
         return $this->processaRetorno((string) $status,(string) $mensagemDetalhe,(string) $idacionamento, '', '0', (string) $dscritic);
     }
@@ -124,7 +138,7 @@ class RestCDC extends RestServerJson{
      */
     public function processaRequisicao(){
         try{
-            $this->setMetodoRequisitado('GET');
+            $this->setMetodoRequisitado($_SERVER['REQUEST_METHOD']);
             
             // // Valida os dados da requisicao
             if (!$this->validaRequisicao()){
@@ -138,7 +152,29 @@ class RestCDC extends RestServerJson{
             if (!$this->validaParametrosRecebidos($oDados)){
                 return false;            
             }
+
+			// Monta retorno da proposta a partir do motor de crédito
+			$xml  = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "	<cdcooper>".$oDados->cooperativaLojista."</cdcooper>";
+			$xml .= "   <dsusuari>".$this->getUsuario()."</dsusuari>";
+			$xml .= "   <dsdsenha>".$this->getSenha()."</dsdsenha>";			
+			$xml .= "   <cdcliente>1</cdcliente>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			$sXmlResult = mensageria($xml, "EMPR0012", "VALIDA_INTEGRACAO", 0, 0, 0, 5, 0, "</Root>");
+			$oRetorno  = simplexml_load_string($sXmlResult);
 			
+			// Vamos verificar se veio retorno de erro
+			if (isset($oRetorno->Erro->Registro->dscritic)){
+				$dscritic = $oRetorno->Erro->Registro->dscritic;
+				if (strpos($dscritic, 'Erro geral') !== false){
+					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+				}else{
+					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+				}
+				return false;
+			}			
             // Gravar acionamento do serviço
             $xml  = "<Root>";
             $xml .= " <Dados>";
@@ -148,14 +184,14 @@ class RestCDC extends RestServerJson{
 			$xml .= "	<cdorigem>5</cdorigem>";			
 			$xml .= "	<nrctrprp>0</nrctrprp>";
 			$xml .= "	<nrdconta></nrdconta>";
-			$xml .= "	<cdcliente>0</cdcliente>";
+			$xml .= "	<cdcliente>1</cdcliente>";
 			$xml .= "	<tpacionamento>1</tpacionamento>";
 			$xml .= "	<dsoperacao>INTEGRACAO CDC - CONSULTA COOPERADO</dsoperacao>";
 			$xml .= "	<dsuriservico>".$this->getNameHost()."</dsuriservico>";
 			$xml .= "	<dsmetodo>".$this->getMetodoRequisitado()."</dsmetodo>";
 			$xml .= "	<dtmvtolt></dtmvtolt>";			
 			$xml .= "	<cdstatus_http></cdstatus_http>";
-			$xml .= "	<dsconteudo_requisicao>".$this->getFileContents()."</dsconteudo_requisicao>";
+			$xml .= "	<dsconteudo_requisicao>".((string) $_SERVER['REQUEST_URI'])."</dsconteudo_requisicao>";
 			$xml .= "	<dsresposta_requisicao></dsresposta_requisicao>";
 			$xml .= "	<dsprotocolo></dsprotocolo>";
 			$xml .= "	<flgreenvia>0</flgreenvia>";
@@ -170,7 +206,7 @@ class RestCDC extends RestServerJson{
             // Vamos verificar se veio retorno 
             if (isset($oRetorno->Erro->Registro->dscritic)){
 				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
+				if (strpos($dscritic, 'Erro geral') !== false){
 					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic);
 				}else{
 					$this->processaRetornoErro(400,$dscritic);
@@ -203,9 +239,9 @@ class RestCDC extends RestServerJson{
             // Vamos verificar se veio retorno 
             if (isset($oRetorno->Erro->Registro->dscritic)){
 				$dscritic = $oRetorno->Erro->Registro->dscritic;
-				if (strpos($dscritic, 'Erro geral') >= 0){
+				if (strpos($dscritic, 'Erro geral') !== false){
 					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
-				}elseif(strpos($dscritic, 'Nao Cooperado') >= 0){
+				}elseif(strpos($dscritic, 'Nao Cooperado') !== false){
 					$this->processaRetornoErro(404,'Consulta de cooperado realizada com restricao!',$dscritic,$idacionamento);
 				}else{
 					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
@@ -218,6 +254,7 @@ class RestCDC extends RestServerJson{
                                           'Consulta de cooperado realizada com sucesso',
                                           $idacionamento,
 										  $oRetorno->inf->contas,
+
                                           0,
                                           '');
 

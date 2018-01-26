@@ -93,6 +93,7 @@ PROCEDURE valores_entrada:
             WHEN "flgerlog" THEN aux_flgerlog = IF CAN-DO("TRUE,SIM,YES", 
                                                           CAPS(tt-param.valorCampo)) THEN TRUE
                                                 ELSE FALSE.
+            WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "dsdopcao" THEN aux_dsdopcao = tt-param.valorCampo.
             
         END CASE.
