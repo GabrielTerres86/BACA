@@ -208,7 +208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
                                ,pr_des_erro   OUT VARCHAR2) IS      --> Erros do processo
     /* .............................................................................
 
-        Programa: pc_alterar_controle.
+        Programa: pc_consultar_controle
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel/AMcom
@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-
+      vr_nrdrowid ROWID;
       ---------->> CURSORES <<--------      
 
     BEGIN
@@ -269,6 +269,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
        WHERE crapepr.cdcooper = vr_cdcooper
          AND crapepr.nrdconta = pr_nrdconta
          AND crapepr.nrctremp = pr_nrctremp;
+         
+      BEGIN   
+      --Grava log
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => ''
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem) --> Origem enviada
+                          ,pr_dstransa => 'Alterada Qualificação da Operação(Controle)'
+                          ,pr_dttransa => SYSDATE--pr_dtmvtolt
+                          ,pr_flgtrans => 1 --> TRUE
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate
+                                                           ,'SSSSS'))
+                          ,pr_idseqttl => 1--pr_idseqttl
+                          ,pr_nmdatela => 'PRESTACOES'--pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+     END;
     EXCEPTION
       WHEN OTHERS THEN
         -- Montar mensagem de critica
@@ -308,4 +325,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
   END pc_alterar_controle;
   --
 END TELA_ATENDA_PRESTACOES;
-/
