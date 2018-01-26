@@ -266,7 +266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,8,'G'
                    ,9,'H') risco_final
            , ris.dtdrisco data_risco
-           , ris.dtrefere-ris.dtdrisco dias_risco
+           , (SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper)-ris.dtdrisco dias_risco
         from crapass a
            , crapris ris
            , crapepr c
@@ -341,7 +341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,8,'G'
                    ,9,'H') risco_final           
            , ris.dtdrisco data_risco
-           , ris.dtrefere-ris.dtdrisco dias_risco
+           , (SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper)-ris.dtdrisco dias_risco
         from crapass a
            , crapris ris
            , crapepr c
@@ -679,7 +679,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,a.nrcpfcgc)  = pr_cpf_cnpj --parametro
          --Risco
          and ris.cdcooper = a.cdcooper
-         and ris.dtrefere = (SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper)
+         and ris.dtrefere = (SELECT dtultdma FROM crapdat WHERE cdcooper = pr_cdcooper)
          and ris.nrdconta = a.nrdconta
          and ris.inddocto = 1
          --Contrato
@@ -733,7 +733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                            ,a.nrcpfcgc)  = pr_cpf_cnpj --parametro
                  --Risco
                  and ris.cdcooper = a.cdcooper
-                 and ris.dtrefere = (SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper)
+                 and ris.dtrefere = (SELECT dtultdma FROM crapdat WHERE cdcooper = pr_cdcooper)
                  and ris.nrdconta = a.nrdconta
                  and ris.inddocto = 1
                  --Contrato
@@ -760,7 +760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    ,a.nrcpfcgc)  = pr_cpf_cnpj --parametro
          --Risco
          and ris.cdcooper = a.cdcooper
-         and ris.dtrefere = (SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper)
+         and ris.dtrefere = (SELECT dtultdma FROM crapdat WHERE cdcooper = pr_cdcooper)
          and ris.nrdconta = a.nrdconta
          and ris.inddocto = 1
          --Contrato
