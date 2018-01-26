@@ -33,7 +33,7 @@
   21/06/2017 - Ajustes PRJ340 - NPC(Odirlei AMcom).
   
   25/01/2018 - #824366 Inclusão da data de transferência na rotina
-               imprime_transferencia (Carlos)                             
+               imprime_transferencia (Carlos)
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
