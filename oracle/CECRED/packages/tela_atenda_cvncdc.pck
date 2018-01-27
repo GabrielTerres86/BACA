@@ -2672,7 +2672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
               ,tbepr_cdc_segmento seg
         WHERE loj.cdsubsegmento = sub.cdsubsegmento
           AND sub.cdsegmento = seg.cdsegmento
-          AND loj.idcooperado_cdc = 703;
+          AND loj.idcooperado_cdc = pr_idcooperado_cdc;
     
       rw_subsegmento cr_subsegmento%ROWTYPE;
 
