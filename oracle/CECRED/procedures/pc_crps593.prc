@@ -60,8 +60,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
                    
                    09/07/2014 - #176849 Format de nrboder (numero do bordero) 
                                 aumentado para 7 digitos (Carlos)
-
-                   22/01/2017 - #780914 Removido cheques digitalizados (Andrey)         
+                            
     ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -111,7 +110,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
          AND cst.cdcooper    = pr_cdcooper
          AND cst.dtlibera    > pr_dtmvtolt
          AND cst.dtlibera   <= pr_dtlimite
-         AND cst.insitprv    < 2 -- 0=Nao Enviado,1=Gerado
+         AND cst.insitprv    < 3 -- 0=Nao Enviado,1=Gerado,2=Digitalizado
          AND cst.insitchq   in (0,2); -- 0=nao processado, 2=processado
       
     -- Buscar Cheques contidos do Bordero de desconto de cheques
@@ -140,7 +139,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
          AND cdb.cdcooper    = pr_cdcooper
          AND cdb.dtlibera    > pr_dtmvtolt
          AND cdb.dtlibera   <= pr_dtlimite
-         AND cdb.insitprv    < 2 -- 0=Nao Enviado,1=Gerado
+         AND cdb.insitprv    < 3 -- 0=Nao Enviado,1=Gerado,2=Digitalizado
          AND cdb.dtlibbdc   is not null
          AND cdb.insitchq   in (0,2); -- 0=nao processado, 2=processado
            
