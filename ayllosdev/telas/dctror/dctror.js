@@ -11,6 +11,7 @@
  * 003: [04/11/2017] Jonata           (RKAM)  : Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
  * 004: [15/12/2017] Jonata           (RKAM)  : Correção controle de acesso a tela quando vinda da tela CONTAS > IMPEDIMETNOS (P364)
  * 005: [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 006: [16/01/2018] Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  * --------------
  */
 
@@ -1329,7 +1330,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'330px', 'height':'110px'});	
 	

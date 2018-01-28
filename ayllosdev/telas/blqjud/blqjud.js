@@ -1,5 +1,5 @@
 /*!
- * FONTE        : blqjud.js                     Última alteração: 29/07/2016
+ * FONTE        : blqjud.js                     Última alteração: 16/01/2018
  * CRIAÇÃO      : Guilherme / SUPERO
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Biblioteca de funções da tela BLQJUD
@@ -22,6 +22,8 @@
                                (Adriano - SD 492902).
 
                   29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+				  
+				  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  * --------------
  */
  
@@ -138,7 +140,7 @@ function controlaLayout() {
 	rDsinfdes           = $('label[for="dsinfdes"]' ,'#frmDesbloqueio');
 	rFldestrf			= $('label[for="fldestrf"]' ,'#frmDesbloqueio');
 	rVldesblo           = $('label[for="vldesblo"]', '#frmDesbloqueio');
-	
+
 	cNrofides           = $('#nrofides' ,'#frmDesbloqueio');
 	cNrprodes           = $('#nrprodes' ,'#frmDesbloqueio');
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
@@ -200,10 +202,10 @@ function controlaLayout() {
 			rDsinfadc.addClass('rotulo').css({'width':'170px'});
             rVlbloque.addClass('rotulo').css({'width':'170px'});
             rVlsaldo.addClass('rotulo-linha').css({ 'width': '180px' });
-
+			
             rVlbloque.show();
             rVlbloque.next().show();
-			
+
             cNroficio.addClass('rotulo').css({'width':'200px'});
             cNrproces.addClass('rotulo').css({'width':'200px'});
             cDsjuizem.addClass('rotulo').css({'width':'350px'});
@@ -237,7 +239,7 @@ function controlaLayout() {
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
             cNrctacon.addClass('rotulo-linha').css({ 'width': '110px' }).setMask('INTEGER', 'zzzzzzzzzzzzz9', '', '');
-
+			
             rVlbloque.hide();
             rVlbloque.next().hide();
 			
@@ -1304,7 +1306,7 @@ function efetuaDesbloqueio() {
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
 	var cdmodali = $("#cdmodali","#frmAcaojud").val();
-	
+
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
@@ -1539,7 +1541,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});	
 

@@ -947,7 +947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       ELSE
         -- Retorna o token de acesso
         pr_dstoken := rw_crapope.cddsenha;
-		END IF;
+			END IF;
 		END IF;
 
   EXCEPTION
@@ -5383,11 +5383,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                              ,pr_texto_novo     => '</relacoes>'
                              ,pr_fecha_xml => TRUE);
       
-      -- Gera o xml
-      gene0002.pc_clob_para_arquivo(pr_clob => vr_clob,
-                                    pr_caminho => '/microsh/cecred/andrino',
-                                    pr_arquivo => 'relacao.xml',
-                                    pr_des_erro => vr_dscritic);
       -- Converte para XML
       pr_retorno := xmltype(vr_clob);
     END IF;
