@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 04/01/2018
+   Data    : Novembro/2009.                   Ultima atualizacao: 26/01/2018
 
    Dados referentes ao programa:
 
@@ -390,6 +390,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
 
+               26/01/2018 - Adicionar validação para carregar a data em que boleto pode ser pago
+                            (Douglas - Chamado 824706)
    .............................................................................*/
 
      DECLARE
@@ -1799,6 +1801,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          ---vr_flgproc_sing INTEGER;
 
          --Variaveis Locais
+         vr_dtboleto DATE;
          vr_flgtitcp BOOLEAN;
          vr_dsmotivo VARCHAR2(100);
          vr_vldescto NUMBER;
@@ -3822,12 +3825,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                     vr_dtrefere:= rw_crapdat.dtmvtolt;
                  END IF;
 
+                 vr_dtboleto := NPCB0001.fn_titulo_vencimento_pagamento(pr_cdcooper => rw_crapcop.cdcooper 
+                                                                       ,pr_dtvencto => rw_crapcob.dtvencto);
+
                  --Verificar Vencimento Titulo
                  pc_verifica_vencto (pr_cdcooper => rw_crapcop.cdcooper                  --Codigo da cooperativa
                                     ,pr_dtmvtolt => vr_dtrefere                          --Data para verificacao
                                     ,pr_cddbanco => vr_cdbanpag                          --Codigo do Banco
                                     ,pr_cdagenci => vr_cdagepag                          --Codigo da Agencia
-                                    ,pr_dtboleto => rw_crapcob.dtvencto                  --Data do Titulo
+                                    ,pr_dtboleto => vr_dtboleto                          --Data do Titulo
                                     ,pr_flgvenci => vr_flgvenci                          --Indicador titulo vencido
                                     ,pr_cdcritic => vr_cdcritic                          --Codigo do erro
                                     ,pr_dscritic => vr_dscritic );                          --Descricao do erro
