@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Novembro/2004                   Ultima atualizacao: 22/11/2013.
+   Data    : Novembro/2004                   Ultima atualizacao: 26/01/2018.
 
    Dados referentes ao programa:
 
@@ -90,7 +90,11 @@
                22/11/2013 - Substituido endereço de e-mail 
                             operacao_fln@multitasknet.com.br para 
                             noc@multitask.com.br (Daniele). 
-                            
+               
+               26/01/2018 - Ajustes para nao usar a gera_criticas_proces.p
+                            e criado a procedure gera_critica_proces no lugar
+                            pois acontecia problemas na hora de usar a work table
+                            wt_critica_proces (Tiago).
 /*----------------------------------------------------------------------------*/
 
                             
@@ -198,6 +202,11 @@ INSS BANCOOB: craptab.cdcooper = 0  /* w_criticas.cdsitexc = 5 */
 
 { includes/var_online.i "NEW"}
 { includes/var_proces.i "NEW"}
+{ sistema/generico/includes/b1wgen0001tt.i }
+{ sistema/generico/includes/b1wgen9998tt.i }
+{ sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
+
 
 DEF VAR aux_nmarqv   AS CHAR                                           NO-UNDO.
 DEF VAR des_criticas AS CHAR                                           NO-UNDO.
@@ -303,7 +312,7 @@ IF  crapdat.inproces = 1  THEN
 
        EMPTY TEMP-TABLE w_criticas.
        
-       RUN fontes/gera_criticas_proces.p (INPUT " ",
+       RUN gera_critica_proces(INPUT " ",
                                           OUTPUT aux_nrsequen,
                                           OUTPUT TABLE w_criticas).  
                  
@@ -588,8 +597,10 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                      INPUT "suporte.operacional@cecred.coop.br,"
                                            + "compe@cecred.coop.br,"
                                            + "eduardo@cecred.coop.br,"
-                                           + "david.kistner@cecred.coop.br,"
-                                           + "diego@cecred.coop.br",                                     INPUT "'CONTROLE PROCESSO   ' ",
+                                           + "anderson.fossa@cecred.coop.br,"  
+                                           + "jean.deschamps@cecred.coop.br,"  
+                                           + "james.junior@cecred.coop.br", 
+                                     INPUT "'CONTROLE PROCESSO   ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
    ELSE
@@ -600,11 +611,12 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            "pinotti@multitasknet.com.br," +
                                            "cpd@cecred.coop.br," +
                                            "compe@cecred.coop.br," + 
-                                     "suporte.operacional@cecred.coop.br," +
+                                           "suporte.operacional@cecred.coop.br," +
                                            "mirtes@cecred.coop.br," +
                                            "eduardo@cecred.coop.br," +
-                                           "david.kistner@cecred.coop.br," +
-                                           "diego@cecred.coop.br", 
+                                           "anderson.fossa@cecred.coop.br," + 
+                                           "jean.deschamps@cecred.coop.br," + 
+                                           "james.junior@cecred.coop.br", 
                                      INPUT "'CONTROLE PROCESSO   ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
@@ -616,3 +628,97 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                     " 2>/dev/null").
 END PROCEDURE.
 
+PROCEDURE gera_critica_proces:
+
+  DEF INPUT  PARAM par_nmarqimp AS CHAR                                  NO-UNDO.
+  DEF OUTPUT PARAM par_nrsequen AS INTE                                  NO-UNDO.
+  DEF OUTPUT PARAM TABLE for w_criticas.
+
+
+  ETIME(TRUE).
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+  RUN STORED-PROCEDURE pc_gera_criticas_proces_wt aux_handproc = PROC-HANDLE
+     (INPUT glb_cdcooper, /* pr_cdcooper   --> Codigo da cooperativa*/
+      INPUT glb_cdagenci, /* pr_cdagenci   --> Codigo da agencia*/
+      INPUT glb_cdoperad, /* pr_cdoperad   --> codigo do operador*/
+      INPUT glb_nmdatela, /* pr_nmdatela   --> Nome da tela */
+      INPUT par_nmarqimp, /* pr_nmarqimp   --> Nome do arquivo*/
+      /* pr_choice      --> Tipo de escolhe efetuado na tela*/
+      INPUT choice,       
+      /* pr_nrsequen    --> Numero sequencial */ 
+      OUTPUT aux_nrsequen, 
+      /* pr_vldaurvs    --> Variavel para armazenar o valor do urv*/
+      OUTPUT aux_vldaurvs, 
+      /* pr_flgsol    --> variavel que controla se deve gerar a solicitaçao*/
+      OUTPUT INT(STRING(aux_flgsol16,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol27,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol28,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol29,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol30,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol37,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol46,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol57,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol59,"1/0")), 
+      OUTPUT INT(STRING(aux_flgsol80,"1/0")), 
+      OUTPUT 0,           /*aux_cdcritic    --> Critica encontrada*/
+      OUTPUT ""          /*aux_dscritic OUT VARCHAR2*/
+      ).
+        
+  IF  ERROR-STATUS:ERROR  THEN DO:
+      DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+          ASSIGN aux_msgerora = aux_msgerora + 
+                                ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+      END.
+          
+      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                        " - pc_gera_criticas_proces_wt' --> '"  +
+                        "Erro ao executar Stored Procedure: '" +
+                        aux_msgerora + "' >> log/proc_batch.log").
+      RETURN.
+  END.
+
+  CLOSE STORED-PROCEDURE pc_gera_criticas_proces_wt WHERE PROC-HANDLE = aux_handproc.
+
+  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+  ASSIGN glb_cdcritic = 0                           
+         glb_dscritic = ""
+         glb_cdcritic = pc_gera_criticas_proces_wt.pr_cdcritic WHEN pc_gera_criticas_proces_wt.pr_cdcritic <> ?
+         glb_dscritic = pc_gera_criticas_proces_wt.pr_dscritic WHEN pc_gera_criticas_proces_wt.pr_dscritic <> ?
+         aux_nrsequen = pc_gera_criticas_proces_wt.pr_nrsequen WHEN pc_gera_criticas_proces_wt.pr_nrsequen <> ?
+         aux_vldaurvs = pc_gera_criticas_proces_wt.pr_vldaurvs WHEN pc_gera_criticas_proces_wt.pr_vldaurvs <> ?       
+         aux_flgsol16 = IF pc_gera_criticas_proces_wt.pr_flgsol16 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol27 = IF pc_gera_criticas_proces_wt.pr_flgsol27 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol28 = IF pc_gera_criticas_proces_wt.pr_flgsol28 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol29 = IF pc_gera_criticas_proces_wt.pr_flgsol29 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol30 = IF pc_gera_criticas_proces_wt.pr_flgsol30 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol37 = IF pc_gera_criticas_proces_wt.pr_flgsol37 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol46 = IF pc_gera_criticas_proces_wt.pr_flgsol46 = 1 THEN TRUE ELSE FALSE       
+         aux_flgsol57 = IF pc_gera_criticas_proces_wt.pr_flgsol57 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol59 = IF pc_gera_criticas_proces_wt.pr_flgsol59 = 1 THEN TRUE ELSE FALSE
+         aux_flgsol80 = IF pc_gera_criticas_proces_wt.pr_flgsol80 = 1 THEN TRUE ELSE FALSE.
+
+  ASSIGN par_nrsequen = aux_nrsequen.
+
+  /** descarregar work table na temp table **/
+  FOR EACH wt_critica_proces 
+        BY nrsequen:
+
+     CREATE w_criticas.
+     ASSIGN w_criticas.cdcooper = wt_critica_proces.cdcooper
+            w_criticas.nrsequen = wt_critica_proces.nrsequen
+            w_criticas.cdsitexc = wt_critica_proces.cdsitexc
+            w_criticas.dscritic = wt_critica_proces.dscritic
+            w_criticas.cdagenci = wt_critica_proces.cdagenci.
+  END. 
+
+  UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
+                    " - "   + glb_cdprogra + "' --> '"   +
+                    "Stored Procedure rodou em "         + 
+                    STRING(INT(ETIME / 1000),"HH:MM:SS") + 
+                    " >> log/proc_batch.log").
+  RETURN "OK".
+
+END PROCEDURE.
