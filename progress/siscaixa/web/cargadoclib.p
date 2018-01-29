@@ -3,13 +3,15 @@
 
     Programa: cargadoclib.p
     Autor   : Lucas Ranghetti
-    Data    : Junho/2015                         Ultima atualizacao: 00/00/0000
+    Data    : Junho/2015                         Ultima atualizacao: 29/01/2018
 
     Objetivo  : Enviar para a Selbetti os documentos liberados e nao 
                 digitalizados via WebService "JSON".
 
     Alteracoes: Utilizado a include b1wgen0137tt para nao ter que criar a 
                 tt-documentos-liberados novamente. (Lombardi #799181)
+                
+                29/01/2018 - Ajustar format do Contrato (Lucas Ranghetti #838829)
    
 .............................................................................*/
 
@@ -256,8 +258,8 @@ PROCEDURE process-web-request :
                                '"Conta":"'         + STRING(tt-documentos-liberados.nrdconta,"zzzz,zzz,9") + '",' +
                                '"Cooperativa":"'   + STRING(tt-documentos-liberados.cdcooper) + '",' +
                                '"PA":"'            + STRING(tt-documentos-liberados.cdagenci,"zz9") + '",' +
-                               '"Contrato":"'      + STRING(tt-documentos-liberados.nrctrato,"z,zzz,zz9") + '",' +
-                               '"Bordero":"'       + STRING(tt-documentos-liberados.nrborder,"z,zzz,zz9") + '",' +
+                               '"Contrato":"'      + STRING(tt-documentos-liberados.nrctrato,"zzz,zzz,zz9") + '",' +
+                               '"Bordero":"'       + STRING(tt-documentos-liberados.nrborder,"zzz,zzz,zz9") + '",' +
                                '"Aditivo":"'       + STRING(tt-documentos-liberados.nraditiv,"zzzzzzzzz9") + '",' +
                                '"DataLiberacao":"' + STRING(tt-documentos-liberados.dtlibera,"99/99/9999") + '",' +
                                '"Valor":"'         + STRING(tt-documentos-liberados.vllanmto,"zzzzzzzzz9.99") + '"' +
